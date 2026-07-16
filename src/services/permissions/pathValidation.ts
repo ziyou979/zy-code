@@ -118,13 +118,11 @@ export function isPathInSandboxWriteAllowlist(resolvedPath: string): boolean {
   const resolvedDeny = denyWithinAllow.flatMap(getResolvedSandboxConfigPath)
   return pathsToCheck.every((p) => {
     for (const denyPath of resolvedDeny) {
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      if (pathInWorkingPath(p as any, denyPath as any)) {
+      if (pathInWorkingPath(p, denyPath)) {
         return false
       }
     }
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    return resolvedAllow.some((allowPath) => pathInWorkingPath(p as any, allowPath as any))
+    return resolvedAllow.some((allowPath) => pathInWorkingPath(p, allowPath))
   })
 }
 
@@ -186,10 +184,8 @@ export function isPathAllowed(
         allowed: false,
         decisionReason: {
           type: 'safetyCheck',
-          // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-          reason: (safetyCheck as any).message,
-          // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-          classifierApprovable: (safetyCheck as any).classifierApprovable,
+          reason: safetyCheck.message,
+          classifierApprovable: safetyCheck.classifierApprovable,
         },
       }
     }

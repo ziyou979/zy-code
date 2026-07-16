@@ -14,7 +14,7 @@
 import type React from 'react'
 import { useCallback } from 'react'
 import { getSystemPrompt } from '../../constants/prompts.js'
-import { getSystemContext, getUserContext } from '../../context.js'
+import { getSystemContext, getUserContext } from '../../services/context/context.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import type { ReplStoreInstance } from '../../state/replStore.js'

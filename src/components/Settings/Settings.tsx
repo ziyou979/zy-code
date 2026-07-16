@@ -52,13 +52,13 @@ export function Settings({ onClose, context, defaultTab }: Props) {
   const tabs = [
     <Tab key="status" id="Status" title={tSync('settings.statusTab')}>
       {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
-      <Status context={context as any} diagnosticsPromise={diagnosticsPromise} />
+      <Status context={context} diagnosticsPromise={diagnosticsPromise} />
     </Tab>,
     <Tab key="config" id="Config" title={tSync('settings.configTab')}>
       <Suspense fallback={null}>
         <Config
           // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          context={context as any}
+          context={context}
           onClose={onClose}
           setTabsHidden={setTabsHidden}
           onIsSearchModeChange={setConfigOwnsEsc}

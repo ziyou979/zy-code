@@ -48,7 +48,7 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
   const projectMemoryPath = join(getOriginalCwd(), 'AGENTS.md')
   const hasUserMemory = existingMemoryFiles.some((f) => f.path === userMemoryPath)
   const hasProjectMemory = existingMemoryFiles.some((f_0) => f_0.path === projectMemoryPath)
-  const allMemoryFiles = [
+  const allMemoryFiles: ExtendedMemoryFileInfo[] = [
     ...existingMemoryFiles
       .filter((f_1) => f_1.type !== 'AutoMem' && f_1.type !== 'TeamMem')
       .map((f_2) => ({
@@ -84,12 +84,10 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
     depths.set(file.path, depth)
     const indent = depth > 0 ? '  '.repeat(depth - 1) : ''
     let label
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    if (file.type === 'User' && !(file as any).isNested && file.path === userMemoryPath) {
+    if (file.type === 'User' && !file.isNested && file.path === userMemoryPath) {
       label = 'User memory'
     } else {
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      if (file.type === 'Project' && !(file as any).isNested && file.path === projectMemoryPath) {
+      if (file.type === 'Project' && !file.isNested && file.path === projectMemoryPath) {
         label = 'Project memory'
       } else {
         if (depth > 0) {
@@ -101,19 +99,16 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
     }
     let description
     const isGit = projectIsInGitRepo(getOriginalCwd())
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    if (file.type === 'User' && !(file as any).isNested) {
+    if (file.type === 'User' && !file.isNested) {
       description = 'Saved in ~/.zy/AGENTS.md'
     } else {
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      if (file.type === 'Project' && !(file as any).isNested && file.path === projectMemoryPath) {
+      if (file.type === 'Project' && !file.isNested && file.path === projectMemoryPath) {
         description = `${isGit ? 'Checked in at' : 'Saved in'} ./AGENTS.md`
       } else {
         if (file.parent) {
           description = '@-imported'
         } else {
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          if ((file as any).isNested) {
+          if (file.isNested) {
             description = 'dynamically loaded'
           } else {
             description = ''
@@ -163,8 +158,7 @@ export function MemoryFileSelector({ onSelect, onCancel }: Props) {
   const [showDreamRow] = useState(isAutoMemoryEnabled)
   const isDreamRunning = useAppState((s_0) =>
     Object.values(s_0.tasks).some(
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      (t: any) => (t as any).type === 'dream' && (t as any).status === 'running',
+      (t: { type?: string; status?: string }) => t.type === 'dream' && t.status === 'running',
     ),
   )
   const [lastDreamAt, setLastDreamAt] = useState<number | null>(null)

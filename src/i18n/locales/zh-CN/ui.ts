@@ -6,6 +6,8 @@ export const zhUi: TranslationResource = {
   'app.toggleTranscript': '切换对话记录',
   'common.add': '添加',
   'common.cancel': '取消',
+  'common.change': '更改',
+  'common.clear': '清除',
   'common.close': '关闭',
   'common.collapse': '收起',
   'common.complete': '完成',

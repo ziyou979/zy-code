@@ -135,7 +135,7 @@ export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
       }
       case 'escape':
         e.preventDefault()
-        onDone(tSync('effort.picker.cancelled' as any) || 'Cancelled')
+        onDone(tSync('effort.picker.cancelled') || 'Cancelled')
         break
     }
   }
@@ -144,7 +144,7 @@ export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
   if (!layout) {
     return (
       <Text dimColor={true}>
-        {tSync('effort.picker.notSupported' as any, { model: model ?? 'unknown' }) ||
+        {tSync('effort.picker.notSupported', { model: model ?? 'unknown' }) ||
           `Effort is not supported for the current model (${model ?? 'unknown'}).`}
       </Text>
     )
@@ -156,15 +156,15 @@ export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
     return (
       <Box flexDirection="column">
         <Text>
-          {tSync('effort.picker.confirmPrompt' as any, { level: level.label }) ||
+          {tSync('effort.picker.confirmPrompt', { level: level.label }) ||
             `Set effort to ${level.label}?`}
         </Text>
         <Text>
           <Text bold={true}>Enter</Text>
-          {tSync('effort.picker.toConfirm' as any) || ' to confirm'}
+          {tSync('effort.picker.toConfirm') || ' to confirm'}
           {' \xB7 '}
           <Text bold={true}>Esc</Text>
-          {tSync('effort.picker.toCancel' as any) || ' to cancel'}
+          {tSync('effort.picker.toCancel') || ' to cancel'}
         </Text>
       </Box>
     )
@@ -179,11 +179,11 @@ export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
   const accentColor = (selectedLevel?.color ?? 'autoAccept') as keyof Theme
 
   // 1. 标题行
-  const titleLine = centerText(tSync('effort.picker.title' as any) || 'Effort', W)
+  const titleLine = centerText(tSync('effort.picker.title') || 'Effort', W)
 
   // 2. 极标签行
-  const fasterText = tSync('effort.picker.faster' as any) || 'Faster'
-  const smarterText = tSync('effort.picker.smarter' as any) || 'Smarter'
+  const fasterText = tSync('effort.picker.faster') || 'Faster'
+  const smarterText = tSync('effort.picker.smarter') || 'Smarter'
   const polarLine = polarRow(fasterText, smarterText, W)
 
   // 3. 轨道行：──▲──
@@ -281,13 +281,13 @@ export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
         <Text dimColor={true}>{pad('')}</Text>
         <Text dimColor={true}>
           {'\u2190'}/<Text bold={true}>{'\u2192'}</Text>
-          {tSync('effort.picker.toAdjust' as any) || ' to adjust'}
+          {tSync('effort.picker.toAdjust') || ' to adjust'}
           {' \xB7 '}
           <Text bold={true}>Enter</Text>
-          {tSync('effort.picker.toConfirm' as any) || ' to confirm'}
+          {tSync('effort.picker.toConfirm') || ' to confirm'}
           {' \xB7 '}
           <Text bold={true}>Esc</Text>
-          {tSync('effort.picker.toCancel' as any) || ' to cancel'}
+          {tSync('effort.picker.toCancel') || ' to cancel'}
         </Text>
       </Box>
     </Box>

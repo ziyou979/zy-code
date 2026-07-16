@@ -100,8 +100,10 @@ export async function loadPluginLspServers(
   // 2. Check manifest.lspServers field
   if (plugin.manifest.lspServers) {
     const manifestServers = await loadLspServersFromManifest(
-      // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-      plugin.manifest.lspServers as any,
+      plugin.manifest.lspServers as unknown as
+        | string
+        | Record<string, LspServerConfig>
+        | Array<string | Record<string, LspServerConfig>>,
       plugin.path,
       plugin.name,
       errors,
@@ -192,8 +194,7 @@ async function loadLspServersFromManifest(
       for (const [serverName, config] of Object.entries(decl)) {
         const result = LspServerConfigSchema().safeParse(config)
         if (result.success) {
-          // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-          servers[serverName] = result.data as any
+          servers[serverName] = result.data as unknown as LspServerConfig
         } else {
           const errorMsg = `LSP config validation failed for inline server "${serverName}" in plugin ${pluginName}: ${result.error.message}`
           logError(new Error(errorMsg))
@@ -267,10 +268,9 @@ export function resolvePluginLspEnvironment(
   resolved.env = resolvedEnv
 
   // Resolve workspaceFolder if present
-  // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-  if ((resolved as any).workspaceFolder) {
-    // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-    ;(resolved as any).workspaceFolder = resolveValue((resolved as any).workspaceFolder)
+  const resolvedAny = resolved as Record<string, unknown>
+  if (resolvedAny.workspaceFolder && typeof resolvedAny.workspaceFolder === 'string') {
+    resolvedAny.workspaceFolder = resolveValue(resolvedAny.workspaceFolder)
   }
 
   // Log missing variables if any were found
@@ -291,6 +291,7 @@ export function resolvePluginLspEnvironment(
 export function addPluginScopeToLspServers(
   servers: Record<string, LspServerConfig>,
   pluginName: string,
+  pluginSource?: string,
 ): Record<string, ScopedLspServerConfig> {
   const scopedServers: Record<string, ScopedLspServerConfig> = {}
 
@@ -299,10 +300,9 @@ export function addPluginScopeToLspServers(
     const scopedName = `plugin:${pluginName}:${name}`
     scopedServers[scopedName] = {
       ...config,
-      scope: 'dynamic', // Use dynamic scope for plugin servers
-      source: pluginName,
-      // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-    } as any
+      scope: 'dynamic',
+      pluginSource,
+    }
   }
 
   return scopedServers
@@ -342,7 +342,7 @@ export async function getPluginLspServers(
   }
 
   // Add plugin scope
-  return addPluginScopeToLspServers(resolvedServers, plugin.name)
+  return addPluginScopeToLspServers(resolvedServers, plugin.name, plugin.source)
 }
 
 /**
@@ -361,7 +361,7 @@ export async function extractLspServersFromPlugins(
 
     const servers = await loadPluginLspServers(plugin, errors)
     if (servers) {
-      const scopedServers = addPluginScopeToLspServers(servers, plugin.name)
+      const scopedServers = addPluginScopeToLspServers(servers, plugin.name, plugin.source)
       Object.assign(allServers, scopedServers)
 
       // Store the servers on the plugin for caching

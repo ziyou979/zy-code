@@ -1,3 +1,4 @@
+import type { UUID } from 'node:crypto'
 import { feature } from 'bun:bundle'
 import { markPostCompaction } from '../../bootstrap/runtime/runtimeContext.js'
 import type { QuerySource } from '../../constants/querySource.js'
@@ -266,8 +267,7 @@ export async function reactiveCompactOnPromptTooLong(
       }
       logError(error as Error)
       logEvent('zy_reactive_compact_error', {
-        // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
-        error: String(error) as any,
+        error: true,
         iteration,
       })
       return { ok: false, reason: 'error' }
@@ -315,8 +315,7 @@ export async function tryReactiveCompact(params: {
     })
 
     if (!outcome.ok) {
-      // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
-      logForDebugging(`reactiveCompact: tryReactiveCompact failed: ${(outcome as any).reason}`)
+      logForDebugging(`reactiveCompact: tryReactiveCompact failed: ${outcome.reason}`)
       return null
     }
 
@@ -401,8 +400,7 @@ async function buildReactiveCompactionResult({
   const messagesToKeep = groupsRemaining < groups.length ? preservedGroups.flat() : undefined
 
   // Boundary marker
-  // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
-  const lastMessageUuid = (messages.at(-1)?.uuid as any) ?? undefined
+  const lastMessageUuid = messages.at(-1)?.uuid as UUID | undefined
   const boundaryMarker = createCompactBoundaryMessage(
     trigger === 'manual' ? 'manual' : 'auto',
     preCompactTokenCount,
@@ -434,8 +432,7 @@ async function buildReactiveCompactionResult({
     context.options.tools,
     context.options.mainLoopModel,
     preservedMessages,
-    // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
-    { callSite: 'reactive_compact' as any },
+    { callSite: 'reactive_compact' },
   )) {
     attachments.push(createAttachmentMessage(att))
   }
@@ -464,8 +461,7 @@ async function buildReactiveCompactionResult({
     // Hook failures should not block compaction
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
-  const compactionUsage = getTokenUsage(assistantMsg as any)
+  const compactionUsage = getTokenUsage(assistantMsg)
   const postCompactTokenCount = tokenCountFromLastAPIResponse([assistantMsg])
 
   // statusline：边界后尚无新 API usage 时用 postTokens 显示压缩后比例

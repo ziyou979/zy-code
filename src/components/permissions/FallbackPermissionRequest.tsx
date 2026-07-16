@@ -28,8 +28,10 @@ export function FallbackPermissionRequest({
     completion_type: 'tool_use_single',
     language_name: 'none',
   }
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  usePermissionRequestLogging(toolUseConfirm, unaryEvent as any)
+  usePermissionRequestLogging(
+    toolUseConfirm,
+    unaryEvent as unknown as import('./hooks.js').UnaryEvent,
+  )
   const handleSelect = (value: string, feedback?: string) => {
     switch (value) {
       case 'yes': {
@@ -103,7 +105,11 @@ export function FallbackPermissionRequest({
   }
   const originalCwd = getOriginalCwd()
   const showAlwaysAllowOptions = shouldShowAlwaysAllowOptions()
-  const result = [
+  const result: {
+    label: React.ReactNode
+    value: string
+    feedbackConfig?: { type: 'accept' | 'reject' }
+  }[] = [
     {
       label: tSync('permission.yes'),
       value: 'yes',
@@ -118,8 +124,7 @@ export function FallbackPermissionRequest({
         <Text>
           {tSync('permission.yesDontAskAgainCommands', { name: userFacingName, cwd: originalCwd })}
         </Text>
-        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      ) as any,
+      ),
       value: 'yes-dont-ask-again',
       feedbackConfig: {
         type: 'accept',
@@ -128,9 +133,9 @@ export function FallbackPermissionRequest({
   }
   const rejectOption = {
     label: tSync('permission.no'),
-    value: 'no',
+    value: 'no' as const,
     feedbackConfig: {
-      type: 'reject',
+      type: 'reject' as const,
     },
   }
   result.push(rejectOption)

@@ -587,7 +587,7 @@ export function renderToolResultMessage(
       iterations: null,
       speed: null,
       // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-    } as any,
+    } as Parameters<typeof createAssistantMessage>[0]['usage'],
   })
   return (
     <Box flexDirection="column">

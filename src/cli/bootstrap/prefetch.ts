@@ -1,5 +1,5 @@
 import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getSystemContext, getUserContext } from '../../context.js'
+import { getSystemContext, getUserContext } from '../../services/context/context.js'
 import { warmI18n } from '../../i18n/index.js'
 import { initializeAnalyticsGates } from '../../services/analytics/sink.js'
 import { prefetchOfficialMcpUrls } from '../../services/mcp/officialRegistry.js'

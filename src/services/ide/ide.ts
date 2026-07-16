@@ -1,8 +1,6 @@
 import { createConnection } from 'node:net'
-import * as os from 'node:os'
 import { basename, join, sep as pathSeparator, resolve } from 'node:path'
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import axios from 'axios'
 import { execa } from 'execa'
 import capitalize from 'lodash-es/capitalize.js'
 import memoize from 'lodash-es/memoize.js'
@@ -10,17 +8,12 @@ import { logEvent } from 'src/services/analytics/index.js'
 import { getIsScrollDraining, getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { env } from '../../utils/env.js'
 import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
-import {
-  execFileNoThrow,
-  execFileNoThrowWithCwd,
-  execSyncWithDefaults_DEPRECATED,
-} from '../shell/execFileNoThrow.js'
+import { execFileNoThrow, execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { getAncestorPidsAsync } from '../../utils/genericProcessUtils.js'
 import { isJetBrainsPluginInstalledCached } from '../../utils/jetbrains.js'
 import { logError } from '../../utils/log.js'
 import { getPlatform } from '../shell/platform.js'
-import { lt } from '../../utils/semver.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { callIdeRpc } from '../mcp/mcpToolCall.js'
 import type { ConnectedMCPServer, MCPServerConnection } from '../mcp/types.js'
@@ -33,12 +26,19 @@ const ideOnboardingDialog = (): typeof import('src/components/IdeOnboardingDialo
 import { createAbortController } from '../../utils/abortController.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { envDynamic } from '../../utils/envDynamic.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage, isFsInaccessible } from '../../utils/errors.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { checkWSLDistroMatch, WindowsToWSLConverter } from '../../utils/idePathConversion.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonParse } from '../../utils/slowOperations.js'
+import {
+  installIDEExtensionForType,
+  isCursorInstalled,
+  isIDEExtensionInstalledForType,
+  isVSCodeInstalled,
+  isWindsurfInstalled,
+} from './ideExtensionSupport.js'
+export { isCursorInstalled, isVSCodeInstalled, isWindsurfInstalled } from './ideExtensionSupport.js'
 
 function isProcessRunning(pid: number): boolean {
   try {
@@ -816,24 +816,14 @@ export function hasAccessToIDEExtensionDiffFeature(mcpClients: MCPServerConnecti
   return mcpClients.some((client) => client.type === 'connected' && client.name === 'ide')
 }
 
-const EXTENSION_ID = isInternalBuild() ? 'anthropic.zy-code-internal' : 'anthropic.zy-code'
-
 export async function isIDEExtensionInstalled(ideType: IdeType): Promise<boolean> {
   if (isVSCodeIde(ideType)) {
-    const command = await getVSCodeIDECommand(ideType)
-    if (command) {
-      try {
-        const result = await execFileNoThrowWithCwd(command, ['--list-extensions'], {
-          env: getInstallationEnv(),
-        })
-        if (result.stdout?.includes(EXTENSION_ID)) {
-          return true
-        }
-      } catch {
-        // eat the error
-      }
-    }
-  } else if (isJetBrainsIde(ideType)) {
+    return isIDEExtensionInstalledForType({
+      ideType,
+      isVSCodeIde,
+    })
+  }
+  if (isJetBrainsIde(ideType)) {
     return await isJetBrainsPluginInstalledCached(ideType)
   }
   return false
@@ -841,183 +831,15 @@ export async function isIDEExtensionInstalled(ideType: IdeType): Promise<boolean
 
 async function installIDEExtension(ideType: IdeType): Promise<string | null> {
   if (isVSCodeIde(ideType)) {
-    const command = await getVSCodeIDECommand(ideType)
-
-    if (command) {
-      // TODO: 自建 VSIX 分发后恢复 Artifactory 安装路径（原 ant.dev 不可访问）
-      // if (isInternalBuild()) {
-      //   return await installFromArtifactory(command)
-      // }
-      let version = await getInstalledVSCodeExtensionVersion(command)
-      // If it's not installed or the version is older than the one we have bundled,
-      if (!version || lt(version, getZyCodeVersion())) {
-        // `code` may crash when invoked too quickly in succession
-        await sleep(500)
-        const result = await execFileNoThrowWithCwd(
-          command,
-          ['--force', '--install-extension', 'anthropic.zy-code'],
-          {
-            env: getInstallationEnv(),
-          },
-        )
-        if (result.code !== 0) {
-          throw new Error(`${result.code}: ${result.error} ${result.stderr}`)
-        }
-        version = getZyCodeVersion()
-      }
-      return version
-    }
+    return installIDEExtensionForType({
+      ideType,
+      isVSCodeIde,
+    })
   }
   // No automatic installation for JetBrains IDEs as it is not supported in native
   // builds. We show a prominent notice for them to download from the marketplace
   // instead.
   return null
-}
-
-function getInstallationEnv(): NodeJS.ProcessEnv | undefined {
-  // Cursor on Linux may incorrectly implement
-  // the `code` command and actually launch the UI.
-  // Make this error out if this happens by clearing the DISPLAY
-  // environment variable.
-  if (getPlatform() === 'linux') {
-    return {
-      ...process.env,
-      DISPLAY: '',
-    }
-  }
-  return undefined
-}
-
-function getZyCodeVersion() {
-  return MACRO.VERSION
-}
-
-async function getInstalledVSCodeExtensionVersion(command: string): Promise<string | null> {
-  const { stdout } = await execFileNoThrow(command, ['--list-extensions', '--show-versions'], {
-    env: getInstallationEnv(),
-  })
-  const lines = stdout?.split('\n') || []
-  for (const line of lines) {
-    const [extensionId, version] = line.split('@')
-    if (extensionId === 'anthropic.zy-code' && version) {
-      return version
-    }
-  }
-  return null
-}
-
-function getVSCodeIDECommandByParentProcess(): string | null {
-  try {
-    const platform = getPlatform()
-
-    // Only supported on OSX, where Cursor has the ability to
-    // register itself as the 'code' command.
-    if (platform !== 'macos') {
-      return null
-    }
-
-    let pid = process.ppid
-
-    // Walk up the process tree to find the actual app
-    for (let i = 0; i < 10; i++) {
-      if (!pid || pid === 0 || pid === 1) {
-        break
-      }
-
-      // Get the command for this PID
-      // this function already returned if not running on macos
-      const command = execSyncWithDefaults_DEPRECATED(
-        // eslint-disable-next-line custom-rules/no-direct-ps-commands
-        `ps -o command= -p ${pid}`,
-      )?.trim()
-
-      if (command) {
-        // Check for known applications and extract the path up to and including .app
-        const appNames = {
-          'Visual Studio Code.app': 'code',
-          'Cursor.app': 'cursor',
-          'Windsurf.app': 'windsurf',
-          'Visual Studio Code - Insiders.app': 'code',
-          'VSCodium.app': 'codium',
-        }
-        const pathToExecutable = '/Contents/MacOS/Electron'
-
-        for (const [appName, executableName] of Object.entries(appNames)) {
-          const appIndex = command.indexOf(appName + pathToExecutable)
-          if (appIndex !== -1) {
-            // Extract the path from the beginning to the end of the .app name
-            const folderPathEnd = appIndex + appName.length
-            // These are all known VSCode variants with the same structure
-            return `${command.substring(0, folderPathEnd)}/Contents/Resources/app/bin/${executableName}`
-          }
-        }
-      }
-
-      // Get parent PID
-      // this function already returned if not running on macos
-      const ppidStr = execSyncWithDefaults_DEPRECATED(
-        // eslint-disable-next-line custom-rules/no-direct-ps-commands
-        `ps -o ppid= -p ${pid}`,
-      )?.trim()
-      if (!ppidStr) {
-        break
-      }
-      pid = parseInt(ppidStr.trim(), 10)
-    }
-
-    return null
-  } catch {
-    return null
-  }
-}
-async function getVSCodeIDECommand(ideType: IdeType): Promise<string | null> {
-  const parentExecutable = getVSCodeIDECommandByParentProcess()
-  if (parentExecutable) {
-    // Verify the parent executable actually exists
-    try {
-      await getFsImplementation().stat(parentExecutable)
-      return parentExecutable
-    } catch {
-      // Parent executable doesn't exist
-    }
-  }
-
-  // On Windows, explicitly request the .cmd wrapper. VS Code 1.110.0 began
-  // prepending the install root (containing Code.exe, the Electron GUI binary)
-  // to the integrated terminal's PATH ahead of bin\ (containing code.cmd, the
-  // CLI wrapper) when launched via Start-Menu/Taskbar shortcuts. A bare 'code'
-  // then resolves to Code.exe via PATHEXT which opens a new editor window
-  // instead of running the CLI. Asking for 'code.cmd' forces cross-spawn/which
-  // to skip Code.exe. See microsoft/vscode#299416 (fixed in Insiders) and
-  // anthropics/zy-code#30975.
-  const ext = getPlatform() === 'windows' ? '.cmd' : ''
-  switch (ideType) {
-    case 'vscode':
-      return `code${ext}`
-    case 'cursor':
-      return `cursor${ext}`
-    case 'windsurf':
-      return `windsurf${ext}`
-    default:
-      break
-  }
-  return null
-}
-
-export async function isCursorInstalled(): Promise<boolean> {
-  const result = await execFileNoThrow('cursor', ['--version'])
-  return result.code === 0
-}
-
-export async function isWindsurfInstalled(): Promise<boolean> {
-  const result = await execFileNoThrow('windsurf', ['--version'])
-  return result.code === 0
-}
-
-export async function isVSCodeInstalled(): Promise<boolean> {
-  const result = await execFileNoThrow('code', ['--help'])
-  // Check if the output indicates this is actually Visual Studio Code
-  return result.code === 0 && Boolean(result.stdout?.includes('Visual Studio Code'))
 }
 
 // Cache for IDE detection results
@@ -1328,102 +1150,3 @@ const detectHostIP = memoize(
   },
   (isIdeRunningInWindows, port) => `${isIdeRunningInWindows}:${port}`,
 )
-
-async function _installFromArtifactory(command: string): Promise<string> {
-  // Read auth token from ~/.npmrc
-  const npmrcPath = join(os.homedir(), '.npmrc')
-  let authToken: string | null = null
-  const fs = getFsImplementation()
-
-  try {
-    const npmrcContent = await fs.readFile(npmrcPath, {
-      encoding: 'utf8',
-    })
-    const lines = npmrcContent.split('\n')
-    for (const line of lines) {
-      // Look for the artifactory auth token line
-      const match = line.match(
-        /\/\/artifactory\.infra\.ant\.dev\/artifactory\/api\/npm\/npm-all\/:_authToken=(.+)/,
-      )
-      if (match?.[1]) {
-        authToken = match[1].trim()
-        break
-      }
-    }
-  } catch (error) {
-    logError(error as Error)
-    throw new Error(`Failed to read npm authentication: ${error}`)
-  }
-
-  if (!authToken) {
-    throw new Error('No artifactory auth token found in ~/.npmrc')
-  }
-
-  // Fetch the version from artifactory
-  const versionUrl =
-    'https://artifactory.infra.ant.dev/artifactory/armorcode-zy-code-internal/zy-vscode-releases/stable'
-
-  try {
-    const versionResponse = await axios.get(versionUrl, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    })
-
-    const version = versionResponse.data.trim()
-    if (!version) {
-      throw new Error('No version found in artifactory response')
-    }
-
-    // Download the .vsix file from artifactory
-    const vsixUrl = `https://artifactory.infra.ant.dev/artifactory/armorcode-zy-code-internal/zy-vscode-releases/${version}/zy-code.vsix`
-    const tempVsixPath = join(os.tmpdir(), `zy-code-${version}-${Date.now()}.vsix`)
-
-    try {
-      const vsixResponse = await axios.get(vsixUrl, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-        responseType: 'stream',
-      })
-
-      // Write the downloaded file to disk
-      const writeStream = getFsImplementation().createWriteStream(tempVsixPath)
-      await new Promise<void>((resolve, reject) => {
-        vsixResponse.data.pipe(writeStream)
-        writeStream.on('finish', resolve)
-        writeStream.on('error', reject)
-      })
-
-      // Install the .vsix file
-      // Add delay to prevent code command crashes
-      await sleep(500)
-
-      const result = await execFileNoThrowWithCwd(
-        command,
-        ['--force', '--install-extension', tempVsixPath],
-        {
-          env: getInstallationEnv(),
-        },
-      )
-
-      if (result.code !== 0) {
-        throw new Error(`${result.code}: ${result.error} ${result.stderr}`)
-      }
-
-      return version
-    } finally {
-      // Clean up the temporary file
-      try {
-        await fs.unlink(tempVsixPath)
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(`Failed to fetch extension version from artifactory: ${error.message}`)
-    }
-    throw error
-  }
-}

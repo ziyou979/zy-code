@@ -80,18 +80,14 @@ export function buildSessionContext(): ComputerUseSessionContext {
       tuc().getAppState().computerUseMcpState?.displayResolvedForApps,
     getLastScreenshotDims: (): ScreenshotDims | undefined => {
       const d = tuc().getAppState().computerUseMcpState?.lastScreenshotDims
-      return d
-        ? ({
-            ...d,
-            // biome-ignore lint/suspicious/noExplicitAny: 第三方类型不完善
-            displayId: (d as any).displayId ?? 0,
-            // biome-ignore lint/suspicious/noExplicitAny: 第三方类型不完善
-            originX: (d as any).originX ?? 0,
-            // biome-ignore lint/suspicious/noExplicitAny: 第三方类型不完善
-            originY: (d as any).originY ?? 0,
-            // biome-ignore lint/suspicious/noExplicitAny: 第三方类型不完善
-          } as any)
-        : undefined
+      if (!d) return undefined
+      const extended = d as ScreenshotDims & { displayId?: number; originX?: number; originY?: number }
+      return {
+        ...extended,
+        displayId: extended.displayId ?? 0,
+        originX: extended.originX ?? 0,
+        originY: extended.originY ?? 0,
+      } as ScreenshotDims
     },
     // ── 写回 ────────────────────────────────────────────────────────
     // `setToolJSX` 将必存在——main.tsx 中的门标排除了非交互式会话。包的
@@ -297,8 +293,11 @@ function getOrBind(): Binding {
   const ctx = buildSessionContext()
   binding = {
     ctx,
-    // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
-    dispatch: (bindSessionContext as any)(
+    dispatch: (bindSessionContext as unknown as (
+      host: ReturnType<typeof getComputerUseHostAdapter>,
+      mode: ReturnType<typeof getChicagoCoordinateMode>,
+      ctx: ComputerUseSessionContext,
+    ) => Binding['dispatch'])(
       getComputerUseHostAdapter(),
       getChicagoCoordinateMode(),
       ctx,
@@ -318,9 +317,7 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
   const call: CallOverride = async (args, context: ToolUseContext) => {
     currentToolUseContext = context
     const { dispatch } = getOrBind()
-    // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
-    const dispatchResult = (await dispatch(toolName, args)) as any
-    const { telemetry, ...result } = dispatchResult
+    const { content: resultContent, telemetry } = await dispatch(toolName, args) as CuCallToolResult & { content?: unknown; telemetry?: { error_kind?: string } }
     if (telemetry?.error_kind) {
       logForDebugging(`[Computer Use MCP] ${toolName} error_kind=${telemetry.error_kind}`)
     }
@@ -331,9 +328,8 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
     // 形状直接映射到 API 的 base64-source 形状。包的结果
     // 类型也允许 audio/resource，但 CU 的 handleToolCall 永远不会发出
     // 这些；默写将它们强制转换为空文本。
-    const data = Array.isArray(result.content)
-      ? // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
-        result.content.map((item: any) =>
+    const data = Array.isArray(resultContent)
+      ? resultContent.map((item: { type?: string; mimeType?: string; data?: string; text?: string }) =>
           item.type === 'image'
             ? {
                 type: 'image' as const,
@@ -348,7 +344,7 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
                 text: item.type === 'text' ? item.text : '',
               },
         )
-      : result.content
+      : resultContent
     return {
       data,
     }

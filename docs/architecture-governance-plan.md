@@ -1,6 +1,10 @@
 # ZY Code 规范统一与架构治理执行计划
 
-## 当前执行状态（2026-07-14）
+## 当前执行状态（2026-07-15）
+
+> 本文件保留 P0～P8 的历史治理记录。2026-07-15 的复审发现，部分“完成”状态只代表
+> 当时门禁未新增债务，不代表现行规范已经完全满足。剩余债务、检查器缺口和后续执行顺序见
+> [架构规范剩余债务清零方案](architecture-compliance-remediation-plan.md)。
 
 本节记录实际落地状态，避免把“检查命令通过”误解为“历史债务已清零”。
 
@@ -11,12 +15,15 @@
 | P2 | 完成 | 顶层 i18n、双语 key、快捷键 action 类型 | 硬编码文案仍应随业务修改持续审计 |
 | P3 | 完成 | Tool profile 与结构检查；移除无实现的 phantom tools | 历史 Tool 主文件命名由 profile 规则豁免 |
 | P4 | 部分完成 | hooks/permissions/plugins 旧入口删除；settings、session-state、file-search 等领域迁出 utils | `utils` 仍有 66 个 IO、117 个实现依赖基线项 |
-| P5 | 完成 | 普通领域目录改为 kebab-case，文件命名违规清零；生成代码与 BCP 47 locale 精确豁免 | 无 |
-| P6 | 完成 | Runtime Context 已进入全部既有服务/组件消费者调用链；服务/组件直连 bootstrap state 为 0；AppState 五 slice 已组合 | bootstrap 兼容实现仍作为 Runtime Context 默认后端 |
+| P5 | 部分完成 | 普通领域目录已改为 kebab-case；生成代码与 BCP 47 locale 使用精确豁免 | 文件命名检查错误放行 kebab-case 普通模块，仍需重新建立真实清单 |
+| P6 | 部分完成 | Runtime Context 已进入既有服务/组件消费者调用链；服务/组件直连 bootstrap state 为 0；AppState 五 slice 已组合 | 独立 ReplStore 与“共享状态统一进入 AppStateStore”规则冲突；bootstrap 兼容实现仍是默认后端 |
 | P7 | 完成 | services→components/screens/ink 与 types→实现层新增违规为 0 | 无新增反向依赖 |
 | P8 | 完成 | 10 个热点均已切换到职责子模块；React 实现不超过 800 行，普通 service/command 实现不超过 1,200 行；原入口保持稳定公开 API | 无 |
 
-最新 P8 门禁结果：架构检查共报告 325 条存量债务，相对当前基线无新增并消除 10 条；`featureMacro` 从 121 降至 111，`as any` 746 处保持不增。P8 的完整测试、构建与启动结果记录在本阶段执行记录中。
+最新复审门禁结果：架构检查共报告 324 条存量债务，相对 335 条基线已消除 11 条；
+其中 `rootFile` 17、`utilsDep` 116、`utilsIO` 66、`utilsI18n` 8、`utilsOutput` 6、
+`featureMacro` 111。`as any` 仍为 746 处，其中 714 处位于非适配层。P8 当时的完整测试、
+构建与启动结果仍保留在本阶段执行记录中。
 
 ## 一、执行目标
 
@@ -984,8 +991,8 @@ src/shell-eval/powershell/parser.ts
 
 建议上限：
 
-- React 组件：800 行。
-- 普通 service：1,200 行。
+- React 组件：1,200 行。
+- 普通 service/command：1,200 行。
 - 纯 utils：800 行。
 - Parser、生成代码需显式豁免。
 

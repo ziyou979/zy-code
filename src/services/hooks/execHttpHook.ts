@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { HookEvent } from 'src/types/index.js'
-import { createCombinedAbortSignal } from '../../utils/combinedAbortSignal.js'
+import { createCombinedAbortSignal } from '../../utils/abortController.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getProxyUrl, shouldBypassProxy } from '../../utils/proxy.js'

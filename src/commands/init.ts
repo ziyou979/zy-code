@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import type { Command } from '../commands.js'
-import { maybeMarkProjectOnboardingComplete } from '../projectOnboardingState.js'
+import { maybeMarkProjectOnboardingComplete } from '../services/settings/projectOnboardingState.js'
 import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 
 const OLD_INIT_PROMPT = `Please analyze this codebase and create a AGENTS.md file, which will be given to future instances of ZY Code to operate in this repository.

@@ -1,5 +1,6 @@
 import { mkdir, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { type Dirent } from 'node:fs'
 import type { Command } from '../../commands.js'
 import type { LogOption } from '../../types/logs.js'
 import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
@@ -136,18 +137,16 @@ export type LiteSessionInfo = {
 export async function scanAllSessions(): Promise<LiteSessionInfo[]> {
   const projectsDir = getProjectsDir()
 
-  let dirents: Awaited<ReturnType<typeof readdir>>
+  let dirents: Dirent[]
   try {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    dirents = (await readdir(projectsDir, { withFileTypes: true })) as any
+    dirents = await readdir(projectsDir, { withFileTypes: true })
   } catch {
     return []
   }
 
   const projectDirs = dirents
     .filter((dirent) => dirent.isDirectory())
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    .map((dirent) => join(projectsDir, (dirent as any).name))
+    .map((dirent) => join(projectsDir, dirent.name))
 
   const allSessions: LiteSessionInfo[] = []
 

@@ -65,8 +65,7 @@ function SkillImprovementSurveyView({
       const lastChar = normalizeFullWidthDigits(inputValue.slice(-1))
       if (isValidInput(lastChar)) {
         setInputValue(inputValue.slice(0, -1))
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        onSelect((lastChar === '1' ? 'good' : 'dismissed') as any)
+        onSelect(lastChar === '1' ? 'good' : 'dismissed')
       }
     }
   }, [inputValue, onSelect, setInputValue])

@@ -7,6 +7,7 @@ import {
   TICK,
 } from '../constants/figures.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
+import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text } from '../ink.js'
 import { useAppState } from '../state/AppState.js'
@@ -118,14 +119,12 @@ export function TaskList({ tasks, isStandalone = false, maxDisplayRows }: Props)
   // Build a map of teammate name -> theme color
   const teammateColors: Record<string, keyof Theme> = {}
   if (isAgentSwarmsEnabled() && teamContext?.teammates) {
-    for (const teammate of Object.values(teamContext.teammates)) {
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      if ((teammate as any).color) {
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        const themeColor = AGENT_COLOR_TO_THEME_COLOR[(teammate as any).color as AgentColorName]
+    const teammates = teamContext.teammates as Record<string, { name: string; color?: string }>
+    for (const teammate of Object.values(teammates)) {
+      if (teammate.color) {
+        const themeColor = AGENT_COLOR_TO_THEME_COLOR[teammate.color as AgentColorName]
         if (themeColor) {
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          teammateColors[(teammate as any).name] = themeColor
+          teammateColors[teammate.name] = themeColor
         }
       }
     }
@@ -240,17 +239,17 @@ export function TaskList({ tasks, isStandalone = false, maxDisplayRows }: Props)
         <Box>
           <Text dimColor>
             <Text bold>{tasks.length}</Text>
-            {' tasks ('}
+            {tSync('misc.taskList.tasks')}
             <Text bold>{completedCount}</Text>
-            {' done, '}
+            {tSync('misc.taskList.done')}
             {inProgressCount > 0 && (
               <>
                 <Text bold>{inProgressCount}</Text>
-                {' in progress, '}
+                {tSync('misc.taskList.inProgress')}
               </>
             )}
             <Text bold>{pendingCount}</Text>
-            {' open)'}
+            {tSync('misc.taskList.open')}
           </Text>
         </Box>
         {content}

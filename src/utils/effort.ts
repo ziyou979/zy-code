@@ -343,7 +343,7 @@ export function getDisplayedEffortLevel(
 // ---------------------------------------------------------------------------
 
 export function getEffortLevelDescription(level: EffortLevel): string {
-  return (tSync(`effort.description.${level}` as any) as string) || level
+  return (tSync(`effort.description.${level}` as `effort.description.${string}`) as string) || level
 }
 
 export type EffortCalloutConfig = {

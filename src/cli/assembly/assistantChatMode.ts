@@ -11,9 +11,9 @@ import type { StatsStore } from '../../context/stats.js'
 import {
   launchAssistantInstallWizard,
   launchAssistantSessionChooser,
-} from '../../DialogLaunchers.js'
+} from '../../cli/dialogLaunchers.js'
 import type { Root } from '../../ink.js'
-import { exitWithError, exitWithMessage } from '../../InteractiveHelpers.js'
+import { exitWithError, exitWithMessage } from '../../cli/interactiveHelpers.js'
 import { createRemoteSessionConfig } from '../../remote/remoteSessionManager.js'
 import { prepareApiRequest } from '../../services/teleport/api.js'
 import type { AppState } from '../../state/AppStateStore.js'
@@ -56,8 +56,7 @@ export async function runAssistantChatMode({
   disableSlashCommands,
   thinkingConfig,
 }: AssistantChatParams): Promise<void> {
-  // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-  const { discoverAssistantSessions } = await import('../../assistant/sessionDiscovery.js' as any)
+  const { discoverAssistantSessions } = await import('../../assistant/sessionDiscovery.js')
   let targetSessionId = pendingAssistantChat.sessionId
 
   // 发现流程 —— 列出桥接环境，过滤会话

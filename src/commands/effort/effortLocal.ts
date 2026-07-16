@@ -28,8 +28,8 @@ export const call: LocalCommandCall = async (rawArgs, context) => {
 
     // 生成帮助文本
     const usageLines = supportedLevels.map((level) => {
-      const name = tSync(`effort.${level}` as any) || level
-      const description = tSync(`effort.description.${level}` as any) || level
+      const name = tSync(`effort.${level}`) || level
+      const description = tSync(`effort.description.${level}`) || level
       return tSync('effort.command.usageItem', { name, description })
     })
 
@@ -51,7 +51,7 @@ export const call: LocalCommandCall = async (rawArgs, context) => {
     const effective = envOverride === null ? undefined : (envOverride ?? effortValue)
     if (effective === undefined) {
       const level = getDisplayedEffortLevel(model, effortValue)
-      const levelName = tSync(`effort.${level}` as any) || level
+      const levelName = tSync(`effort.${level}`) || level
       return { type: 'text', value: tSync('effort.command.currentAuto', { level: levelName }) }
     }
     const { message } = showCurrentEffort(effortValue, model)

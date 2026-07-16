@@ -200,13 +200,20 @@ function useCanUseTool(
                   if (ctx.resolveIfAborted(resolve)) {
                     return
                   }
+                  const raceResultTyped = raceResult as
+                    | {
+                        type: 'result'
+                        result: {
+                          matches: boolean
+                          confidence: string
+                          matchedDescription?: string
+                        }
+                      }
+                    | { type: 'timeout' }
                   if (
-                    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-                    (raceResult as any).type === 'result' &&
-                    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-                    (raceResult as any).result.matches &&
-                    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-                    (raceResult as any).result.confidence === 'high' &&
+                    raceResultTyped.type === 'result' &&
+                    raceResultTyped.result.matches &&
+                    raceResultTyped.result.confidence === 'high' &&
                     feature('BASH_CLASSIFIER')
                   ) {
                     consumeSpeculativeClassifierCheck(
@@ -216,8 +223,7 @@ function useCanUseTool(
                         }
                       ).command,
                     )
-                    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-                    const matchedRule = (raceResult as any).result.matchedDescription ?? undefined
+                    const matchedRule = raceResultTyped.result.matchedDescription ?? undefined
                     if (matchedRule) {
                       setClassifierApproval(toolUseID, matchedRule)
                     }
@@ -232,8 +238,7 @@ function useCanUseTool(
                         decisionReason: {
                           type: 'classifier' as const,
                           classifier: 'bash_allow' as const,
-                          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-                          reason: `Allowed by prompt rule: "${(raceResult as any).result.matchedDescription}"`,
+                          reason: `Allowed by prompt rule: "${raceResultTyped.result.matchedDescription}"`,
                         },
                       }),
                     )

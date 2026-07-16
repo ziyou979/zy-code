@@ -118,16 +118,13 @@ export async function getAnthropicClient({
     maxRetries,
     timeout: parseEnvNumber(process.env.API_TIMEOUT_MS) ?? 600 * 1000,
     dangerouslyAllowBrowser: true,
-    // biome-ignore lint/suspicious/noExplicitAny: SDK ClientOptions 类型不包含 fetchOptions
-    fetchOptions: getProxyFetchOptions({
+      fetchOptions: getProxyFetchOptions({
       forAnthropicAPI: true,
-      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    }) as any,
+    }),
     ...(resolvedFetch && {
       fetch: resolvedFetch,
     }),
-    // biome-ignore lint/suspicious/noExplicitAny: 构造中间对象，需适配多 provider SDK
-  } as any
+  } as ClientOptions & { fetchOptions: ReturnType<typeof getProxyFetchOptions> }
   // 处理有默认值的 provider（endpointType 包含 'default'）
   if (
     registryEntry &&
@@ -177,7 +174,7 @@ export async function getAnthropicClient({
       if (defaultHeaders['User-Agent']) {
         providerHeaders['User-Agent'] = defaultHeaders['User-Agent']
       }
-      const providerConfig: ConstructorParameters<typeof Anthropic>[0] = {
+      const providerConfig = {
         apiKey: resolvedApiKey,
         // 显式置空 authToken，避免 SDK 自动读取 ANTHROPIC_AUTH_TOKEN
         // 与非 Anthropic provider 的 apiKey 鉴权冲突
@@ -191,7 +188,7 @@ export async function getAnthropicClient({
         fetchOptions: getProxyFetchOptions(),
         ...(ARGS.fetch && { fetch: ARGS.fetch }),
         ...(isDebugToStdErr() && { logger: createStderrLogger() }),
-      }
+      } as unknown as ClientOptions
       return new Anthropic(providerConfig)
     }
   }
@@ -229,7 +226,7 @@ export async function getAnthropicClient({
     if (defaultHeaders['User-Agent']) {
       customEndpointHeaders['User-Agent'] = defaultHeaders['User-Agent']
     }
-    const providerAnthropicConfig: ConstructorParameters<typeof Anthropic>[0] = {
+    const providerAnthropicConfig = {
       apiKey: customApiKey,
       // 显式置空 authToken，避免 SDK 自动读取 ANTHROPIC_AUTH_TOKEN
       authToken: null,
@@ -242,12 +239,12 @@ export async function getAnthropicClient({
       fetchOptions: getProxyFetchOptions(),
       ...(ARGS.fetch && { fetch: ARGS.fetch }),
       ...(isDebugToStdErr() && { logger: createStderrLogger() }),
-    }
+    } as unknown as ClientOptions
     return new Anthropic(providerAnthropicConfig)
   }
 
   // 根据可用的 token 确定认证方式
-  const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
+  const clientConfig = {
     apiKey: apiKey || getApiKey(apiProvider),
     authToken: undefined,
     // 使用 staging OAuth 时从 OAuth 配置设置 baseURL
@@ -260,7 +257,7 @@ export async function getAnthropicClient({
     ...(isDebugToStdErr() && {
       logger: createStderrLogger(),
     }),
-  }
+  } as unknown as ClientOptions
   return new Anthropic(clientConfig)
 }
 
@@ -552,8 +549,8 @@ function buildProxiedFetch():
     return undefined
   }
   const inner = globalThis.fetch
-  // biome-ignore lint/suspicious/noExplicitAny: 代理选项（dispatcher/proxy/tls）是平台扩展，非标准 RequestInit
-  return (input, init) => inner(input, { ...init, ...proxyOpts } as any)
+  // 代理选项（dispatcher/proxy/tls）是平台扩展，非标准 RequestInit
+  return (input, init) => inner(input, { ...init, ...proxyOpts } as unknown as RequestInit)
 }
 
 /**

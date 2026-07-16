@@ -351,8 +351,7 @@ export function createAttachmentMessage(attachment: Attachment): AttachmentMessa
     type: 'attachment',
     uuid: randomUUID(),
     timestamp: new Date().toISOString(),
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  } as any
+  } as AttachmentMessage
 }
 
 export function getTodoReminderTurnCounts(messages: Message[]): {

@@ -1,18 +1,18 @@
+import type { Notification } from '../../context/notifications.js'
 import { checkInstall } from 'src/services/native-installer/index.js'
 import { useStartupNotification } from './useStartupNotification.js'
 export function useInstallMessages() {
-  // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-  useStartupNotification(_temp2 as any)
+  useStartupNotification(_temp2)
 }
-async function _temp2() {
+async function _temp2(): Promise<Notification[]> {
   const messages = await checkInstall()
-  return messages.map(_temp)
+  return messages.map(_temp as (m: typeof messages[number], i: number) => Notification)
 }
 function _temp(
   message: { type: string; message: string; userActionRequired?: boolean },
   index: number,
 ) {
-  let priority = 'low'
+  let priority: 'high' | 'medium' | 'low' = 'low'
   if (message.type === 'error' || message.userActionRequired) {
     priority = 'high'
   } else {

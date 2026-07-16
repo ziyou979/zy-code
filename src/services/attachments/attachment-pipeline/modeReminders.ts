@@ -162,11 +162,11 @@ export function getAgentListingDeltaAttachment(
       continue
     }
     // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    for (const t of (msg.attachment as any).addedTypes) {
+    for (const t of (msg.attachment as unknown as { addedTypes: string[] }).addedTypes) {
       announced.add(t)
     }
     // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    for (const t of (msg.attachment as any).removedTypes) {
+    for (const t of (msg.attachment as unknown as { removedTypes: string[] }).removedTypes) {
       announced.delete(t)
     }
   }

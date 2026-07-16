@@ -26,6 +26,7 @@ import { executeHooks } from '../executeEngine.js'
 import { hasHookForEvent } from '../matcher.js'
 import { executeHooksOutsideREPL } from '../outsideRepl.js'
 import { clearSessionHooks } from '../sessionHooks.js'
+import type { WireAssistantMessageError } from '../../../types/wire/messages.js'
 import type { AggregatedHookResult } from '../types.js'
 
 /**
@@ -97,7 +98,7 @@ export async function executeStopFailureHooks(
     ...createBaseHookInput(undefined, undefined, toolUseContext),
     hook_event_name: 'StopFailure',
     // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-    error: error as any,
+    error: error as WireAssistantMessageError,
     error_details: lastMessage.errorDetails,
     last_assistant_message: lastAssistantText,
   }
@@ -106,8 +107,7 @@ export async function executeStopFailureHooks(
     getAppState: toolUseContext?.getAppState,
     hookInput,
     timeoutMs,
-    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-    matchQuery: error as any,
+    matchQuery: error as WireAssistantMessageError,
   })
 }
 

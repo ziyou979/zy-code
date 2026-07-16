@@ -172,6 +172,7 @@ export const enPermissions: TranslationResource = {
   'permission.doYouWantToNotebookAction': 'Do you want to {action} {filename}?',
   'permission.doYouWantToProceed': 'Do you want to proceed?',
   'permission.edit': 'Edit',
+  'permission.editPermissionDenied': 'Permission to edit {path} has been denied.',
   'permission.editFile': 'Edit file',
   'permission.editNotebook': 'Edit notebook',
   'permission.escToCancel': 'Esc to {cancel}',
@@ -203,9 +204,27 @@ export const enPermissions: TranslationResource = {
   'permission.permissionRequestSentToTeam': 'Permission request sent to team "{teamName}" leader',
   'permission.planApprovalNeeded': 'ZY Code needs your approval for the plan',
   'permission.powershellCommand': 'PowerShell command',
+  'permission.powershellInteractiveApprovalRequired':
+    'PowerShell tool requires interactive approval',
   'permission.powershellPrefixPlaceholder': 'command prefix (e.g., Get-Process:*)',
   'permission.read': 'Read',
+  'permission.readPermissionDenied': 'Permission to read {path} has been denied.',
   'permission.readFileTitle': 'Read file',
+  'permission.requestedEditSensitiveFile':
+    'ZY requested permissions to edit {path} which is a sensitive file.',
+  'permission.requestedReadPathNotGranted':
+    "ZY requested permissions to read from {path}, but you haven't granted it yet.",
+  'permission.requestedReadSuspiciousWindowsPath':
+    'ZY requested permissions to read from {path}, which contains a suspicious Windows path pattern that requires manual approval.',
+  'permission.requestedReadUncPath':
+    'ZY requested permissions to read from {path}, which appears to be a UNC path that could access network resources.',
+  'permission.requestedUseToolNotGranted':
+    "ZY requested permissions to use {toolName}, but you haven't granted it yet.",
+  'permission.usePermissionDenied': 'Permission to use {toolName} has been denied.',
+  'permission.requestedWritePathNotGranted':
+    "ZY requested permissions to write to {path}, but you haven't granted it yet.",
+  'permission.requestedWriteSuspiciousWindowsPath':
+    'ZY requested permissions to write to {path}, which contains a suspicious Windows path pattern that requires manual approval.',
   'permission.requiresManualApproval': 'Requires manual approval',
   'permission.reviewArtifactApprovalNeeded': 'Zy needs your approval for a review artifact',
   'permission.saveFileToContinue': 'Save file to continue…',
@@ -243,6 +262,12 @@ export const enPermissions: TranslationResource = {
   'permission.yesDontAskAgainInCwd': "Yes, and don't ask again for {name} in {cwd}",
   'permission.yesDontAskAgainPrefix': "Yes, and don't ask again for",
   'permission.yesInstallPlugin': 'Yes, install {pluginName}',
+  'permission.yoloClassifier.schema.description':
+    'Report the security classification result for the agent action',
+  'permission.yoloClassifier.schema.reason': 'Brief explanation of the classification decision',
+  'permission.yoloClassifier.schema.shouldBlock':
+    'Whether the action should be blocked (true) or allowed (false)',
+  'permission.yoloClassifier.schema.thinking': 'Brief step-by-step reasoning.',
   'permissionRules.addDirectoryEllipsis': 'Add directory…',
   'permissionRules.addDirectoryToWorkspace': 'Add directory to workspace',
   'permissionRules.addNewRule': 'Add a new rule…',

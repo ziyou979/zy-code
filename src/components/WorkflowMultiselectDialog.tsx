@@ -55,8 +55,7 @@ export function WorkflowMultiselectDialog({ onSubmit, defaultSelections }: Props
       return
     }
     setShowError(false)
-    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
-    onSubmit(selectedValues as any)
+    onSubmit(selectedValues as Workflow[])
   }
   const handleChange = () => {
     setShowError(false)

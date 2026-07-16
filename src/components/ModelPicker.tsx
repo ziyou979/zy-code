@@ -123,16 +123,14 @@ export function ModelPicker({
   )
   const handleSelect = function handleSelect(selectedValue: string) {
     logEvent('zy_model_command_menu_effort', {
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      effort: effort as any,
+      effort: effort as unknown as number | boolean | undefined,
     })
     const selectedModel = resolveOptionModel(selectedValue)
     const defaultEffort = getDefaultEffortLevelForOption(selectedValue)
     const effortLevel = resolvePickerEffortPersistence(
       selectedModel ? resolveEffortForModel(selectedModel, effort ?? defaultEffort) : undefined,
       defaultEffort,
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      getSettingsForSource('userSettings')?.effortLevel as any,
+      getSettingsForSource('userSettings')?.effortLevel as EffortLevel | undefined,
       hasToggledEffort,
     )
     if (!skipSettingsWrite) {

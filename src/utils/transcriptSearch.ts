@@ -88,10 +88,15 @@ function computeSearchText(msg: RenderableMessage): string {
       // relevant_memories renders full m.content in transcript mode
       // (AttachmentMessage.tsx <Ansi>{m.content}</Ansi>). Visible but
       // unsearchable without this — [ dump finds it, / doesn't.
-      // biome-ignore lint/suspicious/noExplicitAny: AttachmentMessage 的 attachment 字段无精确判别联合
-      const att = msg.attachment as any
+      const att = msg.attachment as {
+        type: string
+        memories?: Array<{ content: string }>
+        commandMode?: string
+        isMeta?: boolean
+        prompt?: string | Array<{ type: string; text?: string }>
+      }
       if (att.type === 'relevant_memories') {
-        raw = att.memories.map((m: { content: string }) => m.content).join('\n')
+        raw = att.memories?.map((m: { content: string }) => m.content).join('\n') ?? ''
       } else if (
         // Mid-turn prompts — queued while an agent is running. Render via
         // UserTextMessage (AttachmentMessage.tsx:~348). stickyPromptText
@@ -104,11 +109,11 @@ function computeSearchText(msg: RenderableMessage): string {
         raw =
           typeof p === 'string'
             ? p
-            : p
-                .flatMap((b: { type: string; text?: string }) =>
+            : (p
+                ?.flatMap((b: { type: string; text?: string }) =>
                   b.type === 'text' ? [b.text] : [],
                 )
-                .join('\n')
+                .join('\n') ?? '')
       }
       break
     }
@@ -116,8 +121,7 @@ function computeSearchText(msg: RenderableMessage): string {
       // relevant_memories attachments are absorbed into collapse groups
       // (collapseReadSearch.ts); their content is visible in transcript mode
       // via CollapsedReadSearchContent, so mirror it here for / search.
-      // biome-ignore lint/suspicious/noExplicitAny: collapsed_read_search 类型无精确定义
-      const collapsed = msg as any
+      const collapsed = msg as { relevantMemories?: Array<{ content: string }> }
       if (collapsed.relevantMemories) {
         raw = collapsed.relevantMemories.map((m: { content: string }) => m.content).join('\n')
       }

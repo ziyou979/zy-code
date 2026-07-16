@@ -385,8 +385,7 @@ export async function installResolvedPlugin({
     allowedCrossMarketplaces,
   )
   if (!resolution.ok) {
-    // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-    return { ok: false, reason: 'resolution-failed', resolution: resolution as any }
+    return { ok: false, reason: 'resolution-failed', resolution }
   }
 
   // ── Policy guard for transitive dependencies ──
@@ -498,37 +497,31 @@ export async function installPluginFromMarketplace({
     })
 
     if (!result.ok) {
-      // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-      switch ((result as any).reason) {
+      switch (result.reason) {
         case 'local-source-no-location':
           return {
             success: false,
-            // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-            error: `Cannot install local plugin "${(result as any).pluginName}" without marketplace install location`,
+            error: `Cannot install local plugin "${result.pluginName}" without marketplace install location`,
           }
         case 'settings-write-failed':
           return {
             success: false,
-            // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-            error: `Failed to update settings: ${(result as any).message}`,
+            error: `Failed to update settings: ${result.message}`,
           }
         case 'resolution-failed':
           return {
             success: false,
-            // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-            error: formatResolutionError((result as any).resolution),
+            error: formatResolutionError(result.resolution),
           }
         case 'blocked-by-policy':
           return {
             success: false,
-            // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-            error: `Plugin "${(result as any).pluginName}" is blocked by your organization's policy and cannot be installed`,
+            error: `Plugin "${result.pluginName}" is blocked by your organization's policy and cannot be installed`,
           }
         case 'dependency-blocked-by-policy':
           return {
             success: false,
-            // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-            error: `Cannot install "${(result as any).pluginName}": dependency "${(result as any).blockedDependency}" is blocked by your organization's policy`,
+            error: `Cannot install "${result.pluginName}": dependency "${result.blockedDependency}" is blocked by your organization's policy`,
           }
       }
     }
@@ -556,8 +549,7 @@ export async function installPluginFromMarketplace({
 
     return {
       success: true,
-      // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-      message: `✓ Installed ${entry.name}${(result as any).depNote}. Run /reload-plugins to activate.`,
+      message: `✓ Installed ${entry.name}${result.depNote}. Run /reload-plugins to activate.`,
     }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err)

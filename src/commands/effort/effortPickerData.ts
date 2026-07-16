@@ -167,13 +167,13 @@ export function computePickerLayout(model: string): PickerLayout | null {
 
   // 2. 构建 PickerLevel
   const levels: PickerLevel[] = displayLevels.map((lv) => {
-    const label = (tSync(`effort.${lv}` as any) as string) || lv
+    const label = tSync(`effort.${lv}`) || lv
     return { value: lv, label, color: getPickerColor(lv) }
   })
 
   // 3. 追加 orchestrate（如果支持）
   if (hasOrchestrate && !levels.some((l) => l.value === 'orchestrate')) {
-    const label = (tSync('effort.orchestrate' as any) as string) || 'Orchestrate'
+    const label = tSync('effort.orchestrate') || 'Orchestrate'
     levels.push({ value: 'orchestrate', label, color: getPickerColor('orchestrate') })
   }
 
@@ -190,7 +190,7 @@ export function computePickerLayout(model: string): PickerLayout | null {
   const sublabel = hasOrchestrate
     ? {
         text:
-          (tSync('effort.picker.orchestrateSublabel' as any) as string) || 'extreme + workflows',
+          tSync('effort.picker.orchestrateSublabel') || 'extreme + workflows',
       }
     : undefined
 

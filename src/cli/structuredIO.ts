@@ -37,11 +37,6 @@ import { jsonStringify } from 'src/utils/slowOperations.js'
 import { z } from 'zod/v4'
 import { notifyCommandLifecycle } from '../utils/commandLifecycle.js'
 import { normalizeControlMessageKeys } from '../utils/controlMessageCompat.js'
-import { executePermissionRequestHooks } from '../services/hooks.js'
-import {
-  applyPermissionUpdates,
-  persistPermissionUpdates,
-} from '../services/permissions/permissionUpdate.js'
 import {
   notifySessionStateChanged,
   type RequiresActionDetails,
@@ -50,6 +45,7 @@ import {
 import { jsonParse } from '../utils/slowOperations.js'
 import { Stream } from '../utils/stream.js'
 import { ndjsonSafeStringify } from './ndjsonSafeStringify.js'
+import { executePermissionRequestHooksForSDK } from './sdkPermissionBridge.js'
 
 /**
  * Synthetic tool name used when forwarding sandbox network permission
@@ -63,7 +59,7 @@ function serializeDecisionReason(reason: PermissionDecisionReason | undefined): 
     return undefined
   }
 
-  if ((feature('BASH_CLASSIFIER') || true) && reason.type === 'classifier') {
+  if (reason.type === 'classifier') {
     return reason.reason
   }
   switch (reason.type) {
@@ -419,12 +415,9 @@ export class StructuredIO {
       if (message.type === 'assistant' || message.type === 'system') {
         return message
       }
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      if ((message.message as any).role !== 'user') {
-        exitWithMessage(
-          // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-          `Error: Expected message role 'user', got '${(message.message as any).role}'`,
-        )
+      const userRole = (message.message as { role?: unknown }).role
+      if (userRole !== 'user') {
+        exitWithMessage(`Error: Expected message role 'user', got '${String(userRole)}'`)
       }
       return message
     } catch (error) {
@@ -730,83 +723,4 @@ function exitWithMessage(message: string): never {
   console.error(message)
   // eslint-disable-next-line custom-rules/no-process-exit
   process.exit(1)
-}
-
-/**
- * Execute PermissionRequest hooks and return a decision if one is made.
- * Returns undefined if no hook made a decision.
- */
-async function executePermissionRequestHooksForSDK(
-  toolName: string,
-  toolUseID: string,
-  input: Record<string, unknown>,
-  toolUseContext: ToolUseContext,
-  suggestions: PermissionUpdate[] | undefined,
-): Promise<PermissionDecision | undefined> {
-  const appState = toolUseContext.getAppState()
-  const permissionMode = appState.toolPermissionContext.mode
-
-  // Iterate directly over the generator instead of using `all`
-  const hookGenerator = executePermissionRequestHooks(
-    toolName,
-    toolUseID,
-    input,
-    toolUseContext,
-    permissionMode,
-    suggestions,
-    toolUseContext.abortController.signal,
-  )
-
-  for await (const hookResult of hookGenerator) {
-    if (
-      hookResult.permissionRequestResult &&
-      (hookResult.permissionRequestResult.behavior === 'allow' ||
-        hookResult.permissionRequestResult.behavior === 'deny')
-    ) {
-      const decision = hookResult.permissionRequestResult
-      if (decision.behavior === 'allow') {
-        const finalInput = decision.updatedInput || input
-
-        // Apply permission updates if provided by hook ("always allow")
-        const permissionUpdates = decision.updatedPermissions ?? []
-        if (permissionUpdates.length > 0) {
-          persistPermissionUpdates(permissionUpdates)
-          const currentAppState = toolUseContext.getAppState()
-          const updatedContext = applyPermissionUpdates(
-            currentAppState.toolPermissionContext,
-            permissionUpdates,
-          )
-          // Update permission context via setAppState
-          toolUseContext.setAppState((prev) => {
-            if (prev.toolPermissionContext === updatedContext) {
-              return prev
-            }
-            return { ...prev, toolPermissionContext: updatedContext }
-          })
-        }
-
-        return {
-          behavior: 'allow',
-          updatedInput: finalInput,
-          userModified: false,
-          decisionReason: {
-            type: 'hook',
-            hookName: 'PermissionRequest',
-          },
-        }
-      } else {
-        // Hook denied the permission
-        return {
-          behavior: 'deny',
-          message: decision.message || 'Permission denied by PermissionRequest hook',
-          decisionReason: {
-            type: 'hook',
-            hookName: 'PermissionRequest',
-          },
-        }
-      }
-    }
-  }
-
-  return undefined
 }

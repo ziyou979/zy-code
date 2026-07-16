@@ -251,7 +251,6 @@ export async function runClaudeInChromeMcpServer(): Promise<void> {
   process.stdin.on('error', () => void shutdownAndExit())
 
   logForDebugging('[Claude in Chrome] Starting MCP server')
-  // biome-ignore lint/suspicious/noExplicitAny: 第三方 MCP SDK 类型不完善
-  await (server as any).connect(transport)
+  await (server as unknown as { connect(t: typeof transport): Promise<void> }).connect(transport)
   logForDebugging('[Claude in Chrome] MCP server started')
 }

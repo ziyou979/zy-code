@@ -209,13 +209,11 @@ export function ResumeConversation({
     const crossProjectCheck = checkCrossProjectResume(log_0, showAllProjects, worktreePaths)
     if (crossProjectCheck.isCrossProject) {
       if (!crossProjectCheck.isSameRepoWorktree) {
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        const raw = await setClipboard((crossProjectCheck as any).command)
+        const raw = await setClipboard(crossProjectCheck.command)
         if (raw) {
           process.stdout.write(raw)
         }
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        setCrossProjectCommand((crossProjectCheck as any).command)
+        setCrossProjectCommand(crossProjectCheck.command)
         return
       }
     }
@@ -307,10 +305,8 @@ export function ResumeConversation({
         ;(
           require('../services/compact/context-collapse/persist.js') as typeof import('../services/compact/context-collapse/persist.js')
         ).restoreFromEntries(
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          result_3.contextCollapseCommits ?? ([] as any),
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          result_3.contextCollapseSnapshot as any,
+          result_3.contextCollapseCommits ?? [],
+          result_3.contextCollapseSnapshot,
         )
         /* eslint-enable @typescript-eslint/no-require-imports */
       }
@@ -340,8 +336,7 @@ export function ResumeConversation({
     }
   }
   if (crossProjectCommand) {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    return <CrossProjectMessage command={crossProjectCommand as any} />
+    return <CrossProjectMessage command={crossProjectCommand} />
   }
   if (resumeData) {
     return (
@@ -366,8 +361,7 @@ export function ResumeConversation({
         thinkingConfig={thinkingConfig}
         onTurnComplete={onTurnComplete}
       />
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    ) as any
+    )
   }
   if (loading) {
     return (

@@ -56,11 +56,11 @@ export async function findRelevantMemories(
   // and -1 ages distinguish "ran, picked nothing" from "never ran".
   if (feature('MEMORY_SHAPE_TELEMETRY')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const { logMemoryRecallShape } = require('./memoryShapeTelemetry.js') as any
+    const { logMemoryRecallShape } = require('./memoryShapeTelemetry.js') as unknown as {
+      logMemoryRecallShape: (all: MemoryHeader[], selected: MemoryHeader[]) => void
+    }
     /* eslint-enable @typescript-eslint/no-require-imports */
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    ;(logMemoryRecallShape as any)(memories, selected)
+    logMemoryRecallShape(memories, selected)
   }
 
   return selected.map((m) => ({ path: m.filePath, mtimeMs: m.mtimeMs }))
@@ -113,8 +113,7 @@ async function selectRelevantMemories(
         },
       },
       signal,
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      querySource: 'memdir_relevance' as any,
+      querySource: 'memdir_relevance' as const,
     })
 
     const textBlock = result.content.find((block) => block.type === 'text')

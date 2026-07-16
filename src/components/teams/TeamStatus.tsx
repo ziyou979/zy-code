@@ -13,9 +13,9 @@ type Props = {
 export function TeamStatus({ teamsSelected, showHint }: Props) {
   const teamContext = useAppState((s) => s.teamContext)
   const totalTeammates = teamContext
-    ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      Object.values((teamContext as any).teammates).filter((t: any) => t.name !== 'team-lead')
-        .length
+    ? Object.values(
+        (teamContext as unknown as { teammates: Record<string, { name: string }> }).teammates,
+      ).filter((t) => t.name !== 'team-lead').length
     : 0
   if (totalTeammates === 0) {
     return null

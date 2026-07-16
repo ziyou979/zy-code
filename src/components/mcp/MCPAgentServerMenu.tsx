@@ -31,8 +31,7 @@ type Props = {
  * For HTTP/SSE servers, this allows pre-authentication before using the agent.
  */
 export function MCPAgentServerMenu({ agentServer, onCancel, onComplete }: Props): React.ReactNode {
-  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理，AgentMcpServerInfo 运行时包含额外动态字段
-  const srv = agentServer as any
+  const srv = agentServer
   const [theme] = useTheme()
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [error, setError] = useState<string | null>(null)

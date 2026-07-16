@@ -826,12 +826,10 @@ export function toZyEventFormat(
     env.coworker_type = envContext.coworkerType
   }
   if (envContext.ZyCodeContainerId) {
-    // biome-ignore lint/suspicious/noExplicitAny: 扩展字段未在生成类型中声明
-    ;(env as any).zy_code_container_id = envContext.ZyCodeContainerId
+    ;(env as Record<string, unknown>).zy_code_container_id = envContext.ZyCodeContainerId
   }
   if (envContext.ZyCodeRemoteSessionId) {
-    // biome-ignore lint/suspicious/noExplicitAny: 扩展字段未在生成类型中声明
-    ;(env as any).zy_code_remote_session_id = envContext.ZyCodeRemoteSessionId
+    ;(env as Record<string, unknown>).zy_code_remote_session_id = envContext.ZyCodeRemoteSessionId
   }
   if (envContext.tags) {
     env.tags = envContext.tags

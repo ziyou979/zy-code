@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
-import { extractOutputRedirections } from 'src/shell-eval/bash/commands.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
+import { tSync } from '../../i18n/index.js'
 import type { Tool, ToolPermissionContext, ToolUseContext } from '../../tool.js'
 import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
 import { shouldUseSandbox } from '../../tools/BashTool/shouldUseSandbox.js'
@@ -14,11 +14,7 @@ import { createDebugLog } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError, toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { getSettingSourceDisplayNameLowercase, SETTING_SOURCES } from '../settings/constants.js'
-import { plural } from '../../utils/stringUtils.js'
-import { getToolNameForPermissionCheck, mcpInfoFromString } from '../mcp/mcpStringUtils.js'
 import { isAutoModeAllowlistedTool } from './classifierDecision.js'
-import { permissionModeTitle } from './permissionMode.js'
 import type {
   PermissionAskDecision,
   PermissionDecision,
@@ -26,27 +22,15 @@ import type {
   PermissionDenyDecision,
   PermissionResult,
 } from './permissionResult.js'
-import type {
-  PermissionBehavior,
-  PermissionRule,
-  PermissionRuleSource,
-  PermissionRuleValue,
-} from './permissionRule.js'
+import type { PermissionRule, PermissionRuleSource } from './permissionRule.js'
+import { applyPermissionUpdates, persistPermissionUpdates } from './permissionUpdate.js'
+import type { PermissionUpdate } from './permissionUpdateSchema.js'
+import { permissionRuleValueToString } from './permissionRuleParser.js'
 import {
-  applyPermissionUpdate,
-  applyPermissionUpdates,
-  persistPermissionUpdates,
-} from './permissionUpdate.js'
-import type { PermissionUpdate, PermissionUpdateDestination } from './permissionUpdateSchema.js'
-import {
-  permissionRuleValueFromString,
-  permissionRuleValueToString,
-} from './permissionRuleParser.js'
-import {
-  deletePermissionRuleFromSettings,
-  type PermissionRuleFromEditableSettings,
-  shouldAllowManagedPermissionRulesOnly,
-} from './permissionsLoader.js'
+  applyPermissionRulesToPermissionContext,
+  syncPermissionRulesFromDisk,
+} from './permissionContextSyncSupport.js'
+import { deletePermissionRule } from './permissionEditingSupport.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const autoModeStateModule = true
@@ -87,265 +71,43 @@ import {
   recordSuccess,
   shouldFallbackToPrompting,
 } from './denialTracking.js'
+import {
+  createPermissionRequestMessage,
+  filterDeniedAgents,
+  getAllowRules,
+  getAskRuleForTool,
+  getAskRules,
+  getDenyRuleForAgent,
+  getDenyRuleForTool,
+  getDenyRules,
+  getRuleByContentsForTool,
+  getRuleByContentsForToolName,
+  permissionRuleSourceDisplayString,
+  toolAlwaysAllowedRule,
+} from './permissionRuleSupport.js'
 import { classifyYoloAction, formatActionForClassifier } from './yoloClassifier.js'
 
 const permLog = createDebugLog('permissions')
 
-const PERMISSION_RULE_SOURCES = [
-  ...SETTING_SOURCES,
-  'cliArg',
-  'command',
-  'session',
-] as const satisfies readonly PermissionRuleSource[]
+export {
+  createPermissionRequestMessage,
+  filterDeniedAgents,
+  getAllowRules,
+  getAskRuleForTool,
+  getAskRules,
+  getDenyRuleForAgent,
+  getDenyRuleForTool,
+  getDenyRules,
+  getRuleByContentsForTool,
+  getRuleByContentsForToolName,
+  permissionRuleSourceDisplayString,
+  toolAlwaysAllowedRule,
+} from './permissionRuleSupport.js'
 
-export function permissionRuleSourceDisplayString(source: PermissionRuleSource): string {
-  return getSettingSourceDisplayNameLowercase(source)
-}
-
-export function getAllowRules(context: ToolPermissionContext): PermissionRule[] {
-  return PERMISSION_RULE_SOURCES.flatMap((source) =>
-    (context.alwaysAllowRules[source] || []).map((ruleString) => ({
-      source,
-      ruleBehavior: 'allow',
-      ruleValue: permissionRuleValueFromString(ruleString),
-    })),
-  )
-}
-
-/**
- * 创建一条解释权限请求的权限请求消息
- */
-export function createPermissionRequestMessage(
-  toolName: string,
-  decisionReason?: PermissionDecisionReason,
-): string {
-  // 处理不同的决策原因类型
-  if (decisionReason) {
-    if ((feature('BASH_CLASSIFIER') || true) && decisionReason.type === 'classifier') {
-      return `Classifier '${decisionReason.classifier}' requires approval for this ${toolName} command: ${decisionReason.reason}`
-    }
-    switch (decisionReason.type) {
-      case 'hook': {
-        const hookMessage = decisionReason.reason
-          ? `Hook '${decisionReason.hookName}' blocked this action: ${decisionReason.reason}`
-          : `Hook '${decisionReason.hookName}' requires approval for this ${toolName} command`
-        return hookMessage
-      }
-      case 'rule': {
-        const ruleString = permissionRuleValueToString(decisionReason.rule.ruleValue)
-        const sourceString = permissionRuleSourceDisplayString(decisionReason.rule.source)
-        return `Permission rule '${ruleString}' from ${sourceString} requires approval for this ${toolName} command`
-      }
-      case 'subcommandResults': {
-        const needsApproval: string[] = []
-        for (const [cmd, result] of decisionReason.reasons) {
-          if (result.behavior === 'ask' || result.behavior === 'passthrough') {
-            // 去除输出重定向以避免在显示时将文件名显示为命令
-            // 仅对 Bash 工具执行此操作，避免影响其他工具
-            if (toolName === 'Bash') {
-              const { commandWithoutRedirections, redirections } = extractOutputRedirections(cmd)
-              // 仅在存在实际重定向时使用去除后的版本
-              const displayCmd = redirections.length > 0 ? commandWithoutRedirections : cmd
-              needsApproval.push(displayCmd)
-            } else {
-              needsApproval.push(cmd)
-            }
-          }
-        }
-        if (needsApproval.length > 0) {
-          const n = needsApproval.length
-          return `This ${toolName} command contains multiple operations. The following ${plural(n, 'part')} ${plural(n, 'requires', 'require')} approval: ${needsApproval.join(', ')}`
-        }
-        return `This ${toolName} command contains multiple operations that require approval`
-      }
-      case 'permissionPromptTool':
-        return `Tool '${decisionReason.permissionPromptToolName}' requires approval for this ${toolName} command`
-      case 'sandboxOverride':
-        return 'Run outside of the sandbox'
-      case 'workingDir':
-        return decisionReason.reason
-      case 'safetyCheck':
-      case 'other':
-        return decisionReason.reason
-      case 'mode': {
-        const modeTitle = permissionModeTitle(decisionReason.mode)
-        return `Current permission mode (${modeTitle}) requires approval for this ${toolName} command`
-      }
-      case 'asyncAgent':
-        return decisionReason.reason
-    }
-  }
-
-  // 不列出允许的命令的默认消息
-  const message = `ZY requested permissions to use ${toolName}, but you haven't granted it yet.`
-
-  return message
-}
-
-export function getDenyRules(context: ToolPermissionContext): PermissionRule[] {
-  return PERMISSION_RULE_SOURCES.flatMap((source) =>
-    (context.alwaysDenyRules[source] || []).map((ruleString) => ({
-      source,
-      ruleBehavior: 'deny',
-      ruleValue: permissionRuleValueFromString(ruleString),
-    })),
-  )
-}
-
-export function getAskRules(context: ToolPermissionContext): PermissionRule[] {
-  return PERMISSION_RULE_SOURCES.flatMap((source) =>
-    (context.alwaysAskRules[source] || []).map((ruleString) => ({
-      source,
-      ruleBehavior: 'ask',
-      ruleValue: permissionRuleValueFromString(ruleString),
-    })),
-  )
-}
-
-/**
- * 检查整个工具是否匹配规则
- * 例如，对于 BashTool 匹配 "Bash" 而非 "Bash(prefix:*)"
- * 也匹配带有服务器名称的 MCP 工具，例如规则 "mcp__server1"
- */
-function toolMatchesRule(tool: Pick<Tool, 'name' | 'mcpInfo'>, rule: PermissionRule): boolean {
-  // 规则必须没有内容才能匹配整个工具
-  if (rule.ruleValue.ruleContent !== undefined) {
-    return false
-  }
-
-  // MCP 工具通过完全限定的 mcp__server__tool 名称匹配。在
-  // skip-prefix 模式（CLAUDE_AGENT_SDK_MCP_NO_PREFIX）下，MCP 工具具有无前缀的
-  // 显示名称（例如 "Write"），这与内置名称冲突；针对内置工具的
-  // 规则不应匹配其 MCP 替代品。
-  const nameForRuleMatch = getToolNameForPermissionCheck(tool)
-
-  // 直接工具名称匹配
-  if (rule.ruleValue.toolName === nameForRuleMatch) {
-    return true
-  }
-
-  // MCP 服务器级别权限：规则 "mcp__server1" 匹配工具 "mcp__server1__tool1"
-  // 也支持通配符：规则 "mcp__server1__*" 匹配 server1 的所有工具
-  const ruleInfo = mcpInfoFromString(rule.ruleValue.toolName)
-  const toolInfo = mcpInfoFromString(nameForRuleMatch)
-
-  return (
-    ruleInfo !== null &&
-    toolInfo !== null &&
-    (ruleInfo.toolName === undefined || ruleInfo.toolName === '*') &&
-    ruleInfo.serverName === toolInfo.serverName
-  )
-}
-
-/**
- * 检查整个工具是否在始终允许规则中
- * 例如，对于 BashTool 查找 "Bash" 而非 "Bash(prefix:*)"
- */
-export function toolAlwaysAllowedRule(
-  context: ToolPermissionContext,
-  tool: Pick<Tool, 'name' | 'mcpInfo'>,
-): PermissionRule | null {
-  return getAllowRules(context).find((rule) => toolMatchesRule(tool, rule)) || null
-}
-
-/**
- * 检查工具是否在始终拒绝规则中
- */
-export function getDenyRuleForTool(
-  context: ToolPermissionContext,
-  tool: Pick<Tool, 'name' | 'mcpInfo'>,
-): PermissionRule | null {
-  return getDenyRules(context).find((rule) => toolMatchesRule(tool, rule)) || null
-}
-
-/**
- * 检查工具是否在始终询问规则中
- */
-export function getAskRuleForTool(
-  context: ToolPermissionContext,
-  tool: Pick<Tool, 'name' | 'mcpInfo'>,
-): PermissionRule | null {
-  return getAskRules(context).find((rule) => toolMatchesRule(tool, rule)) || null
-}
-
-/**
- * 检查特定 agent 是否通过 Agent(agentType) 语法被拒绝。
- * 例如，Agent(Explore) 会拒绝 Explore agent。
- */
-export function getDenyRuleForAgent(
-  context: ToolPermissionContext,
-  agentToolName: string,
-  agentType: string,
-): PermissionRule | null {
-  return (
-    getDenyRules(context).find(
-      (rule) =>
-        rule.ruleValue.toolName === agentToolName && rule.ruleValue.ruleContent === agentType,
-    ) || null
-  )
-}
-
-/**
- * 过滤掉通过 Agent(agentType) 语法被拒绝的 agent。
- */
-export function filterDeniedAgents<T extends { agentType: string }>(
-  agents: T[],
-  context: ToolPermissionContext,
-  agentToolName: string,
-): T[] {
-  // 一次性解析拒绝规则并将 Agent(x) 内容收集到 Set 中。
-  // 此前每个 agent 都调用 getDenyRuleForAgent，这会为每个 agent
-  // 重新解析所有拒绝规则（O(agents×rules) 次解析调用）。
-  const deniedAgentTypes = new Set<string>()
-  for (const rule of getDenyRules(context)) {
-    if (rule.ruleValue.toolName === agentToolName && rule.ruleValue.ruleContent !== undefined) {
-      deniedAgentTypes.add(rule.ruleValue.ruleContent)
-    }
-  }
-  return agents.filter((agent) => !deniedAgentTypes.has(agent.agentType))
-}
-
-/**
- * 给定工具的规则内容到对应规则的映射。
- * 例如，对于 BashTool，字符串键是 "Bash(prefix:*)" 中的 "prefix:*"
- */
-export function getRuleByContentsForTool(
-  context: ToolPermissionContext,
-  tool: Tool,
-  behavior: PermissionBehavior,
-): Map<string, PermissionRule> {
-  return getRuleByContentsForToolName(context, getToolNameForPermissionCheck(tool), behavior)
-}
-
-// 用于打破循环依赖，当 Tool 调用此函数时使用
-export function getRuleByContentsForToolName(
-  context: ToolPermissionContext,
-  toolName: string,
-  behavior: PermissionBehavior,
-): Map<string, PermissionRule> {
-  const ruleByContents = new Map<string, PermissionRule>()
-  let rules: PermissionRule[] = []
-  switch (behavior) {
-    case 'allow':
-      rules = getAllowRules(context)
-      break
-    case 'deny':
-      rules = getDenyRules(context)
-      break
-    case 'ask':
-      rules = getAskRules(context)
-      break
-  }
-  for (const rule of rules) {
-    if (
-      rule.ruleValue.toolName === toolName &&
-      rule.ruleValue.ruleContent !== undefined &&
-      rule.ruleBehavior === behavior
-    ) {
-      ruleByContents.set(rule.ruleValue.ruleContent, rule)
-    }
-  }
-  return ruleByContents
+export {
+  applyPermissionRulesToPermissionContext,
+  deletePermissionRule,
+  syncPermissionRulesFromDisk,
 }
 
 /**
@@ -516,26 +278,24 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
       // permissionSetup.ts 处理：isOverlyBroadPowerShellAllowRule 剥离 PowerShell(*)，
       // isDangerousPowerShellPermission 为内部用户和 auto 模式入口
       // 剥离 iex/pwsh/Start-Process 前缀规则。
-      if (
-        tool.name === POWERSHELL_TOOL_NAME &&
-        !feature('POWERSHELL_AUTO_MODE') &&
-        !getAutoModeConfig()?.classifyAllShell
-      ) {
-        if (appState.toolPermissionContext.shouldAvoidPermissionPrompts) {
-          return {
-            behavior: 'deny',
-            message: 'PowerShell tool requires interactive approval',
-            decisionReason: {
-              type: 'asyncAgent',
-              reason:
-                'PowerShell tool requires interactive approval and permission prompts are not available in this context',
-            },
+      if (tool.name === POWERSHELL_TOOL_NAME && !getAutoModeConfig()?.classifyAllShell) {
+        if (!feature('POWERSHELL_AUTO_MODE')) {
+          if (appState.toolPermissionContext.shouldAvoidPermissionPrompts) {
+            return {
+              behavior: 'deny',
+              message: tSync('permission.powershellInteractiveApprovalRequired'),
+              decisionReason: {
+                type: 'asyncAgent',
+                reason:
+                  'PowerShell tool requires interactive approval and permission prompts are not available in this context',
+              },
+            }
           }
+          permLog(
+            `Skipping auto mode classifier for ${tool.name}: tool requires explicit user permission`,
+          )
+          return result
         }
-        permLog(
-          `Skipping auto mode classifier for ${tool.name}: tool requires explicit user permission`,
-        )
-        return result
       }
 
       // 在运行 auto 模式分类器之前，检查 acceptEdits 模式是否允许此操作。
@@ -981,7 +741,7 @@ export async function checkRuleBasedPermissions(
         type: 'rule',
         rule: denyRule,
       },
-      message: `Permission to use ${tool.name} has been denied.`,
+      message: tSync('permission.usePermissionDenied', { toolName: tool.name }),
     }
   }
 
@@ -1073,7 +833,7 @@ async function hasPermissionsToUseToolInner(
         type: 'rule',
         rule: denyRule,
       },
-      message: `Permission to use ${tool.name} has been denied.`,
+      message: tSync('permission.usePermissionDenied', { toolName: tool.name }),
     }
   }
 
@@ -1204,156 +964,6 @@ async function hasPermissionsToUseToolInner(
   }
 
   return result
-}
-
-type EditPermissionRuleArgs = {
-  initialContext: ToolPermissionContext
-  setToolPermissionContext: (updatedContext: ToolPermissionContext) => void
-}
-
-/**
- * 从适当的目标中删除权限规则
- */
-export async function deletePermissionRule({
-  rule,
-  initialContext,
-  setToolPermissionContext,
-}: EditPermissionRuleArgs & { rule: PermissionRule }): Promise<void> {
-  if (
-    rule.source === 'policySettings' ||
-    rule.source === 'flagSettings' ||
-    rule.source === 'command'
-  ) {
-    throw new Error('Cannot delete permission rules from read-only settings')
-  }
-
-  const updatedContext = applyPermissionUpdate(initialContext, {
-    type: 'removeRules',
-    rules: [rule.ruleValue],
-    behavior: rule.ruleBehavior,
-    destination: rule.source as PermissionUpdateDestination,
-  })
-
-  // 按目标执行从设置中删除规则的逻辑
-  const destination = rule.source
-  switch (destination) {
-    case 'localSettings':
-    case 'userSettings':
-    case 'projectSettings': {
-      // 注意：即使我们对 `rule.source` 进行了 switch，TypeScript 也不知道 rule 符合 `PermissionRuleFromEditableSettings`
-      deletePermissionRuleFromSettings(rule as PermissionRuleFromEditableSettings)
-      break
-    }
-    case 'cliArg':
-    case 'session': {
-      // 内存中的来源不需要操作 - 不会持久化到磁盘
-      break
-    }
-  }
-
-  // 用更新后的上下文更新 React 状态
-  setToolPermissionContext(updatedContext)
-}
-
-/**
- * 将 PermissionRule 数组转换为 PermissionUpdate 数组的辅助函数
- */
-function convertRulesToUpdates(
-  rules: PermissionRule[],
-  updateType: 'addRules' | 'replaceRules',
-): PermissionUpdate[] {
-  // 按来源和行为分组规则
-  const grouped = new Map<string, PermissionRuleValue[]>()
-
-  for (const rule of rules) {
-    const key = `${rule.source}:${rule.ruleBehavior}`
-    if (!grouped.has(key)) {
-      grouped.set(key, [])
-    }
-    grouped.get(key)!.push(rule.ruleValue)
-  }
-
-  // 转换为 PermissionUpdate 数组
-  const updates: PermissionUpdate[] = []
-  for (const [key, ruleValues] of grouped) {
-    const [source, behavior] = key.split(':')
-    updates.push({
-      type: updateType,
-      rules: ruleValues,
-      behavior: behavior as PermissionBehavior,
-      destination: source as PermissionUpdateDestination,
-    })
-  }
-
-  return updates
-}
-
-/**
- * 将权限规则应用到上下文（追加式 - 用于初始设置）
- */
-export function applyPermissionRulesToPermissionContext(
-  toolPermissionContext: ToolPermissionContext,
-  rules: PermissionRule[],
-): ToolPermissionContext {
-  const updates = convertRulesToUpdates(rules, 'addRules')
-  return applyPermissionUpdates(toolPermissionContext, updates)
-}
-
-/**
- * 从磁盘同步权限规则（替换式 - 用于设置变更）
- */
-export function syncPermissionRulesFromDisk(
-  toolPermissionContext: ToolPermissionContext,
-  rules: PermissionRule[],
-): ToolPermissionContext {
-  let context = toolPermissionContext
-
-  // 当 allowManagedPermissionRulesOnly 启用时，清除所有非策略来源
-  if (shouldAllowManagedPermissionRulesOnly()) {
-    const sourcesToClear: PermissionUpdateDestination[] = [
-      'userSettings',
-      'projectSettings',
-      'localSettings',
-      'cliArg',
-      'session',
-    ]
-    const behaviors: PermissionBehavior[] = ['allow', 'deny', 'ask']
-
-    for (const source of sourcesToClear) {
-      for (const behavior of behaviors) {
-        context = applyPermissionUpdate(context, {
-          type: 'replaceRules',
-          rules: [],
-          behavior,
-          destination: source,
-        })
-      }
-    }
-  }
-
-  // 在应用新规则之前清除所有基于磁盘的 source:behavior 组合。
-  // 如果不这样做，从设置中移除一条规则（例如删除一个 deny 条目）
-  // 会导致旧规则留在上下文中，因为 convertRulesToUpdates
-  // 仅为有规则的 source:behavior 对生成 replaceRules —
-  // 空组不产生更新，因此过时的规则会持续存在。
-  const diskSources: PermissionUpdateDestination[] = [
-    'userSettings',
-    'projectSettings',
-    'localSettings',
-  ]
-  for (const diskSource of diskSources) {
-    for (const behavior of ['allow', 'deny', 'ask'] as PermissionBehavior[]) {
-      context = applyPermissionUpdate(context, {
-        type: 'replaceRules',
-        rules: [],
-        behavior,
-        destination: diskSource,
-      })
-    }
-  }
-
-  const updates = convertRulesToUpdates(rules, 'replaceRules')
-  return applyPermissionUpdates(context, updates)
 }
 
 /**

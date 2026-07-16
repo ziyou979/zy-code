@@ -1,3 +1,4 @@
+import type { UUID } from 'node:crypto'
 import { createUserMessage } from 'src/services/messages/constructors.js'
 import { REJECT_MESSAGE } from 'src/services/messages/constants.js'
 import { withMemoryCorrectionHint } from 'src/services/messages/predicates.js'
@@ -90,8 +91,7 @@ export class StreamingToolExecutor {
               },
             ],
             toolUseResult: `Error: No such tool available: ${block.name}`,
-            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            sourceToolAssistantUUID: assistantMessage.uuid as any,
+            sourceToolAssistantUUID: assistantMessage.uuid as UUID,
           }),
         ],
       })
@@ -170,7 +170,7 @@ export class StreamingToolExecutor {
         ],
         toolUseResult: 'User rejected tool use',
         // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        sourceToolAssistantUUID: assistantMessage.uuid as any,
+        sourceToolAssistantUUID: assistantMessage.uuid as UUID,
       })
     }
     if (reason === 'streaming_fallback') {
@@ -186,7 +186,7 @@ export class StreamingToolExecutor {
         ],
         toolUseResult: 'Streaming fallback - tool execution discarded',
         // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        sourceToolAssistantUUID: assistantMessage.uuid as any,
+        sourceToolAssistantUUID: assistantMessage.uuid as UUID,
       })
     }
     const desc = this.erroredToolDescription
@@ -204,7 +204,7 @@ export class StreamingToolExecutor {
       ],
       toolUseResult: msg,
       // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-      sourceToolAssistantUUID: assistantMessage.uuid as any,
+      sourceToolAssistantUUID: assistantMessage.uuid as UUID,
     })
   }
 

@@ -2,19 +2,16 @@ import { createContext, useEffect, useState } from 'react'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import type { WizardContextValue, WizardProviderProps } from './types.js'
 
-// biome-ignore lint/suspicious/noExplicitAny: Ink 渲染层类型兼容
-export const WizardContext = createContext<WizardContextValue<any> | null>(null)
+export const WizardContext = createContext<WizardContextValue<Record<string, unknown>> | null>(null)
 export function WizardProvider({
   steps,
-  // biome-ignore lint/suspicious/noExplicitAny: Ink 渲染层类型兼容
-  initialData = {} as any,
+  initialData = {} as Record<string, unknown>,
   onComplete,
   onCancel,
   children,
   title,
   showStepCounter = true,
-  // biome-ignore lint/suspicious/noExplicitAny: Ink 渲染层类型兼容
-}: WizardProviderProps<any>) {
+}: WizardProviderProps<Record<string, unknown>>) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [wizardData, setWizardData] = useState(initialData)
   const [isCompleted, setIsCompleted] = useState(false)

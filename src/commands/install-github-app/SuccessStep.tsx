@@ -19,44 +19,46 @@ export function SuccessStep({
         <Box flexDirection="column" borderStyle="round" paddingX={1}>
           {
             <Box flexDirection="column" marginBottom={1}>
-              <Text bold={true}>{tSync('installGh.installTitle')}</Text>
-              <Text dimColor={true}>{tSync('installGh.success')}</Text>
+              <Text bold={true}>{tSync('installGitHubApp.installTitle')}</Text>
+              <Text dimColor={true}>{tSync('installGitHubApp.success')}</Text>
             </Box>
           }
-          {!skipWorkflow && <Text color="success">{tSync('installGh.workflowCreated')}</Text>}
+          {!skipWorkflow && (
+            <Text color="success">{tSync('installGitHubApp.workflowCreated')}</Text>
+          )}
           {secretExists && useExistingSecret && (
             <Box marginTop={1}>
-              <Text color="success">{tSync('installGh.usingExistingSecret')}</Text>
+              <Text color="success">{tSync('installGitHubApp.usingExistingSecret')}</Text>
             </Box>
           )}
           {(!secretExists || !useExistingSecret) && (
             <Box marginTop={1}>
-              <Text color="success">{tSync('installGh.apiKeySavedAs', { secretName })}</Text>
+              <Text color="success">{tSync('installGitHubApp.apiKeySavedAs', { secretName })}</Text>
             </Box>
           )}
           {
             <Box marginTop={1}>
-              <Text>{tSync('installGh.nextSteps')}</Text>
+              <Text>{tSync('installGitHubApp.nextSteps')}</Text>
             </Box>
           }
           {skipWorkflow ? (
             <>
-              <Text>{tSync('installGh.stepInstallApp')}</Text>
-              <Text>{tSync('installGh.stepWorkflowUnchanged')}</Text>
-              <Text>{tSync('installGh.stepApiKeyReady')}</Text>
+              <Text>{tSync('installGitHubApp.stepInstallApp')}</Text>
+              <Text>{tSync('installGitHubApp.stepWorkflowUnchanged')}</Text>
+              <Text>{tSync('installGitHubApp.stepApiKeyReady')}</Text>
             </>
           ) : (
             <>
-              <Text>{tSync('installGh.stepPrCreated')}</Text>
-              <Text>{tSync('installGh.stepInstallApp2')}</Text>
-              <Text>{tSync('installGh.stepMergePr')}</Text>
+              <Text>{tSync('installGitHubApp.stepPrCreated')}</Text>
+              <Text>{tSync('installGitHubApp.stepInstallApp2')}</Text>
+              <Text>{tSync('installGitHubApp.stepMergePr')}</Text>
             </>
           )}
         </Box>
       }
       {
         <Box marginLeft={3}>
-          <Text dimColor={true}>{tSync('installGh.pressAnyKeyExit')}</Text>
+          <Text dimColor={true}>{tSync('installGitHubApp.pressAnyKeyExit')}</Text>
         </Box>
       }
     </>

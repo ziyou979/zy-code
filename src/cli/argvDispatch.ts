@@ -73,8 +73,7 @@ async function rewriteArgvForCcUrl(): Promise<void> {
 
   const ccUrl = rawCliArgs[ccIdx]!
   const { parseConnectUrl } = await import('../server/parseConnectUrl.js')
-  // biome-ignore lint/suspicious/noExplicitAny: parseConnectUrl 类型为内部宽松类型
-  const parsed = (parseConnectUrl as any)(ccUrl)
+  const parsed = parseConnectUrl(ccUrl)
   pendingConnect.dangerouslySkipPermissions = rawCliArgs.includes('--dangerously-skip-permissions')
   if (rawCliArgs.includes('-p') || rawCliArgs.includes('--print')) {
     // 无头模式：重写为内部 `open` 子命令

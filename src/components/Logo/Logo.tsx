@@ -15,7 +15,7 @@ import {
   getSteps,
   incrementProjectOnboardingSeenCount,
   shouldShowProjectOnboarding,
-} from '../../projectOnboardingState.js'
+} from '../../services/settings/projectOnboardingState.js'
 import { getDisplayPath } from '../../utils/file.js'
 import { truncate } from '../../utils/format.js'
 import {

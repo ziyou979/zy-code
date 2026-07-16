@@ -20,6 +20,13 @@ import {
 } from '../../services/mcp/auth.js'
 import { clearServerCache } from '../../services/mcp/client.js'
 import { useMcpReconnect, useMcpToggleEnabled } from '../../services/mcp/MCPConnectionManager.js'
+import type {
+  ConfigScope,
+  MCPServerConnection,
+  McpHTTPServerConfig,
+  McpSSEServerConfig,
+  McpZyAIProxyServerConfig,
+} from '../../services/mcp/types.js'
 import {
   describeMcpConfigFilePath,
   excludeCommandsByServer,
@@ -37,11 +44,15 @@ import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Select } from '../CustomSelect/index.js'
 import { Byline } from '../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
-import { Spinner } from '../Spinner.js'
-import TextInput from '../TextInput.js'
 import { CapabilitiesSection } from './CapabilitiesSection.js'
 import type { HTTPServerInfo, SSEServerInfo, ZyAIServerInfo } from '../../services/mcp/viewTypes.js'
 import { handleReconnectError, handleReconnectResult } from './utils/ReconnectHelpers.js'
+import {
+  RemoteOAuthAuthenticatingView,
+  RemoteReconnectingView,
+  RemoteZyAiAuthenticatingView,
+  RemoteZyAiClearAuthView,
+} from './MCPRemoteServerFlowViews.js'
 
 type Props = {
   server: SSEServerInfo | HTTPServerInfo | ZyAIServerInfo
@@ -56,6 +67,19 @@ type Props = {
   ) => void
   borderless?: boolean
 }
+
+type RemoteServerRuntimeConfig =
+  | (McpHTTPServerConfig & { scope: ConfigScope })
+  | (McpSSEServerConfig & { scope: ConfigScope })
+  | (McpZyAIProxyServerConfig & { scope: ConfigScope })
+
+type RemoteServerRuntimeState = {
+  client: MCPServerConnection
+  config: RemoteServerRuntimeConfig
+  scope: ConfigScope
+  isAuthenticated?: boolean
+}
+
 export function MCPRemoteServerMenu({
   server,
   serverToolsCount,
@@ -64,8 +88,8 @@ export function MCPRemoteServerMenu({
   onComplete,
   borderless = false,
 }: Props): React.ReactNode {
-  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理，SSE/HTTP/ZyAI 类型运行时包含额外字段
-  const srv = server as any
+  // 远端 MCP 菜单会读取连接态和解析后的配置字段，运行时对象比视图类型多这些能力。
+  const srv = server as Props['server'] & RemoteServerRuntimeState
   const [theme] = useTheme()
   const exitState = useExitOnCtrlCDWithKeybindings()
   const { columns: terminalColumns } = useTerminalSize()
@@ -459,153 +483,41 @@ export function MCPRemoteServerMenu({
         ? ` ${tSync('mcp.authViaIdentityProvider')}`
         : ` ${tSync('mcp.browserWillOpen')}`
     return (
-      <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="zy">{tSync('mcp.authenticatingWith', { serverName: server.name })}</Text>
-        <Box>
-          <Spinner />
-          <Text>{authCopy}</Text>
-        </Box>
-        {authorizationUrl && (
-          <Box flexDirection="column">
-            <Box>
-              <Text dimColor>{tSync('mcp.copyUrlManually')} </Text>
-              {urlCopied ? (
-                <Text color="success">({tSync('mcp.copied')})</Text>
-              ) : (
-                <Text dimColor>
-                  <KeyboardShortcutHint shortcut="c" action="copy" parens />
-                </Text>
-              )}
-            </Box>
-            <Link url={authorizationUrl} />
-          </Box>
-        )}
-        {isAuthenticating && authorizationUrl && manualCallbackSubmit && (
-          <Box flexDirection="column" marginTop={1}>
-            <Text dimColor>{tSync('mcp.pasteUrlFromBrowser')}</Text>
-            <Box>
-              <Text dimColor>URL {'>'} </Text>
-              <TextInput
-                value={callbackUrlInput}
-                onChange={setCallbackUrlInput}
-                onSubmit={(value: string) => {
-                  manualCallbackSubmit(value.trim())
-                  setCallbackUrlInput('')
-                }}
-                cursorOffset={callbackUrlCursorOffset}
-                onChangeCursorOffset={setCallbackUrlCursorOffset}
-                columns={terminalColumns - 8}
-              />
-            </Box>
-          </Box>
-        )}
-        <Box marginLeft={3}>
-          <Text dimColor>{tSync('mcp.returnAfterAuth')}</Text>
-        </Box>
-      </Box>
+      <RemoteOAuthAuthenticatingView
+        serverName={server.name}
+        authCopy={authCopy}
+        authorizationUrl={authorizationUrl}
+        urlCopied={urlCopied}
+        callbackUrlInput={callbackUrlInput}
+        onChangeCallbackUrlInput={setCallbackUrlInput}
+        callbackUrlCursorOffset={callbackUrlCursorOffset}
+        onChangeCallbackUrlCursorOffset={setCallbackUrlCursorOffset}
+        onSubmitManualCallback={manualCallbackSubmit}
+        terminalColumns={terminalColumns}
+      />
     )
   }
   if (isZyAIAuthenticating) {
     return (
-      <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="zy">{tSync('mcp.authenticatingWith', { serverName: server.name })}</Text>
-        <Box>
-          <Spinner />
-          <Text> {tSync('mcp.browserWillOpen')}</Text>
-        </Box>
-        {ZyAIAuthUrl && (
-          <Box flexDirection="column">
-            <Box>
-              <Text dimColor>{tSync('mcp.copyUrlManually')} </Text>
-              {urlCopied ? (
-                <Text color="success">({tSync('mcp.copied')})</Text>
-              ) : (
-                <Text dimColor>
-                  <KeyboardShortcutHint shortcut="c" action="copy" parens />
-                </Text>
-              )}
-            </Box>
-            <Link url={ZyAIAuthUrl} />
-          </Box>
-        )}
-        <Box marginLeft={3} flexDirection="column">
-          <Text color="permission">{tSync('mcp.pressEnterAfterAuth')}</Text>
-          <Text dimColor italic>
-            <ConfigurableShortcutHint
-              action="confirm:no"
-              context="Confirmation"
-              fallback="Esc"
-              description={tSync('mcp.back')}
-            />
-          </Text>
-        </Box>
-      </Box>
+      <RemoteZyAiAuthenticatingView
+        serverName={server.name}
+        authUrl={ZyAIAuthUrl}
+        urlCopied={urlCopied}
+      />
     )
   }
   if (isZyAIClearingAuth) {
     return (
-      <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="zy">{tSync('mcp.clearAuthTitle', { serverName: server.name })}</Text>
-        {ZyAIClearAuthBrowserOpened ? (
-          <>
-            <Text>{tSync('mcp.findServerAndDisconnect')}</Text>
-            {ZyAIClearAuthUrl && (
-              <Box flexDirection="column">
-                <Box>
-                  <Text dimColor>{tSync('mcp.copyUrlManually')} </Text>
-                  {urlCopied ? (
-                    <Text color="success">({tSync('mcp.copied')})</Text>
-                  ) : (
-                    <Text dimColor>
-                      <KeyboardShortcutHint shortcut="c" action="copy" parens />
-                    </Text>
-                  )}
-                </Box>
-                <Link url={ZyAIClearAuthUrl} />
-              </Box>
-            )}
-            <Box marginLeft={3} flexDirection="column">
-              <Text color="permission">{tSync('mcp.pressEnterWhenDone')}</Text>
-              <Text dimColor italic>
-                <ConfigurableShortcutHint
-                  action="confirm:no"
-                  context="Confirmation"
-                  fallback="Esc"
-                  description={tSync('mcp.back')}
-                />
-              </Text>
-            </Box>
-          </>
-        ) : (
-          <>
-            <Text>{tSync('mcp.willOpenZyAi')}</Text>
-            <Box marginLeft={3} flexDirection="column">
-              <Text color="permission">{tSync('mcp.pressEnterToOpenBrowser')}</Text>
-              <Text dimColor italic>
-                <ConfigurableShortcutHint
-                  action="confirm:no"
-                  context="Confirmation"
-                  fallback="Esc"
-                  description={tSync('mcp.back')}
-                />
-              </Text>
-            </Box>
-          </>
-        )}
-      </Box>
+      <RemoteZyAiClearAuthView
+        serverName={server.name}
+        clearAuthUrl={ZyAIClearAuthUrl}
+        browserOpened={ZyAIClearAuthBrowserOpened}
+        urlCopied={urlCopied}
+      />
     )
   }
   if (isReconnecting) {
-    return (
-      <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="text">{tSync('mcp.connectingTo', { serverName: server.name })}</Text>
-        <Box>
-          <Spinner />
-          <Text> {tSync('mcp.establishingConnection')}</Text>
-        </Box>
-        <Text dimColor>{tSync('mcp.mayTakeAMoment')}</Text>
-      </Box>
-    )
+    return <RemoteReconnectingView serverName={server.name} />
   }
   const menuOptions = []
 
@@ -713,7 +625,7 @@ export function MCPRemoteServerMenu({
             )}
           </Box>
 
-          {srv.transport !== 'zyai-proxy' && (
+          {srv.config.type !== 'zyai-proxy' && (
             <Box>
               <Text bold>{tSync('mcp.authLabel')} </Text>
               {isEffectivelyAuthenticated ? (

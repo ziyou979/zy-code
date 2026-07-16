@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import * as React from 'react'
-import type { AssistantContentBlock, TextBlock, UserContentBlock } from 'src/types/llm.ts'
+import type { AssistantContentBlock, TextBlock, ToolCallBlock, UserContentBlock } from 'src/types/llm.ts'
 import type { Attachment } from 'src/services/attachments/attachments.js'
 import type { Command } from '../commands.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
@@ -168,7 +168,7 @@ function MessageImpl({
           param={contentBlock}
           style={style}
           verbose={verbose}
-          imageIndex={imageIndices[index] as number}
+          imageIndex={imageIndices[index]}
           isUserContinuation={isUserContinuation}
           lookups={lookups}
           isTranscriptMode={isTranscriptMode}
@@ -280,7 +280,7 @@ function UserMessageContent({
       return (
         <UserTextMessage
           addMargin={addMargin}
-          param={param as TextBlock}
+          param={param}
           verbose={verbose}
           planContent={message.planContent}
           isTranscriptMode={isTranscriptMode}
@@ -290,16 +290,14 @@ function UserMessageContent({
     }
     case 'image': {
       const shouldAddMargin = addMargin && !isUserContinuation
-      return <UserImageMessage imageId={imageIndex as number} addMargin={shouldAddMargin} />
+      return <UserImageMessage imageId={imageIndex} addMargin={shouldAddMargin} />
     }
     case 'tool_result': {
       const toolResultWidth = columns - 5
       return (
         <UserToolResultMessage
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          param={param as any}
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          message={message as any}
+          param={param}
+          message={message}
           lookups={lookups}
           progressMessagesForMessage={progressMessagesForMessage}
           style={style}
@@ -315,32 +313,48 @@ function UserMessageContent({
     }
   }
 }
-function AssistantMessageBlock({
-  param,
-  addMargin,
-  tools,
-  commands,
-  verbose,
-  inProgressToolUseIDs,
-  progressMessagesForMessage,
-  shouldAnimate,
-  shouldShowDot,
-  width,
-  inProgressToolCallCount,
-  isTranscriptMode,
-  lookups,
-  onOpenRateLimitOptions,
-  thinkingBlockId,
-  lastThinkingBlockId,
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-}: any) {
+/**
+ * AssistantMessageBlock props. param accepts AssistantContentBlock plus
+ * the API-level "tool_use" variant (which is structurally identical to ToolCallBlock).
+ */
+type AssistantMessageBlockProps = {
+  param: AssistantContentBlock
+  addMargin: boolean
+  tools: Tools
+  commands: Command[]
+  verbose: boolean
+  inProgressToolUseIDs: Set<string>
+  progressMessagesForMessage: ProgressMessage[]
+  shouldAnimate: boolean
+  shouldShowDot: boolean
+  width?: number | string
+  inProgressToolCallCount: number
+  isTranscriptMode: boolean
+  lookups: ReturnType<typeof buildMessageLookups>
+  onOpenRateLimitOptions?: () => void
+  thinkingBlockId: string
+  lastThinkingBlockId?: string | null
+}
+function AssistantMessageBlock(props: AssistantMessageBlockProps) {
+  const {
+    param: rawParam, addMargin, tools, commands, verbose,
+    inProgressToolUseIDs, progressMessagesForMessage,
+    shouldAnimate, shouldShowDot, width,
+    inProgressToolCallCount, isTranscriptMode,
+    lookups, onOpenRateLimitOptions,
+    thinkingBlockId, lastThinkingBlockId,
+  } = props
+  // Some providers return tool_use (API shape) instead of tool_call (stream shape)
+  // Both have the same structure (id, name, input), handled identically below
+  const param = rawParam as AssistantContentBlock | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
   if (feature('CONNECTOR_TEXT')) {
-    if (isConnectorTextBlock(param)) {
+    if (isConnectorTextBlock(param as AssistantContentBlock)) {
+      const ctParam = param as AssistantContentBlock & { connectorText?: string }
       return (
         <AssistantTextMessage
           param={{
             type: 'text',
-            text: param.connectorText,
+            text: ctParam.connectorText ?? '',
           }}
           addMargin={addMargin}
           shouldShowDot={shouldShowDot}
@@ -356,7 +370,7 @@ function AssistantMessageBlock({
     case 'tool_call': {
       return (
         <AssistantToolUseMessage
-          param={param}
+          param={param as ToolCallBlock}
           addMargin={addMargin}
           tools={tools}
           commands={commands}
@@ -434,8 +448,7 @@ export function areMessagePropsEqual(prev: Props, next: Props): boolean {
   // 否则每次 streaming thinking 开始/停止时，scrollback 中的每条消息都会重新渲染 (CC-941)
   if (
     prev.lastThinkingBlockId !== next.lastThinkingBlockId &&
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    hasThinkingContent(next.message as any)
+    hasThinkingContent(next.message as Parameters<typeof hasThinkingContent>[0])
   ) {
     return false
   }

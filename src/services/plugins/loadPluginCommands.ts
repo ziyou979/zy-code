@@ -4,7 +4,7 @@ import { parseUserSpecifiedModel } from 'src/services/model/model.js'
 import { getInlinePlugins, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../../commands/types.js'
 import { getPluginErrorMessage, type LoadedPlugin, type PluginError } from './types.js'
-import { parseArgumentNames, substituteArguments } from '../../utils/argumentSubstitution.js'
+import { parseArgumentNames, substituteArguments } from '../../utils/argumentParser.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { EFFORT_LEVELS, parseEffortValue } from '../../utils/effort.js'
 import { isBareMode } from '../../utils/envUtils.js'
@@ -475,9 +475,9 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
                   // Convert metadata.source (relative to plugin root) to absolute path for comparison
                   for (const [name, metadata] of Object.entries(plugin.commandsMetadata)) {
                     // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                    if ((metadata as any).source) {
-                      // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                      const fullMetadataPath = join(plugin.path, (metadata as any).source)
+                    const metaSource = (metadata as CommandMetadata).source
+                    if (metaSource) {
+                      const fullMetadataPath = join(plugin.path, metaSource)
                       if (commandPath === fullMetadataPath) {
                         commandName = `${plugin.name}:${name}`
                         metadataOverride = metadata as CommandMetadata
@@ -556,13 +556,13 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
       if (plugin.commandsMetadata) {
         for (const [name, metadata] of Object.entries(plugin.commandsMetadata)) {
           // Only process entries with inline content (no source)
-          // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-          if ((metadata as any).content && !(metadata as any).source) {
+          const metaContent = (metadata as CommandMetadata).content
+          const metaSource = (metadata as CommandMetadata).source
+          if (metaContent && !metaSource) {
             try {
               // Parse inline content for frontmatter
               const { frontmatter, content: markdownContent } = parseFrontmatter(
-                // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                (metadata as any).content,
+                metaContent,
                 `<inline:${plugin.name}:${name}>`,
               )
 
@@ -570,24 +570,22 @@ export const getPluginCommands = memoize(async (): Promise<Command[]> => {
               const finalFrontmatter: FrontmatterData = {
                 ...frontmatter,
                 // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                ...((metadata as any).description && {
+                ...((metadata as CommandMetadata).description && {
                   // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                  description: (metadata as any).description,
+                  description: (metadata as CommandMetadata).description,
                 }),
                 // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                ...((metadata as any).argumentHint && {
+                ...((metadata as CommandMetadata).argumentHint && {
                   // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                  'argument-hint': (metadata as any).argumentHint,
+                  'argument-hint': (metadata as CommandMetadata).argumentHint,
                 }),
                 // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                ...((metadata as any).model && {
+                ...((metadata as CommandMetadata).model && {
                   // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                  model: (metadata as any).model,
+                  model: (metadata as CommandMetadata).model,
                 }),
-                // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                ...((metadata as any).allowedTools && {
-                  // biome-ignore lint/suspicious/noExplicitAny: 插件动态加载类型处理
-                  'allowed-tools': (metadata as any).allowedTools.join(','),
+                ...((metadata as CommandMetadata).allowedTools && {
+                  'allowed-tools': (metadata as CommandMetadata).allowedTools!.join(','),
                 }),
               }
 

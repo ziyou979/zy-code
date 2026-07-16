@@ -6,6 +6,8 @@ export const enUi: TranslationResource = {
   'app.toggleTranscript': 'toggle transcript',
   'common.add': 'add',
   'common.cancel': 'cancel',
+  'common.change': 'change',
+  'common.clear': 'clear',
   'common.close': 'close',
   'common.collapse': 'collapse',
   'common.complete': 'complete',

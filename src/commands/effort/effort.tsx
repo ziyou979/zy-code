@@ -44,7 +44,7 @@ function setEffortValue(effortValue: EffortLevel): EffortCommandResult {
   })
 
   // 获取翻译后的 effort 名称
-  const valueName = tSync(`effort.${effortValue}` as any) || effortValue
+  const valueName = tSync(`effort.${effortValue}`) || effortValue
 
   // Env var wins at resolveAppliedEffort time. Only flag it when it actually
   // conflicts — if env matches what the user just asked for, the outcome is
@@ -95,13 +95,13 @@ export function showCurrentEffort(
   const effectiveValue = envOverride === null ? undefined : (envOverride ?? appStateEffort)
   if (effectiveValue === undefined) {
     const level = getDisplayedEffortLevel(model, appStateEffort)
-    const levelName = tSync(`effort.${level}` as any) || level
+    const levelName = tSync(`effort.${level}`) || level
     return {
       message: tSync('effort.command.currentAuto', { level: levelName }),
     }
   }
   const description = getEffortLevelDescription(effectiveValue)
-  const valueName = tSync(`effort.${effectiveValue}` as any) || effectiveValue
+  const valueName = tSync(`effort.${effectiveValue}`) || effectiveValue
   return {
     message: tSync('effort.command.current', { value: valueName, description }),
   }
@@ -195,8 +195,8 @@ export async function call(
 
     // 生成帮助文本
     const usageLines = supportedLevels.map((level) => {
-      const name = tSync(`effort.${level}` as any) || level
-      const description = tSync(`effort.description.${level}` as any) || level
+      const name = tSync(`effort.${level}`) || level
+      const description = tSync(`effort.description.${level}`) || level
       return tSync('effort.command.usageItem', { name, description })
     })
 

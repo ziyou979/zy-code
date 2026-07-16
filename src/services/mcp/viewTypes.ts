@@ -26,6 +26,10 @@ export interface AgentMcpServerInfo extends ServerInfo {
   agentName: string
   sourceAgents: string[]
   needsAuth?: boolean
+  transport?: 'stdio' | 'sse' | 'http'
+  url?: string
+  command?: string
+  isAuthenticated?: boolean
 }
 
 export interface ZyAIServerInfo {

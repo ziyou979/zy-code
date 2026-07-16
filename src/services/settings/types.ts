@@ -3,10 +3,51 @@ import { z } from 'zod/v4'
 import { SandboxSettingsSchema } from '../../entrypoints/sandboxTypes.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { PERMISSION_MODES } from '../permissions/permissionMode.js'
-import { MarketplaceSourceSchema } from '../plugins/schemas.js'
+import {
+  CustomModelSchema,
+  ModelReferenceSchema,
+  ProviderScopedSettingsSchema,
+} from './settingsModelSchemas.js'
 import { ZY_CODE_SETTINGS_SCHEMA_URL } from './constants.js'
-import { PermissionRuleSchema } from './permissionValidation.js'
+import { MarketplaceSourceSchema } from '../plugins/schemas.js'
+export {
+  AllowedMcpServerEntrySchema,
+  CUSTOMIZATION_SURFACES,
+  DeniedMcpServerEntrySchema,
+  EnvironmentVariablesSchema,
+  ExtraKnownMarketplaceSchema,
+  isMcpServerCommandEntry,
+  isMcpServerNameEntry,
+  isMcpServerUrlEntry,
+  PermissionsSchema,
+  type AllowedMcpServerEntry,
+  type DeniedMcpServerEntry,
+} from './settingsSchemaSupport.js'
+import {
+  AllowedMcpServerEntrySchema,
+  CUSTOMIZATION_SURFACES,
+  DeniedMcpServerEntrySchema,
+  EnvironmentVariablesSchema,
+  ExtraKnownMarketplaceSchema,
+  isMcpServerCommandEntry,
+  isMcpServerNameEntry,
+  isMcpServerUrlEntry,
+  PermissionsSchema,
+  type AllowedMcpServerEntry,
+  type DeniedMcpServerEntry,
+} from './settingsSchemaSupport.js'
+export type {
+  PluginConfig,
+  PluginHookMatcher,
+  SkillHookMatcher,
+  UserConfigValues,
+} from './settingsRuntimeTypes.js'
+import type {
+  PluginConfig,
+  PluginHookMatcher,
+  SkillHookMatcher,
+  UserConfigValues,
+} from './settingsRuntimeTypes.js'
 
 // 从集中位置重新导出 hook schemas 和类型，保持向后兼容性
 export {
@@ -28,281 +69,14 @@ import { type HookCommand, HooksSchema } from '../../schemas/hooks.js'
 import { count } from '../../utils/array.js'
 
 /**
- * 环境变量的 Schema
- */
-export const EnvironmentVariablesSchema = lazySchema(() => z.record(z.string(), z.coerce.string()))
-
-const CustomModelSchema = lazySchema(() =>
-  z.object({
-    alias: z
-      .string()
-      .describe(
-        'Short alias for the model (e.g., "qwen-max", "glm-4"). Used as the settings value.',
-      ),
-    model: z
-      .string()
-      .describe('Actual model ID sent to the API (e.g., "qwen-max-latest", "glm-4-plus").'),
-    provider: z
-      .string()
-      .optional()
-      .describe(
-        'Provider id used when this custom model is selected. Defaults to active provider.',
-      ),
-    label: z
-      .string()
-      .optional()
-      .describe('Display name in the model picker. Defaults to alias if not provided.'),
-    description: z
-      .string()
-      .optional()
-      .describe('Description shown below the model name in the picker.'),
-  }),
-)
-
-const ModelReferenceSchema = lazySchema(() =>
-  z.union([
-    z.string(),
-    z
-      .object({
-        provider: z
-          .string()
-          .optional()
-          .describe('Provider id used for this model entry. Defaults to active provider.'),
-        model: z.string().describe('Actual model ID sent to the API.'),
-      })
-      .passthrough(),
-  ]),
-)
-
-const ProviderScopedSettingsSchema = lazySchema(() =>
-  z
-    .object({
-      baseUrl: z
-        .string()
-        .optional()
-        .describe(
-          'Base URL for this provider. Overrides the top-level baseUrl for this provider only.',
-        ),
-      apiFormat: z
-        .enum(['anthropic', 'openai', 'google'])
-        .optional()
-        .describe('API protocol format for this provider. Overrides the top-level apiFormat.'),
-      model: ModelReferenceSchema()
-        .optional()
-        .describe(
-          'Default model override for this provider. May be a model id or { provider, model }.',
-        ),
-      mainLoopModel: z
-        .enum(['advanced', 'standard', 'compact'])
-        .optional()
-        .describe('Capability tier for this provider. Overrides the top-level mainLoopModel.'),
-      models: z
-        .record(z.string(), ModelReferenceSchema())
-        .optional()
-        .describe(
-          'Model configuration by capability tier for this provider. Values may be a model id or { provider, model }.',
-        ),
-      customModels: z
-        .array(CustomModelSchema())
-        .optional()
-        .describe('Custom model definitions for this provider.'),
-    })
-    .passthrough(),
-)
-
-/**
- * 权限部分的 Schema
- */
-export const PermissionsSchema = lazySchema(() =>
-  z
-    .object({
-      allow: z
-        .array(PermissionRuleSchema())
-        .optional()
-        .describe('List of permission rules for allowed operations'),
-      deny: z
-        .array(PermissionRuleSchema())
-        .optional()
-        .describe('List of permission rules for denied operations'),
-      ask: z
-        .array(PermissionRuleSchema())
-        .optional()
-        .describe('List of permission rules that should always prompt for confirmation'),
-      defaultMode: z
-        .enum(PERMISSION_MODES)
-        .optional()
-        .describe('Default permission mode when ZY Code needs access'),
-      disableBypassPermissionsMode: z
-        .enum(['disable'])
-        .optional()
-        .describe('Disable the ability to bypass permission prompts'),
-      ...(true
-        ? {
-            disableAutoMode: z.enum(['disable']).optional().describe('Disable auto mode'),
-          }
-        : {}),
-      additionalDirectories: z
-        .array(z.string())
-        .optional()
-        .describe('Additional directories to include in the permission scope'),
-    })
-    .passthrough(),
-)
-
-/**
- * 仓库配置中定义的额外市场的 Schema
- * 与 KnownMarketplace 相同但不包含 lastUpdated（该字段自动管理）
- */
-export const ExtraKnownMarketplaceSchema = lazySchema(() =>
-  z.object({
-    source: MarketplaceSourceSchema().describe('Where to fetch the marketplace from'),
-    installLocation: z
-      .string()
-      .optional()
-      .describe(
-        'Local cache path where marketplace manifest is stored (auto-generated if not provided)',
-      ),
-    autoUpdate: z
-      .boolean()
-      .optional()
-      .describe(
-        'Whether to automatically update this marketplace and its installed plugins on startup',
-      ),
-  }),
-)
-
-/**
- * 企业白名单中允许的 MCP 服务器条目的 Schema。
- * 支持通过 serverName、serverCommand 或 serverUrl 匹配（互斥）。
- */
-export const AllowedMcpServerEntrySchema = lazySchema(() =>
-  z
-    .object({
-      serverName: z
-        .string()
-        .regex(
-          /^[a-zA-Z0-9_-]+$/,
-          'Server name can only contain letters, numbers, hyphens, and underscores',
-        )
-        .optional()
-        .describe('Name of the MCP server that users are allowed to configure'),
-      serverCommand: z
-        .array(z.string())
-        .min(1, 'Server command must have at least one element (the command)')
-        .optional()
-        .describe('Command array [command, ...args] to match exactly for allowed stdio servers'),
-      serverUrl: z
-        .string()
-        .optional()
-        .describe(
-          'URL pattern with wildcard support (e.g., "https://*.example.com/*") for allowed remote MCP servers',
-        ),
-      // 未来扩展性：allowedTransports、requiredArgs、maxInstances 等
-    })
-    .refine(
-      (data) => {
-        const defined = count(
-          [
-            data.serverName !== undefined,
-            data.serverCommand !== undefined,
-            data.serverUrl !== undefined,
-          ],
-          Boolean,
-        )
-        return defined === 1
-      },
-      {
-        message: 'Entry must have exactly one of "serverName", "serverCommand", or "serverUrl"',
-      },
-    ),
-)
-
-/**
- * 企业黑名单中被拒绝的 MCP 服务器条目的 Schema。
- * 支持通过 serverName、serverCommand 或 serverUrl 匹配（互斥）。
- */
-export const DeniedMcpServerEntrySchema = lazySchema(() =>
-  z
-    .object({
-      serverName: z
-        .string()
-        .regex(
-          /^[a-zA-Z0-9_-]+$/,
-          'Server name can only contain letters, numbers, hyphens, and underscores',
-        )
-        .optional()
-        .describe('Name of the MCP server that is explicitly blocked'),
-      serverCommand: z
-        .array(z.string())
-        .min(1, 'Server command must have at least one element (the command)')
-        .optional()
-        .describe('Command array [command, ...args] to match exactly for blocked stdio servers'),
-      serverUrl: z
-        .string()
-        .optional()
-        .describe(
-          'URL pattern with wildcard support (e.g., "https://*.example.com/*") for blocked remote MCP servers',
-        ),
-      // 未来扩展性：reason、blockedSince 等
-    })
-    .refine(
-      (data) => {
-        const defined = count(
-          [
-            data.serverName !== undefined,
-            data.serverCommand !== undefined,
-            data.serverUrl !== undefined,
-          ],
-          Boolean,
-        )
-        return defined === 1
-      },
-      {
-        message: 'Entry must have exactly one of "serverName", "serverCommand", or "serverUrl"',
-      },
-    ),
-)
-
-/**
  * 配置文件的统一 Schema
  *
- * ⚠️ 向后兼容性注意事项 ⚠️
- *
- * 此 schema 定义了用户配置文件（.zy/settings.json）的结构。
- * 我们支持向后兼容的变更！方法如下：
- *
- * ✅ 允许的变更：
- * - 添加新的可选字段（始终使用 .optional()）
- * - 添加新的枚举值（保留现有值）
- * - 向对象添加新属性
- * - 使验证更加宽松
- * - 使用联合类型进行渐进式迁移（如 z.union([oldType, newType])）
- *
- * ❌ 应避免的破坏性变更：
- * - 删除字段（改为标记为已弃用）
- * - 删除枚举值
- * - 将可选字段改为必填
- * - 使类型更加严格
- * - 重命名字段而不保留旧名称
- *
- * 确保向后兼容性的方法：
- * 1. 运行：npm run test:file -- test/services/settings/backward-compatibility.test.ts
- * 2. 如果测试失败，说明引入了破坏性变更
- * 3. 添加新字段时，在 BACKWARD_COMPATIBILITY_CONFIGS 中添加测试
- *
- * 配置系统自动处理向后兼容性：
- * - 更新配置时，无效字段会保留在文件中（见 settings.ts 第 233-249 行）
- * - 通过 z.coerce 进行类型转换（如环境变量将数字转换为字符串）
- * - .passthrough() 保留权限对象中的未知字段
- * - 无效配置只是不被使用，但保留在文件中供用户修复
+ * 这是 .zy/settings.json 的唯一结构定义。
+ * 这里默认做向后兼容演进：新增字段保持 optional，旧字段尽量保留，
+ * 渐进迁移优先用联合类型、预处理或 .catch 降级，而不是让整份配置失效。
+ * 修改后需跑 backward-compatibility 测试；无效字段应尽量保留原文，
+ * 让用户可修复，而不是在解析阶段被整体抛弃。
  */
-
-/**
- * 可被 `strictPluginOnlyCustomization` 锁定的表面。导出以使
- * schema 预处理（下方）和运行时辅助函数（pluginOnlyPolicy.ts）
- * 共享唯一的真实来源。
- */
-export const CUSTOMIZATION_SURFACES = ['skills', 'agents', 'hooks', 'mcp'] as const
 
 export const SettingsSchema = lazySchema(() =>
   z
@@ -994,7 +768,7 @@ export const SettingsSchema = lazySchema(() =>
               .describe('Enable AI-based classification for Bash(prompt:...) permission rules'),
           }
         : {}),
-      ...(feature('PROACTIVE') || feature('KAIROS')
+      ...(feature('PROACTIVE')
         ? {
             minSleepDurationMs: z
               .number()
@@ -1016,7 +790,29 @@ export const SettingsSchema = lazySchema(() =>
                   'Useful for limiting idle time in remote/managed environments.',
               ),
           }
-        : {}),
+        : feature('KAIROS')
+          ? {
+              minSleepDurationMs: z
+                .number()
+                .nonnegative()
+                .int()
+                .optional()
+                .describe(
+                  'Minimum duration in milliseconds that the Sleep tool must sleep for. ' +
+                    'Useful for throttling proactive tick frequency.',
+                ),
+              maxSleepDurationMs: z
+                .number()
+                .int()
+                .min(-1)
+                .optional()
+                .describe(
+                  'Maximum duration in milliseconds that the Sleep tool can sleep for. ' +
+                    'Set to -1 for indefinite sleep (waits for user input). ' +
+                    'Useful for limiting idle time in remote/managed environments.',
+                ),
+            }
+          : {}),
       ...(feature('VOICE_MODE')
         ? {
             voiceEnabled: z
@@ -1070,7 +866,7 @@ export const SettingsSchema = lazySchema(() =>
             'plugins may push inbound messages. Undefined falls back to the default. ' +
             'Requires channelsEnabled: true.',
         ),
-      ...(feature('KAIROS') || feature('KAIROS_BRIEF')
+      ...(feature('KAIROS')
         ? {
             defaultView: z
               .enum(['chat', 'transcript'])
@@ -1079,7 +875,16 @@ export const SettingsSchema = lazySchema(() =>
                 'Default transcript view: chat (SendUserMessage checkpoints only) or transcript (full)',
               ),
           }
-        : {}),
+        : feature('KAIROS_BRIEF')
+          ? {
+              defaultView: z
+                .enum(['chat', 'transcript'])
+                .optional()
+                .describe(
+                  'Default transcript view: chat (SendUserMessage checkpoints only) or transcript (full)',
+                ),
+            }
+          : {}),
       prefersReducedMotion: z
         .boolean()
         .optional()
@@ -1223,70 +1028,4 @@ export const SettingsSchema = lazySchema(() =>
     .passthrough(),
 )
 
-/**
- * 插件 hooks 的内部类型 - 包含执行时的插件上下文。
- * 非 Zod schema，因为它不面向用户（插件提供原生 hooks）。
- */
-export type PluginHookMatcher = {
-  matcher?: string
-  hooks: HookCommand[]
-  pluginRoot: string
-  pluginName: string
-  pluginId: string // 格式："pluginName@marketplaceName"
-}
-
-/**
- * Skill hooks 的内部类型 - 包含执行时的 skill 上下文。
- * 非 Zod schema，因为它不面向用户（skills 提供原生 hooks）。
- */
-export type SkillHookMatcher = {
-  matcher?: string
-  hooks: HookCommand[]
-  skillRoot: string
-  skillName: string
-}
-
-export type AllowedMcpServerEntry = z.infer<ReturnType<typeof AllowedMcpServerEntrySchema>>
-export type DeniedMcpServerEntry = z.infer<ReturnType<typeof DeniedMcpServerEntrySchema>>
 export type SettingsJson = z.infer<ReturnType<typeof SettingsSchema>>
-
-/**
- * 带 serverName 的 MCP 服务器条目的类型守卫
- */
-export function isMcpServerNameEntry(
-  entry: AllowedMcpServerEntry | DeniedMcpServerEntry,
-): entry is { serverName: string } {
-  return 'serverName' in entry && entry.serverName !== undefined
-}
-
-/**
- * 带 serverCommand 的 MCP 服务器条目的类型守卫
- */
-export function isMcpServerCommandEntry(
-  entry: AllowedMcpServerEntry | DeniedMcpServerEntry,
-): entry is { serverCommand: string[] } {
-  return 'serverCommand' in entry && entry.serverCommand !== undefined
-}
-
-/**
- * 带 serverUrl 的 MCP 服务器条目的类型守卫
- */
-export function isMcpServerUrlEntry(
-  entry: AllowedMcpServerEntry | DeniedMcpServerEntry,
-): entry is { serverUrl: string } {
-  return 'serverUrl' in entry && entry.serverUrl !== undefined
-}
-
-/**
- * MCPB MCP 服务器的用户配置值
- */
-export type UserConfigValues = Record<string, string | number | boolean | string[]>
-
-/**
- * 存储在 settings.json 中的插件配置
- */
-export type PluginConfig = {
-  mcpServers?: {
-    [serverName: string]: UserConfigValues
-  }
-}

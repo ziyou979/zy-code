@@ -16,6 +16,7 @@ export type InternalQuerySource =
   | 'bash_classifier'
   | 'bash_extract_prefix'
   | 'chrome_mcp'
+  | 'code_review'
   | 'compact'
   | 'extract_memories'
   | 'feedback'

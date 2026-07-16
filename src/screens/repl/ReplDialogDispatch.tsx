@@ -51,6 +51,7 @@ import {
   persistPermissionUpdate,
 } from '../../services/permissions/permissionUpdate.js'
 import { escapeXml } from '../../utils/xml.js'
+import { tSync } from '../../i18n/index.js'
 import type { ReplNotificationsCluster } from './useReplNotificationsCluster.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'
 
@@ -376,7 +377,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
             if (!item) {
               return
             }
-            item.reject(new Error('Prompt cancelled by user'))
+            item.reject(new Error(tSync('repl.dialogDispatch.promptCancelled')))
             replStore.setState((p) => ({ ...p, promptQueue: p.promptQueue.slice(1) }))
           }}
         />
@@ -389,8 +390,10 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
       )}
       {pendingSandboxRequest && (
         <WorkerPendingPermission
-          toolName="Network Access"
-          description={`Waiting for leader to approve network access to ${pendingSandboxRequest.host}`}
+          toolName={tSync('repl.dialogDispatch.networkAccess')}
+          description={tSync('repl.dialogDispatch.waitingLeaderNetworkAccess', {
+            host: pendingSandboxRequest.host,
+          })}
         />
       )}
       {dialog === 'worker-sandbox-permission' && workerSandboxPermissions.queue[0] && (

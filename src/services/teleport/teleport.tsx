@@ -156,8 +156,7 @@ async function generateTitleAndBranch(
       },
       signal,
       options: {
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        querySource: 'teleport_generate_title' as any,
+        querySource: 'teleport_generate_title' as const,
         agents: [],
         isNonInteractiveSession: false,
         hasAppendSystemPrompt: false,
@@ -929,8 +928,7 @@ export async function teleportToRemote(options: {
           },
         )
         if (!bundle.success) {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          logError(new Error(`Bundle upload failed: ${(bundle as any).error}`))
+          logError(new Error(`Bundle upload failed: ${bundle.error}`))
           return null
         }
         seedBundleFileId = bundle.fileId
@@ -1111,13 +1109,11 @@ export async function teleportToRemote(options: {
         },
       )
       if (!bundle.success) {
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        logError(new Error(`Bundle upload failed: ${(bundle as any).error}`))
+        logError(new Error(`Bundle upload failed: ${bundle.error}`))
         // Only steer users to GitHub setup when there's a remote to clone from.
         const setup = repoInfo ? '. Please setup GitHub on https://zy.ai/code' : ''
         let msg: string
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        switch ((bundle as any).failReason) {
+        switch (bundle.failReason) {
           case 'empty_repo':
             msg =
               'Repository has no commits — run `git add . && git commit -m "initial"` then retry'
@@ -1126,19 +1122,16 @@ export async function teleportToRemote(options: {
             msg = `Repo is too large to teleport${setup}`
             break
           case 'git_error':
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-            msg = `Failed to create git bundle (${(bundle as any).error})${setup}`
+            msg = `Failed to create git bundle (${bundle.error})${setup}`
             break
           case undefined:
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-            msg = `Bundle upload failed: ${(bundle as any).error}${setup}`
+            msg = `Bundle upload failed: ${bundle.error}${setup}`
             break
           default: {
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-            const _exhaustive: any = (bundle as any).failReason as any
+            const _exhaustive: 'git_error' | 'too_large' | 'empty_repo' | undefined =
+              bundle.failReason
             void _exhaustive
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-            msg = `Bundle upload failed: ${(bundle as any).error}`
+            msg = `Bundle upload failed: ${bundle.error}`
           }
         }
         options.onBundleFail?.(msg)

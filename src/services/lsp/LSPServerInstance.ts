@@ -92,15 +92,22 @@ export function createLSPServerInstance(
   name: string,
   config: ScopedLspServerConfig,
 ): LSPServerInstance {
+  const configExt = config as ScopedLspServerConfig & {
+    restartOnCrash?: unknown
+    shutdownTimeout?: unknown
+    maxRestarts?: number
+    workspaceFolder?: string
+    initializationOptions?: Record<string, unknown>
+    startupTimeout?: number
+  }
+
   // Validate that unimplemented fields are not set
-  // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-  if ((config as any).restartOnCrash !== undefined) {
+  if (configExt.restartOnCrash !== undefined) {
     throw new Error(
       `LSP server '${name}': restartOnCrash is not yet implemented. Remove this field from the configuration.`,
     )
   }
-  // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-  if ((config as any).shutdownTimeout !== undefined) {
+  if (configExt.shutdownTimeout !== undefined) {
     throw new Error(
       `LSP server '${name}': shutdownTimeout is not yet implemented. Remove this field from the configuration.`,
     )
@@ -142,8 +149,7 @@ export function createLSPServerInstance(
 
     // Cap crash-recovery attempts so a persistently crashing server doesn't
     // spawn unbounded child processes on every incoming request.
-    // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-    const maxRestarts = (config as any).maxRestarts ?? 3
+    const maxRestarts = configExt.maxRestarts ?? 3
     if (state === 'error' && crashRecoveryCount > maxRestarts) {
       const error = new Error(
         `LSP server '${name}' exceeded max crash recovery attempts (${maxRestarts})`,
@@ -159,15 +165,13 @@ export function createLSPServerInstance(
       logForDebugging(`Starting LSP server instance: ${name}`)
 
       // Start the client
-      await client.start(config.command, config.args || [], {
-        env: config.env,
-        // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-        cwd: (config as any).workspaceFolder,
+      await client.start(configExt.command, configExt.args || [], {
+        env: configExt.env,
+        cwd: configExt.workspaceFolder,
       })
 
       // Initialize with workspace info
-      // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-      const workspaceFolder = (config as any).workspaceFolder || getCwd()
+      const workspaceFolder = configExt.workspaceFolder || getCwd()
       const workspaceUri = pathToFileURL(workspaceFolder).href
 
       const initParams: InitializeParams = {
@@ -183,8 +187,7 @@ export function createLSPServerInstance(
         // Required by vue-language-server, optional for others
         // Provide empty object as default to avoid undefined errors in servers
         // that expect this field to exist
-        // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-        initializationOptions: (config as any).initializationOptions ?? {},
+        initializationOptions: configExt.initializationOptions ?? {},
 
         // Modern approach (LSP 3.16+) - required for Pyright, gopls
         workspaceFolders: [
@@ -250,14 +253,11 @@ export function createLSPServerInstance(
       }
 
       initPromise = client.initialize(initParams)
-      // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-      if ((config as any).startupTimeout !== undefined) {
+      if (configExt.startupTimeout !== undefined) {
         await withTimeout(
           initPromise,
-          // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-          (config as any).startupTimeout,
-          // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-          `LSP server '${name}' timed out after ${(config as any).startupTimeout}ms during initialization`,
+          configExt.startupTimeout,
+          `LSP server '${name}' timed out after ${configExt.startupTimeout}ms during initialization`,
         )
       } else {
         await initPromise
@@ -326,8 +326,7 @@ export function createLSPServerInstance(
 
     restartCount++
 
-    // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-    const maxRestarts = (config as any).maxRestarts ?? 3
+    const maxRestarts = configExt.maxRestarts ?? 3
     if (restartCount > maxRestarts) {
       const error = new Error(`Max restart attempts (${maxRestarts}) exceeded for server '${name}'`)
       logError(error)

@@ -78,8 +78,7 @@ export function SkillsMenu({ onExit, commands }: Props) {
     mcp: [],
   }
   for (const skill of skills) {
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    const source = (skill as any).source as SkillSource
+    const source = (skill as unknown as { source: SkillSource }).source
     if (source in groups) {
       groups[source].push(skill)
     }
@@ -115,14 +114,17 @@ export function SkillsMenu({ onExit, commands }: Props) {
       </Dialog>
     )
   }
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const renderSkill = (skill_0: any) => {
+  const renderSkill = (skill_0: Command) => {
     const estimatedTokens = estimateSkillFrontmatterTokens(skill_0)
     const _tokenDisplay = `~${formatTokens(estimatedTokens)}`
+    const skillCasted = skill_0 as unknown as {
+      source: SkillSource
+      pluginInfo?: { pluginManifest: { name: string } }
+    }
     const pluginName =
-      skill_0.source === 'plugin' ? skill_0.pluginInfo?.pluginManifest.name : undefined
+      skillCasted.source === 'plugin' ? skillCasted.pluginInfo?.pluginManifest.name : undefined
     return (
-      <Box key={`${skill_0.name}-${skill_0.source}`}>
+      <Box key={`${getCommandName(skill_0)}-${skillCasted.source}`}>
         <Text>{getCommandName(skill_0)}</Text>
         <Text dimColor={true}>
           {pluginName ? ` · ${pluginName}` : ''} ·{' '}
@@ -137,8 +139,7 @@ export function SkillsMenu({ onExit, commands }: Props) {
       return null
     }
     const title = getSourceTitle(source_0)
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    const subtitle = getSourceSubtitle(source_0, groupSkills as any)
+    const subtitle = getSourceSubtitle(source_0, groupSkills as unknown as SkillCommand[])
     return (
       <Box flexDirection="column" key={source_0}>
         <Box>

@@ -34,7 +34,7 @@ import {
 } from '../services/auth/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import { logForDebugging } from '../utils/debug.js'
-import { stripDisplayTagsAllowEmpty } from '../utils/displayTags.js'
+import { stripDisplayTagsAllowEmpty } from '../utils/xmlTagUtils.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import { getBranch, getRemoteUrl } from '../utils/git.js'
@@ -454,10 +454,9 @@ export async function initReplBridge(options?: InitWireOptions): Promise<ReplWir
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { isAssistantMode } =
       // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-      require('../assistant/index.js') as any as typeof import('../assistant/index.js')
+      require('../assistant/index.js') as typeof import('../assistant/index.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
-    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-    if ((isAssistantMode as any)?.() as any) {
+    if (isAssistantMode?.() as unknown) {
       workerType = 'zy_code_assistant'
     }
   }

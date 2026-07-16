@@ -4,6 +4,7 @@ import { z } from 'zod/v4'
 import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import { buildTool, type ToolDef, type ToolUseContext } from '../../tool.js'
+import type { SetAppState } from '../../task.js'
 import {
   completeWorkflowTask,
   failWorkflowTask,
@@ -95,12 +96,10 @@ export const WorkflowTool = buildTool({
       const appState = context.getAppState()
       const tasks = appState.tasks ?? {}
       for (const [tid, task] of Object.entries(tasks)) {
-        // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-        const t = task as any
         if (
-          t.type === 'local_workflow' &&
-          t.status === 'running' &&
-          t.workflowId === resumeFromRunId
+          task.type === 'local_workflow' &&
+          task.status === 'running' &&
+          task.workflowId === resumeFromRunId
         ) {
           return {
             data: {
@@ -175,16 +174,13 @@ export const WorkflowTool = buildTool({
 
     // resume 时清理旧的已完成 task 条目
     if (resumeFromRunId) {
-      // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-      setAppState((prev: any) => {
+      setAppState((prev) => {
         const tasks = { ...prev.tasks }
         for (const [tid, task] of Object.entries(tasks)) {
-          // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-          const t = task as any
           if (
-            t.type === 'local_workflow' &&
-            t.workflowId === resumeFromRunId &&
-            t.status !== 'running'
+            task.type === 'local_workflow' &&
+            task.workflowId === resumeFromRunId &&
+            task.status !== 'running'
           ) {
             delete tasks[tid]
           }
@@ -278,13 +274,11 @@ export const WorkflowTool = buildTool({
 
 async function executeWorkflowAsync(
   source: string,
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  args: any,
+  args: unknown,
   toolUseContext: ToolUseContext,
   taskId: string,
   outputFile: string,
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  setAppState: (f: (prev: any) => any) => void,
+  setAppState: SetAppState,
   _meta: { name: string; description: string },
   journal: WorkflowJournal,
   workflowSize?: 'small' | 'medium' | 'large' | null,

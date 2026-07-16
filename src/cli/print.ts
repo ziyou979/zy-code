@@ -24,7 +24,7 @@ import {
   isBuiltInAgent,
   parseAgentsFromJson,
 } from 'src/tools/AgentTool/loadAgentsDir.js'
-import type { Message, UserMessage } from 'src/types/message.js'
+import type { Message, MessageOrigin, UserMessage } from 'src/types/message.js'
 import type { QueuedCommand } from 'src/types/textInputTypes.js'
 import {
   enqueue,
@@ -74,6 +74,7 @@ import { createIdleTimeoutManager } from 'src/utils/idleTimeout.js'
 import type {
   WireStatus,
   ModelInfo,
+  AccountInfo,
   WireMessage,
   WireUserMessage,
   WireUserMessageReplay,
@@ -102,7 +103,7 @@ import {
   outputSchema as permissionToolOutputSchema,
   permissionPromptToolResultToPermissionDecision,
 } from 'src/services/permissions/permissionPromptToolResultSchema.js'
-import { createCombinedAbortSignal } from 'src/utils/combinedAbortSignal.js'
+import { createCombinedAbortSignal } from 'src/utils/abortController.js'
 import {
   processSessionStartHooks,
   processSetupHooks,
@@ -1580,11 +1581,9 @@ export async function handleInitializeRequest(
     })),
     output_style: outputStyle,
     available_output_styles: Object.keys(availableOutputStyles),
-    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-    models: modelInfos as any,
+    models: modelInfos,
     account: {
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      email: (accountInfo as any)?.email,
+      email: accountInfo?.email,
       organization: accountInfo?.organization,
       subscriptionType: accountInfo?.subscription,
       tokenSource: accountInfo?.tokenSource,
@@ -1592,9 +1591,8 @@ export async function handleInitializeRequest(
       // getAccountInformation() returns undefined under 3P providers, so the
       // other fields are all absent. apiProvider disambiguates "not logged
       // in" (direct API + tokenSource:none) from "3P, login not applicable".
-      apiProvider: getAPIProvider(),
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-    } as any,
+      apiProvider: getAPIProvider() as AccountInfo['apiProvider'],
+    } satisfies AccountInfo,
     pid: process.pid,
   }
 
@@ -1603,8 +1601,7 @@ export async function handleInitializeRequest(
     response: {
       subtype: 'success',
       request_id: requestId,
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      response: initResponse as any,
+      response: initResponse as unknown as Record<string, unknown>,
     },
   })
 
@@ -1841,8 +1838,11 @@ export function handleChannelEnable(
         value: wrapChannelMessage(serverName, content, meta),
         priority: 'next',
         isMeta: true,
-        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-        origin: { kind: 'channel', server: serverName } as any,
+        origin: {
+          kind: 'channel',
+          channel: serverName,
+          server: serverName,
+        } satisfies MessageOrigin,
         skipSlashCommands: true,
       })
     },
@@ -1915,8 +1915,11 @@ export function reregisterChannelHandlerAfterReconnect(connection: MCPServerConn
         value: wrapChannelMessage(connection.name, content, meta),
         priority: 'next',
         isMeta: true,
-        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-        origin: { kind: 'channel', server: connection.name } as any,
+        origin: {
+          kind: 'channel',
+          channel: connection.name,
+          server: connection.name,
+        } satisfies MessageOrigin,
         skipSlashCommands: true,
       })
     },

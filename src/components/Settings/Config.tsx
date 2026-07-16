@@ -730,8 +730,8 @@ export function Config({
       id: 'notifChannel',
       label:
         feature('KAIROS') || feature('KAIROS_PUSH_NOTIFICATION')
-          ? 'Local notifications'
-          : 'Notifications',
+          ? tSync('settings.localNotifications')
+          : tSync('settings.notifications'),
       value: globalConfig.preferredNotifChannel,
       options: [
         'auto',
@@ -1023,7 +1023,9 @@ export function Config({
     ...(isAgentSwarmsEnabled()
       ? (() => {
           const cliOverride = getCliTeammateModeOverride()
-          const label = cliOverride ? `Teammate mode [overridden: ${cliOverride}]` : 'Teammate mode'
+          const label = cliOverride
+            ? tSync('settings.teammateModeOverridden', { mode: cliOverride })
+            : tSync('settings.teammateMode')
           return [
             {
               id: 'teammateMode',
@@ -1147,10 +1149,11 @@ export function Config({
             id: 'apiKey',
             label: (
               <Text>
-                Use API key: <Text bold>{normalizeApiKeyForConfig(process.env.ZY_API_KEY)}</Text>
+                {tSync('settings.useApiKey')}:{' '}
+                <Text bold>{normalizeApiKeyForConfig(process.env.ZY_API_KEY)}</Text>
               </Text>
             ),
-            searchText: 'Use API key',
+            searchText: tSync('settings.useApiKey'),
             value: Boolean(
               process.env.ZY_API_KEY &&
                 globalConfig.apiKeyResponses?.approved?.includes(
@@ -1288,7 +1291,10 @@ export function Config({
         key: key as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: value_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
-      return `Set ${key} to ${chalk.bold(value_2)}`
+      return tSync('settings.setChanged', {
+        key,
+        value: chalk.bold(value_2),
+      })
     })
     // Check for API key changes
     // On homespace, ZY_API_KEY is preserved in process.env for child
@@ -1305,95 +1311,133 @@ export function Config({
         globalConfig.apiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)),
     )
     if (initialUsingCustomKey !== currentUsingCustomKey) {
-      formattedChanges.push(`${currentUsingCustomKey ? 'Enabled' : 'Disabled'} API key`)
+      formattedChanges.push(
+        currentUsingCustomKey ? tSync('settings.enabledApiKey') : tSync('settings.disabledApiKey'),
+      )
       logEvent('zy_config_changed', {
         key: 'env.ZY_API_KEY' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: currentUsingCustomKey as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
     }
     if (globalConfig.theme !== initialConfig.current.theme) {
-      formattedChanges.push(`Set theme to ${chalk.bold(globalConfig.theme)}`)
+      formattedChanges.push(tSync('settings.setTheme', { value: chalk.bold(globalConfig.theme) }))
     }
     if (globalConfig.preferredNotifChannel !== initialConfig.current.preferredNotifChannel) {
       formattedChanges.push(
-        `Set notifications to ${chalk.bold(globalConfig.preferredNotifChannel)}`,
+        tSync('settings.setNotifications', {
+          value: chalk.bold(globalConfig.preferredNotifChannel),
+        }),
       )
     }
     if (currentOutputStyle !== initialOutputStyle.current) {
-      formattedChanges.push(`Set output style to ${chalk.bold(currentOutputStyle)}`)
+      formattedChanges.push(
+        tSync('settings.setOutputStyle', { value: chalk.bold(currentOutputStyle) }),
+      )
     }
     if (currentLanguage !== initialLanguage.current) {
       formattedChanges.push(
-        `Set response language to ${chalk.bold(currentLanguage ?? 'Default (English)')}`,
+        tSync('settings.setLanguage', {
+          value: chalk.bold(currentLanguage ?? tSync('settings.defaultEnglish')),
+        }),
       )
     }
     if (globalConfig.editorMode !== initialConfig.current.editorMode) {
-      formattedChanges.push(`Set editor mode to ${chalk.bold(globalConfig.editorMode || 'emacs')}`)
+      formattedChanges.push(
+        tSync('settings.setEditorMode', {
+          value: chalk.bold(globalConfig.editorMode || 'emacs'),
+        }),
+      )
     }
     if (globalConfig.diffTool !== initialConfig.current.diffTool) {
-      formattedChanges.push(`Set diff tool to ${chalk.bold(globalConfig.diffTool)}`)
+      formattedChanges.push(
+        tSync('settings.setDiffTool', { value: chalk.bold(globalConfig.diffTool) }),
+      )
     }
     if (globalConfig.autoConnectIde !== initialConfig.current.autoConnectIde) {
       formattedChanges.push(
-        `${globalConfig.autoConnectIde ? 'Enabled' : 'Disabled'} auto-connect to IDE`,
+        globalConfig.autoConnectIde
+          ? tSync('settings.enabledAutoConnectIde')
+          : tSync('settings.disabledAutoConnectIde'),
       )
     }
     if (globalConfig.autoInstallIdeExtension !== initialConfig.current.autoInstallIdeExtension) {
       formattedChanges.push(
-        `${globalConfig.autoInstallIdeExtension ? 'Enabled' : 'Disabled'} auto-install IDE extension`,
+        globalConfig.autoInstallIdeExtension
+          ? tSync('settings.enabledAutoInstallIdeExtension')
+          : tSync('settings.disabledAutoInstallIdeExtension'),
       )
     }
     if (globalConfig.autoCompactEnabled !== initialConfig.current.autoCompactEnabled) {
       formattedChanges.push(
-        `${globalConfig.autoCompactEnabled ? 'Enabled' : 'Disabled'} auto-compact`,
+        globalConfig.autoCompactEnabled
+          ? tSync('settings.enabledAutoCompact')
+          : tSync('settings.disabledAutoCompact'),
       )
     }
     if (globalConfig.respectGitignore !== initialConfig.current.respectGitignore) {
       formattedChanges.push(
-        `${globalConfig.respectGitignore ? 'Enabled' : 'Disabled'} respect .gitignore in file picker`,
+        globalConfig.respectGitignore
+          ? tSync('settings.enabledRespectGitignore')
+          : tSync('settings.disabledRespectGitignore'),
       )
     }
     if (globalConfig.copyFullResponse !== initialConfig.current.copyFullResponse) {
       formattedChanges.push(
-        `${globalConfig.copyFullResponse ? 'Enabled' : 'Disabled'} always copy full response`,
+        globalConfig.copyFullResponse
+          ? tSync('settings.enabledCopyFullResponse')
+          : tSync('settings.disabledCopyFullResponse'),
       )
     }
     if (globalConfig.copyOnSelect !== initialConfig.current.copyOnSelect) {
-      formattedChanges.push(`${globalConfig.copyOnSelect ? 'Enabled' : 'Disabled'} copy on select`)
+      formattedChanges.push(
+        globalConfig.copyOnSelect
+          ? tSync('settings.enabledCopyOnSelect')
+          : tSync('settings.disabledCopyOnSelect'),
+      )
     }
     if (
       globalConfig.terminalProgressBarEnabled !== initialConfig.current.terminalProgressBarEnabled
     ) {
       formattedChanges.push(
-        `${globalConfig.terminalProgressBarEnabled ? 'Enabled' : 'Disabled'} terminal progress bar`,
+        globalConfig.terminalProgressBarEnabled
+          ? tSync('settings.enabledTerminalProgressBar')
+          : tSync('settings.disabledTerminalProgressBar'),
       )
     }
     if (globalConfig.showStatusInTerminalTab !== initialConfig.current.showStatusInTerminalTab) {
       formattedChanges.push(
-        `${globalConfig.showStatusInTerminalTab ? 'Enabled' : 'Disabled'} terminal tab status`,
+        globalConfig.showStatusInTerminalTab
+          ? tSync('settings.enabledTerminalTabStatus')
+          : tSync('settings.disabledTerminalTabStatus'),
       )
     }
     if (globalConfig.showTurnDuration !== initialConfig.current.showTurnDuration) {
       formattedChanges.push(
-        `${globalConfig.showTurnDuration ? 'Enabled' : 'Disabled'} turn duration`,
+        globalConfig.showTurnDuration
+          ? tSync('settings.enabledTurnDuration')
+          : tSync('settings.disabledTurnDuration'),
       )
     }
     if (globalConfig.remoteControlAtStartup !== initialConfig.current.remoteControlAtStartup) {
       const remoteLabel =
         globalConfig.remoteControlAtStartup === undefined
-          ? 'Reset Remote Control to default'
-          : `${globalConfig.remoteControlAtStartup ? 'Enabled' : 'Disabled'} Remote Control for all sessions`
+          ? tSync('settings.resetRemoteControlDefault')
+          : globalConfig.remoteControlAtStartup
+            ? tSync('settings.enabledRemoteControl')
+            : tSync('settings.disabledRemoteControl')
       formattedChanges.push(remoteLabel)
     }
     if (settingsData?.autoUpdatesChannel !== initialSettingsData.current?.autoUpdatesChannel) {
       formattedChanges.push(
-        `Set auto-update channel to ${chalk.bold(settingsData?.autoUpdatesChannel ?? 'latest')}`,
+        tSync('settings.setAutoUpdateChannel', {
+          value: chalk.bold(settingsData?.autoUpdatesChannel ?? 'latest'),
+        }),
       )
     }
     if (formattedChanges.length > 0) {
       onClose(formattedChanges.join('\n'))
     } else {
-      onClose('Config dialog dismissed', {
+      onClose(tSync('settings.configDialogDismissed'), {
         display: 'system',
       })
     }
@@ -1506,7 +1550,7 @@ export function Config({
     if (isDirty.current) {
       revertChanges()
     }
-    onClose('Config dialog dismissed', {
+    onClose(tSync('settings.configDialogDismissed'), {
       display: 'system',
     })
   }, [showSubmenu, revertChanges, onClose])
@@ -1752,7 +1796,7 @@ export function Config({
                   action="confirm:no"
                   context="Confirmation"
                   fallback="Esc"
-                  description="cancel"
+                  description={tSync('settings.shortcuts.cancel')}
                 />
               </Byline>
             </Text>
@@ -1780,7 +1824,7 @@ export function Config({
                 action="confirm:no"
                 context="Confirmation"
                 fallback="Esc"
-                description="cancel"
+                description={tSync('settings.shortcuts.cancel')}
               />
             </Byline>
           </Text>
@@ -1790,7 +1834,7 @@ export function Config({
           <ModelPicker
             initial={globalConfig.teammateDefaultModel ?? null}
             skipSettingsWrite
-            headerText="Default model for newly spawned teammates. The leader can override via the tool call's model parameter."
+            headerText={tSync('settings.teammateModelHeader')}
             onSelect={(model_1, _effort_0) => {
               setShowSubmenu(null)
               setTabsHidden(false)
@@ -1833,7 +1877,7 @@ export function Config({
                 action="confirm:no"
                 context="Confirmation"
                 fallback="Esc"
-                description="cancel"
+                description={tSync('settings.shortcuts.cancel')}
               />
             </Byline>
           </Text>
@@ -1855,7 +1899,7 @@ export function Config({
                 action="confirm:no"
                 context="Confirmation"
                 fallback="Esc"
-                description="disable external includes"
+                description={tSync('settings.shortcuts.disableExternalIncludes')}
               />
             </Byline>
           </Text>
@@ -1895,7 +1939,7 @@ export function Config({
                 action="confirm:no"
                 context="Confirmation"
                 fallback="Esc"
-                description="cancel"
+                description={tSync('settings.shortcuts.cancel')}
               />
             </Byline>
           </Text>
@@ -1936,14 +1980,14 @@ export function Config({
                 action="confirm:no"
                 context="Settings"
                 fallback="Esc"
-                description="cancel"
+                description={tSync('settings.shortcuts.cancel')}
               />
             </Byline>
           </Text>
         </>
       ) : showSubmenu === 'EnableAutoUpdates' ? (
         <Dialog
-          title="Enable Auto-Updates"
+          title={tSync('settings.enableAutoUpdatesTitle')}
           onCancel={() => {
             setShowSubmenu(null)
             setTabsHidden(false)
@@ -1955,12 +1999,14 @@ export function Config({
             <>
               <Text>
                 {autoUpdaterDisabledReason?.type === 'env'
-                  ? 'Auto-updates are controlled by an environment variable and cannot be changed here.'
-                  : 'Auto-updates are disabled in development builds.'}
+                  ? tSync('settings.autoUpdatesDisabledEnv')
+                  : tSync('settings.autoUpdatesDisabledDev')}
               </Text>
               {autoUpdaterDisabledReason?.type === 'env' && (
                 <Text dimColor>
-                  Unset {autoUpdaterDisabledReason.envVar} to re-enable auto-updates.
+                  {tSync('settings.autoUpdatesUnsetEnv', {
+                    envVar: autoUpdaterDisabledReason.envVar,
+                  })}
                 </Text>
               )}
             </>
@@ -2081,8 +2127,7 @@ export function Config({
                                 {showThinkingWarning && setting_2.id === 'thinkingEnabled' && (
                                   <Text color="warning">
                                     {' '}
-                                    Changing thinking mode mid-conversation will increase latency
-                                    and may reduce quality.
+                                    {tSync('settings.thinkingMidConversationWarning')}
                                   </Text>
                                 )}
                               </>
@@ -2102,7 +2147,9 @@ export function Config({
                             ) : setting_2.id === 'autoUpdatesChannel' &&
                               autoUpdaterDisabledReason ? (
                               <Box flexDirection="column">
-                                <Text color={isSelected ? 'suggestion' : undefined}>disabled</Text>
+                                <Text color={isSelected ? 'suggestion' : undefined}>
+                                  {tSync('settings.disabled')}
+                                </Text>
                                 <Text dimColor>
                                   ({formatAutoUpdaterDisabledReason(autoUpdaterDisabledReason)})
                                 </Text>
@@ -2137,7 +2184,7 @@ export function Config({
                   action="confirm:no"
                   context="Settings"
                   fallback="Esc"
-                  description="close"
+                  description={tSync('settings.shortcuts.close')}
                 />
               </Byline>
             </Text>
@@ -2151,7 +2198,7 @@ export function Config({
                   action="confirm:no"
                   context="Settings"
                   fallback="Esc"
-                  description="clear"
+                  description={tSync('settings.shortcuts.clear')}
                 />
               </Byline>
             </Text>
@@ -2162,25 +2209,25 @@ export function Config({
                   action="select:accept"
                   context="Settings"
                   fallback="Space"
-                  description="change"
+                  description={tSync('settings.shortcuts.change')}
                 />
                 <ConfigurableShortcutHint
                   action="settings:close"
                   context="Settings"
                   fallback="Enter"
-                  description="save"
+                  description={tSync('settings.shortcuts.save')}
                 />
                 <ConfigurableShortcutHint
                   action="settings:search"
                   context="Settings"
                   fallback="/"
-                  description="search"
+                  description={tSync('settings.shortcuts.search')}
                 />
                 <ConfigurableShortcutHint
                   action="confirm:no"
                   context="Settings"
                   fallback="Esc"
-                  description="cancel"
+                  description={tSync('settings.shortcuts.cancel')}
                 />
               </Byline>
             </Text>
@@ -2195,53 +2242,57 @@ function teammateModelDisplayString(value: string | null | undefined): string {
     return modelDisplayString(getTeammateModelFallback())
   }
   if (value === null) {
-    return "Default (leader's model)"
+    return tSync('settings.defaultLeaderModel')
   }
   return modelDisplayString(value)
 }
 const THEME_LABELS: Record<string, string> = {
-  auto: 'Auto (match terminal)',
-  dark: 'Dark mode',
-  light: 'Light mode',
-  'dark-daltonized': 'Dark mode (colorblind-friendly)',
-  'light-daltonized': 'Light mode (colorblind-friendly)',
-  'dark-ansi': 'Dark mode (ANSI colors only)',
-  'light-ansi': 'Light mode (ANSI colors only)',
+  auto: tSync('settings.themeAuto'),
+  dark: tSync('settings.themeDark'),
+  light: tSync('settings.themeLight'),
+  'dark-daltonized': tSync('settings.themeDarkDaltonized'),
+  'light-daltonized': tSync('settings.themeLightDaltonized'),
+  'dark-ansi': tSync('settings.themeDarkAnsi'),
+  'light-ansi': tSync('settings.themeLightAnsi'),
 }
 function NotifChannelLabel({ value }: { value: string }) {
   switch (value) {
     case 'auto': {
-      return 'Auto'
+      return tSync('settings.notifChannelAuto')
     }
     case 'iterm2':
       return (
         <Text>
-          iTerm2 <Text dimColor={true}>(OSC 9)</Text>
+          {tSync('settings.notifChannelITerm2')}{' '}
+          <Text dimColor={true}>{tSync('settings.notifChannelITerm2Desc')}</Text>
         </Text>
       )
     case 'terminal_bell':
       return (
         <Text>
-          Terminal Bell <Text dimColor={true}>(\a)</Text>
+          {tSync('settings.notifChannelTerminalBell')}{' '}
+          <Text dimColor={true}>{tSync('settings.notifChannelTerminalBellDesc')}</Text>
         </Text>
       )
     case 'kitty':
       return (
         <Text>
-          Kitty <Text dimColor={true}>(OSC 99)</Text>
+          {tSync('settings.notifChannelKitty')}{' '}
+          <Text dimColor={true}>{tSync('settings.notifChannelKittyDesc')}</Text>
         </Text>
       )
     case 'ghostty':
       return (
         <Text>
-          Ghostty <Text dimColor={true}>(OSC 777)</Text>
+          {tSync('settings.notifChannelGhostty')}{' '}
+          <Text dimColor={true}>{tSync('settings.notifChannelGhosttyDesc')}</Text>
         </Text>
       )
     case 'iterm2_with_bell': {
-      return 'iTerm2 w/ Bell'
+      return tSync('settings.notifChannelITerm2WithBell')
     }
     case 'notifications_disabled': {
-      return 'Disabled'
+      return tSync('settings.notifChannelDisabled')
     }
     default: {
       return value

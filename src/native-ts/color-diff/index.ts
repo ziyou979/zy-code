@@ -442,13 +442,20 @@ function detectLanguage(filePath: string, firstLine: string | null): string | nu
   // 基于文件名查找（处理 Dockerfile、Makefile、CMakeLists.txt 等）
   const stem = base.split('.')[0] ?? ''
   const byName = FILENAME_LANGS[base] ?? FILENAME_LANGS[stem]
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  if (byName && (hljs() as any).getLanguage(byName)) {
+  const hljsApi = hljs() as unknown as {
+    getLanguage: (name: string) => unknown
+    highlight: (
+      code: string,
+      options: { language: string; ignoreIllegals: boolean },
+    ) => {
+      _emitter: { rootNode: HljsNode }
+    }
+  }
+  if (byName && hljsApi.getLanguage(byName)) {
     return byName
   }
   if (ext) {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const lang = (hljs() as any).getLanguage(ext)
+    const lang = hljsApi.getLanguage(ext)
     if (lang) {
       return ext
     }
@@ -540,8 +547,15 @@ function highlightLine(
   }
   let result
   try {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    result = (hljs() as any).highlight(code, {
+    const hljsApi = hljs() as unknown as {
+      highlight: (
+        code: string,
+        options: { language: string; ignoreIllegals: boolean },
+      ) => {
+        _emitter: { rootNode: HljsNode }
+      }
+    }
+    result = hljsApi.highlight(code, {
       language: state.lang,
       ignoreIllegals: true,
     })

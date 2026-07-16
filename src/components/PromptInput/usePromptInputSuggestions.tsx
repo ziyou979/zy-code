@@ -209,12 +209,9 @@ export function usePromptInputSuggestions(context: ReturnType<typeof usePromptIn
       const name = match[2]
 
       // Check if this name matches a team member
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      const member = memberValues.find((t: any) => t.name === name)
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      if ((member as any)?.color) {
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        const themeColor = AGENT_COLOR_TO_THEME_COLOR[(member as any).color as AgentColorName]
+      const member = memberValues.find((t: { name: string }) => t.name === name)
+      if (member?.color) {
+        const themeColor = AGENT_COLOR_TO_THEME_COLOR[member.color as AgentColorName]
         if (themeColor) {
           highlights.push({
             start: nameStart,

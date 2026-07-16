@@ -1,6 +1,7 @@
 // Minimal cron expression parsing and next-run calculation.
 //
 // Supports the standard 5-field cron subset:
+import { formatTimeShort } from './dateUtils.js'
 //   minute hour day-of-month month day-of-week
 //
 // Field syntax: wildcard, N, step (star-slash-N), range (N-M), list (N,M,...).
@@ -206,7 +207,7 @@ function formatLocalTime(minute: number, hour: number): string {
   // January 1 — no DST gap anywhere. Using `new Date()` (today) would roll
   // 2am→3am on the one spring-forward day per year.
   const d = new Date(2000, 0, 1, hour, minute)
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return formatTimeShort(d)
 }
 
 function formatUtcTimeAsLocal(minute: number, hour: number): string {

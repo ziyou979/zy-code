@@ -1,5 +1,6 @@
 import { Box, Text } from '../../ink.js'
 import type { Workflow } from './types.js'
+import { tSync } from '../../i18n/index.js'
 
 interface CreatingStepProps {
   currentWorkflowInstallStep: number
@@ -19,26 +20,28 @@ export function CreatingStep({
 }: CreatingStepProps) {
   const progressSteps = skipWorkflow
     ? [
-        'Getting repository information',
+        tSync('installGitHubApp.stepGettingRepoInfo'),
         secretExists && useExistingSecret
-          ? 'Using existing API key secret'
-          : `Setting up ${secretName} secret`,
+          ? tSync('installGitHubApp.stepUsingExistingSecret')
+          : tSync('installGitHubApp.stepSettingUpSecret', { secretName }),
       ]
     : [
-        'Getting repository information',
-        'Creating branch',
-        selectedWorkflows.length > 1 ? 'Creating workflow files' : 'Creating workflow file',
+        tSync('installGitHubApp.stepGettingRepoInfo'),
+        tSync('installGitHubApp.stepCreatingBranch'),
+        selectedWorkflows.length > 1
+          ? tSync('installGitHubApp.stepCreatingWorkflowFiles')
+          : tSync('installGitHubApp.stepCreatingWorkflowFile'),
         secretExists && useExistingSecret
-          ? 'Using existing API key secret'
-          : `Setting up ${secretName} secret`,
-        'Opening pull request page',
+          ? tSync('installGitHubApp.stepUsingExistingSecret')
+          : tSync('installGitHubApp.stepSettingUpSecret', { secretName }),
+        tSync('installGitHubApp.stepOpeningPrPage'),
       ]
   return (
     <Box flexDirection="column" borderStyle="round" paddingX={1}>
       {
         <Box flexDirection="column" marginBottom={1}>
-          <Text bold={true}>Install GitHub App</Text>
-          <Text dimColor={true}>Create GitHub Actions workflow</Text>
+          <Text bold={true}>{tSync('installGitHubApp.installTitle')}</Text>
+          <Text dimColor={true}>{tSync('installGitHubApp.creatingWorkflow')}</Text>
         </Box>
       }
       {progressSteps.map((stepText, index) => {

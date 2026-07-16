@@ -481,8 +481,7 @@ const getCommandPrefix = createCommandPrefixExtractor({
   toolName: 'Bash',
   policySpec: BASH_POLICY_SPEC,
   eventName: 'zy_bash_prefix',
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  querySource: 'bash_extract_prefix' as any,
+  querySource: 'bash_extract_prefix' as const,
   preCheck: (command) => (isHelpCommand(command) ? { commandPrefix: command } : null),
 })
 

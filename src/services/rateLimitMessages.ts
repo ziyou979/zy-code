@@ -98,8 +98,7 @@ export function getRateLimitMessage(limits: ZyAILimits, model: string): RateLimi
     // if overages are enabled - they'll seamlessly roll into overage
     const subscriptionType = getSubscriptionType()
     const isTeamOrEnterprise =
-      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-      (subscriptionType as any) === 'team' || (subscriptionType as any) === 'enterprise'
+      (subscriptionType as string) === 'team' || (subscriptionType as string) === 'enterprise'
     const hasExtraUsageEnabled = getOauthAccountInfo()?.hasExtraUsageEnabled === true
 
     if (isTeamOrEnterprise && hasExtraUsageEnabled && !hasZyAiBillingAccess()) {
@@ -272,8 +271,7 @@ function getWarningUpsellText(rateLimitType: ZyAILimits['rateLimitType']): strin
   if (rateLimitType === 'five_hour') {
     // Teams/Enterprise with overages disabled: prompt to request extra usage
     // Only show if overage provisioning is allowed for this org type (e.g., not AWS marketplace)
-    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    if ((subscriptionType as any) === 'team' || (subscriptionType as any) === 'enterprise') {
+    if ((subscriptionType as string) === 'team' || (subscriptionType as string) === 'enterprise') {
       if (!hasExtraUsageEnabled && isOverageProvisioningAllowed()) {
         return tSync('rateLimit.upsell.requestAdmin')
       }
@@ -282,8 +280,7 @@ function getWarningUpsellText(rateLimitType: ZyAILimits['rateLimitType']): strin
     }
 
     // Pro/Max users: prompt to upgrade
-    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    if ((subscriptionType as any) === 'pro' || (subscriptionType as any) === 'max') {
+    if ((subscriptionType as string) === 'pro' || (subscriptionType as string) === 'max') {
       return tSync('rateLimit.upsell.upgrade')
     }
   }
@@ -291,7 +288,7 @@ function getWarningUpsellText(rateLimitType: ZyAILimits['rateLimitType']): strin
   // Overage warning (approaching spending limit)
   if (rateLimitType === 'overage') {
     // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    if ((subscriptionType as any) === 'team' || (subscriptionType as any) === 'enterprise') {
+    if ((subscriptionType as string) === 'team' || (subscriptionType as string) === 'enterprise') {
       if (!hasExtraUsageEnabled && isOverageProvisioningAllowed()) {
         return tSync('rateLimit.upsell.requestAdmin')
       }

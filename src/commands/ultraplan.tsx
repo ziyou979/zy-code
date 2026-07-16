@@ -23,6 +23,7 @@ import {
   registerRemoteAgentTask,
 } from '../tasks/remote-agent-task/RemoteAgentTask.js'
 import type { LocalJSXCommandCall } from './types.js'
+import { tSync } from '../i18n/index.js'
 import { logForDebugging } from '../utils/debug.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
@@ -148,11 +149,10 @@ function startDetachedPoll(
             : prev,
         )
         enqueuePendingNotification({
-          value: [
-            `Ultraplan approved — executing in ZY Code on the web. Follow along at: ${url}`,
-            '',
-            'Results will land as a pull request when the remote session finishes. There is nothing to do here.',
-          ].join('\n'),
+          value:
+            tSync('misc.ultraplan.remoteApproved', { url }) +
+            '\n\n' +
+            tSync('misc.ultraplan.remoteResults'),
           mode: 'task-notification',
         })
       } else {
@@ -192,7 +192,7 @@ function startDetachedPoll(
         reject_count: e instanceof UltraplanPollError ? e.rejectCount : undefined,
       })
       enqueuePendingNotification({
-        value: `Ultraplan failed: ${errorMessage(e)}\n\nSession: ${url}`,
+        value: tSync('misc.ultraplan.failed', { error: errorMessage(e), url }),
         mode: 'task-notification',
       })
       // Error path owns cleanup; teleport path defers to the dialog; remote
@@ -236,15 +236,22 @@ function startDetachedPoll(
 // multi-second teleportToRemote round-trip.
 function buildLaunchMessage(disconnectedBridge?: boolean): string {
   const prefix = disconnectedBridge ? `${REMOTE_CONTROL_DISCONNECTED_MSG} ` : ''
-  return `${DIAMOND_OPEN} ultraplan\n${prefix}Starting ZY Code on the web…`
+  return tSync('misc.ultraplan.launching', {
+    diamond: DIAMOND_OPEN,
+    prefix,
+  })
 }
 function buildSessionReadyMessage(url: string): string {
-  return `${DIAMOND_OPEN} ultraplan · Monitor progress in ZY Code on the web ${url}\nYou can continue working — when the ${DIAMOND_OPEN} fills, press ↓ to view results`
+  return (
+    tSync('misc.ultraplan.sessionReady', { diamond: DIAMOND_OPEN, url }) +
+    '\n' +
+    tSync('misc.ultraplan.sessionReadyHint', { diamond: DIAMOND_OPEN })
+  )
 }
 function buildAlreadyActiveMessage(url: string | undefined): string {
   return url
-    ? `ultraplan: already polling. Open ${url} to check status, or wait for the plan to land here.`
-    : 'ultraplan: already launching. Please wait for the session to start.'
+    ? tSync('misc.ultraplan.alreadyPolling', { url })
+    : tSync('misc.ultraplan.alreadyLaunching')
 }
 
 /**
@@ -274,12 +281,11 @@ export async function stopUltraplan(
   )
   const url = getRemoteSessionUrl(sessionId, process.env.SESSION_INGRESS_URL)
   enqueuePendingNotification({
-    value: `Ultraplan stopped.\n\nSession: ${url}`,
+    value: tSync('misc.ultraplan.stopped', { url }),
     mode: 'task-notification',
   })
   enqueuePendingNotification({
-    value:
-      'The user stopped the ultraplan session above. Do not respond to the stop notification — wait for their next message.',
+    value: tSync('misc.ultraplan.stoppedMeta'),
     mode: 'task-notification',
     isMeta: true,
   })
@@ -327,16 +333,16 @@ export async function launchUltraplan(opts: {
     return [
       // Rendered via <Markdown>; raw <message> is tokenized as HTML
       // and dropped. Backslash-escape the brackets.
-      'Usage: /ultraplan \\<prompt\\>, or include "ultraplan" anywhere',
-      'in your prompt',
+      tSync('commands.ultraplan.usage'),
+      tSync('commands.ultraplan.usageHint'),
       '',
-      'Advanced multi-agent plan mode with our most powerful model',
-      '(Opus). Runs in ZY Code on the web. When the plan is ready,',
-      'you can execute it in the web session or send it back here.',
-      'Terminal stays free while the remote plans.',
-      'Requires /login.',
+      tSync('commands.ultraplan.usageDesc'),
+      tSync('commands.ultraplan.usageDescModel'),
+      tSync('commands.ultraplan.usageDescExecute'),
+      tSync('commands.ultraplan.usageDescFree'),
+      tSync('commands.ultraplan.usageRequiresLogin'),
       '',
-      `Terms: ${CCR_TERMS_URL}`,
+      tSync('commands.ultraplan.usageTerms', { termsUrl: CCR_TERMS_URL }),
     ].join('\n')
   }
 
@@ -378,16 +384,13 @@ async function launchDetached(opts: {
     if (!eligibility.eligible) {
       logEvent('zy_ultraplan_create_failed', {
         reason: 'precondition' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        precondition_errors: (eligibility as any).errors
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          .map((e: any) => e.type)
+        precondition_errors: eligibility.errors
+          .map((e: { type: string }) => e.type)
           .join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      const reasons = ((eligibility as any).errors as any[]).map(formatPreconditionError).join('\n')
+      const reasons = eligibility.errors.map(formatPreconditionError).join('\n')
       enqueuePendingNotification({
-        value: `ultraplan: cannot launch remote session —\n${reasons}`,
+        value: tSync('misc.ultraplan.cannotLaunch', { reasons }),
         mode: 'task-notification',
       })
       return
@@ -396,7 +399,7 @@ async function launchDetached(opts: {
     let bundleFailMsg: string | undefined
     const session = await teleportToRemote({
       initialMessage: prompt,
-      description: blurb || 'Refine local plan',
+      description: blurb || tSync('misc.ultraplan.defaultTitle'),
       model,
       permissionMode: 'plan',
       ultraplan: true,
@@ -413,7 +416,9 @@ async function launchDetached(opts: {
           : 'teleport_null') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       enqueuePendingNotification({
-        value: `ultraplan: session creation failed${bundleFailMsg ? ` — ${bundleFailMsg}` : ''}. See --debug for details.`,
+        value: tSync('misc.ultraplan.sessionFailed', {
+          bundleMsg: bundleFailMsg ? ` — ${bundleFailMsg}` : '',
+        }),
         mode: 'task-notification',
       })
       return
@@ -436,7 +441,7 @@ async function launchDetached(opts: {
       remoteTaskType: 'ultraplan',
       session: {
         id: session.id,
-        title: blurb || 'Ultraplan',
+        title: blurb || tSync('misc.ultraplan.taskTitle'),
       },
       command: blurb,
       context: {
@@ -453,7 +458,7 @@ async function launchDetached(opts: {
       reason: 'unexpected_error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     enqueuePendingNotification({
-      value: `ultraplan: unexpected error — ${errorMessage(e)}`,
+      value: tSync('misc.ultraplan.unexpectedError', { error: errorMessage(e) }),
       mode: 'task-notification',
     })
     if (sessionId) {
@@ -537,8 +542,8 @@ const call: LocalJSXCommandCall = async (onDone, context, args) => {
 export default {
   type: 'local-jsx',
   name: 'ultraplan',
-  description: `~10–30 min · ZY Code on the web drafts an advanced plan you can edit and approve. See ${CCR_TERMS_URL}`,
-  argumentHint: '<prompt>',
+  description: tSync('commands.ultraplan.description', { termsUrl: CCR_TERMS_URL }),
+  argumentHint: tSync('commands.ultraplan.argumentHint'),
   isEnabled: () => isInternalBuild(),
   load: () =>
     Promise.resolve({

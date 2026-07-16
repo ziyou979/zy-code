@@ -21,11 +21,9 @@ import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
 import { findModifiedFiles, getEnvironmentKind, logDebug } from './outputsScanner.js'
 import {
   DEFAULT_UPLOAD_CONCURRENCY,
-  type FailedPersistence,
   FILE_COUNT_LIMIT,
   type FilesPersistedEventData,
   OUTPUTS_SUBDIR,
-  type PersistedFile,
   type TurnStartTime,
 } from './types.js'
 
@@ -118,11 +116,9 @@ export async function runFilePersistence(
       files: [],
       failed: [
         {
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          filename: outputsDir as any,
+          path: outputsDir,
           error: errorMessage(error),
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        } as any,
+        },
       ],
     }
   }
@@ -164,11 +160,9 @@ async function executeBYOCPersistence(
       files: [],
       failed: [
         {
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          filename: outputsDir as any,
+          path: outputsDir,
           error: `Too many files modified (${modifiedFiles.length}). Maximum: ${FILE_COUNT_LIMIT}.`,
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        } as any,
+        },
       ],
     }
   }
@@ -193,26 +187,20 @@ async function executeBYOCPersistence(
   const results = await uploadSessionFiles(filesToProcess, config, DEFAULT_UPLOAD_CONCURRENCY)
 
   // Separate successful and failed uploads
-  const persistedFiles: PersistedFile[] = []
-  const failedFiles: FailedPersistence[] = []
+  const persistedFiles: Array<{ filename: string; file_id: string }> = []
+  const failedFiles: Array<{ filename: string; error: string }> = []
 
   for (const result of results) {
     if (result.success) {
       persistedFiles.push({
-        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        filename: result.path as any,
-        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        file_id: result.fileId as any,
-        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-      } as any)
+        filename: result.path,
+        file_id: result.fileId,
+      })
     } else {
       failedFiles.push({
-        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        filename: result.path as any,
-        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        error: (result as any).error,
-        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-      } as any)
+        filename: result.path,
+        error: result.error,
+      })
     }
   }
 
@@ -221,8 +209,8 @@ async function executeBYOCPersistence(
   )
 
   return {
-    files: persistedFiles,
-    failed: failedFiles,
+    files: persistedFiles as unknown as FilesPersistedEventData['files'],
+    failed: failedFiles as unknown as FilesPersistedEventData['failed'],
   }
 }
 

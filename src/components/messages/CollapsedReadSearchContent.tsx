@@ -4,6 +4,7 @@ import React, { useRef } from 'react'
 import { useMinDisplayTime } from '../../hooks/useMinDisplayTime.js'
 import { tSync } from '../../i18n/index.js'
 import { Ansi, Box, Text, useAnimationFrame, useTheme } from '../../ink.js'
+import type { ThemeName } from 'src/utils/theme.js'
 import { useReplStore } from '../../state/ReplState.js'
 import { findToolByName, type Tools } from '../../tool.js'
 import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js'
@@ -53,8 +54,8 @@ type Props = {
   streamingThinkingSummary?: string
   // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
   content?: any
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  theme?: any
+  /** 当前主题名称 */
+  theme?: ThemeName
 }
 
 /**
@@ -103,14 +104,12 @@ function VerboseToolUse({
     const userFacingName = tool.userFacingName(input)
     const toolUseMessage = input
       ? tool.renderToolUseMessage(input, {
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          theme: theme as any,
+          theme: theme!,
           verbose: true,
         })
       : null
     boxElement = (
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      <Box key={content.id} flexDirection="column" marginTop={1} backgroundColor={bg as any}>
+      <Box key={content.id} flexDirection="column" marginTop={1} backgroundColor={bg}>
         <Box flexDirection="row">
           {
             <ToolUseLoader
@@ -130,8 +129,7 @@ function VerboseToolUse({
             {tool.renderToolResultMessage?.(toolResult, [], {
               verbose: true,
               tools,
-              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-              theme: theme as any,
+              theme: theme!,
             })}
           </Box>
         )}
@@ -227,21 +225,18 @@ export function CollapsedReadSearchContent({
       if (!inProgressToolUseIDs.has(id_0)) {
         continue
       }
-      const latest = lookups.progressMessagesByToolUseID.get(id_0)?.at(-1)?.data
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      if ((latest as any)?.type === 'repl_tool_call' && (latest as any).phase === 'start') {
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        const input = (latest as any).toolInput as {
-          command?: string
-          pattern?: string
-          file_path?: string
-        }
+      const latest = lookups.progressMessagesByToolUseID.get(id_0)?.at(-1)?.data as
+        | Record<string, unknown>
+        | undefined
+      if (latest?.type === 'repl_tool_call' && latest.phase === 'start') {
+        const toolInput = latest.toolInput as
+          | { command?: string; pattern?: string; file_path?: string }
+          | undefined
         incomingHint =
-          input.file_path ??
-          (input.pattern ? `"${input.pattern}"` : undefined) ??
-          input.command ??
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          (latest as any).toolName
+          toolInput?.file_path ??
+          (toolInput?.pattern ? `"${toolInput.pattern}"` : undefined) ??
+          toolInput?.command ??
+          (latest.toolName as string | undefined)
       }
     }
   }
@@ -305,10 +300,8 @@ export function CollapsedReadSearchContent({
               lookups={lookups}
               inProgressToolUseIDs={inProgressToolUseIDs}
               shouldAnimate={shouldAnimate}
-              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-              theme={theme as any}
-              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-              message={msg_0.message as any}
+              theme={theme}
+              message={msg_0.message as unknown as CollapsedReadSearchGroup}
               verbose={verbose}
             />
           )
@@ -320,8 +313,7 @@ export function CollapsedReadSearchContent({
               {message.hookCount === 1 ? 'hook' : 'hooks'} (
               {formatSecondsShort(message.hookTotalMs ?? 0)})
             </Text>
-            {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
-            {message.hookInfos.map((info: any, idx: number) => (
+            {message.hookInfos.map((info, idx: number) => (
               <Text key={`hook-${idx}`} dimColor>
                 {'     ⎿ '}
                 {info.command} ({formatSecondsShort(info.durationMs ?? 0)})
@@ -329,19 +321,20 @@ export function CollapsedReadSearchContent({
             ))}
           </>
         )}
-        {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
-        {message.relevantMemories?.map((m: any) => (
-          <Box key={m.path} flexDirection="column" marginTop={1}>
-            <Text dimColor>
-              {'  ⎿  '}Recalled {basename(m.path)}
-            </Text>
-            <Box paddingLeft={5}>
-              <Text>
-                <Ansi>{m.content}</Ansi>
+        {(message.relevantMemories as Array<{ path: string; content: string }> | undefined)?.map(
+          (m) => (
+            <Box key={m.path} flexDirection="column" marginTop={1}>
+              <Text dimColor>
+                {'  ⎿  '}Recalled {basename(m.path)}
               </Text>
+              <Box paddingLeft={5}>
+                <Text>
+                  <Ansi>{m.content}</Ansi>
+                </Text>
+              </Box>
             </Box>
-          </Box>
-        ))}
+          ),
+        )}
       </Box>
     )
   }
@@ -432,18 +425,15 @@ export function CollapsedReadSearchContent({
   if (isFullscreenEnvEnabled() && message.commits?.length) {
     for (const kind of ['committed', 'amended', 'cherryPicked'] as const) {
       const shas = message.commits
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        .filter((c: any) => c.kind === kind.replace('Picked', '-picked'))
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        .map((c_0: any) => c_0.sha)
+        .filter((c) => c.kind === kind.replace('Picked', '-picked'))
+        .map((c_0) => c_0.sha)
       if (shas.length) {
         pushPart(kind, kind, <Text bold>{shas.join(', ')}</Text>)
       }
     }
   }
   if (isFullscreenEnvEnabled() && message.pushes?.length) {
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    const branches = uniq(message.pushes.map((p: any) => p.branch))
+    const branches = uniq(message.pushes.map((p) => p.branch))
     pushPart('push', 'pushedTo', <Text bold>{branches.join(', ')}</Text>)
   }
   if (isFullscreenEnvEnabled() && message.branches?.length) {
@@ -558,7 +548,7 @@ export function CollapsedReadSearchContent({
   if (mcpCallCount > 0) {
     const serverLabel =
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      message.mcpServerNames?.map((n: any) => n.replace(/^zy\.ai /, '')).join(', ') || 'MCP'
+      message.mcpServerNames?.map((n) => n.replace(/^zy\.ai /, '')).join(', ') || 'MCP'
     const isFirst_3 = nonMemParts.length === 0
     const phase = isActiveGroup ? 'active' : 'done'
     const position = isFirst_3 ? 'first' : 'sub'
@@ -661,8 +651,7 @@ export function CollapsedReadSearchContent({
     )
   }
   return (
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    <Box flexDirection="column" marginTop={1} backgroundColor={bg as any}>
+    <Box flexDirection="column" marginTop={1} backgroundColor={bg}>
       <Box flexDirection="row">
         {isActiveGroup ? (
           <ToolUseLoader shouldAnimate isUnresolved isError={anyError} />
@@ -674,8 +663,7 @@ export function CollapsedReadSearchContent({
           {memParts}
           {feature('TEAMMEM')
             ? teamMemCollapsed!.TeamMemCountParts({
-                // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-                message: message as any,
+                message: message as unknown as CollapsedReadSearchGroup,
                 isActiveGroup,
                 hasPrecedingParts: hasPrecedingNonMem || memParts.length > 0,
               })

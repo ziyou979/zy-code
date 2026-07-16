@@ -124,8 +124,9 @@ export function collectSurfacedMemories(messages: ReadonlyArray<Message>): {
   let totalBytes = 0
   for (const m of messages) {
     if (m.type === 'attachment' && m.attachment.type === 'relevant_memories') {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      for (const mem of (m.attachment as any).memories) {
+      for (const mem of (
+        m.attachment as unknown as { memories: Array<{ path: string; content: string }> }
+      ).memories) {
         paths.add(mem.path)
         totalBytes += mem.content.length
       }
@@ -633,7 +634,7 @@ export function extractAtMentionedFiles(content: string): string[] {
   const regularMatchArray = content.match(regularAtMentionRegex) || []
   regularMatchArray.forEach((match) => {
     // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const filename = (match as any).slice((match as any).indexOf('@') + 1)
+    const filename = match.slice(match.indexOf('@') + 1)
     // 如果以引号开头则不包含（已作为引号处理）
     if (!filename.startsWith('"')) {
       regularMatches.push(filename)

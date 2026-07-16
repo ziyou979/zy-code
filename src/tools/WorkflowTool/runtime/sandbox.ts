@@ -17,8 +17,7 @@ export interface WorkflowMeta {
 }
 
 export interface WorkflowRunResult {
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  returnValue: any
+  returnValue: unknown
   agentCount: number
 }
 
@@ -67,8 +66,7 @@ export function validateScript(source: string): void {
 
 export interface SandboxOptions {
   source: string
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  args: any
+  args: unknown
   toolUseContext: ToolUseContext
   semaphore: WorkflowSemaphore
   budget: MutableWorkflowBudget
@@ -120,17 +118,16 @@ export async function executeWorkflowScript(opts: SandboxOptions): Promise<Workf
   const phaseFn = createPhaseFunction(progressCtx)
   const logFn = createLogFunction(progressCtx)
 
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  const pipelineFn = (items: any[], ...stages: any[]) => pipeline(items, semaphore, ...stages)
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  const parallelFn = (thunks: Array<() => Promise<any>>) => parallel(thunks, semaphore)
+  const pipelineFn = <T>(
+    items: T[],
+    ...stages: Array<(prevResult: unknown, originalItem: T, index: number) => unknown>
+  ) => pipeline(items, semaphore, ...stages)
+  const parallelFn = (thunks: Array<() => Promise<unknown>>) => parallel(thunks, semaphore)
 
   const workflowFn = async (
     nameOrRef: string | { scriptPath: string },
-    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-    childArgs?: any,
-    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  ): Promise<any> => {
+    childArgs?: unknown,
+  ): Promise<unknown> => {
     if (nestingDepth >= 1) {
       throw new Error(
         'workflow() nesting is limited to one level. A child workflow cannot call workflow() again.',
@@ -175,14 +172,12 @@ export async function executeWorkflowScript(opts: SandboxOptions): Promise<Workf
           'new Date() without arguments is not allowed in workflow scripts (breaks resume). Pass a timestamp via args.',
         )
       }
-      // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-      return new Date(...(argArray as [any]))
+      return new Date(...(argArray as ConstructorParameters<typeof Date>))
     },
   })
 
-  const blockedMath = { ...Math }
-  // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-  delete (blockedMath as any).random
+  const blockedMath: Record<string, unknown> = { ...Math }
+  delete blockedMath.random
   Object.defineProperty(blockedMath, 'random', {
     get() {
       throw new Error(

@@ -85,15 +85,15 @@ export function ApiKeyStep({
         <Box flexDirection="column" borderStyle="round" paddingX={1}>
           {
             <Box flexDirection="column" marginBottom={1}>
-              <Text bold={true}>{tSync('installGh.installTitle')}</Text>
-              <Text dimColor={true}>{tSync('installGh.chooseApiKey')}</Text>
+              <Text bold={true}>{tSync('installGitHubApp.installTitle')}</Text>
+              <Text dimColor={true}>{tSync('installGitHubApp.chooseApiKey')}</Text>
             </Box>
           }
           {existingApiKey && (
             <Box marginBottom={1}>
               <Text>
                 {selectedOption === 'existing' ? color('success', theme)('> ') : '  '}
-                {tSync('installGh.useExistingZyApiKey')}
+                {tSync('installGitHubApp.useExistingZyApiKey')}
               </Text>
             </Box>
           )}
@@ -101,7 +101,7 @@ export function ApiKeyStep({
             <Box marginBottom={1}>
               <Text>
                 {selectedOption === 'oauth' ? color('success', theme)('> ') : '  '}
-                {tSync('installGh.createLongLivedToken')}
+                {tSync('installGitHubApp.createLongLivedToken')}
               </Text>
             </Box>
           )}
@@ -109,7 +109,7 @@ export function ApiKeyStep({
             <Box marginBottom={1}>
               <Text>
                 {newOptionPrefix}
-                {tSync('installGh.enterNewApiKey')}
+                {tSync('installGitHubApp.enterNewApiKey')}
               </Text>
             </Box>
           }
@@ -120,7 +120,7 @@ export function ApiKeyStep({
               onSubmit={onSubmit}
               onPaste={onApiKeyChange}
               focus={true}
-              placeholder={tSync('installGh.apiKeyPlaceholder')}
+              placeholder={tSync('installGitHubApp.apiKeyPlaceholder')}
               mask="*"
               columns={terminalSize.columns}
               cursorOffset={cursorOffset}
@@ -132,7 +132,7 @@ export function ApiKeyStep({
       }
       {
         <Box marginLeft={3}>
-          <Text dimColor={true}>↑/↓ to select · Enter to continue</Text>
+          <Text dimColor={true}>{tSync('installGitHubApp.selectNavigate')}</Text>
         </Box>
       }
     </>

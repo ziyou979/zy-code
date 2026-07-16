@@ -591,11 +591,9 @@ const MessagesImpl = ({
     const briefFiltered =
       briefToolNames.length > 0 && !isTranscriptMode
         ? isBriefOnly
-          ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-            filterForBriefTool(messagesToShowNotTruncated as any, briefToolNames)
+          ? filterForBriefTool(messagesToShowNotTruncated as Parameters<typeof filterForBriefTool>[0], briefToolNames)
           : dropTextToolNames.length > 0
-            ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-              dropTextInBriefTurns(messagesToShowNotTruncated as any, dropTextToolNames)
+            ? dropTextInBriefTurns(messagesToShowNotTruncated as Parameters<typeof dropTextInBriefTurns>[0], dropTextToolNames)
             : messagesToShowNotTruncated
         : messagesToShowNotTruncated
     const messagesToShow = shouldTruncate
@@ -603,16 +601,14 @@ const MessagesImpl = ({
       : briefFiltered
     const hasTruncatedMessages =
       shouldTruncate && briefFiltered.length > MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    const { messages: groupedMessages } = applyGrouping(messagesToShow as any, tools, verbose)
+    const { messages: groupedMessages } = applyGrouping(messagesToShow as Parameters<typeof applyGrouping>[0], tools, verbose)
     const collapsed = collapseBackgroundBashNotifications(
       collapseHookSummaries(
         collapseTeammateShutdowns(collapseReadSearchGroups(groupedMessages, tools)),
       ),
       verbose,
     )
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    const lookups = buildMessageLookups(normalizedMessages, messagesToShow as any)
+    const lookups = buildMessageLookups(normalizedMessages, messagesToShow as Parameters<typeof buildMessageLookups>[1])
     const hiddenMessageCount =
       messagesToShowNotTruncated.length - MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE
     return {

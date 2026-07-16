@@ -1,5 +1,6 @@
 import { Select } from 'src/components/CustomSelect/index.js'
 import { Box, Text } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 
 interface ExistingWorkflowStepProps {
   repoName: string
@@ -8,15 +9,15 @@ interface ExistingWorkflowStepProps {
 export function ExistingWorkflowStep({ repoName, onSelectAction }: ExistingWorkflowStepProps) {
   const options = [
     {
-      label: 'Update workflow file with latest version',
+      label: tSync('installGitHubApp.optionUpdateWorkflow'),
       value: 'update',
     },
     {
-      label: 'Skip workflow update (configure secrets only)',
+      label: tSync('installGitHubApp.optionSkipWorkflow'),
       value: 'skip',
     },
     {
-      label: 'Exit without making changes',
+      label: tSync('installGitHubApp.optionExit'),
       value: 'exit',
     },
   ]
@@ -30,16 +31,19 @@ export function ExistingWorkflowStep({ repoName, onSelectAction }: ExistingWorkf
     <Box flexDirection="column" borderStyle="round" borderDimColor={true} paddingX={1}>
       {
         <Box flexDirection="column" marginBottom={1}>
-          {<Text bold={true}>Existing Workflow Found</Text>}
-          <Text dimColor={true}>Repository: {repoName}</Text>
+          {<Text bold={true}>{tSync('installGitHubApp.existingWorkflowFound')}</Text>}
+          <Text dimColor={true}>
+            {tSync('installGitHubApp.repository')}: {repoName}
+          </Text>
         </Box>
       }
       {
         <Box flexDirection="column" marginBottom={1}>
           <Text>
-            A Zy workflow file already exists at <Text color="zy">.github/workflows/zy.yml</Text>
+            {tSync('installGitHubApp.workflowFileExists')}{' '}
+            <Text color="zy">.github/workflows/zy.yml</Text>
           </Text>
-          <Text dimColor={true}>What would you like to do?</Text>
+          <Text dimColor={true}>{tSync('installGitHubApp.whatWouldYouLike')}</Text>
         </Box>
       }
       {
@@ -50,7 +54,7 @@ export function ExistingWorkflowStep({ repoName, onSelectAction }: ExistingWorkf
       {
         <Box marginTop={1}>
           <Text dimColor={true}>
-            View the latest workflow template at:{' '}
+            {tSync('installGitHubApp.viewLatestTemplate')}{' '}
             <Text color="zy">
               https://github.com/anthropics/zy-code-action/blob/main/examples/zy.yml
             </Text>

@@ -192,10 +192,10 @@ export function useReplBridge(
           // pointer（仅用于崩溃恢复）。
           let perpetual = false
           if (feature('KAIROS')) {
-            // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-            const { isAssistantMode } = await import('../assistant/index.js' as any)
-            // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-            perpetual = (isAssistantMode as any)()
+            const { isAssistantMode } = (await import('../assistant/index.js')) as unknown as {
+              isAssistantMode: () => boolean
+            }
+            perpetual = isAssistantMode()
           }
 
           // 当来自 zy.ai 的用户消息到达时，将其注入到 REPL 中。

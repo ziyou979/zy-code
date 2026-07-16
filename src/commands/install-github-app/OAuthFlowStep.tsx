@@ -22,7 +22,7 @@ export function OAuthFlowStep({ onSuccess, onCancel }: OAuthFlowStepProps): Reac
   useEffect(() => {
     const apiKey = getApiKey()
     if (!apiKey) {
-      setError(tSync('installGh.noApiKeyFound'))
+      setError(tSync('installGitHubApp.noApiKeyFound'))
       return
     }
     if (!handledRef.current) {
@@ -35,9 +35,9 @@ export function OAuthFlowStep({ onSuccess, onCancel }: OAuthFlowStepProps): Reac
     return (
       <Box flexDirection="column" gap={1} tabIndex={0} autoFocus onKeyDown={() => onCancel()}>
         <Text color="error">
-          {tSync('installGh.error')} {error}
+          {tSync('installGitHubApp.error')} {error}
         </Text>
-        <Text dimColor>{tSync('installGh.pressAnyKeyReturn')}</Text>
+        <Text dimColor>{tSync('installGitHubApp.pressAnyKeyReturn')}</Text>
       </Box>
     )
   }
@@ -46,7 +46,7 @@ export function OAuthFlowStep({ onSuccess, onCancel }: OAuthFlowStepProps): Reac
     <Box flexDirection="column" gap={1}>
       <Box>
         <Spinner />
-        <Text>{tSync('installGh.retrievingToken')}</Text>
+        <Text>{tSync('installGitHubApp.retrievingToken')}</Text>
       </Box>
     </Box>
   )

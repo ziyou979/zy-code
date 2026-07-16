@@ -94,14 +94,12 @@ export async function preprocessMessages(
   // 4. Context Collapse — 投射折叠视图
   if (feature('CONTEXT_COLLAPSE')) {
     if (contextCollapse) {
-      // biome-ignore lint/suspicious/noExplicitAny: feature() 条件 require 的动态模块
-      const collapseResult = await (contextCollapse as any).applyCollapsesIfNeeded(
+      const collapseResult = await contextCollapse.applyCollapsesIfNeeded(
         messagesForQuery,
         updatedToolUseContext,
         querySource,
       )
-      // biome-ignore lint/suspicious/noExplicitAny: feature() 条件 require 的动态模块
-      messagesForQuery = (collapseResult as any).messages
+      messagesForQuery = (collapseResult as { messages: typeof messagesForQuery }).messages
     }
   }
 

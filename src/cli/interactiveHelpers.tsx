@@ -16,42 +16,42 @@ import {
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setSessionTrustAccepted } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setStatsStore } from 'src/bootstrap/runtime/runtimeContext.js'
-import { startDeferredPrefetches } from './cli/bootstrap/prefetch.js'
-import type { Command } from './commands.js'
-import { createStatsStore, type StatsStore } from './context/stats.js'
-import { getSystemContext } from './context.js'
-import { initializeTelemetryAfterTrust } from './entrypoints/init.js'
-import { isSynchronizedOutputSupported } from './ink/terminal.js'
-import type { RenderOptions, Root, TextProps } from './ink.js'
-import { KeybindingSetup } from './keybindings/KeybindingProviderSetup.js'
+import { startDeferredPrefetches } from '../cli/bootstrap/prefetch.js'
+import type { Command } from '../commands.js'
+import { createStatsStore, type StatsStore } from '../context/stats.js'
+import { getSystemContext } from '../services/context/context.js'
+import { initializeTelemetryAfterTrust } from '../entrypoints/init.js'
+import { isSynchronizedOutputSupported } from '../ink/terminal.js'
+import type { RenderOptions, Root, TextProps } from '../ink.js'
+import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js'
 import {
   checkGate_CACHED_OR_BLOCKING,
   initializeGrowthBook,
   resetGrowthBook,
-} from './services/analytics/growthbook.js'
-import { updateDeepLinkTerminalPreference } from './services/deep-link/terminalPreference.js'
-import { handleMcpjsonServerApprovals } from './components/mcp/MCPServerApprovalController.js'
-import { getDefaultStandardModel } from './services/model/model.js'
-import { AppStateProvider } from './state/AppState.js'
-import { onChangeAppState } from './state/onChangeAppState.js'
-import { normalizeApiKeyForConfig } from './utils/authPortable.js'
+} from '../services/analytics/growthbook.js'
+import { updateDeepLinkTerminalPreference } from '../services/deep-link/terminalPreference.js'
+import { handleMcpjsonServerApprovals } from '../components/mcp/MCPServerApprovalController.js'
+import { getDefaultStandardModel } from '../services/model/model.js'
+import { AppStateProvider } from '../state/AppState.js'
+import { onChangeAppState } from '../state/onChangeAppState.js'
+import { normalizeApiKeyForConfig } from '../utils/authPortable.js'
 import {
   checkHasTrustDialogAccepted,
   getApiKeyStatus,
   getGlobalConfig,
   saveGlobalConfig,
-} from './services/config/config.js'
-import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from './utils/envUtils.js'
-import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js'
-import { updateGithubRepoPathMapping } from './utils/githubRepoPathMapping.js'
-import { applyConfigEnvironmentVariables } from './utils/managedEnv.js'
-import type { PermissionMode } from './services/permissions/permissionMode.js'
-import { getBaseRenderOptions } from './utils/renderOptions.js'
-import { getSettingsWithAllErrors } from './services/settings/allErrors.js'
+} from '../services/config/config.js'
+import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from '../utils/envUtils.js'
+import { type FpsMetrics, FpsTracker } from '../utils/fpsTracker.js'
+import { updateGithubRepoPathMapping } from '../utils/githubRepoPathMapping.js'
+import { applyConfigEnvironmentVariables } from '../utils/managedEnv.js'
+import type { PermissionMode } from '../services/permissions/permissionMode.js'
+import { getBaseRenderOptions } from '../utils/renderOptions.js'
+import { getSettingsWithAllErrors } from '../services/settings/allErrors.js'
 import {
   hasAutoModeOptIn,
   hasSkipDangerousModePermissionPrompt,
-} from './services/settings/settings.js'
+} from '../services/settings/settings.js'
 export function completeOnboarding(): void {
   saveGlobalConfig((current) => ({
     ...current,
@@ -101,7 +101,7 @@ export async function exitWithMessage(
     beforeExit?: () => Promise<void>
   },
 ): Promise<never> {
-  const { Text } = await import('./ink.js')
+  const { Text } = await import('../ink.js')
   const color = options?.color
   const exitCode = options?.exitCode ?? 1
   root.render(color ? <Text color={color}>{message}</Text> : <Text>{message}</Text>)
@@ -162,7 +162,7 @@ export async function showSetupScreens(
     !getDefaultStandardModel() // standard 模型未配置时强制进入配置
   ) {
     onboardingShown = true
-    const { Onboarding } = await import('./components/Onboarding.js')
+    const { Onboarding } = await import('../components/Onboarding.js')
     await showSetupDialog(
       root,
       (done) => (
@@ -190,7 +190,7 @@ export async function showSetupScreens(
     // If it returns true, the TrustDialog would auto-resolve regardless of
     // security features, so we can skip the dynamic import and render cycle.
     if (!checkHasTrustDialogAccepted()) {
-      const { TrustDialog } = await import('./components/TrustDialog/TrustDialog.js')
+      const { TrustDialog } = await import('../components/TrustDialog/TrustDialog.js')
       await showSetupDialog(root, (done) => <TrustDialog commands={commands} onDone={done} />)
     }
 
@@ -217,7 +217,7 @@ export async function showSetupScreens(
     if (await shouldShowAgentsMdExternalIncludesWarning()) {
       const externalIncludes = getExternalAgentsMdIncludes(await getMemoryFiles(true))
       const { agentsMdExternalIncludesDialog } = await import(
-        './components/AgentsMdExternalIncludesDialog.js'
+        '../components/AgentsMdExternalIncludesDialog.js'
       )
       const DialogComponent = agentsMdExternalIncludesDialog as React.ComponentType<{
         onDone: () => void
@@ -256,7 +256,7 @@ export async function showSetupScreens(
     const apiKeyTruncated = normalizeApiKeyForConfig(process.env.ZY_API_KEY)
     const keyStatus = getApiKeyStatus(apiKeyTruncated)
     if (keyStatus === 'new') {
-      const { ApproveApiKey } = await import('./components/ApproveApiKey.js')
+      const { ApproveApiKey } = await import('../components/ApproveApiKey.js')
       await showSetupDialog<boolean>(
         root,
         (done) => <ApproveApiKey apiKeyTruncated={apiKeyTruncated} onDone={done} />,
@@ -271,7 +271,7 @@ export async function showSetupScreens(
     !hasSkipDangerousModePermissionPrompt()
   ) {
     const { BypassPermissionsModeDialog } = await import(
-      './components/BypassPermissionsModeDialog.js'
+      '../components/BypassPermissionsModeDialog.js'
     )
     await showSetupDialog(root, (done) => <BypassPermissionsModeDialog onAccept={done} />)
   }
@@ -280,7 +280,7 @@ export async function showSetupScreens(
   // consent for an unavailable feature is pointless. The
   // verifyAutoModeGateAccess notification will explain why instead.
   if (permissionMode === 'auto' && !hasAutoModeOptIn()) {
-    const { AutoModeOptInDialog } = await import('./components/AutoModeOptInDialog.js')
+    const { AutoModeOptInDialog } = await import('../components/AutoModeOptInDialog.js')
     await showSetupDialog(root, (done) => (
       <AutoModeOptInDialog onAccept={done} onDecline={() => gracefulShutdownSync(1)} declineExits />
     ))
@@ -304,8 +304,8 @@ export async function showSetupScreens(
     }
     if (devChannels && devChannels.length > 0) {
       const [{ isChannelsEnabled }, { getZyAIOAuthTokens }] = await Promise.all([
-        import('./services/mcp/channelAllowlist.js'),
-        import('./services/auth/auth.js'),
+        import('../services/mcp/channelAllowlist.js'),
+        import('../services/auth/auth.js'),
       ])
       // Skip the dialog when channels are blocked (zy_channels_gate off or no
       // OAuth) — accepting then immediately seeing "not available" in
@@ -324,7 +324,7 @@ export async function showSetupScreens(
         ])
         setHasDevChannels(true)
       } else {
-        const { DevChannelsDialog } = await import('./components/DevChannelsDialog.js')
+        const { DevChannelsDialog } = await import('../components/DevChannelsDialog.js')
         await showSetupDialog(root, (done) => (
           <DevChannelsDialog
             channels={devChannels}
@@ -349,7 +349,7 @@ export async function showSetupScreens(
 
   // Show Chrome onboarding for first-time Claude in Chrome users
   if (ClaudeInChrome && !getGlobalConfig().hasCompletedClaudeInChromeOnboarding) {
-    const { ClaudeInChromeOnboarding } = await import('./components/ClaudeInChromeOnboarding.js')
+    const { ClaudeInChromeOnboarding } = await import('../components/ClaudeInChromeOnboarding.js')
     await showSetupDialog(root, (done) => <ClaudeInChromeOnboarding onDone={done} />)
   }
   return onboardingShown

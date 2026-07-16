@@ -53,25 +53,25 @@ export function CheckExistingSecretStep({
         <Box flexDirection="column" borderStyle="round" paddingX={1}>
           {
             <Box flexDirection="column" marginBottom={1}>
-              <Text bold={true}>{tSync('installGh.installTitle')}</Text>
-              <Text dimColor={true}>{tSync('installGh.setupApiKeySecret')}</Text>
+              <Text bold={true}>{tSync('installGitHubApp.installTitle')}</Text>
+              <Text dimColor={true}>{tSync('installGitHubApp.setupApiKeySecret')}</Text>
             </Box>
           }
           {
             <Box marginBottom={1}>
-              <Text color="warning">{tSync('installGh.apiKeyAlreadyExists')}</Text>
+              <Text color="warning">{tSync('installGitHubApp.apiKeyAlreadyExists')}</Text>
             </Box>
           }
           {
             <Box marginBottom={1}>
-              <Text>{tSync('installGh.wouldYouLike')}</Text>
+              <Text>{tSync('installGitHubApp.wouldYouLike')}</Text>
             </Box>
           }
           {
             <Box marginBottom={1}>
               <Text>
                 {existingPrefix}
-                {tSync('installGh.useExistingApiKey')}
+                {tSync('installGitHubApp.useExistingApiKey')}
               </Text>
             </Box>
           }
@@ -79,21 +79,21 @@ export function CheckExistingSecretStep({
             <Box marginBottom={1}>
               <Text>
                 {newPrefix}
-                {tSync('installGh.createNewSecret')}
+                {tSync('installGitHubApp.createNewSecret')}
               </Text>
             </Box>
           }
           {!useExistingSecret && (
             <>
               <Box marginBottom={1}>
-                <Text>{tSync('installGh.enterNewSecretName')}</Text>
+                <Text>{tSync('installGitHubApp.enterNewSecretName')}</Text>
               </Box>
               <TextInput
                 value={secretName}
                 onChange={onSecretNameChange}
                 onSubmit={onSubmit}
                 focus={true}
-                placeholder={tSync('installGh.secretPlaceholder')}
+                placeholder={tSync('installGitHubApp.secretPlaceholder')}
                 columns={terminalSize.columns}
                 cursorOffset={cursorOffset}
                 onChangeCursorOffset={setCursorOffset}
@@ -105,7 +105,7 @@ export function CheckExistingSecretStep({
       }
       {
         <Box marginLeft={3}>
-          <Text dimColor={true}>↑/↓ to select · Enter to continue</Text>
+          <Text dimColor={true}>{tSync('installGitHubApp.selectNavigate')}</Text>
         </Box>
       }
     </>

@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react'
+import { tSync } from '../i18n/index.js'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import { type CodeSession, fetchCodeSessionsFromSessionsAPI } from 'src/services/teleport/api.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow list navigation
@@ -21,7 +22,7 @@ type Props = {
   isEmbedded?: boolean
 }
 type LoadErrorType = 'network' | 'auth' | 'api' | 'other'
-const UPDATED_STRING = 'Updated'
+const UPDATED_STRING = tSync('resumeTask.updated')
 const SPACE_BETWEEN_TABLE_COLUMNS = '  '
 export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): React.ReactNode {
   const { rows } = useTerminalSize()
@@ -119,9 +120,11 @@ export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): R
       <Box flexDirection="column" padding={1}>
         <Box flexDirection="row">
           <Spinner />
-          <Text bold>Loading ZY Code sessions…</Text>
+          <Text bold>{tSync('resumeTask.loadingSessions')}</Text>
         </Box>
-        <Text dimColor>{retrying ? 'Retrying…' : 'Fetching your ZY Code sessions…'}</Text>
+        <Text dimColor>
+          {retrying ? tSync('resumeTask.retrying') : tSync('resumeTask.fetchingSessions')}
+        </Text>
       </Box>
     )
   }
@@ -129,13 +132,14 @@ export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): R
     return (
       <Box flexDirection="column" padding={1}>
         <Text bold color="error">
-          Error loading ZY Code sessions
+          {tSync('resumeTask.errorLoadingSessions')}
         </Text>
 
         {renderErrorSpecificGuidance(loadErrorType)}
 
         <Text dimColor>
-          Press <Text bold>Ctrl+R</Text> to retry · Press <Text bold>{escKey}</Text> to cancel
+          <Text bold>Ctrl+R</Text> {tSync('resumeTask.toRetry')} · <Text bold>{escKey}</Text>{' '}
+          {tSync('resumeTask.toCancel')}
         </Text>
       </Box>
     )
@@ -144,12 +148,17 @@ export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): R
     return (
       <Box flexDirection="column" padding={1}>
         <Text bold>
-          No ZY Code sessions found
-          {currentRepo && <Text> for {currentRepo}</Text>}
+          {tSync('resumeTask.noSessionsFound')}
+          {currentRepo && (
+            <Text>
+              {' '}
+              {tSync('resumeTask.for')} {currentRepo}
+            </Text>
+          )}
         </Text>
         <Box marginTop={1}>
           <Text dimColor>
-            Press <Text bold>{escKey}</Text> to cancel
+            <Text bold>{escKey}</Text> {tSync('resumeTask.toCancel')}
           </Text>
         </Box>
       </Box>
@@ -189,11 +198,11 @@ export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): R
   return (
     <Box flexDirection="column" padding={1} height={maxHeight}>
       <Text bold>
-        Select a session to resume
+        {tSync('resumeTask.selectSession')}
         {showScrollPosition && (
           <Text dimColor>
             {' '}
-            ({focusedIndex} of {sessions.length})
+            ({focusedIndex} {tSync('resumeTask.of')} {sessions.length})
           </Text>
         )}
         {currentRepo && <Text dimColor> ({currentRepo})</Text>}:
@@ -203,7 +212,7 @@ export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): R
           <Text bold>
             {UPDATED_STRING.padEnd(maxTimeStringLength, ' ')}
             {SPACE_BETWEEN_TABLE_COLUMNS}
-            {'Session Title'}
+            {tSync('resumeTask.sessionTitle')}
           </Text>
         </Box>
         <Select
@@ -280,28 +289,29 @@ function renderErrorSpecificGuidance(errorType: LoadErrorType): React.ReactNode 
     case 'network':
       return (
         <Box marginY={1} flexDirection="column">
-          <Text dimColor>Check your internet connection</Text>
+          <Text dimColor>{tSync('resumeTask.checkInternet')}</Text>
         </Box>
       )
     case 'auth':
       return (
         <Box marginY={1} flexDirection="column">
-          <Text dimColor>Teleport requires a Zy account</Text>
+          <Text dimColor>{tSync('resumeTask.requiresZyAccount')}</Text>
           <Text dimColor>
-            Run <Text bold>/login</Text> and select &quot;Zy account with subscription&quot;
+            {tSync('resumeTask.run')} <Text bold>/login</Text> {tSync('resumeTask.andSelect')}{' '}
+            &quot;{tSync('resumeTask.zySubscription')}&quot;
           </Text>
         </Box>
       )
     case 'api':
       return (
         <Box marginY={1} flexDirection="column">
-          <Text dimColor>Sorry, Zy encountered an error</Text>
+          <Text dimColor>{tSync('resumeTask.zyError')}</Text>
         </Box>
       )
     case 'other':
       return (
         <Box marginY={1} flexDirection="row">
-          <Text dimColor>Sorry, ZY Code encountered an error</Text>
+          <Text dimColor>{tSync('resumeTask.zyCodeError')}</Text>
         </Box>
       )
   }

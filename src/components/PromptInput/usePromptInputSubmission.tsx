@@ -322,8 +322,7 @@ export function usePromptInputSubmission(context: ReturnType<typeof usePromptInp
             clearBuffer()
             resetHistory()
             return
-            // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          } else if ((result as any).error === 'no_team_context') {
+            } else if ((result as { error?: string }).error === 'no_team_context') {
             // No team context - fall through to normal prompt submission
           } else {
             // Unknown recipient - fall through to normal prompt submission

@@ -32,7 +32,7 @@ import {
   LOCAL_COMMAND_STDOUT_TAG,
 } from '../../constants/xml.js'
 import type { Notification } from '../../context/notifications.js'
-import { getSystemContext, getUserContext } from '../../context.js'
+import { getSystemContext, getUserContext } from '../../services/context/context.js'
 import {
   addToHistory,
   expandPastedTextRefs,
@@ -43,7 +43,7 @@ import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import { mergeClients } from '../../hooks/useMergedClients.js'
 import type { TerminalNotification } from '../../ink/useTerminalNotification.js'
-import { maybeMarkProjectOnboardingComplete } from '../../projectOnboardingState.js'
+import { maybeMarkProjectOnboardingComplete } from '../../services/settings/projectOnboardingState.js'
 import { query } from '../../query.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {

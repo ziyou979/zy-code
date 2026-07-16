@@ -69,11 +69,9 @@ export const plainTextStorage = {
     const { storagePath } = getStoragePath()
     try {
       getFsImplementation().unlinkSync(storagePath)
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      return true as any
+      return Promise.resolve()
     } catch {
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      return false as any
+      return Promise.resolve()
     }
   },
 } satisfies SecureStorage

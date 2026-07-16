@@ -9,7 +9,7 @@ import { type Tool, toolMatchesName } from '../../tool.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from '../../tools/SyntheticOutputTool/SyntheticOutputTool.js'
 import { ALL_AGENT_DISALLOWED_TOOLS } from '../../tools.js'
 import { asAgentId } from '../../types/ids.js'
-import type { Message } from '../../types/message.js'
+import type { HookResultMessage, Message } from '../../types/message.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
 import { createCombinedAbortSignal } from '../../utils/combinedAbortSignal.js'
@@ -166,8 +166,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
         systemContext: {},
         canUseTool: hasPermissionsToUseTool,
         toolUseContext: agentToolUseContext,
-        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-        querySource: 'hook_agent' as any,
+        querySource: 'hook_agent',
       })) {
         // Process stream events to update response length in the spinner
         handleMessageFromStream(
@@ -198,8 +197,9 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
 
         // Check for structured output in attachments
         if (message.type === 'attachment' && message.attachment.type === 'structured_output') {
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          const parsed = hookResponseSchema().safeParse((message.attachment as any).data)
+          const parsed = hookResponseSchema().safeParse(
+            (message.attachment as Record<string, unknown>).data,
+          )
           if (parsed.success) {
             structuredOutputResult = parsed.data
             hookLog(`Hooks: Got structured output: ${jsonStringify(structuredOutputResult)}`)
@@ -276,8 +276,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
           toolUseID: effectiveToolUseID,
           hookEvent,
           content: '',
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-        }) as any,
+        }) as unknown as HookResultMessage,
       }
     } catch (error) {
       parentTimeoutSignal.removeEventListener('abort', onParentTimeout)
@@ -310,8 +309,7 @@ When done, return your result using the ${SYNTHETIC_OUTPUT_TOOL_NAME} tool with:
         stderr: `Error executing agent hook: ${errorMsg}`,
         stdout: '',
         exitCode: 1,
-        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-      }) as any,
+      }) as unknown as HookResultMessage,
     }
   }
 }

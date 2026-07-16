@@ -6,10 +6,21 @@ import {
 } from '../constants/apiLimits.js'
 import { logEvent } from '../services/analytics/index.js'
 import {
-  getImageProcessor,
-  type SharpFunction,
-  type SharpInstance,
-} from '../tools/FileReadTool/imageProcessor.js'
+  type CompressedImageResult,
+  createCompressedImageResult,
+  createUltraCompressedJPEG,
+  type ImageCompressionContext,
+  tryJPEGConversion,
+  tryPalettePNG,
+  tryProgressiveResizing,
+} from './imageCompressionStrategies.js'
+import {
+  createImageMetadataText,
+  detectImageFormatFromBase64,
+  detectImageFormatFromBuffer,
+  type ImageMediaType,
+} from './imageFormatHelpers.js'
+import { getImageProcessor, type SharpFunction } from '../tools/FileReadTool/imageProcessor.js'
 import type { ImageDimensions } from '../types/inputContent.js'
 export type { ImageDimensions } from '../types/inputContent.js'
 import type { ImageBlock, ImageSource } from '../types/llm.js'
@@ -17,8 +28,6 @@ import { logForDebugging } from './debug.js'
 import { errorMessage } from './errors.js'
 import { formatFileSize } from './format.js'
 import { logError } from './log.js'
-
-type ImageMediaType = 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp'
 
 // Error type constants for analytics (numeric to comply with logEvent restrictions)
 const ERROR_TYPE_MODULE_LOAD = 1
@@ -138,20 +147,6 @@ export interface ResizeResult {
   buffer: Buffer
   mediaType: string
   dimensions?: ImageDimensions
-}
-
-interface ImageCompressionContext {
-  imageBuffer: Buffer
-  metadata: { width?: number; height?: number; format?: string }
-  format: string
-  maxBytes: number
-  originalSize: number
-}
-
-interface CompressedImageResult {
-  base64: string
-  mediaType: ImageSource['mediaType']
-  originalSize: number
 }
 
 /**
@@ -591,224 +586,4 @@ export async function compressImageBlock(
   }
 }
 
-// Helper functions for compression pipeline
-
-function createCompressedImageResult(
-  buffer: Buffer,
-  mediaType: string,
-  originalSize: number,
-): CompressedImageResult {
-  const normalizedMediaType = mediaType === 'jpg' ? 'jpeg' : mediaType
-  return {
-    base64: buffer.toString('base64'),
-    mediaType: `image/${normalizedMediaType}` as ImageSource['mediaType'],
-    originalSize,
-  }
-}
-
-async function tryProgressiveResizing(
-  context: ImageCompressionContext,
-  sharp: SharpFunction,
-): Promise<CompressedImageResult | null> {
-  const scalingFactors = [1.0, 0.75, 0.5, 0.25]
-
-  for (const scalingFactor of scalingFactors) {
-    const newWidth = Math.round((context.metadata.width || 2000) * scalingFactor)
-    const newHeight = Math.round((context.metadata.height || 2000) * scalingFactor)
-
-    let resizedImage = sharp(context.imageBuffer).resize(newWidth, newHeight, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-
-    // Apply format-specific optimizations
-    resizedImage = applyFormatOptimizations(resizedImage, context.format)
-
-    const resizedBuffer = await resizedImage.toBuffer()
-
-    if (resizedBuffer.length <= context.maxBytes) {
-      return createCompressedImageResult(resizedBuffer, context.format, context.originalSize)
-    }
-  }
-
-  return null
-}
-
-function applyFormatOptimizations(image: SharpInstance, format: string): SharpInstance {
-  switch (format) {
-    case 'png':
-      return image.png({
-        compressionLevel: 9,
-        palette: true,
-      })
-    case 'jpeg':
-    case 'jpg':
-      return image.jpeg({ quality: 80 })
-    case 'webp':
-      return image.webp({ quality: 80 })
-    default:
-      return image
-  }
-}
-
-async function tryPalettePNG(
-  context: ImageCompressionContext,
-  sharp: SharpFunction,
-): Promise<CompressedImageResult | null> {
-  const palettePng = await sharp(context.imageBuffer)
-    .resize(800, 800, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .png({
-      compressionLevel: 9,
-      palette: true,
-      colors: 64, // Reduce colors to 64 for better compression
-    })
-    .toBuffer()
-
-  if (palettePng.length <= context.maxBytes) {
-    return createCompressedImageResult(palettePng, 'png', context.originalSize)
-  }
-
-  return null
-}
-
-async function tryJPEGConversion(
-  context: ImageCompressionContext,
-  quality: number,
-  sharp: SharpFunction,
-): Promise<CompressedImageResult | null> {
-  const jpegBuffer = await sharp(context.imageBuffer)
-    .resize(600, 600, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .jpeg({ quality })
-    .toBuffer()
-
-  if (jpegBuffer.length <= context.maxBytes) {
-    return createCompressedImageResult(jpegBuffer, 'jpeg', context.originalSize)
-  }
-
-  return null
-}
-
-async function createUltraCompressedJPEG(
-  context: ImageCompressionContext,
-  sharp: SharpFunction,
-): Promise<CompressedImageResult> {
-  const ultraCompressedBuffer = await sharp(context.imageBuffer)
-    .resize(400, 400, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .jpeg({ quality: 20 })
-    .toBuffer()
-
-  return createCompressedImageResult(ultraCompressedBuffer, 'jpeg', context.originalSize)
-}
-
-/**
- * Detect image format from a buffer using magic bytes
- * @param buffer Buffer containing image data
- * @returns Media type string (e.g., 'image/png', 'image/jpeg') or 'image/png' as default
- */
-export function detectImageFormatFromBuffer(buffer: Buffer): ImageMediaType {
-  if (buffer.length < 4) {
-    return 'image/png' // default
-  }
-
-  // Check PNG signature
-  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
-    return 'image/png'
-  }
-
-  // Check JPEG signature (FFD8FF)
-  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
-    return 'image/jpeg'
-  }
-
-  // Check GIF signature (GIF87a or GIF89a)
-  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) {
-    return 'image/gif'
-  }
-
-  // Check WebP signature (RIFF....WEBP)
-  if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46) {
-    if (
-      buffer.length >= 12 &&
-      buffer[8] === 0x57 &&
-      buffer[9] === 0x45 &&
-      buffer[10] === 0x42 &&
-      buffer[11] === 0x50
-    ) {
-      return 'image/webp'
-    }
-  }
-
-  // Default to PNG if unknown
-  return 'image/png'
-}
-
-/**
- * Detect image format from base64 data using magic bytes
- * @param base64Data Base64 encoded image data
- * @returns Media type string (e.g., 'image/png', 'image/jpeg') or 'image/png' as default
- */
-export function detectImageFormatFromBase64(base64Data: string): ImageMediaType {
-  try {
-    const buffer = Buffer.from(base64Data, 'base64')
-    return detectImageFormatFromBuffer(buffer)
-  } catch {
-    // Default to PNG on any error
-    return 'image/png'
-  }
-}
-
-/**
- * Creates a text description of image metadata including dimensions and source path.
- * Returns null if no useful metadata is available.
- */
-export function createImageMetadataText(dims: ImageDimensions, sourcePath?: string): string | null {
-  const { originalWidth, originalHeight, displayWidth, displayHeight } = dims
-  // Skip if dimensions are not available or invalid
-  // Note: checks for undefined/null and zero to prevent division by zero
-  if (
-    !originalWidth ||
-    !originalHeight ||
-    !displayWidth ||
-    !displayHeight ||
-    displayWidth <= 0 ||
-    displayHeight <= 0
-  ) {
-    // If we have a source path but no valid dimensions, still return source info
-    if (sourcePath) {
-      return `[Image source: ${sourcePath}]`
-    }
-    return null
-  }
-  // Check if image was resized
-  const wasResized = originalWidth !== displayWidth || originalHeight !== displayHeight
-
-  // Only include metadata if there's useful info (resized or has source path)
-  if (!wasResized && !sourcePath) {
-    return null
-  }
-
-  // Build metadata parts
-  const parts: string[] = []
-
-  if (sourcePath) {
-    parts.push(`source: ${sourcePath}`)
-  }
-
-  if (wasResized) {
-    const scaleFactor = originalWidth / displayWidth
-    parts.push(
-      `original ${originalWidth}x${originalHeight}, displayed at ${displayWidth}x${displayHeight}. Multiply coordinates by ${scaleFactor.toFixed(2)} to map to original image.`,
-    )
-  }
-
-  return `[Image: ${parts.join(', ')}]`
-}
+export { createImageMetadataText, detectImageFormatFromBase64, detectImageFormatFromBuffer }

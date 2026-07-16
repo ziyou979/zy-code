@@ -223,8 +223,16 @@ export function resetProfileCounters(): void {
 }
 // --- END ---
 
-// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-const reconciler = (createReconciler as any)({
+type ReconcileWithSync = ReturnType<typeof createReconciler> & {
+  createContainer: (...args: unknown[]) => Record<string, unknown>
+  updateContainerSync: (...args: unknown[]) => void
+  flushSyncWork: () => void
+  flushSyncFromReconciler: (...args: unknown[]) => void
+}
+
+const reconciler = (
+  createReconciler as unknown as (config: Record<string, unknown>) => ReconcileWithSync
+)({
   getRootHostContext: () => ({ isInsideText: false }),
   prepareForCommit: () => {
     if (COMMIT_LOG) {

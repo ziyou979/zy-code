@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { tSync } from '../../i18n/index.js'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
 import { Byline } from '../../components/design-system/Byline.js'
 import { SearchBox } from '../../components/SearchBox.js'
@@ -225,7 +226,7 @@ export function DiscoverPlugins({
         const errorResult = formatMarketplaceLoadingErrors(failures, successCount)
         if (errorResult) {
           if (errorResult.type === 'warning') {
-            setWarning(`${errorResult.message}. Showing available plugins.`)
+            setWarning(tSync('managePlugins.showingAvailablePlugins', { message: errorResult.message }))
           } else {
             throw new Error(errorResult.message)
           }
@@ -238,18 +239,18 @@ export function DiscoverPlugins({
           if (foundPlugin) {
             if (foundPlugin.isInstalled) {
               setError(
-                `Plugin '${foundPlugin.pluginId}' is already installed. Use '/plugin' to manage existing plugins.`,
+                tSync('managePlugins.pluginAlreadyInstalled', { pluginId: foundPlugin.pluginId }),
               )
             } else {
               setSelectedPlugin(foundPlugin)
               setViewState('plugin-details')
             }
           } else {
-            setError(`Plugin "${targetPlugin}" not found in any marketplace`)
+            setError(tSync('managePlugins.pluginNotFoundInAnyMarketplace', { name: targetPlugin }))
           }
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load plugins')
+        setError(err instanceof Error ? err.message : tSync('managePlugins.failedToLoadPlugins'))
       } finally {
         setLoading(false)
       }
@@ -283,8 +284,7 @@ export function DiscoverPlugins({
         failureCount++
         newFailedPlugins.push({
           name: plugin_0.entry.name,
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          reason: (result as any).error,
+          reason: result.error,
         })
       }
     }
@@ -295,16 +295,13 @@ export function DiscoverPlugins({
     // Handle installation results
     if (failureCount === 0) {
       const message =
-        `✓ Installed ${successCount_0} ${plural(successCount_0, 'plugin')}. ` +
-        `Run /reload-plugins to activate.`
+        tSync('managePlugins.installedSuccessSingle', { count: String(successCount_0), unit: plural(successCount_0, tSync('managePlugins.pluginCount_one'), tSync('managePlugins.pluginCount_other')) })
       setResult(message)
     } else if (successCount_0 === 0) {
-      setError(`Failed to install: ${formatFailureDetails(newFailedPlugins, true)}`)
+      setError(tSync('managePlugins.failedToInstall', { details: formatFailureDetails(newFailedPlugins, true) }))
     } else {
       const message_0 =
-        `✓ Installed ${successCount_0} of ${successCount_0 + failureCount} plugins. ` +
-        `Failed: ${formatFailureDetails(newFailedPlugins, false)}. ` +
-        `Run /reload-plugins to activate successfully installed plugins.`
+        tSync('managePlugins.installedSuccessPartial', { successCount: String(successCount_0), totalCount: String(successCount_0 + failureCount), details: formatFailureDetails(newFailedPlugins, false) })
       setResult(message_0)
     }
     if (successCount_0 > 0) {
@@ -350,8 +347,7 @@ export function DiscoverPlugins({
       })
     } else {
       setIsInstalling(false)
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      setInstallError((result_0 as any).error)
+      setInstallError(result_0.error)
     }
   }
 
@@ -554,13 +550,13 @@ export function DiscoverPlugins({
         onDone={(outcome, detail) => {
           switch (outcome) {
             case 'configured':
-              finish(`✓ Installed and configured ${plugin_4.name}. Run /reload-plugins to apply.`)
+              finish(tSync('managePlugins.installedAndConfigured', { name: plugin_4.name }))
               break
             case 'skipped':
-              finish(`✓ Installed ${plugin_4.name}. Run /reload-plugins to apply.`)
+              finish(tSync('managePlugins.installedSkippedConfig', { name: plugin_4.name }))
               break
             case 'error':
-              finish(`Installed but failed to save config: ${detail}`)
+              finish(tSync('managePlugins.installedFailedToSaveConfig', { detail: detail || '' }))
               break
           }
         }}
@@ -570,7 +566,7 @@ export function DiscoverPlugins({
 
   // Loading state
   if (loading) {
-    return <Text>Loading…</Text>
+    return <Text>{tSync('managePlugins.loadingMarketplaces')}</Text>
   }
 
   // Error state
@@ -586,14 +582,14 @@ export function DiscoverPlugins({
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
-          <Text bold>Plugin details</Text>
+          <Text bold>{tSync('managePlugins.pluginDetailsTitle')}</Text>
         </Box>
 
         <Box flexDirection="column" marginBottom={1}>
           <Text bold>{selectedPlugin.entry.name}</Text>
-          <Text dimColor>from {selectedPlugin.marketplaceName}</Text>
+          <Text dimColor>{tSync('managePlugins.fromMarketplace', { name: selectedPlugin.marketplaceName })}</Text>
           {selectedPlugin.entry.version && (
-            <Text dimColor>Version: {selectedPlugin.entry.version}</Text>
+            <Text dimColor>{tSync('managePlugins.version', { version: selectedPlugin.entry.version })}</Text>
           )}
           {selectedPlugin.entry.description && (
             <Box marginTop={1}>
@@ -603,7 +599,7 @@ export function DiscoverPlugins({
           {selectedPlugin.entry.author && (
             <Box marginTop={1}>
               <Text dimColor>
-                By:{' '}
+                {tSync('managePlugins.byAuthor')}
                 {typeof selectedPlugin.entry.author === 'string'
                   ? selectedPlugin.entry.author
                   : selectedPlugin.entry.author.name}
@@ -616,7 +612,7 @@ export function DiscoverPlugins({
 
         {installError && (
           <Box marginBottom={1}>
-            <Text color="error">Error: {installError}</Text>
+            <Text color="error">{tSync('managePlugins.installError', { error: installError })}</Text>
           </Box>
         )}
 
@@ -627,7 +623,7 @@ export function DiscoverPlugins({
               {detailsMenuIndex !== index && <Text>{'  '}</Text>}
               <Text bold={detailsMenuIndex === index}>
                 {isInstalling && option.action.startsWith('install-')
-                  ? 'Installing…'
+                  ? tSync('managePlugins.installingEllipsis')
                   : option.label}
               </Text>
             </Box>
@@ -661,12 +657,12 @@ export function DiscoverPlugins({
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
-          <Text bold>Discover plugins</Text>
+          <Text bold>{tSync('managePlugins.discoverPluginsTitle')}</Text>
         </Box>
         <EmptyStateMessage reason={emptyReason!} />
         <Box marginTop={1}>
           <Text dimColor italic>
-            Esc to go back
+            {tSync('managePlugins.escToGoBack')}
           </Text>
         </Box>
       </Box>
@@ -678,7 +674,7 @@ export function DiscoverPlugins({
   return (
     <Box flexDirection="column">
       <Box>
-        <Text bold>Discover plugins</Text>
+        <Text bold>{tSync('managePlugins.discoverPluginsTitle')}</Text>
         {pagination.needsPagination && (
           <Text dimColor>
             {' '}
@@ -710,14 +706,14 @@ export function DiscoverPlugins({
       {/* No search results */}
       {filteredPlugins.length === 0 && searchQuery && (
         <Box marginBottom={1}>
-          <Text dimColor>No plugins match &quot;{searchQuery}&quot;</Text>
+          <Text dimColor>{tSync('managePlugins.noPluginsMatch', { query: searchQuery })}</Text>
         </Box>
       )}
 
       {/* Scroll up indicator */}
       {pagination.scrollPosition.canScrollUp && (
         <Box>
-          <Text dimColor> {ARROW_UP} more above</Text>
+          <Text dimColor> {ARROW_UP} {tSync('managePlugins.moreAbove')}</Text>
         </Box>
       )}
 
@@ -743,12 +739,12 @@ export function DiscoverPlugins({
                 {plugin_5.entry.name}
                 <Text dimColor> · {plugin_5.marketplaceName}</Text>
                 {plugin_5.entry.tags?.includes('community-managed') && (
-                  <Text dimColor> [Community Managed]</Text>
+                  <Text dimColor>{tSync('managePlugins.communityManaged')}</Text>
                 )}
                 {installCounts && plugin_5.marketplaceName === OFFICIAL_MARKETPLACE_NAME && (
                   <Text dimColor>
                     {' · '}
-                    {formatInstallCount(installCounts.get(plugin_5.pluginId) ?? 0)} installs
+                    {formatInstallCount(installCounts.get(plugin_5.pluginId) ?? 0)}{tSync('managePlugins.installsSuffix')}
                   </Text>
                 )}
               </Text>
@@ -765,7 +761,7 @@ export function DiscoverPlugins({
       {/* Scroll down indicator */}
       {pagination.scrollPosition.canScrollDown && (
         <Box>
-          <Text dimColor> {ARROW_DOWN} more below</Text>
+          <Text dimColor> {ARROW_DOWN} {tSync('managePlugins.moreBelow')}</Text>
         </Box>
       )}
 
@@ -779,18 +775,15 @@ export function DiscoverPlugins({
       )}
 
       <DiscoverPluginsKeyHint
-        {...({
-          hasSelection: selectedForInstall.size > 0,
-          canToggle:
-            selectedIndex < filteredPlugins.length && !filteredPlugins[selectedIndex]?.isInstalled,
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        } as any)}
+        hasSelection={selectedForInstall.size > 0}
+        canToggle={
+          selectedIndex < filteredPlugins.length && !filteredPlugins[selectedIndex]?.isInstalled
+        }
       />
     </Box>
   )
 }
-// biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-function DiscoverPluginsKeyHint({ hasSelection, canToggle }: any) {
+function DiscoverPluginsKeyHint({ hasSelection, canToggle }: { hasSelection: boolean; canToggle: boolean }) {
   return (
     <Box marginTop={1}>
       <Text dimColor={true} italic={true}>
@@ -804,7 +797,7 @@ function DiscoverPluginsKeyHint({ hasSelection, canToggle }: any) {
               bold={true}
             />
           )}
-          {<Text>type to search</Text>}
+          {<Text>{tSync('managePlugins.typeToSearch')}</Text>}
           {canToggle && (
             <ConfigurableShortcutHint
               action="plugin:toggle"
@@ -843,45 +836,45 @@ function EmptyStateMessage({ reason }: { reason: string }) {
     case 'git-not-installed':
       return (
         <>
-          <Text dimColor={true}>Git is required to install marketplaces.</Text>
-          <Text dimColor={true}>Please install git and restart ZY Code.</Text>
+          <Text dimColor={true}>{tSync('managePlugins.gitRequired')}</Text>
+          <Text dimColor={true}>{tSync('managePlugins.installGitAndRestart')}</Text>
         </>
       )
     case 'all-blocked-by-policy':
       return (
         <>
           <Text dimColor={true}>
-            Your organization policy does not allow any external marketplaces.
+            {tSync('managePlugins.policyNoExternalMarketplaces')}
           </Text>
-          <Text dimColor={true}>Contact your administrator.</Text>
+          <Text dimColor={true}>{tSync('managePlugins.contactAdministrator')}</Text>
         </>
       )
     case 'policy-restricts-sources':
       return (
         <>
-          <Text dimColor={true}>Your organization restricts which marketplaces can be added.</Text>
-          <Text dimColor={true}>Switch to the Marketplaces tab to view allowed sources.</Text>
+          <Text dimColor={true}>{tSync('managePlugins.policyRestrictsSources')}</Text>
+          <Text dimColor={true}>{tSync('managePlugins.switchToMarketplacesTab')}</Text>
         </>
       )
     case 'all-marketplaces-failed':
       return (
         <>
-          <Text dimColor={true}>Failed to load marketplace data.</Text>
-          <Text dimColor={true}>Check your network connection.</Text>
+          <Text dimColor={true}>{tSync('managePlugins.failedLoadMarketplaceData')}</Text>
+          <Text dimColor={true}>{tSync('managePlugins.checkNetworkConnection')}</Text>
         </>
       )
     case 'all-plugins-installed':
       return (
         <>
-          <Text dimColor={true}>All available plugins are already installed.</Text>
-          <Text dimColor={true}>Check for new plugins later or add more marketplaces.</Text>
+          <Text dimColor={true}>{tSync('managePlugins.allPluginsInstalled')}</Text>
+          <Text dimColor={true}>{tSync('managePlugins.checkForNewPlugins')}</Text>
         </>
       )
     default:
       return (
         <>
-          <Text dimColor={true}>No plugins available.</Text>
-          <Text dimColor={true}>Add a marketplace first using the Marketplaces tab.</Text>
+          <Text dimColor={true}>{tSync('managePlugins.noPluginsAvailable')}</Text>
+          <Text dimColor={true}>{tSync('managePlugins.addMarketplaceFirst')}</Text>
         </>
       )
   }

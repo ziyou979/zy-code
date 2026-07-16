@@ -41,8 +41,7 @@ export function FilesystemPermissionRequest({
         verbose={verbose}
         workerBadge={workerBadge}
       />
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    ) as any
+    ) as React.ReactElement
   }
   const renderedToolUseMessage = toolUseConfirm.tool.renderToolUseMessage(
     toolUseConfirm.input as never,

@@ -13,6 +13,7 @@ import { AskUserQuestionTool } from '../../../tools/AskUserQuestionTool/AskUserQ
 import type { ImageBlock } from '../../../types/llm.js'
 import type { CliHighlight } from '../../../utils/cliHighlight.js'
 import { getCliHighlightPromise } from '../../../utils/cliHighlight.js'
+import type { ImageDimensions } from '../../../utils/imageResizer.js'
 import type { PastedContent } from '../../../services/config/config.js'
 import { maybeResizeAndDownsampleImageBlock } from '../../../utils/imageResizer.js'
 import { cacheImagePath, storeImage } from '../../../utils/imageStore.js'
@@ -105,8 +106,7 @@ function AskUserQuestionPermissionRequestBody({
     base64Image: string,
     mediaType: string,
     filename: string,
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    dimensions: any,
+    dimensions: ImageDimensions | undefined,
     _sourcePath: string,
   ) {
     nextPasteIdRef.current = nextPasteIdRef.current + 1
@@ -119,10 +119,8 @@ function AskUserQuestionPermissionRequestBody({
       filename: filename || 'Pasted image',
       dimensions,
     }
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    cacheImagePath(newContent as any)
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    storeImage(newContent as any)
+    cacheImagePath(newContent)
+    void storeImage(newContent)
     setPastedContentsByQuestion((prev) => ({
       ...prev,
       [questionText]: {
@@ -299,16 +297,14 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
     } else {
       if (textInput) {
         const questionImages = Object.values(pastedContentsByQuestion[questionText_1] ?? {}).filter(
-          // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-          (c_0: any) => c_0.type === 'image',
+          (c_0: PastedContent) => c_0.type === 'image',
         )
         answer_2 = questionImages.length > 0 ? `${textInput} (Image attached)` : textInput
       } else {
         if (label === '__other__') {
           const questionImages_0 = Object.values(
             pastedContentsByQuestion[questionText_1] ?? {},
-            // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-          ).filter((c_1: any) => c_1.type === 'image')
+          ).filter((c_1: PastedContent) => c_1.type === 'image')
           answer_2 = questionImages_0.length > 0 ? '(Image attached)' : label
         } else {
           answer_2 = label

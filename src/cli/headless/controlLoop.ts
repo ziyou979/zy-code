@@ -18,6 +18,7 @@ import type { MCPServerConnection, McpSdkServerConfig } from 'src/services/mcp/t
 import { createFileStateCacheWithSizeLimit } from 'src/utils/fileStateCache.js'
 import { expandPath } from 'src/utils/path.js'
 import { finalizePendingAsyncHooks } from 'src/services/hooks/asyncHookRegistry.js'
+import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 import type { ModelInfo, WireUserMessageReplay } from 'src/types/index.js'
 import type {
   StdoutMessage,
@@ -347,8 +348,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       // Check client exists - dynamically added SDK servers may have
       // placeholder clients with null client until updateSdkMcp() runs
       if (sdkClient && sdkClient.type === 'connected' && sdkClient.client?.transport?.onmessage) {
-        // biome-ignore lint/suspicious/noExplicitAny: MCP SDK transport 类型不暴露 JSONRPCMessage
-        sdkClient.client.transport.onmessage(mcpRequest.message as any)
+        sdkClient.client.transport.onmessage(mcpRequest.message as JSONRPCMessage)
       }
       sendControlResponseSuccess(message)
     },

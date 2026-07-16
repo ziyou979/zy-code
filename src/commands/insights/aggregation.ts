@@ -446,8 +446,7 @@ export async function generateSectionInsight(
       signal: new AbortController().signal,
       options: {
         model: getInsightsModel(),
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        querySource: 'insights' as any,
+        querySource: 'insights',
         agents: [],
         isNonInteractiveSession: true,
         hasAppendSystemPrompt: false,

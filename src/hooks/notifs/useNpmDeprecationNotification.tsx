@@ -1,13 +1,13 @@
+import type { Notification } from '../../context/notifications.js'
 import { isInBundledMode } from 'src/utils/bundledMode.js'
 import { getCurrentInstallationType } from 'src/utils/doctorDiagnostic.js'
 import { isEnvTruthy } from 'src/utils/envUtils.js'
 import { tSync } from '../../i18n/index.js'
 import { useStartupNotification } from './useStartupNotification.js'
 export function useNpmDeprecationNotification() {
-  // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-  useStartupNotification(_temp as any)
+  useStartupNotification(_temp as () => Notification | Promise<Notification>)
 }
-async function _temp() {
+async function _temp(): Promise<Notification | null> {
   if (isInBundledMode() || isEnvTruthy(process.env.DISABLE_INSTALLATION_CHECKS)) {
     return null
   }
@@ -20,6 +20,6 @@ async function _temp() {
     key: 'npm-deprecation-warning',
     text: tSync('notif.npmDeprecation'),
     color: 'warning',
-    priority: 'high',
-  }
+    priority: 'high' as const,
+  } as Notification
 }

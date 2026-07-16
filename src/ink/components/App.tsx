@@ -26,7 +26,11 @@ import {
   startSelection,
 } from '../selection.js'
 import { isXtermJs, setXtversionName, supportsExtendedKeys } from '../terminal.js'
-import { getTerminalFocused, setTerminalFocused } from '../terminal-focus-state.js'
+import {
+  getTerminalFocused,
+  setTerminalFocused,
+  type TerminalFocusState,
+} from '../terminal-focus-state.js'
 import { TerminalQuerier, xtversion } from '../terminal-querier.js'
 import {
   DISABLE_KITTY_KEYBOARD,
@@ -207,8 +211,7 @@ export default class App extends PureComponent<Props, State> {
           >
             <TerminalFocusProvider
               isTerminalFocused={false}
-              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-              terminalFocusState={'unfocused' as any}
+              terminalFocusState={'unfocused' as TerminalFocusState}
             >
               <ClockProvider>
                 <CursorDeclarationContext.Provider

@@ -126,16 +126,13 @@ export async function launchRemoteReview(
   // consume at session creation routes billing: first N zero-rate, then
   // anthropic:cccr org-service-key (overage-only).
   if (!eligibility.eligible) {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const blockers = (eligibility as any).errors.filter(
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      (e: any) => e.type !== 'no_remote_environment',
+    const blockers = eligibility.errors.filter(
+      (e: { type: string }) => e.type !== 'no_remote_environment',
     )
     if (blockers.length > 0) {
       logEvent('zy_review_remote_precondition_failed', {
         precondition_errors: blockers
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          .map((e: any) => e.type)
+          .map((e: { type: string }) => e.type)
           .join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       const reasons = blockers.map(formatPreconditionError).join('\n')

@@ -42,17 +42,13 @@ export async function collectContextData(context: CollectContextDataInput): Prom
     const { projectView } =
       require('../../services/compact/context-collapse/operations.js') as typeof import('../../services/compact/context-collapse/operations.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    apiView = projectView(apiView, []) as any
+    apiView = projectView(apiView, []) as Message[]
   }
 
-  const { messages: compactedMessages } = (await microcompactMessages(
+  const { messages: compactedMessages } = await microcompactMessages(
     apiView,
     undefined,
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  )) as any as {
-    messages: Message[]
-  }
+  )
   const appState = getAppState()
 
   return analyzeContextUsage(

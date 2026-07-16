@@ -232,10 +232,8 @@ ${sessionIds.map((id) => `- ${id}`).join('\n')}`
       if (appendSystemMessage && isDreamTask(dreamState) && dreamState.filesTouched.length > 0) {
         appendSystemMessage({
           ...createMemorySavedMessage(dreamState.filesTouched),
-          // @ts-expect-error 扩展消息字段
-          // biome-ignore lint/suspicious/noExplicitAny: 扩展消息字段
-          verb: 'Improved' as any,
-        })
+          verb: 'Improved' as const,
+        } as Parameters<NonNullable<ToolUseContext['appendSystemMessage']>>[0])
       }
       logForDebugging(
         `[autoDream] completed — cache: read=${result.totalUsage.cacheReadInputTokens} created=${result.totalUsage.cacheCreationInputTokens}`,

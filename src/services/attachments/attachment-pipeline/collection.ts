@@ -148,12 +148,9 @@ export async function getAttachments(
           ? skillSearchModules && !options?.skipSkillDiscovery
             ? [
                 maybe('skill_discovery', () =>
-                  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                  (skillSearchModules!.prefetch as any).getTurnZeroSkillDiscovery(
-                    input,
-                    messages ?? [],
-                    context,
-                  ),
+                  (
+                    skillSearchModules!.prefetch as { getTurnZeroSkillDiscovery: Function }
+                  ).getTurnZeroSkillDiscovery(input, messages ?? [], context),
                 ),
               ]
             : []
@@ -234,8 +231,7 @@ export async function getAttachments(
           // 它与 leader 共享 AppState.teamContext，因此 isTeamLead 解析为
           // true，它会将 leader 的 DM 读取并标记为已读作为临时附件，
           // 静默窃取本应作为永久轮次传递的消息。
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          ...((querySource as any) === 'session_memory'
+          ...((querySource as string) === 'session_memory'
             ? []
             : [
                 maybe('teammate_mailbox', async () =>
@@ -297,7 +293,7 @@ export async function getAttachments(
     ...threadAttachmentResults.flat(),
     ...mainThreadAttachmentResults.flat(),
     // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  ].filter((a) => a !== undefined && a !== null) as any
+  ].filter((a): a is Attachment => a !== undefined && a !== null)
 }
 
 export async function maybe<A>(label: string, f: () => Promise<A[]>): Promise<A[]> {

@@ -24,8 +24,7 @@ export function WizardDialogLayout({
     title: providerTitle,
     showStepCounter,
     goBack,
-    // biome-ignore lint/suspicious/noExplicitAny: Ink 渲染层类型兼容
-  } = useWizard() as any
+  } = useWizard<Record<string, unknown>>()
   const title = titleOverride || providerTitle || 'Wizard'
   const stepSuffix = showStepCounter !== false ? ` (${currentStepIndex + 1}/${totalSteps})` : ''
   return (

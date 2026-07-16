@@ -150,8 +150,7 @@ function ResumeCommand({
       }
 
       // Different project - show command instead of resuming
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      const raw = await setClipboard((crossProjectCheck as any).command)
+      const raw = await setClipboard(crossProjectCheck.command)
       if (raw) {
         process.stdout.write(raw)
       }
@@ -162,8 +161,7 @@ function ResumeCommand({
         'This conversation is from a different directory.',
         '',
         'To resume, run:',
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        `  ${(crossProjectCheck as any).command}`,
+        `  ${crossProjectCheck.command}`,
         '',
         '(Command copied to clipboard)',
         '',
@@ -213,8 +211,7 @@ function ResumeCommand({
       onLoadMore={() => {}}
       initialSearchQuery=""
     />
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  ) as any
+  )
 }
 export function filterResumableSessions(logs: LogOption[], currentSessionId: string): LogOption[] {
   return logs.filter((l) => !l.isSidechain && getSessionIdFromLog(l) !== currentSessionId)

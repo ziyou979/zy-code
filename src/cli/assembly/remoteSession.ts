@@ -8,7 +8,7 @@
 // （assistantModule / sessionDiscovery / teleport / bridge），强行外提收益小、回归面大。
 
 import type { RemoteSessionConfig } from '../../remote/remoteSessionManager.js'
-import { launchRepl } from '../../ReplLauncher.js'
+import { launchRepl } from '../../cli/replLauncher.js'
 import type { Props as REPLProps } from '../../screens/REPL.js'
 import type { Message as MessageType } from '../../types/message.js'
 import type { AssemblyContext, SessionConfig } from './types.js'

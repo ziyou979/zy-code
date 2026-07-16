@@ -154,11 +154,9 @@ export const macOsKeychainStorage = {
       execSyncWithDefaults_DEPRECATED(
         `security delete-generic-password -a "${username}" -s "${storageServiceName}"`,
       )
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      return true as any
+      return Promise.resolve()
     } catch (_e) {
-      // biome-ignore lint/suspicious/noExplicitAny: 安全存储适配层类型处理
-      return false as any
+      return Promise.resolve()
     }
   },
 } satisfies SecureStorage

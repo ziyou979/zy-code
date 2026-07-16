@@ -102,8 +102,7 @@ function handleValidationError(
     }
 
     // Check error body for model-specific errors
-    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    const errorBody = (error as any).error as unknown
+    const errorBody = (error as { error?: unknown }).error
     if (
       errorBody &&
       typeof errorBody === 'object' &&

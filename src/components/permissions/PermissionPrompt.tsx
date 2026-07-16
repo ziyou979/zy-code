@@ -58,7 +58,7 @@ export function PermissionPrompt<T extends string>({
   const [rejectFeedback, setRejectFeedback] = useState('')
   const [acceptInputMode, setAcceptInputMode] = useState(false)
   const [rejectInputMode, setRejectInputMode] = useState(false)
-  const [focusedValue, setFocusedValue] = useState(null)
+  const [focusedValue, setFocusedValue] = useState<string | null>(null)
   const [acceptFeedbackModeEntered, setAcceptFeedbackModeEntered] = useState(false)
   const [rejectFeedbackModeEntered, setRejectFeedbackModeEntered] = useState(false)
   const focusedOption = options.find((opt) => opt.value === focusedValue)
@@ -211,8 +211,7 @@ export function PermissionPrompt<T extends string>({
             ) {
               setRejectInputMode(false)
             }
-            // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-            setFocusedValue(value_2 as any)
+            setFocusedValue(value_2)
           }}
           onInputModeToggle={handleInputModeToggle}
         />

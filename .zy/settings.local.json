@@ -92,7 +92,18 @@
       "Bash(while read:*)",
       "Bash(do if:*)",
       "Bash(then echo:*)",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(CLAUDE_BIN=/d/nvm/v24.15.0/node_global/node_modules/@anthropic-ai/claude-code/bin/claude.exe __NEW_LINE_25527bad200dff71__ echo '=== getReadFileState implementation ===' dd if=$CLAUDE_BIN bs=1 skip=90060900 count=10000)",
+      "Bash(LC_ALL=C tr -d '\\\\0')",
+      "Bash(mkdir -p /tmp/zy-backup)",
+      "Bash(cp E:/ProjectCollection/TSProjects/zy-code/src/services/messages/index.ts /tmp/zy-backup/messages-index-backup.ts)",
+      "Read(//tmp/**)",
+      "WebFetch(domain:www.artificialintelligence-news.com)",
+      "WebFetch(domain:www.reuters.com)",
+      "WebFetch(domain:blog.google)",
+      "WebFetch(domain:openai.com)",
+      "WebFetch(domain:thursdai.news)",
+      "WebFetch(domain:dentro.de)"
     ]
   }
 }

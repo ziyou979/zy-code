@@ -4,7 +4,7 @@ import {
   SYNTHETIC_OUTPUT_TOOL_NAME,
   SyntheticOutputTool,
 } from '../../tools/SyntheticOutputTool/SyntheticOutputTool.js'
-import { substituteArguments } from '../../utils/argumentSubstitution.js'
+import { substituteArguments } from '../../utils/argumentParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
 import { hasSuccessfulToolCall } from '../messages/predicates.js'

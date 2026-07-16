@@ -3,6 +3,7 @@ import TextInput from '../../components/TextInput.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, Text } from '../../ink.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
+import { tSync } from '../../i18n/index.js'
 
 interface ChooseRepoStepProps {
   currentRepo: string | null
@@ -68,14 +69,15 @@ export function ChooseRepoStep({
         <Box flexDirection="column" borderStyle="round" paddingX={1}>
           {
             <Box flexDirection="column" marginBottom={1}>
-              <Text bold={true}>Install GitHub App</Text>
-              <Text dimColor={true}>Select GitHub repository</Text>
+              <Text bold={true}>{tSync('installGitHubApp.installTitle')}</Text>
+              <Text dimColor={true}>{tSync('installGitHubApp.selectRepo')}</Text>
             </Box>
           }
           {currentRepo && (
             <Box marginBottom={1}>
               <Text bold={useCurrentRepo} color={useCurrentRepo ? 'permission' : undefined}>
-                {useCurrentRepo ? '> ' : '  '}Use current repository: {currentRepo}
+                {useCurrentRepo ? '> ' : '  '}
+                {tSync('installGitHubApp.useCurrentRepo')}: {currentRepo}
               </Text>
             </Box>
           )}
@@ -86,7 +88,9 @@ export function ChooseRepoStep({
                 color={!useCurrentRepo || !currentRepo ? 'permission' : undefined}
               >
                 {!useCurrentRepo || !currentRepo ? '> ' : '  '}
-                {currentRepo ? 'Enter a different repository' : 'Enter repository'}
+                {currentRepo
+                  ? tSync('installGitHubApp.enterDifferentRepo')
+                  : tSync('installGitHubApp.enterRepo')}
               </Text>
             </Box>
           }
@@ -100,7 +104,7 @@ export function ChooseRepoStep({
                 }}
                 onSubmit={handleSubmit}
                 focus={true}
-                placeholder={'Enter a repo as owner/repo or https://github.com/owner/repo\u2026'}
+                placeholder={tSync('installGitHubApp.repoPlaceholder')}
                 columns={textInputColumns}
                 cursorOffset={cursorOffset}
                 onChangeCursorOffset={setCursorOffset}
@@ -112,13 +116,14 @@ export function ChooseRepoStep({
       }
       {showEmptyError && (
         <Box marginLeft={3} marginBottom={1}>
-          <Text color="error">Please enter a repository name to continue</Text>
+          <Text color="error">{tSync('installGitHubApp.errorEmptyRepo')}</Text>
         </Box>
       )}
       {
         <Box marginLeft={3}>
           <Text dimColor={true}>
-            {currentRepo ? '\u2191/\u2193 to select \xB7 ' : ''}Enter to continue
+            {currentRepo ? tSync('installGitHubApp.selectNavigate') : ''}
+            {tSync('installGitHubApp.enterToContinue')}
           </Text>
         </Box>
       }

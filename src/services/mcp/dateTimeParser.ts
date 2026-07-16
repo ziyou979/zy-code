@@ -2,6 +2,7 @@ import { queryCompactModel } from '../api/compactQueries.js'
 import { logError } from '../../utils/log.js'
 import { extractTextContent } from '../messages/predicates.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { formatWeekday } from '../../utils/dateUtils.js'
 
 export type DateTimeParseResult =
   | { success: true; value: string }
@@ -33,7 +34,7 @@ export async function parseNaturalLanguageDateTime(
   const tzMinutes = Math.abs(timezoneOffset) % 60
   const tzSign = timezoneOffset >= 0 ? '+' : '-'
   const timezone = `${tzSign}${String(tzHours).padStart(2, '0')}:${String(tzMinutes).padStart(2, '0')}`
-  const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' })
+  const dayOfWeek = formatWeekday(now)
 
   // Build system prompt with context
   const systemPrompt = asSystemPrompt([

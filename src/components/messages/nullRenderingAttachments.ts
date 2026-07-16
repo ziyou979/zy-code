@@ -38,10 +38,9 @@ const NULL_RENDERING_TYPES = [
   'auto_mode',
   'auto_mode_exit',
   'output_token_usage',
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  'pen_mode_enter' as any,
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  'pen_mode_exit' as any,
+  // 运行时存在的类型，尚未在 Attachment 联合类型中登记
+  'pen_mode_enter' as Attachment['type'],
+  'pen_mode_exit' as Attachment['type'],
   'verify_plan_reminder',
   'current_session_memory',
   'compaction_reminder',
@@ -51,9 +50,8 @@ const NULL_RENDERING_TYPES = [
 export type NullRenderingAttachmentType = (typeof NULL_RENDERING_TYPES)[number]
 
 const NULL_RENDERING_ATTACHMENT_TYPES: ReadonlySet<Attachment['type']> = new Set(
-  NULL_RENDERING_TYPES,
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-) as any
+  NULL_RENDERING_TYPES as unknown as Attachment['type'][],
+)
 
 /**
  * True when this message is an attachment that AttachmentMessage renders as
@@ -64,7 +62,7 @@ const NULL_RENDERING_ATTACHMENT_TYPES: ReadonlySet<Attachment['type']> = new Set
  */
 export function isNullRenderingAttachment(msg: Message): boolean {
   return (
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    msg.type === 'attachment' && NULL_RENDERING_ATTACHMENT_TYPES.has(msg.attachment.type as any)
+    msg.type === 'attachment' &&
+    NULL_RENDERING_ATTACHMENT_TYPES.has(msg.attachment.type as Attachment['type'])
   )
 }

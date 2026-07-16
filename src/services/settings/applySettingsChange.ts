@@ -12,6 +12,7 @@ import {
 import { syncPermissionRulesFromDisk } from '../permissions/permissions.js'
 import { loadAllPermissionRulesFromDisk } from '../permissions/permissionsLoader.js'
 import type { SettingSource } from './constants.js'
+import type { ToolPermissionContext } from '../../tool.js'
 import { getInitialSettings } from './settings.js'
 
 /**
@@ -43,8 +44,10 @@ export function applySettingsChange(
   updateHooksConfigSnapshot()
 
   setAppState((prev) => {
-    // biome-ignore lint/suspicious/noExplicitAny: ToolPermissionContext 的 readonly 变体与 mutable 版本不兼容
-    let newContext = syncPermissionRulesFromDisk(prev.toolPermissionContext, updatedRules) as any
+    let newContext: ToolPermissionContext = syncPermissionRulesFromDisk(
+      prev.toolPermissionContext as ToolPermissionContext,
+      updatedRules,
+    )
 
     // Ant-only: re-strip overly broad Bash allow rules after settings sync
     if (isInternalBuild() && process.env.ZY_CODE_ENTRYPOINT !== 'local-agent') {
@@ -78,7 +81,6 @@ export function applySettingsChange(
       // watcher that would resync AppState), so effortChanged would
       // be true and we'd wipe a session-scoped value held in effortValue.
       ...(effortChanged && newEffort !== undefined ? { effortValue: newEffort } : {}),
-      // biome-ignore lint/suspicious/noExplicitAny: ToolPermissionContext readonly 变体不兼容
-    } as any
+    } as AppState
   })
 }

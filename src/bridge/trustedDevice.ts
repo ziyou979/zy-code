@@ -47,8 +47,9 @@ const readStoredToken = memoize((): string | undefined => {
   if (envToken) {
     return envToken
   }
-  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-  return (getSecureStorage() as any).read()?.trustedDeviceToken
+  return (getSecureStorage().read() as Record<string, unknown> | null)?.trustedDeviceToken as
+    | string
+    | undefined
 })
 
 export function getTrustedDeviceToken(): string | undefined {
@@ -76,11 +77,10 @@ export function clearTrustedDeviceToken(): void {
   const secureStorage = getSecureStorage()
   try {
     // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-    const data = (secureStorage as any).read()
+    const data = secureStorage.read() as Record<string, unknown> | null
     if (data?.trustedDeviceToken) {
-      // @ts-expect-error
-      // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-      delete data.trustedDeviceToken(secureStorage as any).update(data)
+      delete (data as Record<string, unknown>).trustedDeviceToken
+      secureStorage.update(data as Record<string, unknown>)
     }
   } catch {
     // Best-effort — don't block login if storage is inaccessible
@@ -175,14 +175,13 @@ export async function enrollTrustedDevice(): Promise<void> {
 
     try {
       // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-      const storageData = (secureStorage as any).read()
+      const storageData = secureStorage.read() as Record<string, unknown>
       if (!storageData) {
         logForDebugging('[trusted-device] Cannot read storage, skipping token persist')
         return
       }
       storageData.trustedDeviceToken = token
-      // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-      const result = (secureStorage as any).update(storageData)
+      const result = secureStorage.update(storageData as Record<string, unknown>)
       if (!result.success) {
         logForDebugging(`[trusted-device] Failed to persist token: ${result.warning ?? 'unknown'}`)
         return

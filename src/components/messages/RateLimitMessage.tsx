@@ -57,8 +57,7 @@ export function RateLimitMessage({ text, onOpenRateLimitOptions }: RateLimitMess
   const subscriptionType = getSubscriptionType()
   const rateLimitTier = getRateLimitTier()
   const isTeamOrEnterprise =
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    (subscriptionType as any) === 'team' || subscriptionType === 'enterprise'
+    (subscriptionType as string) === 'team' || subscriptionType === 'enterprise'
   const isMax20x = rateLimitTier === 'default_Zy_max_20x'
   const shouldShowUpsell = shouldProcessMockLimits() || isZyAISubscriber()
   const canSeeRateLimitOptionsUpsell = shouldShowUpsell && !isMax20x

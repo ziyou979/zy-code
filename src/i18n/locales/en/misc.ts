@@ -706,6 +706,13 @@ export const enMisc: TranslationResource = {
   'promptInput.thinkingOn': 'Thinking on',
   'promptInput.ultraplanLaunch':
     'This prompt will launch an ultraplan session in ZY Code on the web',
+  'promptInput.waiting': 'waiting {duration}',
+  'promptInput.pasting': 'Pasting text\u2026',
+  'promptInput.vimInsert': '-- INSERT --',
+  'promptInput.vimVisual': '-- VISUAL --',
+  'promptInput.remote': 'remote',
+  'promptInput.selectionMacOption': 'set macOptionClickForcesSelection in VS Code settings',
+  'promptInput.voiceHint': 'hold {shortcut} to speak',
   'codeReview.title': 'Code Review',
   'codeReview.effort': 'Effort: {level}',
   'codeReview.levelLow': 'Low — quick scan',
@@ -722,6 +729,29 @@ export const enMisc: TranslationResource = {
   'codeReview.fixApplied': 'Fixes have been applied to the working tree.',
   'codeReview.needPRForComment': '--comment requires a PR number.',
   'codeReview.truncated': '(Result truncated — full output available above)',
+  'ultraplan.launching': '{diamond} ultraplan\n{prefix}Starting ZY Code on the web\u2026',
+  'ultraplan.sessionReady':
+    '{diamond} ultraplan \u00b7 Monitor progress in ZY Code on the web {url}',
+  'ultraplan.sessionReadyHint':
+    'You can continue working \u2014 when the {diamond} fills, press \u2193 to view results',
+  'ultraplan.alreadyPolling':
+    'ultraplan: already polling. Open {url} to check status, or wait for the plan to land here.',
+  'ultraplan.alreadyLaunching':
+    'ultraplan: already launching. Please wait for the session to start.',
+  'ultraplan.defaultTitle': 'Refine local plan',
+  'ultraplan.taskTitle': 'Ultraplan',
+  'ultraplan.remoteApproved':
+    'Ultraplan approved \u2014 executing in ZY Code on the web. Follow along at: {url}',
+  'ultraplan.remoteResults':
+    'Results will land as a pull request when the remote session finishes. There is nothing to do here.',
+  'ultraplan.failed': 'Ultraplan failed: {error}\n\nSession: {url}',
+  'ultraplan.cannotLaunch': 'ultraplan: cannot launch remote session \u2014\n{reasons}',
+  'ultraplan.sessionFailed':
+    'ultraplan: session creation failed{bundleMsg}. See --debug for details.',
+  'ultraplan.unexpectedError': 'ultraplan: unexpected error \u2014 {error}',
+  'ultraplan.stopped': 'Ultraplan stopped.\n\nSession: {url}',
+  'ultraplan.stoppedMeta':
+    'The user stopped the ultraplan session above. Do not respond to the stop notification \u2014 wait for their next message.',
   'ultraplan.noModelConfigured':
     'No model configured for /ultraplan. Set models.advanced or models.standard in settings.',
   'promptInput.ultrareviewRun':
@@ -1204,6 +1234,35 @@ export const enMisc: TranslationResource = {
   'agentFileSource.plugin': 'Plugin: {name}',
   'agentFileSource.cliArg': 'CLI argument',
 
+  // sandbox settings
+  'sandbox.settings.current': 'current',
+  'sandbox.settings.autoAllowLabel': 'Sandbox BashTool, with auto-allow',
+  'sandbox.settings.regularLabel': 'Sandbox BashTool, with regular permissions',
+  'sandbox.settings.disabledLabel': 'No Sandbox',
+  'sandbox.settings.enabledAutoAllow': '\u2713 Sandbox enabled with auto-allow for bash commands',
+  'sandbox.settings.enabledRegular': '\u2713 Sandbox enabled with regular bash permissions',
+  'sandbox.settings.disabled': '\u25CB Sandbox disabled',
+  'sandbox.settings.tabMode': 'Mode',
+  'sandbox.settings.tabOverrides': 'Overrides',
+  'sandbox.settings.tabConfig': 'Config',
+  'sandbox.settings.tabDependencies': 'Dependencies',
+  'sandbox.settings.paneTitle': 'Sandbox',
+  'sandbox.settings.socketWarning': 'Cannot block unix domain sockets (see Dependencies tab)',
+  'sandbox.settings.configureMode': 'Configure Mode',
+  'sandbox.settings.autoAllowMode': 'Auto-allow mode',
+  'sandbox.settings.autoAllowDesc':
+    'Commands will try to run in the sandbox automatically, and attempts to run outside of the sandbox fallback to regular permissions. Explicit ask/deny rules are always respected.',
+  'sandbox.settings.learnMore': 'Learn more',
+
+  // settings shortcuts
+  'settings.shortcuts.cancel': 'cancel',
+  'settings.shortcuts.disableExternalIncludes': 'disable external includes',
+  'settings.shortcuts.close': 'close',
+  'settings.shortcuts.clear': 'clear',
+  'settings.shortcuts.change': 'change',
+  'settings.shortcuts.save': 'save',
+  'settings.shortcuts.search': 'search',
+
   // colorPicker
   'colorPicker.preview': 'Preview: ',
 
@@ -1223,55 +1282,16 @@ export const enMisc: TranslationResource = {
   // memoryFile
   'memoryFile.autoMemory': 'Auto-memory: {status}',
 
+  // repl
+  'repl.memorySurvey.question': 'How well did Zy use its memory? (optional)',
+
+  // repl.dialogDispatch
+  'repl.dialogDispatch.promptCancelled': 'Prompt cancelled by user',
+  'repl.dialogDispatch.networkAccess': 'Network Access',
+  'repl.dialogDispatch.waitingLeaderNetworkAccess':
+    'Waiting for leader to approve network access to {host}',
+
   // install-github-app
-  'installGh.checkingGithub': 'Checking GitHub CLI installation\u2026',
-  'installGh.installTitle': 'Install GitHub App',
-  'installGh.setupApiKeySecret': 'Setup API key secret',
-  'installGh.apiKeyAlreadyExists': 'ANTHROPIC_API_KEY already exists in repository secrets!',
-  'installGh.wouldYouLike': 'Would you like to:',
-  'installGh.useExistingApiKey': 'Use the existing API key',
-  'installGh.createNewSecret': 'Create a new secret with a different name',
-  'installGh.enterNewSecretName': 'Enter new secret name (alphanumeric with underscores):',
-  'installGh.secretPlaceholder': 'e.g., CLAUDE_API_KEY',
-  'installGh.chooseApiKey': 'Choose API key',
-  'installGh.useExistingZyApiKey': 'Use your existing ZY Code API key',
-  'installGh.createLongLivedToken': 'Create a long-lived token with your Zy subscription',
-  'installGh.enterNewApiKey': 'Enter a new API key',
-  'installGh.apiKeyPlaceholder':
-    'sk-ant\u2026 (Create a new key at https://platform.zy.com/settings/keys)',
-  'installGh.selectNavigate': '\u2191\uFE0E/\u2193\uFE0E to select \u00b7 Enter to continue',
-  'installGh.noApiKeyFound':
-    'No API key found. Please login first with `zy auth login --provider <provider>`.',
-  'installGh.pressAnyKeyReturn': 'Press any key to return to API key selection',
-  'installGh.retrievingToken': 'Retrieving authentication token\u2026',
-  'installGh.installZyGhApp': 'Install the Zy GitHub App',
-  'installGh.openingBrowser': 'Opening browser to install the Zy GitHub App\u2026',
-  'installGh.ifBrowserNotOpen': "If your browser doesn't open automatically, visit:",
-  'installGh.installForRepo': 'Please install the app for repository:',
-  'installGh.grantAccess': 'Important: Make sure to grant access to this specific repository',
-  'installGh.pressEnterAfterInstall': 'Press Enter once you\u2019ve installed the app',
-  'installGh.havingTrouble': 'Having trouble? See manual setup instructions at:',
-  'installGh.success': 'Success',
-  'installGh.workflowCreated': '\u2713 GitHub Actions workflow created!',
-  'installGh.usingExistingSecret': '\u2713 Using existing ANTHROPIC_API_KEY secret',
-  'installGh.apiKeySavedAs': '\u2713 API key saved as {secretName} secret',
-  'installGh.nextSteps': 'Next steps:',
-  'installGh.stepInstallApp': '1. Install the Zy GitHub App if you haven\u2019t already',
-  'installGh.stepWorkflowUnchanged': '2. Your workflow file was kept unchanged',
-  'installGh.stepApiKeyReady': '3. API key is configured and ready to use',
-  'installGh.stepPrCreated': '1. A pre-filled PR page has been created',
-  'installGh.stepInstallApp2': '2. Install the Zy GitHub App if you haven\u2019t already',
-  'installGh.stepMergePr': '3. Merge the PR to enable Zy PR assistance',
-  'installGh.pressAnyKeyExit': 'Press any key to exit',
-  'installGh.error': 'Error:',
-  'installGh.reason': 'Reason:',
-  'installGh.howToFix': 'How to fix:',
-  'installGh.manualSetup': 'For manual setup instructions, see:',
-  'installGh.setupWarnings': '{warning} Setup Warnings',
-  'installGh.potentialIssues': 'We found some potential issues, but you can continue anyway',
-  'installGh.pressEnterToContinue':
-    'Press Enter to continue anyway, or Ctrl+C to exit and fix issues',
-  'installGh.manualSetupSteps': 'You can also try the manual setup steps if needed:',
   // PluginErrors guidance strings
   'pluginErr.pathNotFound': 'Check that the path in your manifest or marketplace config is correct',
   'pluginErr.gitAuthFailedSsh': 'Configure SSH keys or use HTTPS URL instead',
@@ -1434,6 +1454,38 @@ export const enMisc: TranslationResource = {
   'chromeCmd.sitePermissions':
     'Site-level permissions are inherited from the Chrome extension. Manage permissions in the Chrome extension settings to control which sites Zy can browse, click, and type on.',
 
+  // claude-in-chrome rendering
+  'chromeRendering.viewTab': '[View Tab]',
+  'chromeRendering.pattern': 'pattern: {query}',
+  'chromeRendering.actionOn': '{action} on {ref}',
+  'chromeRendering.actionAt': '{action} at ({coordinate})',
+  'chromeRendering.action': '{action}',
+  'chromeRendering.type': 'type "{text}"',
+  'chromeRendering.key': 'key {keyName}',
+  'chromeRendering.scroll': 'scroll {direction}',
+  'chromeRendering.wait': 'wait {duration}s',
+  'chromeRendering.drag': 'drag',
+  'chromeRendering.errorsOnly': 'errors only',
+  'chromeRendering.shortcutId': 'shortcut_id: {shortcutId}',
+  'chromeRendering.summaryNavigation': 'Navigation completed',
+  'chromeRendering.summaryTabCreated': 'Tab created',
+  'chromeRendering.summaryTabsRead': 'Tabs read',
+  'chromeRendering.summaryInputCompleted': 'Input completed',
+  'chromeRendering.summaryActionCompleted': 'Action completed',
+  'chromeRendering.summaryWindowResized': 'Window resized',
+  'chromeRendering.summarySearchCompleted': 'Search completed',
+  'chromeRendering.summaryGifCompleted': 'GIF action completed',
+  'chromeRendering.summaryConsoleRetrieved': 'Console messages retrieved',
+  'chromeRendering.summaryNetworkRetrieved': 'Network requests retrieved',
+  'chromeRendering.summaryShortcutsRetrieved': 'Shortcuts retrieved',
+  'chromeRendering.summaryShortcutExecuted': 'Shortcut executed',
+  'chromeRendering.summaryScriptExecuted': 'Script executed',
+  'chromeRendering.summaryPageRead': 'Page read',
+  'chromeRendering.summaryImageUploaded': 'Image uploaded',
+  'chromeRendering.summaryPageTextRetrieved': 'Page text retrieved',
+  'chromeRendering.summaryPlanUpdated': 'Plan updated',
+  'chromeRendering.userFacingName': 'Claude in Chrome[{displayName}]',
+
   // bridge / remote-control command
   'bridgeCmd.title': 'Remote Control',
   'bridgeCmd.sessionAvailable': 'This session is available via Remote Control{url}.',
@@ -1466,4 +1518,39 @@ export const enMisc: TranslationResource = {
   'remoteSetup.dialogNote': 'Your local credentials are used to authenticate with GitHub',
   'remoteSetup.continue': 'Continue',
   'remoteSetup.cancel': 'Cancel',
+
+  // resumeTask (task/resume strings)
+  'resumeTask.updated': 'Updated',
+  'resumeTask.sessionTitle': 'Session Title',
+  'resumeTask.selectSession': 'Select a session to resume',
+  'resumeTask.loadingSessions': 'Loading ZY Code sessions\u2026',
+  'resumeTask.retrying': 'Retrying\u2026',
+  'resumeTask.fetchingSessions': 'Fetching your ZY Code sessions\u2026',
+  'resumeTask.errorLoadingSessions': 'Error loading ZY Code sessions',
+  'resumeTask.toRetry': 'to retry',
+  'resumeTask.toCancel': 'to cancel',
+  'resumeTask.noSessionsFound': 'No ZY Code sessions found',
+  'resumeTask.for': 'for',
+  'resumeTask.of': 'of',
+  'resumeTask.checkInternet': 'Check your internet connection',
+  'resumeTask.requiresZyAccount': 'Teleport requires a Zy account',
+  'resumeTask.run': 'Run',
+  'resumeTask.andSelect': 'and select',
+  'resumeTask.zySubscription': 'Zy account with subscription',
+  'resumeTask.zyError': 'Sorry, Zy encountered an error',
+  'resumeTask.zyCodeError': 'Sorry, ZY Code encountered an error',
+
+  // taskList
+  'misc.taskList.tasks': ' tasks (',
+  'misc.taskList.done': ' done, ',
+  'misc.taskList.inProgress': ' in progress, ',
+  'misc.taskList.open': ' open)',
+  'misc.taskList.blockedBy': ' blocked by ',
+
+  // diffFileList
+  'misc.diffFileList.noChangedFiles': 'No changed files',
+  'misc.diffFileList.untracked': 'untracked',
+  'misc.diffFileList.binaryFile': 'Binary file',
+  'misc.diffFileList.largeFileModified': 'Large file modified',
+  'misc.diffFileList.truncated': ' (truncated)',
 }

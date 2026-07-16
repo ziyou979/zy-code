@@ -17,12 +17,15 @@
 
 import { readFileSync, readdirSync, existsSync, writeFileSync } from 'node:fs'
 import { join, resolve, relative } from 'node:path'
+import * as ts from 'typescript'
 
 // --------------- 辅助函数 ---------------
 
-const ROOT = resolve(import.meta.dirname, '..')
+const ROOT = resolve(process.env.ZY_ARCH_ROOT ?? join(import.meta.dirname, '..'))
 const SRC = join(ROOT, 'src')
-const BASELINE_PATH = join(ROOT, 'scripts', 'architecture-debt-baseline.json')
+const BASELINE_PATH = resolve(
+  process.env.ZY_ARCH_BASELINE_PATH ?? join(ROOT, 'scripts', 'architecture-debt-baseline.json'),
+)
 
 function walkDir(dir: string): string[] {
   const files: string[] = []
@@ -49,11 +52,6 @@ function getRelativePath(absPath: string): string {
 
 function toForwardPath(absPath: string): string {
   return absPath.replace(/\\/g, '/')
-}
-
-function countOccurrences(content: string, pattern: RegExp): number {
-  const matches = content.match(pattern)
-  return matches ? matches.length : 0
 }
 
 /** 已知的兼容转发目录 — 仅允许纯 re-export 文件 */
@@ -92,12 +90,13 @@ interface Violation {
   line: number
   message: string
   category: string
+  detail?: string
 }
 
 const violations: Violation[] = []
 
-function addV(file: string, line: number, msg: string, cat: string) {
-  violations.push({ file, line, message: msg, category: cat })
+function addV(file: string, line: number, msg: string, cat: string, detail?: string) {
+  violations.push({ file, line, message: msg, category: cat, detail })
 }
 
 // --------------- 违规 ID 生成（用于精确基线匹配） ---------------
@@ -118,32 +117,34 @@ function makeBaselineId(category: string, file: string, detail: string): string 
 
 const ALLOWED_ROOT_FILES = new Set(['main.tsx', 'macro.d.ts'])
 
-const HISTORIC_ROOT_FILES = new Set([
-  'QueryEngine.ts',
-  'Task.ts',
-  'Tool.ts',
-  'commands.ts',
-  'context.ts',
-  'cost-tracker.ts',
-  'costHook.ts',
-  'dialogLaunchers.tsx',
-  'history.ts',
-  'ink.ts',
-  'interactiveHelpers.tsx',
-  'projectOnboardingState.ts',
-  'query.ts',
-  'replLauncher.tsx',
-  'setup.ts',
-  'tasks.ts',
-  'tools.ts',
-])
+const HISTORIC_ROOT_FILES = new Set(
+  [
+    'QueryEngine.ts',
+    'Task.ts',
+    'Tool.ts',
+    'commands.ts',
+    'context.ts',
+    'cost-tracker.ts',
+    'costHook.ts',
+    'dialogLaunchers.tsx',
+    'history.ts',
+    'ink.ts',
+    'interactiveHelpers.tsx',
+    'projectOnboardingState.ts',
+    'query.ts',
+    'replLauncher.tsx',
+    'setup.ts',
+    'tasks.ts',
+    'tools.ts',
+  ].map((name) => name.toLowerCase()),
+)
 
 function checkRootFiles() {
   const entries = readdirSync(SRC, { withFileTypes: true })
   for (const entry of entries) {
     if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx'))) {
       if (!ALLOWED_ROOT_FILES.has(entry.name)) {
-        const isHistoric = HISTORIC_ROOT_FILES.has(entry.name)
+        const isHistoric = HISTORIC_ROOT_FILES.has(entry.name.toLowerCase())
         addV(
           join(SRC, entry.name),
           1,
@@ -151,6 +152,7 @@ function checkRootFiles() {
             ? `src/ 根目录历史文件 ${entry.name}（允许存量，禁止新增）`
             : `src/ 根目录新增文件 ${entry.name}（禁止）`,
           'rootFile',
+          entry.name,
         )
       }
     }
@@ -377,36 +379,109 @@ function checkImportSuffix() {
 
 // --------------- E. feature() 宏检查 ---------------
 
+function isFeatureCall(node: ts.Node): node is ts.CallExpression {
+  return (
+    ts.isCallExpression(node) &&
+    ts.isIdentifier(node.expression) &&
+    node.expression.text === 'feature' &&
+    node.arguments.length > 0 &&
+    ts.isStringLiteralLike(node.arguments[0])
+  )
+}
+
+function getConditionContainer(
+  expression: ts.Expression,
+): { kind: 'if' | 'conditional'; expression: ts.Expression } | null {
+  let current: ts.Expression = expression
+  while (ts.isParenthesizedExpression(current.parent)) {
+    current = current.parent
+  }
+
+  if (ts.isIfStatement(current.parent) && current.parent.expression === current) {
+    return { kind: 'if', expression: current }
+  }
+
+  if (ts.isConditionalExpression(current.parent) && current.parent.condition === current) {
+    return { kind: 'conditional', expression: current }
+  }
+
+  return null
+}
+
+function unwrapFeatureConditionExpression(call: ts.CallExpression): ts.Expression {
+  let current: ts.Expression = call
+
+  while (ts.isParenthesizedExpression(current.parent)) {
+    current = current.parent
+  }
+
+  if (
+    ts.isPrefixUnaryExpression(current.parent) &&
+    current.parent.operator === ts.SyntaxKind.ExclamationToken
+  ) {
+    current = current.parent
+    while (ts.isParenthesizedExpression(current.parent)) {
+      current = current.parent
+    }
+  }
+
+  return current
+}
+
+function getFeatureViolationMessage(call: ts.CallExpression): string | null {
+  const rootExpression = unwrapFeatureConditionExpression(call)
+  if (getConditionContainer(rootExpression)) {
+    return null
+  }
+
+  const parent = rootExpression.parent
+  if (ts.isVariableDeclaration(parent) && parent.initializer === rootExpression) {
+    return 'feature() 不能赋值给变量'
+  }
+
+  if (
+    ts.isBinaryExpression(parent) &&
+    (parent.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken ||
+      parent.operatorToken.kind === ts.SyntaxKind.BarBarToken)
+  ) {
+    const operator =
+      parent.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken ? '&&' : '||'
+    const conditionContainer = getConditionContainer(parent)
+    if (conditionContainer?.kind === 'if') {
+      return `feature() 在 if 中不能与 ${operator} 组合`
+    }
+    if (conditionContainer?.kind === 'conditional') {
+      return `feature() 在三元条件中不能与 ${operator} 组合`
+    }
+    return `feature() 不能用于 ${operator} 表达式`
+  }
+
+  return 'feature() 必须直接位于 if 或三元条件中'
+}
+
 function checkFeatureMacro() {
   const files = walkDir(SRC)
   for (const file of files) {
     const content = readFileSync(file, 'utf-8')
-    const lines = content.split('\n')
+    const sf = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+    const seenPositions = new Set<string>()
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i]
-      const trimmed = line.trim()
-      if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) continue
-
-      // 禁止: const enabled = feature('X')
-      const assignmentWindow = lines.slice(i, i + 2).join('\n')
-      if (
-        /=\s*feature\(['"]/.test(line) &&
-        !/=\s*feature\(['"][^'"]+['"]\)\s*\?/.test(assignmentWindow)
-      ) {
-        addV(file, i + 1, 'feature() 不能赋值给变量', 'featureMacro')
+    const visit = (node: ts.Node) => {
+      if (isFeatureCall(node)) {
+        const message = getFeatureViolationMessage(node)
+        if (message) {
+          const position = sf.getLineAndCharacterOfPosition(node.getStart(sf))
+          const detail = `${position.line + 1}:${position.character + 1}:${message}`
+          if (!seenPositions.has(detail)) {
+            seenPositions.add(detail)
+            addV(file, position.line + 1, message, 'featureMacro', detail)
+          }
+        }
       }
-
-      // 禁止: feature('X') && run()
-      if (/feature\(['"][^)]+['"]\)\s*&&/.test(line)) {
-        addV(file, i + 1, 'feature() 不能用于 && 表达式', 'featureMacro')
-      }
-
-      // 禁止: if (feature('X') && condition)
-      if (/if\s*\(.*feature\(['"][^)]+['"]\)\s*&&/.test(line)) {
-        addV(file, i + 1, 'feature() 在 if 中不能与 && 组合', 'featureMacro')
-      }
+      ts.forEachChild(node, visit)
     }
+
+    visit(sf)
   }
 }
 
@@ -417,6 +492,28 @@ interface AsAnyStats {
   fileCounts: Array<{ file: string; count: number }>
   adapterTotal: number
   nonAdapterTotal: number
+  occurrences: AsAnyOccurrence[]
+}
+
+interface AsAnyOccurrence {
+  id: string
+  file: string
+  line: number
+  category: 'adapter' | 'nonAdapter'
+  snippet: string
+}
+
+interface FileLengthRule {
+  maxLines: number
+  scope: string
+}
+
+function hashText(text: string): string {
+  let hash = 5381
+  for (let i = 0; i < text.length; i++) {
+    hash = (hash * 33) ^ text.charCodeAt(i)
+  }
+  return (hash >>> 0).toString(16)
 }
 
 function checkAsAny(): AsAnyStats {
@@ -425,13 +522,16 @@ function checkAsAny(): AsAnyStats {
   let adapterTotal = 0
   let nonAdapterTotal = 0
   const fileCounts: Array<{ file: string; count: number }> = []
+  const occurrences: AsAnyOccurrence[] = []
 
   for (const file of files) {
     const content = readFileSync(file, 'utf-8')
-    const count = countOccurrences(content, /\bas\s+any\b/g)
+    const lines = content.split('\n')
+    const relPath = getRelativePath(file)
+    const matches = [...content.matchAll(/\bas\s+any\b/g)]
+    const count = matches.length
 
     if (count > 0) {
-      const relPath = getRelativePath(file)
       const normalized = toForwardPath(file)
       const isAdapter =
         normalized.includes('/conversions/') ||
@@ -444,13 +544,313 @@ function checkAsAny(): AsAnyStats {
       } else {
         nonAdapterTotal += count
       }
+
+      const category: AsAnyOccurrence['category'] = isAdapter ? 'adapter' : 'nonAdapter'
+      const lineOrdinalMap = new Map<number, number>()
+      for (const match of matches) {
+        const index = match.index ?? 0
+        const line = content.slice(0, index).split('\n').length
+        const ordinal = (lineOrdinalMap.get(line) ?? 0) + 1
+        lineOrdinalMap.set(line, ordinal)
+        const snippet = (lines[line - 1] ?? '').trim().slice(0, 160)
+        const id = `${relPath}|${category}|${line}|${ordinal}|${hashText(snippet)}`
+        occurrences.push({
+          id,
+          file: relPath,
+          line,
+          category,
+          snippet,
+        })
+      }
     }
   }
 
-  return { total, fileCounts, adapterTotal, nonAdapterTotal }
+  return { total, fileCounts, adapterTotal, nonAdapterTotal, occurrences }
 }
 
-// --------------- G. 命名规则检查 (P1-02) ---------------
+// --------------- G. 文件长度检查 ---------------
+
+const FILE_LENGTH_EXEMPTIONS = new Map<string, string>([
+  ['i18n/locales/en.ts', '语言资源文件，不参与实现文件长度门禁'],
+  ['i18n/locales/zh-CN.ts', '语言资源文件，不参与实现文件长度门禁'],
+])
+
+function getFileLengthRule(relPath: string): FileLengthRule | null {
+  if (
+    relPath.endsWith('.d.ts') ||
+    relPath.endsWith('.generated.ts') ||
+    relPath.endsWith('.test.ts') ||
+    relPath.endsWith('.test.tsx')
+  ) {
+    return null
+  }
+
+  if (FILE_LENGTH_EXEMPTIONS.has(relPath)) {
+    return null
+  }
+
+  if (relPath.startsWith('utils/')) {
+    return { maxLines: 800, scope: 'utils' }
+  }
+
+  if (relPath.endsWith('.tsx')) {
+    return { maxLines: 1200, scope: 'react' }
+  }
+
+  if (
+    relPath.startsWith('services/') ||
+    relPath.startsWith('commands/') ||
+    relPath.startsWith('tools/')
+  ) {
+    return { maxLines: 1200, scope: 'serviceOrCommand' }
+  }
+
+  return null
+}
+
+function countFileLines(content: string): number {
+  if (content === '') return 0
+  const splitCount = content.split('\n').length
+  return content.endsWith('\n') ? splitCount - 1 : splitCount
+}
+
+function checkFileLengths() {
+  const files = walkDir(SRC)
+  for (const file of files) {
+    const relPath = getRelativePath(file)
+    const rule = getFileLengthRule(relPath)
+    if (!rule) continue
+
+    const content = readFileSync(file, 'utf-8')
+    const lineCount = countFileLines(content)
+    if (lineCount <= rule.maxLines) continue
+
+    const detail = `${relPath}|${rule.scope}|${rule.maxLines}|${lineCount}`
+    addV(
+      file,
+      1,
+      `${rule.scope} 文件超过 ${rule.maxLines} 行上限（当前 ${lineCount} 行）`,
+      'fileLength',
+      detail,
+    )
+  }
+}
+
+// --------------- H. 硬编码用户文本检查 ---------------
+
+const USER_TEXT_PROP_NAMES = new Set([
+  'label',
+  'title',
+  'description',
+  'placeholder',
+  'message',
+  'helpText',
+  'tooltip',
+  'alt',
+  'aria-label',
+  'confirmLabel',
+  'cancelLabel',
+  'emptyText',
+  'buttonText',
+  'summary',
+])
+
+const USER_TEXT_VARIABLE_NAMES = new Set([
+  'label',
+  'title',
+  'description',
+  'placeholder',
+  'message',
+  'helpText',
+  'tooltip',
+  'summary',
+  'emptyText',
+  'buttonText',
+])
+
+const USER_TEXT_SERVICE_HINTS = [
+  '/services/permissions/',
+  '/services/messages/',
+  '/services/status/',
+  '/services/notifications/',
+]
+
+function shouldCheckHardcodedText(relPath: string): boolean {
+  if (relPath.endsWith('.test.ts') || relPath.endsWith('.test.tsx')) return false
+
+  return (
+    relPath.startsWith('components/') ||
+    relPath.startsWith('screens/') ||
+    relPath.startsWith('commands/') ||
+    /(^|\/)tools\/[^/]+\/UI\.tsx$/.test(relPath) ||
+    USER_TEXT_SERVICE_HINTS.some((hint) => relPath.includes(hint.slice(1)))
+  )
+}
+
+function normalizeTextCandidate(text: string): string {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
+function isLikelyCodeLikeText(text: string): boolean {
+  if (!text) return true
+  if (!/[A-Za-z\u4e00-\u9fff]/.test(text)) return true
+  if (/^(https?:\/\/|\/|\.{1,2}\/|[A-Za-z]:\\)/.test(text)) return true
+  if (/^&[a-z]+;$/.test(text)) return true
+  if (/^[A-Z0-9_]+$/.test(text)) return true
+  if (/^[A-Za-z0-9_.-]+$/.test(text) && /[._-]/.test(text)) return true
+  if (/^[a-z0-9_.:/#-]+$/.test(text) && /[./:_-]/.test(text)) return true
+  if (/^\{.+\}$/.test(text)) return true
+  return false
+}
+
+function isTranslationCall(node: ts.Node): boolean {
+  return (
+    ts.isCallExpression(node) &&
+    ts.isIdentifier(node.expression) &&
+    (node.expression.text === 't' || node.expression.text === 'tSync')
+  )
+}
+
+function isFeatureCallExpression(node: ts.Node): boolean {
+  return (
+    ts.isCallExpression(node) &&
+    ts.isIdentifier(node.expression) &&
+    node.expression.text === 'feature'
+  )
+}
+
+function getLiteralText(node: ts.Node): { text: string; line: number; character: number } | null {
+  if (ts.isJsxText(node)) {
+    return {
+      text: node.getFullText().trim(),
+      ...sourcePosition(node),
+    }
+  }
+
+  if (ts.isStringLiteralLike(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    return {
+      text: node.text,
+      ...sourcePosition(node),
+    }
+  }
+
+  if (ts.isTemplateExpression(node)) {
+    return {
+      text: [node.head.text, ...node.templateSpans.map((span) => span.literal.text)].join(''),
+      ...sourcePosition(node),
+    }
+  }
+
+  return null
+}
+
+function sourcePosition(node: ts.Node): { line: number; character: number } {
+  const sf = node.getSourceFile()
+  const position = sf.getLineAndCharacterOfPosition(node.getStart(sf))
+  return { line: position.line + 1, character: position.character + 1 }
+}
+
+function getStaticPropertyName(name: ts.PropertyName): string | null {
+  if (ts.isIdentifier(name) || ts.isStringLiteral(name)) {
+    return name.text
+  }
+  return null
+}
+
+function getHardcodedTextContext(node: ts.Node): string | null {
+  if (ts.isJsxText(node)) {
+    return 'JSX 文本'
+  }
+
+  if (
+    ts.isStringLiteralLike(node) ||
+    ts.isNoSubstitutionTemplateLiteral(node) ||
+    ts.isTemplateExpression(node)
+  ) {
+    const parent = node.parent
+
+    if (ts.isJsxExpression(parent)) {
+      if (ts.isJsxAttribute(parent.parent)) {
+        const propName = parent.parent.name.text
+        if (USER_TEXT_PROP_NAMES.has(propName)) {
+          return `JSX 属性 ${propName}`
+        }
+      }
+      if (ts.isJsxElement(parent.parent) || ts.isJsxFragment(parent.parent)) {
+        return 'JSX 表达式文本'
+      }
+    }
+
+    if (ts.isJsxAttribute(parent)) {
+      const propName = parent.name.text
+      if (USER_TEXT_PROP_NAMES.has(propName)) {
+        return `JSX 属性 ${propName}`
+      }
+    }
+
+    if (ts.isPropertyAssignment(parent)) {
+      const propertyName = getStaticPropertyName(parent.name)
+      if (propertyName && USER_TEXT_PROP_NAMES.has(propertyName)) {
+        return `对象属性 ${propertyName}`
+      }
+    }
+
+    if (ts.isVariableDeclaration(parent) && ts.isIdentifier(parent.name)) {
+      if (USER_TEXT_VARIABLE_NAMES.has(parent.name.text)) {
+        return `变量 ${parent.name.text}`
+      }
+    }
+  }
+
+  return null
+}
+
+function checkHardcodedUserText() {
+  const files = walkDir(SRC)
+  for (const file of files) {
+    const relPath = getRelativePath(file)
+    if (!shouldCheckHardcodedText(relPath)) continue
+
+    const content = readFileSync(file, 'utf-8')
+    const sf = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+    const seen = new Set<string>()
+
+    const visit = (node: ts.Node) => {
+      if (
+        isTranslationCall(node) ||
+        isFeatureCallExpression(node) ||
+        ts.isImportDeclaration(node)
+      ) {
+        return
+      }
+
+      const literal = getLiteralText(node)
+      const context = getHardcodedTextContext(node)
+      if (literal && context) {
+        const normalizedText = normalizeTextCandidate(literal.text)
+        if (!isLikelyCodeLikeText(normalizedText)) {
+          const detail = `${relPath}|${literal.line}|${literal.character}|${hashText(`${context}|${normalizedText}`)}`
+          if (!seen.has(detail)) {
+            seen.add(detail)
+            addV(
+              file,
+              literal.line,
+              `${context} 存在硬编码用户文本: ${normalizedText.slice(0, 80)}`,
+              'hardcodedText',
+              detail,
+            )
+          }
+        }
+      }
+
+      ts.forEachChild(node, visit)
+    }
+
+    visit(sf)
+  }
+}
+
+// --------------- I. 命名规则检查 (P1-02) ---------------
 
 /** 需要豁免命名检查的目录 */
 const NAMING_EXEMPT_DIRS = ['/node_modules/', '/.git/', '/dist/', '/packages/', '/types/generated/']
@@ -458,6 +858,8 @@ const NAMING_EXEMPT_DIRS = ['/node_modules/', '/.git/', '/dist/', '/packages/', 
 const REACT_COMPONENT_DIRS = ['/components/', '/screens/', '/design-system/']
 /** Tool 目录（匹配 PascalCaseTool 模式，如 BashTool, WebSearchTool） */
 const TOOL_DIR_PATTERN = /[A-Z]\w+Tool$/
+/** 外部格式固定的文件仅允许精确豁免，避免目录级漏检。 */
+const NAMING_EXEMPT_FILES = new Set(['state/AppStateStore.ts', 'i18n/locales/zh-CN.ts'])
 
 function checkNamingConventions() {
   // 检查目录命名
@@ -510,8 +912,7 @@ function checkNamingConventions() {
     if (toolMainMatch && toolMainMatch[1] === toolMainMatch[2]) continue
 
     // 规范或外部格式明确指定名称的文件使用精确豁免，避免扩大成目录级白名单。
-    if (normalized.endsWith('/state/AppStateStore.ts')) continue
-    if (normalized.endsWith('/i18n/locales/zh-CN.ts')) continue
+    if (NAMING_EXEMPT_FILES.has(getRelativePath(file))) continue
     if (fileName.endsWith('.generated.ts')) continue
 
     // 组件目录中的无 JSX 组件也可能使用 .ts，仍按组件 PascalCase 规则处理。
@@ -542,7 +943,6 @@ function checkNamingConventions() {
     // 普通模块: camelCase.ts
     if (fileName.endsWith('.ts') && !fileName.endsWith('.d.ts')) {
       if (/^[a-z][a-zA-Z0-9]*\.ts$/.test(fileName)) continue
-      if (/^[a-z][a-z0-9]*(-[a-z][a-z0-9]*)*\.ts$/.test(fileName)) continue
       if (fileName === 'index.ts') continue
       if (fileName.endsWith('.snapshot.txt')) continue
       // 大写的 .d.ts 文件
@@ -568,7 +968,7 @@ function collectDirs(dir: string): string[] {
   return result
 }
 
-// --------------- H. Tool 结构检查 (P3) ---------------
+// --------------- J. Tool 结构检查 (P3) ---------------
 
 const TOOL_DIR = join(SRC, 'tools')
 const NON_TOOL_DIRS = new Set(['shared', 'testing'])
@@ -661,7 +1061,18 @@ interface BaselineData {
   total: number
   /** 分类计数（仅用于展示） */
   categoryCounts: Record<string, number>
-  asAny: { total: number }
+  asAny: {
+    total: number
+    occurrences: Record<
+      string,
+      {
+        file: string
+        line: number
+        category: 'adapter' | 'nonAdapter'
+        snippet: string
+      }
+    >
+  }
 }
 
 function loadBaseline(): BaselineData | null {
@@ -672,13 +1083,16 @@ function loadBaseline(): BaselineData | null {
     if (!data.violations || typeof data.asAny?.total !== 'number') {
       return null
     }
+    if (!data.asAny.occurrences || typeof data.asAny.occurrences !== 'object') {
+      return null
+    }
     return data
   } catch {
     return null
   }
 }
 
-function writeBaseline(entries: BaselineEntry[], asAnyTotal: number) {
+function writeBaseline(entries: BaselineEntry[], asAnyStats: AsAnyStats) {
   const violationMap: Record<string, true> = {}
   const catCounts: Record<string, number> = {}
   for (const e of entries) {
@@ -686,12 +1100,27 @@ function writeBaseline(entries: BaselineEntry[], asAnyTotal: number) {
     catCounts[e.category] = (catCounts[e.category] || 0) + 1
   }
 
+  const asAnyOccurrences = Object.fromEntries(
+    asAnyStats.occurrences.map((occurrence) => [
+      occurrence.id,
+      {
+        file: occurrence.file,
+        line: occurrence.line,
+        category: occurrence.category,
+        snippet: occurrence.snippet,
+      },
+    ]),
+  )
+
   const baseline: BaselineData = {
     generatedAt: new Date().toISOString().split('T')[0],
     violations: violationMap,
     total: entries.length,
     categoryCounts: catCounts,
-    asAny: { total: asAnyTotal },
+    asAny: {
+      total: asAnyStats.total,
+      occurrences: asAnyOccurrences,
+    },
   }
 
   writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + '\n')
@@ -761,19 +1190,39 @@ function compareWithBaseline(entries: BaselineEntry[], asAnyStats: AsAnyStats): 
   }
   console.error('')
 
-  // as any 比较
-  const asAnyDiff = asAnyStats.total - (baseline.asAny?.total || 0)
-  if (asAnyDiff > 0) {
+  // as any 比较：按具体位置审计，防止“甲文件删一个、乙文件加一个”被总量掩盖。
+  const baselineOccurrences = baseline.asAny.occurrences
+  const newAsAny = asAnyStats.occurrences.filter(
+    (occurrence) => !baselineOccurrences[occurrence.id],
+  )
+  const resolvedAsAny = Object.keys(baselineOccurrences).filter(
+    (id) => !asAnyStats.occurrences.some((occurrence) => occurrence.id === id),
+  )
+  const asAnyDiff = asAnyStats.total - baseline.asAny.total
+
+  if (newAsAny.length > 0) {
     console.error(
-      `🔴 as any 总量: ${asAnyStats.total}（基线 ${baseline.asAny?.total || 0}，新增 ${asAnyDiff}）`,
+      `🔴 as any 新增 ${newAsAny.length} 处（当前总量 ${asAnyStats.total}，基线 ${baseline.asAny.total}）`,
     )
+    for (const occurrence of newAsAny.slice(0, 20)) {
+      console.error(
+        `  [${occurrence.category}] ${occurrence.file}:${occurrence.line}  ${occurrence.snippet}`,
+      )
+    }
+    if (newAsAny.length > 20) {
+      console.error(`  ... 及其他 ${newAsAny.length - 20} 处`)
+    }
     allPass = false
   } else if (asAnyDiff < 0) {
     console.error(
-      `🟢 as any 总量: ${asAnyStats.total}（基线 ${baseline.asAny?.total || 0}，减少 ${Math.abs(asAnyDiff)}）`,
+      `🟢 as any 总量: ${asAnyStats.total}（基线 ${baseline.asAny.total}，减少 ${Math.abs(asAnyDiff)}）`,
     )
   } else {
     console.error(`⚪ as any 总量: ${asAnyStats.total}（与基线持平）`)
+  }
+
+  if (resolvedAsAny.length > 0) {
+    console.error(`🟢 as any 已消除 ${resolvedAsAny.length} 处`)
   }
   console.error('')
 
@@ -803,6 +1252,8 @@ function main() {
   checkLayerDeps()
   checkImportSuffix()
   checkFeatureMacro()
+  checkFileLengths()
+  checkHardcodedUserText()
   checkNamingConventions()
   checkToolProfiles()
   const asAnyStats = checkAsAny()
@@ -810,12 +1261,11 @@ function main() {
   // 生成违规条目（用于精确基线匹配）
   const entries: BaselineEntry[] = violations.map((v) => {
     // 根据类别生成区分细节
-    let detail = v.message
+    let detail = v.detail ?? v.message
     // 对层间依赖，detail 已包含目标路径
     // 对 utilsDep，detail 已说明
     if (v.category === 'rootFile') {
-      const fileName = v.message.match(/[\w-]+\.(ts|tsx)/)?.[0] || ''
-      detail = fileName
+      detail = v.detail ?? v.message.match(/[\w-]+\.(tsx|ts)/)?.[0] ?? v.message
     }
     const id = makeBaselineId(v.category, v.file, detail)
     return {
@@ -869,7 +1319,7 @@ function main() {
   // --------------- 写基线 ---------------
 
   if (writeBaselineMode) {
-    writeBaseline(deduped, asAnyStats.total)
+    writeBaseline(deduped, asAnyStats)
     process.exit(0)
   }
 

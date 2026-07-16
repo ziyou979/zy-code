@@ -73,8 +73,7 @@ export function projectView(
         ...createUserMessage({
           content: [{ type: 'text' as const, text: `[Earlier context collapsed]` }],
         }),
-        // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-        uuid: matchedRange.summaryUuid as any,
+        uuid: matchedRange.summaryUuid,
         message: {
           role: 'user',
           content: [{ type: 'text' as const, text: matchedRange.summaryContent }],
@@ -152,8 +151,7 @@ export function collapseContext(messages: readonly Message[]): Message[] {
         { type: 'text' as const, text: `[Archived ${toArchive.length} messages: ${summaryText}]` },
       ],
     }),
-    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    uuid: randomUUID() as any,
+    uuid: randomUUID(),
   } as unknown as UserMessage
 
   return [collapsedMessage as unknown as Message, ...(keep as Message[])]

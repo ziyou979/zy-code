@@ -43,8 +43,7 @@ async function _temp2() {
 function _temp(current: import('../../services/config/config.js').GlobalConfig) {
   return {
     ...current,
-    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-    subscriptionNoticeCount: ((current as any).subscriptionNoticeCount ?? 0) + 1,
+    subscriptionNoticeCount: ((current as { subscriptionNoticeCount?: number }).subscriptionNoticeCount ?? 0) + 1,
   }
 }
 async function getExistingZySubscription(): Promise<'Max' | 'Pro' | null> {

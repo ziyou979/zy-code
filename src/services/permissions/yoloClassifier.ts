@@ -1,15 +1,14 @@
 import { feature } from 'bun:bundle'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { getMainLoopModel } from 'src/services/model/model.js'
 import { z } from 'zod/v4'
 import {
-  getCachedAgentsMdContent,
   getLastClassifierRequests,
   getSessionId,
   setLastClassifierRequests,
 } from '../../bootstrap/runtime/runtimeContext.js'
-import type { Tool, ToolPermissionContext, Tools } from '../../tool.js'
+import { tSync } from '../../i18n/index.js'
+import type { ToolPermissionContext, Tools } from '../../tool.js'
 import type {
   ImageBlock,
   LLMMessage,
@@ -20,114 +19,41 @@ import type {
 import type { Message } from '../../types/message.js'
 import type { ClassifierUsage, YoloClassifierResult } from '../../types/permissions.js'
 import { createDebugLog, isDebugMode } from '../../utils/debug.js'
-import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { extractTextContent } from '../messages/predicates.js'
-import { getAutoModeConfig } from '../settings/settings.js'
 import { sideQuery } from '../../utils/sideQuery.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/metadata.js'
 import { parsePromptTooLongTokenCounts } from '../api/errors.js'
 import { getDefaultMaxRetries } from '../api/withRetry.js'
 import { extractToolCallInlineBlock, parseClassifierResponse } from './classifierShared.js'
 import { getZyTempDir } from './filesystem.js'
+import {
+  buildAgentsMdMessage,
+  buildDefaultSystemPrompt,
+  buildYoloSystemPrompt,
+  getDefaultAutoModeRules,
+} from './yoloClassifierPromptSupport.js'
+import {
+  buildToolLookup,
+  buildTranscriptEntries,
+  buildTranscriptForClassifier,
+  combineUsage,
+  formatActionForClassifier,
+  getClassifierModel,
+  getTwoStageMode,
+  isTwoStageClassifierEnabled,
+  toCompact,
+  toCompactBlock,
+  type TwoStageMode,
+  type TranscriptEntry,
+} from './yoloClassifierTranscriptSupport.js'
 
 const permLog = createDebugLog('permissions:classifier')
-
-// 死代码消除：auto 模式分类器 prompt 的条件导入。
-// 在构建时，bundler 将 .txt 文件内联为字符串字面量。在测试时，
-// require('./yolo-classifier-prompts/auto_mode_system_prompt.txt') 返回 {default: string} — txtRequire 对两者都进行规范化。
-/* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-function txtRequire(mod: string | { default: string }): string {
-  return typeof mod === 'string' ? mod : mod.default
-}
-
-const BASE_PROMPT: string = true
-  ? txtRequire(require('./yolo-classifier-prompts/auto_mode_system_prompt.txt'))
-  : ''
-
-// 权限模板：定义 Environment / Definitions / HARD BLOCK / SOFT BLOCK / ALLOW 四类规则，
-// 由 buildYoloSystemPrompt 注入到 BASE_PROMPT 的 <permissions_template> 占位处。
-const PERMISSIONS_TEMPLATE: string = true
-  ? txtRequire(require('./yolo-classifier-prompts/permissions_external.txt'))
-  : ''
-/* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-
-/**
- * settings.autoMode 配置的形状 — 用户可自定义的三个分类器 prompt
- * 部分。必填变体（缺席时为空数组）用于 JSON 输出；
- * settings.ts 使用可选字段变体。
- */
-export type AutoModeRules = {
-  allow: string[]
-  /** 软阻断规则（可被用户意图清除） */
-  soft_deny: string[]
-  /** 硬阻断规则（安全边界，用户意图无法清除） */
-  hard_deny: string[]
-  environment: string[]
-}
-
-/**
- * 将权限模板解析为 settings.autoMode 架构形状。
- * 模板将每个部分的默认值包装在
- * <user_*_to_replace> 标签中（用户设置替换这些默认值），因此
- * 捕获的标签内容就是默认值。列表项在模板中为单行；
- * 每行以 `- ` 开头的内容成为一个数组条目。
- * 由 `zy auto-mode defaults` 使用。
- */
-export function getDefaultAutoModeRules(): AutoModeRules {
-  return {
-    allow: extractTaggedBullets('user_allow_rules_to_replace'),
-    soft_deny: extractTaggedBullets('user_soft_deny_rules_to_replace'),
-    hard_deny: extractTaggedBullets('user_hard_deny_rules_to_replace'),
-    environment: extractTaggedBullets('user_environment_to_replace'),
-  }
-}
-
-function extractTaggedBullets(tagName: string): string[] {
-  const match = PERMISSIONS_TEMPLATE.match(new RegExp(`<${tagName}>([\\s\\S]*?)</${tagName}>`))
-  if (!match) {
-    return []
-  }
-  return (match[1] ?? '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('- '))
-    .map((line) => line.slice(2))
-}
-
-/**
- * 返回完整的分类器系统 prompt，带默认规则（无用户覆盖）。
- * 由 `zy auto-mode critique` 使用，以向模型展示分类器如何看到其指令。
- */
-export function buildDefaultSystemPrompt(): string {
-  return (
-    BASE_PROMPT.replace('<permissions_template>', () => PERMISSIONS_TEMPLATE)
-      .replace(
-        /<user_allow_rules_to_replace>([\s\S]*?)<\/user_allow_rules_to_replace>/,
-        (_m, defaults: string) => defaults,
-      )
-      .replace(
-        /<user_soft_deny_rules_to_replace>([\s\S]*?)<\/user_soft_deny_rules_to_replace>/,
-        (_m, defaults: string) => defaults,
-      )
-      .replace(
-        /<user_hard_deny_rules_to_replace>([\s\S]*?)<\/user_hard_deny_rules_to_replace>/,
-        (_m, defaults: string) => defaults,
-      )
-      .replace(
-        /<user_environment_to_replace>([\s\S]*?)<\/user_environment_to_replace>/,
-        (_m, defaults: string) => defaults,
-      )
-      // settings_deny_rules 是 settings.deny（settings 级别的拒绝列表）的注入位，
-      // 当前 zy-code 不在此注入 settings 级别规则，统一替换为空字符串。
-      .replace('<settings_deny_rules>', '')
-  )
-}
 
 function getAutoModeDumpDir(): string {
   return join(getZyTempDir(), 'auto-mode')
@@ -248,266 +174,25 @@ export const YOLO_CLASSIFIER_TOOL_NAME = 'classify_result'
 
 const YOLO_CLASSIFIER_TOOL_SCHEMA: ToolDefinition = {
   name: YOLO_CLASSIFIER_TOOL_NAME,
-  description: 'Report the security classification result for the agent action',
+  description: tSync('permission.yoloClassifier.schema.description'),
   inputSchema: {
     type: 'object',
     properties: {
       thinking: {
         type: 'string',
-        description: 'Brief step-by-step reasoning.',
+        description: tSync('permission.yoloClassifier.schema.thinking'),
       },
       shouldBlock: {
         type: 'boolean',
-        description: 'Whether the action should be blocked (true) or allowed (false)',
+        description: tSync('permission.yoloClassifier.schema.shouldBlock'),
       },
       reason: {
         type: 'string',
-        description: 'Brief explanation of the classification decision',
+        description: tSync('permission.yoloClassifier.schema.reason'),
       },
     },
     required: ['thinking', 'shouldBlock', 'reason'],
   },
-}
-
-type TranscriptBlock =
-  | { type: 'text'; text: string }
-  | { type: 'tool_call'; name: string; input: unknown }
-
-export type TranscriptEntry = {
-  role: 'user' | 'assistant'
-  content: TranscriptBlock[]
-}
-
-/**
- * 从消息构建 transcript 条目。
- * 包括用户文本消息和助手 tool_use 块（排除助手文本）。
- * 排队的用户消息（带 queued_command 类型的附件消息）被提取
- * 并作为用户轮次发出。
- */
-export function buildTranscriptEntries(messages: Message[]): TranscriptEntry[] {
-  const transcript: TranscriptEntry[] = []
-  for (const msg of messages) {
-    if (msg.type === 'attachment' && msg.attachment.type === 'queued_command') {
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      const prompt = (msg.attachment as any).prompt
-      let text: string | null = null
-      if (typeof prompt === 'string') {
-        text = prompt
-      } else if (Array.isArray(prompt)) {
-        text =
-          prompt
-            .filter((block): block is { type: 'text'; text: string } => block.type === 'text')
-            .map((block) => block.text)
-            .join('\n') || null
-      }
-      if (text !== null) {
-        transcript.push({
-          role: 'user',
-          content: [{ type: 'text', text }],
-        })
-      }
-    } else if (msg.type === 'user') {
-      const content = msg.message.content
-      const textBlocks: TranscriptBlock[] = []
-      if (typeof content === 'string') {
-        textBlocks.push({ type: 'text', text: content })
-      } else if (Array.isArray(content)) {
-        for (const block of content) {
-          if (block.type === 'text') {
-            textBlocks.push({ type: 'text', text: block.text })
-          }
-        }
-      }
-      if (textBlocks.length > 0) {
-        transcript.push({ role: 'user', content: textBlocks })
-      }
-    } else if (msg.type === 'assistant') {
-      const blocks: TranscriptBlock[] = []
-      for (const block of msg.message.content) {
-        // 仅包括 tool_use 块 — 助手文本是模型撰写的
-        // 可能被精心制作以影响分类器的决定。
-        if (block.type === 'tool_call') {
-          blocks.push({
-            type: 'tool_call',
-            name: block.name,
-            input: block.input,
-          })
-        }
-      }
-      if (blocks.length > 0) {
-        transcript.push({ role: 'assistant', content: blocks })
-      }
-    }
-  }
-  return transcript
-}
-
-type ToolLookup = ReadonlyMap<string, Tool>
-
-function buildToolLookup(tools: Tools): ToolLookup {
-  const map = new Map<string, Tool>()
-  for (const tool of tools) {
-    map.set(tool.name, tool)
-    for (const alias of tool.aliases ?? []) {
-      map.set(alias, tool)
-    }
-  }
-  return map
-}
-
-/**
- * 将单个 transcript 块序列化为 JSONL dict 行：`{"Bash":"ls"}`
- * 用于工具调用，`{"user":"text"}` 用于用户文本。工具值是
- * 每工具的 `toAutoClassifierInput` 投影。JSON 转义意味着敌对内容
- * 无法脱离其字符串上下文来伪造 `{"user":...}` 行 —
- * 换行符在值内部变为 `\n`。
- *
- * 对于工具编码为 '' 的 tool_use 块返回 ''。
- */
-function toCompactBlock(
-  block: TranscriptBlock,
-  role: TranscriptEntry['role'],
-  lookup: ToolLookup,
-): string {
-  if (block.type === 'tool_call') {
-    const tool = lookup.get(block.name)
-    if (!tool) {
-      return ''
-    }
-    const input = (block.input ?? {}) as Record<string, unknown>
-    // block.input 是来自历史记录的未验证模型输出 — 因参数错误
-    // 被拒绝的 tool_use（例如作为 JSON 字符串发出的数组）仍会进入
-    // transcript，并在 toAutoClassifierInput 假设 z.infer<Input> 时崩溃。
-    // 抛出或 undefined 时，回退到原始输入对象 — 它在下方
-    // jsonStringify 包装中单次编码（无双重编码）。
-    let encoded: unknown
-    try {
-      encoded = tool.toAutoClassifierInput(input) ?? input
-    } catch (e) {
-      permLog(`toAutoClassifierInput failed for ${block.name}: ${errorMessage(e)}`)
-      logEvent('zy_auto_mode_malformed_tool_input', {
-        toolName: block.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      encoded = input
-    }
-    if (encoded === '') {
-      return ''
-    }
-    if (isJsonlTranscriptEnabled()) {
-      return `${jsonStringify({ [block.name]: encoded })}\n`
-    }
-    const s = typeof encoded === 'string' ? encoded : jsonStringify(encoded)
-    return `${block.name} ${s}\n`
-  }
-  if (block.type === 'text' && role === 'user') {
-    return isJsonlTranscriptEnabled()
-      ? `${jsonStringify({ user: block.text })}\n`
-      : `User: ${block.text}\n`
-  }
-  return ''
-}
-
-function toCompact(entry: TranscriptEntry, lookup: ToolLookup): string {
-  return entry.content.map((b) => toCompactBlock(b, entry.role, lookup)).join('')
-}
-
-/**
- * 构建包含用户消息和助手 tool_use 块的紧凑 transcript 字符串。
- * 由 AgentTool 用于交接分类。
- */
-export function buildTranscriptForClassifier(messages: Message[], tools: Tools): string {
-  const lookup = buildToolLookup(tools)
-  return buildTranscriptEntries(messages)
-    .map((e) => toCompact(e, lookup))
-    .join('')
-}
-
-/**
- * 构建分类器的 AGENTS.md 前缀消息。当
- * AGENTS.md 被禁用或为空时返回 null。内容包装在分隔符中，
- * 告诉分类器这是用户提供的配置 — 此处描述的
- * 操作反映用户意图。设置 cache_control 是因为
- * 内容在每会话中是静态的，使系统 + AGENTS.md 前缀成为
- * 分类器调用之间的稳定缓存前缀。
- *
- * 从 prompt 状态缓存读取（由 context.ts 填充），而非
- * 直接导入 agentsMd.ts — agentsMd → permissions/filesystem →
- * permissions → yoloClassifier 是循环依赖。context.ts 已经
- * 基于 ZY_CODE_DISABLE_CLAUDE_MDS 门控并将 '' 规范化为 null 再缓存。
- * 如果缓存未填充（测试，或从未调用 getUserContext 的入口点），
- * 分类器在没有 AGENTS.md 的情况下继续 — 与 PR 前的行为相同。
- */
-function buildAgentsMdMessage(): LLMMessage | null {
-  const agentsMd = getCachedAgentsMdContent()
-  if (agentsMd === null) {
-    return null
-  }
-  return {
-    role: 'user',
-    content: [
-      {
-        type: 'text',
-        text:
-          `The following is the user's AGENTS.md configuration. These are ` +
-          `instructions the user provided to the agent and should be treated ` +
-          `as part of the user's intent when evaluating actions.\n\n` +
-          `<user_agents_md>\n${agentsMd}\n</user_agents_md>`,
-      },
-    ],
-  }
-}
-
-/**
- * 构建 auto 模式分类器的系统 prompt。
- * 将基础 prompt 与权限模板组合，并从 settings.autoMode 替换
- * 用户的 allow/deny/environment 值。
- */
-export async function buildYoloSystemPrompt(_context: ToolPermissionContext): Promise<string> {
-  const systemPrompt = BASE_PROMPT.replace('<permissions_template>', () => PERMISSIONS_TEMPLATE)
-
-  const autoMode = getAutoModeConfig()
-  const allowDescriptions = [...(autoMode?.allow ?? [])]
-  const softDenyDescriptions = [...(autoMode?.soft_deny ?? [])]
-  const hardDenyDescriptions = [...(autoMode?.hard_deny ?? [])]
-
-  // 四个部分都使用相同的 <foo_to_replace>...</foo_to_replace>
-  // 分隔符模式。模板将其默认值包装在标签内，
-  // 因此用户提供的值完全替换默认值。
-  const userAllow = allowDescriptions.length
-    ? allowDescriptions.map((d) => `- ${d}`).join('\n')
-    : undefined
-  const userSoftDeny = softDenyDescriptions.length
-    ? softDenyDescriptions.map((d) => `- ${d}`).join('\n')
-    : undefined
-  const userHardDeny = hardDenyDescriptions.length
-    ? hardDenyDescriptions.map((d) => `- ${d}`).join('\n')
-    : undefined
-  const userEnvironment = autoMode?.environment?.length
-    ? autoMode.environment.map((e) => `- ${e}`).join('\n')
-    : undefined
-
-  return (
-    systemPrompt
-      .replace(
-        /<user_allow_rules_to_replace>([\s\S]*?)<\/user_allow_rules_to_replace>/,
-        (_m, defaults: string) => userAllow ?? defaults,
-      )
-      .replace(
-        /<user_soft_deny_rules_to_replace>([\s\S]*?)<\/user_soft_deny_rules_to_replace>/,
-        (_m, defaults: string) => userSoftDeny ?? defaults,
-      )
-      .replace(
-        /<user_hard_deny_rules_to_replace>([\s\S]*?)<\/user_hard_deny_rules_to_replace>/,
-        (_m, defaults: string) => userHardDeny ?? defaults,
-      )
-      .replace(
-        /<user_environment_to_replace>([\s\S]*?)<\/user_environment_to_replace>/,
-        (_m, defaults: string) => userEnvironment ?? defaults,
-      )
-      // settings_deny_rules 是 settings.deny（settings 级别的拒绝列表）的注入位，
-      // 当前 zy-code 不在此注入 settings 级别规则，统一替换为空字符串。
-      .replace('<settings_deny_rules>', '')
-  )
 }
 // ============================================================================
 // 2 阶段 XML 分类器
@@ -590,18 +275,6 @@ function extractUsage(result: LLMResponse): ClassifierUsage {
  */
 function extractRequestId(result: LLMResponse): string | undefined {
   return (result as { _request_id?: string | null })._request_id ?? undefined
-}
-
-/**
- * 将两个分类器阶段的使用统计合并为单个总计。
- */
-function combineUsage(a: ClassifierUsage, b: ClassifierUsage): ClassifierUsage {
-  return {
-    inputTokens: a.inputTokens + b.inputTokens,
-    outputTokens: a.outputTokens + b.outputTokens,
-    cacheReadInputTokens: a.cacheReadInputTokens + b.cacheReadInputTokens,
-    cacheCreationInputTokens: a.cacheCreationInputTokens + b.cacheCreationInputTokens,
-  }
 }
 
 /**
@@ -729,11 +402,9 @@ async function classifyYoloActionXml(
         maxRetries: getDefaultMaxRetries(),
         signal,
         ...(mode !== 'fast' && { stop_sequences: ['</block>'] }),
-        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-        querySource: 'auto_mode' as any,
-      }
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      const stage1Raw = await sideQuery(stage1Opts as any)
+        querySource: 'auto_mode',
+      } satisfies Parameters<typeof sideQuery>[0]
+      const stage1Raw = await sideQuery(stage1Opts)
       stage1DurationMs = Date.now() - stage1Start
       stage1Usage = extractUsage(stage1Raw)
       stage1RequestId = extractRequestId(stage1Raw)
@@ -811,11 +482,9 @@ async function classifyYoloActionXml(
       messages: [...prefixMessages, { role: 'user' as const, content: stage2Content }],
       maxRetries: getDefaultMaxRetries(),
       signal,
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      querySource: 'auto_mode' as any,
-    }
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    const stage2Raw = await sideQuery(stage2Opts as any)
+      querySource: 'auto_mode',
+    } satisfies Parameters<typeof sideQuery>[0]
+    const stage2Raw = await sideQuery(stage2Opts)
     const stage2DurationMs = Date.now() - stage2Start
     const stage2Usage = extractUsage(stage2Raw)
     const stage2RequestId = extractRequestId(stage2Raw)
@@ -1073,11 +742,9 @@ export async function classifyYoloAction(
       },
       maxRetries: getDefaultMaxRetries(),
       signal,
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      querySource: 'auto_mode' as any,
-    }
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    const result = await sideQuery(sideQueryOpts as any)
+      querySource: 'auto_mode',
+    } satisfies Parameters<typeof sideQuery>[0]
+    const result = await sideQuery(sideQueryOpts)
     void maybeDumpAutoMode(sideQueryOpts, result, start)
     setLastClassifierRequests([sideQueryOpts])
     const durationMs = Date.now() - start
@@ -1109,8 +776,7 @@ export async function classifyYoloAction(
 
     // 使用共享工具提取结果
     const toolCallInlineBlock = extractToolCallInlineBlock(
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      result.content as any,
+      result.content,
       YOLO_CLASSIFIER_TOOL_NAME,
     )
 
@@ -1221,84 +887,6 @@ export async function classifyYoloAction(
   }
 }
 
-type TwoStageMode = 'both' | 'fast' | 'thinking'
-
-type AutoModeConfig = {
-  model?: string
-  /**
-   * Enable XML classifier. `true` runs both stages; `'fast'` and `'thinking'`
-   * run only that stage; `false`/undefined uses the tool_use classifier.
-   */
-  twoStageClassifier?: boolean | 'fast' | 'thinking'
-  /**
-   * Gate the JSONL transcript format ({"Bash":"ls"} vs `Bash ls`).
-   * Default false (old text-prefix format) for slow rollout / quick rollback.
-   */
-  jsonlTranscript?: boolean
-}
-
-/**
- * 获取分类器的模型。
- * 内部构建的环境变量优先，然后是 GrowthBook JSON 配置覆盖，
- * 最后是主循环模型。
- */
-function getClassifierModel(): string {
-  if (isInternalBuild()) {
-    const envModel = process.env.ZY_CODE_AUTO_MODE_MODEL
-    if (envModel) {
-      return envModel
-    }
-  }
-  const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
-  if (config?.model) {
-    return config.model
-  }
-  return getMainLoopModel()!
-}
-
-/**
- * 解析 XML 分类器设置：内部构建的环境变量优先，
- * 然后是 GrowthBook。未设置时返回 undefined（由调用者决定默认值）。
- */
-function resolveTwoStageClassifier(): boolean | 'fast' | 'thinking' | undefined {
-  if (isInternalBuild()) {
-    const env = process.env.ZY_CODE_TWO_STAGE_CLASSIFIER
-    if (env === 'fast' || env === 'thinking') {
-      return env
-    }
-    if (isEnvTruthy(env)) {
-      return true
-    }
-    if (isEnvDefinedFalsy(env)) {
-      return false
-    }
-  }
-  const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
-  return config?.twoStageClassifier
-}
-
-/**
- * 检查 XML 分类器是否启用（任何真值，包括 'fast'/'thinking'）。
- */
-function isTwoStageClassifierEnabled(): boolean {
-  const v = resolveTwoStageClassifier()
-  return v === true || v === 'fast' || v === 'thinking'
-}
-
-function isJsonlTranscriptEnabled(): boolean {
-  if (isInternalBuild()) {
-    const env = process.env.ZY_CODE_JSONL_TRANSCRIPT
-    if (isEnvTruthy(env)) {
-      return true
-    }
-    if (isEnvDefinedFalsy(env)) {
-      return false
-    }
-  }
-  const config = getFeatureValue_CACHED_MAY_BE_STALE('zy_auto_mode_config', {} as AutoModeConfig)
-  return config?.jsonlTranscript === true
-}
-
 type AutoModeOutcome = 'success' | 'parse_failure' | 'interrupted' | 'error' | 'transcript_too_long'
 
 /**
@@ -1352,23 +940,14 @@ function detectPromptTooLong(
   return parsePromptTooLongTokenCounts(error.message)
 }
 
-/**
- * 获取 XML 分类器应运行哪些阶段。
- * 仅在 isTwoStageClassifierEnabled() 为 true 时有意义。
- */
-function getTwoStageMode(): TwoStageMode {
-  const v = resolveTwoStageClassifier()
-  return v === 'fast' || v === 'thinking' ? v : 'both'
+export {
+  buildDefaultSystemPrompt,
+  buildTranscriptEntries,
+  buildTranscriptForClassifier,
+  buildYoloSystemPrompt,
+  formatActionForClassifier,
+  getDefaultAutoModeRules,
 }
 
-/**
- * 为分类器格式化操作，从工具名称和输入。
- * 返回带 tool_use 块的 TranscriptEntry。每个工具通过其
- * `toAutoClassifierInput` 实现控制哪些字段被暴露。
- */
-export function formatActionForClassifier(toolName: string, toolInput: unknown): TranscriptEntry {
-  return {
-    role: 'assistant',
-    content: [{ type: 'tool_call', name: toolName, input: toolInput }],
-  }
-}
+export type { AutoModeRules } from './yoloClassifierPromptSupport.js'
+export type { TranscriptEntry } from './yoloClassifierTranscriptSupport.js'

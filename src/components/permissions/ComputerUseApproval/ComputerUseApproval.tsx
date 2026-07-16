@@ -27,13 +27,11 @@ const DENY_ALL_RESPONSE: CuPermissionResponse = {
  * app allowlist + grant-flags panel.
  */
 export function ComputerUseApproval({ request, onDone }: ComputerUseApprovalProps) {
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  return (request as any).tccState ? (
-    <ComputerUseTccPanel
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      tccState={(request as any).tccState}
-      onDone={() => onDone(DENY_ALL_RESPONSE)}
-    />
+  const tccState = (
+    request as unknown as { tccState?: { accessibility: boolean; screenRecording: boolean } }
+  ).tccState
+  return tccState ? (
+    <ComputerUseTccPanel tccState={tccState} onDone={() => onDone(DENY_ALL_RESPONSE)} />
   ) : (
     <ComputerUseAppListPanel request={request} onDone={onDone} />
   )
@@ -139,26 +137,37 @@ const getSentinelWarning = (): Record<
   filesystem: tSync('computerUse.canReadWriteAnyFile'),
   system_settings: tSync('computerUse.canChangeSystemSettings'),
 })
+// 本地接口描述 ComputerUseAppListPanel 预期从 request 中读取的结构
+interface AppEntry {
+  requestedName: string
+  resolved?: {
+    bundleId: string
+    displayName: string
+  }
+  alreadyGranted?: boolean
+}
+interface AppListRequest {
+  apps: AppEntry[]
+  reason?: string
+  requestedFlags: Record<string, boolean>
+  willHide?: string[]
+}
 function ComputerUseAppListPanel({
   request,
   onDone,
 }: {
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  request: any
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  onDone: (response: any) => void
+  request: CuPermissionRequest
+  onDone: (response: CuPermissionResponse) => void
 }) {
+  const req = request as unknown as AppListRequest
   const [checked] = useState(
     () =>
       new Set(
-        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-        request.apps.flatMap((a: any) =>
-          a.resolved && !a.alreadyGranted ? [a.resolved.bundleId] : [],
-        ),
+        req.apps.flatMap((a) => (a.resolved && !a.alreadyGranted ? [a.resolved.bundleId] : [])),
       ),
   )
   const ALL_FLAG_KEYS = ['clipboardRead', 'clipboardWrite', 'systemKeyCombos']
-  const requestedFlagKeys = ALL_FLAG_KEYS.filter((k) => request.requestedFlags[k])
+  const requestedFlagKeys = ALL_FLAG_KEYS.filter((k) => req.requestedFlags[k])
   const checkedAppCount = checked.size
   const appLabel = plural(checkedAppCount, 'app')
   const options = [
@@ -181,8 +190,7 @@ function ComputerUseAppListPanel({
       return
     }
     const now = Date.now()
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    const granted = request.apps.flatMap((a_0: any) =>
+    const granted = req.apps.flatMap((a_0) =>
       a_0.resolved && checked.has(a_0.resolved.bundleId)
         ? [
             {
@@ -193,11 +201,9 @@ function ComputerUseAppListPanel({
           ]
         : [],
     )
-    const denied = request.apps
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      .filter((a_1: any) => !a_1.resolved || !checked.has(a_1.resolved.bundleId))
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      .map((a_2: any) => ({
+    const denied = req.apps
+      .filter((a_1) => !a_1.resolved || !checked.has(a_1.resolved.bundleId))
+      .map((a_2) => ({
         bundleId: a_2.resolved?.bundleId ?? a_2.requestedName,
         reason: a_2.resolved ? ('user_denied' as const) : ('not_installed' as const),
       }))
@@ -211,8 +217,7 @@ function ComputerUseAppListPanel({
       flags,
     })
   }
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  const appListElements = request.apps.map((a_3: any) => {
+  const appListElements = req.apps.map((a_3) => {
     const resolved = a_3.resolved
     if (!resolved) {
       return (
@@ -253,7 +258,7 @@ function ComputerUseAppListPanel({
     <Dialog title={tSync('computerUse.wantsToControlApps')} onCancel={() => respond(false)}>
       {
         <Box flexDirection="column" paddingX={1} paddingY={1} gap={1}>
-          {request.reason ? <Text dimColor={true}>{request.reason}</Text> : null}
+          {req.reason ? <Text dimColor={true}>{req.reason}</Text> : null}
           {<Box flexDirection="column">{appListElements}</Box>}
           {requestedFlagKeys.length > 0 ? (
             <Box flexDirection="column">
@@ -265,11 +270,11 @@ function ComputerUseAppListPanel({
               ))}
             </Box>
           ) : null}
-          {request.willHide && request.willHide.length > 0 ? (
+          {req.willHide && req.willHide.length > 0 ? (
             <Text dimColor={true}>
               {tSync('computerUse.otherAppsHidden', {
-                count: request.willHide.length,
-                app: plural(request.willHide.length, 'app'),
+                count: req.willHide.length,
+                app: plural(req.willHide.length, 'app'),
               })}
             </Text>
           ) : null}

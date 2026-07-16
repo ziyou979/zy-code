@@ -34,22 +34,22 @@ export function WarningsStep({ warnings, onContinue }: WarningsStepProps) {
     <Box flexDirection="column" borderStyle="round" paddingX={1}>
       {
         <Box flexDirection="column" marginBottom={1}>
-          <Text bold={true}>{tSync('installGh.setupWarnings', { warning: WARNING })}</Text>
-          <Text dimColor={true}>{tSync('installGh.potentialIssues')}</Text>
+          <Text bold={true}>{tSync('installGitHubApp.setupWarnings', { warning: WARNING })}</Text>
+          <Text dimColor={true}>{tSync('installGitHubApp.potentialIssues')}</Text>
         </Box>
       }
       {warningElements}
       {
         <Box marginTop={1}>
           <Text bold={true} color="permission">
-            {tSync('installGh.pressEnterToContinue')}
+            {tSync('installGitHubApp.pressEnterToContinue')}
           </Text>
         </Box>
       }
       {
         <Box marginTop={1}>
           <Text dimColor={true}>
-            {tSync('installGh.manualSetupSteps')}{' '}
+            {tSync('installGitHubApp.manualSetupSteps')}{' '}
             <Text color="zy">{GITHUB_ACTION_SETUP_DOCS_URL}</Text>
           </Text>
         </Box>

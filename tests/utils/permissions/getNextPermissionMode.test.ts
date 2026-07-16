@@ -1,11 +1,13 @@
 /**
  * getNextPermissionMode 测试：Shift+Tab 模式循环。
  *
- * 重点关注：
- * - 普通用户在 auto 可用时可从 default 切换到 auto
- * - auto 不可用时回退到 acceptEdits
- * - bypassPermissions 优先级高于 auto
- * - 各模式间的完整循环路径
+ * 循环顺序：权限等级递增
+ *   default(手动) → plan → acceptEdits → auto(可选) → bypassPermissions(可选) → default
+ *
+ * 重点验证：
+ * - 始终从 default（手动模式）开始递增
+ * - auto 和 bypassPermissions 只在可用时出现在循环中
+ * - 循环闭合回到 default
  */
 import { describe, expect, mock, test } from 'bun:test'
 
@@ -21,6 +23,7 @@ mock.module('../../../src/services/permissions/permissionSetup.js', () => ({
 }))
 mock.module('../../../src/utils/debug.js', () => ({
   logForDebugging: () => {},
+  createDebugLog: () => () => {},
 }))
 
 const { getNextPermissionMode } = await import(
@@ -46,100 +49,179 @@ function makeCtx(
 }
 
 describe('getNextPermissionMode', () => {
-  describe('auto 模式可用时', () => {
-    test('default → auto（普通用户可切换）', () => {
+  describe('全部模式可用时：default → plan → acceptEdits → auto → bypass → default', () => {
+    const opts = { isAutoModeAvailable: true, isBypassPermissionsModeAvailable: true }
+
+    test('default → plan', () => {
       autoModeGateEnabled = true
-      expect(getNextPermissionMode(makeCtx('default', { isAutoModeAvailable: true }))).toBe('auto')
+      expect(getNextPermissionMode(makeCtx('default', opts))).toBe('plan')
     })
 
-    test('plan → auto', () => {
+    test('plan → acceptEdits', () => {
       autoModeGateEnabled = true
-      expect(getNextPermissionMode(makeCtx('plan', { isAutoModeAvailable: true }))).toBe('auto')
+      expect(getNextPermissionMode(makeCtx('plan', opts))).toBe('acceptEdits')
     })
 
-    test('bypassPermissions → auto', () => {
+    test('acceptEdits → auto（auto 可用时优先于 bypass）', () => {
       autoModeGateEnabled = true
-      expect(
-        getNextPermissionMode(makeCtx('bypassPermissions', { isAutoModeAvailable: true })),
-      ).toBe('auto')
+      expect(getNextPermissionMode(makeCtx('acceptEdits', opts))).toBe('auto')
     })
 
-    test('auto → acceptEdits（可继续切到 plan）', () => {
+    test('auto → bypassPermissions', () => {
       autoModeGateEnabled = true
-      expect(getNextPermissionMode(makeCtx('auto', { isAutoModeAvailable: true }))).toBe(
-        'acceptEdits',
-      )
+      expect(getNextPermissionMode(makeCtx('auto', opts))).toBe('bypassPermissions')
+    })
+
+    test('bypassPermissions → default（循环闭合）', () => {
+      autoModeGateEnabled = true
+      expect(getNextPermissionMode(makeCtx('bypassPermissions', opts))).toBe('default')
     })
   })
 
-  describe('auto 模式不可用时', () => {
-    test('default → acceptEdits（回退）', () => {
-      autoModeGateEnabled = false
-      expect(getNextPermissionMode(makeCtx('default'))).toBe('acceptEdits')
+  describe('仅 auto 可用时：default → plan → acceptEdits → auto → default', () => {
+    const opts = { isAutoModeAvailable: true, isBypassPermissionsModeAvailable: false }
+
+    test('acceptEdits → auto', () => {
+      autoModeGateEnabled = true
+      expect(getNextPermissionMode(makeCtx('acceptEdits', opts))).toBe('auto')
     })
 
-    test('plan → default', () => {
+    test('auto → default（无 bypass 时回到手动模式）', () => {
+      autoModeGateEnabled = true
+      expect(getNextPermissionMode(makeCtx('auto', opts))).toBe('default')
+    })
+  })
+
+  describe('仅 bypassPermissions 可用时：default → plan → acceptEdits → bypass → default', () => {
+    const opts = { isAutoModeAvailable: false, isBypassPermissionsModeAvailable: true }
+
+    test('acceptEdits → bypassPermissions', () => {
       autoModeGateEnabled = false
-      expect(getNextPermissionMode(makeCtx('plan'))).toBe('default')
+      expect(getNextPermissionMode(makeCtx('acceptEdits', opts))).toBe('bypassPermissions')
     })
 
     test('bypassPermissions → default', () => {
       autoModeGateEnabled = false
-      expect(getNextPermissionMode(makeCtx('bypassPermissions'))).toBe('default')
+      expect(getNextPermissionMode(makeCtx('bypassPermissions', opts))).toBe('default')
     })
   })
 
-  describe('bypassPermissions 优先级', () => {
-    test('default 且 bypassPermissions 可用时优先返回 bypassPermissions', () => {
-      autoModeGateEnabled = true
-      expect(
-        getNextPermissionMode(
-          makeCtx('default', {
-            isBypassPermissionsModeAvailable: true,
-            isAutoModeAvailable: true,
-          }),
-        ),
-      ).toBe('bypassPermissions')
-    })
-
-    test('plan 且 bypassPermissions 可用时优先返回 bypassPermissions', () => {
-      autoModeGateEnabled = true
-      expect(
-        getNextPermissionMode(
-          makeCtx('plan', {
-            isBypassPermissionsModeAvailable: true,
-            isAutoModeAvailable: true,
-          }),
-        ),
-      ).toBe('bypassPermissions')
-    })
-  })
-
-  describe('固定路径', () => {
-    test('acceptEdits → plan', () => {
+  describe('auto 和 bypass 均不可用时：default → plan → acceptEdits → default', () => {
+    test('default → plan', () => {
       autoModeGateEnabled = false
-      expect(getNextPermissionMode(makeCtx('acceptEdits'))).toBe('plan')
+      expect(getNextPermissionMode(makeCtx('default'))).toBe('plan')
     })
 
-    test('dontAsk → default', () => {
+    test('plan → acceptEdits', () => {
       autoModeGateEnabled = false
-      expect(getNextPermissionMode(makeCtx('dontAsk'))).toBe('default')
+      expect(getNextPermissionMode(makeCtx('plan'))).toBe('acceptEdits')
+    })
+
+    test('acceptEdits → default', () => {
+      autoModeGateEnabled = false
+      expect(getNextPermissionMode(makeCtx('acceptEdits'))).toBe('default')
     })
   })
 
   describe('gate 部分开启', () => {
-    test('isAutoModeAvailable=true 但 gate 关闭 → 不切 auto', () => {
+    test('isAutoModeAvailable=true 但 gate 关闭 → acceptEdits 跳过 auto 到 default', () => {
       autoModeGateEnabled = false
-      expect(getNextPermissionMode(makeCtx('default', { isAutoModeAvailable: true }))).toBe(
-        'acceptEdits',
-      )
+      expect(
+        getNextPermissionMode(
+          makeCtx('acceptEdits', {
+            isAutoModeAvailable: true,
+            isBypassPermissionsModeAvailable: false,
+          }),
+        ),
+      ).toBe('default')
     })
 
-    test('gate 开启但 isAutoModeAvailable=false → 不切 auto', () => {
+    test('gate 开启但 isAutoModeAvailable=false → acceptEdits 跳过 auto 到 default', () => {
       autoModeGateEnabled = true
-      expect(getNextPermissionMode(makeCtx('default', { isAutoModeAvailable: false }))).toBe(
+      expect(
+        getNextPermissionMode(
+          makeCtx('acceptEdits', {
+            isAutoModeAvailable: false,
+            isBypassPermissionsModeAvailable: false,
+          }),
+        ),
+      ).toBe('default')
+    })
+  })
+
+  describe('特殊模式', () => {
+    test('dontAsk → default', () => {
+      autoModeGateEnabled = false
+      expect(getNextPermissionMode(makeCtx('dontAsk'))).toBe('default')
+    })
+
+    test('未知模式 → default', () => {
+      autoModeGateEnabled = false
+      expect(getNextPermissionMode(makeCtx('unknown' as string))).toBe('default')
+    })
+  })
+
+  describe('完整循环验证', () => {
+    test('所有模式可用时完整循环：default → plan → acceptEdits → auto → bypass → default', () => {
+      autoModeGateEnabled = true
+      const opts = { isAutoModeAvailable: true, isBypassPermissionsModeAvailable: true }
+      const order: string[] = ['default']
+      let currentMode: string = 'default'
+      for (let i = 0; i < 10; i++) {
+        const next = getNextPermissionMode(makeCtx(currentMode, opts))
+        order.push(next)
+        if (next === 'default') break
+        currentMode = next
+      }
+      expect(order).toEqual([
+        'default',
+        'plan',
         'acceptEdits',
-      )
+        'auto',
+        'bypassPermissions',
+        'default',
+      ])
+    })
+
+    test('仅 auto 可用时完整循环', () => {
+      autoModeGateEnabled = true
+      const opts = { isAutoModeAvailable: true, isBypassPermissionsModeAvailable: false }
+      const order: string[] = ['default']
+      let currentMode: string = 'default'
+      for (let i = 0; i < 10; i++) {
+        const next = getNextPermissionMode(makeCtx(currentMode, opts))
+        order.push(next)
+        if (next === 'default') break
+        currentMode = next
+      }
+      expect(order).toEqual(['default', 'plan', 'acceptEdits', 'auto', 'default'])
+    })
+
+    test('仅 bypass 可用时完整循环', () => {
+      autoModeGateEnabled = false
+      const opts = { isAutoModeAvailable: false, isBypassPermissionsModeAvailable: true }
+      const order: string[] = ['default']
+      let currentMode: string = 'default'
+      for (let i = 0; i < 10; i++) {
+        const next = getNextPermissionMode(makeCtx(currentMode, opts))
+        order.push(next)
+        if (next === 'default') break
+        currentMode = next
+      }
+      expect(order).toEqual(['default', 'plan', 'acceptEdits', 'bypassPermissions', 'default'])
+    })
+
+    test('均不可用时完整循环', () => {
+      autoModeGateEnabled = false
+      const order: string[] = ['default']
+      let currentMode: string = 'default'
+      for (let i = 0; i < 10; i++) {
+        const next = getNextPermissionMode(makeCtx(currentMode))
+        order.push(next)
+        if (next === 'default') break
+        currentMode = next
+      }
+      expect(order).toEqual(['default', 'plan', 'acceptEdits', 'default'])
     })
   })
 })

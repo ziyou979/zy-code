@@ -81,8 +81,9 @@ function PermissionDecisionInfoItem({ title, decisionReason }: PermissionDecisio
                       </Text>
                     )}
                   {result.behavior === 'ask' && (
-                    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-                    <SuggestedRules suggestions={(result as any).suggestions} />
+                    <SuggestedRules
+                      suggestions={'suggestions' in result ? result.suggestions : undefined}
+                    />
                   )}
                 </Box>
               )
@@ -107,8 +108,7 @@ function PermissionDecisionInfoItem({ title, decisionReason }: PermissionDecisio
     </Box>
   )
 }
-// biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-function SuggestedRules({ suggestions }: any) {
+function SuggestedRules({ suggestions }: { suggestions: PermissionUpdate[] | undefined }) {
   let AnsiComponent
   let TextComponent
   let joinedString
@@ -146,8 +146,7 @@ function SuggestedRules({ suggestions }: any) {
 type Props = {
   permissionResult: PermissionDecision
   toolName?: string // Filter unreachable rules to this tool
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  suggestions?: any
+  suggestions?: PermissionUpdate[]
   width?: number
 }
 
@@ -265,8 +264,7 @@ export function PermissionDecisionDebugInfo({
   permissionResult,
   toolName,
 }: {
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  permissionResult: any
+  permissionResult: PermissionDecision
   toolName: string
 }) {
   const toolPermissionContext = useAppState((s) => s.toolPermissionContext)
@@ -330,11 +328,9 @@ export function PermissionDecisionDebugInfo({
       }
       {
         <SuggestionDisplay
-          // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-          suggestions={suggestions as any}
+          suggestions={suggestions as PermissionUpdate[] | undefined}
           width={10}
-          // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-          permissionResult={permissionResult as any}
+          permissionResult={permissionResult as PermissionDecision}
         />
       }
       {unreachableRules.length > 0 && (

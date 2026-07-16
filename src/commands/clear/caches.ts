@@ -12,7 +12,7 @@ import {
   getSystemContext,
   getUserContext,
   setSystemPromptInjection,
-} from '../../context.js'
+} from '../../services/context/context.js'
 import { clearFileSuggestionCaches } from '../../hooks/fileSuggestions.js'
 import { clearAllPendingCallbacks } from '../../hooks/useSwarmPermissionPoller.js'
 import { clearAllDumpState } from '../../services/api/dumpPrompts.js'

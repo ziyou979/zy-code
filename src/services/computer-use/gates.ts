@@ -8,7 +8,7 @@ type ChicagoConfig = CuSubGates & {
   coordinateMode: CoordinateMode
 }
 
-const DEFAULTS: ChicagoConfig = {
+const DEFAULTS = {
   enabled: false,
   pixelValidation: false,
   clipboardPasteMultiline: true,
@@ -16,9 +16,8 @@ const DEFAULTS: ChicagoConfig = {
   hideBeforeAction: true,
   autoTargetDisplay: true,
   clipboardGuard: true,
-  // biome-ignore lint/suspicious/noExplicitAny: 第三方类型不完善
-  coordinateMode: 'pixels' as any,
-}
+  coordinateMode: 'pixels' as CoordinateMode,
+} as unknown as ChicagoConfig
 
 // Spread over defaults so a partial JSON ({"enabled": true} alone) inherits the
 // rest. The generic on getDynamicConfig is a type assertion, not a validator —

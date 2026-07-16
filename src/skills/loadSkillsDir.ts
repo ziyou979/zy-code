@@ -11,7 +11,7 @@ import {
 import { parseUserSpecifiedModel } from '../services/model/model.js'
 import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
 import type { Command, PromptCommand } from '../commands/types.js'
-import { parseArgumentNames, substituteArguments } from '../utils/argumentSubstitution.js'
+import { parseArgumentNames, substituteArguments } from '../utils/argumentParser.js'
 import { logForDebugging } from '../utils/debug.js'
 import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../utils/effort.js'
 import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../utils/envUtils.js'

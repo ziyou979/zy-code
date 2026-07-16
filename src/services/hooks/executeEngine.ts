@@ -9,9 +9,10 @@ import { createAttachmentMessage } from '../attachments/attachments.js'
 import { createCombinedAbortSignal } from '../../utils/combinedAbortSignal.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import type { PermissionResult } from '../permissions/permissionResult.js'
-import { parseHookOutput, parseHttpHookOutput, processHookJSONOutput } from './commandRunner.js'
+import { execCommandHook } from './commandRunner.js'
 import { emitHookResponse, emitHookStarted } from './hookEvents.js'
 import { getHookDisplayText } from './hooksSettings.js'
+import { parseHookOutput, parseHttpHookOutput, processHookJSONOutput } from './hookOutputSupport.js'
 
 /**
  * 私有 helper：将 matched hooks 转换为 OTel/telemetry 用的简化 schema。
@@ -51,13 +52,12 @@ import {
 import { logOTelEvent } from '../telemetry/events.js'
 import { endHookSpan, isBetaTracingEnabled, startHookSpan } from '../telemetry/sessionTracing.js'
 import type { ToolUseContext } from '../../tool.js'
-import type { HookResultMessage, Message } from '../../types/message.js'
+import type { AttachmentMessage, HookResultMessage, Message } from '../../types/message.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { all } from '../../utils/generators.js'
 import { logError } from '../../utils/log.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { execCommandHook } from './commandRunner.js'
 import { shouldSkipHookDueToTrust, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
 import { execAgentHook } from './execAgentHook.js'
 import { execHttpHook } from './execHttpHook.js'
@@ -228,9 +228,8 @@ export async function* executeHooks({
   // Yield progress messages for each hook before execution
   for (const { hook } of matchingHooks) {
     yield {
-      // biome-ignore lint/suspicious/noExplicitAny: hook 引擎消息构造需要动态类型
       message: {
-        type: 'progress',
+        type: 'progress' as const,
         data: {
           type: 'hook_progress',
           hookEvent,
@@ -246,7 +245,7 @@ export async function* executeHooks({
         toolUseID,
         timestamp: new Date().toISOString(),
         uuid: randomUUID(),
-      } as unknown as HookResultMessage,
+      } as Message,
     }
   }
 
@@ -365,10 +364,9 @@ export async function* executeHooks({
           toolUseID,
         )
         // Inject timing fields for hook visibility
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
-        if ((promptResult.message as any)?.type === 'attachment') {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
-          const att = (promptResult.message as any).attachment
+        const promptMsg = promptResult.message as unknown as AttachmentMessage | undefined
+        if (promptMsg?.type === 'attachment') {
+          const att = promptMsg.attachment as Record<string, unknown>
           if (att.type === 'hook_success' || att.type === 'hook_non_blocking_error') {
             att.command = hookCommand
             att.durationMs = Date.now() - hookStartMs
@@ -398,10 +396,9 @@ export async function* executeHooks({
           'agent_type' in hookInput ? (hookInput.agent_type as string) : undefined,
         )
         // Inject timing fields for hook visibility
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
-        if ((agentResult.message as any)?.type === 'attachment') {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
-          const att = (agentResult.message as any).attachment
+        const agentMsg = agentResult.message as unknown as AttachmentMessage | undefined
+        if (agentMsg?.type === 'attachment') {
+          const att = agentMsg.attachment as Record<string, unknown>
           if (att.type === 'hook_success' || att.type === 'hook_non_blocking_error') {
             att.command = hookCommand
             att.durationMs = Date.now() - hookStartMs
@@ -426,10 +423,9 @@ export async function* executeHooks({
           toolUseID,
         )
         // Inject timing fields for hook visibility
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
-        if ((mcpResult.message as any)?.type === 'attachment') {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时消息类型可能是 AttachmentMessage
-          const att = (mcpResult.message as any).attachment
+        const mcpMsg = mcpResult.message as unknown as AttachmentMessage | undefined
+        if (mcpMsg?.type === 'attachment') {
+          const att = mcpMsg.attachment as Record<string, unknown>
           if (att.type === 'hook_success' || att.type === 'hook_non_blocking_error') {
             att.command = hookCommand
             att.durationMs = Date.now() - hookStartMs

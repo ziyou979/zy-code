@@ -13,6 +13,7 @@ export interface AgentWizardData {
   model?: string
   tools?: string[]
   selectedTools?: string[]
+  selectedModel?: string
   location?: SettingSource
   memoryEnabled?: boolean
   finalAgent?: CustomAgentDefinition
@@ -20,4 +21,10 @@ export interface AgentWizardData {
   generationPrompt?: string
   selectedMemory?: AgentMemoryScope
   wasGenerated?: boolean
+  generatedAgent?: unknown
+  isGenerating?: boolean
+  method?: 'generate' | 'manual'
+  agentType?: string
+  whenToUse?: string
+  selectedColor?: AgentColorName | undefined
 }

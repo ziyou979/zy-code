@@ -67,18 +67,17 @@ export function DiffDialog({ messages, onDone }: Props) {
   const [viewMode, setViewMode] = useState('list')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [sourceIndex, setSourceIndex] = useState(0)
-  const sources = [
+  const sources: DiffSource[] = [
     {
       type: 'current',
     },
     ...turnDiffs.map((turn) => ({
-      type: 'turn',
+      type: 'turn' as const,
       turn,
     })),
   ]
   const currentSource = sources[sourceIndex]
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const currentTurn = currentSource?.type === 'turn' ? (currentSource as any).turn : null
+  const currentTurn = currentSource?.type === 'turn' ? currentSource.turn : null
   const diffData = currentTurn ? turnDiffToDiffData(currentTurn) : gitDiffData
   const selectedFile = diffData.files[selectedIndex]
   const selectedHunks = selectedFile ? diffData.hunks.get(selectedFile.path) || [] : []
@@ -166,8 +165,7 @@ export function DiffDialog({ messages, onDone }: Props) {
           const label =
             source.type === 'current'
               ? tSync('diffDialog.current')
-              : // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-                `T${(source as any).turn.turnIndex}`
+              : `T${source.turn.turnIndex}`
           return (
             <Text key={i} dimColor={!isSelected} bold={isSelected}>
               {i > 0 ? ' \xB7 ' : ''}

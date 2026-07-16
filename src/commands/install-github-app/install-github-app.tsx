@@ -15,6 +15,7 @@ import { openBrowser } from '../../utils/browser.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { getGithubRepo } from '../../utils/git.js'
 import { plural } from '../../utils/stringUtils.js'
+import { tSync } from '../../i18n/index.js'
 import { ApiKeyStep } from './ApiKeyStep.js'
 import { CheckExistingSecretStep } from './CheckExistingSecretStep.js'
 import { CheckGitHubStep } from './CheckGitHubStep.js'
@@ -69,13 +70,13 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
     })
     if (ghVersionResult.exitCode !== 0) {
       warnings.push({
-        title: 'GitHub CLI not found',
-        message: 'GitHub CLI (gh) does not appear to be installed or accessible.',
+        title: tSync('installGitHubApp.warningGhNotFound'),
+        message: tSync('installGitHubApp.warningGhNotFoundMsg'),
         instructions: [
-          'Install GitHub CLI from https://cli.github.com/',
+          tSync('installGitHubApp.instructionInstallGh'),
           'macOS: brew install gh',
           'Windows: winget install --id GitHub.cli',
-          'Linux: See installation instructions at https://github.com/cli/cli#installation',
+          tSync('installGitHubApp.instructionInstallGhLinux'),
         ],
       })
     }
@@ -87,12 +88,12 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
     })
     if (authResult.exitCode !== 0) {
       warnings.push({
-        title: 'GitHub CLI not authenticated',
-        message: 'GitHub CLI does not appear to be authenticated.',
+        title: tSync('installGitHubApp.warningGhNotAuthed'),
+        message: tSync('installGitHubApp.warningGhNotAuthedMsg'),
         instructions: [
-          'Run: gh auth login',
-          'Follow the prompts to authenticate with GitHub',
-          'Or set up authentication using environment variables or other methods',
+          tSync('installGitHubApp.instructionGhAuthLogin'),
+          tSync('installGitHubApp.instructionGhAuthFollow'),
+          tSync('installGitHubApp.instructionGhAuthOther'),
         ],
       })
     } else {
@@ -112,15 +113,20 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
           setState((prev) => ({
             ...prev,
             step: 'error',
-            error: `GitHub CLI is missing required permissions: ${missingScopes.join(', ')}.`,
-            errorReason: 'Missing required scopes',
+            error: tSync('installGitHubApp.errorMissingScopes', {
+              scopes: missingScopes.join(', '),
+            }),
+            errorReason: tSync('installGitHubApp.errorReasonMissingScopes'),
             errorInstructions: [
-              `Your GitHub CLI authentication is missing the "${missingScopes.join('" and "')}" ${plural(missingScopes.length, 'scope')} needed to manage GitHub Actions and secrets.`,
+              tSync('installGitHubApp.instructionMissingScopes', {
+                scopes: missingScopes.join('" and "'),
+                pluralScope: plural(missingScopes.length, 'scope'),
+              }),
               '',
-              'To fix this, run:',
+              tSync('installGitHubApp.instructionToFix'),
               '  gh auth refresh -h github.com -s repo,workflow',
               '',
-              'This will add the necessary permissions to manage workflows and secrets.',
+              tSync('installGitHubApp.instructionAfterRefresh'),
             ],
           }))
           return
@@ -185,7 +191,7 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
         }))
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : 'Failed to set up GitHub Actions'
+          error instanceof Error ? error.message : tSync('installGitHubApp.errorSetupFailed')
         if (errorMessage.includes('workflow file already exists')) {
           logEvent('zy_install_github_app_error', {
             reason:
@@ -194,13 +200,12 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
           setState((prev_2) => ({
             ...prev_2,
             step: 'error',
-            error: 'A Zy workflow file already exists in this repository.',
-            errorReason: 'Workflow file conflict',
+            error: tSync('installGitHubApp.errorWorkflowExists'),
+            errorReason: tSync('installGitHubApp.errorReasonWorkflowConflict'),
             errorInstructions: [
-              'The file .github/workflows/zy.yml already exists',
-              'You can either:',
-              '  1. Delete the existing file and run this command again',
-              '  2. Update the existing file manually using the template from:',
+              tSync('installGitHubApp.errorInstructionWorkflowConflict1'),
+              tSync('installGitHubApp.errorInstructionWorkflowConflict2'),
+              tSync('installGitHubApp.errorInstructionWorkflowConflict3'),
               `     ${GITHUB_ACTION_SETUP_DOCS_URL}`,
             ],
           }))
@@ -213,7 +218,7 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
             ...prev_3,
             step: 'error',
             error: errorMessage,
-            errorReason: 'GitHub Actions setup failed',
+            errorReason: tSync('installGitHubApp.errorReasonSetupFailed'),
             errorInstructions: [],
           }))
         }
@@ -351,12 +356,9 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
         const match = repoName_1.match(/github\.com[:/]([^/]+\/[^/]+)(\.git)?$/)
         if (!match) {
           repoWarnings.push({
-            title: 'Invalid GitHub URL format',
-            message: 'The repository URL format appears to be invalid.',
-            instructions: [
-              'Use format: owner/repo or https://github.com/owner/repo',
-              'Example: owner/repo',
-            ],
+            title: tSync('installGitHubApp.warningInvalidUrl'),
+            message: tSync('installGitHubApp.warningInvalidUrlMsg'),
+            instructions: [tSync('installGitHubApp.instructionUrlFormat'), 'Example: owner/repo'],
           })
         } else {
           repoName_1 = match[1]?.replace(/\.git$/, '') || ''
@@ -364,31 +366,35 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
       }
       if (!repoName_1.includes('/')) {
         repoWarnings.push({
-          title: 'Repository format warning',
-          message: 'Repository should be in format "owner/repo"',
-          instructions: ['Use format: owner/repo', 'Example: owner/repo'],
+          title: tSync('installGitHubApp.warningRepoFormat'),
+          message: tSync('installGitHubApp.warningRepoFormatMsg'),
+          instructions: [tSync('installGitHubApp.instructionUrlFormat'), 'Example: owner/repo'],
         })
       }
       const permissionCheck = await checkRepositoryPermissions(repoName_1)
       if (permissionCheck.error === 'repository_not_found') {
         repoWarnings.push({
-          title: 'Repository not found',
-          message: `Repository ${repoName_1} was not found or you don't have access.`,
+          title: tSync('installGitHubApp.warningRepoNotFound'),
+          message: tSync('installGitHubApp.warningRepoNotFoundMsg', {
+            repoName: repoName_1,
+          }),
           instructions: [
-            `Check that the repository name is correct: ${repoName_1}`,
-            'Ensure you have access to this repository',
-            'For private repositories, make sure your GitHub token has the "repo" scope',
-            'You can add the repo scope with: gh auth refresh -h github.com -s repo,workflow',
+            tSync('installGitHubApp.instructionCheckRepoName', { repoName: repoName_1 }),
+            tSync('installGitHubApp.instructionEnsureAccess'),
+            tSync('installGitHubApp.instructionPrivateRepoScope'),
+            'gh auth refresh -h github.com -s repo,workflow',
           ],
         })
       } else if (!permissionCheck.hasAccess) {
         repoWarnings.push({
-          title: 'Admin permissions required',
-          message: `You might need admin permissions on ${repoName_1} to set up GitHub Actions.`,
+          title: tSync('installGitHubApp.warningAdminRequired'),
+          message: tSync('installGitHubApp.warningAdminRequiredMsg', {
+            repoName: repoName_1,
+          }),
           instructions: [
-            'Repository admins can install GitHub Apps and set secrets',
-            'Ask a repository admin to run this command if setup fails',
-            'Alternatively, you can use the manual setup instructions',
+            tSync('installGitHubApp.instructionAdminCanInstall'),
+            tSync('installGitHubApp.instructionAskAdmin'),
+            tSync('installGitHubApp.instructionManualSetup'),
           ],
         })
       }
@@ -462,7 +468,7 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
         setState((prev_16) => ({
           ...prev_16,
           step: 'error',
-          error: 'API key is required',
+          error: tSync('installGitHubApp.errorApiKeyRequired'),
         }))
         return
       }
@@ -593,7 +599,7 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
   }
   const handleWorkflowAction = async (action: 'update' | 'skip' | 'exit') => {
     if (action === 'exit') {
-      props.onDone('Installation cancelled by user')
+      props.onDone(tSync('installGitHubApp.cancelledByUser'))
       return
     }
     logEvent('zy_install_github_app_step_completed', {
@@ -623,10 +629,13 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
     }
     props.onDone(
       state.step === 'success'
-        ? 'GitHub Actions setup complete!'
+        ? tSync('installGitHubApp.doneSuccess')
         : state.error
-          ? `Couldn't install GitHub App: ${state.error}\nFor manual setup instructions, see: ${GITHUB_ACTION_SETUP_DOCS_URL}`
-          : `GitHub App installation failed\nFor manual setup instructions, see: ${GITHUB_ACTION_SETUP_DOCS_URL}`,
+          ? tSync('installGitHubApp.doneError', {
+              error: state.error,
+              url: GITHUB_ACTION_SETUP_DOCS_URL,
+            })
+          : tSync('installGitHubApp.doneFailed', { url: GITHUB_ACTION_SETUP_DOCS_URL }),
     )
   }
   switch (state.step) {

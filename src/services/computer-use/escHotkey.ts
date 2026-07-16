@@ -29,8 +29,7 @@ export function registerEscHotkey(onEscape: () => void): boolean {
   const cu = requireComputerUseSwift()
   if (
     !(
-      // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
-      (cu as any).hotkey.registerEscape(onEscape)
+      cu.hotkey.registerEscape(onEscape)
     )
   ) {
     // CGEvent.tapCreate failed — typically missing Accessibility permission.
@@ -49,8 +48,7 @@ export function unregisterEscHotkey(): void {
     return
   }
   try {
-    // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
-    ;(requireComputerUseSwift() as any).hotkey.unregister()
+    requireComputerUseSwift().hotkey.unregister()
   } finally {
     releasePump()
     registered = false
@@ -61,6 +59,5 @@ export function unregisterEscHotkey(): void {
 export function notifyExpectedEscape(): void {
   if (!registered) {
     return // @ts-ignore
-  } // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
-  ;(requireComputerUseSwift() as any).hotkey.notifyExpectedEscape()
+  } requireComputerUseSwift().hotkey.notifyExpectedEscape()
 }

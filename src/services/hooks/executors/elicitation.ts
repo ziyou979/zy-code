@@ -2,6 +2,7 @@ import {
   hookJSONOutputSchema,
   isAsyncHookJSONOutput,
   isSyncHookJSONOutput,
+  type HookJSONOutput,
 } from 'src/types/hooks/index.js'
 import type { ElicitationHookInput, ElicitationResultHookInput } from 'src/types/index.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
@@ -41,30 +42,25 @@ function parseElicitationHookOutput(
   }
 
   try {
-    const parsed = hookJSONOutputSchema().parse(JSON.parse(trimmed))
-    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-    if (isAsyncHookJSONOutput(parsed as any)) {
+    const parsed = hookJSONOutputSchema().parse(JSON.parse(trimmed)) as HookJSONOutput
+    if (isAsyncHookJSONOutput(parsed)) {
       return {}
     }
-    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-    if (!isSyncHookJSONOutput(parsed as any)) {
+    if (!isSyncHookJSONOutput(parsed)) {
       return {}
     }
 
     // 检查顶层 decision: 'block'（退出码 0 + JSON block）
-    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-    if ((parsed as any).decision === 'block' || result.blocked) {
+    if (parsed.decision === 'block' || result.blocked) {
       return {
         blockingError: {
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          blockingError: (parsed as any).reason || 'Elicitation blocked by hook',
+          blockingError: parsed.reason || 'Elicitation blocked by hook',
           command: result.command,
         },
       }
     }
 
-    // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-    const specific = (parsed as any).hookSpecificOutput
+    const specific = parsed.hookSpecificOutput
     if (!specific || specific.hookEventName !== expectedEventName) {
       return {}
     }
@@ -86,8 +82,7 @@ function parseElicitationHookOutput(
     if (specific.action === 'decline') {
       out.blockingError = {
         blockingError:
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          (parsed as any).reason ||
+          parsed.reason ||
           (expectedEventName === 'Elicitation'
             ? 'Elicitation denied by hook'
             : 'Elicitation result blocked by hook'),

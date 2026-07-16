@@ -15,12 +15,10 @@ type Props = {
   existingAgents: AgentDefinition[]
 }
 export function TypeStep(_props: Props) {
-  const { goNext, goBack, updateWizardData, wizardData } = useWizard()
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const [agentType, setAgentType] = useState((wizardData.agentType as any) || '')
+  const { goNext, goBack, updateWizardData, wizardData } = useWizard<{ agentType?: string }>()
+  const [agentType, setAgentType] = useState(wizardData.agentType ?? '')
   const [error, setError] = useState<string | null>(null)
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const [cursorOffset, setCursorOffset] = useState((agentType as any).length)
+  const [cursorOffset, setCursorOffset] = useState(agentType.length)
   useKeybinding('confirm:no', goBack, {
     context: 'Settings',
   })

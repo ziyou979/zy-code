@@ -101,8 +101,7 @@ export function Notifications({
   const isInOverageMode = zyAiLimits.isUsingOverage
   const subscriptionType = getSubscriptionType()
   const isTeamOrEnterprise =
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    (subscriptionType as any) === 'team' || (subscriptionType as any) === 'enterprise'
+    (subscriptionType as string) === 'team' || (subscriptionType as string) === 'enterprise'
   const editor = getExternalEditor()
   const shouldShowExternalEditorHint =
     isInputWrapped &&

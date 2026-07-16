@@ -14,7 +14,7 @@ import { feature } from 'bun:bundle'
 import { proactiveModule } from '../../cli/lazyModules.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import type { Notification } from '../../context/notifications.js'
-import { getSystemContext, getUserContext } from '../../context.js'
+import { getSystemContext, getUserContext } from '../../services/context/context.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
 import { partialCompactConversation } from '../../services/compact/compact.js'
 import { runPostCompactCleanup } from '../../services/compact/postCompactCleanup.js'
@@ -56,8 +56,7 @@ export type HandleSummarizeParams = {
 export async function handleSummarize({
   message,
   feedback,
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  direction = 'from' as any,
+  direction = 'from',
   messages,
   createAbortController,
   getToolUseContext,
@@ -87,8 +86,7 @@ export async function handleSummarize({
   const defaultSysPrompt = await getSystemPrompt(
     context.options.tools,
     context.options.mainLoopModel,
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    Array.from((appState.toolPermissionContext as any).additionalWorkingDirectories.keys()),
+    Array.from(appState.toolPermissionContext.additionalWorkingDirectories.keys()),
     context.options.mcpClients,
   )
   const systemPrompt = buildEffectiveSystemPrompt({
@@ -116,8 +114,7 @@ export async function handleSummarize({
 
   const kept = result.messagesToKeep ?? []
   const ordered =
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    (direction as any) === 'up_to'
+    direction === 'up_to'
       ? [...result.summaryMessages, ...kept]
       : [...kept, ...result.summaryMessages]
   const postCompact = [
@@ -127,8 +124,7 @@ export async function handleSummarize({
     ...result.hookResults,
   ]
 
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  if (isFullscreenEnvEnabled() && (direction as any) === 'from') {
+  if (isFullscreenEnvEnabled() && direction === 'from') {
     setMessages((old) => {
       const rawIdx = old.findIndex((m) => m.uuid === message.uuid)
       return [...old.slice(0, rawIdx === -1 ? 0 : rawIdx), ...postCompact]
@@ -143,8 +139,7 @@ export async function handleSummarize({
   regenerateConversationId()
   runPostCompactCleanup(context.options.querySource)
 
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  if ((direction as any) === 'from') {
+  if (direction === 'from') {
     const r = textForResubmit(message)
     if (r) {
       setInputValue(r.text)

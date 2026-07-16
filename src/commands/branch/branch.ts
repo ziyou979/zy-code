@@ -121,10 +121,8 @@ async function createFork(customTitle?: string): Promise<{
     // Create forked transcript entry preserving all original metadata
     const forkedEntry: TranscriptEntry = {
       ...entry,
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      sessionId: forkSessionId as any,
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      parentUuid: parentUuid as any,
+      sessionId: forkSessionId,
+      parentUuid,
       isSidechain: false,
       forkedFrom: {
         sessionId: originalSessionId,
@@ -135,15 +133,13 @@ async function createFork(customTitle?: string): Promise<{
     // Build serialized message for LogOption
     const serialized: SerializedMessage = {
       ...entry,
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      sessionId: forkSessionId as any,
+      sessionId: forkSessionId,
     }
 
     serializedMessages.push(serialized)
     lines.push(jsonStringify(forkedEntry))
     if (entry.type !== 'progress') {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      parentUuid = entry.uuid as any
+      parentUuid = entry.uuid as UUID
     }
   }
 

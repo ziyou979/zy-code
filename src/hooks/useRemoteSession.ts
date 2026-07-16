@@ -19,7 +19,7 @@ import type { AppState } from '../state/AppStateStore.js'
 import type { Tool } from '../tool.js'
 import { findToolByName } from '../tool.js'
 import type { Message as MessageType } from '../types/message.js'
-import type { PermissionAskDecision } from '../types/permissions.js'
+import type { PermissionAskDecision, PermissionUpdate } from '../types/permissions.js'
 import { logForDebugging } from '../utils/debug.js'
 import { truncateToWidth } from '../utils/format.js'
 import { createSystemMessage } from '../services/messages/./constructors.js'
@@ -144,8 +144,7 @@ export function useRemoteSession({
           parts.push(`subtype=${sdkMessage.subtype}`)
         }
         if (sdkMessage.type === 'user') {
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          const c = (sdkMessage.message as any)?.content
+          const c = sdkMessage.message?.content
           parts.push(`content=${Array.isArray(c) ? c.map((b) => b.type).join(',') : typeof c}`)
         }
         logForDebugging(`[useRemoteSession] Received ${parts.join(' ')}`)
@@ -227,8 +226,7 @@ export function useRemoteSession({
         // and inProcessRunner.ts; without this the set grows unbounded for the
         // session lifetime (BQ: CCR cohort shows 5.2x higher RSS slope).
         if (setInProgressToolUseIDs && sdkMessage.type === 'user') {
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          const content = (sdkMessage.message as any)?.content
+          const content = sdkMessage.message?.content
           if (Array.isArray(content)) {
             const resultIds: string[] = []
             for (const block of content) {
@@ -321,10 +319,9 @@ export function useRemoteSession({
         const permissionResult: PermissionAskDecision = {
           behavior: 'ask',
           message: request.description ?? `${request.tool_name} requires permission`,
-          suggestions: request.permission_suggestions,
+          suggestions: request.permission_suggestions as PermissionUpdate[] | undefined,
           blockedPath: request.blocked_path,
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-        } as any
+        }
 
         const toolUseConfirm: ToolUseConfirm = {
           assistantMessage: syntheticMessage,

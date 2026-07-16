@@ -203,8 +203,7 @@ export async function processUserInput({
       context,
       context.requestPrompt,
     )) {
-      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-      if ((hookResult.message as any)?.type === 'progress') {
+      if (hookResult.message?.type === 'progress') {
         continue
       }
       if (hookResult.blockingError) {
@@ -239,7 +238,7 @@ export async function processUserInput({
   )) {
     // We only care about the result
     // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    if ((hookResult.message as any)?.type === 'progress') {
+    if (hookResult.message?.type === 'progress') {
       continue
     }
 
@@ -286,28 +285,23 @@ export async function processUserInput({
 
     // TODO: Clean this up
     if (hookResult.message) {
-      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-      switch ((hookResult.message as any).attachment.type) {
+      const hookMsg = hookResult.message as unknown as AttachmentMessage
+      switch (hookMsg.attachment.type) {
         case 'hook_success':
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          if (!(hookResult.message as any).attachment.content) {
+          if (!hookMsg.attachment.content) {
             // Skip if there is no content
             break
           }
           result.messages.push({
-            ...hookResult.message,
+            ...hookMsg,
             attachment: {
-              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-              ...(hookResult.message as any).attachment,
-              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-              content: applyTruncation((hookResult.message as any).attachment.content),
+              ...hookMsg.attachment,
+              content: typeof hookMsg.attachment.content === 'string' ? applyTruncation(hookMsg.attachment.content) : hookMsg.attachment.content,
             },
-            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          } as any)
+          } as unknown as AttachmentMessage)
           break
         default:
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          result.messages.push(hookResult.message as any)
+          result.messages.push(hookMsg as unknown as AttachmentMessage)
           break
       }
     }

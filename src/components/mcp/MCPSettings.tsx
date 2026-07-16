@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import type { CommandResultDisplay } from '../../commands.js'
 import { tSync } from '../../i18n/index.js'
 import { ZyAuthProvider } from '../../services/mcp/auth.js'
+import type { AgentMcpServerInfo } from '../../services/mcp/viewTypes.js'
 import type {
   McpHTTPServerConfig,
   McpSSEServerConfig,
@@ -18,6 +19,16 @@ import { MCPStdioServerMenu } from './MCPStdioServerMenu.js'
 import { MCPToolDetailView } from './MCPToolDetailView.js'
 import { MCPToolListView } from './MCPToolListView.js'
 
+type ViewState =
+  | { type: 'list'; defaultTab?: string }
+  | { type: 'server-menu'; server: ServerInfo; defaultTab?: string }
+  | { type: 'server-tools'; server: ServerInfo }
+  | { type: 'server-tool-detail'; server: ServerInfo; toolIndex: number }
+  | { type: 'agent-server-menu'; agentServer: AgentMcpServerInfo }
+
+// biome-ignore lint/suspicious/noExplicitAny: servers are built from MCP client connections with dynamic shapes
+type ServerInfo = any
+
 type Props = {
   onComplete: (
     result?: string,
@@ -30,19 +41,8 @@ export function MCPSettings({ onComplete }: Props) {
   const mcp = useAppState((s) => s.mcp)
   const agentDefinitions = useAppState((s) => s.agentDefinitions)
   const mcpClients = mcp.clients
-  const [viewState, setViewState] = React.useState<{
-    type: string
-    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-    server?: any
-    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-    agentServer?: any
-    defaultTab?: string
-    toolIndex?: number
-  }>({
-    type: 'list',
-  })
-  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-  const [servers, setServers] = React.useState<any[]>([])
+  const [viewState, setViewState] = React.useState<ViewState>({ type: 'list' })
+  const [servers, setServers] = React.useState<ServerInfo[]>([])
   const agentMcpServers = extractAgentMcpServers(agentDefinitions.allAgents)
   const filteredClients = mcpClients
     .filter((client) => client.name !== 'ide')
@@ -128,24 +128,11 @@ export function MCPSettings({ onComplete }: Props) {
   }, [servers.length, filteredClients.length, agentMcpServers.length, onComplete])
   switch (viewState.type) {
     case 'list': {
-      let handleSelectAgentServer
-      let handleSelectServer
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      handleSelectServer = (server: any) =>
-        setViewState({
-          type: 'server-menu',
-          server,
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        } as any)
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      handleSelectAgentServer = (agentServer: any) =>
-        setViewState({
-          type: 'agent-server-menu',
-          agentServer,
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        } as any)
-      let listPanel
-      listPanel = (
+      const handleSelectServer = (server: ServerInfo) =>
+        setViewState({ type: 'server-menu', server })
+      const handleSelectAgentServer = (agentServer: AgentMcpServerInfo) =>
+        setViewState({ type: 'agent-server-menu', agentServer })
+      return (
         <MCPListPanel
           servers={servers}
           agentServers={agentMcpServers}
@@ -154,153 +141,69 @@ export function MCPSettings({ onComplete }: Props) {
           onComplete={onComplete}
         />
       )
-      return listPanel
     }
     case 'server-menu': {
-      let serverToolsFiltered
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      serverToolsFiltered = filterToolsByServer(mcp.tools, (viewState as any).server.name)
-      const serverTools = serverToolsFiltered
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      const defaultTab = (viewState as any).server.transport === 'zyai-proxy' ? 'zy.ai' : 'ZY Code'
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      if ((viewState as any).server.transport === 'stdio') {
-        let handleViewTools
-        handleViewTools = () =>
-          setViewState({
-            type: 'server-tools',
-            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-            server: (viewState as any).server,
-            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          } as any)
-        let handleCancel
-        handleCancel = () =>
-          setViewState({
-            type: 'list',
-            defaultTab,
-            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          } as any)
-        let stdioMenu
-        stdioMenu = (
+      const { server } = viewState
+      const serverTools = filterToolsByServer(mcp.tools, server.name)
+      const defaultTab = server.transport === 'zyai-proxy' ? 'zy.ai' : 'ZY Code'
+      if (server.transport === 'stdio') {
+        return (
           <MCPStdioServerMenu
-            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-            server={(viewState as any).server}
+            server={server}
             serverToolsCount={serverTools.length}
-            onViewTools={handleViewTools}
-            onCancel={handleCancel}
+            onViewTools={() => setViewState({ type: 'server-tools', server })}
+            onCancel={() => setViewState({ type: 'list', defaultTab })}
             onComplete={onComplete}
           />
         )
-        return stdioMenu
-      } else {
-        let handleViewTools
-        handleViewTools = () =>
-          setViewState({
-            type: 'server-tools',
-            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-            server: (viewState as any).server,
-            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          } as any)
-        let handleCancel
-        handleCancel = () =>
-          setViewState({
-            type: 'list',
-            defaultTab,
-            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          } as any)
-        let remoteMenu
-        remoteMenu = (
-          <MCPRemoteServerMenu
-            // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-            server={(viewState as any).server}
-            serverToolsCount={serverTools.length}
-            onViewTools={handleViewTools}
-            onCancel={handleCancel}
-            onComplete={onComplete}
-          />
-        )
-        return remoteMenu
       }
-    }
-    case 'server-tools': {
-      let handleSelectTool
-      let handleBack
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      handleBack = (_: any, index: number) =>
-        setViewState({
-          type: 'server-tool-detail',
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          server: (viewState as any).server,
-          toolIndex: index,
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        } as any)
-      handleSelectTool = () =>
-        setViewState({
-          type: 'server-menu',
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          server: (viewState as any).server,
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        } as any)
-      let toolListView
-      toolListView = (
-        <MCPToolListView
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          server={(viewState as any).server}
-          onSelectTool={handleBack}
-          onBack={handleSelectTool}
-        />
-      )
-      return toolListView
-    }
-    case 'server-tool-detail': {
-      let serverToolsFiltered
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      serverToolsFiltered = filterToolsByServer(mcp.tools, (viewState as any).server.name)
-      const serverTools = serverToolsFiltered
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      const tool = serverTools[(viewState as any).toolIndex]
-      if (!tool) {
-        setViewState({
-          type: 'server-tools',
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          server: (viewState as any).server,
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        } as any)
-        return null
-      }
-      let handleBack
-      handleBack = () =>
-        setViewState({
-          type: 'server-tools',
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          server: (viewState as any).server,
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        } as any)
-      let toolDetailView
-      toolDetailView = (
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        <MCPToolDetailView tool={tool} server={(viewState as any).server} onBack={handleBack} />
-      )
-      return toolDetailView
-    }
-    case 'agent-server-menu': {
-      let handleCancel
-      handleCancel = () =>
-        setViewState({
-          type: 'list',
-          defaultTab: 'Agents',
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        } as any)
-      let agentServerMenu
-      agentServerMenu = (
-        <MCPAgentServerMenu
-          // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          agentServer={(viewState as any).agentServer}
-          onCancel={handleCancel}
+      return (
+        <MCPRemoteServerMenu
+          server={server}
+          serverToolsCount={serverTools.length}
+          onViewTools={() => setViewState({ type: 'server-tools', server })}
+          onCancel={() => setViewState({ type: 'list', defaultTab })}
           onComplete={onComplete}
         />
       )
-      return agentServerMenu
+    }
+    case 'server-tools': {
+      const { server } = viewState
+      return (
+        <MCPToolListView
+          server={server}
+          onSelectTool={(_: unknown, index: number) =>
+            setViewState({ type: 'server-tool-detail', server, toolIndex: index })
+          }
+          onBack={() => setViewState({ type: 'server-menu', server })}
+        />
+      )
+    }
+    case 'server-tool-detail': {
+      const { server, toolIndex } = viewState
+      const serverTools = filterToolsByServer(mcp.tools, server.name)
+      const tool = serverTools[toolIndex]
+      if (!tool) {
+        setViewState({ type: 'server-tools', server })
+        return null
+      }
+      return (
+        <MCPToolDetailView
+          tool={tool}
+          server={server}
+          onBack={() => setViewState({ type: 'server-tools', server })}
+        />
+      )
+    }
+    case 'agent-server-menu': {
+      const { agentServer } = viewState
+      return (
+        <MCPAgentServerMenu
+          agentServer={agentServer}
+          onCancel={() => setViewState({ type: 'list' })}
+          onComplete={onComplete}
+        />
+      )
     }
   }
 }

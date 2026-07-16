@@ -178,10 +178,8 @@ function RateLimitSection({ maxWidth }: { maxWidth: number }) {
 
   const subscriptionType = getSubscriptionType()
   const showSonnetBar =
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    (subscriptionType as any) === 'max' ||
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    (subscriptionType as any) === 'team' ||
+    (subscriptionType as string) === 'max' ||
+    (subscriptionType as string) === 'team' ||
     subscriptionType === null
   const limits = [
     {
@@ -249,8 +247,7 @@ type ExtraUsageSectionProps = {
 function ExtraUsageSection({ extraUsage, maxWidth }: ExtraUsageSectionProps) {
   const EXTRA_USAGE_SECTION_TITLE = tSync('usage.extraUsage')
   const subscriptionType = getSubscriptionType()
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const isProOrMax = (subscriptionType as any) === 'pro' || (subscriptionType as any) === 'max'
+  const isProOrMax = (subscriptionType as string) === 'pro' || (subscriptionType as string) === 'max'
   if (!isProOrMax) {
     return false
   }

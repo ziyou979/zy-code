@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { QuerySource } from '../../constants/querySource.js'
 import { clearSystemPromptSections } from '../../constants/systemPromptSections.js'
-import { getUserContext } from '../../context.js'
+import { getUserContext } from '../../services/context/context.js'
 import { clearBetaTracingState } from '../telemetry/betaSessionTracing.js'
 import { clearSpeculativeChecks } from '../../tools/BashTool/bashPermissions.js'
 import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'
@@ -64,8 +64,11 @@ export function runPostCompactCleanup(querySource?: QuerySource): void {
   // cacheUtils resets. See compactConversation() for full rationale.
   clearBetaTracingState()
   if (feature('COMMIT_ATTRIBUTION')) {
-    // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载
-    void import('../../utils/attributionHooks.js').then((m) => (m as any).sweepFileContentCache())
+    void import('../../utils/attributionHooks.js').then(
+      (m: typeof import('../../utils/attributionHooks.js')) => {
+        ;(m as { sweepFileContentCache?: () => void }).sweepFileContentCache?.()
+      },
+    )
   }
   clearSessionMessagesCache()
 }

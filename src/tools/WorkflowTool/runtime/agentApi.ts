@@ -165,13 +165,10 @@ async function runWorkflowAgent(
 
   const canUseTool = async () => ({ allowed: true as const })
 
-  // biome-ignore lint/suspicious/noExplicitAny: 适配层类型处理 — AgentTool.call 的输入/回调类型不完全匹配
   const result = await AgentTool.call(
-    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-    input as any,
+    input as Parameters<typeof AgentTool.call>[0],
     ctx.toolUseContext,
-    // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-    canUseTool as any,
+    canUseTool as unknown as Parameters<typeof AgentTool.call>[2],
     undefined,
   )
 

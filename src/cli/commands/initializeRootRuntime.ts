@@ -20,7 +20,7 @@ import { setAdditionalDirectoriesForAgentsMd } from 'src/bootstrap/runtime/runti
 import { maybeActivateProactive } from '../activate/proactive.js'
 import { getInputPrompt } from '../bootstrap/inputPrompt.js'
 import { getCommands } from '../../commands.js'
-import { getSystemContext, getUserContext } from '../../context.js'
+import { getSystemContext, getUserContext } from '../../services/context/context.js'
 import { initBuiltinPlugins } from '../../services/plugins/builtinInitialization.js'
 import {
   hasGrowthBookEnvOverride,
@@ -573,7 +573,7 @@ export async function initializeRootRuntime(
 
   const setupStart = Date.now()
 
-  const { setup } = await import('../../setup.js')
+  const { setup } = await import('../../bootstrap/setup.js')
 
   const messagingSocketPath = feature('UDS_INBOX') ? options.messagingSocketPath : undefined
 

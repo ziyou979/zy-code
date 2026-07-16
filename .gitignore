@@ -4,3 +4,7 @@ dist/
 bun.lock
 /.idea/
 
+
+# Agent worktrees & temp files
+.zy/worktrees/
+.tmp/

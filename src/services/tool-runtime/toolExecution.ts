@@ -8,8 +8,6 @@ import {
   extractMcpToolDetails,
   extractSkillName,
   extractToolInputForTelemetry,
-  getFileExtensionForAnalytics,
-  getFileExtensionsFromBashCommand,
   isToolDetailsLoggingEnabled,
   mcpToolDetailsForAnalytics,
   sanitizeToolNameForAnalytics,
@@ -27,9 +25,7 @@ import {
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { logOTelEvent } from '../telemetry/events.js'
 import {
-  addToolContentEvent,
   endToolBlockedOnUserSpan,
-  endToolExecutionSpan,
   endToolSpan,
   isBetaTracingEnabled,
   startToolBlockedOnUserSpan,
@@ -49,20 +45,11 @@ import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from '../../tools/FileWriteTool/prompt.js'
-import { NOTEBOOK_EDIT_TOOL_NAME } from '../../tools/NotebookEditTool/constants.js'
-import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
-import { parseGitCommitId } from '../../tools/shared/gitOperationTracking.js'
 import { isDeferredTool, TOOL_SEARCH_TOOL_NAME } from '../../tools/ToolSearchTool/prompt.js'
 import { getAllBaseTools } from '../../tools.js'
-import type {
-  ContentBlock,
-  ToolCallBlock,
-  ToolResultBlock,
-  UserContentBlock,
-} from '../../types/llm.js'
+import type { ContentBlock, ToolCallBlock, UserContentBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
-  AttachmentMessage,
   Message,
   ProgressMessage,
   StopHookInfo,
@@ -70,13 +57,6 @@ import type {
 import { count } from '../../utils/array.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
-import {
-  AbortError,
-  errorMessage,
-  getErrnoCode,
-  ShellError,
-  TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-} from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { CANCEL_MESSAGE } from '../messages/constants.js'
 import {
@@ -87,14 +67,9 @@ import {
 } from '../messages/constructors.js'
 import { withMemoryCorrectionHint } from '../messages/predicates.js'
 import type { PermissionDecisionReason, PermissionResult } from '../permissions/permissionResult.js'
-import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { Stream } from '../../utils/stream.js'
-import { formatError, formatZodValidationError } from '../../utils/toolErrors.js'
-import {
-  processPreMappedToolResultBlock,
-  processToolResultBlock,
-} from '../../utils/toolResultStorage.js'
+import { formatZodValidationError } from '../../utils/toolErrors.js'
 import {
   extractDiscoveredToolNames,
   isToolSearchEnabledOptimistic,
@@ -102,60 +77,25 @@ import {
 } from '../../utils/toolSearch.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
 import { executePermissionDeniedHooks } from '../hooks.js'
-import {
-  McpAuthError,
-  McpToolCallError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-} from '../mcp/mcpShared.js'
 import { mcpInfoFromString } from '../mcp/mcpStringUtils.js'
 import { normalizeNameForMCP } from '../mcp/normalization.js'
 import type { MCPServerConnection } from '../mcp/types.js'
-import { getLoggingSafeMcpBaseUrl, getMcpServerScopeFromToolName, isMcpTool } from '../mcp/utils.js'
+import { getLoggingSafeMcpBaseUrl } from '../mcp/utils.js'
 import {
-  resolveHookPermissionDecision,
-  runPostToolUseFailureHooks,
-  runPostToolUseHooks,
-  runPreToolUseHooks,
-} from './toolHooks.js'
+  HOOK_TIMING_DISPLAY_THRESHOLD_MS,
+  type MessageUpdateLazy,
+  executeToolCallWithResultHandling,
+  getNextImagePasteId,
+} from './toolExecutionResultSupport.js'
+import { resolveHookPermissionDecision, runPreToolUseHooks } from './toolHooks.js'
+
+export type { MessageUpdateLazy } from './toolExecutionResultSupport.js'
 
 const toolLog = createDebugLog('tools')
 
-/** hook 总耗时达到此阈值（毫秒）才在行内展示计时汇总 */
-export const HOOK_TIMING_DISPLAY_THRESHOLD_MS = 500
 /** hook/权限决策阻塞超过此时间时输出 debug 警告。与 BashTool 的
  * PROGRESS_THRESHOLD_MS 对齐 —— 折叠视图超过该时间会令人感觉卡住。 */
 const SLOW_PHASE_LOG_THRESHOLD_MS = 2000
-
-/**
- * 将工具执行错误分类为遵守遥测上传规范的字符串。
- *
- * 在压缩/外部构建中，`error.constructor.name` 会被压缩为
- * “nJT”、“Chq” 这样的短标识符 —— 对诊断毫无帮助。
- * 本函数改为提取结构化、遵守遥测上传规范的信息：
- * - TelemetrySafeError：使用其 telemetryMessage（已检查安全）
- * - Node.js fs 错误：记录错误码 (ENOENT、EACCES 等)
- * - 已知错误类型：使用未压缩的名称
- * - 其余回退：“Error”（优于三位的压缩名）
- */
-export function classifyToolError(error: unknown): string {
-  if (error instanceof TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) {
-    return error.telemetryMessage.slice(0, 200)
-  }
-  if (error instanceof Error) {
-    // Node.js 文件系统错误带有 `code` 属性 (ENOENT、EACCES 等)。
-    // 这些信息可安全记录，且比构造函数名更有用。
-    const errnoCode = getErrnoCode(error)
-    if (typeof errnoCode === 'string') {
-      return `Error:${errnoCode}`
-    }
-    // ShellError、ImageSizeError 等具有稳定的 `.name` 属性，
-    // 在压缩后仍可保留（在构造函数中设置）。
-    if (error.name && error.name !== 'Error' && error.name.length > 3) {
-      return error.name.slice(0, 60)
-    }
-    return 'Error'
-  }
-  return 'UnknownError'
-}
 
 /**
  * 将规则来源映射为 OTel 文档中定义的 `source` 词汇，与交互式路径的语义保持一致
@@ -224,28 +164,6 @@ function decisionReasonToOTelSource(
       const _exhaustive: never = reason
       return 'config'
     }
-  }
-}
-
-function getNextImagePasteId(messages: Message[]): number {
-  let maxId = 0
-  for (const message of messages) {
-    if (message.type === 'user' && message.imagePasteIds) {
-      for (const id of message.imagePasteIds) {
-        if (id > maxId) {
-          maxId = id
-        }
-      }
-    }
-  }
-  return maxId + 1
-}
-
-export type MessageUpdateLazy<M extends Message = Message> = {
-  message: M
-  contextModifier?: {
-    toolUseID: string
-    modifyContext: (context: ToolUseContext) => ToolUseContext
   }
 }
 
@@ -1152,9 +1070,6 @@ async function checkPermissionsAndCallTool(
   endToolBlockedOnUserSpan(decisionInfo?.decision || 'unknown', decisionInfo?.source || 'unknown')
   startToolExecutionSpan()
 
-  const startTime = Date.now()
-
-  startSessionActivity('tool_exec')
   // 若 processedInput 仍指向回填克隆，说明没有 hook/权限替换过它——
   // 传入未回填的 callInput，让 call() 看到模型原始的字段值。否则收敛到 hook 提供的输入。
   // 权限/hook 流程可能返回从回填克隆派生的新对象（例如通过
@@ -1178,550 +1093,28 @@ async function checkPermissionsAndCallTool(
   } else if (processedInput !== backfilledClone) {
     callInput = processedInput
   }
-  try {
-    const result = await tool.call(
-      callInput,
-      {
-        ...toolUseContext,
-        toolUseId: toolUseID,
-        userModified: permissionDecision.userModified ?? false,
-      },
-      canUseTool,
+  return [
+    ...resultingMessages,
+    ...(await executeToolCallWithResultHandling({
       assistantMessage,
-      (progress) => {
-        onToolProgress({
-          toolUseID: progress.toolUseID,
-          data: progress.data,
-        })
-      },
-    )
-    const durationMs = Date.now() - startTime
-    addToToolDuration(durationMs)
-    toolLog(`${tool.name} completed ${durationMs}ms toolUseId=${toolUseID}`)
-
-    // 启用时将工具 content/output 作为 span 事件记录
-    if (result.data && typeof result.data === 'object') {
-      const contentAttributes: Record<string, string | number | boolean> = {}
-
-      // Read 工具：捕获 file_path 与 content
-      if (tool.name === FILE_READ_TOOL_NAME && 'content' in result.data) {
-        if ('file_path' in processedInput) {
-          contentAttributes.file_path = String(processedInput.file_path)
-        }
-        contentAttributes.content = String(result.data.content)
-      }
-
-      // Edit/Write 工具：捕获 file_path 与 diff
-      if (
-        (tool.name === FILE_EDIT_TOOL_NAME || tool.name === FILE_WRITE_TOOL_NAME) &&
-        'file_path' in processedInput
-      ) {
-        contentAttributes.file_path = String(processedInput.file_path)
-
-        // 对 Edit，捕获实际发生的变更
-        if (tool.name === FILE_EDIT_TOOL_NAME && 'diff' in result.data) {
-          contentAttributes.diff = String(result.data.diff)
-        }
-        // 对 Write，捕获写入的内容
-        if (tool.name === FILE_WRITE_TOOL_NAME && 'content' in processedInput) {
-          contentAttributes.content = String(processedInput.content)
-        }
-      }
-
-      // Bash 工具：捕获命令
-      if (tool.name === BASH_TOOL_NAME && 'command' in processedInput) {
-        const bashInput = processedInput as BashToolInput
-        contentAttributes.bash_command = bashInput.command
-        // 可用时同时捕获输出
-        if ('output' in result.data) {
-          contentAttributes.output = String(result.data.output)
-        }
-      }
-
-      if (Object.keys(contentAttributes).length > 0) {
-        addToolContentEvent('tool.output', contentAttributes)
-      }
-    }
-
-    // 如果存在，从工具结果中捕获结构化输出
-    if (typeof result === 'object' && 'structured_output' in result) {
-      // 将结构化输出存入 attachment 消息
-      resultingMessages.push({
-        message: createAttachmentMessage({
-          type: 'structured_output',
-          data: result.structured_output,
-        }),
-      })
-    }
-
-    endToolExecutionSpan({ success: true })
-    // 传入工具结果用于 new_context 记录
-    const toolResultStr =
-      result.data && typeof result.data === 'object'
-        ? jsonStringify(result.data)
-        : String(result.data ?? '')
-    endToolSpan(toolResultStr)
-
-    // 将工具结果一次性映射为 API 格式并缓存。该块会被
-    // addToolResult 复用（跳过重复映射），同时在这里提供遥测指标。
-    const mappedToolResultBlock = tool.mapToolResultToToolResultBlock(result.data, toolUseID)
-    const mappedContent = mappedToolResultBlock.content
-    const toolResultSizeBytes = !mappedContent
-      ? 0
-      : typeof mappedContent === 'string'
-        ? mappedContent.length
-        : jsonStringify(mappedContent).length
-
-    // 为文件类工具提取文件后缀
-    let fileExtension: ReturnType<typeof getFileExtensionForAnalytics>
-    if (processedInput && typeof processedInput === 'object') {
-      if (
-        (tool.name === FILE_READ_TOOL_NAME ||
-          tool.name === FILE_EDIT_TOOL_NAME ||
-          tool.name === FILE_WRITE_TOOL_NAME) &&
-        'file_path' in processedInput
-      ) {
-        fileExtension = getFileExtensionForAnalytics(String(processedInput.file_path))
-      } else if (tool.name === NOTEBOOK_EDIT_TOOL_NAME && 'notebook_path' in processedInput) {
-        fileExtension = getFileExtensionForAnalytics(String(processedInput.notebook_path))
-      } else if (tool.name === BASH_TOOL_NAME && 'command' in processedInput) {
-        const bashInput = processedInput as BashToolInput
-        fileExtension = getFileExtensionsFromBashCommand(
-          bashInput.command,
-          bashInput._simulatedSedEdit?.filePath,
-        )
-      }
-    }
-
-    logEvent('zy_tool_use_success', {
-      messageID: messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      toolName: sanitizeToolNameForAnalytics(tool.name),
-      isMcp: tool.isMcp ?? false,
-      durationMs,
+      callInput,
+      canUseTool,
+      decisionInfo,
+      messageId,
+      mcpServerBaseUrl,
+      mcpServerType,
+      onToolProgress,
+      permissionDecision,
       preToolHookDurationMs,
-      toolResultSizeBytes,
-      ...(fileExtension !== undefined && { fileExtension }),
-
-      queryChainId: toolUseContext.queryTracking
-        ?.chainId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      queryDepth: toolUseContext.queryTracking?.depth,
-      ...(mcpServerType && {
-        mcpServerType: mcpServerType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      }),
-      ...(mcpServerBaseUrl && {
-        mcpServerBaseUrl:
-          mcpServerBaseUrl as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      }),
-      ...(requestId && {
-        requestId: requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      }),
-      ...mcpToolDetailsForAnalytics(tool.name, mcpServerType, mcpServerBaseUrl),
-    })
-
-    // 从成功的 git commit 输出中提取 git commit ID，富化工具参数
-    if (
-      isToolDetailsLoggingEnabled() &&
-      (tool.name === BASH_TOOL_NAME || tool.name === POWERSHELL_TOOL_NAME) &&
-      'command' in processedInput &&
-      typeof processedInput.command === 'string' &&
-      processedInput.command.match(/\bgit\s+commit\b/) &&
-      result.data &&
-      typeof result.data === 'object' &&
-      'stdout' in result.data
-    ) {
-      const gitCommitId = parseGitCommitId(String(result.data.stdout))
-      if (gitCommitId) {
-        toolParameters.git_commit_id = gitCommitId
-      }
-    }
-
-    // 为 OTLP 发送带有工具参数与决策上下文的 tool_result 事件
-    const mcpServerScope = isMcpTool(tool) ? getMcpServerScopeFromToolName(tool.name) : null
-
-    void logOTelEvent('tool_result', {
-      tool_name: sanitizeToolNameForAnalytics(tool.name),
-      success: 'true',
-      duration_ms: String(durationMs),
-      ...(Object.keys(toolParameters).length > 0 && {
-        tool_parameters: jsonStringify(toolParameters),
-      }),
-      ...(telemetryToolInput && { tool_input: telemetryToolInput }),
-      tool_result_size_bytes: String(toolResultSizeBytes),
-      ...(decisionInfo && {
-        decision_source: decisionInfo.source,
-        decision_type: decisionInfo.decision,
-      }),
-      ...(mcpServerScope && { mcp_server_scope: mcpServerScope }),
-    })
-
-    // Run PostToolUse hooks
-    let toolOutput = result.data
-    const hookResults = []
-    const toolContextModifier = result.contextModifier
-    const mcpMeta = result.mcpMeta
-
-    async function addToolResult(toolUseResult: unknown, preMappedBlock?: ToolResultBlock) {
-      // MCP 工具可通过 _meta.maxResultSizeChars 动态覆盖结果大小上限（最多 500K）
-      const MCP_META_MAX_RESULT_SIZE_CAP = 500_000
-      const metaMaxSize =
-        typeof mcpMeta?._meta?.maxResultSizeChars === 'number' &&
-        mcpMeta._meta.maxResultSizeChars > 0
-          ? mcpMeta._meta.maxResultSizeChars
-          : undefined
-      const effectiveMaxResultSize = metaMaxSize
-        ? Math.min(metaMaxSize, MCP_META_MAX_RESULT_SIZE_CAP)
-        : tool.maxResultSizeChars
-      if (metaMaxSize) {
-        toolLog(
-          `MCP _meta maxResultSizeChars override: requested=${metaMaxSize}, effective=${effectiveMaxResultSize} (cap=${MCP_META_MAX_RESULT_SIZE_CAP})`,
-        )
-      }
-
-      // 如果预映射块可用则使用（非 MCP 工具且 hook 未修改输出的场景），
-      // 否则从头映射。
-      const toolResultBlock = preMappedBlock
-        ? await processPreMappedToolResultBlock(preMappedBlock, tool.name, effectiveMaxResultSize)
-        : await processToolResultBlock(
-            { ...tool, maxResultSizeChars: effectiveMaxResultSize },
-            toolUseResult,
-            toolUseID,
-          )
-
-      // 构造 content 块——先是工具结果，然后是可选的反馈
-      const contentBlocks: UserContentBlock[] = [toolResultBlock]
-      // 若用户在同意时提供了反馈，附加 accept feedback
-      // (acceptFeedback 仅在 PermissionAllowDecision 上存在，这里能保证包含)
-      if ('acceptFeedback' in permissionDecision && permissionDecision.acceptFeedback) {
-        contentBlocks.push({
-          type: 'text',
-          text: permissionDecision.acceptFeedback,
-        })
-      }
-
-      // 附加权限决策中的 content 块（例如粘贴的图片）
-      const allowContentBlocks =
-        'contentBlocks' in permissionDecision ? permissionDecision.contentBlocks : undefined
-      if (allowContentBlocks?.length) {
-        contentBlocks.push(...(allowContentBlocks as UserContentBlock[]))
-      }
-
-      // 按顺序生成 imagePasteIds，使每张图片以不同标签渲染
-      let allowImageIds: number[] | undefined
-      if (allowContentBlocks?.length) {
-        const imageCount = count(allowContentBlocks, (b: ContentBlock) => b.type === 'image')
-        if (imageCount > 0) {
-          const startId = getNextImagePasteId(toolUseContext.messages)
-          allowImageIds = Array.from({ length: imageCount }, (_, i) => startId + i)
-        }
-      }
-
-      resultingMessages.push({
-        message: createUserMessage({
-          content: contentBlocks,
-          imagePasteIds: allowImageIds,
-          toolUseResult:
-            toolUseContext.agentId &&
-            !toolUseContext.preserveToolUseResults &&
-            !tool.briefStandalone
-              ? undefined
-              : toolUseResult,
-          mcpMeta: toolUseContext.agentId ? undefined : mcpMeta,
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          sourceToolAssistantUUID: assistantMessage.uuid as UUID,
-        }),
-        contextModifier: toolContextModifier
-          ? {
-              toolUseID: toolUseID,
-              modifyContext: toolContextModifier,
-            }
-          : undefined,
-      })
-    }
-
-    // PostToolUse hook 的通用结果覆盖（updatedToolOutput，全工具，string）。在循环里捕获，
-    // 循环结束后改写已入队的 tool_result 块内容（resultingMessages 末尾才返回，改写安全）。
-    let updatedToolOutputOverride: string | undefined
-    let toolResultEntry: (typeof resultingMessages)[number] | undefined
-
-    // TODO(hackyon)：重构以避免 MCP 工具与其他工具体验不一致
-    if (!isMcpTool(tool)) {
-      await addToolResult(toolOutput, mappedToolResultBlock)
-      toolResultEntry = resultingMessages[resultingMessages.length - 1]
-    }
-
-    const postToolHookInfos: StopHookInfo[] = []
-    const postToolHookStart = Date.now()
-    for await (const hookResult of runPostToolUseHooks(
-      toolUseContext,
-      tool,
-      toolUseID,
-      messageId,
       processedInput,
-      toolOutput,
       requestId,
-      mcpServerType,
-      mcpServerBaseUrl,
-      durationMs,
-    )) {
-      if ('updatedToolOutput' in hookResult) {
-        // 通用结果覆盖（全工具）。优先于 updatedMCPToolOutput（在末尾改写最终块内容）。
-        updatedToolOutputOverride = hookResult.updatedToolOutput
-      } else if ('updatedMCPToolOutput' in hookResult) {
-        if (isMcpTool(tool)) {
-          toolOutput = hookResult.updatedMCPToolOutput
-        }
-      } else if (isMcpTool(tool)) {
-        hookResults.push(hookResult)
-        if (hookResult.message.type === 'attachment') {
-          const att = hookResult.message.attachment
-          if (
-            'command' in att &&
-            att.command !== undefined &&
-            'durationMs' in att &&
-            att.durationMs !== undefined
-          ) {
-            postToolHookInfos.push({
-              hookName: String(att.command),
-              status: 'success',
-              command: att.command as string,
-              durationMs: att.durationMs as number,
-            })
-          }
-        }
-      } else {
-        resultingMessages.push(hookResult)
-        if (hookResult.message.type === 'attachment') {
-          const att = hookResult.message.attachment
-          if (
-            'command' in att &&
-            att.command !== undefined &&
-            'durationMs' in att &&
-            att.durationMs !== undefined
-          ) {
-            postToolHookInfos.push({
-              hookName: String(att.command),
-              status: 'success',
-              command: att.command as string,
-              durationMs: att.durationMs as number,
-            })
-          }
-        }
-      }
-    }
-    const postToolHookDurationMs = Date.now() - postToolHookStart
-    if (postToolHookDurationMs >= SLOW_PHASE_LOG_THRESHOLD_MS) {
-      toolLog(
-        `Slow PostToolUse hooks: ${postToolHookDurationMs}ms for ${tool.name} (${postToolHookInfos.length} hooks)`,
-        { level: 'info' },
-      )
-    }
-
-    if (isMcpTool(tool)) {
-      await addToolResult(toolOutput)
-      toolResultEntry = resultingMessages[resultingMessages.length - 1]
-    }
-
-    // 应用 PostToolUse hook 的通用结果覆盖：改写 tool_result 块的文本内容。
-    // updatedToolOutput 优先于 updatedMCPToolOutput（最后改写最终块）。
-    if (updatedToolOutputOverride !== undefined && toolResultEntry) {
-      type ContentItem = { type?: string; content?: string | unknown[] }
-      const msg = toolResultEntry.message as { type: string; message?: { content?: ContentItem[] } }
-      const content = msg.type === 'user' ? msg.message?.content : undefined
-      if (Array.isArray(content)) {
-        const block = content.find((b) => b?.type === 'tool_result')
-        if (block) {
-          block.content = updatedToolOutputOverride
-        }
-      }
-    }
-
-    // 当 PostToolUse hook 总耗时超过 500ms 时，在工具结果下方内联显示其耗时。
-    // 使用 wall-clock 时间（而非各 hook 时长之和），因为 hooks 是并行执行的。
-    if (isInternalBuild() && postToolHookInfos.length > 0) {
-      if (postToolHookDurationMs > HOOK_TIMING_DISPLAY_THRESHOLD_MS) {
-        resultingMessages.push({
-          message: createStopHookSummaryMessage(
-            postToolHookInfos.length,
-            postToolHookInfos,
-            [],
-            false,
-            undefined,
-            false,
-            'suggestion',
-            undefined,
-            'PostToolUse',
-            postToolHookDurationMs,
-          ),
-        })
-      }
-    }
-
-    // 如果工具提供了新消息，将它们加入待返回列表。
-    if (result.newMessages && result.newMessages.length > 0) {
-      for (const message of result.newMessages) {
-        resultingMessages.push({ message })
-      }
-    }
-    // 如果在工具成功执行后 hook 表示需要阻止继续，产出一条 stop reason 消息
-    if (shouldPreventContinuation) {
-      resultingMessages.push({
-        message: createAttachmentMessage({
-          type: 'hook_stopped_continuation',
-          message: stopReason || 'Execution stopped by hook',
-          hookName: `PreToolUse:${tool.name}`,
-          toolUseID: toolUseID,
-          hookEvent: 'PreToolUse',
-        }),
-      })
-    }
-
-    // 在其他消息发送后，再产出剩余的 hook 结果
-    for (const hookResult of hookResults) {
-      resultingMessages.push(hookResult)
-    }
-    return resultingMessages
-  } catch (error) {
-    const durationMs = Date.now() - startTime
-    addToToolDuration(durationMs)
-
-    endToolExecutionSpan({
-      success: false,
-      error: errorMessage(error),
-    })
-    endToolSpan()
-
-    // 通过将客户端状态更新为 'needs-auth' 来处理 MCP 认证错误
-    // 这会更新 /mcp 显示，提示该 server 需要重新授权
-    if (error instanceof McpAuthError) {
-      toolUseContext.setAppState((prevState) => {
-        const serverName = error.serverName
-        const existingClientIndex = prevState.mcp.clients.findIndex((c) => c.name === serverName)
-        if (existingClientIndex === -1) {
-          return prevState
-        }
-        const existingClient = prevState.mcp.clients[existingClientIndex]
-        // 仅在客户端原本处于 connected 状态时更新（避免覆盖其他状态）
-        if (!existingClient || existingClient.type !== 'connected') {
-          return prevState
-        }
-        const updatedClients = [...prevState.mcp.clients]
-        updatedClients[existingClientIndex] = {
-          name: serverName,
-          type: 'needs-auth' as const,
-          config: existingClient.config,
-        }
-        return {
-          ...prevState,
-          mcp: {
-            ...prevState.mcp,
-            clients: updatedClients,
-          },
-        }
-      })
-    }
-
-    if (!(error instanceof AbortError)) {
-      const errorMsg = errorMessage(error)
-      toolLog(
-        `${tool.name} error ${durationMs}ms toolUseId=${toolUseID}: ${errorMsg.slice(0, 200)}`,
-      )
-      if (!(error instanceof ShellError)) {
-        logError(error)
-      }
-      logEvent('zy_tool_use_error', {
-        messageID: messageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        toolName: sanitizeToolNameForAnalytics(tool.name),
-        error: classifyToolError(
-          error,
-        ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        isMcp: tool.isMcp ?? false,
-
-        queryChainId: toolUseContext.queryTracking
-          ?.chainId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        queryDepth: toolUseContext.queryTracking?.depth,
-        ...(mcpServerType && {
-          mcpServerType:
-            mcpServerType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        }),
-        ...(mcpServerBaseUrl && {
-          mcpServerBaseUrl:
-            mcpServerBaseUrl as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        }),
-        ...(requestId && {
-          requestId: requestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        }),
-        ...mcpToolDetailsForAnalytics(tool.name, mcpServerType, mcpServerBaseUrl),
-      })
-      // 为 OTLP 发送带有工具参数与决策上下文的 tool_result 错误事件
-      const mcpServerScope = isMcpTool(tool) ? getMcpServerScopeFromToolName(tool.name) : null
-
-      void logOTelEvent('tool_result', {
-        tool_name: sanitizeToolNameForAnalytics(tool.name),
-        use_id: toolUseID,
-        success: 'false',
-        duration_ms: String(durationMs),
-        error: errorMessage(error),
-        ...(Object.keys(toolParameters).length > 0 && {
-          tool_parameters: jsonStringify(toolParameters),
-        }),
-        ...(telemetryToolInput && { tool_input: telemetryToolInput }),
-        ...(decisionInfo && {
-          decision_source: decisionInfo.source,
-          decision_type: decisionInfo.decision,
-        }),
-        ...(mcpServerScope && { mcp_server_scope: mcpServerScope }),
-      })
-    }
-    const content = formatError(error)
-
-    // 判断是否为用户中断
-    const isInterrupt = error instanceof AbortError
-
-    // 运行 PostToolUseFailure hook
-    const hookMessages: MessageUpdateLazy<AttachmentMessage | ProgressMessage<HookProgress>>[] = []
-    for await (const hookResult of runPostToolUseFailureHooks(
-      toolUseContext,
+      shouldPreventContinuation,
+      stopReason,
+      telemetryToolInput,
       tool,
+      toolParameters,
+      toolUseContext,
       toolUseID,
-      messageId,
-      processedInput,
-      content,
-      isInterrupt,
-      requestId,
-      mcpServerType,
-      mcpServerBaseUrl,
-    )) {
-      hookMessages.push(hookResult)
-    }
-
-    return [
-      {
-        message: createUserMessage({
-          content: [
-            {
-              type: 'tool_result',
-              content,
-              isError: true,
-              toolCallId: toolUseID,
-            },
-          ],
-          toolUseResult: `Error: ${content}`,
-          mcpMeta: toolUseContext.agentId
-            ? undefined
-            : error instanceof McpToolCallError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
-              ? error.mcpMeta
-              : undefined,
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          sourceToolAssistantUUID: assistantMessage.uuid as UUID,
-        }),
-      },
-      ...hookMessages,
-    ]
-  } finally {
-    stopSessionActivity('tool_exec')
-    // 清理决策信息，仅在记录后执行
-    if (decisionInfo) {
-      toolUseContext.toolDecisions?.delete(toolUseID)
-    }
-  }
+    })),
+  ]
 }

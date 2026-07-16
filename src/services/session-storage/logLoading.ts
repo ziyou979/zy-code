@@ -1065,8 +1065,7 @@ export async function loadTranscriptFile(
       } else if (entry.type === 'ai-title' && entry.sessionId) {
         // AI title 仅在无 custom-title 时回退使用
         if (!customTitles.has(entry.sessionId)) {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          customTitles.set(entry.sessionId, (entry as any).aiTitle)
+          customTitles.set(entry.sessionId, (entry as Entry & { aiTitle: string }).aiTitle)
         }
       } else if (entry.type === 'tag' && entry.sessionId) {
         tags.set(entry.sessionId, entry.tag)

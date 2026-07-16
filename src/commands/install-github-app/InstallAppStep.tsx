@@ -16,17 +16,17 @@ export function InstallAppStep({ repoUrl, onSubmit }: InstallAppStepProps) {
     <Box flexDirection="column" borderStyle="round" borderDimColor={true} paddingX={1}>
       {
         <Box flexDirection="column" marginBottom={1}>
-          <Text bold={true}>{tSync('installGh.installZyGhApp')}</Text>
+          <Text bold={true}>{tSync('installGitHubApp.installZyGhApp')}</Text>
         </Box>
       }
       {
         <Box marginBottom={1}>
-          <Text>{tSync('installGh.openingBrowser')}</Text>
+          <Text>{tSync('installGitHubApp.openingBrowser')}</Text>
         </Box>
       }
       {
         <Box marginBottom={1}>
-          <Text>{tSync('installGh.ifBrowserNotOpen')}</Text>
+          <Text>{tSync('installGitHubApp.ifBrowserNotOpen')}</Text>
         </Box>
       }
       {
@@ -37,19 +37,19 @@ export function InstallAppStep({ repoUrl, onSubmit }: InstallAppStepProps) {
       {
         <Box marginBottom={1}>
           <Text>
-            {tSync('installGh.installForRepo')} <Text bold={true}>{repoUrl}</Text>
+            {tSync('installGitHubApp.installForRepo')} <Text bold={true}>{repoUrl}</Text>
           </Text>
         </Box>
       }
       {
         <Box marginBottom={1}>
-          <Text dimColor={true}>{tSync('installGh.grantAccess')}</Text>
+          <Text dimColor={true}>{tSync('installGitHubApp.grantAccess')}</Text>
         </Box>
       }
       {
         <Box>
           <Text bold={true} color="permission">
-            {tSync('installGh.pressEnterAfterInstall')}
+            {tSync('installGitHubApp.pressEnterAfterInstall')}
             {ELLIPSIS}
           </Text>
         </Box>
@@ -57,7 +57,7 @@ export function InstallAppStep({ repoUrl, onSubmit }: InstallAppStepProps) {
       {
         <Box marginTop={1}>
           <Text dimColor={true}>
-            {tSync('installGh.havingTrouble')}{' '}
+            {tSync('installGitHubApp.havingTrouble')}{' '}
             <Text color="zy">{GITHUB_ACTION_SETUP_DOCS_URL}</Text>
           </Text>
         </Box>

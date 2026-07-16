@@ -121,8 +121,7 @@ export function reorderMessagesInUI(
             postHooks: [],
           })
         }
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        toolUseGroups.get(toolUseID)!.preHooks.push(hookMsg as any)
+        toolUseGroups.get(toolUseID)!.preHooks.push(hookMsg as AttachmentMessage)
         continue
       }
     }
@@ -155,8 +154,7 @@ export function reorderMessagesInUI(
             postHooks: [],
           })
         }
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        toolUseGroups.get(toolUseID)!.postHooks.push(hookMsg as any)
+        toolUseGroups.get(toolUseID)!.postHooks.push(hookMsg as AttachmentMessage)
       }
     }
   }
@@ -859,8 +857,9 @@ export function normalizeMessagesForAPI(
           return
         }
         case 'attachment': {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          const rawAttachmentMessage = normalizeAttachmentForAPI(message.attachment as any)
+          const rawAttachmentMessage = normalizeAttachmentForAPI(
+            message.attachment as import('../../services/attachments/attachment-pipeline/types.js').Attachment,
+          )
           const attachmentMessage = checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_chair_sermon')
             ? rawAttachmentMessage.map(ensureSystemReminderWrap)
             : rawAttachmentMessage

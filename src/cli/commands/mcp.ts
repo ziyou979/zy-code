@@ -261,8 +261,7 @@ export function registerMcpCommands(program: Command<any, any, any>): void {
           },
         ) => {
           const { parseConnectUrl } = await import('../../server/parseConnectUrl.js')
-          // biome-ignore lint/suspicious/noExplicitAny: parseConnectUrl 类型为内部宽松类型
-          const { serverUrl, authToken } = (parseConnectUrl as any)(ccUrl)
+          const { serverUrl, authToken } = parseConnectUrl(ccUrl)
           let connectConfig
           try {
             const session = await createDirectConnectSession({

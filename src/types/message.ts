@@ -381,7 +381,7 @@ export interface CollapsedReadSearchGroup extends BaseMessage {
   hookCount?: number
   hookTotalMs?: number
   relevantMemories?: unknown[]
-  commits?: { sha: string }[]
+  commits?: { sha: string; kind?: string }[]
   pushes?: { branch: string }[]
   branches?: unknown[]
   prs?: unknown[]

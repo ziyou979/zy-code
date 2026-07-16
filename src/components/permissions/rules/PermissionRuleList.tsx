@@ -172,9 +172,9 @@ type RulesTabContentProps = {
   onHeaderFocusChange?: (focused: boolean) => void
   tab?: TabType
   // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  getRulesOptions?: any
+  getRulesOptions?: (tab: TabType, query?: string) => { options: Option[]; rulesByKey: Map<string, PermissionRule> }
   // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  handleToolSelect?: any
+  handleToolSelect?: (value: string, tab: TabType) => void
 }
 
 // Component for rendering rules tab content with full width support
@@ -238,7 +238,7 @@ function PermissionRulesTab({
 }: RulesTabContentProps) {
   const TabContainer = Box
   const TabContentComponent = RulesTabContent
-  const rulesOptions = getRulesOptions(tab, rulesProps.searchQuery)
+  const rulesOptions = getRulesOptions!(tab!, rulesProps.searchQuery)
   return (
     <TabContainer flexDirection={'column'} flexShrink={tab === 'allow' ? 0 : undefined}>
       {
@@ -258,7 +258,7 @@ function PermissionRulesTab({
         <TabContentComponent
           {...rulesProps}
           options={rulesOptions.options}
-          onSelect={(v: string) => handleToolSelect(v, tab!)}
+          onSelect={(v: string) => handleToolSelect?.(v, tab!)}
         />
       }
     </TabContainer>
@@ -284,22 +284,27 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
   const toolPermissionContext = useAppState((s) => s.toolPermissionContext)
   const setAppState = useSetAppState()
   const isTerminalFocused = useTerminalFocus()
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  const denialStateRef = useRef<any>({
+  const denialStateRef = useRef<{
+    approved: Set<number>
+    retry: Set<number>
+    denials: readonly { display: string }[]
+  }>({
     approved: new Set(),
     retry: new Set(),
     denials: [],
   })
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  const handleDenialStateChange = (newState: any) => {
+  const handleDenialStateChange = (newState: {
+    approved: Set<number>
+    retry: Set<number>
+    denials: readonly { display: string }[]
+  }) => {
     denialStateRef.current = newState
   }
   const [selectedRule, setSelectedRule] = useState<PermissionRule | undefined>()
   const [lastFocusedRuleKey, setLastFocusedRuleKey] = useState<string | undefined>()
   const [addingRuleToTab, setAddingRuleToTab] = useState<TabType | null>(null)
   const [validatedRule, setValidatedRule] = useState<{
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    ruleValue: any
+    ruleValue: PermissionRule['ruleValue']
     ruleBehavior: PermissionBehavior
   } | null>(null)
   const [isAddingWorkspaceDirectory, setIsAddingWorkspaceDirectory] = useState(false)
@@ -439,16 +444,14 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
   const handleRuleInputCancel = () => {
     setAddingRuleToTab(null)
   }
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  const handleRuleInputSubmit = (ruleValue: any, ruleBehavior: PermissionBehavior) => {
+  const handleRuleInputSubmit = (ruleValue: PermissionRule['ruleValue'], ruleBehavior: PermissionBehavior) => {
     setValidatedRule({
       ruleValue,
       ruleBehavior,
     })
     setAddingRuleToTab(null)
   }
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  const handleAddRulesSuccess = (rules: PermissionRule[], unreachable?: any[]) => {
+  const handleAddRulesSuccess = (rules: PermissionRule[], unreachable?: Array<{ shadowType: string; rule: PermissionRule; reason: string; fix: string }>) => {
     setValidatedRule(null)
     for (const rule of rules) {
       setChanges((prev) => [
@@ -477,11 +480,9 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
   const handleRequestRemoveDirectory = (path: string) => setRemovingDirectory(path)
   const handleRulesCancel = () => {
     const denialState = denialStateRef.current
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    const denialsFor = (set: Set<any>) =>
+    const denialsFor = (set: Set<number>) =>
       Array.from(set)
-        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-        .map((idx) => denialState.denials[idx as any])
+        .map((idx) => denialState.denials[idx])
         .filter((d) => d !== undefined)
     const retryDenials = denialsFor(denialState.retry)
     if (retryDenials.length > 0) {
@@ -517,7 +518,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
       return
     }
     // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-    const { options: options_0 } = getRulesOptions((selectedRule as any).ruleBehavior as TabType)
+    const { options: options_0 } = getRulesOptions(selectedRule.ruleBehavior as unknown as TabType)
     const selectedKey = jsonStringify(selectedRule)
     const ruleKeys = options_0
       .filter((opt) => opt.value !== 'add-new-rule')
@@ -547,7 +548,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
     setChanges((prev_2) => [
       ...prev_2,
       // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      `Deleted ${(selectedRule as any).ruleBehavior} rule ${chalk.bold(permissionRuleValueToString((selectedRule as any).ruleValue))}`,
+      `Deleted ${selectedRule.ruleBehavior} rule ${chalk.bold(permissionRuleValueToString(selectedRule.ruleValue))}`,
     ])
     setSelectedRule(undefined)
   }
@@ -591,24 +592,21 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
       <AddWorkspaceDirectory
         onAddDirectory={(path_0, remember) => {
           const destination = remember ? 'localSettings' : 'session'
-          const permissionUpdate = {
+          const permissionUpdate: Parameters<typeof applyPermissionUpdate>[1] = {
             type: 'addDirectories' as const,
             directories: [path_0],
             destination,
-            // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-          } as any
+          }
           const updatedContext = applyPermissionUpdate(
             toolPermissionContext,
-            // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-            permissionUpdate as any,
+            permissionUpdate,
           )
           setAppState((prev_4) => ({
             ...prev_4,
             toolPermissionContext: updatedContext,
           }))
           if (remember) {
-            // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-            persistPermissionUpdate(permissionUpdate as any)
+            persistPermissionUpdate(permissionUpdate)
           }
           setChanges((prev_5) => [
             ...prev_5,
@@ -618,8 +616,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
         }}
         onCancel={() => setIsAddingWorkspaceDirectory(false)}
         permissionContext={toolPermissionContext}
-        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-        directoryPath={undefined as any}
+        directoryPath={undefined}
       />
     )
   }
@@ -655,8 +652,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
     getRulesOptions,
     handleToolSelect,
     onHeaderFocusChange: handleHeaderFocusChange,
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  } as any
+    } satisfies Partial<RulesTabContentProps> as Omit<RulesTabContentProps, 'tab'>
   const isHidden =
     !!selectedRule ||
     !!addingRuleToTab ||

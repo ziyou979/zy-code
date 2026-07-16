@@ -1,6 +1,7 @@
 import { POINTER } from '../../constants/figures.js'
 import type { DiffFile } from '../../hooks/useDiffData.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { truncateStartToWidth } from '../../utils/format.js'
 import { plural } from '../../utils/stringUtils.js'
@@ -32,7 +33,7 @@ export function DiffFileList({ files, selectedIndex }: Props) {
   }
   const { startIndex, endIndex } = config
   if (files.length === 0) {
-    return <Text dimColor={true}>No changed files</Text>
+    return <Text dimColor={true}>{tSync('misc.diffFileList.noChangedFiles')}</Text>
   }
   const visibleFiles = files.slice(startIndex, endIndex)
   const hasMoreAbove = startIndex > 0
@@ -43,12 +44,9 @@ export function DiffFileList({ files, selectedIndex }: Props) {
   const mappedItems = visibleFiles.map((file, index) => (
     <FileItem
       key={file.path}
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      file={file as any}
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      isSelected={startIndex + index === (selectedIndex as any)}
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      maxPathWidth={maxPathWidth as any}
+      file={file}
+      isSelected={startIndex + index === selectedIndex}
+      maxPathWidth={maxPathWidth}
     />
   ))
   return (
@@ -69,8 +67,15 @@ export function DiffFileList({ files, selectedIndex }: Props) {
     </BoxComponent>
   )
 }
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-function FileItem({ file, isSelected, maxPathWidth }: any) {
+function FileItem({
+  file,
+  isSelected,
+  maxPathWidth,
+}: {
+  file: DiffFile
+  isSelected: boolean
+  maxPathWidth: number
+}) {
   const displayPath = truncateStartToWidth(file.path, maxPathWidth)
   const pointer = isSelected ? `${POINTER} ` : '  '
   const line = `${pointer}${displayPath}`
@@ -86,26 +91,25 @@ function FileItem({ file, isSelected, maxPathWidth }: any) {
     </Box>
   )
 }
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-function FileStats({ file, isSelected }: any) {
+function FileStats({ file, isSelected }: { file: DiffFile; isSelected: boolean }) {
   if (file.isUntracked) {
     return (
       <Text dimColor={!isSelected} italic={true}>
-        untracked
+        {tSync('misc.diffFileList.untracked')}
       </Text>
     )
   }
   if (file.isBinary) {
     return (
       <Text dimColor={!isSelected} italic={true}>
-        Binary file
+        {tSync('misc.diffFileList.binaryFile')}
       </Text>
     )
   }
   if (file.isLargeFile) {
     return (
       <Text dimColor={!isSelected} italic={true}>
-        Large file modified
+        {tSync('misc.diffFileList.largeFileModified')}
       </Text>
     )
   }
@@ -122,7 +126,9 @@ function FileStats({ file, isSelected }: any) {
           -{file.linesRemoved}
         </Text>
       )}
-      {file.isTruncated && <Text dimColor={!isSelected}> (truncated)</Text>}
+      {file.isTruncated && (
+        <Text dimColor={!isSelected}>{tSync('misc.diffFileList.truncated')}</Text>
+      )}
     </Text>
   )
 }

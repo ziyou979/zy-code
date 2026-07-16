@@ -39,10 +39,7 @@ export async function call(
   const apiView = toApiView(messages)
 
   // Apply microcompact to get accurate representation of messages sent to API
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  const { messages: compactedMessages } = (await microcompactMessages(apiView)) as any as {
-    messages: Message[]
-  }
+  const { messages: compactedMessages } = await microcompactMessages(apiView)
 
   // Get terminal width for responsive sizing
   const terminalWidth = process.stdout.columns || 80

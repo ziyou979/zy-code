@@ -5,6 +5,7 @@ import { createAttachmentMessage } from '../attachments/attachments.js'
 import { errorMessage } from '../../utils/errors.js'
 import type { McpToolHook } from '../settings/types.js'
 import { jsonParse } from '../../utils/slowOperations.js'
+import type { HookResultMessage } from '../../types/message.js'
 import type { HookResult } from './types.js'
 
 /**
@@ -35,8 +36,7 @@ export async function execMcpToolHook(
       stderr,
       stdout: '',
       exitCode: 1,
-      // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-    }) as any,
+    }) as unknown as HookResultMessage,
   })
 
   const conn = toolUseContext.getAppState().mcp.clients.find((c) => c.name === hook.server)
@@ -84,8 +84,7 @@ export async function execMcpToolHook(
         toolUseID: id,
         hookEvent,
         content: '',
-        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-      }) as any,
+      }) as unknown as HookResultMessage,
     }
   } catch (error) {
     return failure(`MCP tool "${hook.server}/${hook.tool}" call failed: ${errorMessage(error)}`)

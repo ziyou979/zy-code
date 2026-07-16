@@ -3,7 +3,7 @@ import { getDefaultCompactModel } from 'src/services/model/model.js'
 import type { HookEvent } from 'src/types/index.js'
 import { queryModelWithoutStreaming } from '../api/llmOrchestrator.js'
 import type { ToolUseContext } from '../../tool.js'
-import type { Message } from '../../types/message.js'
+import type { HookResultMessage, Message } from '../../types/message.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
 import { createCombinedAbortSignal } from '../../utils/combinedAbortSignal.js'
 import { createDebugLog } from '../../utils/debug.js'
@@ -81,8 +81,7 @@ Your response must be a JSON object matching one of the following schemas:
           isNonInteractiveSession: true,
           hasAppendSystemPrompt: false,
           agents: [],
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          querySource: 'hook_prompt' as any,
+          querySource: 'hook_prompt',
           mcpTools: [],
           agentId: toolUseContext.agentId,
           outputFormat: {
@@ -126,8 +125,7 @@ Your response must be a JSON object matching one of the following schemas:
             stderr: 'JSON validation failed',
             stdout: fullResponse,
             exitCode: 1,
-            // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          }) as any,
+          }) as unknown as HookResultMessage,
         }
       }
 
@@ -147,8 +145,7 @@ Your response must be a JSON object matching one of the following schemas:
             stderr: `Schema validation failed: ${parsed.error.message}`,
             stdout: fullResponse,
             exitCode: 1,
-            // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          }) as any,
+          }) as unknown as HookResultMessage,
         }
       }
 
@@ -178,8 +175,7 @@ Your response must be a JSON object matching one of the following schemas:
           toolUseID: effectiveToolUseID,
           hookEvent,
           content: '',
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-        }) as any,
+        }) as unknown as HookResultMessage,
       }
     } catch (error) {
       cleanupSignal()
@@ -206,8 +202,7 @@ Your response must be a JSON object matching one of the following schemas:
         stderr: `Error executing prompt hook: ${errorMsg}`,
         stdout: '',
         exitCode: 1,
-        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-      }) as any,
+      }) as unknown as HookResultMessage,
     }
   }
 }

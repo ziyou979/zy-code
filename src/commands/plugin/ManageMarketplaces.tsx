@@ -1,5 +1,7 @@
 import * as React from 'react'
+import { formatShortDate } from '../../utils/dateUtils.js'
 import { useEffect, useRef, useState } from 'react'
+import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -157,14 +159,14 @@ export function ManageMarketplaces({
               setInternalView('details')
             }
           } else if (setError) {
-            setError(`Marketplace not found: ${targetMarketplace}`)
+            setError(tSync('managePlugins.marketplaceNotFound', { name: targetMarketplace }))
           }
         }
       } catch (err) {
         if (setError) {
-          setError(err instanceof Error ? err.message : 'Failed to load marketplaces')
+          setError(err instanceof Error ? err.message : tSync('managePlugins.failedToLoadMarketplaces'))
         }
-        setProcessError(err instanceof Error ? err.message : 'Failed to load marketplaces')
+        setProcessError(err instanceof Error ? err.message : tSync('managePlugins.failedToLoadMarketplaces'))
       } finally {
         setLoading(false)
       }
@@ -315,12 +317,12 @@ export function ManageMarketplaces({
       if (updatedCount > 0) {
         const pluginPart =
           updatedPluginCount > 0
-            ? ` (${updatedPluginCount} ${plural(updatedPluginCount, 'plugin')} bumped)`
+            ? ` ${tSync('managePlugins.updatedPluginCount', { pluginCount: String(updatedPluginCount), unit: plural(updatedPluginCount, tSync('managePlugins.pluginBumpedUnit_one'), tSync('managePlugins.pluginBumpedUnit_other')) })}`
             : ''
-        actions.push(`Updated ${updatedCount} ${plural(updatedCount, 'marketplace')}${pluginPart}`)
+        actions.push(`${tSync('managePlugins.updatedSuccess', { updateCount: String(updatedCount), unit: plural(updatedCount, tSync('managePlugins.marketplaceUnit_one'), tSync('managePlugins.marketplaceUnit_other')) })}${pluginPart}`)
       }
       if (removedCount > 0) {
-        actions.push(`Removed ${removedCount} ${plural(removedCount, 'marketplace')}`)
+        actions.push(`${tSync('managePlugins.removedSuccess', { removeCount: String(removedCount), unit: plural(removedCount, tSync('managePlugins.marketplaceUnit_one'), tSync('managePlugins.marketplaceUnit_other')) })}`)
       }
       if (actions.length > 0) {
         const successMsg = `${TICK} ${actions.join(', ')}`
@@ -387,13 +389,13 @@ export function ManageMarketplaces({
       value: string
     }> = [
       {
-        label: `Browse plugins (${marketplace.pluginCount ?? 0})`,
+        label: tSync('managePlugins.browsePlugins', { count: String(marketplace.pluginCount ?? 0) }),
         value: 'browse',
       },
       {
-        label: 'Update marketplace',
+        label: tSync('managePlugins.updateMarketplace'),
         secondaryLabel: marketplace.lastUpdated
-          ? `(last updated ${new Date(marketplace.lastUpdated).toLocaleDateString()})`
+          ? tSync('managePlugins.lastUpdated', { date: formatShortDate(new Date(marketplace.lastUpdated)) })
           : undefined,
         value: 'update',
       },
@@ -402,12 +404,12 @@ export function ManageMarketplaces({
     // Only show auto-update toggle if auto-updater is not globally disabled
     if (!shouldSkipPluginAutoupdate()) {
       options.push({
-        label: marketplace.autoUpdate ? 'Disable auto-update' : 'Enable auto-update',
+        label: marketplace.autoUpdate ? tSync('managePlugins.disableAutoUpdate') : tSync('managePlugins.enableAutoUpdate'),
         value: 'toggle-auto-update',
       })
     }
     options.push({
-      label: 'Remove marketplace',
+      label: tSync('managePlugins.removeMarketplace'),
       value: 'remove',
     })
     return options
@@ -441,7 +443,7 @@ export function ManageMarketplaces({
           : prev,
       )
     } catch (err) {
-      setProcessError(err instanceof Error ? err.message : 'Failed to update setting')
+      setProcessError(err instanceof Error ? err.message : tSync('managePlugins.failedToUpdateSetting'))
     }
   }
 
@@ -610,27 +612,27 @@ export function ManageMarketplaces({
     },
   )
   if (loading) {
-    return <Text>Loading marketplaces…</Text>
+    return <Text>{tSync('managePlugins.loadingMarketplaces')}</Text>
   }
   if (marketplaceStates.length === 0) {
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
-          <Text bold>Manage marketplaces</Text>
+          <Text bold>{tSync('managePlugins.manageMarketplacesTitle')}</Text>
         </Box>
 
         {/* Add Marketplace option */}
         <Box flexDirection="row" gap={1}>
           <Text color="suggestion">{POINTER} +</Text>
           <Text bold color="suggestion">
-            Add Marketplace
+            {tSync('managePlugins.addMarketplace')}
           </Text>
         </Box>
 
         <Box marginLeft={3}>
           <Text dimColor italic>
             {exitState.pending ? (
-              <>Press {exitState.keyName} again to go back</>
+              <>{tSync('managePlugins.pressKeyAgainToGoBack', { keyName: exitState.keyName ?? '' })}</>
             ) : (
               <Byline>
                 <ConfigurableShortcutHint
@@ -659,14 +661,13 @@ export function ManageMarketplaces({
     return (
       <Box flexDirection="column">
         <Text bold color="warning">
-          Remove marketplace <Text italic>{selectedMarketplace.name}</Text>?
+          {tSync('managePlugins.removeMarketplaceConfirm', { name: selectedMarketplace.name })}
         </Text>
         <Box flexDirection="column">
           {pluginCount > 0 && (
             <Box marginTop={1}>
               <Text color="warning">
-                This will also uninstall {pluginCount} {plural(pluginCount, 'plugin')} from this
-                marketplace:
+                {tSync('managePlugins.removeMarketplaceWarning', { count: String(pluginCount), unit: plural(pluginCount, tSync('managePlugins.pluginCount_one'), tSync('managePlugins.pluginCount_other')) })}
               </Text>
             </Box>
           )}
@@ -682,7 +683,8 @@ export function ManageMarketplaces({
             )}
           <Box marginTop={1}>
             <Text>
-              Press <Text bold>y</Text> to confirm or <Text bold>n</Text> to cancel
+              <Text bold>y</Text>
+              {tSync('managePlugins.pressYToConfirmOrNToCancel')}
             </Text>
           </Box>
         </Box>
@@ -702,8 +704,7 @@ export function ManageMarketplaces({
         <Text dimColor>{selectedMarketplace.source}</Text>
         <Box marginTop={1}>
           <Text>
-            {selectedMarketplace.pluginCount || 0} available{' '}
-            {plural(selectedMarketplace.pluginCount || 0, 'plugin')}
+            {tSync('managePlugins.availablePlugins', { count: String(selectedMarketplace.pluginCount || 0), unit: plural(selectedMarketplace.pluginCount || 0, tSync('managePlugins.pluginCount_one'), tSync('managePlugins.pluginCount_other')) })}
           </Text>
         </Box>
 
@@ -712,8 +713,7 @@ export function ManageMarketplaces({
           selectedMarketplace.installedPlugins.length > 0 && (
             <Box flexDirection="column" marginTop={1}>
               <Text bold>
-                Installed plugins ({selectedMarketplace.installedPlugins.length}
-                ):
+                {tSync('managePlugins.installedPlugins', { count: String(selectedMarketplace.installedPlugins.length) })}
               </Text>
               <Box flexDirection="column" marginLeft={1}>
                 {selectedMarketplace.installedPlugins.map((plugin) => (
@@ -732,7 +732,7 @@ export function ManageMarketplaces({
         {/* Processing indicator */}
         {isUpdating && (
           <Box marginTop={1} flexDirection="column">
-            <Text color="zy">Updating marketplace…</Text>
+            <Text color="zy">{tSync('managePlugins.updatingMarketplace')}</Text>
             {progressMessage && <Text dimColor>{progressMessage}</Text>}
           </Box>
         )}
@@ -775,8 +775,7 @@ export function ManageMarketplaces({
         {!isUpdating && !shouldSkipPluginAutoupdate() && selectedMarketplace.autoUpdate && (
           <Box marginTop={1}>
             <Text dimColor>
-              Auto-update enabled. ZY Code will automatically update this marketplace and its
-              installed plugins.
+              {tSync('managePlugins.autoUpdateEnabled')}
             </Text>
           </Box>
         )}
@@ -784,7 +783,7 @@ export function ManageMarketplaces({
         <Box marginLeft={3}>
           <Text dimColor italic>
             {isUpdating ? (
-              <>Please wait…</>
+              <>{tSync('managePlugins.pleaseWait')}</>
             ) : (
               <Byline>
                 <ConfigurableShortcutHint
@@ -812,7 +811,7 @@ export function ManageMarketplaces({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text bold>Manage marketplaces</Text>
+        <Text bold>{tSync('managePlugins.manageMarketplacesTitle')}</Text>
       </Box>
 
       {/* Add Marketplace option */}
@@ -821,7 +820,7 @@ export function ManageMarketplaces({
           {selectedIndex === 0 ? POINTER : ' '} +
         </Text>
         <Text bold color={selectedIndex === 0 ? 'suggestion' : undefined}>
-          Add Marketplace
+          {tSync('managePlugins.addMarketplace')}
         </Text>
       </Box>
 
@@ -833,10 +832,10 @@ export function ManageMarketplaces({
           // Build status indicators
           const indicators: string[] = []
           if (state.pendingUpdate) {
-            indicators.push('UPDATE')
+            indicators.push(tSync('managePlugins.marketplaceUpdate'))
           }
           if (state.pendingRemove) {
-            indicators.push('REMOVE')
+            indicators.push(tSync('managePlugins.marketplaceRemove'))
           }
           return (
             <Box key={state.name} flexDirection="row" gap={1} marginBottom={1}>
@@ -854,12 +853,12 @@ export function ManageMarketplaces({
                 </Box>
                 <Text dimColor>{state.source}</Text>
                 <Text dimColor>
-                  {state.pluginCount !== undefined && <>{state.pluginCount} available</>}
+                  {state.pluginCount !== undefined && <>{tSync('managePlugins.countAvailable', { count: String(state.pluginCount) })}</>}
                   {state.installedPlugins && state.installedPlugins.length > 0 && (
-                    <> • {state.installedPlugins.length} installed</>
+                    <> • {tSync('managePlugins.countInstalled', { count: String(state.installedPlugins.length) })}</>
                   )}
                   {state.lastUpdated && (
-                    <> • Updated {new Date(state.lastUpdated).toLocaleDateString()}</>
+                    <> • {tSync('managePlugins.updatedDate', { date: new Date(state.lastUpdated).toLocaleDateString() })}</>
                   )}
                 </Text>
               </Box>
@@ -872,16 +871,16 @@ export function ManageMarketplaces({
       {hasPendingChanges() && (
         <Box marginTop={1} flexDirection="column">
           <Text>
-            <Text bold>Pending changes:</Text> <Text dimColor>Enter to apply</Text>
+            <Text bold>{tSync('managePlugins.pendingChanges')}</Text> <Text dimColor>{tSync('managePlugins.enterToApply')}</Text>
           </Text>
           {updateCount > 0 && (
             <Text>
-              • Update {updateCount} {plural(updateCount, 'marketplace')}
+              • {tSync('managePlugins.updateCount', { count: String(updateCount), unit: plural(updateCount, tSync('managePlugins.marketplaceUnit_one'), tSync('managePlugins.marketplaceUnit_other')) })}
             </Text>
           )}
           {removeCount > 0 && (
             <Text color="warning">
-              • Remove {removeCount} {plural(removeCount, 'marketplace')}
+              • {tSync('managePlugins.removeCount', { count: String(removeCount), unit: plural(removeCount, tSync('managePlugins.marketplaceUnit_one'), tSync('managePlugins.marketplaceUnit_other')) })}
             </Text>
           )}
         </Box>
@@ -890,7 +889,7 @@ export function ManageMarketplaces({
       {/* Processing indicator */}
       {isProcessing && (
         <Box marginTop={1}>
-          <Text color="zy">Processing changes…</Text>
+          <Text color="zy">{tSync('managePlugins.processingChanges')}</Text>
         </Box>
       )}
 
@@ -917,7 +916,7 @@ function ManageMarketplacesKeyHints({
     return (
       <Box marginTop={1}>
         <Text dimColor={true} italic={true}>
-          Press {exitState.keyName} again to go back
+          {tSync('managePlugins.pressKeyAgainToGoBack', { keyName: exitState.keyName ?? '' })}
         </Text>
       </Box>
     )

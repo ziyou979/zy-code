@@ -12,13 +12,15 @@ import { Byline } from '../../../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../../../design-system/KeyboardShortcutHint.js'
 import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
+import type { AgentWizardData } from '../types.js'
+import type { CustomAgentDefinition } from 'src/tools/AgentTool/loadAgentsDir.js'
 
 type MemoryOption = {
   label: string
   value: AgentMemoryScope | 'none'
 }
 export function MemoryStep() {
-  const { goNext, goBack, updateWizardData, wizardData } = useWizard()
+  const { goNext, goBack, updateWizardData, wizardData } = useWizard<AgentWizardData>()
   useKeybinding('confirm:no', goBack, {
     context: 'Confirmation',
   })
@@ -62,20 +64,18 @@ export function MemoryStep() {
       ]
   const handleSelect = (value: string) => {
     const memory = value === 'none' ? undefined : (value as AgentMemoryScope)
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    const agentType = (wizardData.finalAgent as any)?.agentType
+    const agentType = wizardData.finalAgent?.agentType
     updateWizardData({
       selectedMemory: memory,
       finalAgent: wizardData.finalAgent
-        ? {
-            // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-            ...(wizardData.finalAgent as any),
+        ? ({
+            ...wizardData.finalAgent,
             memory,
             getSystemPrompt:
               isAutoMemoryEnabled() && memory && agentType
                 ? () => `${wizardData.systemPrompt}\n\n${loadAgentMemoryPrompt(agentType, memory)}`
-                : () => wizardData.systemPrompt,
-          }
+                : () => wizardData.systemPrompt ?? '',
+          } as CustomAgentDefinition)
         : undefined,
     })
     goNext()

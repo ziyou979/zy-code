@@ -478,46 +478,19 @@ export function extractAgentMcpServers(agents: AgentDefinition[]): AgentMcpServe
   for (const [name, { config, sourceAgents }] of serverMap) {
     // Use type guards to properly narrow the discriminated union type
     // Only include transport types that are supported by AgentMcpServerInfo
+    const agentServer: (
+      transport: string,
+      extra: Record<string, unknown>,
+    ) => AgentMcpServerInfo = (transport, extra) =>
+      ({ name, sourceAgents, transport, needsAuth: false, ...extra }) as AgentMcpServerInfo & Record<string, unknown> as AgentMcpServerInfo
     if (isStdioConfig(config)) {
-      result.push({
-        name,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        sourceAgents: sourceAgents as any,
-        transport: 'stdio',
-        command: config.command,
-        needsAuth: false,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      } as any)
+      result.push(agentServer('stdio', { command: config.command }))
     } else if (isSSEConfig(config)) {
-      result.push({
-        name,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        sourceAgents: sourceAgents as any,
-        transport: 'sse',
-        url: config.url,
-        needsAuth: true,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      } as any)
+      result.push(agentServer('sse', { url: config.url, needsAuth: true }))
     } else if (isHTTPConfig(config)) {
-      result.push({
-        name,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        sourceAgents: sourceAgents as any,
-        transport: 'http',
-        url: config.url,
-        needsAuth: true,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      } as any)
+      result.push(agentServer('http', { url: config.url, needsAuth: true }))
     } else if (isWebSocketConfig(config)) {
-      result.push({
-        name,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        sourceAgents: sourceAgents as any,
-        transport: 'ws',
-        url: config.url,
-        needsAuth: false,
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      } as any)
+      result.push(agentServer('ws', { url: config.url }))
     }
     // Skip unsupported transport types (sdk, zyai-proxy, sse-ide, ws-ide)
     // These are internal types not meant for agent MCP server display

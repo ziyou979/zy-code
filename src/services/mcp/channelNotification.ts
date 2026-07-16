@@ -258,11 +258,7 @@ export function gateChannelServer(
     // not the session-wide bit) bypasses — so accepting the dev dialog for
     // one entry doesn't leak allowlist-bypass to --channels entries.
     if (!entry.dev) {
-      const { entries, source } = getEffectiveChannelAllowlist(
-        // biome-ignore lint/suspicious/noExplicitAny: 参数占位符
-        undefined as any,
-        policy?.allowedChannelPlugins,
-      )
+      const { entries, source } = getEffectiveChannelAllowlist(null, policy?.allowedChannelPlugins)
       if (!entries.some((e) => e.plugin === entry.name && e.marketplace === entry.marketplace)) {
         return {
           action: 'skip',

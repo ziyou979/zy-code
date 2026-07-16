@@ -160,9 +160,7 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
       // 缓存为 false/缺失，延迟初始化 GrowthBook 并获取新鲜数据
       //（最多约 5 秒）。--assistant 完全跳过此门（守护进程是
       // 预先授权的）。
-      kairosEnabled =
-        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-        getAssistant().isAssistantForced() || (await (kairosGate as any).isKairosEnabled())
+      kairosEnabled = getAssistant().isAssistantForced() || (await kairosGate!.isKairosEnabled())
       if (kairosEnabled) {
         options.brief = true
         setKairosActive(true)

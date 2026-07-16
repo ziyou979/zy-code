@@ -1,7 +1,5 @@
 import { feature } from 'bun:bundle'
-import { chmod, open, rename, stat, unlink } from 'node:fs/promises'
-import { dirname, join, parse } from 'node:path'
-import mapValues from 'lodash-es/mapValues.js'
+import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { getPlatform } from 'src/services/shell/platform.js'
 import { isClaudeInChromeMCPServer } from '../claude-in-chrome/common.js'
@@ -13,44 +11,45 @@ import {
   saveCurrentProjectConfig,
   saveGlobalConfig,
 } from '../config/config.js'
-import { getCwd } from '../../utils/cwd.js'
 import { createDebugLog } from '../../utils/debug.js'
 
 const mcpLog = createDebugLog('mcp')
 
-import { getErrnoCode } from '../../utils/errors.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { safeParseJSON } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
 import { getPluginMcpServers } from '../plugins/mcpPluginIntegration.js'
 import { loadAllPluginsCacheOnly } from '../plugins/pluginLoader.js'
-import { isSettingSourceEnabled } from '../settings/constants.js'
-import { getManagedFilePath } from '../settings/managedPath.js'
 import { isRestrictedToPluginOnly } from '../settings/pluginOnlyPolicy.js'
 import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'
-import {
-  isMcpServerCommandEntry,
-  isMcpServerNameEntry,
-  isMcpServerUrlEntry,
-  type SettingsJson,
-} from '../settings/types.js'
+import type { SettingsJson } from '../settings/types.js'
 import type { ValidationError } from '../settings/validation.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { expandEnvVarsInString } from './envExpansion.js'
+import {
+  dedupPluginMcpServers as dedupPluginMcpServersSupport,
+  dedupZyAIMcpServers as dedupZyAIMcpServersSupport,
+  filterMcpServersByPolicy as filterMcpServersByPolicySupport,
+  getMcpServerSignature as getMcpServerSignatureSupport,
+  isMcpServerAllowedByPolicy as isMcpServerAllowedByPolicySupport,
+  isMcpServerDenied as isMcpServerDeniedSupport,
+  unwrapCcrProxyUrl as unwrapCcrProxyUrlSupport,
+} from './mcpConfigPolicySupport.js'
+import {
+  getEnterpriseMcpFilePath as getEnterpriseMcpFilePathSupport,
+  getMcpConfigsByScope as getMcpConfigsByScopeSupport,
+  getProjectMcpConfigsFromCwd as getProjectMcpConfigsFromCwdSupport,
+  parseMcpConfig as parseMcpConfigSupport,
+  parseMcpConfigFromFilePath as parseMcpConfigFromFilePathSupport,
+  writeMcpjsonFile,
+} from './mcpConfigStorageSupport.js'
 import {
   type ConfigScope,
-  type McpHTTPServerConfig,
   type McpJsonConfig,
-  McpJsonConfigSchema,
   type McpServerConfig,
   McpServerConfigSchema,
-  type McpSSEServerConfig,
   type McpStdioServerConfig,
-  type McpWebSocketServerConfig,
   type ScopedMcpServerConfig,
 } from './types.js'
 import { getProjectMcpServerStatus } from './utils.js'
@@ -60,133 +59,15 @@ import { fetchZyAIMcpConfigsIfEligible } from './zyai.js'
  * 获取托管 MCP 配置文件的路径
  */
 export function getEnterpriseMcpFilePath(): string {
-  return join(getManagedFilePath(), 'managed-mcp.json')
+  return getEnterpriseMcpFilePathSupport()
 }
-
-/**
- * 内部工具：向服务器配置添加作用域
- */
-function addScopeToServers(
-  servers: Record<string, McpServerConfig> | undefined,
-  scope: ConfigScope,
-): Record<string, ScopedMcpServerConfig> {
-  if (!servers) {
-    return {}
-  }
-  const scopedServers: Record<string, ScopedMcpServerConfig> = {}
-  for (const [name, config] of Object.entries(servers)) {
-    scopedServers[name] = { ...config, scope }
-  }
-  return scopedServers
-}
-
-/**
- * Internal utility: Write MCP config to .mcp.json file.
- * Preserves file permissions and flushes to disk before rename.
- * Uses the original path for rename (does not follow symlinks).
- */
-async function writeMcpjsonFile(config: McpJsonConfig): Promise<void> {
-  const mcpJsonPath = join(getCwd(), '.mcp.json')
-
-  // 读取现有文件权限以便保留
-  let existingMode: number | undefined
-  try {
-    const stats = await stat(mcpJsonPath)
-    existingMode = stats.mode
-  } catch (e: unknown) {
-    const code = getErrnoCode(e)
-    if (code !== 'ENOENT') {
-      throw e
-    }
-    // 文件尚不存在 — 无需保留权限
-  }
-
-  // 写入临时文件，刷新到磁盘，然后原子重命名
-  const tempPath = `${mcpJsonPath}.tmp.${process.pid}.${Date.now()}`
-  const handle = await open(tempPath, 'w', existingMode ?? 0o644)
-  try {
-    await handle.writeFile(jsonStringify(config, null, 2), {
-      encoding: 'utf8',
-    })
-    await handle.datasync()
-  } finally {
-    await handle.close()
-  }
-
-  try {
-    // 重命名前在临时文件上恢复原始文件权限
-    if (existingMode !== undefined) {
-      await chmod(tempPath, existingMode)
-    }
-    await rename(tempPath, mcpJsonPath)
-  } catch (e: unknown) {
-    // 失败时清理临时文件
-    try {
-      await unlink(tempPath)
-    } catch {
-      // 尽力清理
-    }
-    throw e
-  }
-}
-
-/**
- * 从服务器配置中提取命令数组（仅 stdio 服务器）
- * 非 stdio 服务器返回 null
- */
-function getServerCommandArray(config: McpServerConfig): string[] | null {
-  // 非 stdio 服务器没有命令
-  if (config.type !== undefined && config.type !== 'stdio') {
-    return null
-  }
-  const stdioConfig = config as McpStdioServerConfig
-  return [stdioConfig.command, ...(stdioConfig.args ?? [])]
-}
-
-/**
- * 检查两个命令数组是否完全匹配
- */
-function commandArraysMatch(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) {
-    return false
-  }
-  return a.every((val, idx) => val === b[idx])
-}
-
-/**
- * Extract URL from server config (remote servers only)
- * Returns null for stdio/sdk servers
- */
-function getServerUrl(config: McpServerConfig): string | null {
-  return 'url' in config ? config.url : null
-}
-
-/**
- * CCR proxy URL path markers. In remote sessions, zy.ai connectors arrive
- * via --mcp-config with URLs rewritten to route through the CCR/session-ingress
- * SHTTP proxy. The original vendor URL is preserved in the mcp_url query param
- * so the proxy knows where to forward. See api-go/ccr/internal/ccrshared/
- * mcp_url_rewriter.go and api-go/ccr/internal/mcpproxy/proxy.go.
- */
-const CCR_PROXY_PATH_MARKERS = ['/v2/session_ingress/shttp/mcp/', '/v2/ccr-sessions/']
 
 /**
  * If the URL is a CCR proxy URL, extract the original vendor URL from the
- * mcp_url query parameter. Otherwise return the URL unchanged. This lets
- * signature-based dedup match a plugin's raw vendor URL against a connector's
- * rewritten proxy URL when both point at the same MCP server.
+ * mcp_url query parameter. Otherwise return the URL unchanged.
  */
 export function unwrapCcrProxyUrl(url: string): string {
-  if (!CCR_PROXY_PATH_MARKERS.some((m) => url.includes(m))) {
-    return url
-  }
-  try {
-    const parsed = new URL(url)
-    const original = parsed.searchParams.get('mcp_url')
-    return original || url
-  } catch {
-    return url
-  }
+  return unwrapCcrProxyUrlSupport(url)
 }
 
 /**
@@ -197,15 +78,7 @@ export function unwrapCcrProxyUrl(url: string): string {
  * Returns null only for configs with neither command nor url (sdk type).
  */
 export function getMcpServerSignature(config: McpServerConfig): string | null {
-  const cmd = getServerCommandArray(config)
-  if (cmd) {
-    return `stdio:${jsonStringify(cmd)}`
-  }
-  const url = getServerUrl(config)
-  if (url) {
-    return `url:${unwrapCcrProxyUrl(url)}`
-  }
-  return null
+  return getMcpServerSignatureSupport(config)
 }
 
 /**
@@ -224,44 +97,7 @@ export function dedupPluginMcpServers(
   servers: Record<string, ScopedMcpServerConfig>
   suppressed: Array<{ name: string; duplicateOf: string }>
 } {
-  // 签名 -> 服务器名称的映射，以便报告哪个服务器匹配重复项
-  const manualSigs = new Map<string, string>()
-  for (const [name, config] of Object.entries(manualServers)) {
-    const sig = getMcpServerSignature(config)
-    if (sig && !manualSigs.has(sig)) {
-      manualSigs.set(sig, name)
-    }
-  }
-
-  const servers: Record<string, ScopedMcpServerConfig> = {}
-  const suppressed: Array<{ name: string; duplicateOf: string }> = []
-  const seenPluginSigs = new Map<string, string>()
-  for (const [name, config] of Object.entries(pluginServers)) {
-    const sig = getMcpServerSignature(config)
-    if (sig === null) {
-      servers[name] = config
-      continue
-    }
-    const manualDup = manualSigs.get(sig)
-    if (manualDup !== undefined) {
-      mcpLog(
-        `Suppressing plugin MCP server "${name}": duplicates manually-configured "${manualDup}"`,
-      )
-      suppressed.push({ name, duplicateOf: manualDup })
-      continue
-    }
-    const pluginDup = seenPluginSigs.get(sig)
-    if (pluginDup !== undefined) {
-      mcpLog(
-        `Suppressing plugin MCP server "${name}": duplicates earlier plugin server "${pluginDup}"`,
-      )
-      suppressed.push({ name, duplicateOf: pluginDup })
-      continue
-    }
-    seenPluginSigs.set(sig, name)
-    servers[name] = config
-  }
-  return { servers, suppressed }
+  return dedupPluginMcpServersSupport(pluginServers, manualServers, (message) => mcpLog(message))
 }
 
 /**
@@ -284,54 +120,9 @@ export function dedupZyAIMcpServers(
   servers: Record<string, ScopedMcpServerConfig>
   suppressed: Array<{ name: string; duplicateOf: string }>
 } {
-  const manualSigs = new Map<string, string>()
-  for (const [name, config] of Object.entries(manualServers)) {
-    if (isMcpServerDisabled(name)) {
-      continue
-    }
-    const sig = getMcpServerSignature(config)
-    if (sig && !manualSigs.has(sig)) {
-      manualSigs.set(sig, name)
-    }
-  }
-
-  const servers: Record<string, ScopedMcpServerConfig> = {}
-  const suppressed: Array<{ name: string; duplicateOf: string }> = []
-  for (const [name, config] of Object.entries(zyAiServers)) {
-    const sig = getMcpServerSignature(config)
-    const manualDup = sig !== null ? manualSigs.get(sig) : undefined
-    if (manualDup !== undefined) {
-      mcpLog(`Suppressing zy.ai connector "${name}": duplicates manually-configured "${manualDup}"`)
-      suppressed.push({ name, duplicateOf: manualDup })
-      continue
-    }
-    servers[name] = config
-  }
-  return { servers, suppressed }
-}
-
-/**
- * Convert a URL pattern with wildcards to a RegExp
- * Supports * as wildcard matching any characters
- * Examples:
- *   "https://example.com/*" matches "https://example.com/api/v1"
- *   "https://*.example.com/*" matches "https://api.example.com/path"
- *   "https://example.com:*\/*" matches any port
- */
-function urlPatternToRegex(pattern: string): RegExp {
-  // 转义正则特殊字符，但 * 除外
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&')
-  // 将 * 替换为正则等价物（匹配任意字符）
-  const regexStr = escaped.replace(/\*/g, '.*')
-  return new RegExp(`^${regexStr}$`)
-}
-
-/**
- * Check if a URL matches a pattern with wildcard support
- */
-function urlMatchesPattern(url: string, pattern: string): boolean {
-  const regex = urlPatternToRegex(pattern)
-  return regex.test(url)
+  return dedupZyAIMcpServersSupport(zyAiServers, manualServers, isMcpServerDisabled, (message) =>
+    mcpLog(message),
+  )
 }
 
 /**
@@ -363,43 +154,7 @@ function getMcpDenylistSettings(): SettingsJson {
  * @returns true if denied, false if not on denylist
  */
 function isMcpServerDenied(serverName: string, config?: McpServerConfig): boolean {
-  const settings = getMcpDenylistSettings()
-  if (!settings.deniedMcpServers) {
-    return false // 没有限制
-  }
-
-  // 检查基于名称的拒绝
-  for (const entry of settings.deniedMcpServers) {
-    if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
-      return true
-    }
-  }
-
-  // 检查基于命令的拒绝（仅 stdio 服务器）和基于 URL 的拒绝（仅远程服务器）
-  if (config) {
-    const serverCommand = getServerCommandArray(config)
-    if (serverCommand) {
-      for (const entry of settings.deniedMcpServers) {
-        if (
-          isMcpServerCommandEntry(entry) &&
-          commandArraysMatch(entry.serverCommand, serverCommand)
-        ) {
-          return true
-        }
-      }
-    }
-
-    const serverUrl = getServerUrl(config)
-    if (serverUrl) {
-      for (const entry of settings.deniedMcpServers) {
-        if (isMcpServerUrlEntry(entry) && urlMatchesPattern(serverUrl, entry.serverUrl)) {
-          return true
-        }
-      }
-    }
-  }
-
-  return false
+  return isMcpServerDeniedSupport(serverName, getMcpDenylistSettings, config)
 }
 
 /**
@@ -410,88 +165,12 @@ function isMcpServerDenied(serverName: string, config?: McpServerConfig): boolea
  * @returns true if allowed, false if blocked by policy
  */
 function isMcpServerAllowedByPolicy(serverName: string, config?: McpServerConfig): boolean {
-  // 拒绝列表具有绝对优先级
-  if (isMcpServerDenied(serverName, config)) {
-    return false
-  }
-
-  const settings = getMcpAllowlistSettings()
-  if (!settings.allowedMcpServers) {
-    return true // 没有允许列表限制（undefined）
-  }
-
-  // 空允许列表意味着阻止所有服务器
-  if (settings.allowedMcpServers.length === 0) {
-    return false
-  }
-
-  // 检查允许列表是否包含任何基于命令或基于 URL 的条目
-  const hasCommandEntries = settings.allowedMcpServers.some(isMcpServerCommandEntry)
-  const hasUrlEntries = settings.allowedMcpServers.some(isMcpServerUrlEntry)
-
-  if (config) {
-    const serverCommand = getServerCommandArray(config)
-    const serverUrl = getServerUrl(config)
-
-    if (serverCommand) {
-      // 这是 stdio 服务器
-      if (hasCommandEntries) {
-        // 如果存在任何 serverCommand 条目，stdio 服务器必须匹配其中之一
-        for (const entry of settings.allowedMcpServers) {
-          if (
-            isMcpServerCommandEntry(entry) &&
-            commandArraysMatch(entry.serverCommand, serverCommand)
-          ) {
-            return true
-          }
-        }
-        return false // Stdio 服务器不匹配任何命令条目
-      } else {
-        // 没有命令条目，检查基于名称的允许
-        for (const entry of settings.allowedMcpServers) {
-          if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
-            return true
-          }
-        }
-        return false
-      }
-    } else if (serverUrl) {
-      // 这是远程服务器（sse、http、ws 等）
-      if (hasUrlEntries) {
-        // 如果存在任何 serverUrl 条目，远程服务器必须匹配其中之一
-        for (const entry of settings.allowedMcpServers) {
-          if (isMcpServerUrlEntry(entry) && urlMatchesPattern(serverUrl, entry.serverUrl)) {
-            return true
-          }
-        }
-        return false // 远程服务器不匹配任何 URL 条目
-      } else {
-        // 没有 URL 条目，检查基于名称的允许
-        for (const entry of settings.allowedMcpServers) {
-          if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
-            return true
-          }
-        }
-        return false
-      }
-    } else {
-      // 未知服务器类型 — 仅检查基于名称的允许
-      for (const entry of settings.allowedMcpServers) {
-        if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
-          return true
-        }
-      }
-      return false
-    }
-  }
-
-  // 未提供配置 — 仅检查基于名称的允许
-  for (const entry of settings.allowedMcpServers) {
-    if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
-      return true
-    }
-  }
-  return false
+  return isMcpServerAllowedByPolicySupport(
+    serverName,
+    getMcpAllowlistSettings,
+    getMcpDenylistSettings,
+    config,
+  )
 }
 
 /**
@@ -524,78 +203,7 @@ export function filterMcpServersByPolicy<T>(configs: Record<string, T>): {
   allowed: Record<string, T>
   blocked: string[]
 } {
-  const allowed: Record<string, T> = {}
-  const blocked: string[] = []
-  for (const [name, config] of Object.entries(configs)) {
-    const c = config as McpServerConfig
-    if (c.type === 'sdk' || isMcpServerAllowedByPolicy(name, c)) {
-      allowed[name] = config
-    } else {
-      blocked.push(name)
-    }
-  }
-  return { allowed, blocked }
-}
-
-/**
- * Internal utility: Expands environment variables in an MCP server config
- */
-function expandEnvVars(config: McpServerConfig): {
-  expanded: McpServerConfig
-  missingVars: string[]
-} {
-  const missingVars: string[] = []
-
-  function expandString(str: string): string {
-    const { expanded, missingVars: vars } = expandEnvVarsInString(str)
-    missingVars.push(...vars)
-    return expanded
-  }
-
-  let expanded: McpServerConfig
-
-  switch (config.type) {
-    case undefined:
-    case 'stdio': {
-      const stdioConfig = config as McpStdioServerConfig
-      expanded = {
-        ...stdioConfig,
-        command: expandString(stdioConfig.command),
-        args: stdioConfig.args.map(expandString),
-        env: stdioConfig.env ? mapValues(stdioConfig.env, expandString) : undefined,
-      }
-      break
-    }
-    case 'sse':
-    case 'http':
-    case 'ws': {
-      const remoteConfig = config as
-        | McpSSEServerConfig
-        | McpHTTPServerConfig
-        | McpWebSocketServerConfig
-      expanded = {
-        ...remoteConfig,
-        url: expandString(remoteConfig.url),
-        headers: remoteConfig.headers ? mapValues(remoteConfig.headers, expandString) : undefined,
-      }
-      break
-    }
-    case 'sse-ide':
-    case 'ws-ide':
-      expanded = config
-      break
-    case 'sdk':
-      expanded = config
-      break
-    case 'zyai-proxy':
-      expanded = config
-      break
-  }
-
-  return {
-    expanded,
-    missingVars: [...new Set(missingVars)],
-  }
+  return filterMcpServersByPolicySupport(configs, isMcpServerAllowedByPolicy)
 }
 
 /**
@@ -816,38 +424,7 @@ export function getProjectMcpConfigsFromCwd(): {
   servers: Record<string, ScopedMcpServerConfig>
   errors: ValidationError[]
 } {
-  // 检查项目源是否已启用
-  if (!isSettingSourceEnabled('projectSettings')) {
-    return { servers: {}, errors: [] }
-  }
-
-  const mcpJsonPath = join(getCwd(), '.mcp.json')
-
-  const { config, errors } = parseMcpConfigFromFilePath({
-    filePath: mcpJsonPath,
-    expandVars: true,
-    scope: 'project',
-  })
-
-  // 缺少 .mcp.json 是预期的，但格式错误的文件应报告错误
-  if (!config) {
-    const nonMissingErrors = errors.filter(
-      (e) => !e.message.startsWith('MCP config file not found'),
-    )
-    if (nonMissingErrors.length > 0) {
-      mcpLog(
-        `MCP config errors for ${mcpJsonPath}: ${jsonStringify(nonMissingErrors.map((e) => e.message))}`,
-        { level: 'error' },
-      )
-      return { servers: {}, errors: nonMissingErrors }
-    }
-    return { servers: {}, errors: [] }
-  }
-
-  return {
-    servers: config.mcpServers ? addScopeToServers(config.mcpServers, 'project') : {},
-    errors: errors || [],
-  }
+  return getProjectMcpConfigsFromCwdSupport()
 }
 
 /**
@@ -859,135 +436,7 @@ export function getMcpConfigsByScope(scope: 'project' | 'user' | 'local' | 'ente
   servers: Record<string, ScopedMcpServerConfig>
   errors: ValidationError[]
 } {
-  // 检查此源是否已启用
-  const sourceMap: Record<string, 'projectSettings' | 'userSettings' | 'localSettings'> = {
-    project: 'projectSettings',
-    user: 'userSettings',
-    local: 'localSettings',
-  }
-
-  if (scope in sourceMap && !isSettingSourceEnabled(sourceMap[scope]!)) {
-    return { servers: {}, errors: [] }
-  }
-
-  switch (scope) {
-    case 'project': {
-      const allServers: Record<string, ScopedMcpServerConfig> = {}
-      const allErrors: ValidationError[] = []
-
-      // 构建要检查的目录列表
-      const dirs: string[] = []
-      let currentDir = getCwd()
-
-      while (currentDir !== parse(currentDir).root) {
-        dirs.push(currentDir)
-        currentDir = dirname(currentDir)
-      }
-
-      // 从根目录向下处理到 CWD（使更近的文件具有更高优先级）
-      for (const dir of dirs.reverse()) {
-        const mcpJsonPath = join(dir, '.mcp.json')
-
-        const { config, errors } = parseMcpConfigFromFilePath({
-          filePath: mcpJsonPath,
-          expandVars: true,
-          scope: 'project',
-        })
-
-        // 父目录中缺少 .mcp.json 是预期的，但格式错误的文件应报告错误
-        if (!config) {
-          const nonMissingErrors = errors.filter(
-            (e) => !e.message.startsWith('MCP config file not found'),
-          )
-          if (nonMissingErrors.length > 0) {
-            mcpLog(
-              `MCP config errors for ${mcpJsonPath}: ${jsonStringify(nonMissingErrors.map((e) => e.message))}`,
-              { level: 'error' },
-            )
-            allErrors.push(...nonMissingErrors)
-          }
-          continue
-        }
-
-        if (config.mcpServers) {
-          // 合并服务器，更靠近 CWD 的文件覆盖父配置
-          Object.assign(allServers, addScopeToServers(config.mcpServers, scope))
-        }
-
-        if (errors.length > 0) {
-          allErrors.push(...errors)
-        }
-      }
-
-      return {
-        servers: allServers,
-        errors: allErrors,
-      }
-    }
-    case 'user': {
-      const mcpServers = getGlobalConfig().mcpServers
-      if (!mcpServers) {
-        return { servers: {}, errors: [] }
-      }
-
-      const { config, errors } = parseMcpConfig({
-        configObject: { mcpServers },
-        expandVars: true,
-        scope: 'user',
-      })
-
-      return {
-        servers: addScopeToServers(config?.mcpServers, scope),
-        errors,
-      }
-    }
-    case 'local': {
-      const mcpServers = getCurrentProjectConfig().mcpServers
-      if (!mcpServers) {
-        return { servers: {}, errors: [] }
-      }
-
-      const { config, errors } = parseMcpConfig({
-        configObject: { mcpServers },
-        expandVars: true,
-        scope: 'local',
-      })
-
-      return {
-        servers: addScopeToServers(config?.mcpServers, scope),
-        errors,
-      }
-    }
-    case 'enterprise': {
-      const enterpriseMcpPath = getEnterpriseMcpFilePath()
-
-      const { config, errors } = parseMcpConfigFromFilePath({
-        filePath: enterpriseMcpPath,
-        expandVars: true,
-        scope: 'enterprise',
-      })
-
-      // 缺少企业配置文件是预期的，但格式错误的文件应报告错误
-      if (!config) {
-        const nonMissingErrors = errors.filter(
-          (e) => !e.message.startsWith('MCP config file not found'),
-        )
-        if (nonMissingErrors.length > 0) {
-          mcpLog(
-            `Enterprise MCP config errors for ${enterpriseMcpPath}: ${jsonStringify(nonMissingErrors.map((e) => e.message))}`,
-            { level: 'error' },
-          )
-          return { servers: {}, errors: nonMissingErrors }
-        }
-        return { servers: {}, errors: [] }
-      }
-
-      return {
-        servers: addScopeToServers(config.mcpServers, scope),
-        errors,
-      }
-    }
-  }
+  return getMcpConfigsByScopeSupport(scope)
 }
 
 /**
@@ -1247,80 +696,7 @@ export function parseMcpConfig(params: {
   config: McpJsonConfig | null
   errors: ValidationError[]
 } {
-  const { configObject, expandVars, scope, filePath } = params
-  const schemaResult = McpJsonConfigSchema().safeParse(configObject)
-  if (!schemaResult.success) {
-    return {
-      config: null,
-      errors: schemaResult.error.issues.map((issue) => ({
-        ...(filePath && { file: filePath }),
-        path: issue.path.join('.'),
-        message: 'Does not adhere to MCP server configuration schema',
-        mcpErrorMetadata: {
-          scope,
-          severity: 'fatal',
-        },
-      })),
-    }
-  }
-
-  // 验证每个服务器并在请求时展开变量
-  const errors: ValidationError[] = []
-  const validatedServers: Record<string, McpServerConfig> = {}
-
-  for (const [name, config] of Object.entries(schemaResult.data.mcpServers)) {
-    let configToCheck = config
-
-    if (expandVars) {
-      const { expanded, missingVars } = expandEnvVars(config)
-
-      if (missingVars.length > 0) {
-        errors.push({
-          ...(filePath && { file: filePath }),
-          path: `mcpServers.${name}`,
-          message: `Missing environment variables: ${missingVars.join(', ')}`,
-          suggestion: `Set the following environment variables: ${missingVars.join(', ')}`,
-          mcpErrorMetadata: {
-            scope,
-            serverName: name,
-            severity: 'warning',
-          },
-        })
-      }
-
-      configToCheck = expanded
-    }
-
-    // 检查在没有 cmd 包装器的情况下使用 Windows 特定的 npx
-    if (
-      getPlatform() === 'windows' &&
-      (!configToCheck.type || configToCheck.type === 'stdio') &&
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      ((configToCheck as any).command === 'npx' ||
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        (configToCheck as any).command.endsWith('\\npx') ||
-        // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-        (configToCheck as any).command.endsWith('/npx'))
-    ) {
-      errors.push({
-        ...(filePath && { file: filePath }),
-        path: `mcpServers.${name}`,
-        message: `Windows requires 'cmd /c' wrapper to execute npx`,
-        suggestion: `Change command to "cmd" with args ["/c", "npx", ...]. See: https://code.zy.com/docs/en/mcp#configure-mcp-servers`,
-        mcpErrorMetadata: {
-          scope,
-          serverName: name,
-          severity: 'warning',
-        },
-      })
-    }
-
-    validatedServers[name] = configToCheck
-  }
-  return {
-    config: { mcpServers: validatedServers },
-    errors,
-  }
+  return parseMcpConfigSupport(params)
 }
 
 /**
@@ -1336,81 +712,7 @@ export function parseMcpConfigFromFilePath(params: {
   config: McpJsonConfig | null
   errors: ValidationError[]
 } {
-  const { filePath, expandVars, scope } = params
-  const fs = getFsImplementation()
-
-  let configContent: string
-  try {
-    configContent = fs.readFileSync(filePath, { encoding: 'utf8' })
-  } catch (error: unknown) {
-    const code = getErrnoCode(error)
-    if (code === 'ENOENT') {
-      return {
-        config: null,
-        errors: [
-          {
-            file: filePath,
-            path: '',
-            message: `MCP config file not found: ${filePath}`,
-            suggestion: 'Check that the file path is correct',
-            mcpErrorMetadata: {
-              scope,
-              severity: 'fatal',
-            },
-          },
-        ],
-      }
-    }
-    mcpLog(`MCP config read error for ${filePath} (scope=${scope}): ${error}`, {
-      level: 'error',
-    })
-    return {
-      config: null,
-      errors: [
-        {
-          file: filePath,
-          path: '',
-          message: `Failed to read file: ${error}`,
-          suggestion: 'Check file permissions and ensure the file exists',
-          mcpErrorMetadata: {
-            scope,
-            severity: 'fatal',
-          },
-        },
-      ],
-    }
-  }
-
-  const parsedJson = safeParseJSON(configContent)
-
-  if (!parsedJson) {
-    mcpLog(
-      `MCP config is not valid JSON: ${filePath} (scope=${scope}, length=${configContent.length}, first100=${jsonStringify(configContent.slice(0, 100))})`,
-      { level: 'error' },
-    )
-    return {
-      config: null,
-      errors: [
-        {
-          file: filePath,
-          path: '',
-          message: `MCP config is not a valid JSON`,
-          suggestion: 'Fix the JSON syntax errors in the file',
-          mcpErrorMetadata: {
-            scope,
-            severity: 'fatal',
-          },
-        },
-      ],
-    }
-  }
-
-  return parseMcpConfig({
-    configObject: parsedJson,
-    expandVars,
-    scope,
-    filePath,
-  })
+  return parseMcpConfigFromFilePathSupport(params)
 }
 
 export let doesEnterpriseMcpConfigExist: () => boolean

@@ -6,7 +6,7 @@ import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 import { ModelSelector } from '../../ModelSelector.js'
 export function ModelStep() {
-  const { goNext, goBack, updateWizardData, wizardData } = useWizard()
+  const { goNext, goBack, updateWizardData, wizardData } = useWizard<{ selectedModel?: string }>()
   const handleComplete = (model: string | undefined) => {
     updateWizardData({
       selectedModel: model,
@@ -30,8 +30,7 @@ export function ModelStep() {
       }
     >
       <ModelSelector
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        initialModel={wizardData.selectedModel as any}
+        initialModel={wizardData.selectedModel}
         onComplete={handleComplete}
         onCancel={goBack}
       />

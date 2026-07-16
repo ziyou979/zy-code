@@ -8,6 +8,7 @@ import type {
   WireStreamlinedToolUseSummaryMessage,
   WireUserMessage,
 } from './messages.js'
+import type { AccountInfo, ModelInfo } from '../coreTypes.generated.js'
 
 // ============================================================
 // Control Request Subtypes
@@ -30,8 +31,8 @@ export interface WireControlInitializeResponse {
   agents: Array<{ name: string; description?: string }>
   output_style: string
   available_output_styles: string[]
-  models: Array<{ id: string; displayName: string }>
-  account: { type: string; name?: string }
+  models: ModelInfo[]
+  account: AccountInfo
   pid?: number
 }
 

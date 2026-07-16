@@ -136,8 +136,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
           anthropicMessages.length > 0 ? anthropicMessages : [{ role: 'user', content: 'foo' }],
         ...(anthropicTools &&
           anthropicTools.length > 0 && {
-            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 工具类型转换
-            tools: anthropicTools as any,
+            tools: anthropicTools as unknown as Anthropic.MessageCountTokensTool[],
           }),
         ...(betas.length > 0 && { betas }),
         ...(containsThinking && {
@@ -169,8 +168,7 @@ export class AnthropicProviderAdapter implements LLMAdapter {
         stream: false as const,
         model: normalizeModelStringForAPI(params.model),
       })
-      // biome-ignore lint/suspicious/noExplicitAny: SDK APIPromise.asResponse() 未在类型中暴露
-      return await (apiPromise as any).asResponse()
+      return await (apiPromise as unknown as { asResponse: () => Promise<Response> }).asResponse()
     } catch (error) {
       logError(error)
       return null

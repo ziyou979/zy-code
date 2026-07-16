@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { getLanguageSection, SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from 'src/constants/prompts.js'
-import { getSystemContext, getUserContext } from 'src/context.js'
+import { getSystemContext, getUserContext } from 'src/services/context/context.js'
 import { isAnalyticsDisabled } from 'src/services/analytics/config.js'
 import {
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,

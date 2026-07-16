@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
+import { tSync } from '../../i18n/index.js'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
 import { Byline } from '../../components/design-system/Byline.js'
 import {
@@ -167,8 +168,7 @@ export function BrowseMarketplace({
           if (marketplace) {
             // Count how many plugins from this marketplace are installed
             const installedFromThisMarketplace = count(marketplace.plugins, (plugin) =>
-              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-              isPluginInstalled(createPluginId((plugin as any).name, name)),
+              isPluginInstalled(createPluginId(plugin.name, name)),
             )
             marketplaceInfos.push({
               name,
@@ -196,7 +196,9 @@ export function BrowseMarketplace({
         const errorResult = formatMarketplaceLoadingErrors(failures, successCount)
         if (errorResult) {
           if (errorResult.type === 'warning') {
-            setWarning(`${errorResult.message}. Showing available marketplaces.`)
+            setWarning(
+              `${errorResult.message}. ${tSync('managePlugins.browseMarketplace.showingAvailable')}`,
+            )
           } else {
             throw new Error(errorResult.message)
           }
@@ -250,7 +252,9 @@ export function BrowseMarketplace({
             const globallyInstalled = isPluginGloballyInstalled(foundPluginId)
             if (globallyInstalled) {
               setError(
-                `Plugin '${foundPluginId}' is already installed globally. Use '/plugin' to manage existing plugins.`,
+                tSync('managePlugins.browseMarketplace.alreadyInstalledGlobal', {
+                  pluginId: foundPluginId,
+                }),
               )
             } else {
               // Navigate to the plugin details view
@@ -259,7 +263,7 @@ export function BrowseMarketplace({
               setViewState('plugin-details')
             }
           } else {
-            setError(`Plugin "${targetPlugin}" not found in any marketplace`)
+            setError(tSync('managePlugins.browseMarketplace.pluginNotFound', { targetPlugin }))
           }
         } else if (targetMarketplace) {
           // Navigate directly to the specified marketplace
@@ -270,11 +274,17 @@ export function BrowseMarketplace({
             setSelectedMarketplace(targetMarketplace)
             setViewState('plugin-list')
           } else {
-            setError(`Marketplace "${targetMarketplace}" not found`)
+            setError(
+              tSync('managePlugins.browseMarketplace.marketplaceNotFound', { targetMarketplace }),
+            )
           }
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load marketplaces')
+        setError(
+          err instanceof Error
+            ? err.message
+            : tSync('managePlugins.browseMarketplace.failedLoadMarketplaces'),
+        )
       } finally {
         setLoading(false)
       }
@@ -296,7 +306,9 @@ export function BrowseMarketplace({
           return
         }
         if (!targetMarketplaceData) {
-          throw new Error(`Failed to load marketplace: ${marketplaceName}`)
+          throw new Error(
+            `${tSync('managePlugins.browseMarketplace.failedLoadMarketplace')}: ${marketplaceName}`,
+          )
         }
 
         // Filter out already installed plugins
@@ -357,7 +369,11 @@ export function BrowseMarketplace({
         if (cancelled) {
           return
         }
-        setError(error instanceof Error ? error.message : 'Failed to load plugins')
+        setError(
+          error instanceof Error
+            ? error.message
+            : tSync('managePlugins.browseMarketplace.failedLoadPlugins'),
+        )
       } finally {
         setLoading(false)
       }
@@ -396,8 +412,7 @@ export function BrowseMarketplace({
         failureCount++
         newFailedPlugins.push({
           name: pluginToInstall.entry.name,
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          reason: (installResult as any).error,
+          reason: installResult.error,
         })
       }
     }
@@ -408,19 +423,28 @@ export function BrowseMarketplace({
     // Handle installation results
     if (failureCount === 0) {
       // All succeeded
-      const message =
-        `✓ Installed ${successCount} ${plural(successCount, 'plugin')}. ` +
-        `Run /reload-plugins to activate.`
+      const message = tSync('managePlugins.browseMarketplace.installedSuccess', {
+        count: successCount,
+        unit: plural(successCount, 'plugin'),
+      })
       setResult(message)
     } else if (successCount === 0) {
       // All failed - show error with reasons
-      setError(`Failed to install: ${formatFailureDetails(newFailedPlugins, true)}`)
+      setError(
+        tSync('managePlugins.browseMarketplace.failedInstallAll', {
+          details: formatFailureDetails(newFailedPlugins, true),
+        }),
+      )
     } else {
       // Mixed results - show partial success
-      const partialSuccessMessage =
-        `✓ Installed ${successCount} of ${successCount + failureCount} plugins. ` +
-        `Failed: ${formatFailureDetails(newFailedPlugins, false)}. ` +
-        `Run /reload-plugins to activate successfully installed plugins.`
+      const partialSuccessMessage = tSync(
+        'managePlugins.browseMarketplace.installedPartialSuccess',
+        {
+          successCount,
+          totalCount: successCount + failureCount,
+          details: formatFailureDetails(newFailedPlugins, false),
+        },
+      )
       setResult(partialSuccessMessage)
     }
 
@@ -468,8 +492,7 @@ export function BrowseMarketplace({
       })
     } else {
       setIsInstalling(false)
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      setInstallError((installResult as any).error)
+      setInstallError(installResult.error)
     }
   }
 
@@ -643,14 +666,24 @@ export function BrowseMarketplace({
           switch (outcome) {
             case 'configured':
               finish(
-                `✓ Installed and configured ${optionsPlugin.name}. Run /reload-plugins to apply.`,
+                tSync('managePlugins.browseMarketplace.configuredAndInstalled', {
+                  name: optionsPlugin.name,
+                }),
               )
               break
             case 'skipped':
-              finish(`✓ Installed ${optionsPlugin.name}. Run /reload-plugins to apply.`)
+              finish(
+                tSync('managePlugins.browseMarketplace.installedSingle', {
+                  name: optionsPlugin.name,
+                }),
+              )
               break
             case 'error':
-              finish(`Installed but failed to save config: ${detail}`)
+              finish(
+                tSync('managePlugins.browseMarketplace.installConfigFailed', {
+                  detail,
+                }),
+              )
               break
           }
         }}
@@ -660,7 +693,7 @@ export function BrowseMarketplace({
 
   // Loading state
   if (loading) {
-    return <Text>Loading…</Text>
+    return <Text>{tSync('globalSearch.loading')}</Text>
   }
 
   // Error state
@@ -674,17 +707,17 @@ export function BrowseMarketplace({
       return (
         <Box flexDirection="column">
           <Box marginBottom={1}>
-            <Text bold>Select marketplace</Text>
+            <Text bold>{tSync('managePlugins.browseMarketplace.selectMarketplace')}</Text>
           </Box>
-          <Text>No marketplaces configured.</Text>
-          <Text dimColor>Add a marketplace first using {"'Add marketplace'"}.</Text>
+          <Text>{tSync('managePlugins.browseMarketplace.noMarketplaces')}</Text>
+          <Text dimColor>{tSync('managePlugins.browseMarketplace.addMarketplaceHint')}</Text>
           <Box marginTop={1} paddingLeft={1}>
             <Text dimColor>
               <ConfigurableShortcutHint
                 action="confirm:no"
                 context="Confirmation"
                 fallback="Esc"
-                description="go back"
+                description={tSync('managePlugins.shortcutGoBack')}
               />
             </Text>
           </Box>
@@ -694,10 +727,8 @@ export function BrowseMarketplace({
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
-          <Text bold>Select marketplace</Text>
+          <Text bold>{tSync('managePlugins.browseMarketplace.selectMarketplace')}</Text>
         </Box>
-
-        {/* Warning banner for marketplace load failures */}
         {warning && (
           <Box marginBottom={1} flexDirection="column">
             <Text color="warning">
@@ -719,9 +750,11 @@ export function BrowseMarketplace({
             <Box marginLeft={2}>
               <Text dimColor>
                 {marketplaceItem.totalPlugins} {plural(marketplaceItem.totalPlugins, 'plugin')}{' '}
-                available
+                {tSync('managePlugins.browseMarketplace.available')}
                 {marketplaceItem.installedCount > 0 &&
-                  ` · ${marketplaceItem.installedCount} already installed`}
+                  tSync('managePlugins.browseMarketplace.installedCount', {
+                    count: marketplaceItem.installedCount,
+                  })}
                 {marketplaceItem.source && ` · ${marketplaceItem.source}`}
               </Text>
             </Box>
@@ -735,13 +768,13 @@ export function BrowseMarketplace({
                 action="select:accept"
                 context="Select"
                 fallback="Enter"
-                description="select"
+                description={tSync('managePlugins.shortcutSelect')}
               />
               <ConfigurableShortcutHint
                 action="confirm:no"
                 context="Confirmation"
                 fallback="Esc"
-                description="go back"
+                description={tSync('managePlugins.shortcutGoBack')}
               />
             </Byline>
           </Text>
@@ -758,14 +791,18 @@ export function BrowseMarketplace({
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
-          <Text bold>Plugin Details</Text>
+          <Text bold>{tSync('managePlugins.browseMarketplace.pluginDetails')}</Text>
         </Box>
 
         {/* Plugin metadata */}
         <Box flexDirection="column" marginBottom={1}>
           <Text bold>{selectedPlugin.entry.name}</Text>
           {selectedPlugin.entry.version && (
-            <Text dimColor>Version: {selectedPlugin.entry.version}</Text>
+            <Text dimColor>
+              {tSync('managePlugins.browseMarketplace.version', {
+                version: selectedPlugin.entry.version,
+              })}
+            </Text>
           )}
           {selectedPlugin.entry.description && (
             <Box marginTop={1}>
@@ -775,7 +812,7 @@ export function BrowseMarketplace({
           {selectedPlugin.entry.author && (
             <Box marginTop={1}>
               <Text dimColor>
-                By:{' '}
+                {tSync('managePlugins.authorLabel')}
                 {typeof selectedPlugin.entry.author === 'string'
                   ? selectedPlugin.entry.author
                   : selectedPlugin.entry.author.name}
@@ -786,10 +823,10 @@ export function BrowseMarketplace({
 
         {/* What will be installed */}
         <Box flexDirection="column" marginBottom={1}>
-          <Text bold>Will install:</Text>
+          <Text bold>{tSync('managePlugins.browseMarketplace.willInstall')}</Text>
           {selectedPlugin.entry.commands && (
             <Text dimColor>
-              · Commands:{' '}
+              {tSync('managePlugins.commandsLabel')}
               {Array.isArray(selectedPlugin.entry.commands)
                 ? selectedPlugin.entry.commands.join(', ')
                 : Object.keys(selectedPlugin.entry.commands).join(', ')}
@@ -797,23 +834,26 @@ export function BrowseMarketplace({
           )}
           {selectedPlugin.entry.agents && (
             <Text dimColor>
-              · Agents:{' '}
+              {tSync('managePlugins.agentsLabel')}
               {Array.isArray(selectedPlugin.entry.agents)
                 ? selectedPlugin.entry.agents.join(', ')
                 : Object.keys(selectedPlugin.entry.agents).join(', ')}
             </Text>
           )}
           {selectedPlugin.entry.hooks && (
-            <Text dimColor>· Hooks: {Object.keys(selectedPlugin.entry.hooks).join(', ')}</Text>
+            <Text dimColor>
+              {tSync('managePlugins.hooksLabel')}
+              {Object.keys(selectedPlugin.entry.hooks).join(', ')}
+            </Text>
           )}
           {selectedPlugin.entry.mcpServers && (
             <Text dimColor>
-              · MCP Servers:{' '}
+              {tSync('managePlugins.mcpServersLabel')}
               {Array.isArray(selectedPlugin.entry.mcpServers)
                 ? selectedPlugin.entry.mcpServers.join(', ')
                 : typeof selectedPlugin.entry.mcpServers === 'object'
                   ? Object.keys(selectedPlugin.entry.mcpServers).join(', ')
-                  : 'configured'}
+                  : tSync('managePlugins.browseMarketplace.configured')}
             </Text>
           )}
           {!selectedPlugin.entry.commands &&
@@ -826,7 +866,7 @@ export function BrowseMarketplace({
               selectedPlugin.entry.source.source === 'url' ||
               selectedPlugin.entry.source.source === 'npm' ||
               selectedPlugin.entry.source.source === 'pip') ? (
-              <Text dimColor>· Component summary not available for remote plugin</Text>
+              <Text dimColor>{tSync('managePlugins.browseMarketplace.noComponentSummary')}</Text>
             ) : (
               // TODO: Actually scan local plugin directories to show real components
               // This would require accessing the filesystem to check for:
@@ -834,7 +874,9 @@ export function BrowseMarketplace({
               // - agents/ directory and list files
               // - hooks/ directory and list files
               // - .mcp.json or mcp-servers.json files
-              <Text dimColor>· Components will be discovered at installation</Text>
+              <Text dimColor>
+                {tSync('managePlugins.browseMarketplace.componentsDiscoveredAtInstall')}
+              </Text>
             ))}
         </Box>
 
@@ -843,7 +885,9 @@ export function BrowseMarketplace({
         {/* Error message */}
         {installError && (
           <Box marginBottom={1}>
-            <Text color="error">Error: {installError}</Text>
+            <Text color="error">
+              {tSync('managePlugins.errorLabel')}: {installError}
+            </Text>
           </Box>
         )}
 
@@ -854,7 +898,9 @@ export function BrowseMarketplace({
               {detailsMenuIndex === menuOptionIndex && <Text>{'> '}</Text>}
               {detailsMenuIndex !== menuOptionIndex && <Text>{'  '}</Text>}
               <Text bold={detailsMenuIndex === menuOptionIndex}>
-                {isInstalling && option.action === 'install' ? 'Installing…' : option.label}
+                {isInstalling && option.action === 'install'
+                  ? tSync('managePlugins.installing')
+                  : option.label}
               </Text>
             </Box>
           ))}
@@ -867,13 +913,13 @@ export function BrowseMarketplace({
                 action="select:accept"
                 context="Select"
                 fallback="Enter"
-                description="select"
+                description={tSync('managePlugins.shortcutSelect')}
               />
               <ConfigurableShortcutHint
                 action="confirm:no"
                 context="Confirmation"
                 fallback="Esc"
-                description="back"
+                description={tSync('managePlugins.shortcutBack')}
               />
             </Byline>
           </Text>
@@ -887,17 +933,17 @@ export function BrowseMarketplace({
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
-          <Text bold>Install plugins</Text>
+          <Text bold>{tSync('managePlugins.browseMarketplace.installPlugins')}</Text>
         </Box>
-        <Text dimColor>No new plugins available to install.</Text>
-        <Text dimColor>All plugins from this marketplace are already installed.</Text>
+        <Text dimColor>{tSync('managePlugins.browseMarketplace.noNewPlugins')}</Text>
+        <Text dimColor>{tSync('managePlugins.browseMarketplace.allPluginsInstalled')}</Text>
         <Box marginLeft={3}>
           <Text dimColor italic>
             <ConfigurableShortcutHint
               action="confirm:no"
               context="Confirmation"
               fallback="Esc"
-              description="go back"
+              description={tSync('managePlugins.shortcutGoBack')}
             />
           </Text>
         </Box>
@@ -910,13 +956,16 @@ export function BrowseMarketplace({
   return (
     <Box flexDirection="column">
       <Box marginBottom={1}>
-        <Text bold>Install Plugins</Text>
+        <Text bold>{tSync('managePlugins.browseMarketplace.installPlugins')}</Text>
       </Box>
 
       {/* Scroll up indicator */}
       {pagination.scrollPosition.canScrollUp && (
         <Box>
-          <Text dimColor> {ARROW_UP} more above</Text>
+          <Text dimColor>
+            {' '}
+            {ARROW_UP} {tSync('managePlugins.moreAbove')}
+          </Text>
         </Box>
       )}
 
@@ -948,13 +997,17 @@ export function BrowseMarketplace({
                 {plugin_6.entry.name}
                 {plugin_6.entry.category && <Text dimColor> [{plugin_6.entry.category}]</Text>}
                 {plugin_6.entry.tags?.includes('community-managed') && (
-                  <Text dimColor> [Community Managed]</Text>
+                  <Text dimColor> {tSync('managePlugins.browseMarketplace.communityManaged')}</Text>
                 )}
-                {plugin_6.isInstalled && <Text dimColor> (installed)</Text>}
+                {plugin_6.isInstalled && (
+                  <Text dimColor> {tSync('managePlugins.browseMarketplace.installed')}</Text>
+                )}
                 {installCounts && selectedMarketplace === OFFICIAL_MARKETPLACE_NAME && (
                   <Text dimColor>
                     {' · '}
-                    {formatInstallCount(installCounts.get(plugin_6.pluginId) ?? 0)} installs
+                    {tSync('managePlugins.browseMarketplace.installs', {
+                      count: formatInstallCount(installCounts.get(plugin_6.pluginId) ?? 0),
+                    })}
                   </Text>
                 )}
               </Text>
@@ -972,7 +1025,10 @@ export function BrowseMarketplace({
       {/* Scroll down indicator */}
       {pagination.scrollPosition.canScrollDown && (
         <Box>
-          <Text dimColor> {ARROW_DOWN} more below</Text>
+          <Text dimColor>
+            {' '}
+            {ARROW_DOWN} {tSync('managePlugins.moreBelow')}
+          </Text>
         </Box>
       )}
 

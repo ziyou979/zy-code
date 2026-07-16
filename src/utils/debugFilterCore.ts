@@ -1,3 +1,11 @@
+/**
+ * Core debug filter utilities — pure functions for parsing and matching debug filters.
+ *
+ * 这些函数与 IO 无关，可独立测试。
+ *
+ * 依赖：`memoize`（来自 `lodash-es/memoize`）。
+ */
+
 import memoize from 'lodash-es/memoize.js'
 
 export type DebugFilter = {

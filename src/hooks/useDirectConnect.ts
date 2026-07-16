@@ -11,9 +11,10 @@ import {
   DirectConnectSessionManager,
 } from '../server/directConnectManager.js'
 import type { RemoteMessageContent } from '../services/teleport/api.js'
-import type { Tool } from '../tool.js'
+import type { Tool, ToolUseContext } from '../tool.js'
 import { findToolByName } from '../tool.js'
 import type { Message as MessageType } from '../types/message.js'
+import type { PermissionAskDecision, PermissionUpdate } from '../types/permissions.js'
 import { logForDebugging } from '../utils/debug.js'
 import { gracefulShutdown } from '../utils/gracefulShutdown.js'
 
@@ -88,24 +89,20 @@ export function useDirectConnect({
 
         const syntheticMessage = createSyntheticAssistantMessage(request, requestId)
 
-        // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-        const permissionResult: any = {
+        const permissionResult: PermissionAskDecision = {
           behavior: 'ask',
           message: request.description ?? `${request.tool_name} requires permission`,
-          suggestions: request.permission_suggestions,
+          suggestions: request.permission_suggestions as PermissionUpdate[] | undefined,
           blockedPath: request.blocked_path,
         }
 
         const toolUseConfirm = {
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          assistantMessage: syntheticMessage as any,
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          permissionUpdates: [] as any,
+          assistantMessage: syntheticMessage,
+          permissionUpdates: [] as PermissionUpdate[],
           tool,
           description: request.description ?? `${request.tool_name} requires permission`,
           input: request.input,
-          // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-          toolUseContext: {} as any,
+          toolUseContext: {} as ToolUseContext,
           toolUseID: request.tool_use_id,
           permissionResult,
           permissionPromptStartTimeMs: Date.now(),

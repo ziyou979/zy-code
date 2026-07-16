@@ -5,7 +5,7 @@
  * 客户端创建统一走 client.ts 的 getGoogleClient()，与其他 provider 路径共享基础设施。
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, type GenerateContentRequest, type CountTokensRequest } from '@google/generative-ai'
 import { getMainLoopModel, normalizeModelStringForAPI } from '../model/model.js'
 import type {
   CreateParams,
@@ -71,8 +71,8 @@ export class GoogleProviderAdapter implements LLMAdapter {
       })}`,
     )
 
-    // biome-ignore lint/suspicious/noExplicitAny: SDK 类型严格区分联合类型，适配层需要类型断言
-    const result = await model.generateContentStream(requestParams as any)
+    // SDK 类型严格区分联合类型，适配层需要类型断言
+    const result = await model.generateContentStream(requestParams as unknown as GenerateContentRequest)
 
     // Google SDK 的 stream 是 AsyncIterable<GenerateContentResponse>
     const googleStream = result.stream as unknown as AsyncIterable<GoogleGenerateContentResponse>
@@ -106,8 +106,8 @@ export class GoogleProviderAdapter implements LLMAdapter {
       })}`,
     )
 
-    // biome-ignore lint/suspicious/noExplicitAny: SDK 类型严格区分联合类型，适配层需要类型断言
-    const result = await model.generateContent(requestParams as any)
+    // SDK 类型严格区分联合类型，适配层需要类型断言
+    const result = await model.generateContent(requestParams as unknown as GenerateContentRequest)
 
     const response = result.response as unknown as GoogleGenerateContentResponse
     return googleResponseToStandard(response, params.model)
@@ -124,8 +124,8 @@ export class GoogleProviderAdapter implements LLMAdapter {
       const { contents } = messagesToGoogle(messages)
 
       // Google SDK 的 countTokens 接受 { contents } 或 { generateContentRequest } 参数
-      // biome-ignore lint/suspicious/noExplicitAny: SDK countTokens 参数类型与自定义 Content 不兼容
-      const result = await generativeModel.countTokens({ contents } as any)
+      // SDK countTokens 参数类型与自定义 Content 不兼容
+      const result = await generativeModel.countTokens({ contents } as unknown as CountTokensRequest)
 
       return result.totalTokens ?? null
     } catch (error) {

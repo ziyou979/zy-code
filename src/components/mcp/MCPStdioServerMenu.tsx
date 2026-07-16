@@ -16,11 +16,17 @@ import { Byline } from '../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Spinner } from '../Spinner.js'
 import { CapabilitiesSection } from './CapabilitiesSection.js'
+import type { MCPServerConnection } from '../../services/mcp/types.js'
 import type { StdioServerInfo } from '../../services/mcp/viewTypes.js'
 import { handleReconnectError, handleReconnectResult } from './utils/ReconnectHelpers.js'
 
+type StdioServerInfoExtended = StdioServerInfo & {
+  client: MCPServerConnection
+  config: { command: string; args: string[] }
+}
+
 type Props = {
-  server: StdioServerInfo
+  server: StdioServerInfoExtended
   serverToolsCount: number
   onViewTools: () => void
   onCancel: () => void
@@ -40,8 +46,7 @@ export function MCPStdioServerMenu({
   onComplete,
   borderless = false,
 }: Props): React.ReactNode {
-  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理，StdioServerInfo 运行时包含额外字段
-  const srv = server as any
+  const srv = server
   const [theme] = useTheme()
   const exitState = useExitOnCtrlCDWithKeybindings()
   const mcp = useAppState((s) => s.mcp)

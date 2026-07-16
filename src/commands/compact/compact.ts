@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import chalk from 'chalk'
 import { markPostCompaction } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
-import { getSystemContext, getUserContext } from '../../context.js'
+import { getSystemContext, getUserContext } from '../../services/context/context.js'
 import { tSync } from '../../i18n/index.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
 import { notifyCompaction } from '../../services/api/promptCacheBreakDetection.js'
@@ -57,8 +57,7 @@ export const call: LocalCommandCall = async (args, context) => {
         // Reset cache read baseline so the post-compact drop isn't flagged
         // as a break. compactConversation does this internally; SM-compact doesn't.
         if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
-          // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
-          notifyCompaction((context.options.querySource ?? 'compact') as any, context.agentId)
+          notifyCompaction(context.options.querySource ?? 'compact', context.agentId)
         }
         markPostCompaction()
         // Suppress warning immediately after successful compaction
@@ -74,8 +73,7 @@ export const call: LocalCommandCall = async (args, context) => {
 
     // Reactive-only mode: route /compact through the reactive path.
     // Checked after session-memory (that path is cheap and orthogonal).
-    // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
-    if ((reactiveCompact as any)?.isReactiveOnlyMode()) {
+    if (reactiveCompact?.isReactiveOnlyMode()) {
       return await compactViaReactive(messages, context, customInstructions, reactiveCompact!)
     }
 
@@ -163,12 +161,10 @@ async function compactViaReactive(
     context.setResponseLength?.(() => 0)
     context.onCompactProgress?.({ type: 'compact_start' })
 
-    // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
-    const outcome = await (reactive as any).reactiveCompactOnPromptTooLong(
-      messages,
-      cacheSafeParams,
-      { customInstructions: mergedInstructions, trigger: 'manual' },
-    )
+    const outcome = await reactive.reactiveCompactOnPromptTooLong(messages, cacheSafeParams, {
+      customInstructions: mergedInstructions,
+      trigger: 'manual',
+    })
 
     if (!outcome.ok) {
       // The outer catch in `call` translates these: aborted → "Compaction
@@ -245,8 +241,7 @@ async function getCacheSharingParams(
   const defaultSysPrompt = await getSystemPrompt(
     context.options.tools,
     context.options.mainLoopModel,
-    // biome-ignore lint/suspicious/noExplicitAny: 压缩服务类型处理
-    Array.from((appState.toolPermissionContext.additionalWorkingDirectories as any).keys()),
+    Array.from(appState.toolPermissionContext.additionalWorkingDirectories.keys()),
     context.options.mcpClients,
   )
   const systemPrompt = buildEffectiveSystemPrompt({

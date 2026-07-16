@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import { relative } from 'node:path'
 import {
   getOriginalCwd,
   handleAutoModeTransition,
@@ -8,13 +7,9 @@ import {
   setNeedsAutoModeExitAttachment,
 } from '../../bootstrap/runtime/runtimeContext.js'
 import type { ToolPermissionContext } from '../../tool.js'
-import { getCwd } from '../../utils/cwd.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import type { SettingSource } from '../settings/constants.js'
-import { SETTING_SOURCES } from '../settings/constants.js'
 import {
   getInitialSettings,
-  getSettingsFilePathForSource,
   getUseAutoModeDuringPlan,
   hasAutoModeOptIn,
   hasTrustedDefaultModeAuto,
@@ -42,10 +37,7 @@ import {
   addDirHelpMessage,
   validateDirectoryForWorkspace,
 } from '../../commands/add-dir/validation.js'
-import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
-import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { getToolsForDefaultPreset, parseToolPreset } from '../../tools.js'
 import { modelSupportsAutoMode } from '../../utils/betas.js'
 import { createDebugLog } from '../../utils/debug.js'
@@ -55,10 +47,17 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { CROSS_PLATFORM_CODE_EXEC, DANGEROUS_BASH_PATTERNS } from './dangerousPatterns.js'
-import type { PermissionRule, PermissionRuleSource, PermissionRuleValue } from './permissionRule.js'
+import {
+  type DangerousPermissionInfo,
+  findDangerousClassifierPermissions,
+  findOverlyBroadBashPermissions,
+  findOverlyBroadPowerShellPermissions,
+  removeDangerousPermissions,
+  restoreDangerousPermissions,
+  stripDangerousPermissionsForAutoMode,
+} from './permissionDangerousRuleSupport.js'
+import type { PermissionRule } from './permissionRule.js'
 import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './permissionUpdate.js'
-import type { PermissionUpdateDestination } from './permissionUpdateSchema.js'
 import {
   normalizeLegacyToolName,
   permissionRuleValueFromString,
@@ -66,485 +65,6 @@ import {
 } from './permissionRuleParser.js'
 
 const permLog = createDebugLog('permissions')
-
-/**
- * 检查 Bash 权限规则在 auto 模式下是否危险。
- * 如果规则会自动放行执行任意代码的命令，从而绕过分类器的安全评估，则该规则是危险的。
- *
- * 危险模式：
- * 1. 工具级放行（不带 ruleContent 的 Bash）— 放行所有命令
- * 2. 脚本解释器前缀规则（python:*、node:* 等）
- * 3. 匹配解释器的通配符规则（python*、node* 等）
- */
-export function isDangerousBashPermission(
-  toolName: string,
-  ruleContent: string | undefined,
-): boolean {
-  // 仅检查 Bash 规则
-  if (toolName !== BASH_TOOL_NAME) {
-    return false
-  }
-
-  // 工具级放行（不带 ruleContent 的 Bash，或 Bash(*)）— 放行所有命令
-  if (ruleContent === undefined || ruleContent === '') {
-    return true
-  }
-
-  const content = ruleContent.trim().toLowerCase()
-
-  // 独立通配符 (*) 匹配所有内容
-  if (content === '*') {
-    return true
-  }
-
-  // 检查前缀语法的危险模式（例如 "python:*"）或通配符语法（例如 "python*"）
-  for (const pattern of DANGEROUS_BASH_PATTERNS) {
-    const lowerPattern = pattern.toLowerCase()
-
-    // 精确匹配模式本身（例如，将 "python" 作为规则）
-    if (content === lowerPattern) {
-      return true
-    }
-
-    // 前缀语法："python:*" 放行任何 python 命令
-    if (content === `${lowerPattern}:*`) {
-      return true
-    }
-
-    // 末尾通配符："python*" 匹配 python、python3 等
-    if (content === `${lowerPattern}*`) {
-      return true
-    }
-
-    // 带空格的通配符："python *" 匹配 "python script.py"
-    if (content === `${lowerPattern} *`) {
-      return true
-    }
-
-    // 检查类似 "python -*" 的模式，它会匹配 "python -c 'code'"
-    if (content.startsWith(`${lowerPattern} -`) && content.endsWith('*')) {
-      return true
-    }
-  }
-
-  return false
-}
-
-/**
- * 检查 PowerShell 权限规则在 auto 模式下是否危险。
- * 如果规则会自动放行执行任意代码的命令（嵌套 shell、Invoke-Expression、Start-Process 等），
- * 从而绕过分类器的安全评估，则该规则是危险的。
- *
- * PowerShell 不区分大小写，因此规则内容在匹配前先转为小写。
- */
-export function isDangerousPowerShellPermission(
-  toolName: string,
-  ruleContent: string | undefined,
-): boolean {
-  if (toolName !== POWERSHELL_TOOL_NAME) {
-    return false
-  }
-
-  // 工具级放行（不带 ruleContent 的 PowerShell，或 PowerShell(*)）— 放行所有命令
-  if (ruleContent === undefined || ruleContent === '') {
-    return true
-  }
-
-  const content = ruleContent.trim().toLowerCase()
-
-  // 独立通配符 (*) 匹配所有内容
-  if (content === '*') {
-    return true
-  }
-
-  // PS 特有的 cmdlet 名称。CROSS_PLATFORM_CODE_EXEC 与 bash 共享。
-  const patterns: readonly string[] = [
-    ...CROSS_PLATFORM_CODE_EXEC,
-    // 嵌套 PS + 可从 PS 启动的 shell
-    'pwsh',
-    'powershell',
-    'cmd',
-    'wsl',
-    // 字符串/脚本块求值器
-    'iex',
-    'invoke-expression',
-    'icm',
-    'invoke-command',
-    // 进程启动器
-    'start-process',
-    'saps',
-    'start',
-    'start-job',
-    'sajb',
-    'start-threadjob', // PS 6.1+ 内置；接受 -ScriptBlock 参数，类似 Start-Job
-    // 事件/会话代码执行
-    'register-objectevent',
-    'register-engineevent',
-    'register-wmievent',
-    'register-scheduledjob',
-    'new-pssession',
-    'nsn', // 别名
-    'enter-pssession',
-    'etsn', // 别名
-    // .NET 逃逸出口
-    'add-type', // Add-Type -TypeDefinition '<C#>' → P/Invoke
-    'new-object', // New-Object -ComObject WScript.Shell → .Run()
-  ]
-
-  for (const pattern of patterns) {
-    // patterns 存储为小写；content 已在上方转为小写
-    if (content === pattern) {
-      return true
-    }
-    if (content === `${pattern}:*`) {
-      return true
-    }
-    if (content === `${pattern}*`) {
-      return true
-    }
-    if (content === `${pattern} *`) {
-      return true
-    }
-    if (content.startsWith(`${pattern} -`) && content.endsWith('*')) {
-      return true
-    }
-    // .exe 后缀加在第一个单词上。`python` → `python.exe`。
-    // `npm run` → `npm.exe run`（npm.exe 才是 Windows 上的真实二进制名）。
-    // 像 `PowerShell(npm.exe run:*)` 这样的规则需要匹配 `npm run`。
-    const sp = pattern.indexOf(' ')
-    const exe = sp === -1 ? `${pattern}.exe` : `${pattern.slice(0, sp)}.exe${pattern.slice(sp)}`
-    if (content === exe) {
-      return true
-    }
-    if (content === `${exe}:*`) {
-      return true
-    }
-    if (content === `${exe}*`) {
-      return true
-    }
-    if (content === `${exe} *`) {
-      return true
-    }
-    if (content.startsWith(`${exe} -`) && content.endsWith('*')) {
-      return true
-    }
-  }
-  return false
-}
-
-/**
- * 检查 Agent（子代理）权限规则在 auto 模式下是否危险。
- * 任何 Agent 放行规则都会在 auto 模式分类器评估子代理的 prompt 之前自动批准子代理的生成，
- * 从而使委派攻击防护失效。
- */
-export function isDangerousTaskPermission(
-  toolName: string,
-  _ruleContent: string | undefined,
-): boolean {
-  return normalizeLegacyToolName(toolName) === AGENT_TOOL_NAME
-}
-
-function formatPermissionSource(source: PermissionRuleSource): string {
-  if ((SETTING_SOURCES as readonly string[]).includes(source)) {
-    const filePath = getSettingsFilePathForSource(source as SettingSource)
-    if (filePath) {
-      const relativePath = relative(getCwd(), filePath)
-      return relativePath.length < filePath.length ? relativePath : filePath
-    }
-  }
-  return source
-}
-
-export type DangerousPermissionInfo = {
-  ruleValue: PermissionRuleValue
-  source: PermissionRuleSource
-  /** 格式化后的权限规则，便于显示，例如 "Bash(*)" 或 "Bash(python:*)" */
-  ruleDisplay: string
-  /** 格式化后的来源，例如文件路径或 "--allowed-tools" */
-  sourceDisplay: string
-}
-
-/**
- * 检查权限规则在 auto 模式下是否危险。
- * 如果规则会在 auto 模式分类器评估之前自动放行操作，从而绕过安全检查，则该规则是危险的。
- */
-function isDangerousClassifierPermission(
-  toolName: string,
-  ruleContent: string | undefined,
-): boolean {
-  if (isInternalBuild()) {
-    // Tmux send-keys 执行任意 shell，与 Bash(*) 一样绕过了分类器
-    if (toolName === 'Tmux') {
-      return true
-    }
-  }
-  return (
-    isDangerousBashPermission(toolName, ruleContent) ||
-    isDangerousPowerShellPermission(toolName, ruleContent) ||
-    isDangerousTaskPermission(toolName, ruleContent)
-  )
-}
-
-/**
- * 从磁盘加载的规则和 CLI 参数中查找所有危险的权限。
- * 返回每个危险权限的结构化信息。
- *
- * 检查 Bash 权限（通配符/解释器模式）、PowerShell 权限（通配符/iex/Start-Process 模式）
- * 以及 Agent 权限（任何放行规则都会绕过分类器的子代理评估）。
- */
-export function findDangerousClassifierPermissions(
-  rules: PermissionRule[],
-  cliAllowedTools: string[],
-): DangerousPermissionInfo[] {
-  const dangerous: DangerousPermissionInfo[] = []
-
-  // 检查从设置中加载的规则
-  for (const rule of rules) {
-    if (
-      rule.ruleBehavior === 'allow' &&
-      isDangerousClassifierPermission(rule.ruleValue.toolName, rule.ruleValue.ruleContent)
-    ) {
-      const ruleString = rule.ruleValue.ruleContent
-        ? `${rule.ruleValue.toolName}(${rule.ruleValue.ruleContent})`
-        : `${rule.ruleValue.toolName}(*)`
-      dangerous.push({
-        ruleValue: rule.ruleValue,
-        source: rule.source,
-        ruleDisplay: ruleString,
-        sourceDisplay: formatPermissionSource(rule.source),
-      })
-    }
-  }
-
-  // 检查 CLI --allowed-tools 参数
-  for (const toolSpec of cliAllowedTools) {
-    // 解析工具规格："Bash" 或 "Bash(pattern)" 或 "Agent" 或 "Agent(subagent_type)"
-    const match = toolSpec.match(/^([^(]+)(?:\(([^)]*)\))?$/)
-    if (match) {
-      const toolName = match[1]!.trim()
-      const ruleContent = match[2]?.trim()
-
-      if (isDangerousClassifierPermission(toolName, ruleContent)) {
-        dangerous.push({
-          ruleValue: { toolName, ruleContent },
-          source: 'cliArg',
-          ruleDisplay: ruleContent ? toolSpec : `${toolName}(*)`,
-          sourceDisplay: '--allowed-tools',
-        })
-      }
-    }
-  }
-
-  return dangerous
-}
-
-/**
- * 检查 Bash 放行规则是否过于宽泛（等同于 YOLO 模式）。
- * 对不带内容限制的 Bash 工具级放行规则返回 true，
- * 这会自动放行所有 bash 命令。
- *
- * 匹配：Bash、Bash(*)、Bash() — 都解析为 { toolName: 'Bash' } 且没有 ruleContent。
- */
-export function isOverlyBroadBashAllowRule(ruleValue: PermissionRuleValue): boolean {
-  return ruleValue.toolName === BASH_TOOL_NAME && ruleValue.ruleContent === undefined
-}
-
-/**
- * isOverlyBroadBashAllowRule 的 PowerShell 等价版本。
- *
- * 匹配：PowerShell、PowerShell(*)、PowerShell() — 都解析为
- * { toolName: 'PowerShell' } 且没有 ruleContent。
- */
-export function isOverlyBroadPowerShellAllowRule(ruleValue: PermissionRuleValue): boolean {
-  return ruleValue.toolName === POWERSHELL_TOOL_NAME && ruleValue.ruleContent === undefined
-}
-
-/**
- * 从设置和 CLI 参数中查找所有过于宽泛的 Bash 放行规则。
- * 过于宽泛的规则会放行所有 bash 命令（例如 Bash 或 Bash(*)），
- * 这实际上等同于 YOLO/绕过权限模式。
- */
-export function findOverlyBroadBashPermissions(
-  rules: PermissionRule[],
-  cliAllowedTools: string[],
-): DangerousPermissionInfo[] {
-  const overlyBroad: DangerousPermissionInfo[] = []
-
-  for (const rule of rules) {
-    if (rule.ruleBehavior === 'allow' && isOverlyBroadBashAllowRule(rule.ruleValue)) {
-      overlyBroad.push({
-        ruleValue: rule.ruleValue,
-        source: rule.source,
-        ruleDisplay: `${BASH_TOOL_NAME}(*)`,
-        sourceDisplay: formatPermissionSource(rule.source),
-      })
-    }
-  }
-
-  for (const toolSpec of cliAllowedTools) {
-    const parsed = permissionRuleValueFromString(toolSpec)
-    if (isOverlyBroadBashAllowRule(parsed)) {
-      overlyBroad.push({
-        ruleValue: parsed,
-        source: 'cliArg',
-        ruleDisplay: `${BASH_TOOL_NAME}(*)`,
-        sourceDisplay: '--allowed-tools',
-      })
-    }
-  }
-
-  return overlyBroad
-}
-
-/**
- * findOverlyBroadBashPermissions 的 PowerShell 等价版本。
- */
-export function findOverlyBroadPowerShellPermissions(
-  rules: PermissionRule[],
-  cliAllowedTools: string[],
-): DangerousPermissionInfo[] {
-  const overlyBroad: DangerousPermissionInfo[] = []
-
-  for (const rule of rules) {
-    if (rule.ruleBehavior === 'allow' && isOverlyBroadPowerShellAllowRule(rule.ruleValue)) {
-      overlyBroad.push({
-        ruleValue: rule.ruleValue,
-        source: rule.source,
-        ruleDisplay: `${POWERSHELL_TOOL_NAME}(*)`,
-        sourceDisplay: formatPermissionSource(rule.source),
-      })
-    }
-  }
-
-  for (const toolSpec of cliAllowedTools) {
-    const parsed = permissionRuleValueFromString(toolSpec)
-    if (isOverlyBroadPowerShellAllowRule(parsed)) {
-      overlyBroad.push({
-        ruleValue: parsed,
-        source: 'cliArg',
-        ruleDisplay: `${POWERSHELL_TOOL_NAME}(*)`,
-        sourceDisplay: '--allowed-tools',
-      })
-    }
-  }
-
-  return overlyBroad
-}
-
-/**
- * 类型守卫：检查 PermissionRuleSource 是否为有效的 PermissionUpdateDestination。
- * 'flagSettings'、'policySettings' 和 'command' 等来源不是有效的目标。
- */
-function isPermissionUpdateDestination(
-  source: PermissionRuleSource,
-): source is PermissionUpdateDestination {
-  return ['userSettings', 'projectSettings', 'localSettings', 'session', 'cliArg'].includes(source)
-}
-
-/**
- * 从内存中的上下文中移除危险权限，并可选地将移除操作持久化到磁盘上的设置文件中。
- */
-export function removeDangerousPermissions(
-  context: ToolPermissionContext,
-  dangerousPermissions: DangerousPermissionInfo[],
-): ToolPermissionContext {
-  // 按来源（更新的目标）对危险规则分组
-  const rulesBySource = new Map<PermissionUpdateDestination, PermissionRuleValue[]>()
-  for (const perm of dangerousPermissions) {
-    // 跳过无法持久化的来源（flagSettings、policySettings、command）
-    if (!isPermissionUpdateDestination(perm.source)) {
-      continue
-    }
-    const destination = perm.source
-    const existing = rulesBySource.get(destination) || []
-    existing.push(perm.ruleValue)
-    rulesBySource.set(destination, existing)
-  }
-
-  let updatedContext = context
-  for (const [destination, rules] of rulesBySource) {
-    updatedContext = applyPermissionUpdate(updatedContext, {
-      type: 'removeRules' as const,
-      rules,
-      behavior: 'allow' as const,
-      destination,
-    })
-  }
-
-  return updatedContext
-}
-
-/**
- * 为 auto 模式准备 ToolPermissionContext，剥离会绕过分类器的危险权限。
- * 返回清理后的上下文（模式不变 — 由调用者设置模式）。
- */
-export function stripDangerousPermissionsForAutoMode(
-  context: ToolPermissionContext,
-): ToolPermissionContext {
-  const rules: PermissionRule[] = []
-  for (const [source, ruleStrings] of Object.entries(context.alwaysAllowRules)) {
-    if (!ruleStrings) {
-      continue
-    }
-    for (const ruleString of ruleStrings) {
-      const ruleValue = permissionRuleValueFromString(ruleString)
-      rules.push({
-        source: source as PermissionRuleSource,
-        ruleBehavior: 'allow',
-        ruleValue,
-      })
-    }
-  }
-  const dangerousPermissions = findDangerousClassifierPermissions(rules, [])
-  if (dangerousPermissions.length === 0) {
-    return {
-      ...context,
-      strippedDangerousRules: context.strippedDangerousRules ?? {},
-    }
-  }
-  for (const permission of dangerousPermissions) {
-    permLog(
-      `Ignoring dangerous permission ${permission.ruleDisplay} from ${permission.sourceDisplay} (bypasses classifier)`,
-    )
-  }
-  // 与 removeDangerousPermissions 的来源过滤保持一致，确保暂存的确实是已移除的内容。
-  const stripped: ToolPermissionRulesBySource = {}
-  for (const perm of dangerousPermissions) {
-    if (!isPermissionUpdateDestination(perm.source)) {
-      continue
-    }
-    ;(stripped[perm.source] ??= []).push(permissionRuleValueToString(perm.ruleValue))
-  }
-  return {
-    ...removeDangerousPermissions(context, dangerousPermissions),
-    strippedDangerousRules: stripped,
-  }
-}
-
-/**
- * 恢复之前由 stripDangerousPermissionsForAutoMode 暂存的危险放行规则。
- * 在离开 auto 模式时调用，以便用户的 Bash(python:*)、Agent(*) 等规则在 default 模式下再次生效。
- * 调用后清空暂存，使第二次退出成为无操作。
- */
-export function restoreDangerousPermissions(context: ToolPermissionContext): ToolPermissionContext {
-  const stash = context.strippedDangerousRules
-  if (!stash) {
-    return context
-  }
-  let result = context
-  for (const [source, ruleStrings] of Object.entries(stash)) {
-    if (!ruleStrings || ruleStrings.length === 0) {
-      continue
-    }
-    result = applyPermissionUpdate(result, {
-      type: 'addRules',
-      rules: ruleStrings.map(permissionRuleValueFromString),
-      behavior: 'allow',
-      destination: source as PermissionUpdateDestination,
-    })
-  }
-  return { ...result, strippedDangerousRules: undefined }
-}
 
 /**
  * 处理切换权限模式时的所有状态转换。
@@ -1432,4 +952,11 @@ export function transitionPlanAutoMode(context: ToolPermissionContext): ToolPerm
   autoModeStateModule?.setAutoModeActive(false)
   setNeedsAutoModeExitAttachment(true)
   return restoreDangerousPermissions(context)
+}
+
+export {
+  findOverlyBroadBashPermissions,
+  removeDangerousPermissions,
+  restoreDangerousPermissions,
+  stripDangerousPermissionsForAutoMode,
 }

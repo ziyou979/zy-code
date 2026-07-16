@@ -100,8 +100,7 @@ export async function autoModeCritiqueHandler(options: { model?: string }): Prom
   let response
   try {
     response = await sideQuery({
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      querySource: 'auto_mode_critique' as any,
+      querySource: 'auto_mode_critique' as const,
       model,
       system: CRITIQUE_SYSTEM_PROMPT,
       skipSystemPromptPrefix: true,

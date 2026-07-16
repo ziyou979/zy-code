@@ -1,5 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { tSync } from './i18n/index.js'
+import { COMMAND_DESCRIPTION_I18N_KEYS } from './commands/descriptionI18n.js'
 import { isBgSession } from './utils/concurrentSessions.js'
 import { isInternalBuild } from './utils/envUtils.js'
 import addDir from './commands/add-dir/index.js'
@@ -115,16 +116,29 @@ import { getSettingSourceName } from './services/settings/constants.js'
 import { type Command, getCommandName, isCommandEnabled } from './commands/types.js'
 // 死代码消除：条件导入
 /* eslint-disable @typescript-eslint/no-require-imports */
-const proactive =
-  feature('PROACTIVE') || feature('KAIROS') ? require('./commands/proactive.js').default : null
-const briefCommand =
-  feature('KAIROS') || feature('KAIROS_BRIEF') ? require('./commands/brief.js').default : null
+let proactive: Command | null = null
+if (feature('PROACTIVE')) {
+  proactive = require('./commands/proactive.js').default as Command
+} else if (feature('KAIROS')) {
+  proactive = require('./commands/proactive.js').default as Command
+}
+
+let briefCommand: Command | null = null
+if (feature('KAIROS')) {
+  briefCommand = require('./commands/brief.js').default as Command
+} else if (feature('KAIROS_BRIEF')) {
+  briefCommand = require('./commands/brief.js').default as Command
+}
+
 const assistantCommand = feature('KAIROS') ? require('./commands/assistant/index.js').default : null
 const bridge = feature('BRIDGE_MODE') ? require('./commands/bridge/index.js').default : null
-const remoteControlServerCommand =
-  feature('DAEMON') && feature('BRIDGE_MODE')
-    ? require('./commands/remoteControlServer/index.js').default
-    : null
+let remoteControlServerCommand: Command | null = null
+if (feature('DAEMON')) {
+  if (feature('BRIDGE_MODE')) {
+    remoteControlServerCommand = require('./commands/remoteControlServer/index.js')
+      .default as Command
+  }
+}
 const voiceCommand = feature('VOICE_MODE') ? require('./commands/voice/index.js').default : null
 const workflowsCmd = feature('WORKFLOW_SCRIPTS')
   ? (require('./commands/workflows/index.js') as typeof import('./commands/workflows/index.js'))
@@ -681,98 +695,6 @@ export function getCommand(commandName: string, commands: Command[]): Command {
   }
 
   return command
-}
-
-/**
- * 命令名称到 i18n 翻译 key 的映射。
- * 仅包含对用户可见的命令。
- */
-const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
-  'add-dir': 'commands.addDir',
-  agents: 'commands.agents',
-  background: 'commands.bg',
-  batch: 'commands.batch',
-  branch: 'commands.branch',
-  btw: 'commands.btw',
-  chrome: 'commands.chrome',
-  clear: 'commands.clear',
-  color: 'commands.color',
-  compact: 'commands.compact',
-  config: 'commands.config',
-  'code-review': 'commands.codeReview',
-  copy: 'commands.copy',
-  desktop: 'commands.desktop',
-  context: 'commands.context',
-  'context-noninteractive': 'commands.contextNonInteractive',
-  diff: 'commands.diff',
-  checkup: 'commands.doctor',
-  doctor: 'commands.doctor',
-  effort: 'commands.effort',
-  exit: 'commands.exit',
-  files: 'commands.files',
-  help: 'commands.help',
-  ide: 'commands.ide',
-  init: 'commands.init',
-  keybindings: 'commands.keybindings',
-  'install-github-app': 'commands.installGitHubApp',
-  'install-slack-app': 'commands.installSlackApp',
-  mcp: 'commands.mcp',
-  memory: 'commands.memory',
-  mobile: 'commands.mobile',
-  model: 'commands.model',
-  'output-style': 'commands.outputStyle',
-  'remote-env': 'commands.remoteEnv',
-  plugin: 'commands.plugin',
-  'pr-comments': 'commands.prComments',
-  'release-notes': 'commands.releaseNotes',
-  'reload-plugins': 'commands.reloadPlugins',
-  'reload-skills': 'commands.reloadSkills',
-  'reload-tools': 'commands.reloadTools',
-  tools: 'commands.tools',
-  rename: 'commands.rename',
-  resume: 'commands.resume',
-  session: 'commands.session',
-  skills: 'commands.skills',
-  simplify: 'commands.simplify',
-  status: 'commands.status',
-  statusline: 'commands.statusline',
-  stickers: 'commands.stickers',
-  tag: 'commands.tag',
-  theme: 'commands.theme',
-  feedback: 'commands.feedback',
-  ultrareview: 'commands.ultrareview',
-  rewind: 'commands.rewind',
-  'terminal-setup': 'commands.terminalSetup',
-  upgrade: 'commands.upgrade',
-  'rate-limit-options': 'commands.rateLimitOptions',
-  tui: 'commands.tui',
-  usage: 'commands.usage',
-  insights: 'commands.insights',
-  vim: 'commands.vim',
-  'think-back': 'commands.thinkback',
-  'thinkback-play': 'commands.thinkbackPlay',
-  permissions: 'commands.permissions',
-  plan: 'commands.plan',
-  powerup: 'commands.powerup',
-  hooks: 'commands.hooks',
-  export: 'commands.export',
-  sandbox: 'commands.sandbox',
-  logout: 'commands.logout',
-  login: 'commands.login',
-  tasks: 'commands.tasks',
-  commit: 'commands.commit',
-  'commit-push-pr': 'commands.commitPushPr',
-  'init-verifiers': 'commands.initVerifiers',
-  version: 'commands.version',
-  heapdump: 'commands.heapdump',
-  'remote-setup': 'commands.remoteSetup',
-  'update-config': 'commands.updateConfig',
-  'keybindings-help': 'commands.keybindingsHelp',
-  'claude-in-chrome': 'commands.claudeInChrome',
-  debug: 'commands.debug',
-  schedule: 'commands.schedule',
-  loop: 'commands.loop',
-  goal: 'commands.goal',
 }
 
 /**

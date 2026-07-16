@@ -18,41 +18,41 @@ import {
   setProjectRoot,
   switchSession,
 } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getCommands } from './commands.js'
-import { tSync } from './i18n/index.js'
-import { lockCurrentVersion } from './services/native-installer/index.js'
-import { initSessionMemory } from './services/session-memory/sessionMemory.js'
-import { asSessionId } from './types/ids.js'
-import { isAgentSwarmsEnabled } from './services/swarm/agentSwarmsEnabled.js'
-import { clearMemoryFileCaches } from './utils/agentsMd.js'
-import { checkAndRestoreTerminalBackup } from './services/shell/appleTerminalBackup.js'
-import { prefetchApiKeyFromApiKeyHelperIfSafe } from './services/auth/auth.js'
-import { getCurrentProjectConfig, getGlobalConfig } from './services/config/config.js'
-import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
-import { env } from './utils/env.js'
-import { envDynamic } from './utils/envDynamic.js'
-import { isBareMode, isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
-import { errorMessage } from './utils/errors.js'
-import { findCanonicalGitRoot, findGitRoot, getIsGit } from './utils/git.js'
-import { initializeFileChangedWatcher } from './services/hooks/fileChangedWatcher.js'
+import { getCommands } from '../commands.js'
+import { tSync } from '../i18n/index.js'
+import { lockCurrentVersion } from '../services/native-installer/index.js'
+import { initSessionMemory } from '../services/session-memory/sessionMemory.js'
+import { asSessionId } from '../types/ids.js'
+import { isAgentSwarmsEnabled } from '../services/swarm/agentSwarmsEnabled.js'
+import { clearMemoryFileCaches } from '../utils/agentsMd.js'
+import { checkAndRestoreTerminalBackup } from '../services/shell/appleTerminalBackup.js'
+import { prefetchApiKeyFromApiKeyHelperIfSafe } from '../services/auth/auth.js'
+import { getCurrentProjectConfig, getGlobalConfig } from '../services/config/config.js'
+import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
+import { env } from '../utils/env.js'
+import { envDynamic } from '../utils/envDynamic.js'
+import { isBareMode, isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
+import { errorMessage } from '../utils/errors.js'
+import { findCanonicalGitRoot, findGitRoot, getIsGit } from '../utils/git.js'
+import { initializeFileChangedWatcher } from '../services/hooks/fileChangedWatcher.js'
 import {
   captureHooksConfigSnapshot,
   updateHooksConfigSnapshot,
-} from './services/hooks/hooksConfigSnapshot.js'
-import { hasWorktreeCreateHook } from './services/hooks.js'
-import { checkAndRestoreITerm2Backup } from './services/shell/iTermBackup.js'
-import { logError } from './utils/log.js'
-import { getRecentActivity } from './utils/logoUtils.js'
-import type { PermissionMode } from './services/permissions/permissionMode.js'
-import { getPlanSlug } from './utils/plans.js'
-import { saveWorktreeState } from './services/sessionStorage.js'
-import { profileCheckpoint } from './utils/startupProfiler.js'
+} from '../services/hooks/hooksConfigSnapshot.js'
+import { hasWorktreeCreateHook } from '../services/hooks.js'
+import { checkAndRestoreITerm2Backup } from '../services/shell/iTermBackup.js'
+import { logError } from '../utils/log.js'
+import { getRecentActivity } from '../utils/logoUtils.js'
+import type { PermissionMode } from '../services/permissions/permissionMode.js'
+import { getPlanSlug } from '../utils/plans.js'
+import { saveWorktreeState } from '../services/sessionStorage.js'
+import { profileCheckpoint } from '../utils/startupProfiler.js'
 import {
   createTmuxSessionForWorktree,
   createWorktreeForSession,
   generateTmuxSessionName,
   worktreeBranchName,
-} from './services/worktree/worktree.js'
+} from '../services/worktree/worktree.js'
 
 export async function setup(
   cwd: string,
@@ -90,7 +90,7 @@ export async function setup(
     // $ZY_CODE_MESSAGING_SOCKET 已导出，然后任何 hook
     // （特别是 SessionStart）才能派生并快照 process.env。
     if (feature('UDS_INBOX')) {
-      const m = await import('./utils/udsMessaging.js')
+      const m = await import('../utils/udsMessaging.js')
       // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
       await (m as any).startUdsMessaging(
         // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
@@ -103,7 +103,7 @@ export async function setup(
   // 队友快照 — 仅 SIMPLE 门控（无逃生通道，bare 模式不使用 swarm）
   if (!isBareMode() && isAgentSwarmsEnabled()) {
     const { captureTeammateModeSnapshot } = await import(
-      './services/swarm/backends/teammateModeSnapshot.js'
+      '../services/swarm/backends/teammateModeSnapshot.js'
     )
     captureTeammateModeSnapshot()
   }
@@ -279,7 +279,7 @@ export async function setup(
     if (feature('CONTEXT_COLLAPSE')) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       ;(
-        require('./services/compact/context-collapse/index.js') as typeof import('./services/compact/context-collapse/index.js')
+        require('../services/compact/context-collapse/index.js') as typeof import('../services/compact/context-collapse/index.js')
       ).initContextCollapse()
       /* eslint-enable @typescript-eslint/no-require-imports */
     }
@@ -303,7 +303,7 @@ export async function setup(
   if (!skipPluginPrefetch) {
     void getCommands(getProjectRoot())
   }
-  void import('./services/plugins/loadPluginHooks.js').then((m) => {
+  void import('../services/plugins/loadPluginHooks.js').then((m) => {
     if (!skipPluginPrefetch) {
       void m.loadPluginHooks() // 预加载插件 hooks（由 processSessionStartHooks 在渲染前消费）
       m.setupPluginHookHotReload() // 设置插件 hooks 热重载，当设置变更时触发
@@ -319,9 +319,9 @@ export async function setup(
       // 预热仓库分类缓存，用于 auto-undercover 模式。默认
       // undercover 开启，直到确认为内部仓库；如果解析为内部仓库，
       // 清除 prompt 缓存使下一轮获取 OFF 状态。
-      void import('./utils/commitAttribution.js').then(async (m) => {
+      void import('../utils/commitAttribution.js').then(async (m) => {
         if (await m.isInternalModelRepo()) {
-          const { clearSystemPromptSections } = await import('./constants/systemPromptSections.js')
+          const { clearSystemPromptSections } = await import('../constants/systemPromptSections.js')
           clearSystemPromptSections()
         }
       })
@@ -332,14 +332,14 @@ export async function setup(
       // 而不是在 setup() 微任务窗口期间运行。
       setImmediate(() => {
         // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        void import('./utils/attributionHooks.js').then((m: any) => {
+        void import('../utils/attributionHooks.js').then((m: any) => {
           m.registerAttributionHooks() // 注册归因追踪 hooks（仅 ant 功能）
         })
       })
     }
-    void import('./utils/sessionFileAccessHooks.js').then((m) => m.registerSessionFileAccessHooks()) // 注册会话文件访问分析 hooks
+    void import('../utils/sessionFileAccessHooks.js').then((m) => m.registerSessionFileAccessHooks()) // 注册会话文件访问分析 hooks
     if (feature('TEAMMEM')) {
-      void import('./services/team-memory-sync/watcher.js').then((m) => m.startTeamMemoryWatcher()) // 启动团队内存同步监视器
+      void import('../services/team-memory-sync/watcher.js').then((m) => m.startTeamMemoryWatcher()) // 启动团队内存同步监视器
     }
   }
   initSinks() // 附加错误日志 + 分析 sink 并排空队列中的事件

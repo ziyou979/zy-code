@@ -35,35 +35,34 @@ export function getNextPermissionMode(
   _teamContext?: { leadAgentId: string },
 ): PermissionMode {
   switch (toolPermissionContext.mode) {
+    // 手动模式 → 计划模式（权限最低到最高）
     case 'default':
-      if (toolPermissionContext.isBypassPermissionsModeAvailable) {
-        return 'bypassPermissions'
-      }
-      if (canCycleToAuto(toolPermissionContext)) {
-        return 'auto'
-      }
-      return 'acceptEdits'
-
-    case 'acceptEdits':
       return 'plan'
 
+    // 计划模式 → 接受编辑
     case 'plan':
+      return 'acceptEdits'
+
+    // 接受编辑 → 自动模式（可用时）/ 跳过权限（可用时）/ 手动模式
+    case 'acceptEdits':
+      if (canCycleToAuto(toolPermissionContext)) {
+        return 'auto'
+      }
       if (toolPermissionContext.isBypassPermissionsModeAvailable) {
         return 'bypassPermissions'
       }
-      if (canCycleToAuto(toolPermissionContext)) {
-        return 'auto'
-      }
       return 'default'
 
-    case 'bypassPermissions':
-      if (canCycleToAuto(toolPermissionContext)) {
-        return 'auto'
-      }
-      return 'default'
-
+    // 自动模式 → 跳过权限（可用时）/ 手动模式
     case 'auto':
-      return 'acceptEdits'
+      if (toolPermissionContext.isBypassPermissionsModeAvailable) {
+        return 'bypassPermissions'
+      }
+      return 'default'
+
+    // 跳过权限 → 手动模式
+    case 'bypassPermissions':
+      return 'default'
 
     case 'dontAsk':
       // Not exposed in UI cycle yet, but return default if somehow reached

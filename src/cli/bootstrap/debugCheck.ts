@@ -29,9 +29,7 @@ export function isBeingDebugged(): boolean {
   // 检查 inspector 是否可用且活跃（表示正在调试）
   try {
     // 动态导入更好但是异步的 —— 改用全局对象
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-    const inspector = (global as any).require('inspector')
+    const inspector = (global as typeof globalThis & { require: NodeRequire }).require('inspector')
     const hasInspectorUrl = !!inspector.url()
     return hasInspectorUrl || hasInspectArg || !!hasInspectEnv
   } catch {

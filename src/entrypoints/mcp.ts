@@ -126,8 +126,9 @@ export async function startMCPServer(cwd: string, debug: boolean, verbose: boole
         }
         const validationResult = await tool.validateInput?.((args as never) ?? {}, toolUseContext)
         if (validationResult && !validationResult.result) {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          throw new Error(`Tool ${name} input is invalid: ${(validationResult as any).message}`)
+          throw new Error(
+            `Tool ${name} input is invalid: ${(validationResult as unknown as { message: string }).message}`,
+          )
         }
         const finalResult = await tool.call(
           (args ?? {}) as never,

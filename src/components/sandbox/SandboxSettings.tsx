@@ -1,4 +1,5 @@
 import { Box, color, Link, Text, useTheme } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { SandboxDependencyCheck } from '../../services/sandbox/sandbox-adapter.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
@@ -46,24 +47,27 @@ export function SandboxSettings({ onComplete, depCheck }: Props) {
     return 'regular'
   }
   const currentMode = getCurrentMode()
-  const currentIndicator = color('success', theme)('(current)')
+  const currentIndicator = color('success', theme)(`(${tSync('misc.sandbox.settings.current')})`)
   const options = [
     {
       label:
         currentMode === 'auto-allow'
-          ? `Sandbox BashTool, with auto-allow ${currentIndicator}`
-          : 'Sandbox BashTool, with auto-allow',
+          ? `${tSync('misc.sandbox.settings.autoAllowLabel')} ${currentIndicator}`
+          : tSync('misc.sandbox.settings.autoAllowLabel'),
       value: 'auto-allow',
     },
     {
       label:
         currentMode === 'regular'
-          ? `Sandbox BashTool, with regular permissions ${currentIndicator}`
-          : 'Sandbox BashTool, with regular permissions',
+          ? `${tSync('misc.sandbox.settings.regularLabel')} ${currentIndicator}`
+          : tSync('misc.sandbox.settings.regularLabel'),
       value: 'regular',
     },
     {
-      label: currentMode === 'disabled' ? `No Sandbox ${currentIndicator}` : 'No Sandbox',
+      label:
+        currentMode === 'disabled'
+          ? `${tSync('misc.sandbox.settings.disabledLabel')} ${currentIndicator}`
+          : tSync('misc.sandbox.settings.disabledLabel'),
       value: 'disabled',
     },
   ]
@@ -75,7 +79,7 @@ export function SandboxSettings({ onComplete, depCheck }: Props) {
           enabled: true,
           autoAllowBashIfSandboxed: true,
         })
-        onComplete('\u2713 Sandbox enabled with auto-allow for bash commands')
+        onComplete(tSync('misc.sandbox.settings.enabledAutoAllow'))
         break
       }
       case 'regular': {
@@ -83,7 +87,7 @@ export function SandboxSettings({ onComplete, depCheck }: Props) {
           enabled: true,
           autoAllowBashIfSandboxed: false,
         })
-        onComplete('\u2713 Sandbox enabled with regular bash permissions')
+        onComplete(tSync('misc.sandbox.settings.enabledRegular'))
         break
       }
       case 'disabled': {
@@ -91,7 +95,7 @@ export function SandboxSettings({ onComplete, depCheck }: Props) {
           enabled: false,
           autoAllowBashIfSandboxed: false,
         })
-        onComplete('\u25CB Sandbox disabled')
+        onComplete(tSync('misc.sandbox.settings.disabled'))
       }
     }
   }
@@ -107,7 +111,7 @@ export function SandboxSettings({ onComplete, depCheck }: Props) {
     },
   )
   const modeTab = (
-    <Tab key="mode" title="Mode">
+    <Tab key="mode" title={tSync('misc.sandbox.settings.tabMode')}>
       <SandboxModeTab
         showSocketWarning={showSocketWarning}
         options={options}
@@ -117,19 +121,19 @@ export function SandboxSettings({ onComplete, depCheck }: Props) {
     </Tab>
   )
   const overridesTab = (
-    <Tab key="overrides" title="Overrides">
+    <Tab key="overrides" title={tSync('misc.sandbox.settings.tabOverrides')}>
       <SandboxOverridesTab onComplete={onComplete} />
     </Tab>
   )
   const configTab = (
-    <Tab key="config" title="Config">
+    <Tab key="config" title={tSync('misc.sandbox.settings.tabConfig')}>
       <SandboxConfigTab />
     </Tab>
   )
   const hasErrors = depCheck.errors.length > 0
   const tabs = hasErrors
     ? [
-        <Tab key="dependencies" title="Dependencies">
+        <Tab key="dependencies" title={tSync('misc.sandbox.settings.tabDependencies')}>
           <SandboxDependenciesTab depCheck={depCheck} />
         </Tab>,
       ]
@@ -137,7 +141,7 @@ export function SandboxSettings({ onComplete, depCheck }: Props) {
         modeTab,
         ...(hasWarnings
           ? [
-              <Tab key="dependencies" title="Dependencies">
+              <Tab key="dependencies" title={tSync('misc.sandbox.settings.tabDependencies')}>
                 <SandboxDependenciesTab depCheck={depCheck} />
               </Tab>,
             ]
@@ -147,7 +151,11 @@ export function SandboxSettings({ onComplete, depCheck }: Props) {
       ]
   return (
     <Pane color="permission">
-      <Tabs title="Sandbox:" color="permission" defaultTab="Mode">
+      <Tabs
+        title={`${tSync('misc.sandbox.settings.paneTitle')}:`}
+        color="permission"
+        defaultTab="Mode"
+      >
         {tabs}
       </Tabs>
     </Pane>
@@ -159,12 +167,12 @@ function SandboxModeTab({ showSocketWarning, options, onSelect, onComplete }: Sa
     <Box flexDirection="column" paddingY={1}>
       {showSocketWarning && (
         <Box marginBottom={1}>
-          <Text color="warning">Cannot block unix domain sockets (see Dependencies tab)</Text>
+          <Text color="warning">{tSync('misc.sandbox.settings.socketWarning')}</Text>
         </Box>
       )}
       {
         <Box marginBottom={1}>
-          <Text bold={true}>Configure Mode:</Text>
+          <Text bold={true}>{tSync('misc.sandbox.settings.configureMode')}:</Text>
         </Box>
       }
       {
@@ -185,15 +193,13 @@ function SandboxModeTab({ showSocketWarning, options, onSelect, onComplete }: Sa
           {
             <Text dimColor={true}>
               <Text bold={true} dimColor={true}>
-                Auto-allow mode:
+                {tSync('misc.sandbox.settings.autoAllowMode')}:
               </Text>{' '}
-              Commands will try to run in the sandbox automatically, and attempts to run outside of
-              the sandbox fallback to regular permissions. Explicit ask/deny rules are always
-              respected.
+              {tSync('misc.sandbox.settings.autoAllowDesc')}
             </Text>
           }
           <Text dimColor={true}>
-            Learn more:{' '}
+            {tSync('misc.sandbox.settings.learnMore')}:{' '}
             <Link url="https://code.zy.com/docs/en/sandboxing">code.zy.com/docs/en/sandboxing</Link>
           </Text>
         </Box>

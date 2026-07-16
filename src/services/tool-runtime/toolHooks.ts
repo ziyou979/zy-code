@@ -65,12 +65,8 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
       try {
         // 检查在 hook 执行期间是否被 abort
         // 重要：每个 hook 发出一条 cancelled 事件
-        if (
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          (result.message as any)?.type === 'attachment' &&
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          (result.message as any).attachment.type === 'hook_cancelled'
-        ) {
+        const resultMsg = result.message
+        if (resultMsg?.type === 'attachment' && resultMsg.attachment.type === 'hook_cancelled') {
           logEvent('zy_post_tool_hooks_cancelled', {
             toolName: sanitizeToolNameForAnalytics(tool.name),
 
@@ -94,18 +90,10 @@ export async function* runPostToolUseHooks<Input extends AnyObject, Output>(
         // 分支会创建同样的 attachment，所以这里跳过以避免重复展示 block reason
         // (#31301)。exit-code-2 路径只产出 {blockingError}，所以不受影响。
         if (
-          result.message &&
-          !(
-            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            (
-              (result.message as any).type === 'attachment' &&
-              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-              (result.message as any).attachment.type === 'hook_blocking_error'
-            )
-          )
+          resultMsg &&
+          !(resultMsg.type === 'attachment' && resultMsg.attachment.type === 'hook_blocking_error')
         ) {
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          yield { message: result.message as any }
+          yield { message: resultMsg as AttachmentMessage | ProgressMessage<HookProgress> }
         }
 
         if (result.blockingError) {
@@ -229,12 +217,8 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
     )) {
       try {
         // 检查在 hook 执行期间是否被 abort
-        if (
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          (result.message as any)?.type === 'attachment' &&
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          (result.message as any).attachment.type === 'hook_cancelled'
-        ) {
+        const resultMsg = result.message
+        if (resultMsg?.type === 'attachment' && resultMsg.attachment.type === 'hook_cancelled') {
           logEvent('zy_post_tool_failure_hooks_cancelled', {
             toolName: sanitizeToolNameForAnalytics(tool.name),
             queryChainId: toolUseContext.queryTracking
@@ -255,18 +239,10 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
         // 跳过 result.message 中的 hook_blocking_error —— 下面 blockingError
         // 路径会创建相同的 attachment（参见 #31301 与上面的 PostToolUse）。
         if (
-          result.message &&
-          !(
-            // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-            (
-              (result.message as any).type === 'attachment' &&
-              // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-              (result.message as any).attachment.type === 'hook_blocking_error'
-            )
-          )
+          resultMsg &&
+          !(resultMsg.type === 'attachment' && resultMsg.attachment.type === 'hook_blocking_error')
         ) {
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          yield { message: result.message as any }
+          yield { message: resultMsg as AttachmentMessage | ProgressMessage<HookProgress> }
         }
 
         if (result.blockingError) {
@@ -479,8 +455,12 @@ export async function* runPreToolUseHooks(
     )) {
       try {
         if (result.message) {
-          // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-          yield { type: 'message', message: { message: result.message as any } }
+          yield {
+            type: 'message',
+            message: {
+              message: result.message as AttachmentMessage | ProgressMessage<HookProgress>,
+            },
+          }
         }
         if (result.blockingError) {
           const denialMessage = getPreToolHookBlockingMessage(

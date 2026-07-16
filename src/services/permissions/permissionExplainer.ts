@@ -178,8 +178,7 @@ Explain this command in context.`
       tools: [EXPLAIN_COMMAND_TOOL],
       tool_choice: { type: 'tool', name: 'explain_command' },
       signal,
-      // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      querySource: 'permission_explainer' as any,
+      querySource: 'permission_explainer',
     })
 
     const latencyMs = Date.now() - startTime

@@ -28,7 +28,7 @@ function parseArgs(raw: string): CodeReviewArgs {
       result.fix = true
     } else if (p === '--comment') {
       result.comment = true
-    } else if (EFFORT_LEVELS.includes(p as any)) {
+    } else if (EFFORT_LEVELS.includes(p as 'low' | 'medium' | 'high')) {
       result.effort = p as CodeReviewArgs['effort']
     } else if (/^\d+$/.test(p)) {
       result.prNumber = Number.parseInt(p, 10)
@@ -125,7 +125,7 @@ async function performReview(diff: string, info: string, args: CodeReviewArgs): 
 
   const model = getMainLoopModel() || 'default'
   const response = await sideQuery({
-    querySource: 'code_review' as any,
+    querySource: 'code_review',
     model,
     system: prompt,
     messages: [

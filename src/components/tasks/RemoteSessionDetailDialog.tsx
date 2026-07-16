@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import type { ToolUseContext } from 'src/tool.js'
+import type { ToolCallBlock } from 'src/types/llm.js'
 import type { WireMessage } from 'src/types/index.js'
 import type {
   AssistantMessage,
@@ -104,12 +105,9 @@ function UltraplanSessionDetail({
   onBack,
   onKill,
 }: {
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  session: any
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  toolUseContext: any
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  onDone: (...args: any[]) => void
+  session: DeepImmutable<RemoteAgentTaskState>
+  toolUseContext: ToolUseContext
+  onDone: Props['onDone']
   onBack?: () => void
   onKill?: () => void
 }) {
@@ -117,8 +115,7 @@ function UltraplanSessionDetail({
   const phase = session.ultraplanPhase
   const statusText = running
     ? phase
-      ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        (getPhaseLabel() as any)[phase]
+      ? (getPhaseLabel() as Record<string, string>)[phase]
       : 'running'
     : session.status
   const elapsedTime = useElapsedTime(session.startTime, running, 1000, 0, session.endTime)
@@ -130,12 +127,14 @@ function UltraplanSessionDetail({
       continue
     }
     for (const block of msg.message.content) {
-      if (block.type !== 'tool_use') {
+      // 注意：WireMessage 中工具调用的类型名称是 'tool_use'（wire 格式），
+      // 而非归一化后的 'tool_call'（LLM 类型），因此需要类型断言。
+      if ((block as { type: string }).type !== 'tool_use') {
         continue
       }
       calls++
-      lastBlock = block
-      if (block.name === AGENT_TOOL_NAME || block.name === LEGACY_AGENT_TOOL_NAME) {
+      lastBlock = block as ToolCallBlock
+      if (lastBlock.name === AGENT_TOOL_NAME || lastBlock.name === LEGACY_AGENT_TOOL_NAME) {
         spawns++
       }
     }
@@ -246,8 +245,7 @@ function UltraplanSessionDetail({
                   value: 'back' as const,
                 },
               ]}
-              // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-              onChange={(selectedAction: any) => {
+              onChange={(selectedAction: string) => {
                 switch (selectedAction) {
                   case 'open': {
                     openBrowser(sessionUrl)
@@ -293,8 +291,7 @@ function StagePipeline({
   completed: boolean
   hasProgress: boolean
 }) {
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const currentIdx = stage ? STAGES.indexOf(stage as any) : -1
+  const currentIdx = stage ? STAGES.indexOf(stage as (typeof STAGES)[number]) : -1
   const inSetup = !completed && !hasProgress
   const stageElements = STAGES.map((stage, index) => {
     const isCurrent = !completed && !inSetup && index === currentIdx
@@ -353,10 +350,8 @@ function ReviewSessionDetail({
   onBack,
   onKill,
 }: {
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  session: any
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  onDone: (...args: any[]) => void
+  session: DeepImmutable<RemoteAgentTaskState>
+  onDone: Props['onDone']
   onBack?: () => void
   onKill?: () => void
 }) {

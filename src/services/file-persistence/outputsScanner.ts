@@ -9,6 +9,7 @@
 
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
+import type { Dirent } from 'node:fs'
 import type { EnvironmentKind } from 'src/services/teleport/environments.js'
 import { logForDebugging } from '../../utils/debug.js'
 import type { TurnStartTime } from './types.js'
@@ -83,8 +84,7 @@ export async function findModifiedFiles(
     if (entry.isFile()) {
       // entry.parentPath is available in Node 20+, fallback to entry.path for older versions
       const parentPath = getEntryParentPath(entry, outputsDir)
-      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-      filePaths.push(path.join(parentPath, (entry as any).name))
+      filePaths.push(path.join(parentPath, (entry as unknown as { name: string }).name))
     }
   }
 
@@ -113,8 +113,7 @@ export async function findModifiedFiles(
   // Filter to files modified since turn start
   const modifiedFiles: string[] = []
   for (const result of statResults) {
-    // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    if (result && result.mtimeMs >= (turnStartTime as any)) {
+    if (result && result.mtimeMs >= turnStartTime.wallMs) {
       modifiedFiles.push(result.filePath)
     }
   }

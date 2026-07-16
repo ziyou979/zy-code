@@ -9,6 +9,7 @@ import { logEvent } from '../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/metadata.js'
 import { getLLMAdapter } from '../services/api/client.js'
 import type {
+  CreateParams,
   JSONOutputFormat,
   LLMMessage,
   LLMResponse,
@@ -139,8 +140,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
     allMessages.push({
       role: 'system',
       content: systemBlocks.map((b) => b.text).join('\n\n'),
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    } as any)
+    } as LLMMessage)
   }
   for (const m of messages) {
     allMessages.push(m)
@@ -153,10 +153,8 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
       maxTokens: max_tokens,
       temperature,
       stopSequences: stop_sequences,
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      tools: tools as any,
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      toolChoice: tool_choice as any,
+      tools: tools as ToolDefinition[] | undefined,
+      toolChoice: tool_choice as ToolChoice | undefined,
       thinking: thinkingConfig,
       ...(outputFormat && { outputConfig: { format: outputFormat } }),
       providerExtras: {
@@ -164,8 +162,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<LLMResponse> {
           betas: betas.length > 0 ? betas : undefined,
         },
       },
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    } as any,
+    } as CreateParams,
     signal ?? new AbortController().signal,
   )
 

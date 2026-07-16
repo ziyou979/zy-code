@@ -373,8 +373,7 @@ export const NotebookEditTool = buildTool({
         notebook.cells.splice(cellIndex, 0, new_cell as NotebookCell)
       } else {
         // Find the specified cell
-        // biome-ignore lint/suspicious/noExplicitAny: ipynb 运行时对象包含接口未声明的额外字段
-        const targetCell = notebook.cells[cellIndex]! as any
+        const targetCell = notebook.cells[cellIndex]! as unknown as Record<string, unknown>
         targetCell.source = new_source
         if (targetCell.cellType === 'code') {
           // Reset execution count and clear outputs since cell was modified

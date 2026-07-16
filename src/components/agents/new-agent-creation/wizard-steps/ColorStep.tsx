@@ -39,8 +39,7 @@ export function ColorStep() {
   }
   return (
     <WizardDialogLayout
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      subtitle={tSync('wizard.chooseColor') as any}
+      subtitle={tSync('wizard.chooseColor')}
       footerText={
         <Byline>
           <KeyboardShortcutHint shortcut={'\u2191\u2193'} action="navigate" />
@@ -57,8 +56,7 @@ export function ColorStep() {
       <Box>
         <ColorPicker
           agentName={String(wizardData.agentType || 'agent')}
-          // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-          currentColor={'automatic' as any}
+          currentColor={'automatic'}
           onConfirm={handleConfirm}
         />
       </Box>

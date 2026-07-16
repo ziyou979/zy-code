@@ -14,7 +14,7 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import type { DeepImmutable } from '../../types/utils.js'
-import { stripIdeContextTags } from '../../utils/displayTags.js'
+import { stripIdeContextTags } from '../../utils/xmlTagUtils.js'
 import { escapeRegExp } from '../../utils/stringUtils.js'
 import { INTERRUPT_MESSAGE_FOR_TOOL_USE } from './constants.js'
 

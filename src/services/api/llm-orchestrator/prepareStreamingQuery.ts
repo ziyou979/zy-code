@@ -189,14 +189,19 @@ export async function prepareStreamingQuery(
   let cacheEditingBetaHeader = ''
 
   if (feature('CACHED_MICROCOMPACT')) {
-    // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载
-    const cachedMicrocompact = (await import('../../compact/cachedMicrocompact.js')) as any
-    // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载
-    const betas = (await import('src/constants/betas.js')) as any
-    const isCachedMicrocompactEnabled = cachedMicrocompact.isCachedMicrocompactEnabled
-    const isModelSupportedForCacheEditing = cachedMicrocompact.isModelSupportedForCacheEditing
-    const getCachedMCConfig = cachedMicrocompact.getCachedMCConfig
-    cacheEditingBetaHeader = betas.CACHE_EDITING_BETA_HEADER
+    // 动态模块加载 — 被导入模块的导出随构建宏变化，无法静态确定
+    const cachedMicrocompact = (await import(
+      '../../compact/cachedMicrocompact.js'
+    )) as unknown as Record<string, unknown>
+    const betas = (await import('src/constants/betas.js')) as unknown as Record<string, unknown>
+    const isCachedMicrocompactEnabled =
+      cachedMicrocompact.isCachedMicrocompactEnabled as unknown as () => boolean
+    const isModelSupportedForCacheEditing =
+      cachedMicrocompact.isModelSupportedForCacheEditing as unknown as (model: string) => boolean
+    const getCachedMCConfig = cachedMicrocompact.getCachedMCConfig as unknown as () => {
+      supportedModels: string[]
+    }
+    cacheEditingBetaHeader = betas.CACHE_EDITING_BETA_HEADER as unknown as string
     const featureEnabled = isCachedMicrocompactEnabled()
     const modelSupported = isModelSupportedForCacheEditing(options.model)
     cachedMCEnabled = featureEnabled && modelSupported

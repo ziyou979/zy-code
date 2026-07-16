@@ -7,7 +7,7 @@ import { getProjectRoot, getSessionId } from 'src/bootstrap/runtime/runtimeConte
 import { getCommand, getSkillToolCommands, hasCommand } from '../../commands.js'
 import { DEFAULT_AGENT_PROMPT, enhanceSystemPromptWithEnvDetails } from '../../constants/prompts.js'
 import type { QuerySource } from '../../constants/querySource.js'
-import { getSystemContext, getUserContext } from '../../context.js'
+import { getSystemContext, getUserContext } from '../../services/context/context.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { query } from '../../query.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
@@ -576,7 +576,7 @@ export async function* runAgent({
 
     // Load all skill contents concurrently and add to initial messages
     const { formatSkillLoadingMetadata } = await import(
-      '../../services/process-user-input/ProcessSlashCommand.js'
+      '../../services/process-user-input/commandMetadataFormatters.js'
     )
     const loaded = await Promise.all(
       validSkills.map(async ({ skillName, skill }) => ({

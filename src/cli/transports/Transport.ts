@@ -12,6 +12,10 @@ export interface Transport {
   connect(): Promise<void>
   disconnect(): void
   send(message: StdinMessage): void
+  /** 发送 StdoutMessage 到远端（SSETransport / WebSocketTransport 共有）。 */
+  write(message: StdoutMessage): Promise<void>
+  /** 关闭连接并清理资源。 */
+  close(): void
   onMessage(handler: MessageHandler): void
   onStateChange(handler: StateChangeHandler): void
   /** 注册原始入站数据回调(remoteIO 用它把数据喂给输入流)。 */

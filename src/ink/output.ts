@@ -398,16 +398,21 @@ export default class Output {
         }
 
         case 'shift': {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          shiftRows(screen, (operation as any).top, (operation as any).bottom, (operation as any).n)
+          const { top, bottom, n } = operation as unknown as {
+            top: number
+            bottom: number
+            n: number
+          }
+          shiftRows(screen, top, bottom, n)
           continue
         }
 
         case 'write': {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          const { text, softWrap } = operation as any
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          let { x, y } = operation as any
+          const { text, softWrap } = operation as unknown as {
+            text: string
+            softWrap: boolean[]
+          }
+          let { x, y } = operation as unknown as { x: number; y: number }
           let lines = text.split('\n')
           let swFrom = 0
           let prevContentEnd = 0

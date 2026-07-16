@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test'
-import { applyShellSuggestion, findShellTokenStart } from '../../../src/hooks/useTypeahead.js'
+import {
+  applyShellSuggestion,
+  findShellTokenStart,
+} from '../../../src/hooks/typeaheadTokenUtils.js'
 import {
   detectCompletionShellType,
   getShellCompletions,

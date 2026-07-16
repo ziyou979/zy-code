@@ -35,8 +35,7 @@ export function UserToolResultMessage({
   width,
   isTranscriptMode,
 }: Props) {
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const toolUse = useGetToolFromMessages(param.toolCallId, tools, lookups as any)
+  const toolUse = useGetToolFromMessages(param.toolCallId, tools, lookups as unknown as Parameters<typeof useGetToolFromMessages>[2])
   if (!toolUse) {
     return null
   }

@@ -1,4 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+import type { Color } from '../../ink/styles.js'
 import { Box, Text } from '../../ink.js'
 import { feature } from 'bun:bundle'
 import { useState } from 'react'
@@ -55,7 +56,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
         marginTop={addMargin ? 1 : 0}
         // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
-        backgroundColor={bg as any}
+        backgroundColor={bg as Color}
         width="100%"
       >
         {
@@ -74,14 +75,14 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
         marginTop={addMargin ? 1 : 0}
         // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
         // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
-        backgroundColor={bg as any}
+        backgroundColor={bg as Color}
         width="100%"
       >
         {
           <Box minWidth={2}>
             {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
             <Text // biome-ignore lint/suspicious/noExplicitAny: Ink Color 类型不含 theme 颜色
-              color={'error' as any}
+              color={'' as Color}
             >
               {BLACK_CIRCLE}
             </Text>
@@ -103,7 +104,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       <Box
         marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
-        backgroundColor={bg as any}
+        backgroundColor={bg as Color}
         width="100%"
       >
         {
@@ -120,7 +121,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       <Box
         marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
-        backgroundColor={bg as any}
+        backgroundColor={bg as Color}
         width="100%"
       >
         {<Text dimColor={true}>{TEARDROP_ASTERISK} </Text>}
@@ -160,7 +161,7 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
         color={
           'level' in message && message.level === 'warning'
             ? // biome-ignore lint/suspicious/noExplicitAny: Ink Color 类型不含 theme 颜色
-              ('warning' as any)
+              ('' as Color)
             : undefined
         }
         dimColor={'level' in message && message.level === 'info'}
@@ -252,7 +253,7 @@ function StopHookSummaryMessage({
     <Box
       flexDirection="row"
       marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
-      backgroundColor={bg as any}
+      backgroundColor={bg as Color}
       width="100%"
     >
       {
@@ -301,14 +302,14 @@ function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: an
     <Box
       flexDirection="row"
       marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
-      backgroundColor={bg as any}
+      backgroundColor={bg as Color}
       width="100%"
     >
       {dot && (
         <Box minWidth={2}>
           {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
           <Text // biome-ignore lint/suspicious/noExplicitAny: Ink Color 类型不含 theme 颜色
-            color={color as any}
+            color={color as Color}
             dimColor={dimColor}
           >
             {BLACK_CIRCLE}
@@ -320,7 +321,7 @@ function SystemTextMessageInner({ content, addMargin, dot, color, dimColor }: an
           {
             // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
             <Text // biome-ignore lint/suspicious/noExplicitAny: Ink Color 类型不含 theme 颜色
-              color={color as any}
+              color={color as Color}
               dimColor={dimColor}
               wrap="wrap"
             >
@@ -366,7 +367,7 @@ function TurnDurationMessage({ message, addMargin }: { message: any; addMargin: 
     <Box
       flexDirection="row"
       marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
-      backgroundColor={bg as any}
+      backgroundColor={bg as Color}
       width="100%"
     >
       {
@@ -407,7 +408,7 @@ function MemorySavedMessage({
     <Box
       flexDirection="column"
       marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
-      backgroundColor={bg as any}
+      backgroundColor={bg as Color}
     >
       {
         <Box flexDirection="row">
@@ -452,7 +453,7 @@ function _ThinkingMessage({ message, addMargin }: { message: any; addMargin: boo
     <Box
       flexDirection="row"
       marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
-      backgroundColor={bg as any}
+      backgroundColor={bg as Color}
       width="100%"
     >
       {
@@ -472,7 +473,7 @@ function WireStatusMessage({ message, addMargin }: { message: any; addMargin: bo
     <Box
       flexDirection="row"
       marginTop={addMargin ? 1 : 0} // biome-ignore lint/suspicious/noExplicitAny: Ink BackgroundColor 类型不含 theme 颜色
-      backgroundColor={bg as any}
+      backgroundColor={bg as Color}
       width={999}
     >
       {<Box minWidth={2} />}
@@ -482,7 +483,7 @@ function WireStatusMessage({ message, addMargin }: { message: any; addMargin: bo
             <Text>
               {/* biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容 */}
               <ThemedText // biome-ignore lint/suspicious/noExplicitAny: Ink Color 类型不含 theme 颜色
-                color={'suggestion' as any}
+                color={'' as Color}
               >
                 /remote-control
               </ThemedText>{' '}

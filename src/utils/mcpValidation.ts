@@ -3,12 +3,31 @@ import {
   countMessagesTokensWithAPI,
   roughTokenCountEstimation,
 } from '../services/tokenEstimation.js'
-import type { ContentBlock, ImageBlock, LLMMessage, TextBlock } from '../types/llm.js'
+import type { ContentBlock, LLMMessage } from '../types/llm.js'
 import { compressImageBlock } from './imageResizer.js'
 import { logError } from './log.js'
 
+// @deprecated 请直接导入 src/utils/mcpContentSizeUtils.js 中的同名函数/变量
+import {
+  getContentSizeEstimate,
+  getMaxMcpOutputChars,
+  getTruncationMessage,
+  type MCPToolResult,
+  truncateString,
+} from './mcpContentSizeUtils.js'
+
+export {
+  getContentSizeEstimate,
+  getMaxMcpOutputChars,
+  getTruncationMessage,
+  type MCPToolResult,
+  truncateString,
+} from './mcpContentSizeUtils.js'
+
+// @deprecated 请直接导入 src/utils/mcpContentSizeUtils.js 中的 IMAGE_TOKEN_ESTIMATE
+export { IMAGE_TOKEN_ESTIMATE } from './mcpContentSizeUtils.js'
+
 export const MCP_TOKEN_COUNT_THRESHOLD_FACTOR = 0.5
-export const IMAGE_TOKEN_ESTIMATE = 1600
 const DEFAULT_MAX_MCP_OUTPUT_TOKENS = 25000
 
 /**
@@ -38,53 +57,6 @@ export function getMaxMcpOutputTokens(): number {
   return DEFAULT_MAX_MCP_OUTPUT_TOKENS
 }
 
-export type MCPToolResult = string | ContentBlock[] | undefined
-
-function isTextBlock(block: ContentBlock): block is TextBlock {
-  return block.type === 'text'
-}
-
-function isImageBlock(block: ContentBlock): block is ImageBlock {
-  return block.type === 'image'
-}
-
-export function getContentSizeEstimate(content: MCPToolResult): number {
-  if (!content) {
-    return 0
-  }
-
-  if (typeof content === 'string') {
-    return roughTokenCountEstimation(content)
-  }
-
-  return content.reduce((total, block) => {
-    if (isTextBlock(block)) {
-      return total + roughTokenCountEstimation(block.text)
-    } else if (isImageBlock(block)) {
-      // 图像 token 估算
-      return total + IMAGE_TOKEN_ESTIMATE
-    }
-    return total
-  }, 0)
-}
-
-function getMaxMcpOutputChars(): number {
-  return getMaxMcpOutputTokens() * 4
-}
-
-function getTruncationMessage(): string {
-  return `\n\n[OUTPUT TRUNCATED - exceeded ${getMaxMcpOutputTokens()} token limit]
-
-The tool output was truncated. If this MCP server provides pagination or filtering tools, use them to retrieve specific portions of the data. If pagination is not available, inform the user that you are working with truncated output and results may be incomplete.`
-}
-
-function truncateString(content: string, maxChars: number): string {
-  if (content.length <= maxChars) {
-    return content
-  }
-  return content.slice(0, maxChars)
-}
-
 async function truncateContentBlocks(
   blocks: ContentBlock[],
   maxChars: number,
@@ -93,7 +65,7 @@ async function truncateContentBlocks(
   let currentChars = 0
 
   for (const block of blocks) {
-    if (isTextBlock(block)) {
+    if (block.type === 'text') {
       const remainingChars = maxChars - currentChars
       if (remainingChars <= 0) {
         break
@@ -106,9 +78,9 @@ async function truncateContentBlocks(
         result.push({ type: 'text', text: block.text.slice(0, remainingChars) })
         break
       }
-    } else if (isImageBlock(block)) {
+    } else if (block.type === 'image') {
       // 包含图像但计入其估算大小
-      const imageChars = IMAGE_TOKEN_ESTIMATE * 4
+      const imageChars = 1600 * 4
       if (currentChars + imageChars <= maxChars) {
         result.push(block)
         currentChars += imageChars
@@ -168,8 +140,9 @@ export async function truncateMcpContent(content: MCPToolResult): Promise<MCPToo
     return content
   }
 
-  const maxChars = getMaxMcpOutputChars()
-  const truncationMsg = getTruncationMessage()
+  const maxTokens = getMaxMcpOutputTokens()
+  const maxChars = getMaxMcpOutputChars(maxTokens)
+  const truncationMsg = getTruncationMessage(maxTokens)
 
   if (typeof content === 'string') {
     return truncateString(content, maxChars) + truncationMsg

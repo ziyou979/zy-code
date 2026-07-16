@@ -1,5 +1,5 @@
 import type { QuerySource } from 'src/constants/querySource.js'
-import { getUserContext } from 'src/context.js'
+import { getUserContext } from 'src/services/context/context.js'
 import { queryModelWithoutStreaming } from 'src/services/api/llmOrchestrator.js'
 import type { ModelName } from 'src/services/model/model.js'
 import { getEmptyToolPermissionContext } from 'src/tool.js'

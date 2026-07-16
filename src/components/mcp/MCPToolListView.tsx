@@ -20,8 +20,7 @@ type Props = {
 export function MCPToolListView({ server, onSelectTool, onBack }: Props) {
   const mcpTools = useAppState((s) => s.mcp.tools)
   let serverTools: ReturnType<typeof filterToolsByServer>
-  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-  if ((server as any).client.type !== 'connected') {
+  if (server.client.type !== 'connected') {
     serverTools = []
   } else {
     serverTools = filterToolsByServer(mcpTools, server.name)

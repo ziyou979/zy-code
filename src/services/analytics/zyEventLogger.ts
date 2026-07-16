@@ -343,8 +343,13 @@ export function initializeZyEventLogging(): void {
   // Events are written to ~/.zy/telemetry/zy_events.log
   // instead of being sent to the remote /api/event_logging/batch endpoint.
   const eventLoggingExporter = new LocalFileExporter()
-  // biome-ignore lint/suspicious/noExplicitAny: 第三方 API 构造函数签名不完善
-  zyEventLoggerProvider = new (LoggerProvider as any)({
+  // LoggerProvider 的 types 文件未声明 processors 配置，
+  // 但 SDK 运行时确实支持通过 config 传入 processors 数组。
+  zyEventLoggerProvider = new (
+    LoggerProvider as unknown as new (
+      config: Record<string, unknown>,
+    ) => LoggerProvider
+  )({
     resource,
     processors: [
       new BatchLogRecordProcessor(eventLoggingExporter, {

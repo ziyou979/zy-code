@@ -12,9 +12,10 @@ import { createDebugLog } from '../../utils/debug.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { execCommandHook, parseHookOutput, parseHttpHookOutput } from './commandRunner.js'
+import { execCommandHook } from './commandRunner.js'
 import { shouldSkipHookDueToTrust, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
 import { execHttpHook } from './execHttpHook.js'
+import { parseHookOutput, parseHttpHookOutput } from './hookOutputSupport.js'
 import { shouldDisableAllHooksIncludingManaged } from './hooksConfigSnapshot.js'
 import {
   getHookTypeCounts,

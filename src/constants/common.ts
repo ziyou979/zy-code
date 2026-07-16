@@ -1,3 +1,4 @@
+import { formatMonthYear } from "../utils/dateUtils.js"
 import memoize from 'lodash-es/memoize.js'
 
 // This ensures you get the LOCAL date in ISO format
@@ -29,5 +30,5 @@ export function getLocalMonthYear(): string {
   const date = process.env.ZY_CODE_OVERRIDE_DATE
     ? new Date(process.env.ZY_CODE_OVERRIDE_DATE)
     : new Date()
-  return date.toLocaleString('en-US', { month: 'long', year: 'numeric' })
+  return formatMonthYear(date)
 }

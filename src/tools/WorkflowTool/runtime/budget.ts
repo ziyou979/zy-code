@@ -24,10 +24,8 @@ export function createWorkflowBudget(totalTokens: number | null): WorkflowBudget
 }
 
 export function addSpentTokens(budget: WorkflowBudget, tokens: number): void {
-  const _b = budget as { total: number | null; spent: () => number }
-  // 通过 setter 模式修改闭包中的变量
-  // biome-ignore lint/suspicious/noExplicitAny: 通过动态属性修改闭包变量
-  ;(budget as any)._spent = ((budget as any)._spent ?? 0) + tokens // eslint-disable-line @typescript-eslint/no-explicit-any
+  const mutable = budget as WorkflowBudget & { _spent?: number }
+  mutable._spent = (mutable._spent ?? 0) + tokens
 }
 
 export class BudgetExhaustedError extends Error {

@@ -168,8 +168,9 @@ export async function finalizeInProcessAgent(
   }
 
   // 关闭 SDK 事件
-  const terminatedStatus = status === 'killed' ? 'stopped' : status
-  emitTaskTerminatedBridge(taskId, terminatedStatus as any, {
+  const terminatedStatus: 'completed' | 'failed' | 'stopped' =
+    status === 'killed' ? 'stopped' : status
+  emitTaskTerminatedBridge(taskId, terminatedStatus, {
     toolUseId: capturedToolUseId,
     summary: capturedAgentId,
   })

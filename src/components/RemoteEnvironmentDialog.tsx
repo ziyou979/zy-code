@@ -5,6 +5,7 @@ import { tSync } from '../i18n/index.js'
 import { Text } from '../ink.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { getEnvironmentSelectionInfo } from '../services/teleport/environmentSelection.js'
+import type { EnvironmentResource } from '../services/teleport/environments.js'
 import { toError } from '../utils/errors.js'
 import { logError } from '../utils/log.js'
 import { getSettingSourceName } from '../services/settings/constants.js'
@@ -22,10 +23,8 @@ type Props = {
 type LoadingState = 'loading' | 'updating' | null
 export function RemoteEnvironmentDialog({ onDone }: Props) {
   const [loadingState, setLoadingState] = useState<string | null>('loading')
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const [environments, setEnvironments] = useState<any[]>([])
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const [selectedEnvironment, setSelectedEnvironment] = useState<any>(null)
+  const [environments, setEnvironments] = useState<EnvironmentResource[]>([])
+  const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentResource | null>(null)
   const [selectedEnvironmentSource, setSelectedEnvironmentSource] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   useEffect(() => {
@@ -114,8 +113,7 @@ export function RemoteEnvironmentDialog({ onDone }: Props) {
     />
   )
 }
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-function EnvironmentLabel({ environment }: any) {
+function EnvironmentLabel({ environment }: { environment: EnvironmentResource }) {
   return (
     <Text>
       {TICK} Using {<Text bold={true}>{environment.name}</Text>}{' '}
@@ -127,8 +125,7 @@ function SingleEnvironmentContent({
   environment,
   onDone,
 }: {
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  environment: any
+  environment: EnvironmentResource
   onDone: () => void
 }) {
   useKeybinding('confirm:yes', onDone, {
@@ -152,10 +149,8 @@ function MultipleEnvironmentsContent({
   onSelect,
   onCancel,
 }: {
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  environments: any[]
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  selectedEnvironment: any
+  environments: EnvironmentResource[]
+  selectedEnvironment: EnvironmentResource
   selectedEnvironmentSource: string | null
   loadingState: string | null
   onSelect: (value: string) => void
@@ -163,8 +158,7 @@ function MultipleEnvironmentsContent({
 }) {
   const sourceSuffix =
     selectedEnvironmentSource && selectedEnvironmentSource !== 'localSettings'
-      ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        ` ${tSync('remoteEnv.fromSettings', { source: getSettingSourceName(selectedEnvironmentSource as any) })}`
+      ? ` ${tSync('remoteEnv.fromSettings', { source: getSettingSourceName(selectedEnvironmentSource as import('../services/settings/constants.js').SettingSource) })}`
       : ''
   const subtitle = (
     <Text>

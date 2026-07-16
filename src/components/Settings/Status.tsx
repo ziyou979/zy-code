@@ -166,15 +166,12 @@ export function Status({ context, diagnosticsPromise }: Props) {
     </Box>
   )
 }
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-function Diagnostics({ promise }: { promise: Promise<any> }) {
+function Diagnostics({ promise }: { promise: Promise<Diagnostic[]> }) {
   const diagnostics = use(promise)
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  if ((diagnostics as any).length === 0) {
+  if (diagnostics.length === 0) {
     return null
   }
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const diagnosticElements = (diagnostics as any).map((diagnostic: any, i: number) => (
+  const diagnosticElements = diagnostics.map((diagnostic: string | React.ReactNode, i: number) => (
     <Box key={i} flexDirection="row" gap={1} paddingX={1}>
       <Text color="error">{WARNING}</Text>
       {typeof diagnostic === 'string' ? <Text wrap="wrap">{diagnostic}</Text> : diagnostic}

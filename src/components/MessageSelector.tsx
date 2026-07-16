@@ -1,4 +1,5 @@
 import { randomUUID, type UUID } from 'node:crypto'
+import { basename } from 'node:path'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
@@ -18,53 +19,30 @@ import { POINTER, WARNING } from '../constants/figures.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { Box, Text } from '../ink.js'
 import { useKeybinding, useKeybindings } from '../keybindings/useKeybinding.js'
-import type { ContentBlock, TextBlock } from '../types/llm.js'
 import type { Message, PartialCompactDirection, UserMessage } from '../types/message.js'
-import { stripDisplayTags } from '../utils/displayTags.js'
 import { createUserMessage } from '../services/messages/./constructors.js'
-import {
-  extractTag,
-  isEmptyMessageText,
-  isToolUseResultMessage,
-} from '../services/messages/./predicates.js'
-import { isSyntheticMessage } from '../services/messages/./constants.js'
 import { type OptionWithDescription, Select } from './CustomSelect/select.js'
 import { Spinner } from './Spinner.js'
-
-function isTextBlock(block: ContentBlock): block is TextBlock {
-  return block.type === 'text'
-}
-
-import * as path from 'node:path'
-import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
-import type { FileEditOutput } from 'src/tools/FileEditTool/types.js'
-import type { Output as FileWriteToolOutput } from 'src/tools/FileWriteTool/FileWriteTool.js'
-import {
-  BASH_STDERR_TAG,
-  BASH_STDOUT_TAG,
-  COMMAND_MESSAGE_TAG,
-  LOCAL_COMMAND_STDERR_TAG,
-  LOCAL_COMMAND_STDOUT_TAG,
-  TASK_NOTIFICATION_TAG,
-  TEAMMATE_MESSAGE_TAG,
-  TICK_TAG,
-} from '../constants/xml.js'
-import { count } from '../utils/array.js'
-import { formatRelativeTimeAgo, truncate } from '../utils/format.js'
+import { formatRelativeTimeAgo } from '../utils/format.js'
+import { validateUuid } from '../utils/uuid.js'
 import { Divider } from './design-system/Divider.js'
+import {
+  DiffStatsText,
+  RestoreOptionDescription,
+  UserMessageOption,
+} from './MessageSelectorDetails.js'
+import {
+  computeDiffStatsBetweenMessages,
+  isSummarizeOption,
+  messagesAfterAreOnlySynthetic,
+  type RestoreOption,
+  selectableUserMessagesFilter,
+} from './messageSelectorUtils.js'
+export {
+  messagesAfterAreOnlySynthetic,
+  selectableUserMessagesFilter,
+} from './messageSelectorUtils.js'
 
-type RestoreOption =
-  | 'both'
-  | 'conversation'
-  | 'code'
-  | 'summarize'
-  | 'summarize_up_to'
-  | 'nevermind'
-function isSummarizeOption(
-  option: RestoreOption | null,
-): option is 'summarize' | 'summarize_up_to' {
-  return option === 'summarize' || option === 'summarize_up_to'
-}
 type Props = {
   messages: Message[]
   onPreRestore: () => void
@@ -80,6 +58,12 @@ type Props = {
   preselectedMessage?: UserMessage
 }
 const MAX_VISIBLE_MESSAGES = 7
+
+function getValidatedMessageUuid(message: Pick<UserMessage, 'uuid'>): UUID | undefined {
+  // 历史会话可能来自旧日志或外部导入，进入 file history 前先做一次运行时收窄。
+  return validateUuid(message.uuid) ?? undefined
+}
+
 export function MessageSelector({
   messages,
   onPreRestore,
@@ -126,9 +110,12 @@ export function MessageSelector({
     if (!preselectedMessage || !isFileHistoryEnabled) {
       return
     }
+    const preselectedMessageId = getValidatedMessageUuid(preselectedMessage)
+    if (!preselectedMessageId) {
+      return
+    }
     let cancelled = false
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    void fileHistoryGetDiffStats(fileHistory, preselectedMessage.uuid as any).then((stats) => {
+    void fileHistoryGetDiffStats(fileHistory, preselectedMessageId).then((stats) => {
       if (!cancelled) {
         setDiffStatsForRestore(stats)
       }
@@ -211,7 +198,11 @@ export function MessageSelector({
     } catch (restoreError) {
       logError(restoreError as Error)
       setIsRestoring(false)
-      setError(`Failed to restore the conversation:\n${restoreError}`)
+      setError(
+        tSync('messageSelector.restoreConversationFailed', {
+          error: String(restoreError),
+        }),
+      )
     }
   }
   async function handleSelect(message_0: UserMessage) {
@@ -232,8 +223,12 @@ export function MessageSelector({
       await restoreConversationDirectly(message_0)
       return
     }
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    const diffStats = await fileHistoryGetDiffStats(fileHistory, message_0.uuid as any)
+    const messageId = getValidatedMessageUuid(message_0)
+    if (!messageId) {
+      setError(tSync('messageSelector.messageNotFound'))
+      return
+    }
+    const diffStats = await fileHistoryGetDiffStats(fileHistory, messageId)
     setMessageToRestore(message_0)
     setDiffStatsForRestore(diffStats)
   }
@@ -259,12 +254,11 @@ export function MessageSelector({
       setRestoringOption(option)
       setError(undefined)
       try {
-        const direction = option === 'summarize_up_to' ? 'up_to' : 'from'
+        const direction: PartialCompactDirection = option === 'summarize_up_to' ? 'up_to' : 'from'
         const feedback =
           (direction === 'up_to' ? summarizeUpToFeedback : summarizeFromFeedback).trim() ||
           undefined
-        // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-        await onSummarize(messageToRestore, feedback, direction as any)
+        await onSummarize(messageToRestore, feedback, direction)
         setIsRestoring(false)
         setRestoringOption(null)
         setMessageToRestore(undefined)
@@ -274,7 +268,11 @@ export function MessageSelector({
         setIsRestoring(false)
         setRestoringOption(null)
         setMessageToRestore(undefined)
-        setError(`Failed to summarize:\n${summarizeError}`)
+        setError(
+          tSync('messageSelector.summarizeFailed', {
+            error: String(summarizeError),
+          }),
+        )
       }
       return
     }
@@ -304,11 +302,24 @@ export function MessageSelector({
 
     // Handle errors
     if (conversationError && codeError) {
-      setError(`Failed to restore the conversation and code:\n${conversationError}\n${codeError}`)
+      setError(
+        tSync('messageSelector.restoreConversationAndCodeFailed', {
+          conversationError: String(conversationError),
+          codeError: String(codeError),
+        }),
+      )
     } else if (conversationError) {
-      setError(`Failed to restore the conversation:\n${conversationError}`)
+      setError(
+        tSync('messageSelector.restoreConversationFailed', {
+          error: String(conversationError),
+        }),
+      )
     } else if (codeError) {
-      setError(`Failed to restore the code:\n${codeError}`)
+      setError(
+        tSync('messageSelector.restoreCodeFailed', {
+          error: String(codeError),
+        }),
+      )
     } else {
       // Success - close the selector
       onClose()
@@ -371,19 +382,24 @@ export function MessageSelector({
       void Promise.all(
         messageOptions.map(async (userMessage, itemIndex) => {
           if (userMessage.uuid !== currentUUID) {
-            // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-            const canRestore = fileHistoryCanRestore(fileHistory, userMessage.uuid as any)
+            const userMessageId = getValidatedMessageUuid(userMessage)
+            if (!userMessageId) {
+              setFileHistoryMetadata((prev) => ({
+                ...prev,
+                [itemIndex]: undefined,
+              }))
+              return
+            }
+            const canRestore = fileHistoryCanRestore(fileHistory, userMessageId)
             const nextUserMessage = messageOptions.at(itemIndex + 1)
+            const nextUserMessageId = nextUserMessage
+              ? getValidatedMessageUuid(nextUserMessage)
+              : undefined
             const diffStats_0 = canRestore
               ? computeDiffStatsBetweenMessages(
                   messages,
-                  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-                  userMessage.uuid as any,
-                  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-                  (nextUserMessage?.uuid as any) !== currentUUID
-                    ? // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-                      (nextUserMessage?.uuid as any)
-                    : undefined,
+                  userMessageId,
+                  nextUserMessageId !== currentUUID ? nextUserMessageId : undefined,
                 )
               : undefined
             if (diffStats_0 !== undefined) {
@@ -523,8 +539,10 @@ export function MessageSelector({
                                 {numFilesChanged ? (
                                   <>
                                     {numFilesChanged === 1 && metadata.filesChanged![0]
-                                      ? `${path.basename(metadata.filesChanged![0])} `
-                                      : `${numFilesChanged} files changed `}
+                                      ? `${basename(metadata.filesChanged![0])} `
+                                      : `${tSync('messageSelector.filesChanged', {
+                                          count: numFilesChanged,
+                                        })} `}
                                     <DiffStatsText diffStats={metadata} />
                                   </>
                                 ) : (
@@ -560,348 +578,4 @@ export function MessageSelector({
       </Box>
     </Box>
   )
-}
-function getRestoreOptionConversationText(option: RestoreOption): string {
-  switch (option) {
-    case 'summarize':
-      return tSync('messageSelector.messagesAfterSummarized')
-    case 'summarize_up_to':
-      return tSync('messageSelector.precedingMessagesSummarized')
-    case 'both':
-    case 'conversation':
-      return tSync('messageSelector.conversationWillBeForked')
-    case 'code':
-    case 'nevermind':
-      return tSync('messageSelector.conversationUnchanged')
-  }
-}
-function RestoreOptionDescription({
-  selectedRestoreOption,
-  canRestoreCode,
-  diffStatsForRestore,
-}: {
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  selectedRestoreOption: any
-  canRestoreCode: boolean
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  diffStatsForRestore: any
-}) {
-  const showCodeRestore =
-    canRestoreCode && (selectedRestoreOption === 'both' || selectedRestoreOption === 'code')
-  const getRestoreOptionConversationTextResult =
-    getRestoreOptionConversationText(selectedRestoreOption)
-  const restoreCodeConfirmationElement =
-    !isSummarizeOption(selectedRestoreOption) &&
-    (showCodeRestore ? (
-      <RestoreCodeConfirmation diffStatsForRestore={diffStatsForRestore} />
-    ) : (
-      <Text dimColor={true}>{tSync('messageSelector.codeUnchanged')}</Text>
-    ))
-  return (
-    <Box flexDirection="column">
-      {<Text dimColor={true}>{getRestoreOptionConversationTextResult}</Text>}
-      {restoreCodeConfirmationElement}
-    </Box>
-  )
-}
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-function RestoreCodeConfirmation({ diffStatsForRestore }: { diffStatsForRestore: any }) {
-  if (diffStatsForRestore === undefined) {
-    return
-  }
-  if (!diffStatsForRestore.filesChanged?.[0]) {
-    return <Text dimColor={true}>{tSync('messageSelector.codeNotChanged')}</Text>
-  }
-  const numFilesChanged = diffStatsForRestore.filesChanged.length
-  let fileLabel
-  if (numFilesChanged === 1) {
-    fileLabel = path.basename(diffStatsForRestore.filesChanged[0] || '')
-  } else {
-    if (numFilesChanged === 2) {
-      const file1 = path.basename(diffStatsForRestore.filesChanged[0] || '')
-      const file2 = path.basename(diffStatsForRestore.filesChanged[1] || '')
-      fileLabel = `${file1} and ${file2}`
-    } else {
-      const file1_0 = path.basename(diffStatsForRestore.filesChanged[0] || '')
-      fileLabel = tSync('messageSelector.fileAndOtherFiles', {
-        file1: file1_0,
-        count: diffStatsForRestore.filesChanged.length - 1,
-      })
-    }
-  }
-  return (
-    <Text dimColor={true}>
-      {tSync('messageSelector.codeWillBeRestored')}{' '}
-      {<DiffStatsText diffStats={diffStatsForRestore} />}{' '}
-      {tSync('messageSelector.inFiles', { fileLabel })}
-    </Text>
-  )
-}
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-function DiffStatsText({ diffStats }: { diffStats: any }) {
-  if (!diffStats?.filesChanged) {
-    return
-  }
-  return (
-    <>
-      {<Text color="diffAddedWord">+{diffStats.insertions} </Text>}
-      {<Text color="diffRemovedWord">-{diffStats.deletions}</Text>}
-    </>
-  )
-}
-function UserMessageOption({
-  userMessage,
-  color,
-  dimColor,
-  isCurrent,
-  paddingRight,
-}: {
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  userMessage: any
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  color?: any
-  dimColor?: boolean
-  isCurrent: boolean
-  paddingRight?: number
-}) {
-  const { columns } = useTerminalSize()
-  if (isCurrent) {
-    return (
-      <Box width="100%">
-        <Text italic={true} color={color} dimColor={dimColor}>
-          {tSync('messageSelector.currentLabel')}
-        </Text>
-      </Box>
-    )
-  }
-  const content = userMessage.message.content
-  const lastBlock = typeof content === 'string' ? null : content[content.length - 1]
-  let TextComponent!: typeof Text
-  let BoxComponent!: typeof Box
-  let textColor
-  let textDimColor
-  let truncateResult
-
-  let earlyReturn: React.ReactNode | symbol = Symbol.for('react.early_return_sentinel')
-  const rawMessageText =
-    typeof content === 'string'
-      ? content.trim()
-      : lastBlock && isTextBlock(lastBlock)
-        ? lastBlock.text.trim()
-        : '(no prompt)'
-  const messageText = stripDisplayTags(rawMessageText)
-  if (isEmptyMessageText(messageText)) {
-    earlyReturn = (
-      <Box flexDirection="row" width="100%">
-        <Text italic={true} color={color} dimColor={dimColor}>
-          {tSync('messageSelector.emptyMessage')}
-        </Text>
-      </Box>
-    )
-  } else {
-    if (messageText.includes('<bash-input>')) {
-      const input = extractTag(messageText, 'bash-input')
-      if (input) {
-        earlyReturn = (
-          <Box flexDirection="row" width="100%">
-            {<Text color="bashBorder">!</Text>}
-            <Text color={color} dimColor={dimColor}>
-              {' '}
-              {input}
-            </Text>
-          </Box>
-        )
-      }
-    }
-    if (messageText.includes(`<${COMMAND_MESSAGE_TAG}>`)) {
-      const commandMessage = extractTag(messageText, COMMAND_MESSAGE_TAG)
-      const args = extractTag(messageText, 'command-args')
-      const isSkillFormat = extractTag(messageText, 'skill-format') === 'true'
-      if (commandMessage) {
-        if (isSkillFormat) {
-          earlyReturn = (
-            <Box flexDirection="row" width="100%">
-              <Text color={color} dimColor={dimColor}>
-                Skill({commandMessage})
-              </Text>
-            </Box>
-          )
-        } else {
-          earlyReturn = (
-            <Box flexDirection="row" width="100%">
-              <Text color={color} dimColor={dimColor}>
-                /{commandMessage} {args}
-              </Text>
-            </Box>
-          )
-        }
-      }
-    }
-    BoxComponent = Box
-
-    TextComponent = Text
-    textColor = color
-    textDimColor = dimColor
-    truncateResult = paddingRight
-      ? truncate(messageText, columns - paddingRight, true)
-      : messageText.slice(0, 500).split('\n').slice(0, 4).join('\n')
-  }
-  if (earlyReturn !== Symbol.for('react.early_return_sentinel')) {
-    return earlyReturn as React.ReactNode
-  }
-  return (
-    <BoxComponent flexDirection={'row'} width={'100%'}>
-      {
-        <TextComponent color={textColor} dimColor={textDimColor}>
-          {truncateResult}
-        </TextComponent>
-      }
-    </BoxComponent>
-  )
-}
-
-/**
- * Computes the diff stats for all the file edits in-between two messages.
- */
-function computeDiffStatsBetweenMessages(
-  messages: Message[],
-  fromMessageId: UUID,
-  toMessageId: UUID | undefined,
-): DiffStats | undefined {
-  const startIndex = messages.findIndex((msg) => msg.uuid === fromMessageId)
-  if (startIndex === -1) {
-    return undefined
-  }
-  let endIndex = toMessageId
-    ? messages.findIndex((msg) => msg.uuid === toMessageId)
-    : messages.length
-  if (endIndex === -1) {
-    endIndex = messages.length
-  }
-  const filesChanged: string[] = []
-  let insertions = 0
-  let deletions = 0
-  for (let i = startIndex + 1; i < endIndex; i++) {
-    const msg = messages[i]
-    if (!msg || !isToolUseResultMessage(msg)) {
-      continue
-    }
-    const result = msg.toolUseResult as FileEditOutput | FileWriteToolOutput
-    if (!result?.filePath || !result.structuredPatch) {
-      continue
-    }
-    if (!filesChanged.includes(result.filePath)) {
-      filesChanged.push(result.filePath)
-    }
-    try {
-      if ('type' in result && result.type === 'create') {
-        insertions += result.content.split(/\r?\n/).length
-      } else {
-        for (const hunk of result.structuredPatch) {
-          const additions = count(hunk.lines, (line) => line.startsWith('+'))
-          const removals = count(hunk.lines, (line) => line.startsWith('-'))
-          insertions += additions
-          deletions += removals
-        }
-      }
-    } catch {}
-  }
-  return {
-    filesChanged,
-    insertions,
-    deletions,
-  }
-}
-export function selectableUserMessagesFilter(message: Message): message is UserMessage {
-  if (message.type !== 'user') {
-    return false
-  }
-  if (
-    Array.isArray(message.message.content) &&
-    message.message.content[0]?.type === 'tool_result'
-  ) {
-    return false
-  }
-  if (isSyntheticMessage(message)) {
-    return false
-  }
-  if (message.isMeta) {
-    return false
-  }
-  if (message.isCompactSummary || message.isVisibleInTranscriptOnly) {
-    return false
-  }
-  const content = message.message.content
-  const lastBlock = content[content.length - 1]
-  const messageText = lastBlock && isTextBlock(lastBlock) ? lastBlock.text.trim() : ''
-
-  // Filter out non-user-authored messages (command outputs, task notifications, ticks).
-  if (
-    messageText.indexOf(`<${LOCAL_COMMAND_STDOUT_TAG}>`) !== -1 ||
-    messageText.indexOf(`<${LOCAL_COMMAND_STDERR_TAG}>`) !== -1 ||
-    messageText.indexOf(`<${BASH_STDOUT_TAG}>`) !== -1 ||
-    messageText.indexOf(`<${BASH_STDERR_TAG}>`) !== -1 ||
-    messageText.indexOf(`<${TASK_NOTIFICATION_TAG}>`) !== -1 ||
-    messageText.indexOf(`<${TICK_TAG}>`) !== -1 ||
-    messageText.indexOf(`<${TEAMMATE_MESSAGE_TAG}`) !== -1
-  ) {
-    return false
-  }
-  return true
-}
-
-/**
- * Checks if all messages after the given index are synthetic (interruptions, cancels, etc.)
- * or non-meaningful content. Returns true if there's nothing meaningful to confirm -
- * for example, if the user hit enter then immediately cancelled.
- */
-export function messagesAfterAreOnlySynthetic(messages: Message[], fromIndex: number): boolean {
-  for (let i = fromIndex + 1; i < messages.length; i++) {
-    const msg = messages[i]
-    if (!msg) {
-      continue
-    }
-
-    // Skip known non-meaningful message types
-    if (isSyntheticMessage(msg)) {
-      continue
-    }
-    if (isToolUseResultMessage(msg)) {
-      continue
-    }
-    if (msg.type === 'progress') {
-      continue
-    }
-    if (msg.type === 'system') {
-      continue
-    }
-    if (msg.type === 'attachment') {
-      continue
-    }
-    if (msg.type === 'user' && msg.isMeta) {
-      continue
-    }
-
-    // Assistant with actual content = meaningful
-    if (msg.type === 'assistant') {
-      const content = msg.message.content
-      if (Array.isArray(content)) {
-        const hasMeaningfulContent = content.some(
-          (block) => (block.type === 'text' && block.text.trim()) || block.type === 'tool_call',
-        )
-        if (hasMeaningfulContent) {
-          return false
-        }
-      }
-      continue
-    }
-
-    // User messages that aren't synthetic or meta = meaningful
-    if (msg.type === 'user') {
-      return false
-    }
-
-    // Other types (e.g., tombstone) are non-meaningful, continue
-  }
-  return true
 }

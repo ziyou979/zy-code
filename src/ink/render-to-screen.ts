@@ -64,8 +64,7 @@ export function renderToScreen(
     stylePool = new StylePool()
     charPool = new CharPool()
     hyperlinkPool = new HyperlinkPool()
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    container = (reconciler as any).createContainer(
+    container = reconciler.createContainer(
       root,
       LegacyRoot,
       null,
@@ -76,8 +75,7 @@ export function renderToScreen(
       noop,
       noop,
       noop,
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    ) as any
+    )
   }
 
   const reconcileStartMs = performance.now()

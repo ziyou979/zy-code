@@ -14,12 +14,9 @@ type Props = {
 }
 export function MCPToolDetailView({ tool, server, onBack }: Props) {
   const [toolDescription, setToolDescription] = React.useState('')
-  let fullDisplayName
-  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-  const displayNameExtractor = extractMcpToolDisplayName(fullDisplayName as any)
   const toolName = getMcpDisplayName(tool.name, server.name)
-  fullDisplayName = tool.userFacingName ? tool.userFacingName({}) : toolName
-  const displayName = displayNameExtractor
+  const fullDisplayName = tool.userFacingName ? tool.userFacingName({}) : toolName
+  const displayName = extractMcpToolDisplayName(fullDisplayName)
   const isReadOnly = tool.isReadOnly?.({}) ?? false
   const isDestructive = tool.isDestructive?.({}) ?? false
   const isOpenWorld = tool.isOpenWorld?.({}) ?? false

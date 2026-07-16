@@ -249,8 +249,7 @@ export async function applyCollapsesIfNeeded(
       })),
       armed: false,
       lastSpawnTokens: tokenCount,
-      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    } as any)
+    })
   } catch {
     // 持久化失败不应影响折叠流程
   }
@@ -305,7 +304,7 @@ export async function recoverFromOverflow(
   const beforeSpan = messages.slice(0, startIdx)
   const afterSpan = messages.slice(endIdx + 1)
   // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-  const newMessages = [...beforeSpan, placeholder as any, ...afterSpan]
+  const newMessages = [...beforeSpan, placeholder as Message, ...afterSpan]
 
   // 持久化提交
   try {
@@ -317,8 +316,7 @@ export async function recoverFromOverflow(
       summary: span.summary,
       firstArchivedUuid: span.startUuid,
       lastArchivedUuid: span.endUuid,
-      // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
-    } as any)
+    })
   } catch {
     // 持久化失败不影响折叠流程
   }

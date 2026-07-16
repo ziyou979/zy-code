@@ -23,19 +23,10 @@ import {
   VALID_INSTALLABLE_SCOPES,
   VALID_UPDATE_SCOPES,
 } from '../../services/plugins/pluginCliCommands.js'
-import { getPluginErrorMessage } from '../../services/plugins/types.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { clearAllCaches } from '../../services/plugins/cacheUtils.js'
-import { getInstallCounts } from '../../services/plugins/installCounts.js'
-import {
-  isPluginInstalled,
-  loadInstalledPlugins,
-} from '../../services/plugins/installedPluginsManager.js'
-import {
-  createPluginId,
-  loadMarketplacesWithGracefulDegradation,
-} from '../../services/plugins/marketplaceHelpers.js'
+import { loadInstalledPlugins } from '../../services/plugins/installedPluginsManager.js'
 import {
   addMarketplaceSource,
   loadKnownMarketplacesConfig,
@@ -44,20 +35,23 @@ import {
   removeMarketplaceSource,
   saveMarketplaceToSettings,
 } from '../../services/plugins/marketplaceManager.js'
-import { loadPluginMcpServers } from '../../services/plugins/mcpPluginIntegration.js'
 import { parseMarketplaceInput } from '../../services/plugins/parseMarketplaceInput.js'
 import {
   parsePluginIdentifier,
   scopeToSettingSource,
 } from '../../services/plugins/pluginIdentifier.js'
 import { loadAllPlugins } from '../../services/plugins/pluginLoader.js'
-import type { PluginSource } from '../../services/plugins/schemas.js'
 import {
   type ValidationResult,
   validateManifest,
   validatePluginContents,
 } from '../../services/plugins/validatePlugin.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
+import {
+  buildAvailablePluginListEntries,
+  buildPluginListJsonEntries,
+  printPluginListReport,
+} from './pluginListSupport.js'
 import { cliError, cliOk } from '../exit.js'
 
 // 重新导出，供 main.tsx 在选项定义中引用
@@ -198,140 +192,19 @@ export async function pluginListHandler(options: {
   )
 
   if (options.json) {
-    // 创建插件 source 到已加载插件的映射，用于快速查找
-    const loadedPluginMap = new Map(allLoadedPlugins.map((p) => [p.source, p]))
-
-    const plugins: Array<{
-      id: string
-      version: string
-      scope: string
-      enabled: boolean
-      installPath: string
-      installedAt?: string
-      lastUpdated?: string
-      projectPath?: string
-      mcpServers?: Record<string, unknown>
-      errors?: string[]
-    }> = []
-
-    for (const pluginId of pluginIds.sort()) {
-      const installations = installedData.plugins[pluginId]
-      if (!installations || installations.length === 0) {
-        continue
-      }
-
-      // 查找此插件的加载错误
-      const pluginName = parsePluginIdentifier(pluginId).name
-      const pluginErrors = loadErrors
-        .filter((e) => e.source === pluginId || ('plugin' in e && e.plugin === pluginName))
-        .map(getPluginErrorMessage)
-
-      for (const installation of installations) {
-        // 尝试查找已加载的插件以获取 MCP 服务器
-        const loadedPlugin = loadedPluginMap.get(pluginId)
-        let mcpServers: Record<string, unknown> | undefined
-
-        if (loadedPlugin) {
-          // 如果尚未缓存则加载 MCP 服务器
-          const servers = loadedPlugin.mcpServers || (await loadPluginMcpServers(loadedPlugin))
-          if (servers && Object.keys(servers).length > 0) {
-            mcpServers = servers
-          }
-        }
-
-        plugins.push({
-          id: pluginId,
-          version: installation.version || 'unknown',
-          scope: installation.scope,
-          enabled: enabledPlugins.has(pluginId),
-          installPath: installation.installPath,
-          installedAt: installation.installedAt,
-          lastUpdated: installation.lastUpdated,
-          projectPath: installation.projectPath,
-          mcpServers,
-          errors: pluginErrors.length > 0 ? pluginErrors : undefined,
-        })
-      }
-    }
-
-    // 会话级插件：scope='session'，无安装元数据。
-    // 从 inlineLoadErrors（而非 loadErrors）过滤，以避免同名已安装插件
-    // 通过 e.plugin 交叉污染。e.plugin 回退处理 dirName≠manifestName 的情况：
-    // createPluginFromPath 用 `${dirName}@inline` 标记错误，但之后
-    // plugin.source 被重新赋值为 `${manifest.name}@inline`
-    // （pluginLoader.ts loadInlinePlugins），因此当开发检出目录如
-    // ~/code/my-fork/ 的清单名为 'cool-plugin' 时，e.source !== p.source。
-    for (const p of inlinePlugins) {
-      const servers = p.mcpServers || (await loadPluginMcpServers(p))
-      const pErrors = inlineLoadErrors
-        .filter((e) => e.source === p.source || ('plugin' in e && e.plugin === p.name))
-        .map(getPluginErrorMessage)
-      plugins.push({
-        id: p.source,
-        version: p.manifest.version ?? 'unknown',
-        scope: 'session',
-        enabled: p.enabled !== false,
-        installPath: p.path,
-        mcpServers: servers && Object.keys(servers).length > 0 ? servers : undefined,
-        errors: pErrors.length > 0 ? pErrors : undefined,
-      })
-    }
-    // 路径级 inline 失败（--plugin-dir /nonexistent）：不存在 LoadedPlugin，
-    // 因此上面的循环无法展示它们。与人类可读路径的处理保持一致，
-    // 以便 JSON 消费者看到失败而非静默遗漏。
-    for (const e of inlineLoadErrors.filter((e) => e.source.startsWith('inline['))) {
-      plugins.push({
-        id: e.source,
-        version: 'unknown',
-        scope: 'session',
-        enabled: false,
-        installPath: 'path' in e ? e.path : '',
-        errors: [getPluginErrorMessage(e)],
-      })
-    }
+    const plugins = await buildPluginListJsonEntries({
+      allLoadedPlugins,
+      enabledPlugins,
+      inlineLoadErrors,
+      inlinePlugins,
+      installedData,
+      loadErrors,
+      pluginIds,
+    })
 
     // 如果设置了 --available，还从 marketplace 加载可用插件
     if (options.available) {
-      const available: Array<{
-        pluginId: string
-        name: string
-        description?: string
-        marketplaceName: string
-        version?: string
-        source: PluginSource
-        installCount?: number
-      }> = []
-
-      try {
-        const [config, installCounts] = await Promise.all([
-          loadKnownMarketplacesConfig(),
-          getInstallCounts(),
-        ])
-        const { marketplaces } = await loadMarketplacesWithGracefulDegradation(config)
-
-        for (const { name: marketplaceName, data: marketplace } of marketplaces) {
-          if (marketplace) {
-            for (const entry of marketplace.plugins) {
-              const pluginId = createPluginId(entry.name, marketplaceName)
-              // 仅包含尚未安装的插件
-              if (!isPluginInstalled(pluginId)) {
-                available.push({
-                  pluginId,
-                  name: entry.name,
-                  description: entry.description,
-                  marketplaceName,
-                  version: entry.version,
-                  source: entry.source,
-                  installCount: installCounts?.get(pluginId),
-                })
-              }
-            }
-          }
-        }
-      } catch {
-        // 静默忽略 marketplace 加载错误
-      }
-
+      const available = await buildAvailablePluginListEntries()
       cliOk(jsonStringify({ installed: plugins, available }, null, 2))
     } else {
       cliOk(jsonStringify(plugins, null, 2))
@@ -347,90 +220,14 @@ export async function pluginListHandler(options: {
     }
   }
 
-  if (pluginIds.length > 0) {
-    // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log('已安装的插件：\n')
-  }
-
-  for (const pluginId of pluginIds.sort()) {
-    const installations = installedData.plugins[pluginId]
-    if (!installations || installations.length === 0) {
-      continue
-    }
-
-    // 查找此插件的加载错误
-    const pluginName = parsePluginIdentifier(pluginId).name
-    const pluginErrors = loadErrors.filter(
-      (e) => e.source === pluginId || ('plugin' in e && e.plugin === pluginName),
-    )
-
-    for (const installation of installations) {
-      const isEnabled = enabledPlugins.has(pluginId)
-      const status =
-        pluginErrors.length > 0
-          ? `${CROSS} ${tSync('plugins.list.statusLoadFailed')}`
-          : isEnabled
-            ? `${TICK} ${tSync('plugins.list.statusEnabled')}`
-            : `${CROSS} ${tSync('plugins.list.statusDisabled')}`
-      const version = installation.version || 'unknown'
-      const scope = installation.scope
-
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`  ${POINTER} ${pluginId}`)
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    ${tSync('plugins.list.version', { version })}`)
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    ${tSync('plugins.list.scope', { scope })}`)
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    ${tSync('plugins.list.statusLabel', { status })}`)
-      for (const error of pluginErrors) {
-        // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.log(
-          `    ${tSync('plugins.list.errorLabel', { error: getPluginErrorMessage(error) })}`,
-        )
-      }
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log('')
-    }
-  }
-
-  if (inlinePlugins.length > 0 || inlineLoadErrors.length > 0) {
-    // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`${tSync('plugins.list.sessionOnly')}\n`)
-    for (const p of inlinePlugins) {
-      // 与上方 JSON 路径相同的 dirName≠manifestName 回退处理 —
-      // 错误 source 使用目录基准名，但 p.source 使用清单名。
-      const pErrors = inlineLoadErrors.filter(
-        (e) => e.source === p.source || ('plugin' in e && e.plugin === p.name),
-      )
-      const status =
-        pErrors.length > 0
-          ? `${CROSS} ${tSync('plugins.list.statusLoadedWithErrors')}`
-          : `${TICK} ${tSync('plugins.list.statusLoaded')}`
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`  ${POINTER} ${p.source}`)
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(
-        `    ${tSync('plugins.list.version', { version: p.manifest.version ?? 'unknown' })}`,
-      )
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    ${tSync('plugins.list.pathLabel', { path: p.path })}`)
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    ${tSync('plugins.list.statusLabel', { status })}`)
-      for (const e of pErrors) {
-        // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.log(`    ${tSync('plugins.list.errorLabel', { error: getPluginErrorMessage(e) })}`)
-      }
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log('')
-    }
-    // 路径级失败：不存在 LoadedPlugin 对象。展示它们，
-    // 以免 `--plugin-dir /typo` 静默无输出。
-    for (const e of inlineLoadErrors.filter((e) => e.source.startsWith('inline['))) {
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`  ${POINTER} ${e.source}: ${CROSS} ${getPluginErrorMessage(e)}\n`)
-    }
-  }
+  printPluginListReport({
+    enabledPlugins,
+    inlineLoadErrors,
+    inlinePlugins,
+    installedData,
+    loadErrors,
+    pluginIds,
+  })
 
   cliOk()
 }

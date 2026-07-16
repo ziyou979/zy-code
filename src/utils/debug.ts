@@ -7,7 +7,7 @@ import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 
 import { type BufferedWriter, createBufferedWriter } from './bufferedWriter.js'
 import { registerCleanup } from './cleanupRegistry.js'
-import { type DebugFilter, parseDebugFilter, shouldShowDebugMessage } from './debugFilter.js'
+import { type DebugFilter, parseDebugFilter, shouldShowDebugMessage } from './debugFilterCore.js'
 import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
 import { writeToStderr } from '../services/shell/process.js'

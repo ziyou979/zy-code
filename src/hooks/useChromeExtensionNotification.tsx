@@ -17,8 +17,7 @@ function getChromeFlag(): boolean | undefined {
   return undefined
 }
 export function useChromeExtensionNotification() {
-  // biome-ignore lint/suspicious/noExplicitAny: 钩子系统动态类型处理
-  useStartupNotification(_temp as any)
+  useStartupNotification(_temp)
 }
 async function _temp() {
   const chromeFlag = getChromeFlag()
@@ -31,7 +30,7 @@ async function _temp() {
     return {
       key: 'chrome-extension-not-detected',
       jsx: <Text color="warning">{tSync('notif.chromeNotDetected')}</Text>,
-      priority: 'immediate',
+      priority: 'immediate' as const,
       timeoutMs: 3000,
     }
   }
@@ -39,7 +38,7 @@ async function _temp() {
     return {
       key: 'claude-in-chrome-default-enabled',
       text: tSync('notif.chromeEnabled'),
-      priority: 'low',
+      priority: 'low' as const,
     }
   }
   return null

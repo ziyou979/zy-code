@@ -433,8 +433,7 @@ export async function summarizeTranscriptChunk(chunk: string): Promise<string> {
       signal: new AbortController().signal,
       options: {
         model: getAnalysisModel(),
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        querySource: 'insights' as any,
+        querySource: 'insights',
         agents: [],
         isNonInteractiveSession: true,
         hasAppendSystemPrompt: false,
@@ -572,8 +571,7 @@ RESPOND WITH ONLY A VALID JSON OBJECT matching this schema:
       signal: new AbortController().signal,
       options: {
         model: getAnalysisModel(),
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        querySource: 'insights' as any,
+        querySource: 'insights',
         agents: [],
         isNonInteractiveSession: true,
         hasAppendSystemPrompt: false,

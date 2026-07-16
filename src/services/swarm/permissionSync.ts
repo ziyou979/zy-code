@@ -18,16 +18,10 @@
  * 6. Worker polls mailbox for responses and continues execution
  */
 
-import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { z } from 'zod/v4'
 import { logForDebugging } from '../../utils/debug.js'
-import { getErrnoCode } from '../../utils/errors.js'
-import { lazySchema } from '../../utils/lazySchema.js'
-import * as lockfile from '../../utils/lockfile.js'
 import { logError } from '../../utils/log.js'
 import type { PermissionUpdate } from '../permissions/permissionUpdateSchema.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
 import { getAgentId, getAgentName, getTeammateColor, getTeamName } from '../../utils/teammate.js'
 import {
   createPermissionRequestMessage,
@@ -36,51 +30,21 @@ import {
   createSandboxPermissionResponseMessage,
   writeToMailbox,
 } from '../../utils/teammateMailbox.js'
-import { getTeamDir, readTeamFileAsync } from './teamHelpers.js'
+import {
+  cleanupOldResolutionsForTeam,
+  deleteResolvedPermissionForTeam,
+  getPermissionDir,
+  readPendingPermissionsForTeam,
+  readResolvedPermissionForTeam,
+  resolvePermissionForTeam,
+  SwarmPermissionRequestSchema,
+  type SwarmPermissionRequest,
+  writePermissionRequestFile,
+} from './permissionSyncSupport.js'
+import { readTeamFileAsync } from './teamHelpers.js'
 
-/**
- * Full request schema for a permission request from a worker to the leader
- */
-export const SwarmPermissionRequestSchema = lazySchema(() =>
-  z.object({
-    /** Unique identifier for this request */
-    id: z.string(),
-    /** Worker's ZY_CODE_AGENT_ID */
-    workerId: z.string(),
-    /** Worker's ZY_CODE_AGENT_NAME */
-    workerName: z.string(),
-    /** Worker's ZY_CODE_AGENT_COLOR */
-    workerColor: z.string().optional(),
-    /** Team name for routing */
-    teamName: z.string(),
-    /** Tool name requiring permission (e.g., "Bash", "Edit") */
-    toolName: z.string(),
-    /** Original toolUseID from worker's context */
-    toolUseId: z.string(),
-    /** Human-readable description of the tool use */
-    description: z.string(),
-    /** Serialized tool input */
-    input: z.record(z.string(), z.unknown()),
-    /** Suggested permission rules from the permission result */
-    permissionSuggestions: z.array(z.unknown()),
-    /** Status of the request */
-    status: z.enum(['pending', 'approved', 'rejected']),
-    /** Who resolved the request */
-    resolvedBy: z.enum(['worker', 'leader']).optional(),
-    /** Timestamp when resolved */
-    resolvedAt: z.number().optional(),
-    /** Rejection feedback message */
-    feedback: z.string().optional(),
-    /** Modified input if changed by resolver */
-    updatedInput: z.record(z.string(), z.unknown()).optional(),
-    /** "Always allow" rules applied during resolution */
-    permissionUpdates: z.array(z.unknown()).optional(),
-    /** Timestamp when request was created */
-    createdAt: z.number(),
-  }),
-)
-
-export type SwarmPermissionRequest = z.infer<ReturnType<typeof SwarmPermissionRequestSchema>>
+export { getPermissionDir, SwarmPermissionRequestSchema }
+export type { SwarmPermissionRequest }
 
 /**
  * Resolution data returned when leader/worker resolves a request
@@ -96,55 +60,6 @@ export type PermissionResolution = {
   updatedInput?: Record<string, unknown>
   /** Permission updates to apply (e.g., "always allow" rules) */
   permissionUpdates?: PermissionUpdate[]
-}
-
-/**
- * Get the base directory for a team's permission requests
- * Path: ~/.zy/teams/{teamName}/permissions/
- */
-export function getPermissionDir(teamName: string): string {
-  return join(getTeamDir(teamName), 'permissions')
-}
-
-/**
- * Get the pending directory for a team
- */
-function getPendingDir(teamName: string): string {
-  return join(getPermissionDir(teamName), 'pending')
-}
-
-/**
- * Get the resolved directory for a team
- */
-function getResolvedDir(teamName: string): string {
-  return join(getPermissionDir(teamName), 'resolved')
-}
-
-/**
- * Ensure the permissions directory structure exists (async)
- */
-async function ensurePermissionDirsAsync(teamName: string): Promise<void> {
-  const permDir = getPermissionDir(teamName)
-  const pendingDir = getPendingDir(teamName)
-  const resolvedDir = getResolvedDir(teamName)
-
-  for (const dir of [permDir, pendingDir, resolvedDir]) {
-    await mkdir(dir, { recursive: true })
-  }
-}
-
-/**
- * Get the path to a pending request file
- */
-function getPendingRequestPath(teamName: string, requestId: string): string {
-  return join(getPendingDir(teamName), `${requestId}.json`)
-}
-
-/**
- * Get the path to a resolved request file
- */
-function getResolvedRequestPath(teamName: string, requestId: string): string {
-  return join(getResolvedDir(teamName), `${requestId}.json`)
 }
 
 /**
@@ -208,36 +123,7 @@ export function createPermissionRequest(params: {
 export async function writePermissionRequest(
   request: SwarmPermissionRequest,
 ): Promise<SwarmPermissionRequest> {
-  await ensurePermissionDirsAsync(request.teamName)
-
-  const pendingPath = getPendingRequestPath(request.teamName, request.id)
-  const lockDir = getPendingDir(request.teamName)
-
-  // Create a directory-level lock file for atomic writes
-  const lockFilePath = join(lockDir, '.lock')
-  await writeFile(lockFilePath, '', 'utf-8')
-
-  let release: (() => Promise<void>) | undefined
-  try {
-    release = await lockfile.lock(lockFilePath)
-
-    // Write the request file
-    await writeFile(pendingPath, jsonStringify(request, null, 2), 'utf-8')
-
-    logForDebugging(
-      `[PermissionSync] Wrote pending request ${request.id} from ${request.workerName} for ${request.toolName}`,
-    )
-
-    return request
-  } catch (error) {
-    logForDebugging(`[PermissionSync] Failed to write permission request: ${error}`)
-    logError(error)
-    throw error
-  } finally {
-    if (release) {
-      await release()
-    }
-  }
+  return writePermissionRequestFile(request)
 }
 
 /**
@@ -250,48 +136,7 @@ export async function readPendingPermissions(teamName?: string): Promise<SwarmPe
     logForDebugging('[PermissionSync] No team name available')
     return []
   }
-
-  const pendingDir = getPendingDir(team)
-
-  let files: string[]
-  try {
-    files = await readdir(pendingDir)
-  } catch (e: unknown) {
-    const code = getErrnoCode(e)
-    if (code === 'ENOENT') {
-      return []
-    }
-    logForDebugging(`[PermissionSync] Failed to read pending requests: ${e}`)
-    logError(e)
-    return []
-  }
-
-  const jsonFiles = files.filter((f) => f.endsWith('.json') && f !== '.lock')
-
-  const results = await Promise.all(
-    jsonFiles.map(async (file) => {
-      const filePath = join(pendingDir, file)
-      try {
-        const content = await readFile(filePath, 'utf-8')
-        const parsed = SwarmPermissionRequestSchema().safeParse(jsonParse(content))
-        if (parsed.success) {
-          return parsed.data
-        }
-        logForDebugging(`[PermissionSync] Invalid request file ${file}: ${parsed.error.message}`)
-        return null
-      } catch (err) {
-        logForDebugging(`[PermissionSync] Failed to read request file ${file}: ${err}`)
-        return null
-      }
-    }),
-  )
-
-  const requests = results.filter((r) => r !== null)
-
-  // Sort by creation time (oldest first)
-  requests.sort((a, b) => a.createdAt - b.createdAt)
-
-  return requests
+  return readPendingPermissionsForTeam(team)
 }
 
 /**
@@ -308,28 +153,7 @@ export async function readResolvedPermission(
   if (!team) {
     return null
   }
-
-  const resolvedPath = getResolvedRequestPath(team, requestId)
-
-  try {
-    const content = await readFile(resolvedPath, 'utf-8')
-    const parsed = SwarmPermissionRequestSchema().safeParse(jsonParse(content))
-    if (parsed.success) {
-      return parsed.data
-    }
-    logForDebugging(
-      `[PermissionSync] Invalid resolved request ${requestId}: ${parsed.error.message}`,
-    )
-    return null
-  } catch (e: unknown) {
-    const code = getErrnoCode(e)
-    if (code === 'ENOENT') {
-      return null
-    }
-    logForDebugging(`[PermissionSync] Failed to read resolved request ${requestId}: ${e}`)
-    logError(e)
-    return null
-  }
+  return readResolvedPermissionForTeam(requestId, team)
 }
 
 /**
@@ -348,71 +172,7 @@ export async function resolvePermission(
     logForDebugging('[PermissionSync] No team name available')
     return false
   }
-
-  await ensurePermissionDirsAsync(team)
-
-  const pendingPath = getPendingRequestPath(team, requestId)
-  const resolvedPath = getResolvedRequestPath(team, requestId)
-  const lockFilePath = join(getPendingDir(team), '.lock')
-
-  await writeFile(lockFilePath, '', 'utf-8')
-
-  let release: (() => Promise<void>) | undefined
-  try {
-    release = await lockfile.lock(lockFilePath)
-
-    // Read the pending request
-    let content: string
-    try {
-      content = await readFile(pendingPath, 'utf-8')
-    } catch (e: unknown) {
-      const code = getErrnoCode(e)
-      if (code === 'ENOENT') {
-        logForDebugging(`[PermissionSync] Pending request not found: ${requestId}`)
-        return false
-      }
-      throw e
-    }
-
-    const parsed = SwarmPermissionRequestSchema().safeParse(jsonParse(content))
-    if (!parsed.success) {
-      logForDebugging(
-        `[PermissionSync] Invalid pending request ${requestId}: ${parsed.error.message}`,
-      )
-      return false
-    }
-
-    const request = parsed.data
-
-    // Update the request with resolution data
-    const resolvedRequest: SwarmPermissionRequest = {
-      ...request,
-      status: resolution.decision === 'approved' ? 'approved' : 'rejected',
-      resolvedBy: resolution.resolvedBy,
-      resolvedAt: Date.now(),
-      feedback: resolution.feedback,
-      updatedInput: resolution.updatedInput,
-      permissionUpdates: resolution.permissionUpdates,
-    }
-
-    // Write to resolved directory
-    await writeFile(resolvedPath, jsonStringify(resolvedRequest, null, 2), 'utf-8')
-
-    // Remove from pending directory
-    await unlink(pendingPath)
-
-    logForDebugging(`[PermissionSync] Resolved request ${requestId} with ${resolution.decision}`)
-
-    return true
-  } catch (error) {
-    logForDebugging(`[PermissionSync] Failed to resolve request: ${error}`)
-    logError(error)
-    return false
-  } finally {
-    if (release) {
-      await release()
-    }
-  }
+  return resolvePermissionForTeam(requestId, resolution, team)
 }
 
 /**
@@ -430,61 +190,7 @@ export async function cleanupOldResolutions(
   if (!team) {
     return 0
   }
-
-  const resolvedDir = getResolvedDir(team)
-
-  let files: string[]
-  try {
-    files = await readdir(resolvedDir)
-  } catch (e: unknown) {
-    const code = getErrnoCode(e)
-    if (code === 'ENOENT') {
-      return 0
-    }
-    logForDebugging(`[PermissionSync] Failed to cleanup resolutions: ${e}`)
-    logError(e)
-    return 0
-  }
-
-  const now = Date.now()
-  const jsonFiles = files.filter((f) => f.endsWith('.json'))
-
-  const cleanupResults = await Promise.all(
-    jsonFiles.map(async (file) => {
-      const filePath = join(resolvedDir, file)
-      try {
-        const content = await readFile(filePath, 'utf-8')
-        const request = jsonParse(content) as SwarmPermissionRequest
-
-        // Check if the resolution is old enough to clean up
-        // Use >= to handle edge case where maxAgeMs is 0 (clean up everything)
-        const resolvedAt = request.resolvedAt || request.createdAt
-        if (now - resolvedAt >= maxAgeMs) {
-          await unlink(filePath)
-          logForDebugging(`[PermissionSync] Cleaned up old resolution: ${file}`)
-          return 1
-        }
-        return 0
-      } catch {
-        // If we can't parse it, clean it up anyway
-        try {
-          await unlink(filePath)
-          return 1
-        } catch {
-          // Ignore deletion errors
-          return 0
-        }
-      }
-    }),
-  )
-
-  const cleanedCount = cleanupResults.reduce<number>((sum, n) => sum + n, 0)
-
-  if (cleanedCount > 0) {
-    logForDebugging(`[PermissionSync] Cleaned up ${cleanedCount} old resolutions`)
-  }
-
-  return cleanedCount
+  return cleanupOldResolutionsForTeam(team, maxAgeMs)
 }
 
 /**
@@ -583,22 +289,7 @@ export async function deleteResolvedPermission(
   if (!team) {
     return false
   }
-
-  const resolvedPath = getResolvedRequestPath(team, requestId)
-
-  try {
-    await unlink(resolvedPath)
-    logForDebugging(`[PermissionSync] Deleted resolved permission: ${requestId}`)
-    return true
-  } catch (e: unknown) {
-    const code = getErrnoCode(e)
-    if (code === 'ENOENT') {
-      return false
-    }
-    logForDebugging(`[PermissionSync] Failed to delete resolved permission: ${e}`)
-    logError(e)
-    return false
-  }
+  return deleteResolvedPermissionForTeam(requestId, team)
 }
 
 /**

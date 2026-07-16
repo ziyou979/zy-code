@@ -97,6 +97,7 @@ import type { SetAppState } from '../../utils/messageQueueManager.js'
 import { getCommandQueueLength } from '../../utils/messageQueueManager.js'
 import { StreamingThinking } from '../../services/messages/./streaming.js'
 import type { Theme } from '../../utils/theme.js'
+import { tSync } from '../../i18n/index.js'
 import type { Screen } from '../REPL.js'
 import { handleSummarize as handleSummarizeAction } from './handleSummarize.js'
 import { ReplDialogDispatch } from './ReplDialogDispatch.js'
@@ -936,7 +937,7 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                           inputValue={inputValue}
                           setInputValue={setInputValue}
                           onRequestFeedback={handleSurveyRequestFeedback}
-                          message="How well did Zy use its memory? (optional)"
+                          message={tSync('misc.repl.memorySurvey.question')}
                         />
                       ) : (
                         <FeedbackSurvey

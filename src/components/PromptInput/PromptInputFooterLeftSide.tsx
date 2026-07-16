@@ -1,5 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { CIRCLE_DOUBLE } from '../../constants/figures.js'
+import type { Task } from '../../utils/tasks.js'
 import { feature } from 'bun:bundle'
 // Dead code elimination: conditional import for COORDINATOR_MODE
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -107,7 +108,7 @@ function ProactiveCountdown() {
   const formattedDuration = formatDuration(remainingSeconds * 1000, {
     mostSignificantOnly: true,
   })
-  return <Text dimColor={true}>waiting {formattedDuration}</Text>
+  return <Text dimColor={true}>{tSync('promptInput.waiting', { duration: formattedDuration })}</Text>
 }
 export function PromptInputFooterLeftSide({
   exitMessage,
@@ -130,14 +131,14 @@ export function PromptInputFooterLeftSide({
   if (exitMessage.show) {
     return (
       <Text dimColor={true} key="exit-message">
-        Press {exitMessage.key} again to exit
+        {tSync('help.pressAgainToExit', { keyName: exitMessage.key ?? '' })}
       </Text>
     )
   }
   if (isPasting) {
     return (
       <Text dimColor={true} key="pasting-message">
-        Pasting text…
+        {tSync('promptInput.pasting')}
       </Text>
     )
   }
@@ -154,11 +155,11 @@ export function PromptInputFooterLeftSide({
       )}
       {showVimInsert ? (
         <Text dimColor={true} key="vim-insert">
-          -- INSERT --
+          {tSync('promptInput.vimInsert')}
         </Text>
       ) : showVimVisual ? (
         <Text dimColor={true} key="vim-visual">
-          -- VISUAL --
+          {tSync('promptInput.vimVisual')}
         </Text>
       ) : null}
       {
@@ -298,14 +299,11 @@ function ModeIndicator({
     isAgentSwarmsEnabled() &&
     !isInProcessEnabled() &&
     teamContext !== undefined &&
-    count(
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      Object.values(teamContext.teammates) as any[],
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      (teammate: any) => teammate.name !== 'team-lead',
-    ) > 0
+    (Object.values(teamContext.teammates) as { name: string }[]).filter(
+      (t) => t.name !== 'team-lead',
+    ).length > 0
   if (mode === 'bash') {
-    return <Text color="bashBorder">! for bash mode</Text>
+    return <Text color="bashBorder">{tSync('help.bashMode')}</Text>
   }
   const currentMode = toolPermissionContext?.mode
   const hasActiveMode = currentMode !== undefined
@@ -341,7 +339,7 @@ function ModeIndicator({
     !showSpinnerTree &&
     hasBackgroundTasks &&
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    (Object.values(tasks) as any[]).some((task: any) => task.type === 'in_process_teammate')
+    (Object.values(tasks) as { type?: string }[]).some((task) => task.type === 'in_process_teammate')
   const hasTeammatePills = hasInProcessTeammates || (!showSpinnerTree && isViewingTeammate)
 
   // In remote mode (`zy assistant`, --teleport) the agent runs elsewhere;
@@ -369,7 +367,7 @@ function ModeIndicator({
     ...(remoteSessionUrl
       ? [
           <Link url={remoteSessionUrl} key="remote">
-            <Text color="ide">{CIRCLE_DOUBLE} remote</Text>
+            <Text color="ide">{CIRCLE_DOUBLE} {tSync('promptInput.remote')}</Text>
           </Link>,
         ]
       : []),
@@ -528,7 +526,7 @@ function ModeIndicator({
           {!copyOnSelect && <KeyboardShortcutHint shortcut="ctrl+c" action="copy" />}
           {isXtermJs() &&
             (altClickFailed ? (
-              <Text>set macOptionClickForcesSelection in VS Code settings</Text>
+              <Text>{tSync('promptInput.selectionMacOption')}</Text>
             ) : (
               <KeyboardShortcutHint
                 shortcut={isMac ? 'option+click' : 'shift+click'}
@@ -549,7 +547,7 @@ function ModeIndicator({
   ) {
     parts.push(
       <Text dimColor key="voice-hint">
-        hold {voiceKeyShortcut} to speak
+        {tSync('promptInput.voiceHint', { shortcut: voiceKeyShortcut })}
       </Text>,
     )
   }

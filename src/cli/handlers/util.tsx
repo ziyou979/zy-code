@@ -57,7 +57,7 @@ export async function installHandler(
     force?: boolean
   },
 ): Promise<void> {
-  const { setup } = await import('../../setup.js')
+  const { setup } = await import('../../bootstrap/setup.js')
   await setup(cwd(), 'default', false, false, undefined, false)
   const { install } = await import('../../commands/install.js')
   await new Promise<void>((resolve) => {

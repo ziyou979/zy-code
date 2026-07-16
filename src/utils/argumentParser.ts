@@ -1,13 +1,8 @@
 /**
- * Utility for substituting $ARGUMENTS placeholders in skill/command prompts.
+ * argumentParser.ts
  *
- * Supports:
- * - $ARGUMENTS - replaced with the full arguments string
- * - $ARGUMENTS[0], $ARGUMENTS[1], etc. - replaced with individual indexed arguments
- * - $0, $1, etc. - shorthand for $ARGUMENTS[0], $ARGUMENTS[1]
- * - Named arguments (e.g., $foo, $bar) - when argument names are defined in frontmatter
- *
- * Arguments are parsed using shell-quote for proper shell argument handling.
+ * 纯函数：解析 shell 参数字符串、参数名列表，并替换 $ARGUMENTS 占位符。
+ * 从 argumentSubstitution.ts 提取，无业务语义、无 IO。
  */
 
 import { tryParseShellCommand } from 'src/shell-eval/bash/shellQuote.js'

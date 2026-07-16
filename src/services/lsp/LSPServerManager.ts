@@ -83,18 +83,18 @@ export function createLSPServerManager(): LSPServerManager {
         if (!config.command) {
           throw new Error(`Server ${serverName} missing required 'command' field`)
         }
+        const extConfig = config as ScopedLspServerConfig & {
+          extensionToLanguage: Record<string, string>
+        }
         if (
-          // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-          !(config as any).extensionToLanguage ||
-          // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-          Object.keys((config as any).extensionToLanguage).length === 0
+          !extConfig.extensionToLanguage ||
+          Object.keys(extConfig.extensionToLanguage).length === 0
         ) {
           throw new Error(`Server ${serverName} missing required 'extensionToLanguage' field`)
         }
 
         // Map file extensions to this server (derive from extensionToLanguage)
-        // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-        const fileExtensions = Object.keys((config as any).extensionToLanguage)
+        const fileExtensions = Object.keys(extConfig.extensionToLanguage)
         for (const ext of fileExtensions) {
           const normalized = ext.toLowerCase()
           if (!extensionMap.has(normalized)) {
@@ -257,8 +257,9 @@ export function createLSPServerManager(): LSPServerManager {
 
     // Get language ID from server's extensionToLanguage mapping
     const ext = path.extname(filePath).toLowerCase()
-    // biome-ignore lint/suspicious/noExplicitAny: LSP 协议动态类型处理
-    const languageId = (server.config as any).extensionToLanguage[ext] || 'plaintext'
+    const languageId =
+      (server.config as ScopedLspServerConfig & { extensionToLanguage: Record<string, string> })
+        .extensionToLanguage[ext] || 'plaintext'
 
     try {
       await server.sendNotification('textDocument/didOpen', {

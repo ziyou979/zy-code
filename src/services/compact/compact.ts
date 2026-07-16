@@ -1331,13 +1331,19 @@ async function streamCompactSummary({
       while (!next.done) {
         const event = next.value
 
-        // biome-ignore lint/suspicious/noExplicitAny: 流式事件联合类型无法精确表达，需运行时判别
-        const ev = event as any
+        const ev = event as {
+          type: string
+          event?: {
+            type: string
+            content_block?: { type: string }
+            delta?: { type: string; text?: string }
+          }
+        }
         if (
           !hasStartedStreaming &&
           ev.type === 'stream_event' &&
-          ev.event.type === 'content_block_start' &&
-          ev.event.content_block.type === 'text'
+          ev.event?.type === 'content_block_start' &&
+          ev.event.content_block?.type === 'text'
         ) {
           hasStartedStreaming = true
           context.setStreamMode?.('responding')
@@ -1345,10 +1351,10 @@ async function streamCompactSummary({
 
         if (
           ev.type === 'stream_event' &&
-          ev.event.type === 'content_block_delta' &&
-          ev.event.delta.type === 'text_delta'
+          ev.event?.type === 'content_block_delta' &&
+          ev.event.delta?.type === 'text_delta'
         ) {
-          const charactersStreamed = (ev.event.delta.text as string).length
+          const charactersStreamed = (ev.event.delta.text ?? '').length
           context.setResponseLength?.((length) => {
             const next = length + charactersStreamed
             // 流式摘要：在 api 阶段内按输出字符推进进度条
@@ -1358,7 +1364,7 @@ async function streamCompactSummary({
         }
 
         if (ev.type === 'assistant') {
-          streamedAssistants.push(ev as AssistantMessage)
+          streamedAssistants.push(event as AssistantMessage)
         }
 
         next = await streamIter.next()

@@ -5,10 +5,12 @@ process.env.USER_TYPE = 'external'
 
 // 注入 build features，使 true 等在 dev 下为 true
 if (typeof Bun !== 'undefined') {
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  ;(Bun as any).features = [
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    ...((Bun as any).features || []),
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Bun type may not have features
+  interface BunWithFeatures {
+    features: string[]
+  }
+  ;(Bun as unknown as BunWithFeatures).features = [
+    ...((Bun as unknown as BunWithFeatures).features || []),
     'FORK_SUBAGENT',
     'REACTIVE_COMPACT',
     'TOKEN_BUDGET',

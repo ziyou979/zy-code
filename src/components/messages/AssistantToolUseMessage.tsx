@@ -118,8 +118,7 @@ export function AssistantToolUseMessage({
       terminalSize,
     )
     return (
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      <Box flexDirection="column" width="100%" backgroundColor={bg as any}>
+      <Box flexDirection="column" width="100%" backgroundColor={bg}>
         {progressMessageElement}
       </Box>
     )
@@ -174,8 +173,7 @@ export function AssistantToolUseMessage({
       justifyContent="space-between"
       marginTop={addMargin ? 1 : 0}
       width="100%"
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      backgroundColor={bg as any}
+      backgroundColor={bg}
     >
       {
         <Box flexDirection="column">
@@ -198,8 +196,7 @@ export function AssistantToolUseMessage({
                   <Text
                     bold={true}
                     wrap="truncate-end"
-                    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-                    backgroundColor={userFacingToolNameBackgroundColor as any}
+                    backgroundColor={userFacingToolNameBackgroundColor}
                     color={userFacingToolNameBackgroundColor ? 'inverseText' : undefined}
                   >
                     {userFacingToolName}

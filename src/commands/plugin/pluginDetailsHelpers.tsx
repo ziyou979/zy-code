@@ -7,6 +7,7 @@
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
 import { Byline } from '../../components/design-system/Byline.js'
 import { Box, Text } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 import type { PluginMarketplaceEntry } from '../../services/plugins/schemas.js'
 
 /**
@@ -51,32 +52,32 @@ export function buildPluginDetailsMenuOptions(
 ): PluginDetailsMenuOption[] {
   const options: PluginDetailsMenuOption[] = [
     {
-      label: 'Install for you (user scope)',
+      label: tSync('managePlugins.menuInstallUser'),
       action: 'install-user',
     },
     {
-      label: 'Install for all collaborators on this repository (project scope)',
+      label: tSync('managePlugins.menuInstallProject'),
       action: 'install-project',
     },
     {
-      label: 'Install for you, in this repo only (local scope)',
+      label: tSync('managePlugins.menuInstallLocal'),
       action: 'install-local',
     },
   ]
   if (hasHomepage) {
     options.push({
-      label: 'Open homepage',
+      label: tSync('managePlugins.menuOpenHomepage'),
       action: 'homepage',
     })
   }
   if (githubRepo) {
     options.push({
-      label: 'View on GitHub',
+      label: tSync('managePlugins.menuViewGitHub'),
       action: 'github',
     })
   }
   options.push({
-    label: 'Back to plugin list',
+    label: tSync('managePlugins.menuBackToList'),
     action: 'back',
   })
   return options

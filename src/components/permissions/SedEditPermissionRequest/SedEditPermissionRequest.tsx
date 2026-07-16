@@ -52,8 +52,9 @@ function SedEditPermissionRequestInner({
   ...props
 }: SedEditPermissionRequestProps) {
   const { filePath } = sedInfo
-  // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  const { oldContent, fileExists } = use(contentPromise as any) as FileReadResult
+  const { oldContent, fileExists } = use(
+    contentPromise as unknown as Promise<FileReadResult>,
+  ) as FileReadResult
   const newContent = applySedSubstitution(oldContent, sedInfo)
   let edits: Array<{ old_string: string; new_string: string; replace_all: boolean }>
   if (oldContent === newContent) {

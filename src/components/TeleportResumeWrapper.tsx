@@ -35,8 +35,7 @@ export function TeleportResumeWrapper({
       source: source as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   }, [source])
-  // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
-  const handleSelect = async (session: any) => {
+  const handleSelect = async (session: { id: string }) => {
     const result = await resumeSession(session)
     if (result) {
       onComplete(result)
@@ -65,8 +64,9 @@ export function TeleportResumeWrapper({
             <Text bold={true}>Resuming session…</Text>
           </Box>
         }
-        {/* biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换 */}
-        <Text dimColor={true}>Loading "{(selectedSession as any).title}"...</Text>
+        <Text dimColor={true}>
+          Loading &quot;{(selectedSession as Record<string, unknown>).title as string}&quot;...
+        </Text>
       </Box>
     )
   }

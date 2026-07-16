@@ -1,4 +1,4 @@
-import { constants as fsConstants } from 'node:fs'
+import { constants as fsConstants, type Dirent } from 'node:fs'
 import { copyFile, mkdir, mkdtemp, readdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { extname, join } from 'node:path'
@@ -83,10 +83,9 @@ export const collectFromRemoteHost: (
         }
 
         const projectsDir = join(tempDir, 'projects')
-        let projectDirents: Awaited<ReturnType<typeof readdir>>
+        let projectDirents: Dirent[]
         try {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          projectDirents = (await readdir(projectsDir, { withFileTypes: true })) as any
+          projectDirents = await readdir(projectsDir, { withFileTypes: true })
         } catch {
           return result
         }
@@ -94,8 +93,7 @@ export const collectFromRemoteHost: (
         // Merge into destination (parallel per project directory)
         await Promise.all(
           projectDirents.map(async (dirent) => {
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-            const projectName = (dirent as any).name
+            const projectName = dirent.name
             const projectPath = join(projectsDir, projectName)
 
             // Skip if not a directory
@@ -113,26 +111,21 @@ export const collectFromRemoteHost: (
             }
 
             // Copy session files (skip existing)
-            let files: Awaited<ReturnType<typeof readdir>>
+            let files: Dirent[]
             try {
-              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-              files = (await readdir(projectPath, { withFileTypes: true })) as any
+              files = await readdir(projectPath, { withFileTypes: true })
             } catch {
               return
             }
             await Promise.all(
               files.map(async (fileDirent) => {
-                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                const fileName = (fileDirent as any).name
-                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                if (!(fileName as any).endsWith('.jsonl')) {
+                const fileName = fileDirent.name
+                if (!fileName.endsWith('.jsonl')) {
                   return
                 }
 
-                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                const srcFile = join(projectPath, fileName as any)
-                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                const destFile = join(destProjectPath, fileName as any)
+                const srcFile = join(projectPath, fileName)
+                const destFile = join(destProjectPath, fileName)
 
                 try {
                   await copyFile(srcFile, destFile, fsConstants.COPYFILE_EXCL)

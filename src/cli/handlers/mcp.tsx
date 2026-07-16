@@ -81,7 +81,7 @@ export async function mcpServeHandler({
     throw error
   }
   try {
-    const { setup } = await import('../../setup.js')
+    const { setup } = await import('../../bootstrap/setup.js')
     await setup(providedCwd, 'default', false, false, undefined, false)
     const { startMCPServer } = await import('../../entrypoints/mcp.js')
     await startMCPServer(providedCwd, debug ?? false, verbose ?? false)
@@ -206,11 +206,13 @@ export async function mcpListHandler(): Promise<void> {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(`${name}: ${server.url} - ${status}`)
       } else if (!server.type || server.type === 'stdio') {
-        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-        const args = Array.isArray((server as any).args) ? (server as any).args : []
+        const args = Array.isArray((server as unknown as { args?: string[] }).args)
+          ? (server as unknown as { args: string[] }).args
+          : []
         // biome-ignore lint/suspicious/noConsole:: intentional console output
-        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-        console.log(`${name}: ${(server as any).command} ${args.join(' ')} - ${status}`)
+        console.log(
+          `${name}: ${(server as unknown as { command: string }).command} ${args.join(' ')} - ${status}`,
+        )
       }
     }
   }

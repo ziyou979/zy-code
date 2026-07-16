@@ -1,5 +1,7 @@
 import { useRef } from 'react'
 import type { RemoteAgentTaskState } from 'src/tasks/remote-agent-task/RemoteAgentTask.js'
+import type { DeepImmutable } from 'src/types/utils.js'
+import type { TodoItem } from 'src/services/todo/types.js'
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { useSettings } from '../../hooks/useSettings.js'
 import { Text, useAnimationFrame } from '../../ink.js'
@@ -79,8 +81,7 @@ function useSmoothCount(target: number, time: number, snap: boolean): number {
   }
   return displayed.current
 }
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-function ReviewRainbowLine({ session }: { session: any }) {
+function ReviewRainbowLine({ session }: { session: DeepImmutable<RemoteAgentTaskState> }) {
   const settings = useSettings()
   const reducedMotion = settings.prefersReducedMotion ?? false
   const p = session.reviewProgress
@@ -123,8 +124,11 @@ function ReviewRainbowLine({ session }: { session: any }) {
     </>
   )
 }
-// biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-export function RemoteSessionProgress({ session }: { session: any }) {
+export function RemoteSessionProgress({
+  session,
+}: {
+  session: DeepImmutable<RemoteAgentTaskState>
+}) {
   if (session.isRemoteReview) {
     return <ReviewRainbowLine session={session} />
   }
@@ -142,13 +146,10 @@ export function RemoteSessionProgress({ session }: { session: any }) {
       </Text>
     )
   }
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  if (!(session as any).todoList.length) {
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    return <Text dimColor={true}>{(session as any).status}…</Text>
+  if (!session.todoList.length) {
+    return <Text dimColor={true}>{session.status}…</Text>
   }
-  // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-  const completed = count((session as any).todoList, (_: any) => _.status === 'completed')
+  const completed = count(session.todoList, (_: TodoItem) => _.status === 'completed')
   const total = session.todoList.length
   return (
     <Text dimColor={true}>

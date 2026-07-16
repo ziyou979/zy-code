@@ -106,8 +106,9 @@ async function main(): Promise<void> {
   // worker 是轻量级的。如果某种 worker 需要配置/认证（如 assistant），
   // 它会在自己的 run() 函数中调用。
   if (feature('DAEMON') && args[0] === '--daemon-worker') {
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const workerRegistry = (await import('../daemon/workerRegistry.js')) as any
+    const workerRegistry = (await import('../daemon/workerRegistry.js')) as unknown as {
+      runDaemonWorker: (kind: string) => Promise<void>
+    }
     await workerRegistry.runDaemonWorker(args[1])
     return
   }
@@ -170,8 +171,9 @@ async function main(): Promise<void> {
     enableConfigs()
     const { initSinks } = await import('../utils/sinks.js')
     initSinks()
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const daemonModule = (await import('../daemon/main.js')) as any
+    const daemonModule = (await import('../daemon/main.js')) as unknown as {
+      daemonMain: (args: string[]) => Promise<void>
+    }
     await daemonModule.daemonMain(args.slice(1))
     return
   }
@@ -191,8 +193,13 @@ async function main(): Promise<void> {
     profileCheckpoint('cli_bg_path')
     const { enableConfigs } = await import('../services/config/config.js')
     enableConfigs()
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const bg = (await import('../cli/bg.js')) as any
+    const bg = (await import('../cli/bg.js')) as unknown as {
+      psHandler: (args: string[]) => Promise<void>
+      logsHandler: (id: string) => Promise<void>
+      attachHandler: (id: string) => Promise<void>
+      killHandler: (id: string) => Promise<void>
+      handleBgFlag: (args: string[]) => Promise<void>
+    }
     switch (args[0]) {
       case 'ps':
         await bg.psHandler(args.slice(1))
@@ -215,10 +222,10 @@ async function main(): Promise<void> {
   // 模板 job 命令快速路径。
   if (feature('TEMPLATES') && (args[0] === 'new' || args[0] === 'list' || args[0] === 'reply')) {
     profileCheckpoint('cli_templates_path')
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const { templatesMain } = (await import('../cli/handlers/templateJobs.js')) as any
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    await (templatesMain as any)(args)
+    const { templatesMain } = (await import('../cli/handlers/templateJobs.js')) as unknown as {
+      templatesMain: (args: string[]) => Promise<void>
+    }
+    await templatesMain(args)
     // process.exit（非 return）—— mountFleetView 的 Ink TUI 可能留下事件
     // 循环句柄阻止自然退出。
     // eslint-disable-next-line custom-rules/no-process-exit
@@ -229,10 +236,12 @@ async function main(): Promise<void> {
   // feature() 必须保持内联以实现构建时死代码消除。
   if (feature('BYOC_ENVIRONMENT_RUNNER') && args[0] === 'environment-runner') {
     profileCheckpoint('cli_environment_runner_path')
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const { environmentRunnerMain } = (await import('../environment-runner/main.js')) as any
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    await (environmentRunnerMain as any)(args.slice(1))
+    const { environmentRunnerMain } = (await import(
+      '../environment-runner/main.js'
+    )) as unknown as {
+      environmentRunnerMain: (args: string[]) => Promise<void>
+    }
+    await environmentRunnerMain(args.slice(1))
     return
   }
 
@@ -241,10 +250,10 @@ async function main(): Promise<void> {
   // feature() 必须保持内联以实现构建时死代码消除。
   if (feature('SELF_HOSTED_RUNNER') && args[0] === 'self-hosted-runner') {
     profileCheckpoint('cli_self_hosted_runner_path')
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const { selfHostedRunnerMain } = (await import('../self-hosted-runner/main.js')) as any
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    await (selfHostedRunnerMain as any)(args.slice(1))
+    const { selfHostedRunnerMain } = (await import('../self-hosted-runner/main.js')) as unknown as {
+      selfHostedRunnerMain: (args: string[]) => Promise<void>
+    }
+    await selfHostedRunnerMain(args.slice(1))
     return
   }
 

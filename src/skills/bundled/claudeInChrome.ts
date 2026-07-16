@@ -4,8 +4,7 @@ import { shouldAutoEnableClaudeInChrome } from '../../services/claude-in-chrome/
 import { registerBundledSkill } from '../bundledSkills.js'
 
 const CLAUDE_IN_CHROME_MCP_TOOLS = BROWSER_TOOLS.map(
-  // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  (tool) => `mcp__claude-in-chrome__${(tool as any).name}`,
+  (tool) => `mcp__claude-in-chrome__${(tool as unknown as { name: string }).name}`,
 )
 
 const SKILL_ACTIVATION_MESSAGE = `

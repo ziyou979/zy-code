@@ -14,6 +14,7 @@ import type {
   TeammateIdentity,
 } from '../../tasks/in-process-teammate-task/types.js'
 import type { Message } from '../../types/message.js'
+import type { PermissionMode } from '../../types/permissions.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
@@ -65,7 +66,7 @@ export async function saveHibernateSnapshot(
   const snapshot: HibernatedAgentSnapshot = {
     identity,
     model: options.model,
-    permissionMode: options.permissionMode as any,
+    permissionMode: options.permissionMode as PermissionMode,
     summary: options.summary,
     transcriptPath: options.transcriptPath,
     lastActiveAt: options.lastActiveAt,

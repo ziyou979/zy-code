@@ -414,10 +414,8 @@ export function usePromptInputState({
       return []
     }
     const teammateCount = count(
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      Object.values(teamContext.teammates) as any[],
-      // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-      (t: any) => t.name !== 'team-lead',
+      Object.values(teamContext.teammates) as { name: string }[],
+      (t) => t.name !== 'team-lead',
     )
     return [
       {
@@ -433,8 +431,7 @@ export function usePromptInputState({
   // Which pills render below the input box. Order here IS the nav order
   // (down/right = forward, up/left = back).
   const runningTaskCount = useMemo(
-    // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    () => count(Object.values(tasks) as any[], (t: any) => t.status === 'running'),
+    () => count(Object.values(tasks) as { status: string }[], (t) => t.status === 'running'),
     [tasks],
   )
 

@@ -929,8 +929,7 @@ export async function* queryModel(
       // 404 在分配 streamRequestId 之前在 .withResponse() 处抛出，
       // 且 CannotRetryError 意味着每次重试都失败——所以从错误 header 中获取
       // 失败的请求 ID。
-      // biome-ignore lint/suspicious/noExplicitAny: SDK 扩展字段 requestID 未在类型中声明
-      const failedRequestId = (errorFromRetry.originalError as any).requestID ?? 'unknown'
+      const failedRequestId = (errorFromRetry.originalError as unknown as { requestID?: string }).requestID ?? 'unknown'
       logForDebugging('Streaming endpoint returned 404, falling back to non-streaming mode', {
         level: 'warn',
       })
@@ -1004,12 +1003,10 @@ export async function* queryModel(
           probeThinkingFromError(errorModel, error.message)
         }
 
-        // biome-ignore lint/suspicious/noExplicitAny: SDK 扩展字段 requestID/error 未在类型中声明
-        const errorAny = error as any
         const requestId =
           streamRequestId ||
-          (isAPIError(error) ? errorAny.requestID : undefined) ||
-          (isAPIError(error) ? (errorAny.error as { request_id?: string })?.request_id : undefined)
+          (isAPIError(error) ? (error as unknown as { requestID?: string }).requestID : undefined) ||
+          (isAPIError(error) ? ((error as unknown as { error?: { request_id?: string } }).error?.request_id) : undefined)
 
         logAPIError({
           error,
@@ -1058,13 +1055,11 @@ export async function* queryModel(
         probeThinkingFromError(errorModel, error.message)
       }
 
-      // biome-ignore lint/suspicious/noExplicitAny: SDK 扩展字段 requestID/error 未在类型中声明
-      const errorAny2 = error as any
       // 从流、错误头或错误体中提取 requestId
       const requestId =
         streamRequestId ||
-        (isAPIError(error) ? errorAny2.requestID : undefined) ||
-        (isAPIError(error) ? (errorAny2.error as { request_id?: string })?.request_id : undefined)
+        (isAPIError(error) ? (error as unknown as { requestID?: string }).requestID : undefined) ||
+        (isAPIError(error) ? ((error as unknown as { error?: { request_id?: string } }).error?.request_id) : undefined)
 
       logAPIError({
         error,

@@ -2,6 +2,7 @@ import * as React from 'react'
 import { MessageResponse } from '../MessageResponse.js'
 import { supportsHyperlinks } from '../../ink/supports-hyperlinks.js'
 import { Link, Text } from '../../ink.js'
+import { tSync } from '../../i18n/index.js'
 import { renderToolResultMessage as renderDefaultMCPToolResultMessage } from '../../tools/MCPTool/UI.js'
 import { truncateToWidth } from '../../utils/format.js'
 import type { MCPToolResult } from '../../utils/mcpValidation.js'
@@ -57,7 +58,7 @@ function renderChromeToolUseMessage(
       break
     case 'find':
       if (typeof input.query === 'string') {
-        secondaryInfo.push(`pattern: ${truncateToWidth(input.query, 30)}`)
+        secondaryInfo.push(tSync('chromeRendering.pattern', { query: truncateToWidth(input.query, 30) }))
       }
       break
     case 'computer':
@@ -70,30 +71,30 @@ function renderChromeToolUseMessage(
           action === 'middle_click'
         ) {
           if (typeof input.ref === 'string') {
-            secondaryInfo.push(`${action} on ${input.ref}`)
+            secondaryInfo.push(tSync('chromeRendering.actionOn', { action, ref: input.ref }))
           } else if (Array.isArray(input.coordinate)) {
-            secondaryInfo.push(`${action} at (${input.coordinate.join(', ')})`)
+            secondaryInfo.push(tSync('chromeRendering.actionAt', { action, coordinate: input.coordinate.join(', ') }))
           } else {
-            secondaryInfo.push(action)
+            secondaryInfo.push(tSync('chromeRendering.action', { action }))
           }
         } else if (action === 'type' && typeof input.text === 'string') {
-          secondaryInfo.push(`type "${truncateToWidth(input.text, 15)}"`)
+          secondaryInfo.push(tSync('chromeRendering.type', { text: truncateToWidth(input.text, 15) }))
         } else if (action === 'key' && typeof input.text === 'string') {
-          secondaryInfo.push(`key ${input.text}`)
+          secondaryInfo.push(tSync('chromeRendering.key', { keyName: input.text }))
         } else if (action === 'scroll' && typeof input.scroll_direction === 'string') {
-          secondaryInfo.push(`scroll ${input.scroll_direction}`)
+          secondaryInfo.push(tSync('chromeRendering.scroll', { direction: input.scroll_direction }))
         } else if (action === 'wait' && typeof input.duration === 'number') {
-          secondaryInfo.push(`wait ${input.duration}s`)
+          secondaryInfo.push(tSync('chromeRendering.wait', { duration: input.duration }))
         } else if (action === 'left_click_drag') {
-          secondaryInfo.push('drag')
+          secondaryInfo.push(tSync('chromeRendering.drag'))
         } else {
-          secondaryInfo.push(action)
+          secondaryInfo.push(tSync('chromeRendering.action', { action }))
         }
       }
       break
     case 'gif_creator':
       if (typeof input.action === 'string') {
-        secondaryInfo.push(`${input.action}`)
+        secondaryInfo.push(tSync('chromeRendering.action', { action: input.action }))
       }
       break
     case 'resize_window':
@@ -103,20 +104,20 @@ function renderChromeToolUseMessage(
       break
     case 'read_console_messages':
       if (typeof input.pattern === 'string') {
-        secondaryInfo.push(`pattern: ${truncateToWidth(input.pattern, 20)}`)
+        secondaryInfo.push(tSync('chromeRendering.pattern', { query: truncateToWidth(input.pattern, 20) }))
       }
       if (input.onlyErrors === true) {
-        secondaryInfo.push('errors only')
+        secondaryInfo.push(tSync('chromeRendering.errorsOnly'))
       }
       break
     case 'read_network_requests':
       if (typeof input.urlPattern === 'string') {
-        secondaryInfo.push(`pattern: ${truncateToWidth(input.urlPattern, 20)}`)
+        secondaryInfo.push(tSync('chromeRendering.pattern', { query: truncateToWidth(input.urlPattern, 20) }))
       }
       break
     case 'shortcuts_execute':
       if (typeof input.shortcutId === 'string') {
-        secondaryInfo.push(`shortcut_id: ${input.shortcutId}`)
+        secondaryInfo.push(tSync('chromeRendering.shortcutId', { shortcutId: input.shortcutId }))
       }
       break
     case 'javascript_tool':
@@ -169,7 +170,7 @@ function renderChromeViewTabLink(input: unknown): React.ReactNode {
     <Text>
       {' '}
       <Link url={linkUrl}>
-        <Text color="subtle">[View Tab]</Text>
+        <Text color="subtle">{tSync('chromeRendering.viewTab')}</Text>
       </Link>
     </Text>
   )
@@ -193,55 +194,55 @@ export function renderChromeToolResultMessage(
   let summary: string | null = null
   switch (toolName) {
     case 'navigate':
-      summary = 'Navigation completed'
+      summary = tSync('chromeRendering.summaryNavigation')
       break
     case 'tabs_create_mcp':
-      summary = 'Tab created'
+      summary = tSync('chromeRendering.summaryTabCreated')
       break
     case 'tabs_context_mcp':
-      summary = 'Tabs read'
+      summary = tSync('chromeRendering.summaryTabsRead')
       break
     case 'form_input':
-      summary = 'Input completed'
+      summary = tSync('chromeRendering.summaryInputCompleted')
       break
     case 'computer':
-      summary = 'Action completed'
+      summary = tSync('chromeRendering.summaryActionCompleted')
       break
     case 'resize_window':
-      summary = 'Window resized'
+      summary = tSync('chromeRendering.summaryWindowResized')
       break
     case 'find':
-      summary = 'Search completed'
+      summary = tSync('chromeRendering.summarySearchCompleted')
       break
     case 'gif_creator':
-      summary = 'GIF action completed'
+      summary = tSync('chromeRendering.summaryGifCompleted')
       break
     case 'read_console_messages':
-      summary = 'Console messages retrieved'
+      summary = tSync('chromeRendering.summaryConsoleRetrieved')
       break
     case 'read_network_requests':
-      summary = 'Network requests retrieved'
+      summary = tSync('chromeRendering.summaryNetworkRetrieved')
       break
     case 'shortcuts_list':
-      summary = 'Shortcuts retrieved'
+      summary = tSync('chromeRendering.summaryShortcutsRetrieved')
       break
     case 'shortcuts_execute':
-      summary = 'Shortcut executed'
+      summary = tSync('chromeRendering.summaryShortcutExecuted')
       break
     case 'javascript_tool':
-      summary = 'Script executed'
+      summary = tSync('chromeRendering.summaryScriptExecuted')
       break
     case 'read_page':
-      summary = 'Page read'
+      summary = tSync('chromeRendering.summaryPageRead')
       break
     case 'upload_image':
-      summary = 'Image uploaded'
+      summary = tSync('chromeRendering.summaryImageUploaded')
       break
     case 'get_page_text':
-      summary = 'Page text retrieved'
+      summary = tSync('chromeRendering.summaryPageTextRetrieved')
       break
     case 'update_plan':
-      summary = 'Plan updated'
+      summary = tSync('chromeRendering.summaryPlanUpdated')
       break
   }
   if (summary) {
@@ -278,7 +279,7 @@ export function getClaudeInChromeMCPToolOverrides(toolName: string): {
     userFacingName(_input?: Record<string, unknown>) {
       // 删除部分工具名末尾的 _mcp 后缀
       const displayName = toolName.replace(/_mcp$/, '')
-      return `Claude in Chrome[${displayName}]`
+      return tSync('chromeRendering.userFacingName', { displayName })
     },
     renderToolUseMessage(
       input: Record<string, unknown>,

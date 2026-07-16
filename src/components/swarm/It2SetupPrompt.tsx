@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { tSync } from '../../i18n/index.js'
 import { Select } from '../CustomSelect/index.js'
 import { Pane } from '../design-system/Pane.js'
 import { Spinner } from '../Spinner.js'
@@ -55,7 +56,7 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
           setStep('success')
           setTimeout(onDone, 1500, 'installed' as const)
         } else {
-          setError(result.error || 'Verification failed')
+          setError(result.error || tSync('it2Setup.verificationFailed'))
           setStep('failed')
         }
       })
@@ -63,7 +64,7 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
   })
   const handleInstall = async function handleInstall() {
     if (!packageManager) {
-      setError('No Python package manager found (uvx, pipx, or pip)')
+      setError(tSync('it2Setup.noPackageManager'))
       setStep('failed')
       return
     }
@@ -72,7 +73,7 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
     if (result_0.success) {
       setStep('api-instructions')
     } else {
-      setError(result_0.error || 'Installation failed')
+      setError(result_0.error || tSync('it2Setup.installFailed'))
       setStep('install-failed')
     }
   }
@@ -116,34 +117,32 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
   function renderInitialPrompt() {
     const options = [
       {
-        label: 'Install it2 now',
+        label: tSync('it2Setup.installNow'),
         value: 'install',
         description: packageManager
-          ? `Uses ${packageManager} to install the it2 CLI tool`
-          : 'Requires Python (uvx, pipx, or pip)',
+          ? tSync('it2Setup.usesPackageManager', { packageManager })
+          : tSync('it2Setup.requiresPython'),
       },
     ]
     if (tmuxAvailable) {
       options.push({
-        label: 'Use tmux instead',
+        label: tSync('it2Setup.useTmux'),
         value: 'tmux',
-        description: 'Opens teammates in a separate tmux session',
+        description: tSync('it2Setup.useTmuxDesc'),
       })
     }
     options.push({
-      label: 'Cancel',
+      label: tSync('it2Setup.cancel'),
       value: 'cancel',
-      description: 'Skip teammate spawning for now',
+      description: tSync('it2Setup.cancelDesc'),
     })
     return (
       <Box flexDirection="column" gap={1}>
         <Text>
-          To use native iTerm2 split panes for teammates, you need the <Text bold={true}>it2</Text>{' '}
-          CLI tool.
+          {tSync('it2Setup.needIt2CLI')} <Text bold={true}>it2</Text>{' '}
+          {tSync('it2Setup.needIt2CLI2')}
         </Text>
-        <Text dimColor={true}>
-          This enables teammates to appear as split panes within your current window.
-        </Text>
+        <Text dimColor={true}>{tSync('it2Setup.splitPanesDesc')}</Text>
         <Box marginTop={1}>
           <Select
             options={options}
@@ -173,43 +172,46 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
       <Box flexDirection="column" gap={1}>
         <Box>
           <Spinner />
-          <Text> Installing it2 using {packageManager}…</Text>
+          <Text>
+            {' '}
+            {tSync('it2Setup.installingUsing', { packageManager: packageManager ?? '' })}
+          </Text>
         </Box>
-        <Text dimColor={true}>This may take a moment.</Text>
+        <Text dimColor={true}>{tSync('it2Setup.installMayTakeMoment')}</Text>
       </Box>
     )
   }
   function renderInstallFailed() {
     const installOptions = [
       {
-        label: 'Try again',
+        label: tSync('it2Setup.tryAgain'),
         value: 'retry',
-        description: 'Retry the installation',
+        description: tSync('it2Setup.retryInstallDesc'),
       },
     ]
     if (tmuxAvailable) {
       installOptions.push({
-        label: 'Use tmux instead',
+        label: tSync('it2Setup.useTmux'),
         value: 'tmux',
-        description: 'Falls back to tmux for teammate panes',
+        description: tSync('it2Setup.fallbackTmuxDesc'),
       })
     }
     installOptions.push({
-      label: 'Cancel',
+      label: tSync('it2Setup.cancel'),
       value: 'cancel',
-      description: 'Skip teammate spawning for now',
+      description: tSync('it2Setup.cancelDesc'),
     })
     return (
       <Box flexDirection="column" gap={1}>
-        <Text color="error">Installation failed</Text>
+        <Text color="error">{tSync('it2Setup.installFailed')}</Text>
         {error && <Text dimColor={true}>{error}</Text>}
         <Text dimColor={true}>
-          You can try installing manually:{' '}
+          {tSync('it2Setup.tryManualInstall')}{' '}
           {packageManager === 'uvx'
-            ? 'uv tool install it2'
+            ? tSync('it2Setup.manualCmdUvx')
             : packageManager === 'pipx'
-              ? 'pipx install it2'
-              : 'pip install --user it2'}
+              ? tSync('it2Setup.manualCmdPipx')
+              : tSync('it2Setup.manualCmdPip')}
         </Text>
         <Box marginTop={1}>
           <Select
@@ -239,14 +241,14 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
     const instructions = getPythonApiInstructions()
     return (
       <Box flexDirection="column" gap={1}>
-        <Text color="success">✓ it2 installed successfully</Text>
+        <Text color="success">{tSync('it2Setup.installedSuccessfully')}</Text>
         <Box flexDirection="column" marginTop={1}>
           {instructions.map((line, i) => (
             <Text key={i}>{line}</Text>
           ))}
         </Box>
         <Box marginTop={1}>
-          <Text dimColor={true}>Press Enter when ready to verify…</Text>
+          <Text dimColor={true}>{tSync('it2Setup.pressEnterVerify')}</Text>
         </Box>
       </Box>
     )
@@ -255,46 +257,46 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
     return (
       <Box>
         <Spinner />
-        <Text> Verifying it2 can communicate with iTerm2…</Text>
+        <Text> {tSync('it2Setup.verifyingCommunication')}</Text>
       </Box>
     )
   }
   function renderSuccess() {
     return (
       <Box flexDirection="column">
-        <Text color="success">✓ iTerm2 split pane support is ready</Text>
-        <Text dimColor={true}>Teammates will now appear as split panes.</Text>
+        <Text color="success">{tSync('it2Setup.splitPaneReady')}</Text>
+        <Text dimColor={true}>{tSync('it2Setup.splitPaneTeammates')}</Text>
       </Box>
     )
   }
   function renderFailed() {
     const enableOptions = [
       {
-        label: 'Try again',
+        label: tSync('it2Setup.tryAgain'),
         value: 'retry',
-        description: 'Verify the connection again',
+        description: tSync('it2Setup.verifyAgainDesc'),
       },
     ]
     if (tmuxAvailable) {
       enableOptions.push({
-        label: 'Use tmux instead',
+        label: tSync('it2Setup.useTmux'),
         value: 'tmux',
-        description: 'Falls back to tmux for teammate panes',
+        description: tSync('it2Setup.fallbackTmuxDesc'),
       })
     }
     enableOptions.push({
-      label: 'Cancel',
+      label: tSync('it2Setup.cancel'),
       value: 'cancel',
-      description: 'Skip teammate spawning for now',
+      description: tSync('it2Setup.cancelDesc'),
     })
     return (
       <Box flexDirection="column" gap={1}>
-        <Text color="error">Verification failed</Text>
+        <Text color="error">{tSync('it2Setup.verificationFailed')}</Text>
         {error && <Text dimColor={true}>{error}</Text>}
-        <Text>Make sure:</Text>
+        <Text>{tSync('it2Setup.makeSure')}</Text>
         <Box flexDirection="column" paddingLeft={2}>
-          <Text>· Python API is enabled in iTerm2 preferences</Text>
-          <Text>· You may need to restart iTerm2 after enabling</Text>
+          <Text>{tSync('it2Setup.enablePythonApi')}</Text>
+          <Text>{tSync('it2Setup.restartIterm2')}</Text>
         </Box>
         <Box marginTop={1}>
           <Select
@@ -309,7 +311,7 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
                       setStep('success')
                       setTimeout(onDone, 1500, 'installed' as const)
                     } else {
-                      setError(verificationResult.error || 'Verification failed')
+                      setError(verificationResult.error || tSync('it2Setup.verificationFailed'))
                       setStep('failed')
                     }
                   })
@@ -336,7 +338,7 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
 
   const textElement = (
     <Text bold={true} color="permission">
-      iTerm2 Split Pane Setup
+      {tSync('it2Setup.title')}
     </Text>
   )
   renderContentResult = renderContent()
@@ -349,9 +351,9 @@ export function It2SetupPrompt({ onDone, tmuxAvailable }: Props) {
           {step !== 'installing' && step !== 'verifying' && step !== 'success' && (
             <Text dimColor={true} italic={true}>
               {exitState.pending ? (
-                <>Press {exitState.keyName} again to exit</>
+                <>{tSync('it2Setup.pressAgainToExit', { keyName: exitState.keyName ?? '' })}</>
               ) : (
-                <>Esc to cancel</>
+                <>{tSync('it2Setup.escToCancel')}</>
               )}
             </Text>
           )}

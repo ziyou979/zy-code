@@ -12,7 +12,6 @@
 
 import { feature } from 'bun:bundle'
 import chalk from 'chalk'
-import uniqBy from 'lodash-es/uniqBy.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -25,13 +24,11 @@ import { logManagedSettings } from '../bootstrap/managedSettings.js'
 import { logTenguInit } from '../bootstrap/telemetry.js'
 import { assistantModule, coordinatorModeModule } from '../lazyModules.js'
 import type { StatsStore } from '../../context/stats.js'
-import { launchInvalidSettingsDialog, launchSnapshotUpdateDialog } from '../../DialogLaunchers.js'
+import { launchInvalidSettingsDialog, launchSnapshotUpdateDialog } from '../../cli/dialogLaunchers.js'
 import type { Root } from '../../ink.js'
-import { exitWithError, getRenderContext, showSetupScreens } from '../../InteractiveHelpers.js'
+import { exitWithError, getRenderContext, showSetupScreens } from '../../cli/interactiveHelpers.js'
 import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js'
 import { fetchBootstrapData } from '../../services/api/bootstrap.js'
-import { prefetchAllMcpResources } from '../../services/mcp/client.js'
-import type { McpSdkServerConfig, ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import {
   getDefaultMainLoopModel,
   getDefaultMainLoopModelSetting,
@@ -83,8 +80,14 @@ import {
 import { initializeLspServerManager } from '../../services/lsp/manager.js'
 import { isInBundledMode } from '../../utils/bundledMode.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
-import { shouldEnableThinkingByDefault, type ThinkingConfig } from '../../utils/thinking.js'
 import { resetUserCache } from '../../utils/user.js'
+import {
+  appendProactiveModePrompt,
+  createMcpPrefetchPromises,
+  maybeEnableBriefOptInFromDefaultView,
+  resolveThinkingState,
+  splitMcpConfigs,
+} from './sessionBootConfig.js'
 import { RootActionCompleted } from './rootActionPipeline.js'
 import { initializeRootRuntime } from './initializeRootRuntime.js'
 export async function loadRootResources(
@@ -334,43 +337,28 @@ export async function loadRootResources(
   // 在任何 isBriefEnabled() 读取之前（主动提示的
   // briefVisibility）。GB 关闭开关后的持久化 'chat' 会
   // 透传（授权失败）。
-  if (
-    (feature('KAIROS') || feature('KAIROS_BRIEF')) &&
-    !getIsNonInteractiveSession() &&
-    !getUserMsgOptIn() &&
-    getInitialSettings().defaultView === 'chat'
-  ) {
-    /* eslint-disable @typescript-eslint/no-require-imports */
-    const { isBriefEntitled } =
-      require('../../tools/BriefTool/BriefTool.js') as typeof import('../../tools/BriefTool/BriefTool.js')
-    /* eslint-enable @typescript-eslint/no-require-imports */
-    if (isBriefEntitled()) {
-      setUserMsgOptIn(true)
-    }
+  if (feature('KAIROS')) {
+    maybeEnableBriefOptInFromDefaultView()
+  } else if (feature('KAIROS_BRIEF')) {
+    maybeEnableBriefOptInFromDefaultView()
   }
 
   // 协调器模式有自己的系统提示并过滤掉 Sleep，所以
   // 通用主动提示会告诉它调用它无法访问的工具
   // 并与委托指令冲突。
-  if (
-    (feature('PROACTIVE') || feature('KAIROS')) &&
-    (options.proactive || isEnvTruthy(process.env.ZY_CODE_PROACTIVE)) &&
-    !coordinatorModeModule?.isCoordinatorMode()
-  ) {
-    /* eslint-disable @typescript-eslint/no-require-imports */
-    const briefVisibility =
-      feature('KAIROS') || feature('KAIROS_BRIEF')
-        ? (
-            require('../../tools/BriefTool/BriefTool.js') as typeof import('../../tools/BriefTool/BriefTool.js')
-          ).isBriefEnabled()
-          ? 'Call SendUserMessage at checkpoints to mark where things stand.'
-          : 'The user will see any text you output.'
-        : 'The user will see any text you output.'
-    /* eslint-enable @typescript-eslint/no-require-imports */
-    const proactivePrompt = `\n# Proactive Mode\n\nYou are in proactive mode. Take initiative — explore, act, and make progress without waiting for instructions.\n\nStart by briefly greeting the user.\n\nYou will receive periodic <tick> prompts. These are check-ins. Do whatever seems most useful, or call Sleep if there's nothing to do. ${briefVisibility}`
-    appendSystemPrompt = appendSystemPrompt
-      ? `${appendSystemPrompt}\n\n${proactivePrompt}`
-      : proactivePrompt
+  const proactiveRequested = options.proactive || isEnvTruthy(process.env.ZY_CODE_PROACTIVE)
+  if (feature('PROACTIVE')) {
+    appendSystemPrompt = appendProactiveModePrompt(
+      appendSystemPrompt,
+      proactiveRequested,
+      coordinatorModeModule?.isCoordinatorMode() ?? false,
+    )
+  } else if (feature('KAIROS')) {
+    appendSystemPrompt = appendProactiveModePrompt(
+      appendSystemPrompt,
+      proactiveRequested,
+      coordinatorModeModule?.isCoordinatorMode() ?? false,
+    )
   }
 
   const activeAssistantModule = assistantModule
@@ -453,13 +441,18 @@ export async function loadRootResources(
         snapshotTimestamp: agentDef.pendingSnapshotUpdate!.snapshotTimestamp,
       })
       if (choice === 'merge') {
-        const {
-          // @ts-expect-error
-          buildMergePrompt,
-        } = await import('../../components/agents/SnapshotUpdateDialog.js')
-        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-        const mergePrompt = (buildMergePrompt as any)(agentDef.agentType, agentDef.memory!)
-        inputPrompt = inputPrompt ? `${mergePrompt}\n\n${inputPrompt}` : mergePrompt
+        const snapshotUpdateDialogModule = (await import(
+          '../../components/agents/SnapshotUpdateDialog.js'
+        )) as {
+          buildMergePrompt?: (agentType: string, scope: unknown) => string
+        }
+        const mergePrompt = snapshotUpdateDialogModule.buildMergePrompt?.(
+          agentDef.agentType,
+          agentDef.memory!,
+        )
+        if (mergePrompt) {
+          inputPrompt = inputPrompt ? `${mergePrompt}\n\n${inputPrompt}` : mergePrompt
+        }
       }
       agentDef.pendingSnapshotUpdate = undefined
     }
@@ -497,8 +490,7 @@ export async function loadRootResources(
     // 在入门培训之后运行，以便托管设置和登录状态完全加载。
     const orgValidation = await validateForceLoginOrg()
     if (!orgValidation.valid) {
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      await exitWithError(root, (orgValidation as any).message)
+      await exitWithError(root, orgValidation.message)
     }
   }
 
@@ -579,59 +571,18 @@ export async function loadRootResources(
     ...dynamicMcpConfig,
   }
 
-  // 将 SDK 配置与普通 MCP 配置分开
-  const sdkMcpConfigs: Record<string, McpSdkServerConfig> = {}
-
-  const regularMcpConfigs: Record<string, ScopedMcpServerConfig> = {}
-
-  for (const [name, config] of Object.entries(allMcpConfigs)) {
-    const typedConfig = config as ScopedMcpServerConfig | McpSdkServerConfig
-    if (typedConfig.type === 'sdk') {
-      sdkMcpConfigs[name] = typedConfig as McpSdkServerConfig
-    } else {
-      regularMcpConfigs[name] = typedConfig as ScopedMcpServerConfig
-    }
-  }
+  const { sdkMcpConfigs, regularMcpConfigs } = splitMcpConfigs(allMcpConfigs)
 
   profileCheckpoint('action_mcp_configs_loaded')
 
   // 在信任对话框之后预取 MCP 资源（这是执行发生的地方）。
-  // 仅限交互模式：打印模式延迟连接直到 headlessStore 存在
-  // 并按服务器推送（下方），所以 ToolSearch 的 pending-client 处理有效
-  // 且一个慢速服务器不会阻塞批次。
-  const localMcpPromise = isNonInteractiveSession
-    ? Promise.resolve({
-        clients: [],
-        tools: [],
-        commands: [],
-      })
-    : prefetchAllMcpResources(regularMcpConfigs)
-
-  const zyaiMcpPromise = isNonInteractiveSession
-    ? Promise.resolve({
-        clients: [],
-        tools: [],
-        commands: [],
-      })
-    : zyaiConfigPromise.then((configs) =>
-        Object.keys(configs).length > 0
-          ? prefetchAllMcpResources(configs)
-          : {
-              clients: [],
-              tools: [],
-              commands: [],
-            },
-      )
-
-  // 按名称去重合并：每个 prefetchAllMcpResources 调用独立
-  // 添加帮助工具（ListMcpResourcesTool、ReadMcpResourceTool）通过
-  // 本地去重标志，所以合并两个调用可能产生重复。print.ts
-  // 已经对最终工具池进行 uniqBy 处理，但在此去重保持 appState 干净。
-  const mcpPromise = Promise.all([localMcpPromise, zyaiMcpPromise]).then(([local, zyai]) => ({
-    clients: [...local.clients, ...zyai.clients],
-    tools: uniqBy([...local.tools, ...zyai.tools], 'name'),
-    commands: uniqBy([...local.commands, ...zyai.commands], 'name'),
-  }))
+  // 仅限交互模式：打印模式延迟连接直到 headlessStore 存在，
+  // 并按服务器推送，所以一个慢速服务器不会阻塞整批启动。
+  const { localMcpPromise, zyaiMcpPromise, mcpPromise } = createMcpPrefetchPromises(
+    isNonInteractiveSession,
+    regularMcpConfigs,
+    zyaiConfigPromise,
+  )
 
   // 早期启动钩子以便它们与 MCP 连接并行运行。
   // 跳过 initOnly/init/maintenance（单独处理）、非交互
@@ -665,45 +616,11 @@ export async function loadRootResources(
 
   const mcpCommands: Awaited<typeof mcpPromise>['commands'] = []
 
-  let thinkingEnabled = shouldEnableThinkingByDefault(effectiveModel)
-
-  let thinkingConfig: ThinkingConfig = thinkingEnabled
-    ? {
-        type: 'adaptive',
-      }
-    : {
-        type: 'disabled',
-      }
-
-  if (options.thinking === 'adaptive' || options.thinking === 'enabled') {
-    thinkingEnabled = true
-    thinkingConfig = {
-      type: 'adaptive',
-    }
-  } else if (options.thinking === 'disabled') {
-    thinkingEnabled = false
-    thinkingConfig = {
-      type: 'disabled',
-    }
-  } else {
-    const maxThinkingTokens = process.env.MAX_THINKING_TOKENS
-      ? parseInt(process.env.MAX_THINKING_TOKENS, 10)
-      : options.maxThinkingTokens
-    if (maxThinkingTokens !== undefined) {
-      if (maxThinkingTokens > 0) {
-        thinkingEnabled = true
-        thinkingConfig = {
-          type: 'enabled',
-          budgetTokens: maxThinkingTokens,
-        }
-      } else if (maxThinkingTokens === 0) {
-        thinkingEnabled = false
-        thinkingConfig = {
-          type: 'disabled',
-        }
-      }
-    }
-  }
+  const { thinkingEnabled, thinkingConfig } = resolveThinkingState(
+    effectiveModel,
+    options.thinking,
+    options.maxThinkingTokens,
+  )
 
   logForDiagnosticsNoPII('info', 'started', {
     version: MACRO.VERSION,

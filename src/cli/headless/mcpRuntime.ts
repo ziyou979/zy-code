@@ -35,6 +35,7 @@ import {
 import { getMcpPrefix } from 'src/services/mcp/mcpStringUtils.js'
 import type {
   MCPServerConnection,
+  McpStdioServerConfig,
   McpSdkServerConfig,
   ScopedMcpServerConfig,
 } from 'src/services/mcp/types.js'
@@ -392,12 +393,11 @@ export class McpRuntime {
           id: connection.config.id,
         }
       } else if (connection.config.type === 'stdio' || connection.config.type === undefined) {
+        const stdioConfig = connection.config as ScopedMcpServerConfig & McpStdioServerConfig
         config = {
           type: 'stdio' as const,
-          // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-          command: (connection.config as any).command,
-          // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-          args: (connection.config as any).args,
+          command: stdioConfig.command,
+          args: stdioConfig.args,
         }
       }
       const serverTools =
@@ -508,15 +508,12 @@ export class McpRuntime {
         type === 'http' ||
         type === 'sdk'
       ) {
-        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-        supportedConfigs[name] = config as any
+        supportedConfigs[name] = config as McpServerConfigForProcessTransport
       }
     }
     for (const [name, config] of Object.entries(this.sdkMcpConfigs)) {
-      // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-      if ((config as any).type === 'sdk' && !(name in supportedConfigs)) {
-        // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-        supportedConfigs[name] = config as any
+      if ((config as Record<string, unknown>).type === 'sdk' && !(name in supportedConfigs)) {
+        supportedConfigs[name] = config as McpServerConfigForProcessTransport
       }
     }
     const { response, sdkServersChanged } = await this.applyMcpServerChanges(supportedConfigs)

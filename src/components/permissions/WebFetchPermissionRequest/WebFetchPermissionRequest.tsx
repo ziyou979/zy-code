@@ -34,14 +34,16 @@ export function WebFetchPermissionRequest({
   }
   const parsedUrl = new URL(url)
   const hostname = parsedUrl.hostname
-  const unaryEvent = {
+  const unaryEvent: import('../hooks.js').UnaryEvent = {
     completion_type: 'tool_use_single',
     language_name: 'none',
-    // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  } as any
+  }
   usePermissionRequestLogging(toolUseConfirm, unaryEvent)
   const showAlwaysAllowOptions = shouldShowAlwaysAllowOptions()
-  const result = [
+  const result: {
+    label: React.ReactNode
+    value: string
+  }[] = [
     {
       label: tSync('permission.yes'),
       value: 'yes',
@@ -49,10 +51,7 @@ export function WebFetchPermissionRequest({
   ]
   if (showAlwaysAllowOptions) {
     result.push({
-      label: (
-        <Text>{tSync('permission.yesDontAskAgainDomain', { domain: hostname })}</Text>
-        // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-      ) as any,
+      label: <Text>{tSync('permission.yesDontAskAgainDomain', { domain: hostname })}</Text>,
       value: 'yes-dont-ask-again-domain',
     })
   }

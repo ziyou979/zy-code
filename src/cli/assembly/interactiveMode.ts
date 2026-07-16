@@ -2,7 +2,7 @@
 // 对应原 root.ts:3570-3635 else 分支：无 resume / connect / ssh / remote 触发时的 REPL 启动。
 
 import { feature } from 'bun:bundle'
-import { launchRepl } from '../../ReplLauncher.js'
+import { launchRepl } from '../../cli/replLauncher.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { buildDeepLinkBanner } from '../../services/deep-link/banner.js'
 import type { Message } from '../../types/message.js'

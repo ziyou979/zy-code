@@ -30,8 +30,6 @@ import {
   ResourceListChangedNotificationSchema,
   ToolListChangedNotificationSchema,
 } from '@modelcontextprotocol/sdk/types.js'
-import omit from 'lodash-es/omit.js'
-import reject from 'lodash-es/reject.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -71,54 +69,19 @@ import {
   isChannelPermissionRelayEnabled,
 } from './channelPermissions.js'
 import { registerElicitationHandler } from './elicitationHandler.js'
-import { getMcpPrefix } from './mcpStringUtils.js'
-import { commandBelongsToServer, excludeStalePluginClients } from './utils.js'
+import {
+  addErrorsToAppState,
+  applyPendingMcpUpdates,
+  getTransportDisplayName,
+  type PendingMcpUpdate,
+} from './mcpConnectionStateSupport.js'
+import { excludeStalePluginClients } from './utils.js'
 import { clearZyAIMcpConfigsCache, fetchZyAIMcpConfigsIfEligible } from './zyai.js'
 
 // Constants for reconnection with exponential backoff
 const MAX_RECONNECT_ATTEMPTS = 5
 const INITIAL_BACKOFF_MS = 1000
 const MAX_BACKOFF_MS = 30000
-
-/**
- * Create a unique key for a plugin error to enable deduplication
- */
-function getErrorKey(error: PluginError): string {
-  const plugin = 'plugin' in error ? error.plugin : 'no-plugin'
-  return `${error.type}:${error.source}:${plugin}`
-}
-
-/**
- * Add errors to AppState, deduplicating to avoid showing the same error multiple times
- */
-function addErrorsToAppState(
-  setAppState: (updater: (prev: AppState) => AppState) => void,
-  newErrors: PluginError[],
-): void {
-  if (newErrors.length === 0) {
-    return
-  }
-
-  setAppState((prevState) => {
-    // Build set of existing error keys
-    const existingKeys = new Set(prevState.plugins.errors.map((e) => getErrorKey(e)))
-
-    // Only add errors that don't already exist
-    const uniqueNewErrors = newErrors.filter((error) => !existingKeys.has(getErrorKey(error)))
-
-    if (uniqueNewErrors.length === 0) {
-      return prevState
-    }
-
-    return {
-      ...prevState,
-      plugins: {
-        ...prevState.plugins,
-        errors: [...prevState.plugins.errors, ...uniqueNewErrors],
-      },
-    }
-  })
-}
 
 /**
  * Hook to manage MCP (Model Context Protocol) server connections and updates
@@ -155,16 +118,47 @@ export function useManageMCPConnections(
   // AppState so interactiveHandler can subscribe. The pending Map lives inside
   // the closure (not module-level, not AppState — functions-in-state is brittle).
   const channelPermCallbacksRef = useRef<ChannelPermissionCallbacks | null>(null)
-  if (
-    (feature('KAIROS') || feature('KAIROS_CHANNELS')) &&
-    channelPermCallbacksRef.current === null
-  ) {
-    channelPermCallbacksRef.current = createChannelPermissionCallbacks()
+  if (feature('KAIROS')) {
+    if (channelPermCallbacksRef.current === null) {
+      channelPermCallbacksRef.current = createChannelPermissionCallbacks()
+    }
+  } else if (feature('KAIROS_CHANNELS')) {
+    if (channelPermCallbacksRef.current === null) {
+      channelPermCallbacksRef.current = createChannelPermissionCallbacks()
+    }
   }
   // Store callbacks in AppState so interactiveHandler.ts can reach them via
   // ctx.toolUseContext.getAppState(). One-time set — the ref is stable.
   useEffect(() => {
-    if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
+    if (feature('KAIROS')) {
+      const callbacks = channelPermCallbacksRef.current
+      if (!callbacks) {
+        return
+      }
+      // GrowthBook runtime gate — separate from channels so channels can
+      // ship without this. Checked at mount; mid-session flips need restart.
+      // If off, callbacks never go into AppState → interactiveHandler sees
+      // undefined → never sends → intercept has nothing pending → "yes tbxkq"
+      // flows to Zy as normal chat. One gate, full disable.
+      if (!isChannelPermissionRelayEnabled()) {
+        return
+      }
+      setAppState((prev) => {
+        if (prev.channelPermissionCallbacks === callbacks) {
+          return prev
+        }
+        return { ...prev, channelPermissionCallbacks: callbacks }
+      })
+      return () => {
+        setAppState((prev) => {
+          if (prev.channelPermissionCallbacks === undefined) {
+            return prev
+          }
+          return { ...prev, channelPermissionCallbacks: undefined }
+        })
+      }
+    }
+    if (feature('KAIROS_CHANNELS')) {
       const callbacks = channelPermCallbacksRef.current
       if (!callbacks) {
         return
@@ -200,12 +194,7 @@ export function useManageMCPConnections(
   // (instead of queueMicrotask) ensures updates are batched even when
   // connection callbacks arrive at different times due to network I/O.
   const MCP_BATCH_FLUSH_MS = 16
-  type PendingUpdate = MCPServerConnection & {
-    tools?: Tool[]
-    commands?: Command[]
-    resources?: ServerResource[]
-  }
-  const pendingUpdatesRef = useRef<PendingUpdate[]>([])
+  const pendingUpdatesRef = useRef<PendingMcpUpdate[]>([])
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const flushPendingUpdates = useCallback(() => {
@@ -216,57 +205,7 @@ export function useManageMCPConnections(
     }
     pendingUpdatesRef.current = []
 
-    setAppState((prevState) => {
-      let mcp = prevState.mcp
-
-      for (const update of updates) {
-        const { tools: rawTools, commands: rawCmds, resources: rawRes, ...client } = update
-        const tools =
-          client.type === 'disabled' || client.type === 'failed' ? (rawTools ?? []) : rawTools
-        const commands =
-          client.type === 'disabled' || client.type === 'failed' ? (rawCmds ?? []) : rawCmds
-        const resources =
-          client.type === 'disabled' || client.type === 'failed' ? (rawRes ?? []) : rawRes
-
-        const prefix = getMcpPrefix(client.name)
-        const existingClientIndex = mcp.clients.findIndex((c) => c.name === client.name)
-
-        const updatedClients =
-          existingClientIndex === -1
-            ? [...mcp.clients, client]
-            : mcp.clients.map((c) => (c.name === client.name ? client : c))
-
-        const updatedTools =
-          tools === undefined
-            ? mcp.tools
-            : [...reject(mcp.tools, (t) => t.name?.startsWith(prefix)), ...tools]
-
-        const updatedCommands =
-          commands === undefined
-            ? mcp.commands
-            : [...reject(mcp.commands, (c) => commandBelongsToServer(c, client.name)), ...commands]
-
-        const updatedResources =
-          resources === undefined
-            ? mcp.resources
-            : {
-                ...mcp.resources,
-                ...(resources.length > 0
-                  ? { [client.name]: resources }
-                  : omit(mcp.resources, client.name)),
-              }
-
-        mcp = {
-          ...mcp,
-          clients: updatedClients,
-          tools: updatedTools,
-          commands: updatedCommands,
-          resources: updatedResources,
-        }
-      }
-
-      return { ...prevState, mcp }
-    })
+    setAppState((prevState) => applyPendingMcpUpdates(prevState, updates))
   }, [setAppState])
 
   // Update server state, tools, commands, and resources.
@@ -274,7 +213,7 @@ export function useManageMCPConnections(
   // When type is 'disabled' or 'failed', tools/commands/resources are automatically cleared.
   // Updates are batched via setTimeout to coalesce updates arriving within MCP_BATCH_FLUSH_MS.
   const updateServer = useCallback(
-    (update: PendingUpdate) => {
+    (update: PendingMcpUpdate) => {
       pendingUpdatesRef.current.push(update)
       if (flushTimerRef.current === null) {
         flushTimerRef.current = setTimeout(flushPendingUpdates, MCP_BATCH_FLUSH_MS)
@@ -431,7 +370,7 @@ export function useManageMCPConnections(
           // Channel push: notifications/zy/channel → enqueue().
           // Gate decides whether to register the handler; connection stays
           // up either way (allowedMcpServers controls that).
-          if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
+          if (feature('KAIROS')) {
             const gate = gateChannelServer(
               client.name,
               client.capabilities,
@@ -483,8 +422,120 @@ export function useManageMCPConnections(
                       value: wrapChannelMessage(client.name, content, meta),
                       priority: 'next',
                       isMeta: true,
-                      // biome-ignore lint/suspicious/noExplicitAny: 扩展 InputOrigin 类型
-                      origin: { kind: 'channel', server: client.name } as any,
+                      origin: {
+                        kind: 'channel',
+                        channel: client.name,
+                        server: client.name,
+                      },
+                      skipSlashCommands: true,
+                    })
+                  },
+                )
+                if (client.capabilities?.experimental?.['zy/channel/permission'] !== undefined) {
+                  client.client.setNotificationHandler(
+                    ChannelPermissionNotificationSchema(),
+                    async (notification) => {
+                      const { request_id, behavior } = notification.params
+                      const resolved =
+                        channelPermCallbacksRef.current?.resolve(
+                          request_id,
+                          behavior,
+                          client.name,
+                        ) ?? false
+                      logMCPDebug(
+                        client.name,
+                        `notifications/zy/channel/permission: ${request_id} → ${behavior} (${resolved ? 'matched pending' : 'no pending entry — stale or unknown ID'})`,
+                      )
+                    },
+                  )
+                }
+                break
+              case 'skip':
+                client.client.removeNotificationHandler('notifications/zy/channel')
+                client.client.removeNotificationHandler(CHANNEL_PERMISSION_METHOD)
+                logMCPDebug(client.name, `Channel notifications skipped: ${gate.reason}`)
+                if (
+                  gate.kind !== 'capability' &&
+                  gate.kind !== 'session' &&
+                  !channelWarnedKindsRef.current.has(gate.kind) &&
+                  (gate.kind === 'marketplace' || gate.kind === 'allowlist' || entry !== undefined)
+                ) {
+                  channelWarnedKindsRef.current.add(gate.kind)
+                  const text =
+                    gate.kind === 'disabled'
+                      ? 'Channels are not currently available'
+                      : gate.kind === 'auth'
+                        ? 'Channels require zy.ai authentication · run /login'
+                        : gate.kind === 'policy'
+                          ? 'Channels are not enabled for your org · have an administrator set channelsEnabled: true in managed settings'
+                          : gate.reason
+                  addNotification({
+                    key: `channels-blocked-${gate.kind}`,
+                    priority: 'high',
+                    text,
+                    color: 'warning',
+                    timeoutMs: 12000,
+                  })
+                }
+                break
+            }
+          } else if (feature('KAIROS_CHANNELS')) {
+            const gate = gateChannelServer(
+              client.name,
+              client.capabilities,
+              client.config.pluginSource,
+            )
+            const entry = findChannelEntry(client.name, getAllowedChannels())
+            // Plugin identifier for telemetry — log name@marketplace for any
+            // plugin-kind entry (same tier as zy_plugin_installed, which
+            // logs arbitrary plugin_id+marketplace_name ungated). server-kind
+            // names are MCP-server-name tier; those are opt-in-only elsewhere
+            // (see isAnalyticsToolDetailsLoggingEnabled in metadata.ts) and
+            // stay unlogged here. is_dev/entry_kind segment the rest.
+            const pluginId =
+              entry?.kind === 'plugin'
+                ? (`${entry.name}@${entry.marketplace}` as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
+                : undefined
+            // Skip capability-miss — every non-channel MCP server trips it.
+            if (gate.action === 'register' || gate.kind !== 'capability') {
+              logEvent('zy_mcp_channel_gate', {
+                registered: gate.action === 'register',
+                skip_kind:
+                  gate.action === 'skip'
+                    ? (gate.kind as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
+                    : undefined,
+                entry_kind:
+                  entry?.kind as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                is_dev: entry?.dev ?? false,
+                plugin: pluginId,
+              })
+            }
+            switch (gate.action) {
+              case 'register':
+                logMCPDebug(client.name, 'Channel notifications registered')
+                client.client.setNotificationHandler(
+                  ChannelMessageNotificationSchema(),
+                  async (notification) => {
+                    const { content, meta } = notification.params
+                    logMCPDebug(client.name, `notifications/zy/channel: ${content.slice(0, 80)}`)
+                    logEvent('zy_mcp_channel_message', {
+                      content_length: content.length,
+                      meta_key_count: Object.keys(meta ?? {}).length,
+                      entry_kind:
+                        entry?.kind as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+                      is_dev: entry?.dev ?? false,
+                      plugin: pluginId,
+                    })
+                    enqueue({
+                      mode: 'prompt',
+                      value: wrapChannelMessage(client.name, content, meta),
+                      priority: 'next',
+                      isMeta: true,
+                      origin: {
+                        kind: 'channel',
+                        channel: client.name,
+                        server: client.name,
+                      },
                       skipSlashCommands: true,
                     })
                   },
@@ -1028,16 +1079,4 @@ export function useManageMCPConnections(
   )
 
   return { reconnectMcpServer, toggleMcpServer }
-}
-
-function getTransportDisplayName(type: string): string {
-  switch (type) {
-    case 'http':
-      return 'HTTP'
-    case 'ws':
-    case 'ws-ide':
-      return 'WebSocket'
-    default:
-      return 'SSE'
-  }
 }

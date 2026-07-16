@@ -83,12 +83,21 @@ export function consumePendingCacheEdits():
 /**
  * 获取所有已 pin 的缓存编辑，这些编辑必须在其原始位置重新发送以命中缓存。
  */
-export function getPinnedCacheEdits(): import('./cachedMicrocompact.js').PinnedCacheEdits[] {
+export function getPinnedCacheEdits(): {
+  userMessageIndex: number
+  block: import('./cachedMicrocompact.js').CacheEditsBlock
+}[] {
   if (!cachedMCState) {
     return []
   }
-  // biome-ignore lint/suspicious/noExplicitAny: CachedMCState 类型不包含运行时动态字段
-  return (cachedMCState as any).pinnedEdits
+  return (
+    cachedMCState as import('./cachedMicrocompact.js').CachedMCState & {
+      pinnedEdits: {
+        userMessageIndex: number
+        block: import('./cachedMicrocompact.js').CacheEditsBlock
+      }[]
+    }
+  ).pinnedEdits
 }
 
 /**
@@ -100,8 +109,14 @@ export function pinCacheEdits(
   block: import('./cachedMicrocompact.js').CacheEditsBlock,
 ): void {
   if (cachedMCState) {
-    // biome-ignore lint/suspicious/noExplicitAny: CachedMCState 类型不包含运行时动态字段
-    ;(cachedMCState as any).pinnedEdits.push({ userMessageIndex, block })
+    ;(
+      cachedMCState as import('./cachedMicrocompact.js').CachedMCState & {
+        pinnedEdits: {
+          userMessageIndex: number
+          block: import('./cachedMicrocompact.js').CacheEditsBlock
+        }[]
+      }
+    ).pinnedEdits.push({ userMessageIndex, block })
   }
 }
 
@@ -255,12 +270,15 @@ export async function microcompactMessages(
   // 否则主线程会尝试删除其自身对话中不存在的工具。
   if (feature('CACHED_MICROCOMPACT')) {
     const mod = await getCachedMCModule()
-    const model = toolUseContext?.options.mainLoopModel ?? getMainLoopModel()
-    // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载，方法签名不在静态类型中
-    const modAny = mod as any
+    const model = toolUseContext?.options.mainLoopModel ?? getMainLoopModel() ?? ''
+    type CachedMCModule = typeof import('./cachedMicrocompact.js') & {
+      isCachedMicrocompactEnabled: () => boolean
+      isModelSupportedForCacheEditing: (model: string) => boolean
+    }
+    const modTyped = mod as unknown as CachedMCModule
     if (
-      modAny.isCachedMicrocompactEnabled() &&
-      modAny.isModelSupportedForCacheEditing(model) &&
+      modTyped.isCachedMicrocompactEnabled() &&
+      modTyped.isModelSupportedForCacheEditing(model) &&
       isMainThreadSource(querySource)
     ) {
       return await cachedMicrocompactPath(messages, querySource)
@@ -290,10 +308,30 @@ async function cachedMicrocompactPath(
 ): Promise<MicrocompactResult> {
   const mod = await getCachedMCModule()
   const state = ensureCachedMCState()
-  // biome-ignore lint/suspicious/noExplicitAny: 动态模块加载，方法签名不在静态类型中
-  const modApi = mod as any
-  // biome-ignore lint/suspicious/noExplicitAny: CachedMCState 运行时字段不在静态类型中
-  const stateAny = state as any
+  type CachedMCModuleApi = typeof import('./cachedMicrocompact.js') & {
+    getCachedMCConfig: () => { triggerThreshold: number; keepRecent: number }
+    registerToolResult: (
+      state: import('./cachedMicrocompact.js').CachedMCState,
+      toolCallId: string,
+    ) => void
+    registerToolMessage: (
+      state: import('./cachedMicrocompact.js').CachedMCState,
+      groupIds: string[],
+    ) => void
+    getToolResultsToDelete: (state: import('./cachedMicrocompact.js').CachedMCState) => string[]
+    createCacheEditsBlock: (
+      state: import('./cachedMicrocompact.js').CachedMCState,
+      toolsToDelete: string[],
+    ) => import('./cachedMicrocompact.js').CacheEditsBlock | null
+  }
+  type CachedMCStateExtended = import('./cachedMicrocompact.js').CachedMCState & {
+    registeredTools: Map<string, number>
+    toolOrder: string[]
+    deletedRefs: Set<string>
+    toolMessageRegistry: string[][]
+  }
+  const modApi = mod as unknown as CachedMCModuleApi
+  const stateAny = state as CachedMCStateExtended
   const config = modApi.getCachedMCConfig()
 
   const compactableToolIds = new Set(collectCompactableToolIds(messages))

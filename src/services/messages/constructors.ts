@@ -483,8 +483,8 @@ export function createStopHookSummaryMessage(
     toolUseID,
     hookLabel,
     totalDurationMs,
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-  } as any
+    content: undefined,
+  } satisfies SystemStopHookSummaryMessage
 }
 
 export function createTurnDurationMessage(
@@ -616,10 +616,8 @@ export function createSystemAPIErrorMessage(
     type: 'system',
     subtype: 'api_error',
     level: 'error',
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    cause: (error as any).cause instanceof Error ? (error as any).cause : undefined,
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    error: error as any,
+    cause: error instanceof Error && error.cause instanceof Error ? error.cause : undefined,
+    error: error as import('../../types/llm.js').LLMError,
     retryInMs,
     retryAttempt,
     maxRetries,

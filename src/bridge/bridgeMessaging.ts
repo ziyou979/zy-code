@@ -18,7 +18,7 @@ import type { Message } from '../types/message.js'
 import type { WireControlRequest, WireControlResponse } from '../types/wire/control.js'
 import { normalizeControlMessageKeys } from '../utils/controlMessageCompat.js'
 import { logForDebugging } from '../utils/debug.js'
-import { stripDisplayTagsAllowEmpty } from '../utils/displayTags.js'
+import { stripDisplayTagsAllowEmpty } from '../utils/xmlTagUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { jsonParse } from '../utils/slowOperations.js'
@@ -316,7 +316,7 @@ export function handleServerControlRequest(
       // false-success: the mode is never actually applied in that context,
       // so success would lie to the client.
       // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-      const verdict = onSetPermissionMode?.(request.request.mode as any) ?? {
+      const verdict = onSetPermissionMode?.(request.request.mode as PermissionMode) ?? {
         ok: false,
         error:
           'set_permission_mode is not supported in this context (onSetPermissionMode callback not registered)',
@@ -335,8 +335,7 @@ export function handleServerControlRequest(
           response: {
             subtype: 'error',
             request_id: request.request_id,
-            // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
-            error: (verdict as any).error,
+            error: verdict.error,
           },
         }
       }
