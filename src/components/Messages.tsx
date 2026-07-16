@@ -34,7 +34,7 @@ import { collapseTeammateShutdowns } from '../utils/collapseTeammateShutdowns.js
 import { getGlobalConfig } from '../services/config/config.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
-import { applyGrouping } from '../utils/groupToolUses.js'
+import { applyGrouping } from '../services/tool-runtime/groupToolUses.js'
 import {
   buildMessageLookups,
   getToolUseIDs,

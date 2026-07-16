@@ -1,5 +1,5 @@
-import type { Tools } from '../tools/Tool.js'
-import type { ToolResultBlock } from '../types/llm.js'
+import type { Tools } from '../../tools/Tool.js'
+import type { ToolResultBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -7,7 +7,7 @@ import type {
   RenderableMessage,
   SystemMessage,
   UserMessage,
-} from '../types/message.js'
+} from '../../types/message.js'
 
 export type MessageWithoutProgress =
   | UserMessage
@@ -39,7 +39,7 @@ function getToolUseInfo(
   if (!('message' in msg) || !msg.message) {
     return null
   }
-  const assistantMsg = msg as import('../types/message.js').AssistantMessage
+  const assistantMsg = msg as import('../../types/message.js').AssistantMessage
   const firstBlock = assistantMsg.message.content[0]
   if (firstBlock && firstBlock.type === 'tool_call') {
     return {
