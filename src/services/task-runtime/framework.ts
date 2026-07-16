@@ -8,7 +8,7 @@ import {
   TOOL_USE_ID_TAG,
 } from '../../constants/xml.js'
 import type { AppState } from '../../state/AppStateStore.js'
-import { isTerminalTaskStatus, type TaskStatus, type TaskType } from '../../task.js'
+import { isTerminalTaskStatus, type TaskStatus, type TaskType } from '../../tasks/Task.js'
 import type { TaskState } from '../../tasks/types.js'
 import { enqueueWireEvent } from '../../utils/bridgeEventQueue.js'
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'

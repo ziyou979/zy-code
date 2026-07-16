@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { Task, TaskType } from '../task.js'
+import type { Task, TaskType } from '../tasks/Task.js'
 import { DreamTask } from './dream-task/dreamTask.js'
 import { LocalAgentTask } from './local-agent-task/LocalAgentTask.js'
 import { LocalShellTask } from './local-shell-task/LocalShellTask.js'

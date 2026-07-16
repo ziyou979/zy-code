@@ -18,8 +18,8 @@ import type {
   Task,
   TaskContext,
   TaskHandle,
-} from '../../task.js'
-import { createTaskStateBase } from '../../task.js'
+} from '../../tasks/Task.js'
+import { createTaskStateBase } from '../../tasks/Task.js'
 import type { AgentId } from '../../types/ids.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { tailFile } from '../../utils/fsOperations.js'

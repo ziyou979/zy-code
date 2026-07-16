@@ -5,8 +5,8 @@
 
 import { rollbackConsolidationLock } from '../../services/auto-dream/consolidationLock.js'
 import { registerTask, updateTaskState } from '../../services/task-runtime/framework.js'
-import type { SetAppState, Task, TaskStateBase } from '../../task.js'
-import { createTaskStateBase, generateTaskId } from '../../task.js'
+import type { SetAppState, Task, TaskStateBase } from '../../tasks/Task.js'
+import { createTaskStateBase, generateTaskId } from '../../tasks/Task.js'
 
 // Keep only the N most recent turns for live display.
 const MAX_TURNS = 30
