@@ -1,6 +1,6 @@
 import { getSessionId } from '../../../bootstrap/runtime/runtimeContext.js'
 import { quote } from '../../../shell-eval/bash/shellQuote.js'
-import type { ToolUseContext } from '../../../tool.js'
+import type { ToolUseContext } from '../../../tools/Tool.js'
 import { formatAgentId, parseAgentId } from '../../../utils/agentId.js'
 import { registerCleanup } from '../../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../../utils/debug.js'

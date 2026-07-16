@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
 import type { TaskStateBase } from '../../tasks/Task.js'
-import { buildTool, type ToolDef } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tools/Tool.js'
 import { stopTask } from '../../tasks/stopTask.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { lazySchema } from '../../utils/lazySchema.js'

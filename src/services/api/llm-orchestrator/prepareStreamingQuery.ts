@@ -1,7 +1,7 @@
 import { getProviderForModel } from 'src/services/model/model.js'
 import { resolveModel } from 'src/services/model/resolvedModel.js'
 import { getCLISyspromptPrefix } from '../../../constants/system.js'
-import { type Tools, toolMatchesName } from '../../../tool.js'
+import { type Tools, toolMatchesName } from '../../../tools/Tool.js'
 import { type ConnectorTextBlock } from '../../../types/connectorText.js'
 import type {
   ContentBlock,

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import type { ToolUseContext } from 'src/tool.js'
+import type { ToolUseContext } from 'src/tools/Tool.js'
 import type { ToolCallBlock } from 'src/types/llm.js'
 import type { WireMessage } from 'src/types/index.js'
 import type {

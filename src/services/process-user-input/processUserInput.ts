@@ -12,7 +12,7 @@ import {
 } from '../../commands.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
-import type { SetToolJSXFn, ToolUseContext } from '../../tool.js'
+import type { SetToolJSXFn, ToolUseContext } from '../../tools/Tool.js'
 import type { ImageBlock, ImageSource, UserContentBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,

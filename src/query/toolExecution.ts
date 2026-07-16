@@ -5,7 +5,7 @@ import { logEvent } from '../services/analytics/index.js'
 import type { StreamingToolExecutor } from '../services/tool-runtime/streamingToolExecutor.js'
 import { runTools } from '../services/tool-runtime/toolOrchestration.js'
 import { generateToolUseSummary } from '../services/tool-use-summary/toolUseSummaryGenerator.js'
-import type { ToolUseContext } from '../tool.js'
+import type { ToolUseContext } from '../tools/Tool.js'
 import type { TextBlock, ToolCallBlock, ToolResultBlock } from '../types/llm.js'
 import type {
   AssistantMessage,

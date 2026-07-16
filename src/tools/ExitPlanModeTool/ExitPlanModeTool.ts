@@ -10,7 +10,7 @@ import {
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/metadata.js'
-import { buildTool, type Tool, type ToolDef, toolMatchesName } from '../../tool.js'
+import { buildTool, type Tool, type ToolDef, toolMatchesName } from '../../tools/Tool.js'
 import { formatAgentId, generateRequestId } from '../../utils/agentId.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { logForDebugging } from '../../utils/debug.js'

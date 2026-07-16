@@ -38,7 +38,7 @@ import {
   type ToolProgress,
   type ToolProgressData,
   type ToolUseContext,
-} from '../../tool.js'
+} from '../../tools/Tool.js'
 import type { BashToolInput } from '../../tools/BashTool/BashTool.js'
 import { startSpeculativeClassifierCheck } from '../../tools/BashTool/bashPermissions.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
@@ -46,7 +46,7 @@ import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from '../../tools/FileWriteTool/prompt.js'
 import { isDeferredTool, TOOL_SEARCH_TOOL_NAME } from '../../tools/ToolSearchTool/prompt.js'
-import { getAllBaseTools } from '../../tools.js'
+import { getAllBaseTools } from '../../tools/tools.js'
 import type { ContentBlock, ToolCallBlock, UserContentBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,

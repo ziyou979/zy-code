@@ -18,8 +18,8 @@ import {
   isLspConnected,
   waitForInitialization,
 } from '../../services/lsp/manager.js'
-import type { ValidationResult } from '../../tool.js'
-import { buildTool, type ToolDef } from '../../tool.js'
+import type { ValidationResult } from '../../tools/Tool.js'
+import { buildTool, type ToolDef } from '../../tools/Tool.js'
 import { uniq } from '../../utils/array.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'

@@ -8,7 +8,7 @@ import {
   LOCAL_COMMAND_CAVEAT_TAG,
   LOCAL_COMMAND_STDOUT_TAG,
 } from '../../constants/xml.js'
-import type { AnyObject, Progress, Tool } from '../../tool.js'
+import type { AnyObject, Progress, Tool } from '../../tools/Tool.js'
 import type {
   APIErrorLike,
   AssistantContentBlock,

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { tSync } from '../i18n/index.js'
-import type { Tool, ToolUseContext } from '../tool.js'
+import type { Tool, ToolUseContext } from '../tools/Tool.js'
 import { BashTool } from '../tools/BashTool/BashTool.js'
 import { logForDebugging } from './debug.js'
 import { errorMessage, MalformedCommandError, ShellError } from './errors.js'

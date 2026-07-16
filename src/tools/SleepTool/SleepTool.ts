@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import { buildTool, type ToolDef } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tools/Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { sleep } from '../../utils/sleep.js'
 import { DESCRIPTION, SLEEP_TOOL_NAME } from './prompt.js'

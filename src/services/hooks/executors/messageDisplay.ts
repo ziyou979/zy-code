@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { MessageDisplayHookInput } from 'src/types/index.js'
 import { getSessionId } from '../../../bootstrap/runtime/runtimeContext.js'
-import type { ToolUseContext } from '../../../tool.js'
+import type { ToolUseContext } from '../../../tools/Tool.js'
 import type { AssistantMessage } from '../../../types/message.js'
 import { createDebugLog } from '../../../utils/debug.js'
 import { extractTextContent } from '../../messages/predicates.js'

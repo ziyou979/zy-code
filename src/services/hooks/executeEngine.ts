@@ -51,7 +51,7 @@ import {
 } from '../analytics/index.js'
 import { logOTelEvent } from '../telemetry/events.js'
 import { endHookSpan, isBetaTracingEnabled, startHookSpan } from '../telemetry/sessionTracing.js'
-import type { ToolUseContext } from '../../tool.js'
+import type { ToolUseContext } from '../../tools/Tool.js'
 import type { AttachmentMessage, HookResultMessage, Message } from '../../types/message.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'

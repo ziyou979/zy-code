@@ -1,7 +1,7 @@
 import { tSync } from 'src/i18n/index.js'
 import { Select } from '../../CustomSelect/select.js'
 import { Box, Text } from '../../../ink.js'
-import type { ToolPermissionContext } from '../../../tool.js'
+import type { ToolPermissionContext } from '../../../tools/Tool.js'
 import { applyPermissionUpdate } from '../../../services/permissions/permissionUpdate.js'
 import { Dialog } from '../../design-system/Dialog.js'
 

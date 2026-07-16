@@ -1,5 +1,5 @@
 import { createContext, Script } from 'node:vm'
-import type { ToolUseContext } from '../../../tool.js'
+import type { ToolUseContext } from '../../../tools/Tool.js'
 import { createAgentFunction, type WorkflowAgentContext } from './agentApi.js'
 import type { MutableWorkflowBudget } from './budget.js'
 import type { WorkflowSemaphore } from './concurrency.js'

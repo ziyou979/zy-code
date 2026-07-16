@@ -8,7 +8,7 @@ import type { ThemeName } from 'src/utils/theme.js'
 import { supportsHyperlinks } from '../../ink/supports-hyperlinks.js'
 import { color } from '../../ink.js'
 import { maybeMarkProjectOnboardingComplete } from '../../services/settings/projectOnboardingState.js'
-import type { ToolUseContext } from '../../tool.js'
+import type { ToolUseContext } from '../../tools/Tool.js'
 import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types.js'
 import {
   backupTerminalPreferences,

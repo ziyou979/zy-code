@@ -8,7 +8,7 @@ import {
   logEvent,
 } from '../analytics/index.js'
 import { queryModelWithoutStreaming } from '../api/llmOrchestrator.js'
-import { getEmptyToolPermissionContext } from '../../tool.js'
+import { getEmptyToolPermissionContext } from '../../tools/Tool.js'
 import type { TextBlock } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import { createAbortController } from '../../utils/abortController.js'

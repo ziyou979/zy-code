@@ -15,8 +15,8 @@ import { Box, Text } from '../ink.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 import type { Screen } from '../screens/REPL.js'
 import { useReplStore } from '../state/ReplState.js'
-import type { Tools } from '../tool.js'
-import { findToolByName } from '../tool.js'
+import type { Tools } from '../tools/Tool.js'
+import { findToolByName } from '../tools/Tool.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import type {
   AssistantMessage,

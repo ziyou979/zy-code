@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
-import type { ValidationResult } from '../../tool.js'
-import { buildTool, type ToolDef } from '../../tool.js'
+import type { ValidationResult } from '../../tools/Tool.js'
+import { buildTool, type ToolDef } from '../../tools/Tool.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isENOENT } from '../../utils/errors.js'
 import { FILE_NOT_FOUND_CWD_NOTE, suggestPathUnderCwd } from '../../utils/file.js'

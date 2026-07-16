@@ -13,8 +13,8 @@ import {
   addSkillDirectories,
   discoverSkillDirsForPaths,
 } from '../../skills/loadSkillsDir.js'
-import type { ToolUseContext } from '../../tool.js'
-import { buildTool, type ToolDef } from '../../tool.js'
+import type { ToolUseContext } from '../../tools/Tool.js'
+import { buildTool, type ToolDef } from '../../tools/Tool.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { countLinesChanged, getPatchForDisplay } from '../../utils/diff.js'

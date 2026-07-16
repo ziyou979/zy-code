@@ -19,7 +19,7 @@ import { excludeCommandsByServer, excludeResourcesByServer } from '../../service
 import { type AppState, getDefaultAppState } from '../../state/AppStateStore.js'
 import { onChangeAppState } from '../../state/onChangeAppState.js'
 import { createStore } from '../../state/store.js'
-import type { ToolInputJSONSchema, ToolPermissionContext, Tools } from '../../tool.js'
+import type { ToolInputJSONSchema, ToolPermissionContext, Tools } from '../../tools/Tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Command } from '../../commands/types.js'
 import { validateForceLoginOrg } from '../../services/auth/auth.js'

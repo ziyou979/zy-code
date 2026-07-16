@@ -16,7 +16,7 @@ import {
   isNullRedirectionTarget,
   isPowerShellParameter,
 } from '../../shell-eval/powershell/parser.js'
-import type { ToolPermissionContext } from '../../tool.js'
+import type { ToolPermissionContext } from '../../tools/Tool.js'
 import type { PermissionRule } from '../../types/permissions.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'

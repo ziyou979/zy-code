@@ -6,7 +6,7 @@ import type {
   TaskCreatedHookInput,
   TeammateIdleHookInput,
 } from 'src/types/index.js'
-import type { ToolUseContext } from '../../../tool.js'
+import type { ToolUseContext } from '../../../tools/Tool.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooks } from '../executeEngine.js'
 import type { AggregatedHookResult } from '../types.js'

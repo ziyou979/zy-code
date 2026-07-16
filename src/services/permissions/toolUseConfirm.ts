@@ -1,5 +1,5 @@
 import type { z } from 'zod/v4'
-import type { AnyObject, Tool, ToolUseContext } from '../../tool.js'
+import type { AnyObject, Tool, ToolUseContext } from '../../tools/Tool.js'
 import type { ContentBlock } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
 import type { PermissionDecision, PermissionUpdate } from '../../types/permissions.js'

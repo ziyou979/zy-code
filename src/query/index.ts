@@ -23,7 +23,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { ImageSizeError } from '../utils/imageValidation.js'
 import { ImageResizeError } from '../utils/imageResizer.js'
-import { findToolByName, type ToolUseContext } from '../tool.js'
+import { findToolByName, type ToolUseContext } from '../tools/Tool.js'
 import type { SystemPrompt } from '../utils/systemPromptType.js'
 import type {
   AssistantMessage,

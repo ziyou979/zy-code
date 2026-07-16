@@ -8,7 +8,7 @@ import {
   type Tools,
   type ToolUseContext,
   type ToolPermissionContext,
-} from '../../../tool.js'
+} from '../../../tools/Tool.js'
 import { FileReadTool, readImageWithTokenBudget } from '../../../tools/FileReadTool/FileReadTool.js'
 import { expandPath } from '../../../utils/path.js'
 import { readdir, stat } from 'node:fs/promises'

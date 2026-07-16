@@ -1,32 +1,32 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
-import { toolMatchesName, type Tool, type Tools } from './tool.js'
-import type { ToolPermissionContext } from './tool.js'
-import { isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
-import { toolRegistry } from './tools/registry.js'
+import { toolMatchesName, type Tool, type Tools } from '../tools/Tool.js'
+import type { ToolPermissionContext } from '../tools/Tool.js'
+import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
+import { toolRegistry } from '../tools/registry.js'
 export {
   loadExternalTools,
   hasExternalToolOverride,
   getLoadGeneration,
-} from './tools/externalToolLoader.js'
+} from '../tools/externalToolLoader.js'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { getDenyRuleForTool } from './services/permissions/permissions.js'
-import { REPL_TOOL_NAME, REPL_ONLY_TOOLS, isReplModeEnabled } from './tools/REPLTool/constants.js'
-import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
+import { getDenyRuleForTool } from '../services/permissions/permissions.js'
+import { REPL_TOOL_NAME, REPL_ONLY_TOOLS, isReplModeEnabled } from '../tools/REPLTool/constants.js'
+import { SYNTHETIC_OUTPUT_TOOL_NAME } from '../tools/SyntheticOutputTool/SyntheticOutputTool.js'
 export { REPL_ONLY_TOOLS }
 export {
   ALL_AGENT_DISALLOWED_TOOLS,
   CUSTOM_AGENT_DISALLOWED_TOOLS,
   ASYNC_AGENT_ALLOWED_TOOLS,
   COORDINATOR_MODE_ALLOWED_TOOLS,
-} from './constants/tools.js'
+} from '../constants/tools.js'
 
 // ─── Value imports: getTools() 简单模式直接引用的工具 ───────────────
-import { AgentTool } from './tools/AgentTool/AgentTool.js'
-import { BashTool } from './tools/BashTool/BashTool.js'
-import { FileReadTool } from './tools/FileReadTool/FileReadTool.js'
-import { FileEditTool } from './tools/FileEditTool/FileEditTool.js'
-import { TaskStopTool } from './tools/TaskStopTool/TaskStopTool.js'
+import { AgentTool } from '../tools/AgentTool/AgentTool.js'
+import { BashTool } from '../tools/BashTool/BashTool.js'
+import { FileReadTool } from '../tools/FileReadTool/FileReadTool.js'
+import { FileEditTool } from '../tools/FileEditTool/FileEditTool.js'
+import { TaskStopTool } from '../tools/TaskStopTool/TaskStopTool.js'
 
 // ─── Side-effect imports: 触发模块加载 → 自注册到 toolRegistry ──────
 import './tools/SkillTool/SkillTool.js'
@@ -57,58 +57,58 @@ import './tools/testing/TestingPermissionTool.js'
 
 // ─── DCE 条件加载: 仅触发模块加载（自注册），不提取值 ─────────────
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-const REPLTool = isInternalBuild() ? require('./tools/REPLTool/REPLTool.js').REPLTool : null
+const REPLTool = isInternalBuild() ? require('../tools/REPLTool/REPLTool.js').REPLTool : null
 if (isInternalBuild()) {
-  require('./tools/SuggestBackgroundPRTool/SuggestBackgroundPRTool.js')
-  require('./tools/ConfigTool/ConfigTool.js')
-  require('./tools/TungstenTool/TungstenTool.js')
+  require('../tools/SuggestBackgroundPRTool/SuggestBackgroundPRTool.js')
+  require('../tools/ConfigTool/ConfigTool.js')
+  require('../tools/TungstenTool/TungstenTool.js')
 }
 if (feature('PROACTIVE') || feature('KAIROS')) {
-  require('./tools/SleepTool/SleepTool.js')
+  require('../tools/SleepTool/SleepTool.js')
 }
 if (feature('AGENT_TRIGGERS')) {
-  require('./tools/ScheduleCronTool/cronCreateTool.js')
-  require('./tools/ScheduleCronTool/cronDeleteTool.js')
-  require('./tools/ScheduleCronTool/cronListTool.js')
+  require('../tools/ScheduleCronTool/cronCreateTool.js')
+  require('../tools/ScheduleCronTool/cronDeleteTool.js')
+  require('../tools/ScheduleCronTool/cronListTool.js')
 }
 if (feature('AGENT_TRIGGERS_REMOTE')) {
-  require('./tools/RemoteTriggerTool/RemoteTriggerTool.js')
+  require('../tools/RemoteTriggerTool/RemoteTriggerTool.js')
 }
 if (feature('MONITOR_TOOL')) {
-  require('./tools/MonitorTool/MonitorTool.js')
+  require('../tools/MonitorTool/MonitorTool.js')
 }
 if (feature('KAIROS')) {
-  require('./tools/SendUserFileTool/SendUserFileTool.js')
+  require('../tools/SendUserFileTool/SendUserFileTool.js')
 }
 if (feature('KAIROS') || feature('KAIROS_PUSH_NOTIFICATION')) {
-  require('./tools/PushNotificationTool/PushNotificationTool.js')
+  require('../tools/PushNotificationTool/PushNotificationTool.js')
 }
 if (feature('KAIROS_GITHUB_WEBHOOKS')) {
-  require('./tools/SubscribePRTool/SubscribePRTool.js')
+  require('../tools/SubscribePRTool/SubscribePRTool.js')
 }
 if (feature('OVERFLOW_TEST_TOOL')) {
-  require('./tools/OverflowTestTool/OverflowTestTool.js')
+  require('../tools/OverflowTestTool/OverflowTestTool.js')
 }
 if (feature('CONTEXT_COLLAPSE')) {
-  require('./tools/CtxInspectTool/CtxInspectTool.js')
+  require('../tools/CtxInspectTool/CtxInspectTool.js')
 }
 if (feature('UDS_INBOX')) {
-  require('./tools/ListPeersTool/ListPeersTool.js')
+  require('../tools/ListPeersTool/ListPeersTool.js')
 }
 if (feature('WORKFLOW_SCRIPTS')) {
-  require('./tools/WorkflowTool/bundled/index.js').initBundledWorkflows()
-  require('./tools/WorkflowTool/WorkflowTool.js')
+  require('../tools/WorkflowTool/bundled/index.js').initBundledWorkflows()
+  require('../tools/WorkflowTool/WorkflowTool.js')
 }
 if (process.env.ZY_CODE_VERIFY_PLAN === 'true') {
-  require('./tools/VerifyPlanExecutionTool/VerifyPlanExecutionTool.js')
+  require('../tools/VerifyPlanExecutionTool/VerifyPlanExecutionTool.js')
 }
 const coordinatorModeModule = feature('COORDINATOR_MODE')
-  ? (require('./coordinator/coordinatorMode.js') as typeof import('./coordinator/coordinatorMode.js'))
+  ? (require('../coordinator/coordinatorMode.js') as typeof import('../coordinator/coordinatorMode.js'))
   : null
 // 延迟 require 以打破循环依赖
 const getSendMessageTool = () =>
-  require('./tools/SendMessageTool/SendMessageTool.js')
-    .SendMessageTool as typeof import('./tools/SendMessageTool/SendMessageTool.js').SendMessageTool
+  require('../tools/SendMessageTool/SendMessageTool.js')
+    .SendMessageTool as typeof import('../tools/SendMessageTool/SendMessageTool.js').SendMessageTool
 // TeamCreateTool/TeamDeleteTool 通过 side-effect import 触发 → 自注册带条件
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 

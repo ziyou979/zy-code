@@ -1,5 +1,5 @@
 import { updateTaskState } from '../../../services/task-runtime/framework.js'
-import type { ToolUseContext } from '../../../tool.js'
+import type { ToolUseContext } from '../../../tools/Tool.js'
 import type { LocalWorkflowTaskState } from '../../../tasks/local-workflow-task/localWorkflowTask.js'
 import type { MutableWorkflowBudget } from './budget.js'
 import type { WorkflowSemaphore } from './concurrency.js'

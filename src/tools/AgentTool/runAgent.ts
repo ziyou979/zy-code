@@ -23,7 +23,7 @@ import {
   registerAgent as registerPerfettoAgent,
   unregisterAgent as unregisterPerfettoAgent,
 } from '../../services/telemetry/perfettoTracing.js'
-import type { Tool, Tools, ToolUseContext } from '../../tool.js'
+import type { Tool, Tools, ToolUseContext } from '../../tools/Tool.js'
 import { killShellTasksForAgent } from '../../tasks/local-shell-task/killShellTasks.js'
 import type { Command } from '../../commands/types.js'
 import type { AgentId } from '../../types/ids.js'

@@ -1,4 +1,4 @@
-import { getEmptyToolPermissionContext } from '../../tool.js'
+import { getEmptyToolPermissionContext } from '../../tools/Tool.js'
 import type { PermissionMode } from '../../services/permissions/permissionMode.js'
 import type { AppState } from '../AppStateStore.js'
 

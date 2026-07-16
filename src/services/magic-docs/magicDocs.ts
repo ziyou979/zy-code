@@ -6,7 +6,7 @@
  * See docs/magic-docs.md for more information.
  */
 
-import type { Tool, ToolUseContext } from '../../tool.js'
+import type { Tool, ToolUseContext } from '../../tools/Tool.js'
 import type { BuiltInAgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { runAgent } from '../../tools/AgentTool/runAgent.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'

@@ -35,7 +35,7 @@ import type { ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import { getDefaultMainLoopModel } from '../../services/model/model.js'
 import { ensureModelStringsInitialized } from '../../services/model/modelStrings.js'
 import { initBundledSkills } from '../../skills/bundled/index.js'
-import type { ToolInputJSONSchema } from '../../tool.js'
+import type { ToolInputJSONSchema } from '../../tools/Tool.js'
 import {
   getActiveAgentsFromList,
   getAgentDefinitionsWithOverrides,
@@ -45,7 +45,7 @@ import {
   createSyntheticOutputTool,
   isSyntheticOutputToolEnabled,
 } from '../../tools/SyntheticOutputTool/SyntheticOutputTool.js'
-import { getTools, loadExternalTools } from '../../tools.js'
+import { getTools, loadExternalTools } from '../../tools/tools.js'
 import { assertMinVersion } from '../../utils/autoUpdater.js'
 import { getGlobalConfig } from '../../services/config/config.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'

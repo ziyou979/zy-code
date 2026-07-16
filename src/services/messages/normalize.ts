@@ -8,7 +8,7 @@ import {
   logEvent,
 } from '../analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../analytics/metadata.js'
-import { findToolByName, type Tools } from '../../tool.js'
+import { findToolByName, type Tools } from '../../tools/Tool.js'
 import type { AgentId } from '../../types/ids.js'
 import type {
   AssistantContentBlock,

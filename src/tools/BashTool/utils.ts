@@ -1,7 +1,7 @@
 import { readFile, stat } from 'node:fs/promises'
 import { getOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import type { ToolPermissionContext } from 'src/tool.js'
+import type { ToolPermissionContext } from 'src/tools/Tool.js'
 import { getCwd } from 'src/utils/cwd.js'
 import { pathInAllowedWorkingPath } from 'src/services/permissions/filesystem.js'
 import { setCwd } from 'src/services/shell/shell.js'

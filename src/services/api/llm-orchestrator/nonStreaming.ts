@@ -4,7 +4,7 @@ import {
   type Tool,
   type ToolPermissionContext,
   type Tools,
-} from '../../../tool.js'
+} from '../../../tools/Tool.js'
 import type { AgentDefinition } from '../../../tools/AgentTool/loadAgentsDir.js'
 import type {
   AssistantContentBlock,

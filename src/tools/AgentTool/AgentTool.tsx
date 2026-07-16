@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { buildTool, type ToolDef, toolMatchesName } from 'src/tool.js'
+import { buildTool, type ToolDef, toolMatchesName } from 'src/tools/Tool.js'
 import type { Message as MessageType, UserMessage } from 'src/types/message.js'
 import { getQuerySourceForAgent } from 'src/services/analytics/querySource.js'
 import { z } from 'zod/v4'
@@ -38,7 +38,7 @@ import {
   getRemoteTaskSessionUrl,
   registerRemoteAgentTask,
 } from '../../tasks/remote-agent-task/RemoteAgentTask.js'
-import { assembleToolPool } from '../../tools.js'
+import { assembleToolPool } from '../../tools/tools.js'
 import { asAgentId } from '../../types/ids.js'
 import { runWithAgentContext } from '../../utils/agentContext.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'

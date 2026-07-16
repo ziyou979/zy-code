@@ -1,7 +1,7 @@
 import { constants as fsConstants } from 'node:fs'
 import { mkdir, open } from 'node:fs/promises'
 import { dirname, isAbsolute, join, normalize, sep as pathSep } from 'node:path'
-import type { ToolUseContext } from '../tool.js'
+import type { ToolUseContext } from '../tools/Tool.js'
 import type { Command } from '../commands/types.js'
 import type { ContentBlock } from '../types/llm.js'
 import { logForDebugging } from '../utils/debug.js'

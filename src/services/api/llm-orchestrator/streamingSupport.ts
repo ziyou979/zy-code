@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { isAnthropicBaseUrl } from 'src/services/model/providers.js'
-import { type Tools } from '../../../tool.js'
+import { type Tools } from '../../../tools/Tool.js'
 import { type ConnectorTextBlock, type ConnectorTextDelta } from '../../../types/connectorText.js'
 import type {
   AssistantContentBlock,

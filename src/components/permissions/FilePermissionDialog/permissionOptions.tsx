@@ -5,7 +5,7 @@ import { tSync } from 'src/i18n/index.js'
 import { getOriginalCwd } from '../../../bootstrap/runtime/runtimeContext.js'
 import { Text } from '../../../ink.js'
 import { getShortcutDisplay } from '../../../keybindings/shortcutFormat.js'
-import type { ToolPermissionContext } from '../../../tool.js'
+import type { ToolPermissionContext } from '../../../tools/Tool.js'
 import { expandPath, getDirectoryForPath } from '../../../utils/path.js'
 import {
   normalizeCaseForComparison,

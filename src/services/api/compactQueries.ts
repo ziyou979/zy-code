@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import { getDefaultCompactModel } from '../model/model.js'
-import { getEmptyToolPermissionContext } from '../../tool.js'
+import { getEmptyToolPermissionContext } from '../../tools/Tool.js'
 import type { JSONOutputFormat } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
 import { createUserMessage } from '../messages/constructors.js'

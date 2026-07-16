@@ -5,7 +5,7 @@ import type { Attachment } from 'src/services/attachments/attachments.js'
 import type { Command } from '../commands.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { Box } from '../ink.js'
-import type { Tools } from '../tool.js'
+import type { Tools } from '../tools/Tool.js'
 import { isConnectorTextBlock } from '../types/connectorText.js'
 import type {
   AssistantMessage,

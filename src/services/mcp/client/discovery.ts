@@ -1,7 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { type JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 import { PRODUCT_URL } from '../../../constants/product.js'
-import { type Tool } from '../../../tool.js'
+import { type Tool } from '../../../tools/Tool.js'
 import { logMCPError } from '../../../utils/log.js'
 import { WireControlClientTransport } from '../bridgeControlTransport.js'
 import type { MCPServerConnection, McpSdkServerConfig } from '../types.js'

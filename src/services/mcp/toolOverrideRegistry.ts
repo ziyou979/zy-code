@@ -1,4 +1,4 @@
-import type { Tool } from '../../tool.js'
+import type { Tool } from '../../tools/Tool.js'
 
 export type MCPToolOverrides = Partial<Tool>
 export type MCPToolOverrideResolver = (toolName: string) => MCPToolOverrides

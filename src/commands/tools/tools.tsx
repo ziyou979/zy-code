@@ -6,7 +6,7 @@ import { tSync } from '../../i18n/index.js'
 import ScrollBox, { type ScrollBoxHandle } from '../../ink/components/ScrollBox.js'
 import { Box, Text, useInput } from '../../ink.js'
 import { getActiveExternalToolNames } from '../../tools/externalToolLoader.js'
-import { getAllBaseTools } from '../../tools.js'
+import { getAllBaseTools } from '../../tools/tools.js'
 import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types.js'
 
 /** 标题 + 退出提示占用行数 */

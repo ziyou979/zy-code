@@ -1,7 +1,7 @@
 import type { HookCallback } from 'src/types/hooks/index.js'
 import { isAsyncHookJSONOutput } from 'src/types/hooks/index.js'
 import type { HookEvent, HookInput } from 'src/types/index.js'
-import type { ToolUseContext } from '../../tool.js'
+import type { ToolUseContext } from '../../tools/Tool.js'
 import type { HookResultMessage, Message } from '../../types/message.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
 import { createCombinedAbortSignal } from '../../utils/combinedAbortSignal.js'

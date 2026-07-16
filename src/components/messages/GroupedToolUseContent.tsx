@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { filterToolProgressMessages, findToolByName, type Tools } from '../../tool.js'
+import { filterToolProgressMessages, findToolByName, type Tools } from '../../tools/Tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { GroupedToolUseMessage } from '../../types/message.js'
 import { buildMessageLookups } from '../../services/messages/./lookups.js'

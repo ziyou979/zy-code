@@ -8,7 +8,7 @@ import {
   hasExternalToolOverride,
   reloadExternalTools,
 } from '../../src/tools/externalToolLoader.js'
-import { getAllBaseTools } from '../../src/tools.js'
+import { getAllBaseTools } from '../../src/tools/tools.js'
 
 /**
  * 在临时目录下创建可加载的外部工具 .ts 文件。

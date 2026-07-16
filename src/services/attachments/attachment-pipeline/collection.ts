@@ -3,7 +3,7 @@ import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from 'src/services/analytics/index.js'
-import { type ToolUseContext } from '../../../tool.js'
+import { type ToolUseContext } from '../../../tools/Tool.js'
 import type { IDESelection } from '../../../hooks/useIdeSelection.js'
 import { isTodoV2Enabled } from '../../../utils/tasks.js'
 import { getPlanFilePath, getPlan } from '../../../utils/plans.js'

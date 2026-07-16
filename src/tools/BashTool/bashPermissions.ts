@@ -23,7 +23,7 @@ import {
 } from '../../shell-eval/bash/commands.js'
 import { parseCommandRaw } from '../../shell-eval/bash/parser.js'
 import { tryParseShellCommand } from '../../shell-eval/bash/shellQuote.js'
-import type { ToolPermissionContext, ToolUseContext } from '../../tool.js'
+import type { ToolPermissionContext, ToolUseContext } from '../../tools/Tool.js'
 import { isAbortError } from '../../types/llm.js'
 import type { PendingClassifierCheck } from '../../types/permissions.js'
 import { count } from '../../utils/array.js'

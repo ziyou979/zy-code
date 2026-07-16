@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import { buildTool, type ToolDef } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tools/Tool.js'
 import { executeTaskCreatedHooks, getTaskCreatedHookMessage } from '../../services/hooks.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { createTask, deleteTask, getTaskListId, isTodoV2Enabled } from '../../utils/tasks.js'

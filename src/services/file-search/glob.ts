@@ -1,5 +1,5 @@
 import { basename, dirname, isAbsolute, join, sep } from 'node:path'
-import type { ToolPermissionContext } from '../../tool.js'
+import type { ToolPermissionContext } from '../../tools/Tool.js'
 import { getFileReadIgnorePatterns, normalizePatternsToPath } from '../permissions/filesystem.js'
 import { getGlobExclusionsForPluginCache } from '../plugins/orphanedPluginFilter.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'

@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { type FetchLike } from '@modelcontextprotocol/sdk/shared/transport.js'
-import { type Tool } from '../../../tool.js'
+import { type Tool } from '../../../tools/Tool.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getZyAIOAuthTokens,

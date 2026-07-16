@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import type { ElicitResult, JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 import type { AssistantMessage } from 'src/types/message.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
-import type { Tool, ToolUseContext } from 'src/tool.js'
+import type { Tool, ToolUseContext } from 'src/tools/Tool.js'
 import { type HookCallback, hookJSONOutputSchema } from 'src/types/hooks/index.js'
 import type {
   HookInput,

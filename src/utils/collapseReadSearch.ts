@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import { tSync } from '../i18n/index.js'
-import { findToolByName, type Tools } from '../tool.js'
+import { findToolByName, type Tools } from '../tools/Tool.js'
 import { extractBashCommentLabel } from '../tools/BashTool/commentLabel.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'

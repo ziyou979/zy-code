@@ -6,7 +6,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { useSetAppState } from 'src/state/AppState.js'
 import { tSync } from '../../../../i18n/index.js'
-import type { Tools } from '../../../../tool.js'
+import type { Tools } from '../../../../tools/Tool.js'
 import type { AgentDefinition } from '../../../../tools/AgentTool/loadAgentsDir.js'
 import { getActiveAgentsFromList } from '../../../../tools/AgentTool/loadAgentsDir.js'
 import { editFileInEditor } from '../../../../terminal-ui/promptEditor.js'

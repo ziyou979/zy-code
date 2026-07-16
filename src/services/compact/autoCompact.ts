@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { markPostCompaction } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { QuerySource } from '../../constants/querySource.js'
-import type { ToolUseContext } from '../../tool.js'
+import type { ToolUseContext } from '../../tools/Tool.js'
 import type { Message } from '../../types/message.js'
 import { getContextWindowForModel } from '../../utils/context.js'
 import { logForDebugging } from '../../utils/debug.js'

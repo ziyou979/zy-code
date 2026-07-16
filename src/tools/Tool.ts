@@ -1,10 +1,10 @@
 import type { UUID } from 'node:crypto'
 import type { ElicitRequestURLParams, ElicitResult } from '@modelcontextprotocol/sdk/types.js'
 import type { z } from 'zod/v4'
-import type { Command } from './commands.js'
-import type { CanUseToolFn } from './hooks/useCanUseTool.js'
-import type { ToolCallBlock, ToolResultBlock } from './types/llm.js'
-import type { ThinkingConfig } from './utils/thinking.js'
+import type { Command } from '../commands.js'
+import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
+import type { ToolCallBlock, ToolResultBlock } from '../types/llm.js'
+import type { ThinkingConfig } from '../utils/thinking.js'
 
 export type ToolInputJSONSchema = {
   [x: string]: unknown
@@ -14,9 +14,9 @@ export type ToolInputJSONSchema = {
   }
 }
 
-import type { Notification } from './context/notifications.js'
-import type { MCPServerConnection, ServerResource } from './services/mcp/types.js'
-import type { AgentDefinition, AgentDefinitionsResult } from './tools/AgentTool/loadAgentsDir.js'
+import type { Notification } from '../context/notifications.js'
+import type { MCPServerConnection, ServerResource } from '../services/mcp/types.js'
+import type { AgentDefinition, AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -25,31 +25,31 @@ import type {
   SystemLocalCommandMessage,
   SystemMessage,
   UserMessage,
-} from './types/message.js'
+} from '../types/message.js'
 // 从集中位置导入权限类型以打破导入循环
 // 从集中位置导入 PermissionResult 以打破导入循环
 import type {
   AdditionalWorkingDirectory,
   PermissionMode,
   PermissionResult,
-} from './types/permissions.js'
+} from '../types/permissions.js'
 // 从集中位置导入工具进度类型以打破导入循环
-import type { ToolProgressData } from './types/tools.js'
-import type { FileStateCache } from './utils/fileStateCache.js'
-import type { DenialTrackingState } from './services/permissions/denialTracking.js'
-import type { SystemPrompt } from './utils/systemPromptType.js'
-import type { ContentReplacementState } from './utils/toolResultStorage.js'
+import type { ToolProgressData } from '../types/tools.js'
+import type { FileStateCache } from '../utils/fileStateCache.js'
+import type { DenialTrackingState } from '../services/permissions/denialTracking.js'
+import type { SystemPrompt } from '../utils/systemPromptType.js'
+import type { ContentReplacementState } from '../utils/toolResultStorage.js'
 
 import type { HookProgress, PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { WireStatus } from 'src/types/index.js'
-import type { SpinnerMode } from './types/spinner.js'
-import type { QuerySource } from './constants/querySource.js'
-import type { AppState } from './state/AppStateStore.js'
-import type { AgentId } from './types/ids.js'
-import type { DeepImmutable } from './types/utils.js'
-import type { AttributionState } from './utils/commitAttribution.js'
-import type { FileHistoryState } from './utils/fileHistory.js'
-import type { Theme, ThemeName } from './utils/theme.js'
+import type { SpinnerMode } from '../types/spinner.js'
+import type { QuerySource } from '../constants/querySource.js'
+import type { AppState } from '../state/AppStateStore.js'
+import type { AgentId } from '../types/ids.js'
+import type { DeepImmutable } from '../types/utils.js'
+import type { AttributionState } from '../utils/commitAttribution.js'
+import type { FileHistoryState } from '../utils/fileHistory.js'
+import type { Theme, ThemeName } from '../utils/theme.js'
 
 export type QueryChainTracking = {
   chainId: string
@@ -78,7 +78,7 @@ export type SetToolJSXFn = (
 ) => void
 
 // 从集中位置导入工具权限类型以打破导入循环
-import type { ToolPermissionRulesBySource } from './types/permissions.js'
+import type { ToolPermissionRulesBySource } from '../types/permissions.js'
 
 // 对导入的类型应用 DeepImmutable
 export type ToolPermissionContext = DeepImmutable<{

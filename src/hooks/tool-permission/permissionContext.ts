@@ -5,7 +5,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
-import type { ToolPermissionContext, Tool as ToolType, ToolUseContext } from '../../tool.js'
+import type { ToolPermissionContext, Tool as ToolType, ToolUseContext } from '../../tools/Tool.js'
 import { awaitClassifierAutoApproval } from '../../tools/BashTool/bashPermissions.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 import type { ContentBlock } from '../../types/llm.js'

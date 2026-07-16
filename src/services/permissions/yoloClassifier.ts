@@ -8,7 +8,7 @@ import {
   setLastClassifierRequests,
 } from '../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
-import type { ToolPermissionContext, Tools } from '../../tool.js'
+import type { ToolPermissionContext, Tools } from '../../tools/Tool.js'
 import type {
   ImageBlock,
   LLMMessage,

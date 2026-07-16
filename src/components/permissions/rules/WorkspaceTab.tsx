@@ -4,7 +4,7 @@ import { getOriginalCwd } from '../../../bootstrap/runtime/runtimeContext.js'
 import type { CommandResultDisplay } from '../../../commands.js'
 import { Select } from '../../CustomSelect/select.js'
 import { Box, Text } from '../../../ink.js'
-import type { ToolPermissionContext } from '../../../tool.js'
+import type { ToolPermissionContext } from '../../../tools/Tool.js'
 import { useTabHeaderFocus } from '../../design-system/Tabs.js'
 
 type Props = {

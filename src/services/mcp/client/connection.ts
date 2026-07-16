@@ -9,7 +9,7 @@ import {
 import zipObject from 'lodash-es/zipObject.js'
 import pMap from 'p-map'
 import type { Command } from '../../../commands.js'
-import { type Tool, type ToolCallProgress, toolMatchesName } from '../../../tool.js'
+import { type Tool, type ToolCallProgress, toolMatchesName } from '../../../tools/Tool.js'
 import { ListMcpResourcesTool } from '../../../tools/ListMcpResourcesTool/ListMcpResourcesTool.js'
 import { type MCPProgress, MCPTool } from '../../../tools/MCPTool/MCPTool.js'
 import { createMcpAuthTool } from '../../../tools/McpAuthTool/McpAuthTool.js'

@@ -43,7 +43,7 @@ import {
   updatePluginOp,
 } from '../../services/plugins/pluginOperations.js'
 import { useAppState } from '../../state/AppState.js'
-import type { Tool } from '../../tool.js'
+import type { Tool } from '../../tools/Tool.js'
 import type { LoadedPlugin, PluginError } from '../../services/plugins/types.js'
 import { tSync } from '../../i18n/index.js'
 import { count } from '../../utils/array.js'

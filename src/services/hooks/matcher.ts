@@ -4,7 +4,7 @@ import type { HookCallback, HookCallbackMatcher } from 'src/types/hooks/index.js
 import type { HookEvent, HookInput } from 'src/types/index.js'
 import { getRegisteredHooks } from '../../bootstrap/runtime/runtimeContext.js'
 import type { AppState } from '../../state/AppStateStore.js'
-import { findToolByName, type Tools } from '../../tool.js'
+import { findToolByName, type Tools } from '../../tools/Tool.js'
 import { createDebugLog } from '../../utils/debug.js'
 import {
   getLegacyToolNames,

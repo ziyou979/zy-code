@@ -10,7 +10,7 @@ import {
   getPdfTooLargeErrorMessage,
   getRequestTooLargeErrorMessage,
 } from '../api/errors.js'
-import { type Tools, toolMatchesName } from '../../tool.js'
+import { type Tools, toolMatchesName } from '../../tools/Tool.js'
 import type { ContentBlock, TextBlock, ToolResultBlock, UserContentBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,

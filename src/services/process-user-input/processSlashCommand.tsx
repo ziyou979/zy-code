@@ -12,7 +12,7 @@ import {
   type PromptCommand,
 } from 'src/commands.js'
 import { getNoContentMessage } from 'src/constants/messages.js'
-import type { SetToolJSXFn, ToolUseContext } from 'src/tool.js'
+import type { SetToolJSXFn, ToolUseContext } from 'src/tools/Tool.js'
 import type {
   AssistantMessage,
   AttachmentMessage,

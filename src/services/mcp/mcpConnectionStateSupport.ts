@@ -1,7 +1,7 @@
 import omit from 'lodash-es/omit.js'
 import reject from 'lodash-es/reject.js'
 import type { Command } from '../../commands.js'
-import type { Tool } from '../../tool.js'
+import type { Tool } from '../../tools/Tool.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import type { PluginError } from '../plugins/types.js'
 import { getMcpPrefix } from './mcpStringUtils.js'

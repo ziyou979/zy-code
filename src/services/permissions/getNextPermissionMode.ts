@@ -1,4 +1,4 @@
-import type { ToolPermissionContext } from '../../tool.js'
+import type { ToolPermissionContext } from '../../tools/Tool.js'
 import { createDebugLog } from '../../utils/debug.js'
 
 const permLog = createDebugLog('permissions')

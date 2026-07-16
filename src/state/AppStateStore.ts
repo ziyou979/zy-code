@@ -7,7 +7,7 @@ import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler
 import type { MCPServerConnection, ServerResource } from '../services/mcp/types.js'
 import type { ModelSetting } from '../services/model/model.js'
 import { shouldEnablePromptSuggestion } from '../services/prompt-suggestion/availability.js'
-import type { Tool, ToolPermissionContext } from '../tool.js'
+import type { Tool, ToolPermissionContext } from '../tools/Tool.js'
 import type { TaskState } from '../tasks/types.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'

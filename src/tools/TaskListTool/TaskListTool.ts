@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import { buildTool, type ToolDef } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tools/Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { getTaskListId, isTodoV2Enabled, listTasks, TaskStatusSchema } from '../../utils/tasks.js'
 import { TASK_LIST_TOOL_NAME } from './constants.js'

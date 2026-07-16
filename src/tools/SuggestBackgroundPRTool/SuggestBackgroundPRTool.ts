@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import { buildTool, type ToolDef } from '../../tool.js'
+import { buildTool, type ToolDef } from '../../tools/Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
 export const SUGGEST_BACKGROUND_PR_TOOL_NAME = 'SuggestBackgroundPR'

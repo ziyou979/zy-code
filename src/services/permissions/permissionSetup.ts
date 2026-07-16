@@ -6,7 +6,7 @@ import {
   setHasExitedPlanMode,
   setNeedsAutoModeExitAttachment,
 } from '../../bootstrap/runtime/runtimeContext.js'
-import type { ToolPermissionContext } from '../../tool.js'
+import type { ToolPermissionContext } from '../../tools/Tool.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import {
   getInitialSettings,
@@ -38,7 +38,7 @@ import {
   validateDirectoryForWorkspace,
 } from '../../commands/add-dir/validation.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { getToolsForDefaultPreset, parseToolPreset } from '../../tools.js'
+import { getToolsForDefaultPreset, parseToolPreset } from '../../tools/tools.js'
 import { modelSupportsAutoMode } from '../../utils/betas.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'

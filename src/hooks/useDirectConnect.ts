@@ -11,8 +11,8 @@ import {
   DirectConnectSessionManager,
 } from '../server/directConnectManager.js'
 import type { RemoteMessageContent } from '../services/teleport/api.js'
-import type { Tool, ToolUseContext } from '../tool.js'
-import { findToolByName } from '../tool.js'
+import type { Tool, ToolUseContext } from '../tools/Tool.js'
+import { findToolByName } from '../tools/Tool.js'
 import type { Message as MessageType } from '../types/message.js'
 import type { PermissionAskDecision, PermissionUpdate } from '../types/permissions.js'
 import { logForDebugging } from '../utils/debug.js'

@@ -1,4 +1,4 @@
-import type { Tool, ToolUseContext } from 'src/tool.js'
+import type { Tool, ToolUseContext } from 'src/tools/Tool.js'
 import z from 'zod/v4'
 import { createDebugLog } from '../../utils/debug.js'
 

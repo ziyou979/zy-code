@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { mcpInfoFromString } from 'src/services/mcp/mcpStringUtils.js'
 import { isMcpTool } from 'src/services/mcp/utils.js'
-import type { Tool, Tools } from 'src/tool.js'
+import type { Tool, Tools } from 'src/tools/Tool.js'
 import { filterToolsForAgent } from 'src/tools/AgentTool/agentToolUtils.js'
 import { AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'

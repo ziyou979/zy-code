@@ -1,6 +1,6 @@
 import { HooksConfigMenu } from '../../components/hooks/HooksConfigMenu.js'
 import { logEvent } from '../../services/analytics/index.js'
-import { getTools } from '../../tools.js'
+import { getTools } from '../../tools/tools.js'
 import type { LocalJSXCommandCall } from '../types.js'
 export const call: LocalJSXCommandCall = async (onDone, context) => {
   logEvent('zy_hooks_command', {})

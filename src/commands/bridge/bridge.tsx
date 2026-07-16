@@ -22,7 +22,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import type { ToolUseContext } from '../../tool.js'
+import type { ToolUseContext } from '../../tools/Tool.js'
 import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types.js'
 import { logForDebugging } from '../../utils/debug.js'
 

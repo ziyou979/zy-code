@@ -10,8 +10,8 @@ import type {
   ToolResult,
   ToolUseContext,
   ValidationResult,
-} from 'src/tool.js'
-import { buildTool, type ToolDef } from 'src/tool.js'
+} from 'src/tools/Tool.js'
+import { buildTool, type ToolDef } from 'src/tools/Tool.js'
 import type { Command } from 'src/commands/types.js'
 import type {
   AssistantMessage,

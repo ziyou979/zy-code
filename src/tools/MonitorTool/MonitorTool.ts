@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
-import type { ToolUseContext } from '../../tool.js'
-import { buildTool } from '../../tool.js'
+import type { ToolUseContext } from '../../tools/Tool.js'
+import { buildTool } from '../../tools/Tool.js'
 import { spawnShellTask } from '../../tasks/local-shell-task/LocalShellTask.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'

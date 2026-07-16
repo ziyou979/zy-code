@@ -20,7 +20,7 @@ import { expandPastedTextRefs, parseReferences } from '../services/session-stora
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import type { IDESelection } from '../hooks/useIdeSelection.js'
 import type { AppState } from '../state/AppStateStore.js'
-import type { SetToolJSXFn } from '../tool.js'
+import type { SetToolJSXFn } from '../tools/Tool.js'
 import type { LocalJSXCommandOnDone } from '../commands/types.js'
 import type { Message } from '../types/message.js'
 import {

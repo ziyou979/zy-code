@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { useMemo } from 'react'
-import type { Tools, ToolPermissionContext } from '../tool.js'
-import { assembleToolPool } from '../tools.js'
+import type { Tools, ToolPermissionContext } from '../tools/Tool.js'
+import { assembleToolPool } from '../tools/tools.js'
 import { mergeAndFilterTools } from '../utils/toolPool.js'
 
 /**

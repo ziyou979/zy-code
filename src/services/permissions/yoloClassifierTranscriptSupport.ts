@@ -1,6 +1,6 @@
 import { getMainLoopModel } from 'src/services/model/model.js'
 import type { Attachment } from '../attachments/attachment-pipeline/types.js'
-import type { Tool, Tools } from '../../tool.js'
+import type { Tool, Tools } from '../../tools/Tool.js'
 import type { Message } from '../../types/message.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/metadata.js'
 import type { ClassifierUsage } from '../../types/permissions.js'

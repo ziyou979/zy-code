@@ -6,7 +6,7 @@ import { useMergedTools } from '../../hooks/useMergedTools.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import type { Tools } from '../../tool.js'
+import type { Tools } from '../../tools/Tool.js'
 import { resolveAgentOverrides } from '../../tools/AgentTool/agentDisplay.js'
 import {
   type AgentDefinition,

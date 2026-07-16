@@ -5,7 +5,7 @@ import { ExitPlanModeTool } from 'src/tools/ExitPlanModeTool/ExitPlanModeTool.js
 import { useNotifyAfterTimeout } from '../../hooks/useNotifyAfterTimeout.js'
 import { tSync } from '../../i18n/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
-import type { AnyObject, Tool, ToolUseContext } from '../../tool.js'
+import type { AnyObject, Tool, ToolUseContext } from '../../tools/Tool.js'
 import { AskUserQuestionTool } from '../../tools/AskUserQuestionTool/AskUserQuestionTool.js'
 import { BashTool } from '../../tools/BashTool/BashTool.js'
 import { FileEditTool } from '../../tools/FileEditTool/FileEditTool.js'
