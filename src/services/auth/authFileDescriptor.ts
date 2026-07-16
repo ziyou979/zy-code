@@ -5,10 +5,10 @@ import {
   setApiKeyFromFd,
   setOauthTokenFromFd,
 } from 'src/bootstrap/runtime/runtimeContext.js'
-import { logForDebugging } from './debug.js'
-import { isEnvTruthy } from './envUtils.js'
-import { errorMessage, isENOENT } from './errors.js'
-import { getFsImplementation } from './fsOperations.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
+import { errorMessage, isENOENT } from '../../utils/errors.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
 
 /**
  * Well-known token file locations in CCR. The Go environment-manager creates

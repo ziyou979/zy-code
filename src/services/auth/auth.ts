@@ -25,11 +25,11 @@ import {
 import {
   getApiKeyFromFileDescriptor,
   getOAuthTokenFromFileDescriptor,
-} from '../../utils/authFileDescriptor.js'
+} from '../../services/auth/authFileDescriptor.js'
 import {
   maybeRemoveApiKeyFromMacOSKeychainThrows,
   normalizeApiKeyForConfig,
-} from '../../utils/authPortable.js'
+} from '../../services/auth/authPortable.js'
 import { clearBetasCaches } from '../../utils/betas.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../../utils/envUtils.js'

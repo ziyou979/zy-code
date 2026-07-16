@@ -1,5 +1,5 @@
 import type { Command } from '../commands/index.js'
-import { getAttributionTexts } from '../utils/attribution.js'
+import { getAttributionTexts } from '../services/attribution/attribution.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { executeShellCommandsInPrompt } from '../utils/promptShellExecution.js'
 import { getUndercoverInstructions, isUndercover } from '../utils/undercover.js'

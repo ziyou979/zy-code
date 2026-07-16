@@ -12,7 +12,7 @@ import {
   getCurrentProjectConfig,
   type OutputStyle,
 } from '../../services/config/config.js'
-import { normalizeApiKeyForConfig } from '../../utils/authPortable.js'
+import { normalizeApiKeyForConfig } from '../../services/auth/authPortable.js'
 import {
   getGlobalConfig,
   getAutoUpdaterDisabledReason,

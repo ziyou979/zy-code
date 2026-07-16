@@ -34,7 +34,7 @@ import { handleMcpjsonServerApprovals } from '../components/mcp/MCPServerApprova
 import { getDefaultStandardModel } from '../services/model/model.js'
 import { AppStateProvider } from '../state/AppState.js'
 import { onChangeAppState } from '../state/onChangeAppState.js'
-import { normalizeApiKeyForConfig } from '../utils/authPortable.js'
+import { normalizeApiKeyForConfig } from '../services/auth/authPortable.js'
 import {
   checkHasTrustDialogAccepted,
   getApiKeyStatus,

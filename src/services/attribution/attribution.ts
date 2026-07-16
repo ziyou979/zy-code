@@ -6,31 +6,31 @@ import {
   getPublicModelName,
 } from 'src/services/model/model.js'
 import { getClientType } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getRemoteSessionUrl, isRemoteSessionLocal, PRODUCT_URL } from '../constants/product.js'
-import { TERMINAL_OUTPUT_TAGS } from '../constants/xml.js'
-import type { AppState } from '../state/AppStateStore.js'
-import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
-import { FILE_READ_TOOL_NAME } from '../tools/FileReadTool/prompt.js'
-import { FILE_WRITE_TOOL_NAME } from '../tools/FileWriteTool/prompt.js'
-import { GLOB_TOOL_NAME } from '../tools/GlobTool/prompt.js'
-import { GREP_TOOL_NAME } from '../tools/GrepTool/prompt.js'
-import type { Entry } from '../types/logs.js'
+import { getRemoteSessionUrl, isRemoteSessionLocal, PRODUCT_URL } from '../../constants/product.js'
+import { TERMINAL_OUTPUT_TAGS } from '../../constants/xml.js'
+import type { AppState } from '../../state/AppStateStore.js'
+import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
+import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
+import { FILE_WRITE_TOOL_NAME } from '../../tools/FileWriteTool/prompt.js'
+import { GLOB_TOOL_NAME } from '../../tools/GlobTool/prompt.js'
+import { GREP_TOOL_NAME } from '../../tools/GrepTool/prompt.js'
+import type { Entry } from '../../types/logs.js'
 import {
   type AttributionData,
   calculateCommitAttribution,
   isInternalModelRepo,
   isInternalModelRepoCached,
   sanitizeModelName,
-} from './commitAttribution.js'
-import { logForDebugging } from './debug.js'
-import { isInternalBuild } from './envUtils.js'
-import { parseJSONL } from './json.js'
-import { logError } from './log.js'
-import { isMemoryFileAccess } from './sessionFileAccessHooks.js'
-import { getTranscriptPath } from '../services/sessionStorage.js'
-import { readTranscriptForLoad } from './sessionStoragePortable.js'
-import { getInitialSettings } from '../services/settings/settings.js'
-import { isUndercover } from './undercover.js'
+} from '../../utils/commitAttribution.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
+import { parseJSONL } from '../../utils/json.js'
+import { logError } from '../../utils/log.js'
+import { isMemoryFileAccess } from '../../utils/sessionFileAccessHooks.js'
+import { getTranscriptPath } from '../sessionStorage.js'
+import { readTranscriptForLoad } from '../../utils/sessionStoragePortable.js'
+import { getInitialSettings } from '../settings/settings.js'
+import { isUndercover } from '../../utils/undercover.js'
 export type AttributionTexts = {
   commit: string
   pr: string
@@ -360,7 +360,7 @@ export async function getEnhancedPRAttribution(getAppState: () => AppState): Pro
   // 末尾的 trailer 行会成为 squash commit 上的正式 git trailers。
   if (feature('COMMIT_ATTRIBUTION') && isInternal && attributionData) {
     // @ts-expect-error
-    const { buildPRTrailers } = await import('./attributionTrailer.js')
+    const { buildPRTrailers } = await import('../../utils/attributionTrailer.js')
     const trailers = buildPRTrailers(attributionData, appState.attribution)
     const result = `${summary}\n\n${trailers.join('\n')}`
     logForDebugging(`PR Attribution: returning with trailers: ${result}`)

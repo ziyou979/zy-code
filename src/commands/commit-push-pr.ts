@@ -1,5 +1,5 @@
 import type { Command } from '../commands/index.js'
-import { getAttributionTexts, getEnhancedPRAttribution } from '../utils/attribution.js'
+import { getAttributionTexts, getEnhancedPRAttribution } from '../services/attribution/attribution.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { getDefaultBranch } from '../utils/git.js'
 import { executeShellCommandsInPrompt } from '../utils/promptShellExecution.js'
