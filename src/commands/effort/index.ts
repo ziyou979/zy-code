@@ -1,5 +1,5 @@
 import type { Command } from '../../commands/index.js'
-import { shouldInferenceConfigCommandBeImmediate } from '../../utils/immediateCommand.js'
+import { shouldInferenceConfigCommandBeImmediate } from '../../services/commands/immediateCommand.js'
 
 /**
  * /effort 的交互变体（默认导出）。

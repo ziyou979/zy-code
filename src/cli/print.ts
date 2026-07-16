@@ -162,7 +162,7 @@ import {
 import { getModelOptions } from 'src/services/model/modelOptions.js'
 import { getModelEffortLevels } from 'src/utils/effort.js'
 import { modelSupportsAdaptiveThinking } from 'src/utils/thinking.js'
-import { modelSupportsAutoMode } from 'src/utils/betas.js'
+import { modelSupportsAutoMode } from 'src/services/feature-flags/betas.js'
 import { ensureModelStringsInitialized } from 'src/services/model/modelStrings.js'
 import { getSessionId, switchSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'

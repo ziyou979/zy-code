@@ -21,7 +21,7 @@ import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from 'src/services/analytics/index.js'
-import { ImageSizeError } from '../utils/imageValidation.js'
+import { ImageSizeError } from '../services/attachments/imageValidation.js'
 import { ImageResizeError } from '../utils/imageResizer.js'
 import { findToolByName, type ToolUseContext } from '../tools/Tool.js'
 import type { SystemPrompt } from '../utils/systemPromptType.js'

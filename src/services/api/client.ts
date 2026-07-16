@@ -14,7 +14,7 @@ import {
   isOpenAIProvider,
 } from 'src/services/model/providers.js'
 import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/services/auth/auth.js'
-import { getUserAgent } from 'src/utils/http.js'
+import { getUserAgent } from 'src/services/http/http.js'
 import { getProxyFetchOptions } from 'src/utils/proxy.js'
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { getOauthConfig } from '../../constants/oauth.js'

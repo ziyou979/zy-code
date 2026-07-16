@@ -5,7 +5,7 @@ import { Spinner } from '../../components/Spinner.js'
 import { useTimeout } from '../../hooks/useTimeout.js'
 import { Box, Text } from '../../ink/index.js'
 import { getSSLErrorHint } from '../../services/api/errorUtils.js'
-import { getUserAgent } from '../../utils/http.js'
+import { getUserAgent } from '../../services/http/http.js'
 import { logError } from '../../utils/log.js'
 export interface PreflightCheckResult {
   success: boolean

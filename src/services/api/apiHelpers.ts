@@ -4,7 +4,7 @@ import { EFFORT_BETA_HEADER, TASK_BUDGETS_BETA_HEADER } from '../../constants/be
 import { getAPIProvider, isAnthropicModel } from '../model/providers.js'
 import type { TaskBudgetParam } from '../../types/llm.js'
 import { getOauthAccountInfo } from '../auth/auth.js'
-import { shouldIncludeExperimentalBetas } from '../../utils/betas.js'
+import { shouldIncludeExperimentalBetas } from '../../services/feature-flags/betas.js'
 import { getOrCreateUserID } from '../config/config.js'
 import { getModelMaxOutputTokens } from '../../utils/context.js'
 import { logForDebugging } from '../../utils/debug.js'

@@ -27,7 +27,7 @@ import { env } from '../utils/env.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { getGitState, getIsGit } from '../utils/git.js'
 import type { GitRepoState } from '../utils/gitUrlUtils.js'
-import { getAuthHeaders, getUserAgent } from '../utils/http.js'
+import { getAuthHeaders, getUserAgent } from '../services/http/http.js'
 import { getInMemoryErrors, logError } from '../utils/log.js'
 import { isEssentialTrafficOnly } from '../utils/privacyLevel.js'
 import {

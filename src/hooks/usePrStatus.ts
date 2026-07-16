@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getLastInteractionTime } from 'src/bootstrap/runtime/runtimeContext.js'
-import { fetchPrStatus, type PrReviewState } from '../utils/ghPrStatus.js'
+import { fetchPrStatus, type PrReviewState } from '../services/github/ghPrStatus.js'
 
 const POLL_INTERVAL_MS = 60_000
 const SLOW_GH_THRESHOLD_MS = 4_000

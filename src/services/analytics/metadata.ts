@@ -10,7 +10,7 @@ import { extname } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { env, getHostPlatformForAnalytics } from '../../utils/env.js'
 import { envDynamic } from '../../utils/envDynamic.js'
-import { getModelBetas } from '../../utils/betas.js'
+import { getModelBetas } from '../../services/feature-flags/betas.js'
 import { getMainLoopModel } from '../model/model.js'
 import {
   getSessionId,

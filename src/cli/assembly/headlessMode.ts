@@ -23,7 +23,7 @@ import type { ToolInputJSONSchema, ToolPermissionContext, Tools } from '../../to
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Command } from '../../commands/types.js'
 import { validateForceLoginOrg } from '../../services/auth/auth.js'
-import { filterAllowedSdkBetas } from '../../utils/betas.js'
+import { filterAllowedSdkBetas } from '../../services/feature-flags/betas.js'
 import { logForDebugging, setHasFormattedOutput } from '../../utils/debug.js'
 import { resolveInitialEffortSetting } from '../../utils/effort.js'
 import { isBareMode } from '../../utils/envUtils.js'

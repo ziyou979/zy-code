@@ -14,7 +14,7 @@ import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { LogOption, SerializedMessage } from '../types/logs.js'
 import { formatLogMetadata, truncateToWidth } from '../utils/format.js'
-import { getWorktreePaths } from '../utils/getWorktreePaths.js'
+import { getWorktreePaths } from '../services/worktree/getWorktreePaths.js'
 import { getBranch } from '../utils/git.js'
 import { getLogDisplayTitle } from '../utils/log.js'
 import {

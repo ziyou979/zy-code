@@ -1,5 +1,5 @@
 import { Link, Text } from '../ink/index.js'
-import type { PrReviewState } from '../utils/ghPrStatus.js'
+import type { PrReviewState } from '../services/github/ghPrStatus.js'
 
 type Props = {
   number: number

@@ -30,7 +30,7 @@ import {
   maybeRemoveApiKeyFromMacOSKeychainThrows,
   normalizeApiKeyForConfig,
 } from '../../services/auth/authPortable.js'
-import { clearBetasCaches } from '../../utils/betas.js'
+import { clearBetasCaches } from '../../services/feature-flags/betas.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'

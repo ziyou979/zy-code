@@ -19,13 +19,13 @@ import {
   SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER,
   TOKEN_EFFICIENT_TOOLS_BETA_HEADER,
   TOOL_SEARCH_TOOL_BETA_HEADER,
-} from '../constants/betas.js'
-import { getContextWindowForModel } from './context.js'
-import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
+} from '../../constants/betas.js'
+import { getContextWindowForModel } from '../../utils/context.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import {
   getLocalModelBetaHeaders,
   localModelHasCapability,
-} from '../services/settings/localModelCapabilities.js'
+} from '../settings/localModelCapabilities.js'
 
 /**
  * SDK-provided betas that are allowed for API key users.

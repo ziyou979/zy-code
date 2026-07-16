@@ -39,7 +39,7 @@ import {
 } from '../../commands/add-dir/validation.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { getToolsForDefaultPreset, parseToolPreset } from '../../tools/tools.js'
-import { modelSupportsAutoMode } from '../../utils/betas.js'
+import { modelSupportsAutoMode } from '../../services/feature-flags/betas.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'

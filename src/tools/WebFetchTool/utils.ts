@@ -9,7 +9,7 @@ import {
 import { queryCompactModel } from '../../services/api/compactQueries.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
-import { getWebFetchUserAgent } from '../../utils/http.js'
+import { getWebFetchUserAgent } from '../../services/http/http.js'
 import { logError } from '../../utils/log.js'
 import { isBinaryContentType, persistBinaryContent } from '../../utils/mcpOutputStorage.js'
 import { getInitialSettings } from '../../services/settings/settings.js'

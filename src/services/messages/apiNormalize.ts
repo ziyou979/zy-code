@@ -22,7 +22,7 @@ import type {
 } from '../../types/message.js'
 import { normalizeToolInputForAPI } from '../../utils/api.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { validateImagesForAPI } from '../../utils/imageValidation.js'
+import { validateImagesForAPI } from '../../services/attachments/imageValidation.js'
 import { normalizeLegacyToolName } from '../permissions/permissionRuleParser.js'
 import { isToolReferenceBlock, isToolSearchEnabledOptimistic } from '../../utils/toolSearch.js'
 import { normalizeAttachmentForAPI } from './api.js'

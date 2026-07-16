@@ -17,7 +17,7 @@ import type {
   ToolChoice,
   ToolDefinition,
 } from '../types/llm.js'
-import { getModelBetas } from './betas.js'
+import { getModelBetas } from '../services/feature-flags/betas.js'
 
 export type SideQueryOptions = {
   /** 用于查询的模型 */

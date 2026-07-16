@@ -14,7 +14,7 @@ import { checkHasTrustDialogAccepted } from '../config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage, toError } from '../../utils/errors.js'
-import { getAuthHeaders } from '../../utils/http.js'
+import { getAuthHeaders } from '../../services/http/http.js'
 import { logError } from '../../utils/log.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 

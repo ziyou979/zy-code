@@ -8,9 +8,9 @@ import {
   isAnthropicProvider,
   isOpenAIProvider,
 } from 'src/services/model/providers.js'
-import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from '../services/auth/auth.js'
-import { getZyCodeUserAgent } from './userAgent.js'
-import { getWorkload } from './workloadContext.js'
+import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from '../auth/auth.js'
+import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { getWorkload } from '../../utils/workloadContext.js'
 
 // 警告：我们依赖 user agent 中的 `zy-cli` 进行日志过滤。
 // 请勿在未确认日志也更新的情况下修改此处！
