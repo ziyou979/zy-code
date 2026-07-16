@@ -30,7 +30,7 @@ import {
   oneShotJitteredNextCronRunMs,
   readCronTasks,
   removeCronTasks,
-} from './cronTasks.js'
+} from '../services/jobs/cronTasks.js'
 import { releaseSchedulerLock, tryAcquireSchedulerLock } from './cronTasksLock.js'
 import { logForDebugging } from './debug.js'
 

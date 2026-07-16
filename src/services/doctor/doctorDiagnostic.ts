@@ -14,34 +14,34 @@ import {
   getPackageManager,
 } from 'src/services/native-installer/packageManagers.js'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
-import { checkGlobalInstallPermissions } from './autoUpdater.js'
-import { isInBundledMode } from './bundledMode.js'
+import { checkGlobalInstallPermissions } from '../../utils/autoUpdater.js'
+import { isInBundledMode } from '../../utils/bundledMode.js'
 import {
   formatAutoUpdaterDisabledReason,
   getAutoUpdaterDisabledReason,
   getGlobalConfig,
   type InstallMethod,
-} from '../services/config/config.js'
-import { getCwd } from './cwd.js'
-import { isEnvTruthy } from './envUtils.js'
-import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
-import { getFsImplementation } from './fsOperations.js'
+} from '../config/config.js'
+import { getCwd } from '../../utils/cwd.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
+import { execFileNoThrow } from '../shell/execFileNoThrow.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
 import {
   getShellType,
   isRunningFromLocalInstallation,
   localInstallationExists,
-} from './localInstaller.js'
-import { getPlatform } from '../services/shell/platform.js'
-import { getRipgrepStatus } from './ripgrep.js'
-import { getManagedFilePath } from '../services/settings/managedPath.js'
-import { CUSTOMIZATION_SURFACES } from '../services/settings/types.js'
+} from '../../utils/localInstaller.js'
+import { getPlatform } from '../shell/platform.js'
+import { getRipgrepStatus } from '../../utils/ripgrep.js'
+import { getManagedFilePath } from '../settings/managedPath.js'
+import { CUSTOMIZATION_SURFACES } from '../settings/types.js'
 import {
   findValidZyAlias,
   findZyAlias,
   getShellConfigPaths,
-} from '../services/shell/shellConfig.js'
-import { jsonParse } from './slowOperations.js'
-import { which } from '../services/shell/which.js'
+} from '../shell/shellConfig.js'
+import { jsonParse } from '../../utils/slowOperations.js'
+import { which } from '../shell/which.js'
 export type InstallationType =
   | 'npm-global'
   | 'npm-local'

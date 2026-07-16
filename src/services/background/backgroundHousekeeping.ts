@@ -20,7 +20,7 @@ import {
   cleanupNpmCacheForAnthropicPackages,
   cleanupOldMessageFilesInBackground,
   cleanupOldVersionsThrottled,
-} from '../../utils/cleanup.js'
+} from '../cleanup/cleanup.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { autoUpdateMarketplacesAndPluginsInBackground } from '../plugins/pluginAutoupdate.js'
 

@@ -1,6 +1,6 @@
 import type { Notification } from '../../context/notifications.js'
 import { isInBundledMode } from 'src/utils/bundledMode.js'
-import { getCurrentInstallationType } from 'src/utils/doctorDiagnostic.js'
+import { getCurrentInstallationType } from 'src/services/doctor/doctorDiagnostic.js'
 import { isEnvTruthy } from 'src/utils/envUtils.js'
 import { tSync } from '../../i18n/index.js'
 import { useStartupNotification } from './useStartupNotification.js'

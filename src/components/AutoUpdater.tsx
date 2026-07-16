@@ -18,7 +18,7 @@ import {
 } from '../utils/autoUpdater.js'
 import { getGlobalConfig, isAutoUpdaterDisabled } from '../services/config/config.js'
 import { logForDebugging } from '../utils/debug.js'
-import { getCurrentInstallationType } from '../utils/doctorDiagnostic.js'
+import { getCurrentInstallationType } from '../services/doctor/doctorDiagnostic.js'
 import { isDevEnv, isTestEnv } from '../utils/envUtils.js'
 import { installOrUpdateZyPackage, localInstallationExists } from '../utils/localInstaller.js'
 import { gt, gte } from '../utils/semver.js'

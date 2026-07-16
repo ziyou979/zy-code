@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import { DEFAULT_CRON_JITTER_CONFIG } from '../../utils/cronTasks.js'
+import { DEFAULT_CRON_JITTER_CONFIG } from '../../services/jobs/cronTasks.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 
 export const DEFAULT_MAX_AGE_DAYS =

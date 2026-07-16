@@ -17,7 +17,7 @@ import {
   saveGlobalConfig,
 } from 'src/services/config/config.js'
 import { logForDebugging } from 'src/utils/debug.js'
-import { getDoctorDiagnostic } from 'src/utils/doctorDiagnostic.js'
+import { getDoctorDiagnostic } from 'src/services/doctor/doctorDiagnostic.js'
 import { isInternalBuild } from 'src/utils/envUtils.js'
 import { gracefulShutdown } from 'src/utils/gracefulShutdown.js'
 import { installOrUpdateZyPackage, localInstallationExists } from 'src/utils/localInstaller.js'

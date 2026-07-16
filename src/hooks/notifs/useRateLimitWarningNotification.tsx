@@ -3,7 +3,7 @@ import { useNotifications } from 'src/context/notifications.js'
 import { Text } from 'src/ink/index.js'
 import { getRateLimitWarning, getUsingOverageText } from 'src/services/zyAiLimits.js'
 import { useZyAiLimits } from 'src/services/zyAiLimitsHook.js'
-import { hasZyAiBillingAccess } from 'src/utils/billing.js'
+import { hasZyAiBillingAccess } from 'src/services/billing/billing.js'
 import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 export function useRateLimitWarningNotification(model: string) {
   const { addNotification } = useNotifications()
