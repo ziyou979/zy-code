@@ -6,7 +6,7 @@
 // Always validate against actual API responses before relying on this for production features.
 
 import type { SubscriptionType } from './oauth/types.js'
-import { setMockBillingAccessOverride } from '../utils/billing.js'
+import { setMockBillingAccessOverride } from '../services/billing/billing.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import type { OverageDisabledReason } from './zyAiLimits.js'
 
