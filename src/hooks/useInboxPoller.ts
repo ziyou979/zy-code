@@ -22,7 +22,7 @@ import { logForDebugging } from '../utils/debug.js'
 import {
   findInProcessTeammateTaskId,
   handlePlanApprovalResponse,
-} from '../utils/inProcessTeammateHelpers.js'
+} from '../services/swarm/inProcessTeammateHelpers.js'
 import { createAssistantMessage } from '../services/messages/./constructors.js'
 import {
   permissionModeFromString,

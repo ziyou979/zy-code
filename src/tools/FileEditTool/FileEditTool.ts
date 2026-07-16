@@ -31,7 +31,7 @@ import { logFileOperation } from '../../services/analytics/fileOperationAnalytic
 import { type LineEndingType, readFileSyncWithMetadata } from '../../utils/fileRead.js'
 import { formatFileSize } from '../../utils/format.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
-import { fetchSingleFileGitDiff, type ToolUseDiff } from '../../utils/gitDiff.js'
+import { fetchSingleFileGitDiff, type ToolUseDiff } from '../../services/git/gitDiff.js'
 import { logError } from '../../utils/log.js'
 import { expandPath } from '../../utils/path.js'
 import {

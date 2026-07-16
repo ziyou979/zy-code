@@ -27,7 +27,7 @@ import {
   getRecentActivitySync,
   getRecentReleaseNotesSync,
   truncatePath,
-} from '../../utils/logoUtils.js'
+} from '../../services/branding/logoUtils.js'
 import { checkForReleaseNotesSync } from '../../utils/releaseNotes.js'
 import { OffscreenFreeze } from '../OffscreenFreeze.js'
 import { CondensedLogo } from './CondensedLogo.js'

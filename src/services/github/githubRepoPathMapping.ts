@@ -1,11 +1,11 @@
 import { realpath } from 'node:fs/promises'
 import { getOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
-import { logForDebugging } from './debug.js'
-import { detectCurrentRepository, parseGitHubRepository } from './detectRepository.js'
-import { pathExists } from './file.js'
-import { getRemoteUrlForDir } from '../services/git/gitFilesystem.js'
-import { findGitRoot } from './git.js'
+import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { detectCurrentRepository, parseGitHubRepository } from '../../utils/detectRepository.js'
+import { pathExists } from '../../utils/file.js'
+import { getRemoteUrlForDir } from '../git/gitFilesystem.js'
+import { findGitRoot } from '../../utils/git.js'
 /**
  * Updates the GitHub repository path mapping in global config.
  * Called at startup (fire-and-forget) to track known local paths for repos.

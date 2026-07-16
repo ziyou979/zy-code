@@ -45,7 +45,7 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage, getErrnoCode, isENOENT, toError } from '../../utils/errors.js'
 import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
 import { getShellType } from '../../utils/localInstaller.js'
-import * as lockfile from '../../utils/lockfile.js'
+import * as lockfile from '../../services/file-persistence/lockfile.js'
 import { logError } from '../../utils/log.js'
 import { gt, gte } from '../../utils/semver.js'
 import {

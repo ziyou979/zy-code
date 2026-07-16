@@ -49,7 +49,7 @@ import { errorMessage, isENOENT, TeleportOperationError, toError } from '../../u
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
 import { getWorktreePaths } from '../../services/worktree/getWorktreePaths.js'
 import { getBranch } from '../../utils/git.js'
-import { filterExistingPaths, getKnownPathsForRepo } from '../../utils/githubRepoPathMapping.js'
+import { filterExistingPaths, getKnownPathsForRepo } from '../../services/github/githubRepoPathMapping.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { logError } from '../../utils/log.js'
 import { createSystemMessage, createUserMessage } from '../../services/messages/./constructors.js'

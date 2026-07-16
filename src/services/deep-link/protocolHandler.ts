@@ -13,7 +13,7 @@
 
 import { homedir } from 'node:os'
 import { logForDebugging } from '../../utils/debug.js'
-import { filterExistingPaths, getKnownPathsForRepo } from '../../utils/githubRepoPathMapping.js'
+import { filterExistingPaths, getKnownPathsForRepo } from '../../services/github/githubRepoPathMapping.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { readLastFetchTime } from './banner.js'
 import { parseDeepLink } from './parseDeepLink.js'

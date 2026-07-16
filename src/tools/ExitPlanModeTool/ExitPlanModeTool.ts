@@ -17,7 +17,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import {
   findInProcessTeammateTaskId,
   setAwaitingPlanApproval,
-} from '../../utils/inProcessTeammateHelpers.js'
+} from '../../services/swarm/inProcessTeammateHelpers.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
 import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from '../../utils/plans.js'

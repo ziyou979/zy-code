@@ -42,7 +42,7 @@ import {
 import { hasWorktreeCreateHook } from '../services/hooks.js'
 import { checkAndRestoreITerm2Backup } from '../services/shell/iTermBackup.js'
 import { logError } from '../utils/log.js'
-import { getRecentActivity } from '../utils/logoUtils.js'
+import { getRecentActivity } from '../services/branding/logoUtils.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { getPlanSlug } from '../utils/plans.js'
 import { saveWorktreeState } from '../services/sessionStorage.js'

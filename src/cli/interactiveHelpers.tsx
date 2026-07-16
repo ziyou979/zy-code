@@ -43,7 +43,7 @@ import {
 } from '../services/config/config.js'
 import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from '../utils/envUtils.js'
 import { type FpsMetrics, FpsTracker } from '../utils/fpsTracker.js'
-import { updateGithubRepoPathMapping } from '../utils/githubRepoPathMapping.js'
+import { updateGithubRepoPathMapping } from '../services/github/githubRepoPathMapping.js'
 import { applyConfigEnvironmentVariables } from '../services/environment/managedEnv.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { getBaseRenderOptions } from '../utils/renderOptions.js'

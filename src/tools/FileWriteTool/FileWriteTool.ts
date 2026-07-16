@@ -25,7 +25,7 @@ import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../utils/fileHistor
 import { logFileOperation } from '../../services/analytics/fileOperationAnalytics.js'
 import { readFileSyncWithMetadata } from '../../utils/fileRead.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
-import { fetchSingleFileGitDiff, type ToolUseDiff } from '../../utils/gitDiff.js'
+import { fetchSingleFileGitDiff, type ToolUseDiff } from '../../services/git/gitDiff.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
 import { expandPath } from '../../utils/path.js'

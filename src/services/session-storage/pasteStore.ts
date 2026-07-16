@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto'
 import { mkdir, readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { logForDebugging } from './debug.js'
-import { getZyConfigHomeDir } from './envUtils.js'
-import { isENOENT } from './errors.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { isENOENT } from '../../utils/errors.js'
 const PASTE_STORE_DIR = 'paste-cache'
 
 /**

@@ -10,16 +10,16 @@
  */
 
 import { updateTaskState } from 'src/services/task-runtime/framework.js'
-import type { AppState } from '../state/AppStateStore.js'
+import type { AppState } from '../../state/AppStateStore.js'
 import {
   type InProcessTeammateTaskState,
   isInProcessTeammateTask,
-} from '../tasks/in-process-teammate-task/types.js'
+} from '../../tasks/in-process-teammate-task/types.js'
 import {
   isPermissionResponse,
   isSandboxPermissionResponse,
   type PlanApprovalResponseMessage,
-} from './teammateMailbox.js'
+} from '../../utils/teammateMailbox.js'
 
 type SetAppState = (updater: (prev: AppState) => AppState) => void
 
