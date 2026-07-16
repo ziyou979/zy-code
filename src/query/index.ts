@@ -63,7 +63,7 @@ const _jobClassifier = feature('TEMPLATES')
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { notifyCommandLifecycle } from '../utils/commandLifecycle.js'
-import { headlessProfilerCheckpoint } from '../utils/headlessProfiler.js'
+import { headlessProfilerCheckpoint } from '../services/analytics/headlessProfiler.js'
 import { renderModelName } from '../services/model/model.js'
 import { finalContextTokensFromLastResponse, tokenCountWithEstimation } from '../utils/tokens.js'
 import { ESCALATED_MAX_TOKENS } from '../utils/context.js'

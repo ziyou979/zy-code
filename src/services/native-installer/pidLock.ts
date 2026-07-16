@@ -15,7 +15,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
 import { isENOENT, toError } from '../../utils/errors.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
-import { getProcessCommand } from '../../utils/genericProcessUtils.js'
+import { getProcessCommand } from '../../services/shell/genericProcessUtils.js'
 import { logError } from '../../utils/log.js'
 import { jsonParse, jsonStringify, writeFileSync_DEPRECATED } from '../../utils/slowOperations.js'
 

@@ -16,11 +16,11 @@ import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from '../services/analytics/index.js'
-import { logForDebugging } from './debug.js'
-import { isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { getPerformance } from './profilerBase.js'
-import { jsonStringify } from './slowOperations.js'
+} from '../analytics/index.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { getPerformance } from '../../utils/profilerBase.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
 // Detailed profiling mode - same env var as startupProfiler
 // eslint-disable-next-line custom-rules/no-process-env-top-level
 const DETAILED_PROFILING = isEnvTruthy(process.env.ZY_CODE_PROFILE_STARTUP)

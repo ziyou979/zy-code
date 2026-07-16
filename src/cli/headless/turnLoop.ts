@@ -49,7 +49,7 @@ import {
   headlessProfilerCheckpoint,
   headlessProfilerMemorySample,
   logHeadlessProfilerTurn,
-} from 'src/utils/headlessProfiler.js'
+} from 'src/services/analytics/headlessProfiler.js'
 import { startQueryProfile, logQueryProfileReport } from 'src/utils/queryProfiler.js'
 import { isEnvDefinedFalsy } from '../../utils/envUtils.js'
 import {

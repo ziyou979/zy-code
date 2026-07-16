@@ -27,7 +27,7 @@ import {
   writeTextContent,
 } from '../../utils/file.js'
 import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../utils/fileHistory.js'
-import { logFileOperation } from '../../utils/fileOperationAnalytics.js'
+import { logFileOperation } from '../../services/analytics/fileOperationAnalytics.js'
 import { type LineEndingType, readFileSyncWithMetadata } from '../../utils/fileRead.js'
 import { formatFileSize } from '../../utils/format.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'

@@ -41,7 +41,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/grow
 import { getAgentContext } from 'src/utils/agentContext.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
-import { headlessProfilerCheckpoint } from 'src/utils/headlessProfiler.js'
+import { headlessProfilerCheckpoint } from 'src/services/analytics/headlessProfiler.js'
 import { calculateCost, getModelCurrency } from 'src/services/model/modelCost.js'
 import { endQueryProfile, queryCheckpoint } from 'src/utils/queryProfiler.js'
 import { type ThinkingConfig } from 'src/utils/thinking.js'

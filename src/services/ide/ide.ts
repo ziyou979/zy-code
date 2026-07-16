@@ -10,7 +10,7 @@ import { env } from '../../utils/env.js'
 import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
-import { getAncestorPidsAsync } from '../../utils/genericProcessUtils.js'
+import { getAncestorPidsAsync } from '../../services/shell/genericProcessUtils.js'
 import { isJetBrainsPluginInstalledCached } from '../../utils/jetbrains.js'
 import { logError } from '../../utils/log.js'
 import { getPlatform } from '../shell/platform.js'
@@ -25,7 +25,7 @@ const ideOnboardingDialog = (): typeof import('src/components/IdeOnboardingDialo
 
 import { createAbortController } from '../../utils/abortController.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { envDynamic } from '../../utils/envDynamic.js'
+import { envDynamic } from '../../services/environment/envDynamic.js'
 import { errorMessage, isFsInaccessible } from '../../utils/errors.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { checkWSLDistroMatch, WindowsToWSLConverter } from '../../utils/idePathConversion.js'

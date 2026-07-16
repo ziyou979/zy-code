@@ -26,7 +26,7 @@ import { enableConfigs, recordFirstStartTime } from '../services/config/config.j
 import { createDebugLog } from '../utils/debug.js'
 import { detectCurrentRepository } from '../utils/detectRepository.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
-import { initJetBrainsDetection } from '../utils/envDynamic.js'
+import { initJetBrainsDetection } from '../services/environment/envDynamic.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { ConfigParseError, errorMessage } from '../utils/errors.js'
 // showInvalidConfigDialog 在错误路径中动态导入，以避免在初始化时加载 React

@@ -192,7 +192,7 @@ import {
   headlessProfilerCheckpoint,
   headlessProfilerMemorySample,
   logHeadlessProfilerTurn,
-} from 'src/utils/headlessProfiler.js'
+} from 'src/services/analytics/headlessProfiler.js'
 import { asSessionId } from 'src/types/ids.js'
 import { jsonStringify } from '../utils/slowOperations.js'
 import { skillChangeDetector } from '../services/skill-runtime/skillChangeDetector.js'
