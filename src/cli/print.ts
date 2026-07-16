@@ -221,7 +221,7 @@ const cronSchedulerModule = feature('AGENT_TRIGGERS')
   ? (require('../utils/cronScheduler.js') as typeof import('../utils/cronScheduler.js'))
   : null
 const cronJitterConfigModule = feature('AGENT_TRIGGERS')
-  ? (require('../utils/cronJitterConfig.js') as typeof import('../utils/cronJitterConfig.js'))
+  ? (require('../services/jobs/cronJitterConfig.js') as typeof import('../services/jobs/cronJitterConfig.js'))
   : null
 const cronGate = feature('AGENT_TRIGGERS')
   ? (require('../tools/ScheduleCronTool/prompt.js') as typeof import('../tools/ScheduleCronTool/prompt.js'))

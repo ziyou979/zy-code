@@ -7,7 +7,7 @@ import {
 } from '../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import { isKairosCronEnabled } from '../tools/ScheduleCronTool/prompt.js'
 import type { Message } from '../types/message.js'
-import { getCronJitterConfig } from '../utils/cronJitterConfig.js'
+import { getCronJitterConfig } from '../services/jobs/cronJitterConfig.js'
 import { createCronScheduler } from '../utils/cronScheduler.js'
 import { removeCronTasks } from '../utils/cronTasks.js'
 import { logForDebugging } from '../utils/debug.js'

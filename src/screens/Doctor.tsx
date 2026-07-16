@@ -34,7 +34,7 @@ import {
 import { useAppState } from '../state/AppState.js'
 import { getPluginErrorMessage } from '../services/plugins/types.js'
 import { getGcsDistTags, getNpmDistTags, type NpmDistTags } from '../utils/autoUpdater.js'
-import { type ContextWarnings, checkContextWarnings } from '../utils/doctorContextWarnings.js'
+import { type ContextWarnings, checkContextWarnings } from '../services/doctor/doctorContextWarnings.js'
 import { type DiagnosticInfo, getDoctorDiagnostic } from '../utils/doctorDiagnostic.js'
 import { validateBoundedIntEnvVar } from '../utils/envValidation.js'
 import { pathExists } from '../utils/file.js'

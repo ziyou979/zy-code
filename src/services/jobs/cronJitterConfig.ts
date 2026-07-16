@@ -9,9 +9,9 @@
 //   Daemon/SDK: omit getJitterConfig → DEFAULT_CRON_JITTER_CONFIG applies.
 
 import { z } from 'zod/v4'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { type CronJitterConfig, DEFAULT_CRON_JITTER_CONFIG } from './cronTasks.js'
-import { lazySchema } from './lazySchema.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { type CronJitterConfig, DEFAULT_CRON_JITTER_CONFIG } from '../../utils/cronTasks.js'
+import { lazySchema } from '../../utils/lazySchema.js'
 
 // Upper bounds here are defense-in-depth against fat-fingered GrowthBook
 // pushes. Like pollConfig.ts, Zod rejects the whole object on any violation
