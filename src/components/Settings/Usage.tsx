@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { formatCost } from 'src/cost-tracker.js'
+import { formatCost } from 'src/services/cost/cost-tracker.js'
 import { getSubscriptionType } from 'src/services/auth/auth.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'

@@ -1,4 +1,4 @@
-import { expandPastedTextRefs, formatPastedTextRef, getPastedTextRefNumLines } from '../history.js'
+import { expandPastedTextRefs, formatPastedTextRef, getPastedTextRefNumLines } from '../services/session-storage/history.js'
 import instances from '../ink/instances.js'
 import type { PastedContent } from '../services/config/config.js'
 import { classifyGuiEditor, getExternalEditor } from './editor.js'

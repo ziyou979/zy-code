@@ -6,7 +6,7 @@ import {
   expandExistingPasteRefsInInput,
   findExistingPastedTextId,
 } from '../../../src/components/PromptInput/inputPaste.js'
-import { formatPastedTextRef } from '../../../src/history.js'
+import { formatPastedTextRef } from '../../../src/services/session-storage/history.js'
 import type { PastedContent } from '../../../src/services/config/config.js'
 
 describe('findExistingPastedTextId', () => {

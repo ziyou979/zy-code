@@ -1,16 +1,16 @@
 import { feature } from 'bun:bundle'
-import type { Task, TaskType } from './task.js'
-import { DreamTask } from './tasks/dream-task/dreamTask.js'
-import { LocalAgentTask } from './tasks/local-agent-task/LocalAgentTask.js'
-import { LocalShellTask } from './tasks/local-shell-task/LocalShellTask.js'
-import { RemoteAgentTask } from './tasks/remote-agent-task/RemoteAgentTask.js'
+import type { Task, TaskType } from '../task.js'
+import { DreamTask } from './dream-task/dreamTask.js'
+import { LocalAgentTask } from './local-agent-task/LocalAgentTask.js'
+import { LocalShellTask } from './local-shell-task/LocalShellTask.js'
+import { RemoteAgentTask } from './remote-agent-task/RemoteAgentTask.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const LocalWorkflowTask: Task | null = feature('WORKFLOW_SCRIPTS')
-  ? require('./tasks/local-workflow-task/localWorkflowTask.js').LocalWorkflowTask
+  ? require('./local-workflow-task/localWorkflowTask.js').LocalWorkflowTask
   : null
 const MonitorMcpTask: Task | null = feature('MONITOR_TOOL')
-  ? require('./tasks/monitor-mcp-task/monitorMcpTask.js').MonitorMcpTask
+  ? require('./monitor-mcp-task/monitorMcpTask.js').MonitorMcpTask
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

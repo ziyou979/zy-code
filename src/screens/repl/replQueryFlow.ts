@@ -38,13 +38,13 @@ import {
   expandPastedTextRefs,
   parseReferences,
   removeLastFromHistory,
-} from '../../history.js'
+} from '../../services/session-storage/history.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import { mergeClients } from '../../hooks/useMergedClients.js'
 import type { TerminalNotification } from '../../ink/useTerminalNotification.js'
 import { maybeMarkProjectOnboardingComplete } from '../../services/settings/projectOnboardingState.js'
-import { query } from '../../query.js'
+import { query } from '../../query/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

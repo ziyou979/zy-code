@@ -10,7 +10,7 @@ import {
   formatPastedTextRef,
   getPastedTextRefNumLines,
   parseReferences,
-} from '../../history.js'
+} from '../../services/session-storage/history.js'
 import { useDoublePress } from '../../hooks/useDoublePress.js'
 import { useTypeahead } from '../../hooks/useTypeahead.js'
 import { type Key } from '../../ink.js'

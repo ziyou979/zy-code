@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { formatTotalCost, saveCurrentSessionCosts } from '../cost-tracker.js'
+import { formatTotalCost, saveCurrentSessionCosts } from '../services/cost/cost-tracker.js'
 import { hasConsoleBillingAccess } from '../utils/billing.js'
 import type { FpsMetrics } from '../utils/fpsTracker.js'
 

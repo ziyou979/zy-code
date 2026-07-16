@@ -16,7 +16,7 @@ import {
 import { selectableUserMessagesFilter } from '../components/messageSelectorUtils.js'
 import type { SpinnerMode } from '../types/spinner.js'
 import type { QuerySource } from '../constants/querySource.js'
-import { expandPastedTextRefs, parseReferences } from '../history.js'
+import { expandPastedTextRefs, parseReferences } from '../services/session-storage/history.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import type { IDESelection } from '../hooks/useIdeSelection.js'
 import type { AppState } from '../state/AppStateStore.js'

@@ -1,30 +1,30 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { evaluateStopHookBlockCap, isInternalBuild } from './utils/envUtils.js'
-import type { ToolResultBlock, ToolCallBlock, AssistantContentBlock } from './types/llm.js'
-import type { CanUseToolFn } from './hooks/useCanUseTool.js'
-import { FallbackTriggeredError } from './services/api/withRetry.js'
+import { evaluateStopHookBlockCap, isInternalBuild } from '../utils/envUtils.js'
+import type { ToolResultBlock, ToolCallBlock, AssistantContentBlock } from '../types/llm.js'
+import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
+import { FallbackTriggeredError } from '../services/api/withRetry.js'
 import {
   calculateTokenWarningState,
   isAutoCompactEnabled,
   type AutoCompactTrackingState,
-} from './services/compact/autoCompact.js'
-import { buildPostCompactMessages } from './services/compact/compact.js'
+} from '../services/compact/autoCompact.js'
+import { buildPostCompactMessages } from '../services/compact/compact.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const reactiveCompact = feature('REACTIVE_COMPACT')
-  ? (require('./services/compact/reactiveCompact.js') as typeof import('./services/compact/reactiveCompact.js'))
+  ? (require('../services/compact/reactiveCompact.js') as typeof import('../services/compact/reactiveCompact.js'))
   : null
 const contextCollapse = feature('CONTEXT_COLLAPSE')
-  ? (require('./services/compact/context-collapse/index.js') as typeof import('./services/compact/context-collapse/index.js'))
+  ? (require('../services/compact/context-collapse/index.js') as typeof import('../services/compact/context-collapse/index.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from 'src/services/analytics/index.js'
-import { ImageSizeError } from './utils/imageValidation.js'
-import { ImageResizeError } from './utils/imageResizer.js'
-import { findToolByName, type ToolUseContext } from './tool.js'
-import type { SystemPrompt } from './utils/systemPromptType.js'
+import { ImageSizeError } from '../utils/imageValidation.js'
+import { ImageResizeError } from '../utils/imageResizer.js'
+import { findToolByName, type ToolUseContext } from '../tool.js'
+import type { SystemPrompt } from '../utils/systemPromptType.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -34,62 +34,62 @@ import type {
   ToolUseSummaryMessage,
   UserMessage,
   TombstoneMessage,
-} from './types/message.js'
-import { logError } from './utils/log.js'
-import { PROMPT_TOO_LONG_ERROR_MESSAGE, isPromptTooLongMessage } from './services/api/errors.js'
-import { createDebugLog, logAntError } from './utils/debug.js'
-import { normalizeMessagesForAPI } from './services/messages/api.js'
+} from '../types/message.js'
+import { logError } from '../utils/log.js'
+import { PROMPT_TOO_LONG_ERROR_MESSAGE, isPromptTooLongMessage } from '../services/api/errors.js'
+import { createDebugLog, logAntError } from '../utils/debug.js'
+import { normalizeMessagesForAPI } from '../services/messages/api.js'
 import {
   createAssistantAPIErrorMessage,
   createMicrocompactBoundaryMessage,
   createSystemMessage,
   createUserInterruptionMessage,
   createUserMessage,
-} from './services/messages/constructors.js'
-import { stripSignatureBlocks } from './services/messages/prune.js'
-import { prependUserContext } from './utils/api.js'
+} from '../services/messages/constructors.js'
+import { stripSignatureBlocks } from '../services/messages/prune.js'
+import { prependUserContext } from '../utils/api.js'
 import {
   createAttachmentMessage,
   filterDuplicateMemoryAttachments,
   getAttachmentMessages,
   startRelevantMemoryPrefetch,
-} from './services/attachments/attachments.js'
+} from '../services/attachments/attachments.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const skillPrefetch = feature('EXPERIMENTAL_SKILL_SEARCH')
-  ? (require('./services/skill-search/prefetch.js') as typeof import('./services/skill-search/prefetch.js'))
+  ? (require('../services/skill-search/prefetch.js') as typeof import('../services/skill-search/prefetch.js'))
   : null
 const _jobClassifier = feature('TEMPLATES')
-  ? (require('./services/jobs/classifier.js') as typeof import('./services/jobs/classifier.js'))
+  ? (require('../services/jobs/classifier.js') as typeof import('../services/jobs/classifier.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { notifyCommandLifecycle } from './utils/commandLifecycle.js'
-import { headlessProfilerCheckpoint } from './utils/headlessProfiler.js'
-import { renderModelName } from './services/model/model.js'
-import { finalContextTokensFromLastResponse, tokenCountWithEstimation } from './utils/tokens.js'
-import { ESCALATED_MAX_TOKENS } from './utils/context.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from './services/analytics/growthbook.js'
-import { executePostSamplingHooks } from './services/hooks/postSamplingHooks.js'
-import { executeStopFailureHooks } from './services/hooks.js'
-import type { QuerySource } from './constants/querySource.js'
-import { createDumpPromptsFetch } from './services/api/dumpPrompts.js'
-import { StreamingToolExecutor } from './services/tool-runtime/streamingToolExecutor.js'
-import { queryCheckpoint } from './utils/queryProfiler.js'
-import { handleStopHooks } from './query/stopHooks.js'
-import { buildQueryConfig } from './query/config.js'
-import { preprocessMessages } from './query/preprocess.js'
-import { runCompaction } from './query/compaction.js'
-import { executeToolsAndBatch } from './query/toolExecution.js'
-import { injectAttachments } from './query/attachments.js'
-import { diagnoseRecovery } from './query/recovery.js'
-import { productionDeps, type QueryDeps } from './query/deps.js'
-import type { Terminal, Continue } from './query/transitions.js'
+import { notifyCommandLifecycle } from '../utils/commandLifecycle.js'
+import { headlessProfilerCheckpoint } from '../utils/headlessProfiler.js'
+import { renderModelName } from '../services/model/model.js'
+import { finalContextTokensFromLastResponse, tokenCountWithEstimation } from '../utils/tokens.js'
+import { ESCALATED_MAX_TOKENS } from '../utils/context.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { executePostSamplingHooks } from '../services/hooks/postSamplingHooks.js'
+import { executeStopFailureHooks } from '../services/hooks.js'
+import type { QuerySource } from '../constants/querySource.js'
+import { createDumpPromptsFetch } from '../services/api/dumpPrompts.js'
+import { StreamingToolExecutor } from '../services/tool-runtime/streamingToolExecutor.js'
+import { queryCheckpoint } from '../utils/queryProfiler.js'
+import { handleStopHooks } from '../query/stopHooks.js'
+import { buildQueryConfig } from '../query/config.js'
+import { preprocessMessages } from '../query/preprocess.js'
+import { runCompaction } from '../query/compaction.js'
+import { executeToolsAndBatch } from '../query/toolExecution.js'
+import { injectAttachments } from '../query/attachments.js'
+import { diagnoseRecovery } from '../query/recovery.js'
+import { productionDeps, type QueryDeps } from '../query/deps.js'
+import type { Terminal, Continue } from '../query/transitions.js'
 import { feature } from 'bun:bundle'
 import {
   getCurrentTurnTokenBudget,
   getTurnOutputTokens,
   incrementBudgetContinuationCount,
 } from 'src/bootstrap/runtime/runtimeContext.js'
-import { createBudgetTracker, checkTokenBudget } from './query/tokenBudget.js'
+import { createBudgetTracker, checkTokenBudget } from '../query/tokenBudget.js'
 
 const log = createDebugLog('query')
 
@@ -803,7 +803,7 @@ async function* queryLoop(
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 释放主线程锁的理由。
       if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
         try {
-          const { cleanupComputerUseAfterTurn } = await import('./services/computer-use/cleanup.js')
+          const { cleanupComputerUseAfterTurn } = await import('../services/computer-use/cleanup.js')
           await cleanupComputerUseAfterTurn(toolUseContext)
         } catch {
           // 失败是静默的 — 这是实验性清理，不是关键路径
@@ -1205,7 +1205,7 @@ async function* queryLoop(
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 的理由。
       if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
         try {
-          const { cleanupComputerUseAfterTurn } = await import('./services/computer-use/cleanup.js')
+          const { cleanupComputerUseAfterTurn } = await import('../services/computer-use/cleanup.js')
           await cleanupComputerUseAfterTurn(toolUseContext)
         } catch {
           // 失败是静默的 — 这是实验性清理，不是关键路径

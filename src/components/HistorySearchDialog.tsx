@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { useRegisterOverlay } from '../context/OverlayContext.js'
-import { getTimestampedHistory, type TimestampedHistoryEntry } from '../history.js'
+import { getTimestampedHistory, type TimestampedHistoryEntry } from '../services/session-storage/history.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'

@@ -30,20 +30,20 @@ import {
   getTotalWebSearchRequests,
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { resetStateForTests } from 'src/bootstrap/runtime/runtimeContext.js'
-import { tSync } from './i18n/index.js'
-import { stringWidth } from './ink/stringWidth.js'
+import { tSync } from '../../i18n/index.js'
+import { stringWidth } from '../../ink/stringWidth.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from './services/analytics/index.js'
-import type { TokenUsage as Usage } from './types/llm.js'
-import type { Message } from './types/message.js'
-import { getCurrentProjectConfig, saveCurrentProjectConfig } from './services/config/config.js'
-import { getContextWindowForModel, getModelMaxOutputTokens } from './utils/context.js'
-import { formatDuration, formatNumber } from './utils/format.js'
-import type { FpsMetrics } from './utils/fpsTracker.js'
-import { SYNTHETIC_MODEL } from './services/messages/constants.js'
-import { calculateCost, getCurrencySymbol, getModelCurrency } from './services/model/modelCost.js'
+} from '../analytics/index.js'
+import type { TokenUsage as Usage } from '../../types/llm.js'
+import type { Message } from '../../types/message.js'
+import { getCurrentProjectConfig, saveCurrentProjectConfig } from '../config/config.js'
+import { getContextWindowForModel, getModelMaxOutputTokens } from '../../utils/context.js'
+import { formatDuration, formatNumber } from '../../utils/format.js'
+import type { FpsMetrics } from '../../utils/fpsTracker.js'
+import { SYNTHETIC_MODEL } from '../messages/constants.js'
+import { calculateCost, getCurrencySymbol, getModelCurrency } from '../model/modelCost.js'
 
 export {
   addToTotalLinesChanged,

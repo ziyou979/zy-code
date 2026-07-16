@@ -3,7 +3,7 @@
 
 import type { AppState } from '../state/AppStateStore.js'
 import type { TaskStateBase } from '../task.js'
-import { getTaskByType } from '../tasks.js'
+import { getTaskByType } from './index.js'
 import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
 import { isLocalShellTask } from './local-shell-task/guards.js'
 

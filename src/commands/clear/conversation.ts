@@ -10,7 +10,7 @@ import {
   getSessionId,
   regenerateSessionId,
 } from 'src/bootstrap/runtime/runtimeContext.js'
-import { resetCostState, saveCurrentSessionCosts } from '../../cost-tracker.js'
+import { resetCostState, saveCurrentSessionCosts } from '../../services/cost/cost-tracker.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
