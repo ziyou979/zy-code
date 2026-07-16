@@ -10,7 +10,7 @@ import {
   type InstallStatus,
   installGlobalPackage,
 } from 'src/utils/autoUpdater.js'
-import { regenerateCompletionCache } from 'src/utils/completionCache.js'
+import { regenerateCompletionCache } from 'src/services/cache/completionCache.js'
 import {
   getGlobalConfig,
   type InstallMethod,

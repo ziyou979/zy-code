@@ -15,7 +15,7 @@ import { Box, Text } from '../../ink/index.js'
 import type { LocalJSXCommandCall } from '../types.js'
 import type { LogOption } from '../../types/logs.js'
 import { agenticSessionSearch } from '../../utils/agenticSessionSearch.js'
-import { checkCrossProjectResume } from '../../utils/crossProjectResume.js'
+import { checkCrossProjectResume } from '../../services/session-storage/crossProjectResume.js'
 import { getWorktreePaths } from '../../utils/getWorktreePaths.js'
 import { logError } from '../../utils/log.js'
 import {

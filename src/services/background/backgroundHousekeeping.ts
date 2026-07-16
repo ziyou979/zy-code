@@ -1,11 +1,11 @@
 import { feature } from 'bun:bundle'
-import { initAutoDream } from '../services/auto-dream/autoDream.js'
-import { initMagicDocs } from '../services/magic-docs/magicDocs.js'
-import { initSkillImprovement } from '../services/hooks/skillImprovement.js'
+import { initAutoDream } from '../auto-dream/autoDream.js'
+import { initMagicDocs } from '../magic-docs/magicDocs.js'
+import { initSkillImprovement } from '../hooks/skillImprovement.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const extractMemoriesModule = feature('EXTRACT_MEMORIES')
-  ? (require('../services/extract-memories/extractMemories.js') as typeof import('../services/extract-memories/extractMemories.js'))
+  ? (require('../extract-memories/extractMemories.js') as typeof import('../extract-memories/extractMemories.js'))
   : null
 const registerProtocolModule = feature('LODESTONE')
   ? (require('src/services/deep-link/registerProtocol.js') as typeof import('src/services/deep-link/registerProtocol.js'))
@@ -20,9 +20,9 @@ import {
   cleanupNpmCacheForAnthropicPackages,
   cleanupOldMessageFilesInBackground,
   cleanupOldVersionsThrottled,
-} from './cleanup.js'
-import { isInternalBuild } from './envUtils.js'
-import { autoUpdateMarketplacesAndPluginsInBackground } from '../services/plugins/pluginAutoupdate.js'
+} from '../../utils/cleanup.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
+import { autoUpdateMarketplacesAndPluginsInBackground } from '../plugins/pluginAutoupdate.js'
 
 // 24 hours in milliseconds
 const RECURRING_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000

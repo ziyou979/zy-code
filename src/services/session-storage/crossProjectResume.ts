@@ -1,9 +1,9 @@
 import { sep } from 'node:path'
 import { quote } from 'src/shell-eval/bash/shellQuote.js'
 import { getOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
-import type { LogOption } from '../types/logs.js'
-import { isInternalBuild } from './envUtils.js'
-import { getSessionIdFromLog } from '../services/sessionStorage.js'
+import type { LogOption } from '../../types/logs.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
+import { getSessionIdFromLog } from '../sessionStorage.js'
 
 export type CrossProjectResumeResult =
   | {

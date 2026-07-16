@@ -397,7 +397,7 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
   // 不需要的簿记 —— 下次交互会话将协调。
   if (!isBareMode()) {
     startDeferredPrefetches()
-    void import('../../utils/backgroundHousekeeping.js').then((m) =>
+    void import('../../services/background/backgroundHousekeeping.js').then((m) =>
       m.startBackgroundHousekeeping(),
     )
   }

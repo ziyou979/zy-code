@@ -4,7 +4,7 @@ import { tSync } from '../i18n/index.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw input for "any key" dismiss and y/n prompt
 import { Box, Text, useInput } from '../ink/index.js'
 import { openBrowser } from '../utils/browser.js'
-import { getDesktopInstallStatus, openCurrentSessionInDesktop } from '../utils/desktopDeepLink.js'
+import { getDesktopInstallStatus, openCurrentSessionInDesktop } from '../services/deep-link/desktopDeepLink.js'
 import { errorMessage } from '../utils/errors.js'
 import { gracefulShutdown } from '../utils/gracefulShutdown.js'
 import { flushSessionStorage } from '../services/sessionStorage.js'

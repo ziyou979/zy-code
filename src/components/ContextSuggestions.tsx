@@ -1,7 +1,7 @@
 import { ARROW_RIGHT } from '../constants/figures.js'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink/index.js'
-import type { ContextSuggestion } from '../utils/contextSuggestions.js'
+import type { ContextSuggestion } from '../services/prompt-suggestion/contextSuggestions.js'
 import { formatTokens } from '../utils/format.js'
 import { StatusIcon } from './design-system/StatusIcon.js'
 
