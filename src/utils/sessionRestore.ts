@@ -15,7 +15,7 @@ import {
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setMainThreadAgentType } from 'src/bootstrap/runtime/runtimeContext.js'
 import { clearSystemPromptSections } from '../constants/systemPromptSections.js'
-import { restoreCostStateForSession } from '../services/cost/cost-tracker.js'
+import { restoreCostStateForSession } from '../services/cost/costTracker.js'
 import type { AppState } from '../state/AppStateStore.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
 import {

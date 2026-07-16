@@ -24,7 +24,7 @@ import {
   getTotalCostByCurrency,
   getTotalInputTokens,
   getTotalOutputTokens,
-} from '../../services/cost/cost-tracker.js'
+} from '../../services/cost/costTracker.js'
 import { tSync } from '../../i18n/index.js'
 import type { ModelName } from '../../services/model/model.js'
 import type { Currency } from '../../types/currency.js'

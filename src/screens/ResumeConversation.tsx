@@ -6,7 +6,7 @@ import { getOriginalCwd, switchSession } from 'src/bootstrap/runtime/runtimeCont
 import type { Command } from '../commands/index.js'
 import { LogSelector } from '../components/LogSelector.js'
 import { Spinner } from '../components/Spinner.js'
-import { restoreCostStateForSession } from '../services/cost/cost-tracker.js'
+import { restoreCostStateForSession } from '../services/cost/costTracker.js'
 import { tSync } from '../i18n/index.js'
 import { setClipboard } from '../ink/termio/osc.js'
 import { Box, Text } from '../ink/index.js'

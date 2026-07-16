@@ -17,7 +17,7 @@ import {
   getRestorableSessionCosts,
   resetCostState,
   saveCurrentSessionCosts,
-} from '../../services/cost/cost-tracker.js'
+} from '../../services/cost/costTracker.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

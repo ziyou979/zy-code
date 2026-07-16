@@ -36,7 +36,7 @@ import { extractQuotaStatusFromError, extractQuotaStatusFromHeaders } from '../.
 import { getLLMAdapter } from '../client.js'
 import { feature } from 'bun:bundle'
 import { setLastMainRequestId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { addToTotalSessionCost } from 'src/services/cost/cost-tracker.js'
+import { addToTotalSessionCost } from 'src/services/cost/costTracker.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { getAgentContext } from 'src/utils/agentContext.js'
 import { logForDebugging } from 'src/utils/debug.js'

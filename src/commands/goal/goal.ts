@@ -4,7 +4,7 @@
  */
 
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getTotalInputTokens } from '../../services/cost/cost-tracker.js'
+import { getTotalInputTokens } from '../../services/cost/costTracker.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { LocalJSXCommandCall } from '../types.js'
 import { checkHasTrustDialogAccepted } from '../../services/config/config.js'

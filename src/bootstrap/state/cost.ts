@@ -77,7 +77,7 @@ export function resetCostState(): void {
 
 /**
  * 设置会话恢复的成本状态值。
- * 由 cost-tracker.ts 中的 restoreCostStateForSession 调用。
+ * 由 costTracker.ts 中的 restoreCostStateForSession 调用。
  */
 export function setCostStateForRestore({
   totalCost,

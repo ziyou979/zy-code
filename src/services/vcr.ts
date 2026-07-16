@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import isPlainObject from 'lodash-es/isPlainObject.js'
 import mapValues from 'lodash-es/mapValues.js'
-import { addToTotalSessionCost } from 'src/services/cost/cost-tracker.js'
+import { addToTotalSessionCost } from 'src/services/cost/costTracker.js'
 import { calculateCost, getModelCurrency } from 'src/services/model/modelCost.js'
 import type { AssistantContentBlock } from '../types/llm.js'
 import type {

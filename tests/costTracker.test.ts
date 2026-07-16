@@ -6,13 +6,13 @@ import {
   getTotalCostByCurrency,
   reconstructCostStateFromMessages,
   resetCostState,
-} from '../src/services/cost/cost-tracker.js'
+} from '../src/services/cost/costTracker.js'
 import type { TokenUsage } from '../src/types/llm.js'
 import { SYNTHETIC_MODEL } from '../src/services/messages/constants.js'
 import { calculateCost, getModelCurrency } from '../src/services/model/modelCost.js'
 import { createTestAssistantMessage } from './_helpers/messageFixtures.js'
 
-describe('cost-tracker resume restore', () => {
+describe('costTracker resume restore', () => {
   beforeEach(() => {
     resetCostState()
   })
