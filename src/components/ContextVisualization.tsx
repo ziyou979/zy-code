@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import type { ContextData } from '../utils/analyzeContext.js'
 import { generateContextSuggestions } from '../utils/contextSuggestions.js'
 import { getDisplayPath } from '../utils/file.js'

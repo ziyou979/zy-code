@@ -4,14 +4,14 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import type { CommandResultDisplay } from '../../commands.js'
+import type { CommandResultDisplay } from '../../commands/index.js'
 import { CROSS, RADIO_OFF, TICK, TRIANGLE_UP_OUTLINE } from '../../constants/figures.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { setClipboard } from '../../ink/termio/osc.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow menu navigation
-import { Box, color, Link, Text, useInput, useTheme } from '../../ink.js'
+import { Box, color, Link, Text, useInput, useTheme } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import {
   AuthenticationCancelledError,

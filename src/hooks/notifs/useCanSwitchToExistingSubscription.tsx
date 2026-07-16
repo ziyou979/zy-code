@@ -1,4 +1,4 @@
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { useStartupNotification } from './useStartupNotification.js'

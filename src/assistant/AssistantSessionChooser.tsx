@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Box, Text, useInput } from '../ink.js'
+import { Box, Text, useInput } from '../ink/index.js'
 
 type AssistantSession = { id: string; name: string }
 

@@ -1,6 +1,6 @@
 import * as React from 'react'
-import type { Command } from '../commands.js'
-import { Box } from '../ink.js'
+import type { Command } from '../commands/index.js'
+import { Box } from '../ink/index.js'
 import type { Screen } from '../screens/REPL.js'
 import type { Tools } from '../tools/Tool.js'
 import type {

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { SQUARE_SMALL_FILLED } from '../constants/figures.js'
-import { Text } from '../ink.js'
+import { Text } from '../ink/index.js'
 import { useAppState } from '../state/AppState.js'
 
 type Props = {

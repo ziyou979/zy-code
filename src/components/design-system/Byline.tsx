@@ -1,5 +1,5 @@
 import React, { Children, isValidElement } from 'react'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 
 type Props = {
   /** The items to join with a middot separator */

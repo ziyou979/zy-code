@@ -1,4 +1,4 @@
-import { Text } from 'src/ink.js'
+import { Text } from 'src/ink/index.js'
 import type { BackgroundTaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import { truncate } from 'src/utils/format.js'

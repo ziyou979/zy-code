@@ -4,7 +4,7 @@ import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErr
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import type { ToolProgressData } from '../../tools/Tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { ProgressMessage } from '../../types/message.js'

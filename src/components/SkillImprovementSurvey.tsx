@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { BLACK_CIRCLE, BULLET_OPERATOR } from '../constants/figures.js'
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import type { SkillUpdate } from '../services/hooks/skillImprovement.js'
 import { normalizeFullWidthDigits } from '../utils/stringUtils.js'
 import { isValidResponseInput } from './FeedbackSurvey/FeedbackSurveyView.js'

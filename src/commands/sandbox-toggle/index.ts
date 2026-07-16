@@ -1,4 +1,4 @@
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 import { CIRCLE, TICK, WARNING } from '../../constants/figures.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 

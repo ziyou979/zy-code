@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { useSyncExternalStore } from 'react'
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import {
   calculateTokenWarningState,

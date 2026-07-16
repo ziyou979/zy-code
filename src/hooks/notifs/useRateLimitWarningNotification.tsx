@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
-import { Text } from 'src/ink.js'
+import { Text } from 'src/ink/index.js'
 import { getRateLimitWarning, getUsingOverageText } from 'src/services/zyAiLimits.js'
 import { useZyAiLimits } from 'src/services/zyAiLimitsHook.js'
 import { hasZyAiBillingAccess } from 'src/utils/billing.js'

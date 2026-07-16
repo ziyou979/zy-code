@@ -12,7 +12,7 @@ import type { BackgroundTaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import { POINTER } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { BackgroundTask as BackgroundTaskComponent } from './BackgroundTask.js'
 
 export type ListItem =

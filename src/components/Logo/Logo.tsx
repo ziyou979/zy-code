@@ -10,7 +10,7 @@ import { resolveThemeSetting } from 'src/utils/systemTheme.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
-import { Box, color, Text } from '../../ink.js'
+import { Box, color, Text } from '../../ink/index.js'
 import {
   getSteps,
   incrementProjectOnboardingSeenCount,

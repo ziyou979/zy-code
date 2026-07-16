@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { tSync } from '../../../../i18n/index.js'
-import { Box, Text } from '../../../../ink.js'
+import { Box, Text } from '../../../../ink/index.js'
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js'
 import type { AgentDefinition } from '../../../../tools/AgentTool/loadAgentsDir.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'

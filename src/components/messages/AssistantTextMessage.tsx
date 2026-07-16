@@ -2,7 +2,7 @@ import { useContext } from 'react'
 import { ERROR_MESSAGE_USER_ABORT } from 'src/services/compact/compact.js'
 import { isRateLimitErrorMessage } from 'src/services/rateLimitMessages.js'
 import { BLACK_CIRCLE } from '../../constants/figures.js'
-import { Box, NoSelect, Text } from '../../ink.js'
+import { Box, NoSelect, Text } from '../../ink/index.js'
 import {
   API_ERROR_MESSAGE_PREFIX,
   API_TIMEOUT_ERROR_MESSAGE,

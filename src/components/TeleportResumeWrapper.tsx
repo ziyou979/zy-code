@@ -5,7 +5,7 @@ import {
 } from 'src/services/analytics/index.js'
 import type { TeleportRemoteResponse } from 'src/utils/conversationRecovery.js'
 import { type TeleportSource, useTeleportResume } from '../hooks/useTeleportResume.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { ResumeTask } from './ResumeTask.js'
 import { Spinner } from './Spinner.js'

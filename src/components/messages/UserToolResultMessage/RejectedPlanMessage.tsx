@@ -1,6 +1,6 @@
 import { Markdown } from 'src/components/Markdown.js'
 import { MessageResponse } from 'src/components/MessageResponse.js'
-import { Box, Text } from '../../../ink.js'
+import { Box, Text } from '../../../ink/index.js'
 
 type Props = {
   plan: string

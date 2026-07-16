@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import React, { useContext, useMemo } from 'react'
 import { getKairosActive, getUserMsgOptIn } from '../../bootstrap/runtime/runtimeContext.js'
-import { Box } from '../../ink.js'
+import { Box } from '../../ink/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { useAppState } from '../../state/AppState.js'
 import type { TextBlock } from '../../types/llm.js'

@@ -1,5 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -36,7 +36,7 @@ import {
   getTurnOutputTokens,
 } from '../bootstrap/runtime/runtimeContext.js'
 import { TeammateSpinnerTree } from './Spinner/TeammateSpinnerTree.js'
-import { useAnimationFrame } from '../ink.js'
+import { useAnimationFrame } from '../ink/index.js'
 import { getGlobalConfig } from '../services/config/config.js'
 import { tSync } from '../i18n/index.js'
 export type { SpinnerMode } from './Spinner/index.js'

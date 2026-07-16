@@ -25,7 +25,7 @@ import { logTenguInit } from '../bootstrap/telemetry.js'
 import { assistantModule, coordinatorModeModule } from '../lazyModules.js'
 import type { StatsStore } from '../../context/stats.js'
 import { launchInvalidSettingsDialog, launchSnapshotUpdateDialog } from '../../cli/dialogLaunchers.js'
-import type { Root } from '../../ink.js'
+import type { Root } from '../../ink/index.js'
 import { exitWithError, getRenderContext, showSetupScreens } from '../../cli/interactiveHelpers.js'
 import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js'
 import { fetchBootstrapData } from '../../services/api/bootstrap.js'
@@ -387,7 +387,7 @@ export async function loadRootResources(
       installAsciicastRecorder()
     }
 
-    const { createRoot } = await import('../../ink.js')
+    const { createRoot } = await import('../../ink/index.js')
     root = await createRoot(ctx.renderOptions)
 
     // 现在记录启动时间，在任何阻塞对话框渲染之前。从

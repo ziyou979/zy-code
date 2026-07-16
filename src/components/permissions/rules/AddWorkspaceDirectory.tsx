@@ -7,7 +7,7 @@ import {
 } from '../../../commands/add-dir/validation.js'
 import TextInput from '../../TextInput.js'
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
-import { Box, Text } from '../../../ink.js'
+import { Box, Text } from '../../../ink/index.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'
 import { getDirectoryCompletions } from '../../../services/suggestions/directoryCompletion.js'
 import type { ToolPermissionContext } from '../../../tools/Tool.js'

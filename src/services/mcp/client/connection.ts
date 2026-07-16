@@ -8,7 +8,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js'
 import zipObject from 'lodash-es/zipObject.js'
 import pMap from 'p-map'
-import type { Command } from '../../../commands.js'
+import type { Command } from '../../../commands/index.js'
 import { type Tool, type ToolCallProgress, toolMatchesName } from '../../../tools/Tool.js'
 import { ListMcpResourcesTool } from '../../../tools/ListMcpResourcesTool/ListMcpResourcesTool.js'
 import { type MCPProgress, MCPTool } from '../../../tools/MCPTool/MCPTool.js'

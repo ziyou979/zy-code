@@ -1,6 +1,6 @@
 import { BLACK_CIRCLE } from '../constants/figures.js'
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import type { Screen } from '../screens/REPL.js'
 import type { UserMessage } from '../types/message.js'
 import { getUserMessageText } from '../services/messages/./predicates.js'

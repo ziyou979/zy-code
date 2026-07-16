@@ -19,7 +19,7 @@ import {
 import { setAdditionalDirectoriesForAgentsMd } from 'src/bootstrap/runtime/runtimeContext.js'
 import { maybeActivateProactive } from '../activate/proactive.js'
 import { getInputPrompt } from '../bootstrap/inputPrompt.js'
-import { getCommands } from '../../commands.js'
+import { getCommands } from '../../commands/index.js'
 import { getSystemContext, getUserContext } from '../../services/context/context.js'
 import { initBuiltinPlugins } from '../../services/plugins/builtinInitialization.js'
 import {

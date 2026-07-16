@@ -1,7 +1,7 @@
 import { resolve } from 'node:path'
 import type { StructuredPatchHunk } from 'diff'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { getCwd } from '../../utils/cwd.js'
 import { readFileSafe } from '../../utils/file.js'
 import { Divider } from '../design-system/Divider.js'

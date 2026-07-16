@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import type { LocalCommandResult } from '../../commands.js'
+import type { LocalCommandResult } from '../../commands/index.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { loadInstalledPlugins } from '../../services/plugins/installedPluginsManager.js'
 import { OFFICIAL_MARKETPLACE_NAME } from '../../services/plugins/officialMarketplace.js'

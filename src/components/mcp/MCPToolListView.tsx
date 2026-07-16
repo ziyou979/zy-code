@@ -1,5 +1,5 @@
 import { tSync } from 'src/i18n/index.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import { extractMcpToolDisplayName, getMcpDisplayName } from '../../services/mcp/mcpStringUtils.js'
 import { filterToolsByServer } from '../../services/mcp/utils.js'
 import { useAppState } from '../../state/AppState.js'

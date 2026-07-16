@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { useMemo } from 'react'
-import { Box } from 'src/ink.js'
+import { Box } from 'src/ink/index.js'
 import { useAppState } from 'src/state/AppState.js'
 import { STATUS_TAG, SUMMARY_TAG, TASK_NOTIFICATION_TAG } from '../../constants/xml.js'
 import { QueuedMessageProvider } from '../../context/QueuedMessageContext.js'

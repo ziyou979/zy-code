@@ -3,7 +3,7 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { FeedbackSurveyView, isValidResponseInput } from './FeedbackSurveyView.js'
 import type { TranscriptShareResponse } from './TranscriptSharePrompt.js'
 import { TranscriptSharePrompt } from './TranscriptSharePrompt.js'

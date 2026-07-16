@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import type React from 'react'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
 import { tSync } from '../i18n/index.js'
-import { Text } from '../ink.js'
+import { Text } from '../ink/index.js'
 import type { SetToolPermissionContextFn } from '../services/swarm/leaderPermissionBridge.js'
 import type { Tool as ToolType, ToolUseContext } from '../tools/Tool.js'
 import {

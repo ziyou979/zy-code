@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useTerminalFocus } from '../../ink.js'
+import { useTerminalFocus } from '../../ink/index.js'
 import type { PromptInputMode, VimMode } from '../../types/textInputTypes.js'
 import type { PastedContent } from '../../services/config/config.js'
 import { consumeEarlyInput } from '../../utils/earlyInput.js'

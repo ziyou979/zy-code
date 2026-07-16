@@ -6,7 +6,7 @@
 
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
 import { Byline } from '../../components/design-system/Byline.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 import type { PluginMarketplaceEntry } from '../../services/plugins/schemas.js'
 

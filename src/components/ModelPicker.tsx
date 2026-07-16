@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKeybindings.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import {
   getDefaultMainLoopModel,

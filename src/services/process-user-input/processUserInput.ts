@@ -9,7 +9,7 @@ import {
   getCommandName,
   isBridgeSafeCommand,
   type LocalJSXCommandContext,
-} from '../../commands.js'
+} from '../../commands/index.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import type { SetToolJSXFn, ToolUseContext } from '../../tools/Tool.js'

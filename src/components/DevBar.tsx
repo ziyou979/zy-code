@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { getSlowOperations } from '../bootstrap/runtime/runtimeContext.js'
-import { Text, useInterval } from '../ink.js'
+import { Text, useInterval } from '../ink/index.js'
 import { isDevEnv, isInternalBuild } from '../utils/envUtils.js'
 
 // Show DevBar for dev builds or all ants

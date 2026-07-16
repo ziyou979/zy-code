@@ -1,5 +1,5 @@
 import React, { createContext, type RefObject, useContext, useLayoutEffect } from 'react'
-import type { Key } from '../ink.js'
+import type { Key } from '../ink/index.js'
 import {
   type ChordResolveResult,
   getBindingDisplayText,

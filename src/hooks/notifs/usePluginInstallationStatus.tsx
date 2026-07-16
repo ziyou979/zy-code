@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../../context/notifications.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import { useAppState } from '../../state/AppState.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { plural } from '../../utils/stringUtils.js'

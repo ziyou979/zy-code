@@ -1,7 +1,7 @@
-import type { CommandResultDisplay } from '../../commands.js'
+import type { CommandResultDisplay } from '../../commands/index.js'
 import { Pane } from '../../components/design-system/Pane.js'
 import { ThemePicker } from '../../components/ThemePicker.js'
-import { useTheme } from '../../ink.js'
+import { useTheme } from '../../ink/index.js'
 import type { LocalJSXCommandCall } from '../types.js'
 
 type Props = {

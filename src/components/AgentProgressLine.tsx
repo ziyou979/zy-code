@@ -1,5 +1,5 @@
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { formatNumber } from '../utils/format.js'
 import type { Theme } from '../utils/theme.js'
 

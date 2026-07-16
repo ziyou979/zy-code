@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { dirname } from 'node:path'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { getProjectRoot } from 'src/bootstrap/runtime/runtimeContext.js'
-import { builtInCommandNames, findCommand, getCommands, type PromptCommand } from 'src/commands.js'
+import { builtInCommandNames, findCommand, getCommands, type PromptCommand } from 'src/commands/index.js'
 import { buildPluginCommandTelemetryFields } from 'src/services/telemetry/pluginTelemetry.js'
 import type {
   Tool,

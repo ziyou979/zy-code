@@ -1,5 +1,5 @@
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { getAgentName, getTeammateColor, getTeamName } from '../../utils/teammate.js'
 import { Spinner } from '../Spinner.js'
 import { WorkerBadge } from './WorkerBadge.js'

@@ -1,6 +1,6 @@
 import { BLACK_CIRCLE } from '../constants/figures.js'
 import { useBlink } from '../hooks/useBlink.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 
 type Props = {
   isError: boolean

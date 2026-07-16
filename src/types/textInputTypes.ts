@@ -1,6 +1,6 @@
 import type { UUID } from 'node:crypto'
 import type React from 'react'
-import type { Key } from '../ink.js'
+import type { Key } from '../ink/index.js'
 import type { PermissionResult } from './index.js'
 import type { ImageDimensions, PastedContent } from './inputContent.js'
 import type { TextHighlight } from '../utils/textHighlighting.js'

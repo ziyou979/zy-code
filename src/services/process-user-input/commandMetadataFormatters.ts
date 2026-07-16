@@ -1,5 +1,5 @@
 import { COMMAND_MESSAGE_TAG, COMMAND_NAME_TAG } from '../../constants/xml.js'
-import type { CommandBase, PromptCommand } from 'src/commands.js'
+import type { CommandBase, PromptCommand } from 'src/commands/index.js'
 
 /**
  * Determines if a string looks like a valid command name.

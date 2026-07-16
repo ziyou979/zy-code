@@ -1,4 +1,4 @@
-import { Text } from '../../../ink.js'
+import { Text } from '../../../ink/index.js'
 import { MessageResponse } from '../../MessageResponse.js'
 export function RejectedToolUseMessage() {
   return (

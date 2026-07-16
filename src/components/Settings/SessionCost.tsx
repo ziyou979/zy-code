@@ -10,7 +10,7 @@ import {
   hasUnknownModelCost,
 } from '../../services/cost/cost-tracker.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import type { Currency } from '../../types/currency.js'
 import { CURRENCY_SYMBOLS, getCurrencySymbol } from '../../types/currency.js'
 import { formatDuration, formatNumber } from '../../utils/format.js'

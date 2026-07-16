@@ -7,7 +7,7 @@ import {
   TRIANGLE_UP_OUTLINE,
   WARNING,
 } from '../../constants/figures.js'
-import { Box, color, Text, useTheme } from '../../ink.js'
+import { Box, color, Text, useTheme } from '../../ink/index.js'
 import { plural } from '../../utils/stringUtils.js'
 // @ts-expect-error
 import type { UnifiedInstalledItem } from './unifiedTypes.js'

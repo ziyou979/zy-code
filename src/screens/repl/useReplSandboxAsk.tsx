@@ -21,7 +21,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { SANDBOX_NETWORK_ACCESS_TOOL_NAME } from '../../cli/structuredIO.js'
 import type { Notification } from '../../context/notifications.js'
 import { registerSandboxPermissionCallback } from '../../hooks/useSwarmPermissionPoller.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import {
   type NetworkHostPattern,
   type SandboxAskCallback,

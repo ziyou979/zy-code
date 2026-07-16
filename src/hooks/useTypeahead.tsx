@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
-import { Text } from 'src/ink.js'
+import { Text } from 'src/ink/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { useDebounceCallback } from 'usehooks-ts'
-import { type Command, getCommandName } from '../commands.js'
+import { type Command, getCommandName } from '../commands/index.js'
 import { getModeFromInput, getValueFromInput } from '../components/PromptInput/inputModes.js'
 import type {
   SuggestionItem,
@@ -12,7 +12,7 @@ import type {
 import { useIsModalOverlayActive, useRegisterOverlay } from '../context/OverlayContext.js'
 import { KeyboardEvent } from '../ink/events/keyboard-event.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- backward-compat bridge until consumers wire handleKeyDown to <Box onKeyDown>
-import { useInput } from '../ink.js'
+import { useInput } from '../ink/index.js'
 import {
   useOptionalKeybindingContext,
   useRegisterKeybindingContext,

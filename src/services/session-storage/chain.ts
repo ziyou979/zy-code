@@ -3,7 +3,7 @@
 
 import type { UUID } from 'node:crypto'
 import { logEvent } from 'src/services/analytics/index.js'
-import { builtInCommandNames } from '../../commands.js'
+import { builtInCommandNames } from '../../commands/index.js'
 import { COMMAND_NAME_TAG } from '../../constants/xml.js'
 import type { TokenUsage } from '../../types/llm.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'

@@ -8,7 +8,7 @@ import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErr
 import { FileEditToolUpdatedMessage } from '../../components/FileEditToolUpdatedMessage.js'
 import { FilePathLink } from '../../components/FilePathLink.js'
 import { tSync } from '../../i18n/index.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import type { Tools } from '../../tools/Tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { Message, ProgressMessage } from '../../types/message.js'

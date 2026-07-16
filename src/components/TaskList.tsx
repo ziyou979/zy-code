@@ -9,7 +9,7 @@ import {
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { useAppState } from '../state/AppState.js'
 import { isInProcessTeammateTask } from '../tasks/in-process-teammate-task/types.js'
 import {

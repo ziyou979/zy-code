@@ -8,7 +8,7 @@ const coordinatorModule = feature('COORDINATOR_MODE')
   ? (require('../../coordinator/coordinatorMode.js') as typeof import('../../coordinator/coordinatorMode.js'))
   : undefined
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { Box, Text, Link } from '../../ink.js'
+import { Box, Text, Link } from '../../ink/index.js'
 import * as React from 'react'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { VimMode, PromptInputMode } from '../../types/textInputTypes.js'

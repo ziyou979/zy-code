@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import { Ansi, Text, useTheme } from '../../ink.js'
+import { Ansi, Text, useTheme } from '../../ink/index.js'
 import { createHyperlink } from '../../utils/hyperlink.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { renderTruncatedContent } from '../../terminal-ui/terminal.js'

@@ -1,6 +1,6 @@
 import { tSync } from 'src/i18n/index.js'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
-import { Box, Text, useTheme } from '../../ink.js'
+import { Box, Text, useTheme } from '../../ink/index.js'
 import { sanitizeToolNameForAnalytics } from '../../services/analytics/metadata.js'
 import { env } from '../../utils/env.js'
 import { shouldShowAlwaysAllowOptions } from '../../services/permissions/permissionsLoader.js'

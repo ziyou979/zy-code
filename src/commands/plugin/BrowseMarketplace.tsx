@@ -14,7 +14,7 @@ import {
   TICK,
   WARNING,
 } from '../../constants/figures.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { LoadedPlugin } from '../../services/plugins/types.js'
 import { count } from '../../utils/array.js'

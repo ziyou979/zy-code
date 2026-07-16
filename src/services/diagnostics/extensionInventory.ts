@@ -1,4 +1,4 @@
-import { getCommands } from '../../commands.js'
+import { getCommands } from '../../commands/index.js'
 import { toolRegistry } from '../../tools/registry.js'
 import { getAllMcpConfigs } from '../mcp/config.js'
 import { loadAllPluginsCacheOnly } from '../plugins/pluginLoader.js'

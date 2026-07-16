@@ -14,7 +14,7 @@ import {
   getSessionId,
   getSessionProjectDir,
 } from '../../bootstrap/runtime/runtimeContext.js'
-import { builtInCommandNames } from '../../commands.js'
+import { builtInCommandNames } from '../../commands/index.js'
 import { COMMAND_NAME_TAG, TICK_TAG } from '../../constants/xml.js'
 import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
 import { type AgentId, asAgentId } from '../../types/ids.js'

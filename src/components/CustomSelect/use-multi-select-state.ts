@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import { useRegisterOverlay } from '../../context/OverlayContext.js'
 import type { InputEvent } from '../../ink/events/input-event.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw space/arrow multiselect input
-import { useInput } from '../../ink.js'
+import { useInput } from '../../ink/index.js'
 import { normalizeFullWidthDigits, normalizeFullWidthSpace } from '../../utils/stringUtils.js'
 import type { OptionWithDescription } from './select.js'
 import { useSelectNavigation } from './use-select-navigation.js'

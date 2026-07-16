@@ -3,7 +3,7 @@ import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErr
 import { FallbackToolUseRejectedMessage } from '../../components/FallbackToolUseRejectedMessage.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 import { getTaskOutput } from '../../services/task-runtime/diskOutput.js'
 import { updateTaskState } from '../../services/task-runtime/framework.js'

@@ -7,7 +7,7 @@ import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeyb
 import { tSync, warmI18n } from '../i18n/index.js'
 import { setLanguage } from '../i18n/languageStore.js'
 import type { UiLanguage } from '../i18n/types.js'
-import { Box, Link, Newline, Text, useTheme } from '../ink.js'
+import { Box, Link, Newline, Text, useTheme } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
 import { normalizeApiKeyForConfig } from '../utils/authPortable.js'

@@ -1,5 +1,5 @@
 import { POINTER } from '../../constants/figures.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useAppState } from '../../state/AppState.js'
 import { getRunningTeammatesSorted } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import { formatNumber } from '../../utils/format.js'

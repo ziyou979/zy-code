@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import TextInput from '../../components/TextInput.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
-import { Box, color, Text, useTheme } from '../../ink.js'
+import { Box, color, Text, useTheme } from '../../ink/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import { tSync } from '../../i18n/index.js'
 

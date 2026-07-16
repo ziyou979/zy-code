@@ -8,7 +8,7 @@ import { cwd } from 'node:process'
 import pMap from 'p-map'
 import { MCPServerDesktopImportDialog } from '../../components/MCPServerDesktopImportDialog.js'
 import { CROSS, TICK } from '../../constants/figures.js'
-import { render } from '../../ink.js'
+import { render } from '../../ink/index.js'
 import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

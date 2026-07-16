@@ -1,4 +1,4 @@
-import { Link, Text } from '../ink.js'
+import { Link, Text } from '../ink/index.js'
 import type { PrReviewState } from '../utils/ghPrStatus.js'
 
 type Props = {

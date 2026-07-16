@@ -15,7 +15,7 @@
 
 import type React from 'react'
 import { useCallback } from 'react'
-import { REMOTE_SAFE_COMMANDS } from '../../commands.js'
+import { REMOTE_SAFE_COMMANDS } from '../../commands/index.js'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
 import type { SpinnerMode } from '../../types/spinner.js'
 import { useDirectConnect } from '../../hooks/useDirectConnect.js'

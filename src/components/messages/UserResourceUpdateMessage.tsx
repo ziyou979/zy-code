@@ -1,6 +1,6 @@
 import type React from 'react'
 import { REFRESH_ARROW } from '../../constants/figures.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import type { TextBlock } from '../../types/llm.js'
 
 type Props = {

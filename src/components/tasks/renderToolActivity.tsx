@@ -1,5 +1,5 @@
 import React from 'react'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import type { Tools } from '../../tools/Tool.js'
 import { findToolByName } from '../../tools/Tool.js'
 import type { ToolActivity } from '../../tasks/local-agent-task/LocalAgentTask.js'

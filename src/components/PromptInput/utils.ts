@@ -3,7 +3,7 @@ import {
   isShiftEnterKeyBindingInstalled,
 } from '../../commands/terminal-setup/TerminalSetup.js'
 import { tSync } from '../../i18n/index.js'
-import type { Key } from '../../ink.js'
+import type { Key } from '../../ink/index.js'
 import { getGlobalConfig } from '../../services/config/config.js'
 import { env } from '../../utils/env.js'
 /**

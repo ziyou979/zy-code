@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { BULLET_OPERATOR } from '../../../constants/figures.js'
 import { tSync } from '../../../i18n/index.js'
-import { Text } from '../../../ink.js'
+import { Text } from '../../../ink/index.js'
 import { filterToolProgressMessages, type Tool, type Tools } from '../../../tools/Tool.js'
 import type { ToolResultBlock } from '../../../types/llm.js'
 import type { ProgressMessage } from '../../../types/message.js'

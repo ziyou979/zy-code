@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box } from '../../ink.js'
+import { Box } from '../../ink/index.js'
 import { Select } from '../CustomSelect/select.js'
 export type TreeNode<T> = {
   id: string | number

@@ -8,7 +8,7 @@ import {
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js'
 import { getDefaultAppState } from 'src/state/AppStateStore.js'
-import type { Command } from '../commands.js'
+import type { Command } from '../commands/index.js'
 import { getMainLoopModel } from '../services/model/model.js'
 import { reviewCommand } from '../skills/bundled/review.js'
 import { findToolByName, getEmptyToolPermissionContext, type ToolUseContext } from '../tools/Tool.js'

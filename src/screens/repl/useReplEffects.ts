@@ -12,7 +12,7 @@ import { getLastInteractionTime } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getTotalInputTokens } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { Notification } from '../../context/notifications.js'
 import type { TerminalNotification } from '../../ink/useTerminalNotification.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

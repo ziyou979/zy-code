@@ -16,8 +16,8 @@ import {
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { coordinatorModeModule, proactiveModule } from '../../cli/lazyModules.js'
-import type { Command, CommandResultDisplay } from '../../commands.js'
-import { getCommandName, isCommandEnabled } from '../../commands.js'
+import type { Command, CommandResultDisplay } from '../../commands/index.js'
+import { getCommandName, isCommandEnabled } from '../../commands/index.js'
 import {
   messagesAfterAreOnlySynthetic,
   selectableUserMessagesFilter,

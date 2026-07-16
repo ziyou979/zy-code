@@ -17,7 +17,7 @@ import {
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setTeleportedSessionInfo } from 'src/bootstrap/runtime/runtimeContext.js'
-import { filterCommandsForRemoteMode } from '../../commands.js'
+import { filterCommandsForRemoteMode } from '../../commands/index.js'
 import { getRemoteSessionUrl } from '../../constants/product.js'
 import type { StatsStore } from '../../context/stats.js'
 import {
@@ -25,7 +25,7 @@ import {
   launchTeleportRepoMismatchDialog,
   launchTeleportResumeWrapper,
 } from '../../cli/dialogLaunchers.js'
-import type { Root } from '../../ink.js'
+import type { Root } from '../../ink/index.js'
 import { exitWithError } from '../../cli/interactiveHelpers.js'
 import { createRemoteSessionConfig } from '../../remote/remoteSessionManager.js'
 import type { DownloadResult } from '../../services/api/filesApi.js'

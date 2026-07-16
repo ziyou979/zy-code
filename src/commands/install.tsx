@@ -1,10 +1,10 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import React, { useEffect, useState } from 'react'
-import type { CommandResultDisplay } from 'src/commands.js'
+import type { CommandResultDisplay } from 'src/commands/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { StatusIcon } from '../components/design-system/StatusIcon.js'
-import { Box, render, Text } from '../ink.js'
+import { Box, render, Text } from '../ink/index.js'
 import {
   checkInstall,
   cleanupNpmInstallations,

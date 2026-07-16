@@ -1,5 +1,5 @@
 import { tSync } from 'src/i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import {
   hookSourceDescriptionDisplayString,
   type IndividualHookConfig,

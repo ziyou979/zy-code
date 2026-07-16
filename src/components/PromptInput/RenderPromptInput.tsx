@@ -1,5 +1,5 @@
 import { stringWidth } from '../../ink/stringWidth.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import {
   AGENT_COLOR_TO_THEME_COLOR,
   AGENT_COLORS,

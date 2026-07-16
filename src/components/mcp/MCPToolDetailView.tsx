@@ -1,6 +1,6 @@
 import React from 'react'
 import { tSync } from 'src/i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { extractMcpToolDisplayName, getMcpDisplayName } from '../../services/mcp/mcpStringUtils.js'
 import type { Tool } from '../../tools/Tool.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'

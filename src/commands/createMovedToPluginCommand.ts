@@ -1,4 +1,4 @@
-import type { Command } from '../commands.js'
+import type { Command } from '../commands/index.js'
 import type { ToolUseContext } from '../tools/Tool.js'
 import type { ContentBlock } from '../types/llm.js'
 import { isInternalBuild } from '../utils/envUtils.js'

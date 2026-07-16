@@ -17,12 +17,12 @@ import {
 import { setSessionTrustAccepted } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setStatsStore } from 'src/bootstrap/runtime/runtimeContext.js'
 import { startDeferredPrefetches } from '../cli/bootstrap/prefetch.js'
-import type { Command } from '../commands.js'
+import type { Command } from '../commands/index.js'
 import { createStatsStore, type StatsStore } from '../context/stats.js'
 import { getSystemContext } from '../services/context/context.js'
 import { initializeTelemetryAfterTrust } from '../entrypoints/init.js'
 import { isSynchronizedOutputSupported } from '../ink/terminal.js'
-import type { RenderOptions, Root, TextProps } from '../ink.js'
+import type { RenderOptions, Root, TextProps } from '../ink/index.js'
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js'
 import {
   checkGate_CACHED_OR_BLOCKING,
@@ -101,7 +101,7 @@ export async function exitWithMessage(
     beforeExit?: () => Promise<void>
   },
 ): Promise<never> {
-  const { Text } = await import('../ink.js')
+  const { Text } = await import('../ink/index.js')
   const color = options?.color
   const exitCode = options?.exitCode ?? 1
   root.render(color ? <Text color={color}>{message}</Text> : <Text>{message}</Text>)

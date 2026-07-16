@@ -3,7 +3,7 @@ import { Dialog } from '../../components/design-system/Dialog.js'
 import { POINTER_SMALL } from '../../constants/figures.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw text input for config dialog
-import { Box, Text, useInput } from '../../ink.js'
+import { Box, Text, useInput } from '../../ink/index.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import type {

@@ -1,4 +1,4 @@
-import { clearCommandMemoizationCaches, getSkillToolCommands } from '../../commands.js'
+import { clearCommandMemoizationCaches, getSkillToolCommands } from '../../commands/index.js'
 import { tSync } from '../../i18n/index.js'
 import { clearPluginSkillsCache } from '../../services/plugins/loadPluginCommands.js'
 import { clearDynamicSkills } from '../../skills/loadSkillsDir.js'

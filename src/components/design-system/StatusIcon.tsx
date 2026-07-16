@@ -1,5 +1,5 @@
 import { CIRCLE, CROSS, ELLIPSIS, INFO, TICK, WARNING } from '../../constants/figures.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 
 type Status = 'success' | 'error' | 'warning' | 'info' | 'pending' | 'loading'
 type Props = {

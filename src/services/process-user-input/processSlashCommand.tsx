@@ -10,7 +10,7 @@ import {
   getCommandName,
   hasCommand,
   type PromptCommand,
-} from 'src/commands.js'
+} from 'src/commands/index.js'
 import { getNoContentMessage } from 'src/constants/messages.js'
 import type { SetToolJSXFn, ToolUseContext } from 'src/tools/Tool.js'
 import type {

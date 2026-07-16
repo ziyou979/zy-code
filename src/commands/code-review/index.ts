@@ -4,7 +4,7 @@
  * 支持 effort 等级（low/medium/high）、--fix 直接应用修改、--comment 行级评论。
  * 与 /review（快速单 pass）不同，/code-review 支持多级审查深度。
  */
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 
 const codeReview: Command = {
   type: 'local-jsx',

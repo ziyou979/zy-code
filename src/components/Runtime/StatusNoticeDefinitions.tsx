@@ -1,6 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { WARNING, ARROW_UP } from '../../constants/figures.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import * as React from 'react'
 import {
   getLargeMemoryFiles,

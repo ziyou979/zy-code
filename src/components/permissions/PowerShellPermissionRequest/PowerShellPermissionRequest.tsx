@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { tSync } from '../../../i18n/index.js'
-import { Box, Text, useTheme } from '../../../ink.js'
+import { Box, Text, useTheme } from '../../../ink/index.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js'
 import {

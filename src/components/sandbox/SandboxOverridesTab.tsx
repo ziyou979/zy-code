@@ -1,4 +1,4 @@
-import { Box, color, Link, Text, useTheme } from '../../ink.js'
+import { Box, color, Link, Text, useTheme } from '../../ink/index.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import type { CommandResultDisplay } from '../../commands/types.js'
 import { Select } from '../CustomSelect/select.js'

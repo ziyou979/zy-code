@@ -1,4 +1,4 @@
-import { Text, useTheme } from '../../ink.js'
+import { Text, useTheme } from '../../ink/index.js'
 import { getTheme, type Theme } from '../../utils/theme.js'
 import { interpolateColor, parseRGB, toRGBColor } from './utils.js'
 

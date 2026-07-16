@@ -1,4 +1,4 @@
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 import { CLOCKWISE_ARROWS, CROSS, TICK } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import type { LocalCommandCall, LocalCommandModule } from '../types.js'

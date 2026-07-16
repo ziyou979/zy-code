@@ -1,4 +1,4 @@
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 import { isPolicyAllowed } from '../../services/policy-limits/index.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'

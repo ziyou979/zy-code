@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { Box, Text } from 'src/ink.js'
+import { Box, Text } from 'src/ink/index.js'
 import { getPlatform } from 'src/services/shell/platform.js'
 import { tSync } from '../../i18n/index.js'
 import { isKeybindingCustomizationEnabled } from '../../keybindings/loadUserBindings.js'

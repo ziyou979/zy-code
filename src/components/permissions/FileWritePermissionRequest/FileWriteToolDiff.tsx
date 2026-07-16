@@ -1,5 +1,5 @@
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
-import { Box, NoSelect, Text } from '../../../ink.js'
+import { Box, NoSelect, Text } from '../../../ink/index.js'
 import { intersperse } from '../../../utils/array.js'
 import { getPatchForDisplay } from '../../../utils/diff.js'
 import { HighlightedCode } from '../../HighlightedCode.js'

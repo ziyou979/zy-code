@@ -1,4 +1,4 @@
-import { Text } from '../ink.js'
+import { Text } from '../ink/index.js'
 import type { ValidationError } from '../services/settings/validation.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'

@@ -1,5 +1,5 @@
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { PromptInputHelpMenu } from '../PromptInput/PromptInputHelpMenu.js'
 export function General() {
   return (

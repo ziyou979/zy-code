@@ -1,4 +1,4 @@
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { Spinner } from '../Spinner.js'
 
 type LoadingStateProps = {

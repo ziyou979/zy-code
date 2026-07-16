@@ -1,4 +1,4 @@
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 import { isVoiceGrowthBookEnabled, isVoiceModeEnabled } from '../../voice/voiceModeEnabled.js'
 
 const voice = {

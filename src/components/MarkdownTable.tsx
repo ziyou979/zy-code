@@ -4,7 +4,7 @@ import stripAnsi from 'strip-ansi'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { wrapAnsi } from '../ink/wrapAnsi.js'
-import { Ansi, useTheme } from '../ink.js'
+import { Ansi, useTheme } from '../ink/index.js'
 import type { CliHighlight } from '../utils/cliHighlight.js'
 import { formatToken, padAligned } from '../utils/markdown.js'
 

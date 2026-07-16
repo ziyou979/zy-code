@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { clearTrustedDeviceTokenCache } from '../../bridge/trustedDevice.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js'
 import { clearOAuthCredentialsCache } from '../../services/oauth/oauthStorage.js'

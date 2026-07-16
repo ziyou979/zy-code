@@ -1,6 +1,6 @@
 import React from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
-import { Box, Link, Newline, Text } from '../ink.js'
+import { Box, Link, Newline, Text } from '../ink/index.js'
 import { gracefulShutdownSync } from '../utils/gracefulShutdown.js'
 import { updateSettingsForSource } from '../services/settings/settings.js'
 import { Select } from './CustomSelect/index.js'

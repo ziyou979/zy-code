@@ -1,6 +1,6 @@
 import React from 'react'
 import { tSync } from 'src/i18n/index.js'
-import { Box, Link, Text } from '../../ink.js'
+import { Box, Link, Text } from '../../ink/index.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Spinner } from '../Spinner.js'

@@ -1,5 +1,5 @@
 import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 
 interface ErrorStepProps {

@@ -1,5 +1,5 @@
 import { tSync } from 'src/i18n/index.js'
-import { Box, Text, useTheme } from '../../../ink.js'
+import { Box, Text, useTheme } from '../../../ink/index.js'
 import { WebFetchTool } from '../../../tools/WebFetchTool/WebFetchTool.js'
 import { shouldShowAlwaysAllowOptions } from '../../../services/permissions/permissionsLoader.js'
 import { Select } from '../../CustomSelect/select.js'

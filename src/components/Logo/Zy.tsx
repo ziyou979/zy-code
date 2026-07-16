@@ -1,4 +1,4 @@
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { env } from '../../utils/env.js'
 
 export type ZyPose = 'default' | 'soaring' | 'tilt-left' | 'tilt-right'

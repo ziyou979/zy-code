@@ -18,7 +18,7 @@ import {
 import { generateSessionName } from '../../../commands/rename/generateSessionName.js'
 import { TICK, WARNING } from '../../../constants/figures.js'
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
-import { Box, Text } from '../../../ink.js'
+import { Box, Text } from '../../../ink/index.js'
 import { getMainLoopModel } from '../../../services/model/model.js'
 import type { AppState } from '../../../state/AppStateStore.js'
 import { AGENT_TOOL_NAME } from '../../../tools/AgentTool/constants.js'

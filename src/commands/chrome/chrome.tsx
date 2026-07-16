@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,

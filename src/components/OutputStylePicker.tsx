@@ -5,7 +5,7 @@ import {
   OUTPUT_STYLE_CONFIG,
   type OutputStyleConfig,
 } from '../constants/outputStyles.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import type { OutputStyle } from '../services/config/config.js'
 import { getCwd } from '../utils/cwd.js'
 import type { OptionWithDescription } from './CustomSelect/select.js'

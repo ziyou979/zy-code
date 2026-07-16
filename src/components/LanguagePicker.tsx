@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { ELLIPSIS, POINTER } from '../constants/figures.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import TextInput from './TextInput.js'
 

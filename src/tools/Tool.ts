@@ -1,7 +1,7 @@
 import type { UUID } from 'node:crypto'
 import type { ElicitRequestURLParams, ElicitResult } from '@modelcontextprotocol/sdk/types.js'
 import type { z } from 'zod/v4'
-import type { Command } from '../commands.js'
+import type { Command } from '../commands/index.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import type { ToolCallBlock, ToolResultBlock } from '../types/llm.js'
 import type { ThinkingConfig } from '../utils/thinking.js'

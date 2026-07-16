@@ -1,7 +1,7 @@
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../ink/stringWidth.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { renderModelSetting } from '../../services/model/model.js'
 import { useAppState } from '../../state/AppState.js'
 import { truncate } from '../../utils/format.js'

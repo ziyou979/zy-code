@@ -1,4 +1,4 @@
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 import { tSync } from '../../i18n/index.js'
 
 const command = {

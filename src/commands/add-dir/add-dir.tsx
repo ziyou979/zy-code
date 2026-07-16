@@ -4,11 +4,11 @@ import {
   getAdditionalDirectoriesForAgentsMd,
   setAdditionalDirectoriesForAgentsMd,
 } from 'src/bootstrap/runtime/runtimeContext.js'
-import type { LocalJSXCommandContext } from '../../commands.js'
+import type { LocalJSXCommandContext } from '../../commands/index.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { AddWorkspaceDirectory } from '../../components/permissions/rules/AddWorkspaceDirectory.js'
 import { POINTER } from '../../constants/figures.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import {

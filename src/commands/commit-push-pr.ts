@@ -1,4 +1,4 @@
-import type { Command } from '../commands.js'
+import type { Command } from '../commands/index.js'
 import { getAttributionTexts, getEnhancedPRAttribution } from '../utils/attribution.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { getDefaultBranch } from '../utils/git.js'

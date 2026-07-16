@@ -14,7 +14,7 @@ import { ListItem } from '../../components/design-system/ListItem.js'
 import { QRCodeDisplay } from '../../components/QRCodeDisplay.js'
 import { shouldShowRemoteCallout } from '../../components/RemoteCallout.js'
 import { useRegisterOverlay } from '../../context/OverlayContext.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import {

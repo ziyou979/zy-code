@@ -1,7 +1,7 @@
 import { useContext } from 'react'
 import { POINTER } from '../../constants/figures.js'
 import { useQueuedMessage } from '../../context/QueuedMessageContext.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { formatBriefTimestamp } from '../../utils/dateUtils.js'
 import {
   findThinkingTriggerPositions,

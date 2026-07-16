@@ -1,7 +1,7 @@
 import * as platformPath from 'node:path'
 import chokidar, { type FSWatcher } from 'chokidar'
 import { getAdditionalDirectoriesForAgentsMd } from '../../bootstrap/runtime/runtimeContext.js'
-import { clearCommandMemoizationCaches, clearCommandsCache } from '../../commands.js'
+import { clearCommandMemoizationCaches, clearCommandsCache } from '../../commands/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

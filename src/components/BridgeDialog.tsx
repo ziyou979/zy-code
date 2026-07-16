@@ -10,7 +10,7 @@ import {
 import { BRIDGE_FAILED_INDICATOR, BRIDGE_READY_INDICATOR } from '../constants/figures.js'
 import { useRegisterOverlay } from '../context/OverlayContext.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw 'd' key for disconnect, not a configurable keybinding action
-import { Box, Text, useInput } from '../ink.js'
+import { Box, Text, useInput } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
 import { saveGlobalConfig } from '../services/config/config.js'

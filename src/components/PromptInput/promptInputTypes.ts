@@ -1,6 +1,6 @@
 import * as React from 'react'
 import type { AppState } from 'src/state/AppStateStore.js'
-import { type Command } from '../../commands.js'
+import { type Command } from '../../commands/index.js'
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'

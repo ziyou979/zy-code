@@ -1,6 +1,6 @@
 import { toString as qrToString } from 'qrcode'
 import { useEffect, useState } from 'react'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 
 type QRCodeDisplayProps = {
   displayUrl: string | undefined

@@ -1,7 +1,7 @@
 import { tSync } from 'src/i18n/index.js'
 import { logError } from 'src/utils/log.js'
 import { getOriginalCwd } from '../../../bootstrap/runtime/runtimeContext.js'
-import { Box, Text } from '../../../ink.js'
+import { Box, Text } from '../../../ink/index.js'
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js'
 import { SKILL_TOOL_NAME } from '../../../tools/SkillTool/constants.js'
 import { SkillTool } from '../../../tools/SkillTool/SkillTool.js'

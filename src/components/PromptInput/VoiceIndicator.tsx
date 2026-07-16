@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { useSettings } from '../../hooks/useSettings.js'
-import { Box, Text, useAnimationFrame } from '../../ink.js'
+import { Box, Text, useAnimationFrame } from '../../ink/index.js'
 import { interpolateColor, toRGBColor } from '../Spinner/utils.js'
 
 type Props = {

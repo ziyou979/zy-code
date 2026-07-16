@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box } from '../../ink.js'
+import { Box } from '../../ink/index.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
 import { Zy, type ZyPose } from './Zy.js'
 

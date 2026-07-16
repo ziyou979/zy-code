@@ -5,7 +5,7 @@ import {
   TITLE_FRAME_B,
   TITLE_TAB,
 } from 'src/constants/figures.js'
-import { useTerminalFocus, useTerminalTitle } from '../ink.js'
+import { useTerminalFocus, useTerminalTitle } from '../ink/index.js'
 
 const TITLE_ANIMATION_FRAMES = [TITLE_FRAME_A, TITLE_FRAME_B]
 const TITLE_STATIC_PREFIX = TITLE_TAB

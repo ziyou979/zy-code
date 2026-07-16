@@ -12,7 +12,7 @@ import { Status, buildDiagnostics } from './Status.js'
 import { Config } from './Config.js'
 import { Usage } from './Usage.js'
 import { StatsTab, createAllTimeStatsPromise } from './StatsTab.js'
-import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands.js'
+import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands/index.js'
 type Props = {
   onClose: (
     result?: string,

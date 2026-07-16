@@ -1,7 +1,7 @@
 import type { DeepImmutable } from 'src/types/utils.js'
 import { useElapsedTime } from '../../hooks/useElapsedTime.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text, useTheme } from '../../ink.js'
+import { Box, Text, useTheme } from '../../ink/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import { getEmptyToolPermissionContext } from '../../tools/Tool.js'
 import type { InProcessTeammateTaskState } from '../../tasks/in-process-teammate-task/types.js'

@@ -1,4 +1,4 @@
-import type { Root } from '../../ink.js'
+import type { Root } from '../../ink/index.js'
 import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
 import { getMcpConfigsByScope } from '../../services/mcp/config.js'
 import { getProjectMcpServerStatus } from '../../services/mcp/utils.js'

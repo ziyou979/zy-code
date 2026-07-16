@@ -1,4 +1,4 @@
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { getAgentModelOptions } from '../../services/model/agent.js'
 import { Select } from '../CustomSelect/select.js'
 

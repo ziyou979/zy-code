@@ -12,7 +12,7 @@ import {
   getBgSessionBlockReason,
   getCommandName,
   isCommandEnabled,
-} from '../commands.js'
+} from '../commands/index.js'
 import { selectableUserMessagesFilter } from '../components/messageSelectorUtils.js'
 import type { SpinnerMode } from '../types/spinner.js'
 import type { QuerySource } from '../constants/querySource.js'

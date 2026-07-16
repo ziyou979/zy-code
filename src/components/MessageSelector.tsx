@@ -17,7 +17,7 @@ import {
 import { logError } from 'src/utils/log.js'
 import { POINTER, WARNING } from '../constants/figures.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { useKeybinding, useKeybindings } from '../keybindings/useKeybinding.js'
 import type { Message, PartialCompactDirection, UserMessage } from '../types/message.js'
 import { createUserMessage } from '../services/messages/./constructors.js'

@@ -2,8 +2,8 @@ import * as React from 'react'
 import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { CIRCLE, TICK } from '../constants/figures.js'
-import type { Root } from '../ink.js'
-import { Box, Text, useAnimationFrame } from '../ink.js'
+import type { Root } from '../ink/index.js'
+import { Box, Text, useAnimationFrame } from '../ink/index.js'
 import { AppStateProvider } from '../state/AppState.js'
 import {
   checkOutTeleportedSessionBranch,

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { join } from 'node:path'
 import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 import type { AgentMcpServerInfo } from './viewTypes.js'
 import type { Tool } from '../../tools/Tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'

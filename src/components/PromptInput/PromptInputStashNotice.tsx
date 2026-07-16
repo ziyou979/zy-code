@@ -1,4 +1,4 @@
-import { Box, Text } from 'src/ink.js'
+import { Box, Text } from 'src/ink/index.js'
 import { POINTER_SMALL } from '../../constants/figures.js'
 
 type Props = {

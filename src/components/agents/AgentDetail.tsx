@@ -1,7 +1,7 @@
 import { WARNING } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { getAgentModelDisplay } from '../../services/model/agent.js'
 import type { Tools } from '../../tools/Tool.js'

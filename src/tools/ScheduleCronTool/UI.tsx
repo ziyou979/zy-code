@@ -1,7 +1,7 @@
 import React from 'react'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { tSync } from '../../i18n/index.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import { truncate } from '../../utils/format.js'
 import type { CreateOutput } from './cronCreateTool.js'
 import type { DeleteOutput } from './cronDeleteTool.js'

@@ -1,7 +1,7 @@
 import partition from 'lodash-es/partition.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { getInitialSettings, updateSettingsForSource } from '../services/settings/settings.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { SelectMulti } from './CustomSelect/SelectMulti.js'

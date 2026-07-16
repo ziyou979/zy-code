@@ -1,6 +1,6 @@
 import type { ChannelEntry } from '../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { gracefulShutdownSync } from '../utils/gracefulShutdown.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'

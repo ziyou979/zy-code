@@ -3,7 +3,7 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { Pane } from '../../components/design-system/Pane.js'
 import { KeyboardEvent } from '../../ink/events/keyboard-event.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 

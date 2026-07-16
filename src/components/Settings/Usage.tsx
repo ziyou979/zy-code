@@ -4,7 +4,7 @@ import { formatCost } from 'src/services/cost/cost-tracker.js'
 import { getSubscriptionType } from 'src/services/auth/auth.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import {
   type ExtraUsage,

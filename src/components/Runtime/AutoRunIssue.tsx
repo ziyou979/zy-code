@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 

@@ -17,7 +17,7 @@ export function registerUtilCommands(program: Command<any, any, any>): void {
     .action(async () => {
       const [{ doctorHandler }, { createRoot }] = await Promise.all([
         import('../handlers/util.js'),
-        import('../../ink.js'),
+        import('../../ink/index.js'),
       ])
       const root = await createRoot(getBaseRenderOptions(false))
       await doctorHandler(root)

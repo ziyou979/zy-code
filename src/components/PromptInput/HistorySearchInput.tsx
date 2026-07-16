@@ -1,5 +1,5 @@
 import { stringWidth } from '../../ink/stringWidth.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import TextInput from '../TextInput.js'
 
 type Props = {

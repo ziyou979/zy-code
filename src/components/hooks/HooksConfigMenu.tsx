@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { useAppState, useAppStateStore } from 'src/state/AppState.js'
 import type { HookEvent } from 'src/types'
-import type { CommandResultDisplay } from '../../commands.js'
+import type { CommandResultDisplay } from '../../commands/index.js'
 import { useSettingsChange } from '../../hooks/useSettingsChange.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import {
   getHookEventMetadata,

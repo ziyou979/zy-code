@@ -1,5 +1,5 @@
 import type React from 'react'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 export function SandboxDoctorSection() {
   if (!SandboxManager.isSupportedPlatform()) {

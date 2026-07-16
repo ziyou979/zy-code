@@ -1,7 +1,7 @@
 import React from 'react'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { tSync } from '../../i18n/index.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import { countCharInString } from '../../utils/stringUtils.js'
 import type { Input, Output } from './RemoteTriggerTool.js'
 export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {

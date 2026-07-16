@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { tSync } from '../i18n/index.js'
 import { isBridgeEnabled } from '../bridge/bridgeEnabled.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { getZyAIOAuthTokens } from '../services/auth/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import type { OptionWithDescription } from './CustomSelect/select.js'

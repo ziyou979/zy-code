@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import type { CommandResultDisplay, LocalJSXCommandContext } from '../../commands.js'
+import type { CommandResultDisplay, LocalJSXCommandContext } from '../../commands/index.js'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { tSync } from '../../i18n/index.js'

@@ -1,7 +1,7 @@
 import { tSync } from 'src/i18n/index.js'
 import type { HookEvent } from 'src/types/index.js'
 import type { HookEventMetadata } from 'src/services/hooks/hooksConfigManager.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import {
   getHookDisplayText,
   hookSourceHeaderDisplayString,

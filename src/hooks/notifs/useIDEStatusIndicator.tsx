@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
-import { Text } from 'src/ink.js'
+import { Text } from 'src/ink/index.js'
 import type { MCPServerConnection } from 'src/services/mcp/types.js'
 import { getGlobalConfig, saveGlobalConfig } from 'src/services/config/config.js'
 import {

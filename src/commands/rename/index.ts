@@ -1,4 +1,4 @@
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 
 /**
  * /rename 的交互变体（默认导出）。

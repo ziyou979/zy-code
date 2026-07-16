@@ -3,7 +3,7 @@ import { FileEditToolDiff } from 'src/components/FileEditToolDiff.js'
 import { getCwd } from 'src/utils/cwd.js'
 import type { z } from 'zod/v4'
 import { tSync } from '../../../i18n/index.js'
-import { Text } from '../../../ink.js'
+import { Text } from '../../../ink/index.js'
 import { FileEditTool } from '../../../tools/FileEditTool/FileEditTool.js'
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js'
 import {

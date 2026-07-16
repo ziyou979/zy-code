@@ -3,7 +3,7 @@ import { useIsInsideModal, useModalScrollRef } from '../../context/ModalContext.
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import ScrollBox from '../../ink/components/ScrollBox.js'
 import { stringWidth } from '../../ink/stringWidth.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { Theme } from '../../utils/theme.js'
 

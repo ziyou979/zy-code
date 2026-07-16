@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import type { CommandResultDisplay } from '../../commands.js'
+import type { CommandResultDisplay } from '../../commands/index.js'
 import { tSync } from '../../i18n/index.js'
 import { ZyAuthProvider } from '../../services/mcp/auth.js'
 import type { AgentMcpServerInfo } from '../../services/mcp/viewTypes.js'

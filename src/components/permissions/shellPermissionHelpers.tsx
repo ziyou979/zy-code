@@ -2,7 +2,7 @@ import { basename, sep } from 'node:path'
 import { type ReactNode } from 'react'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import { permissionRuleExtractPrefix } from '../../services/permissions/shellRuleMatching.js'
 

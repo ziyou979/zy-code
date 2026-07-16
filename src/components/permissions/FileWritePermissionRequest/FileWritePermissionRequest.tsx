@@ -1,7 +1,7 @@
 import { basename, relative } from 'node:path'
 import type { z } from 'zod/v4'
 import { tSync } from '../../../i18n/index.js'
-import { Text } from '../../../ink.js'
+import { Text } from '../../../ink/index.js'
 import { FileWriteTool } from '../../../tools/FileWriteTool/FileWriteTool.js'
 import { getCwd } from '../../../utils/cwd.js'
 import { isENOENT } from '../../../utils/errors.js'

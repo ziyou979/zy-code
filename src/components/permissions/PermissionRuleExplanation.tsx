@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import { Ansi, Box, Text } from '../../ink.js'
+import { Ansi, Box, Text } from '../../ink/index.js'
 import { useAppState } from '../../state/AppState.js'
 import type {
   PermissionDecision,

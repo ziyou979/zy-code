@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Select } from '../../components/CustomSelect/index.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import { LoadingState } from '../../components/design-system/LoadingState.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 import {
   logEvent,

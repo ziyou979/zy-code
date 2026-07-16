@@ -1,4 +1,4 @@
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import type { SandboxDependencyCheck } from '../../services/sandbox/sandbox-adapter.js'
 import { getPlatform } from '../../services/shell/platform.js'
 

@@ -1,6 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
-import { useStdin, useTheme, useTabStatus } from '../ink.js'
+import { useStdin, useTheme, useTabStatus } from '../ink/index.js'
 import type { TabStatusKind } from '../ink/hooks/use-tab-status.js'
 import * as React from 'react'
 import {
@@ -33,7 +33,7 @@ import {
 import { endInteractionSpan } from '../services/telemetry/sessionTracing.js'
 import { useLogMessages } from '../hooks/useLogMessages.js'
 import { useReplBridge } from '../hooks/useReplBridge.js'
-import { type Command } from '../commands.js'
+import { type Command } from '../commands/index.js'
 import type { QueuedCommand } from '../types/textInputTypes.js'
 import { useIdeLogging } from '../hooks/useIdeLogging.js'
 import type { DirectConnectConfig } from '../server/directConnectManager.js'

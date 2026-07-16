@@ -7,7 +7,7 @@
 import React from 'react'
 import { z } from 'zod/v4'
 import { MessageResponse } from '../components/MessageResponse.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { buildTool, type ToolInputJSONSchema } from '../tools/Tool.js'
 import type { PermissionResult } from '../types/permissions.js'
 import { errorMessage } from '../utils/errors.js'

@@ -1,4 +1,4 @@
-import { Text } from '../../../ink.js'
+import { Text } from '../../../ink/index.js'
 import { BashTool } from '../../../tools/BashTool/BashTool.js'
 import type { PermissionRuleValue } from '../../../services/permissions/permissionRule.js'
 

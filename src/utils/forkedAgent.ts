@@ -10,7 +10,7 @@
 
 import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
-import type { PromptCommand } from '../commands.js'
+import type { PromptCommand } from '../commands/index.js'
 import type { QuerySource } from '../constants/querySource.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import { query } from '../query/index.js'

@@ -10,7 +10,7 @@ import {
   getAllowedChannels,
   getHasDevChannels,
 } from '../../bootstrap/runtime/runtimeContext.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { isChannelsEnabled } from '../../services/mcp/channelAllowlist.js'
 import { getEffectiveChannelAllowlist } from '../../services/mcp/channelNotification.js'
 import { getMcpConfigsByScope } from '../../services/mcp/config.js'

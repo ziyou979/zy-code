@@ -1,4 +1,4 @@
-import { Text } from '../ink.js'
+import { Text } from '../ink/index.js'
 export function PressEnterToContinue() {
   return (
     <Text color="permission">

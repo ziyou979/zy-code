@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { getSystemPrompt, SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from 'src/constants/prompts.js'
 import { microcompactMessages } from 'src/services/compact/microCompact.js'
-import { getCommandName } from '../commands.js'
+import { getCommandName } from '../commands/index.js'
 import { getSystemContext } from '../services/context/context.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import {

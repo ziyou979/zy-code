@@ -1,7 +1,7 @@
 import { relative } from 'node:path'
 import React from 'react'
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { DiagnosticTrackingService } from '../services/diagnosticTracking.js'
 import type { Attachment } from '../services/attachments/attachments.js'
 import { getCwd } from '../utils/cwd.js'

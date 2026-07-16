@@ -1,5 +1,5 @@
 import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 
 const session = {
   type: 'local-jsx',

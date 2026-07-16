@@ -1,7 +1,7 @@
 import type { DeepImmutable } from 'src/types/utils.js'
 import { useElapsedTime } from '../../hooks/useElapsedTime.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { DreamTaskState } from '../../tasks/dream-task/dreamTask.js'
 import { plural } from '../../utils/stringUtils.js'

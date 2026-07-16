@@ -1,6 +1,6 @@
 import { CHANNEL_ARROW } from '../../constants/figures.js'
 import { CHANNEL_TAG } from '../../constants/xml.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import type { TextBlock } from '../../types/llm.js'
 import { truncateToWidth } from '../../utils/format.js'
 

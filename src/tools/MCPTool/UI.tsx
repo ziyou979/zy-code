@@ -7,7 +7,7 @@ import { linkifyUrlsInText, OutputLine } from '../../components/shell/OutputLine
 import { WARNING } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
-import { Ansi, Box, Text } from '../../ink.js'
+import { Ansi, Box, Text } from '../../ink/index.js'
 import type { ToolProgressData } from '../../tools/Tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import type { MCPProgress } from '../../types/tools.js'

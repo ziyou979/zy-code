@@ -1,6 +1,6 @@
 import { readdir, rm, stat, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { clearCommandsCache } from '../../commands.js'
+import { clearCommandsCache } from '../../commands/index.js'
 import { clearAllOutputStylesCache } from '../../constants/outputStyles.js'
 import { clearAgentDefinitionsCache } from '../../tools/AgentTool/loadAgentsDir.js'
 import { clearPromptCache } from '../../tools/SkillTool/prompt.js'

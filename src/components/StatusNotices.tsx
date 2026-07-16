@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { use } from 'react'
-import { Box } from '../ink.js'
+import { Box } from '../ink/index.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import { getMemoryFiles } from '../utils/agentsMd.js'
 import { getGlobalConfig } from '../services/config/config.js'

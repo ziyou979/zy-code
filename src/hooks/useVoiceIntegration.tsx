@@ -11,7 +11,7 @@ import {
 } from '../context/voice.js'
 import { KeyboardEvent } from '../ink/events/keyboard-event.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- backward-compat bridge until REPL wires handleKeyDown to <Box onKeyDown>
-import { useInput } from '../ink.js'
+import { useInput } from '../ink/index.js'
 import { useOptionalKeybindingContext } from '../keybindings/KeybindingContext.js'
 import { keystrokesEqual } from '../keybindings/resolver.js'
 import type { ParsedKeystroke } from '../keybindings/types.js'

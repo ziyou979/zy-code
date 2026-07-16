@@ -1,5 +1,5 @@
 import { tSync } from '../../../../i18n/index.js'
-import { Box } from '../../../../ink.js'
+import { Box } from '../../../../ink/index.js'
 import type { SettingSource } from '../../../../services/settings/constants.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'
 import { Select } from '../../../CustomSelect/select.js'

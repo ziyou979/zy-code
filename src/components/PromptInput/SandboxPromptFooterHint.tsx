@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
 export function SandboxPromptFooterHint() {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useDoublePress } from '../hooks/useDoublePress.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 import { useAppState, useAppStateStore, useSetAppState } from '../state/AppState.js'

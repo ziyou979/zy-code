@@ -9,7 +9,7 @@
  */
 
 import { getMainLoopModel } from 'src/services/model/model.js'
-import type { Command } from '../commands.js'
+import type { Command } from '../commands/index.js'
 import { getSystemPrompt } from '../constants/prompts.js'
 import { getSystemContext, getUserContext } from '../services/context/context.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'

@@ -7,7 +7,7 @@ import {
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { setClipboard } from '../ink/termio/osc.js'
 import { useTerminalNotification } from '../ink/useTerminalNotification.js'
-import { Box, Link, Text } from '../ink.js'
+import { Box, Link, Text } from '../ink/index.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { getSSLErrorHint } from '../services/api/errorUtils.js'
 import { sendNotification } from '../services/notifier.js'

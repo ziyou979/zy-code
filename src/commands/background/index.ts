@@ -2,7 +2,7 @@
  * /bg 命令 — 将当前前台任务转为后台运行。
  * 实现懒加载自 background.ts 以减少启动时间。
  */
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 
 const background = {
   type: 'local',

@@ -1,5 +1,5 @@
 import { tSync } from 'src/i18n/index.js'
-import { Box, Text } from 'src/ink.js'
+import { Box, Text } from 'src/ink/index.js'
 import {
   type NetworkHostPattern,
   shouldAllowManagedSandboxDomainsOnly,

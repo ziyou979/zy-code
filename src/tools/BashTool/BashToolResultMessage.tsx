@@ -5,7 +5,7 @@ import { MessageResponse } from '../../components/MessageResponse.js'
 import { OutputLine } from '../../components/shell/OutputLine.js'
 import { ShellTimeDisplay } from '../../components/shell/ShellTimeDisplay.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import type { Out as BashOut } from './BashTool.js'
 
 type Props = {

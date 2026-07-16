@@ -1,6 +1,6 @@
 import type React from 'react'
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
-import { useTheme } from '../../../ink.js'
+import { useTheme } from '../../../ink/index.js'
 import { filterToolProgressMessages, type Tool, type Tools } from '../../../tools/Tool.js'
 import type { ProgressMessage } from '../../../types/message.js'
 import { buildMessageLookups } from '../../../services/messages/./lookups.js'

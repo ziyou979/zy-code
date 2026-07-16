@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { ELLIPSIS } from '../constants/figures.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { logForDebugging } from '../utils/debug.js'
 import type { GitFileStatus } from '../utils/gitUrlUtils.js'
 import { getFileStatus, stashToCleanState } from '../utils/git.js'

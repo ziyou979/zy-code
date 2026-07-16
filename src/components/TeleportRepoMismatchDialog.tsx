@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { getDisplayPath } from '../utils/file.js'
 import { removePathFromRepo, validateRepoAtPath } from '../utils/githubRepoPathMapping.js'
 import { Select } from './CustomSelect/index.js'

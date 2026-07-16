@@ -6,7 +6,7 @@ import { isUltrareviewEnabled } from '../../commands/review/ultrareviewEnabled.j
 import { parseReferences } from '../../services/session-storage/history.js'
 import { type HistoryMode, useArrowKeyHistory } from '../../hooks/useArrowKeyHistory.js'
 import { useInputBuffer } from '../../hooks/useInputBuffer.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import { abortPromptSuggestion } from '../../services/prompt-suggestion/promptSuggestion.js'
 import { abortSpeculation } from '../../services/prompt-suggestion/speculation.js'
 import {

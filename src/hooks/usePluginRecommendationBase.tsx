@@ -8,7 +8,7 @@ import * as React from 'react'
 import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { TICK } from '../constants/figures.js'
 import type { useNotifications } from '../context/notifications.js'
-import { Text } from '../ink.js'
+import { Text } from '../ink/index.js'
 import { logError } from '../utils/log.js'
 import { getPluginById } from '../services/plugins/marketplaceManager.js'
 

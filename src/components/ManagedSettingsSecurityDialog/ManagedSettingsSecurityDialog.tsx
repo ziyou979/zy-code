@@ -1,6 +1,6 @@
 import { tSync } from 'src/i18n/index.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import type { SettingsJson } from '../../services/settings/types.js'
 import { Select } from '../CustomSelect/index.js'

@@ -1,5 +1,5 @@
 import { tSync } from '../../../../i18n/index.js'
-import { Box } from '../../../../ink.js'
+import { Box } from '../../../../ink/index.js'
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js'
 import { isAutoMemoryEnabled } from '../../../../memdir/paths.js'
 import {

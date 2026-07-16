@@ -18,7 +18,7 @@
  */
 
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
 import { getAgentDefinitionsWithOverrides } from '../../tools/AgentTool/loadAgentsDir.js'

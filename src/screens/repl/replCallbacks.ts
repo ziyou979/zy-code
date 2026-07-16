@@ -8,7 +8,7 @@
 import { feature } from 'bun:bundle'
 import { spawnSync } from 'node:child_process'
 import * as React from 'react'
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 import {
   messagesAfterAreOnlySynthetic,
   selectableUserMessagesFilter,
@@ -19,7 +19,7 @@ import type { Notification } from '../../context/notifications.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import { setClipboard } from '../../ink/termio/osc.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { resetMicrocompactState } from '../../services/compact/microCompact.js'
 import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'

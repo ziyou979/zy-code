@@ -4,7 +4,7 @@ import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErr
 import { FilePathLink } from '../../components/FilePathLink.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { tSync } from '../../i18n/index.js'
-import { Text } from '../../ink.js'
+import { Text } from '../../ink/index.js'
 import { getTaskOutputDir } from '../../services/task-runtime/diskOutput.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file.js'

@@ -5,7 +5,7 @@ import { BLACK_CIRCLE } from '../../src/constants/figures.js'
 import type { Frame } from '../../src/ink/frame.js'
 import Ink from '../../src/ink/ink.js'
 import { charInCellAt } from '../../src/ink/screen.js'
-import { Box, Text } from '../../src/ink.js'
+import { Box, Text } from '../../src/ink/index.js'
 import { AppStateProvider } from '../../src/state/AppState.js'
 
 function makeStdout(cols: number, rows: number): NodeJS.WriteStream {

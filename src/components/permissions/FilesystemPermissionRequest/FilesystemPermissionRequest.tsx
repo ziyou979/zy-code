@@ -1,5 +1,5 @@
 import { tSync } from '../../../i18n/index.js'
-import { Box, Text, useTheme } from '../../../ink.js'
+import { Box, Text, useTheme } from '../../../ink/index.js'
 import { FallbackPermissionRequest } from '../FallbackPermissionRequest.js'
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js'
 import type { ToolInput } from '../FilePermissionDialog/useFilePermissionDialog.js'

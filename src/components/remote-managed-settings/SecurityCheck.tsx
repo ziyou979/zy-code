@@ -1,6 +1,6 @@
 import { getIsInteractive } from '../../bootstrap/runtime/runtimeContext.js'
 import { ManagedSettingsSecurityDialog } from '../ManagedSettingsSecurityDialog/ManagedSettingsSecurityDialog.js'
-import { render } from '../../ink.js'
+import { render } from '../../ink/index.js'
 import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
 import { logEvent } from '../../services/analytics/index.js'
 import {

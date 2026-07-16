@@ -13,7 +13,7 @@ import {
 } from '../../services/session-storage/history.js'
 import { useDoublePress } from '../../hooks/useDoublePress.js'
 import { useTypeahead } from '../../hooks/useTypeahead.js'
-import { type Key } from '../../ink.js'
+import { type Key } from '../../ink/index.js'
 import { logSuggestionSuppressed } from '../../services/prompt-suggestion/promptSuggestion.js'
 import { getActiveAgentForInput } from '../../state/selectors.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'

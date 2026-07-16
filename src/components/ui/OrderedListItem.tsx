@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useContext } from 'react'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 export const OrderedListItemContext = createContext({
   marker: '',
 })

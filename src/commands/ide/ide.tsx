@@ -2,7 +2,7 @@ import * as path from 'node:path'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import type { CommandResultDisplay, LocalJSXCommandContext } from '../../commands.js'
+import type { CommandResultDisplay, LocalJSXCommandContext } from '../../commands/index.js'
 import { Select } from '../../components/CustomSelect/index.js'
 import { Dialog } from '../../components/design-system/Dialog.js'
 import {
@@ -11,7 +11,7 @@ import {
   shouldShowAutoConnectDialog,
   shouldShowDisableAutoConnectDialog,
 } from '../../components/IdeAutoConnectDialog.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { clearServerCache } from '../../services/mcp/client.js'
 import type { ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'

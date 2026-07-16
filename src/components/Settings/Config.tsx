@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { ARROW_UP, POINTER, ARROW_DOWN } from '../../constants/figures.js'
 import { feature } from 'bun:bundle'
-import { Box, Text, useTheme, useThemeSetting, useTerminalFocus } from '../../ink.js'
+import { Box, Text, useTheme, useThemeSetting, useTerminalFocus } from '../../ink/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import * as React from 'react'
 import { useState, useCallback } from 'react'
@@ -69,7 +69,7 @@ import {
 import { getUserMsgOptIn, setUserMsgOptIn } from '../../bootstrap/runtime/runtimeContext.js'
 import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles.js'
 import { isEnvTruthy, isRunningOnHomespace, isInternalBuild } from 'src/utils/envUtils.js'
-import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands.js'
+import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import {

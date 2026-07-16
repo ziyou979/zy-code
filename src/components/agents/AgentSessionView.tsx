@@ -16,7 +16,7 @@ import {
   YELLOW_CIRCLE,
 } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text, useInput } from '../../ink.js'
+import { Box, Text, useInput } from '../../ink/index.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import { enterTeammateView } from '../../state/teammateViewHelpers.js'
 import {

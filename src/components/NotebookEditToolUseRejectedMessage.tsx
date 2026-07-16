@@ -1,7 +1,7 @@
 import { relative } from 'node:path'
 import { getCwd } from 'src/utils/cwd.js'
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { HighlightedCode } from './HighlightedCode.js'
 import { MessageResponse } from './MessageResponse.js'
 

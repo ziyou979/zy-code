@@ -1,6 +1,6 @@
 import React from 'react'
 import { useIsInsideModal } from '../../context/ModalContext.js'
-import { Box } from '../../ink.js'
+import { Box } from '../../ink/index.js'
 import type { Theme } from '../../utils/theme.js'
 import { Divider } from './Divider.js'
 

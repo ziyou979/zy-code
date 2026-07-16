@@ -1,4 +1,4 @@
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 import { isKeybindingCustomizationEnabled } from '../../keybindings/loadUserBindings.js'
 
 const keybindings = {

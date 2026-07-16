@@ -6,7 +6,7 @@ import { ARROW_DOWN, ARROW_LEFT, ARROW_UP, POINTER, TICK } from '../../constants
 import { useRegisterOverlay } from '../../context/OverlayContext.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow dialog navigation
-import { Box, Text, useInput } from '../../ink.js'
+import { Box, Text, useInput } from '../../ink/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 import { IT2_COMMAND, isInsideTmuxSync } from '../../services/swarm/backends/detection.js'

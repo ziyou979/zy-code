@@ -4,7 +4,7 @@
  * /reload-plugins 负责插件变更（插件提供的 commands/agents/skills/hooks/MCP/LSP），
  * /reload-skills 负责 skill 目录（本地 .claude/skills、内建技能、search index 等）。
  */
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 
 const reloadSkills = {
   type: 'local',

@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { Command } from '../commands.js'
+import type { Command } from '../commands/index.js'
 import { maybeMarkProjectOnboardingComplete } from '../services/settings/projectOnboardingState.js'
 import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 

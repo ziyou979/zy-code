@@ -3,7 +3,7 @@ import type { SettingSource } from 'src/services/settings/constants.js'
 import { POINTER, WARNING } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import type { ResolvedAgent } from '../../tools/AgentTool/agentDisplay.js'
 import {
   AGENT_SOURCE_GROUPS,

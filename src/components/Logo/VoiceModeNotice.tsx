@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { useEffect, useState } from 'react'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
 import { isVoiceModeEnabled } from '../../voice/voiceModeEnabled.js'

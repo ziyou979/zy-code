@@ -1,6 +1,6 @@
 import { openSync } from 'node:fs'
 import { ReadStream } from 'node:tty'
-import type { RenderOptions } from '../ink.js'
+import type { RenderOptions } from '../ink/index.js'
 import { isEnvTruthy } from './envUtils.js'
 import { logError } from './log.js'
 

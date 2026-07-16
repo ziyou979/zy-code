@@ -1,5 +1,5 @@
 import { tSync } from '../i18n/index.js'
-import { Box, render, Text } from '../ink.js'
+import { Box, render, Text } from '../ink/index.js'
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js'
 import { AppStateProvider } from '../state/AppState.js'
 import type { ConfigParseError } from '../utils/errors.js'

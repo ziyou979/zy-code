@@ -1,4 +1,4 @@
-import { Box } from '../ink.js'
+import { Box } from '../ink/index.js'
 import { BashTool } from '../tools/BashTool/BashTool.js'
 import type { ShellProgress } from '../types/tools.js'
 import { UserBashInputMessage } from './messages/UserBashInputMessage.js'

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { useInterval } from 'usehooks-ts'
-import { Text } from '../ink.js'
+import { Text } from '../ink/index.js'
 import { getPackageManager } from '../services/native-installer/packageManagers.js'
 import {
   type AutoUpdaterResult,

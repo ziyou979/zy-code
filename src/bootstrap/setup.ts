@@ -18,7 +18,7 @@ import {
   setProjectRoot,
   switchSession,
 } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getCommands } from '../commands.js'
+import { getCommands } from '../commands/index.js'
 import { tSync } from '../i18n/index.js'
 import { lockCurrentVersion } from '../services/native-installer/index.js'
 import { initSessionMemory } from '../services/session-memory/sessionMemory.js'

@@ -2,7 +2,7 @@ import { PassThrough } from 'node:stream'
 import * as React from 'react'
 import { useLayoutEffect } from 'react'
 import stripAnsi from 'strip-ansi'
-import { render, useApp } from '../../ink.js'
+import { render, useApp } from '../../ink/index.js'
 
 // This is a workaround for the fact that Ink doesn't support multiple <Static>
 // components in the same render tree. Instead of using a <Static> we just render

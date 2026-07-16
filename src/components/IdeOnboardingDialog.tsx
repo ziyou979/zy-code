@@ -1,5 +1,5 @@
 import { envDynamic } from 'src/utils/envDynamic.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import { env } from '../utils/env.js'

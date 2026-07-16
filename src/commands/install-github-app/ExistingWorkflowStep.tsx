@@ -1,5 +1,5 @@
 import { Select } from 'src/components/CustomSelect/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 
 interface ExistingWorkflowStepProps {

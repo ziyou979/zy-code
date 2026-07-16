@@ -1,6 +1,6 @@
 import { POINTER } from '../../constants/figures.js'
 import { COMMAND_MESSAGE_TAG } from '../../constants/xml.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import type { TextBlock } from '../../types/llm.js'
 import { extractTag } from '../../services/messages/./predicates.js'
 

@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { getOriginalCwd } from '../../../bootstrap/runtime/runtimeContext.js'
-import type { CommandResultDisplay } from '../../../commands.js'
+import type { CommandResultDisplay } from '../../../commands/index.js'
 import { Select } from '../../CustomSelect/select.js'
-import { Box, Text } from '../../../ink.js'
+import { Box, Text } from '../../../ink/index.js'
 import type { ToolPermissionContext } from '../../../tools/Tool.js'
 import { useTabHeaderFocus } from '../../design-system/Tabs.js'
 

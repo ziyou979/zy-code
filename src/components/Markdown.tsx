@@ -1,7 +1,7 @@
 import { marked, type Token, type Tokens } from 'marked'
 import React, { Suspense, use, useRef } from 'react'
 import { useSettings } from '../hooks/useSettings.js'
-import { Ansi, Box, useTheme } from '../ink.js'
+import { Ansi, Box, useTheme } from '../ink/index.js'
 import type { CliHighlight } from '../utils/cliHighlight.js'
 import { getCliHighlightPromise } from '../utils/cliHighlight.js'
 import { hashContent } from '../utils/hash.js'

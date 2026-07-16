@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { POINTER } from '../../constants/figures.js'
 import { TEAMMATE_MESSAGE_TAG } from '../../constants/xml.js'
-import { Ansi, Box, Text, type TextProps } from '../../ink.js'
+import { Ansi, Box, Text, type TextProps } from '../../ink/index.js'
 import type { TextBlock } from '../../types/llm.js'
 import { toInkColor } from '../../utils/ink.js'
 import { jsonParse } from '../../utils/slowOperations.js'

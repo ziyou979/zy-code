@@ -5,7 +5,7 @@
 import { feature } from 'bun:bundle'
 import { clearInvokedSkills } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setLastEmittedDate } from 'src/bootstrap/runtime/runtimeContext.js'
-import { clearCommandsCache } from '../../commands.js'
+import { clearCommandsCache } from '../../commands/index.js'
 import { getSessionStartDate } from '../../constants/common.js'
 import {
   getGitStatus,

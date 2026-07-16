@@ -77,8 +77,8 @@ export async function installQueryEngineMocks(): Promise<void> {
     flushSessionStorage: async () => {},
   }))
 
-  const commands = await import('../../src/commands.js')
-  mock.module('src/commands.js', () => ({
+  const commands = await import('../../src/commands/index.js')
+  mock.module('src/commands/index.js', () => ({
     ...commands,
     getSlashCommandToolSkills: async () => [],
   }))

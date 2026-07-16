@@ -1,6 +1,6 @@
 import React from 'react'
 import { tSync } from '../../../../i18n/index.js'
-import { Box } from '../../../../ink.js'
+import { Box } from '../../../../ink/index.js'
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js'
 import type { AgentColorName } from '../../../../tools/AgentTool/agentColorManager.js'
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js'

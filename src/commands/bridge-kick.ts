@@ -1,5 +1,5 @@
 import { getWireDebugHandle } from '../bridge/bridgeDebug.js'
-import type { Command } from '../commands.js'
+import type { Command } from '../commands/index.js'
 import type { LocalCommandCall } from './types.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 

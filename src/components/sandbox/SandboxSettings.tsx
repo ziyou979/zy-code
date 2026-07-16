@@ -1,4 +1,4 @@
-import { Box, color, Link, Text, useTheme } from '../../ink.js'
+import { Box, color, Link, Text, useTheme } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { SandboxDependencyCheck } from '../../services/sandbox/sandbox-adapter.js'

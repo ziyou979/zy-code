@@ -6,13 +6,13 @@
 
 import { setIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setKairosActive, setUserMsgOptIn } from 'src/bootstrap/runtime/runtimeContext.js'
-import { filterCommandsForRemoteMode } from '../../commands.js'
+import { filterCommandsForRemoteMode } from '../../commands/index.js'
 import type { StatsStore } from '../../context/stats.js'
 import {
   launchAssistantInstallWizard,
   launchAssistantSessionChooser,
 } from '../../cli/dialogLaunchers.js'
-import type { Root } from '../../ink.js'
+import type { Root } from '../../ink/index.js'
 import { exitWithError, exitWithMessage } from '../../cli/interactiveHelpers.js'
 import { createRemoteSessionConfig } from '../../remote/remoteSessionManager.js'
 import { prepareApiRequest } from '../../services/teleport/api.js'

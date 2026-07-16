@@ -7,7 +7,7 @@ import {
 import { isQueuedCommandEditable } from 'src/utils/messageQueueManager.js'
 import { getNativeCSIuTerminalDisplayName } from '../../commands/terminal-setup/TerminalSetup.js'
 import { useSetPromptOverlayDialog } from '../../context/PromptOverlayContext.js'
-import { Box, type ClickEvent, Text, useInput } from '../../ink.js'
+import { Box, type ClickEvent, Text, useInput } from '../../ink/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import { modelDisplayString } from '../../services/model/model.js'
 import { abortSpeculation } from '../../services/prompt-suggestion/speculation.js'

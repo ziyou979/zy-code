@@ -44,7 +44,7 @@ export function takeSessionTitle(): string | undefined {
  */
 async function reloadSkillsFromHook(): Promise<void> {
   try {
-    const { clearCommandMemoizationCaches, getSkillToolCommands } = await import('../commands.js')
+    const { clearCommandMemoizationCaches, getSkillToolCommands } = await import('../commands/index.js')
     const { clearDynamicSkills } = await import('../skills/loadSkillsDir.js')
     const { clearSkillCaches } = await import('../skills/loadSkillsDir.js')
     const { clearPluginSkillsCache } = await import('../services/plugins/loadPluginCommands.js')

@@ -10,7 +10,7 @@ import { isBackgroundTask, type TaskState } from 'src/tasks/types.js'
 import { calculateHorizontalScrollWindow } from 'src/utils/horizontalScroll.js'
 import { ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import {
   AGENT_COLOR_TO_THEME_COLOR,
   AGENT_COLORS,

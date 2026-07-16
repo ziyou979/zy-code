@@ -2,7 +2,7 @@ import { POINTER } from '../../constants/figures.js'
 import type { DiffFile } from '../../hooks/useDiffData.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { truncateStartToWidth } from '../../utils/format.js'
 import { plural } from '../../utils/stringUtils.js'
 

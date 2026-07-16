@@ -5,7 +5,7 @@ import { RejectedPlanMessage } from 'src/components/messages/UserToolResultMessa
 import { BLACK_CIRCLE } from 'src/constants/figures.js'
 import { getModeColor } from 'src/services/permissions/permissionMode.js'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import type { ToolProgressData } from '../../tools/Tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { getDisplayPath } from '../../utils/file.js'

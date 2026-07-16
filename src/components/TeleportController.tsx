@@ -5,7 +5,7 @@ import {
   getTeleportErrors,
   type TeleportLocalErrorType,
 } from '../services/teleport/prerequisites.js'
-import type { Root } from '../ink.js'
+import type { Root } from '../ink/index.js'
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js'
 import { AppStateProvider } from '../state/AppState.js'
 import { TeleportError } from './TeleportError.js'

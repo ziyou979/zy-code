@@ -19,8 +19,8 @@ import uniqBy from 'lodash-es/uniqBy.js'
 import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { StructuredIO } from 'src/cli/structuredIO.js'
-import type { Command } from 'src/commands.js'
-import { getCommands } from 'src/commands.js'
+import type { Command } from 'src/commands/index.js'
+import { getCommands } from 'src/commands/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

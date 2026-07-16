@@ -1,6 +1,6 @@
 import { Suspense, use, useState } from 'react'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { Message } from '../../types/message.js'

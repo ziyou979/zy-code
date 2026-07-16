@@ -1,5 +1,5 @@
 import sample from 'lodash-es/sample.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { extractTag } from '../../services/messages/./predicates.js'
 import { MessageResponse } from '../MessageResponse.js'
 

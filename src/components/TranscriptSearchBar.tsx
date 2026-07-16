@@ -1,6 +1,6 @@
 import React, { type RefObject, useEffect } from 'react'
 import { useSearchInput } from '../hooks/useSearchInput.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import type { JumpHandle } from './VirtualMessageList.js'
 
 /** less 风格 / bar。1 行，与 TranscriptModeFooter 相同的 border-top 样式

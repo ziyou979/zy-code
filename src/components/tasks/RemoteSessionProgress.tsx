@@ -4,7 +4,7 @@ import type { DeepImmutable } from 'src/types/utils.js'
 import type { TodoItem } from 'src/services/todo/types.js'
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { useSettings } from '../../hooks/useSettings.js'
-import { Text, useAnimationFrame } from '../../ink.js'
+import { Text, useAnimationFrame } from '../../ink/index.js'
 import { count } from '../../utils/array.js'
 import { getRainbowColor } from '../../utils/thinking.js'
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { tSync } from '../i18n/index.js'
-import { Box, Text } from '../ink.js'
+import { Box, Text } from '../ink/index.js'
 import { SandboxManager } from '../services/sandbox/sandbox-adapter.js'
 
 /**

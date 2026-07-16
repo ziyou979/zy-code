@@ -1,6 +1,6 @@
 import { relative } from 'node:path'
 import { Suspense, use } from 'react'
-import { Box, NoSelect, Text } from '../../../ink.js'
+import { Box, NoSelect, Text } from '../../../ink/index.js'
 import type { NotebookCellType, NotebookContent } from '../../../types/notebook.js'
 import { intersperse } from '../../../utils/array.js'
 import { getCwd } from '../../../utils/cwd.js'

@@ -1,4 +1,4 @@
-import { Text } from '../ink.js'
+import { Text } from '../ink/index.js'
 import { logForDebugging } from '../utils/debug.js'
 import { checkAndInstallOfficialMarketplace } from '../services/plugins/officialMarketplaceStartupCheck.js'
 import { useStartupNotification } from './notifs/useStartupNotification.js'

@@ -6,12 +6,12 @@ import {
   applyPermissionUpdate,
   persistPermissionUpdate,
 } from 'src/services/permissions/permissionUpdate.js'
-import type { CommandResultDisplay } from '../../../commands.js'
+import type { CommandResultDisplay } from '../../../commands/index.js'
 import { Select } from '../../CustomSelect/select.js'
 import { WARNING } from '../../../constants/figures.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useSearchInput } from '../../../hooks/useSearchInput.js'
-import { Box, Text, useTerminalFocus } from '../../../ink.js'
+import { Box, Text, useTerminalFocus } from '../../../ink/index.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'
 import { getAutoModeDenials } from '../../../utils/autoModeDenials.js'
 import type {

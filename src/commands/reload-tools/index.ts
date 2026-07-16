@@ -3,7 +3,7 @@
  * 与 /reload-skills 不同：仅影响 ~/.zy/tools/ 和 .zy/tools/ 目录下的外部工具，
  * 不涉及内置工具、MCP 工具或插件工具。
  */
-import type { Command } from '../../commands.js'
+import type { Command } from '../../commands/index.js'
 
 const reloadTools = {
   type: 'local',

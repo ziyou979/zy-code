@@ -3,7 +3,7 @@ import { tSync } from '../i18n/index.js'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import { type CodeSession, fetchCodeSessionsFromSessionsAPI } from 'src/services/teleport/api.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow list navigation
-import { Box, Text, useInput } from '../ink.js'
+import { Box, Text, useInput } from '../ink/index.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 import { logForDebugging } from '../utils/debug.js'

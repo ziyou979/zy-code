@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 import React, { useContext } from 'react'
 import { tSync } from '../i18n/index.js'
-import { Text } from '../ink.js'
+import { Text } from '../ink/index.js'
 import { getShortcutDisplay } from '../keybindings/shortcutFormat.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'

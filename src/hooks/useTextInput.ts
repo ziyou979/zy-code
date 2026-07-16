@@ -4,7 +4,7 @@ import stripAnsi from 'strip-ansi'
 import { markBackslashReturnUsed } from '../commands/terminal-setup/TerminalSetup.js'
 import { addToHistory } from '../services/session-storage/history.js'
 import instances from '../ink/instances.js'
-import type { Key } from '../ink.js'
+import type { Key } from '../ink/index.js'
 import type { InlineGhostText, TextInputState } from '../types/textInputTypes.js'
 import {
   Cursor,

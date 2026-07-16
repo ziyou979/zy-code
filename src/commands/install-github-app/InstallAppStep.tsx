@@ -1,6 +1,6 @@
 import { ELLIPSIS } from '../../constants/figures.js'
 import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { tSync } from '../../i18n/index.js'
 

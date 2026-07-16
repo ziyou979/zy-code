@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import type { CommandResultDisplay } from '../commands.js'
+import type { CommandResultDisplay } from '../commands/index.js'
 import { tSync } from '../i18n/index.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw input for "any key" dismiss and y/n prompt
-import { Box, Text, useInput } from '../ink.js'
+import { Box, Text, useInput } from '../ink/index.js'
 import { openBrowser } from '../utils/browser.js'
 import { getDesktopInstallStatus, openCurrentSessionInDesktop } from '../utils/desktopDeepLink.js'
 import { errorMessage } from '../utils/errors.js'

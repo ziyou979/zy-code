@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import * as React from 'react'
-import type { CommandResultDisplay } from '../../commands.js'
+import type { CommandResultDisplay } from '../../commands/index.js'
 import { ModelPicker } from '../../components/ModelPicker.js'
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js'
 import { tSync } from '../../i18n/index.js'

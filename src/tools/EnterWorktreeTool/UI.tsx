@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { tSync } from '../../i18n/index.js'
-import { Box, Text } from '../../ink.js'
+import { Box, Text } from '../../ink/index.js'
 import type { ToolProgressData } from '../../tools/Tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import type { ThemeName } from '../../utils/theme.js'
