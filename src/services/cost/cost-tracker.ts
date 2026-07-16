@@ -31,7 +31,7 @@ import {
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { resetStateForTests } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
-import { stringWidth } from '../../ink/stringWidth.js'
+import { stringWidth } from '../../utils/stringWidth.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

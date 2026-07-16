@@ -2,14 +2,11 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import chalk from 'chalk'
-import { color } from '../../components/design-system/color.js'
-import { supportsHyperlinks } from '../../ink/supports-hyperlinks.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { isENOENT } from '../../utils/errors.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 import { logError } from '../../utils/log.js'
-import type { ThemeName } from '../../utils/theme.js'
 const EOL = '\n'
 type ShellInfo = {
   name: string
@@ -58,7 +55,7 @@ function detectShell(): ShellInfo | null {
   return null
 }
 function formatPathLink(filePath: string): string {
-  if (!supportsHyperlinks()) {
+  if (!process.stdout.isTTY) {
     return filePath
   }
   const fileUrl = pathToFileURL(filePath).href
@@ -69,7 +66,7 @@ function formatPathLink(filePath: string): string {
  * Generate and cache the completion script, then add a source line to the
  * shell's rc file. Returns a user-facing status message.
  */
-export async function setupShellCompletion(theme: ThemeName): Promise<string> {
+export async function setupShellCompletion(): Promise<string> {
   const shell = detectShell()
   if (!shell) {
     return ''
@@ -82,7 +79,7 @@ export async function setupShellCompletion(theme: ThemeName): Promise<string> {
     })
   } catch (e: unknown) {
     logError(e)
-    return `${EOL}${color('warning', theme)(`Could not write ${shell.name} completion cache`)}${EOL}${chalk.dim(`Run manually: zy completion ${shell.shellFlag} > ${shell.cacheFile}`)}${EOL}`
+    return `${EOL}${chalk.yellow(`Could not write ${shell.name} completion cache`)}${EOL}${chalk.dim(`Run manually: zy completion ${shell.shellFlag} > ${shell.cacheFile}`)}${EOL}`
   }
 
   // Generate the completion script by writing directly to the cache file.
@@ -96,7 +93,7 @@ export async function setupShellCompletion(theme: ThemeName): Promise<string> {
     shell.cacheFile,
   ])
   if (result.code !== 0) {
-    return `${EOL}${color('warning', theme)(`Could not generate ${shell.name} shell completions`)}${EOL}${chalk.dim(`Run manually: zy completion ${shell.shellFlag} > ${shell.cacheFile}`)}${EOL}`
+    return `${EOL}${chalk.yellow(`Could not generate ${shell.name} shell completions`)}${EOL}${chalk.dim(`Run manually: zy completion ${shell.shellFlag} > ${shell.cacheFile}`)}${EOL}`
   }
 
   // Check if rc file already sources completions
@@ -106,12 +103,12 @@ export async function setupShellCompletion(theme: ThemeName): Promise<string> {
       encoding: 'utf-8',
     })
     if (existing.includes('zy completion') || existing.includes(shell.cacheFile)) {
-      return `${EOL}${color('success', theme)(`Shell completions updated for ${shell.name}`)}${EOL}${chalk.dim(`See ${formatPathLink(shell.rcFile)}`)}${EOL}`
+      return `${EOL}${chalk.green(`Shell completions updated for ${shell.name}`)}${EOL}${chalk.dim(`See ${formatPathLink(shell.rcFile)}`)}${EOL}`
     }
   } catch (e: unknown) {
     if (!isENOENT(e)) {
       logError(e)
-      return `${EOL}${color('warning', theme)(`Could not install ${shell.name} shell completions`)}${EOL}${chalk.dim(`Add this to ${formatPathLink(shell.rcFile)}:`)}${EOL}${chalk.dim(shell.completionLine)}${EOL}`
+      return `${EOL}${chalk.yellow(`Could not install ${shell.name} shell completions`)}${EOL}${chalk.dim(`Add this to ${formatPathLink(shell.rcFile)}:`)}${EOL}${chalk.dim(shell.completionLine)}${EOL}`
     }
   }
 
@@ -126,10 +123,10 @@ export async function setupShellCompletion(theme: ThemeName): Promise<string> {
     await writeFile(shell.rcFile, content, {
       encoding: 'utf-8',
     })
-    return `${EOL}${color('success', theme)(`Installed ${shell.name} shell completions`)}${EOL}${chalk.dim(`Added to ${formatPathLink(shell.rcFile)}`)}${EOL}${chalk.dim(`Run: source ${shell.rcFile}`)}${EOL}`
+    return `${EOL}${chalk.green(`Installed ${shell.name} shell completions`)}${EOL}${chalk.dim(`Added to ${formatPathLink(shell.rcFile)}`)}${EOL}${chalk.dim(`Run: source ${shell.rcFile}`)}${EOL}`
   } catch (error) {
     logError(error)
-    return `${EOL}${color('warning', theme)(`Could not install ${shell.name} shell completions`)}${EOL}${chalk.dim(`Add this to ${formatPathLink(shell.rcFile)}:`)}${EOL}${chalk.dim(shell.completionLine)}${EOL}`
+    return `${EOL}${chalk.yellow(`Could not install ${shell.name} shell completions`)}${EOL}${chalk.dim(`Add this to ${formatPathLink(shell.rcFile)}:`)}${EOL}${chalk.dim(shell.completionLine)}${EOL}`
   }
 }
 

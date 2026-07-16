@@ -4,7 +4,10 @@
  */
 
 import type { UUID } from 'node:crypto'
-import type { Progress } from '../tools/Tool.js'
+import type { ToolProgressData } from './tools.js'
+import type { HookProgress } from './hooks/index.js'
+
+type Progress = ToolProgressData | HookProgress
 import type { PermissionMode } from './permissions.js'
 import type { LLMAssistantMessage, LLMError, ToolCallBlock, UserContentBlock } from './llm.js'
 

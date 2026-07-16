@@ -1,7 +1,7 @@
 import { getAPIProvider } from 'src/services/model/providers.js'
 import { getDirectConnectServerUrl, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
-import { stringWidth } from '../../ink/stringWidth.js'
+import { stringWidth } from '../../utils/stringWidth.js'
 import type { LogOption } from '../../types/logs.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isInternalBuild } from '../../utils/envUtils.js'

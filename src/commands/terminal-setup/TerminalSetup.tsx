@@ -146,7 +146,7 @@ export async function setupTerminal(theme: ThemeName): Promise<string> {
 
   // Install shell completions (ant-only, since the completion command is ant-only)
   if (isInternalBuild()) {
-    result += await setupShellCompletion(theme)
+    result += await setupShellCompletion()
   }
   return result
 }
