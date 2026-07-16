@@ -13,14 +13,14 @@
 import { exec } from 'node:child_process'
 import chalk from 'chalk'
 import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
-import { logEvent } from '../services/analytics/index.js'
-import { checkHasTrustDialogAccepted } from '../services/config/config.js'
-import { checkStsCallerIdentity, clearAwsIniCache, isValidAwsStsOutput } from './aws.js'
-import { AwsAuthStatusManager } from './awsAuthStatusManager.js'
-import { logAntError, logForDebugging } from './debug.js'
-import { execSyncWithDefaults_DEPRECATED } from '../services/shell/execFileNoThrow.js'
-import { getInitialSettings, getSettingsForSource } from '../services/settings/settings.js'
-import { jsonParse } from './slowOperations.js'
+import { logEvent } from '../analytics/index.js'
+import { checkHasTrustDialogAccepted } from '../config/config.js'
+import { checkStsCallerIdentity, clearAwsIniCache, isValidAwsStsOutput } from '../../utils/aws.js'
+import { AwsAuthStatusManager } from '../../utils/awsAuthStatusManager.js'
+import { logAntError, logForDebugging } from '../../utils/debug.js'
+import { execSyncWithDefaults_DEPRECATED } from '../shell/execFileNoThrow.js'
+import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'
+import { jsonParse } from '../../utils/slowOperations.js'
 
 // ─── 常量 ────────────────────────────────────────────────────────────────────
 

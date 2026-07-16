@@ -1,8 +1,8 @@
-import { roughTokenCountEstimation as countTokens } from '../services/tokenEstimation.js'
-import type { ContentBlock } from '../types/llm.js'
-import type { AssistantMessage, Message, UserMessage } from '../types/message.js'
-import { normalizeMessagesForAPI } from '../services/messages/./api.js'
-import { jsonStringify } from './slowOperations.js'
+import { roughTokenCountEstimation as countTokens } from '../tokenEstimation.js'
+import type { ContentBlock } from '../../types/llm.js'
+import type { AssistantMessage, Message, UserMessage } from '../../types/message.js'
+import { normalizeMessagesForAPI } from '../messages/./api.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
 
 type TokenStats = {
   toolRequests: Map<string, number>

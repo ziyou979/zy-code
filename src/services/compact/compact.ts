@@ -30,7 +30,7 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import { COMPACT_MAX_OUTPUT_TOKENS } from '../../utils/context.js'
-import { analyzeContext, tokenStatsToStatsigMetrics } from '../../utils/contextAnalysis.js'
+import { analyzeContext, tokenStatsToStatsigMetrics } from '../../services/compact/contextAnalysis.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import { cacheToObject } from '../../utils/fileStateCache.js'
