@@ -218,7 +218,7 @@ export const proactiveModule =
     ? (require('../proactive/index.js') as typeof import('../proactive/index.js'))
     : null
 const cronSchedulerModule = feature('AGENT_TRIGGERS')
-  ? (require('../utils/cronScheduler.js') as typeof import('../utils/cronScheduler.js'))
+  ? (require('../services/jobs/cronScheduler.js') as typeof import('../services/jobs/cronScheduler.js'))
   : null
 const cronJitterConfigModule = feature('AGENT_TRIGGERS')
   ? (require('../services/jobs/cronJitterConfig.js') as typeof import('../services/jobs/cronJitterConfig.js'))
@@ -1232,7 +1232,7 @@ function runHeadlessStreaming(
   // that drains on enqueue while idle. The run() mutex makes this safe
   // during an active turn: the call no-ops and the post-run recheck at
   // the end of run() picks up the queued command.
-  let cronScheduler: import('../utils/cronScheduler.js').CronScheduler | null = null
+  let cronScheduler: import('../services/jobs/cronScheduler.js').CronScheduler | null = null
   if (feature('AGENT_TRIGGERS') && cronSchedulerModule && cronGate?.isKairosCronEnabled()) {
     cronScheduler = cronSchedulerModule.createCronScheduler({
       onFire: (prompt) => {

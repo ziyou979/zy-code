@@ -232,7 +232,7 @@ async function run(): Promise<CommanderCommand<any, any, any>> {
     // 接收器附加。setup() 为默认命令附加接收器，但
     // 子命令（doctor、mcp、plugin、auth）从不调用 setup()，会在
     // process.exit() 时静默丢弃事件。两个初始化都是幂等的。
-    const { initSinks } = await import('./utils/sinks.js')
+    const { initSinks } = await import('./services/telemetry/sinks.js')
     initSinks()
     profileCheckpoint('preAction_after_sinks')
 

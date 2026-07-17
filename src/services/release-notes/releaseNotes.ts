@@ -3,12 +3,12 @@ import { dirname, join } from 'node:path'
 import axios from 'axios'
 import { coerce } from 'semver'
 import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
-import { getZyConfigHomeDir, isInternalBuild } from './envUtils.js'
-import { toError } from './errors.js'
-import { logError } from './log.js'
-import { isEssentialTrafficOnly } from './privacyLevel.js'
-import { gt } from './semver.js'
+import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
+import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
+import { toError } from '../../utils/errors.js'
+import { logError } from '../../utils/log.js'
+import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
+import { gt } from '../../utils/semver.js'
 
 const MAX_RELEASE_NOTES_SHOWN = 5
 

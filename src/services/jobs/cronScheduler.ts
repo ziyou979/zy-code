@@ -16,8 +16,8 @@ import {
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from '../services/analytics/index.js'
-import { cronToHuman } from './cron.js'
+} from '../analytics/index.js'
+import { cronToHuman } from '../../utils/cron.js'
 import {
   type CronJitterConfig,
   type CronTask,
@@ -30,9 +30,9 @@ import {
   oneShotJitteredNextCronRunMs,
   readCronTasks,
   removeCronTasks,
-} from '../services/jobs/cronTasks.js'
-import { releaseSchedulerLock, tryAcquireSchedulerLock } from './cronTasksLock.js'
-import { logForDebugging } from './debug.js'
+} from '../jobs/cronTasks.js'
+import { releaseSchedulerLock, tryAcquireSchedulerLock } from '../../services/jobs/cronTasksLock.js'
+import { logForDebugging } from '../../utils/debug.js'
 
 const CHECK_INTERVAL_MS = 1000
 const FILE_STABILITY_MS = 300

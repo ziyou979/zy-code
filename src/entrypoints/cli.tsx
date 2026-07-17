@@ -169,7 +169,7 @@ async function main(): Promise<void> {
     profileCheckpoint('cli_daemon_path')
     const { enableConfigs } = await import('../services/config/config.js')
     enableConfigs()
-    const { initSinks } = await import('../utils/sinks.js')
+    const { initSinks } = await import('../services/telemetry/sinks.js')
     initSinks()
     const daemonModule = (await import('../daemon/main.js')) as unknown as {
       daemonMain: (args: string[]) => Promise<void>

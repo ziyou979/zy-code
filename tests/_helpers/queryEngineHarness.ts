@@ -40,8 +40,8 @@ export async function installQueryEngineMocks(): Promise<void> {
   // bun test（非 bundle）下 bun:bundle 无法解析；feature() 用于死代码消除。
   mock.module('bun:bundle', () => ({ feature: () => false }))
 
-  const queryContext = await import('../../src/utils/queryContext.js')
-  mock.module('src/utils/queryContext.js', () => ({
+  const queryContext = await import('../../src/services/query/queryContext.js')
+  mock.module('src/services/query/queryContext.js', () => ({
     ...queryContext,
     fetchSystemPromptParts: async () => ({
       defaultSystemPrompt: [],

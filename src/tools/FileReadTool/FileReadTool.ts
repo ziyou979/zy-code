@@ -51,7 +51,7 @@ import {
 } from '../../utils/imageResizer.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
-import { isAutoMemFile } from '../../utils/memoryFileDetection.js'
+import { isAutoMemFile } from '../../services/memory/memoryFileDetection.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'
 import { mapNotebookCellsToToolResult, readNotebook } from '../../services/attachments/notebook.js'
 import { expandPath } from '../../utils/path.js'

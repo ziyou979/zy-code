@@ -26,7 +26,7 @@ import {
   type DailyModelTokens,
   type StatsDateRange,
   type ZyCodeStats,
-} from '../utils/stats.js'
+} from '../services/analytics/stats.js'
 import { resolveThemeSetting } from '../utils/systemTheme.js'
 import { getTheme, themeColorToAnsi } from '../utils/theme.js'
 import { Pane } from './design-system/Pane.js'

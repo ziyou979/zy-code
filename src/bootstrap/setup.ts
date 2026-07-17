@@ -7,9 +7,9 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { getCwd } from 'src/utils/cwd.js'
-import { checkForReleaseNotes } from 'src/utils/releaseNotes.js'
+import { checkForReleaseNotes } from 'src/services/release-notes/releaseNotes.js'
 import { setCwd } from 'src/services/shell/shell.js'
-import { initSinks } from 'src/utils/sinks.js'
+import { initSinks } from 'src/services/telemetry/sinks.js'
 import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   getProjectRoot,

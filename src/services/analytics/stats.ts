@@ -3,15 +3,15 @@ import { open } from 'node:fs/promises'
 import { basename, dirname, join, sep } from 'node:path'
 import { SHELL_TOOL_NAMES } from 'src/shell-eval/shared/shellToolUtils.js'
 import type { ModelUsage } from 'src/types/index.js'
-import { DEFAULT_CURRENCY } from '../types/currency.js'
-import type { Entry, TranscriptMessage } from '../types/logs.js'
-import { logForDebugging } from './debug.js'
-import { errorMessage, isENOENT } from './errors.js'
-import { getFsImplementation } from './fsOperations.js'
-import { readJSONLFile } from './json.js'
-import { SYNTHETIC_MODEL } from '../services/messages/./constants.js'
-import { getProjectsDir, isTranscriptMessage } from '../services/sessionStorage.js'
-import { jsonParse } from './slowOperations.js'
+import { DEFAULT_CURRENCY } from '../../types/currency.js'
+import type { Entry, TranscriptMessage } from '../../types/logs.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { errorMessage, isENOENT } from '../../utils/errors.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
+import { readJSONLFile } from '../../utils/json.js'
+import { SYNTHETIC_MODEL } from '../messages/./constants.js'
+import { getProjectsDir, isTranscriptMessage } from '../sessionStorage.js'
+import { jsonParse } from '../../utils/slowOperations.js'
 import {
   getTodayDateString,
   getYesterdayDateString,
@@ -22,7 +22,7 @@ import {
   saveStatsCache,
   toDateString,
   withStatsCacheLock,
-} from './statsCache.js'
+} from '../../utils/statsCache.js'
 
 export type DailyActivity = {
   date: string // YYYY-MM-DD format

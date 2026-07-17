@@ -28,7 +28,7 @@ import {
   getRecentReleaseNotesSync,
   truncatePath,
 } from '../../services/branding/logoUtils.js'
-import { checkForReleaseNotesSync } from '../../utils/releaseNotes.js'
+import { checkForReleaseNotesSync } from '../../services/release-notes/releaseNotes.js'
 import { OffscreenFreeze } from '../OffscreenFreeze.js'
 import { CondensedLogo } from './CondensedLogo.js'
 import { EmergencyTip } from './EmergencyTip.js'

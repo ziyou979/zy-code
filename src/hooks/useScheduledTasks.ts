@@ -8,7 +8,7 @@ import {
 import { isKairosCronEnabled } from '../tools/ScheduleCronTool/prompt.js'
 import type { Message } from '../types/message.js'
 import { getCronJitterConfig } from '../services/jobs/cronJitterConfig.js'
-import { createCronScheduler } from '../utils/cronScheduler.js'
+import { createCronScheduler } from '../services/jobs/cronScheduler.js'
 import { removeCronTasks } from '../services/jobs/cronTasks.js'
 import { logForDebugging } from '../utils/debug.js'
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js'

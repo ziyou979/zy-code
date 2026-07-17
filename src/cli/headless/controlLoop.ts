@@ -36,8 +36,8 @@ import { extractInboundMessageFields } from 'src/bridge/inboundMessages.js'
 import { resolveAndPrepend } from 'src/bridge/inboundAttachments.js'
 import { createAbortController } from 'src/utils/abortController.js'
 import { generateSessionTitle } from 'src/utils/sessionTitle.js'
-import { buildSideQuestionFallbackParams } from 'src/utils/queryContext.js'
-import { runSideQuestion } from 'src/utils/sideQuestion.js'
+import { buildSideQuestionFallbackParams } from 'src/services/query/queryContext.js'
+import { runSideQuestion } from 'src/services/assistant/sideQuestion.js'
 import { getSettingsWithSources } from 'src/services/settings/settings.js'
 import { settingsChangeDetector } from 'src/services/settings/changeDetector.js'
 import { getLastCacheSafeParams } from 'src/utils/forkedAgent.js'
@@ -117,7 +117,7 @@ export interface ControlLoopDeps {
   mcpClients: MCPServerConnection[]
   injectModelSwitchBreadcrumbs: (modelArg: string, resolvedModel: string) => void
   scheduleProactiveTick: (() => void) | undefined
-  cronScheduler: import('../../utils/cronScheduler.js').CronScheduler | null
+  cronScheduler: import('../../services/jobs/cronScheduler.js').CronScheduler | null
   unsubscribeSkillChanges: () => void
   unsubscribeAuthStatus: (() => void) | undefined
   rateLimitListener: (limits: ZyAILimits) => void

@@ -39,7 +39,7 @@ import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claude-in-chrome/p
 import { getToolSearchBetaHeader, shouldIncludeExperimentalBetas } from 'src/services/feature-flags/betas.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { type EffortLevel } from 'src/utils/effort.js'
-import { isMcpInstructionsDeltaEnabled } from 'src/utils/mcpInstructionsDelta.js'
+import { isMcpInstructionsDeltaEnabled } from 'src/services/mcp/mcpInstructionsDelta.js'
 import { queryCheckpoint } from 'src/utils/queryProfiler.js'
 import { type ThinkingConfig } from 'src/utils/thinking.js'
 import {

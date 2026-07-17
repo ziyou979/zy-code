@@ -20,7 +20,7 @@ import { saveGlobalConfig } from '../../services/config/config.js'
 import { errorMessage } from '../../utils/errors.js'
 import { type CacheSafeParams, getLastCacheSafeParams } from '../../utils/forkedAgent.js'
 import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
-import { runSideQuestion } from '../../utils/sideQuestion.js'
+import { runSideQuestion } from '../../services/assistant/sideQuestion.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 
 type BtwComponentProps = {

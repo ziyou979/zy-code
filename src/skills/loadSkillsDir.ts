@@ -35,7 +35,7 @@ import {
   type MarkdownFile,
   parseSlashCommandToolsFromFrontmatter,
 } from '../utils/markdownConfigLoader.js'
-import { executeShellCommandsInPrompt } from '../utils/promptShellExecution.js'
+import { executeShellCommandsInPrompt } from '../services/shell/promptShellExecution.js'
 import type { SettingSource } from '../services/settings/constants.js'
 import { isSettingSourceEnabled } from '../services/settings/constants.js'
 import { getManagedFilePath } from '../services/settings/managedPath.js'

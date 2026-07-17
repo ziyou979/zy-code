@@ -96,7 +96,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
 
   // Initialize analytics and error reporting sinks. The bridge bypasses the
   // setup() init flow, so we call initSinks() directly to attach sinks here.
-  const { initSinks } = await import('../../utils/sinks.js')
+  const { initSinks } = await import('../../services/telemetry/sinks.js')
   initSinks()
 
   // Gate-aware validation: --spawn / --capacity / --create-session-in-dir require
@@ -842,7 +842,7 @@ export async function runWireHeadless(opts: HeadlessWireOpts, signal: AbortSigna
     '../../services/config/config.js'
   )
   enableConfigs()
-  const { initSinks } = await import('../../utils/sinks.js')
+  const { initSinks } = await import('../../services/telemetry/sinks.js')
   initSinks()
 
   if (!checkHasTrustDialogAccepted()) {

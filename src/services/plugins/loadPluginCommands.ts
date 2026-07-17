@@ -21,7 +21,7 @@ import {
   extractDescriptionFromMarkdown,
   parseSlashCommandToolsFromFrontmatter,
 } from '../../utils/markdownConfigLoader.js'
-import { executeShellCommandsInPrompt } from '../../utils/promptShellExecution.js'
+import { executeShellCommandsInPrompt } from '../../services/shell/promptShellExecution.js'
 import { loadAllPluginsCacheOnly } from './pluginLoader.js'
 import {
   loadPluginOptions,

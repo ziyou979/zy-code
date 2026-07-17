@@ -61,7 +61,7 @@ describe('promptShellExecution', () => {
       setupMocks(mock, { disableSkillShellExecution: true })
 
       const { executeShellCommandsInPrompt } = await import(
-        '../../src/utils/promptShellExecution.js'
+        '../../src/services/shell/promptShellExecution.js'
       )
 
       const textWithShell = 'Hello !`ls -la` world'
@@ -77,7 +77,7 @@ describe('promptShellExecution', () => {
       setupMocks(mock, {})
 
       const { executeShellCommandsInPrompt } = await import(
-        '../../src/utils/promptShellExecution.js'
+        '../../src/services/shell/promptShellExecution.js'
       )
 
       const plainText = 'Hello world, no shell commands here'
@@ -92,7 +92,7 @@ describe('promptShellExecution', () => {
       setupMocks(mock, { disableSkillShellExecution: false })
 
       const { executeShellCommandsInPrompt } = await import(
-        '../../src/utils/promptShellExecution.js'
+        '../../src/services/shell/promptShellExecution.js'
       )
 
       const plainText = 'Just some regular text'

@@ -5,14 +5,14 @@ import {
   getMemoryBaseDir,
   isAutoMemoryEnabled,
   isAutoMemPath,
-} from '../memdir/paths.js'
-import { isAgentMemoryPath } from '../tools/AgentTool/agentMemory.js'
-import { getZyConfigHomeDir } from './envUtils.js'
-import { posixPathToWindowsPath, windowsPathToPosixPath } from '../services/shell/windowsPaths.js'
+} from '../../memdir/paths.js'
+import { isAgentMemoryPath } from '../../tools/AgentTool/agentMemory.js'
+import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { posixPathToWindowsPath, windowsPathToPosixPath } from '../shell/windowsPaths.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemPaths = feature('TEAMMEM')
-  ? (require('../memdir/teamMemPaths.js') as typeof import('../memdir/teamMemPaths.js'))
+  ? (require('../../memdir/teamMemPaths.js') as typeof import('../../memdir/teamMemPaths.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

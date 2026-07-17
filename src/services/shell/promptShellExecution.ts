@@ -1,14 +1,14 @@
 import { randomUUID } from 'node:crypto'
-import { tSync } from '../i18n/index.js'
-import type { Tool, ToolUseContext } from '../tools/tool.js'
-import { BashTool } from '../tools/BashTool/BashTool.js'
-import { logForDebugging } from './debug.js'
-import { errorMessage, MalformedCommandError, ShellError } from './errors.js'
-import type { FrontmatterShell } from '../services/markdown/frontmatterParser.js'
-import { createAssistantMessage } from '../services/messages/./constructors.js'
-import { hasPermissionsToUseTool } from '../services/permissions/permissions.js'
-import { getInitialSettings } from '../services/settings/settings.js'
-import { processToolResultBlock } from './toolResultStorage.js'
+import { tSync } from '../../i18n/index.js'
+import type { Tool, ToolUseContext } from '../../tools/tool.js'
+import { BashTool } from '../../tools/BashTool/BashTool.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { errorMessage, MalformedCommandError, ShellError } from '../../utils/errors.js'
+import type { FrontmatterShell } from '../markdown/frontmatterParser.js'
+import { createAssistantMessage } from '../messages/./constructors.js'
+import { hasPermissionsToUseTool } from '../permissions/permissions.js'
+import { getInitialSettings } from '../settings/settings.js'
+import { processToolResultBlock } from '../../utils/toolResultStorage.js'
 
 // Narrow structural slice both BashTool and PowerShellTool satisfy.
 // We can't use `typeof BashTool` directly: BashTool's input schema has
@@ -33,7 +33,7 @@ const getPowerShellTool = (() => {
   return (): PromptShellTool => {
     if (!cached) {
       cached = (
-        require('../tools/PowerShellTool/PowerShellTool.js') as typeof import('../tools/PowerShellTool/PowerShellTool.js')
+        require('../../tools/PowerShellTool/PowerShellTool.js') as typeof import('../../tools/PowerShellTool/PowerShellTool.js')
       ).PowerShellTool
     }
     return cached

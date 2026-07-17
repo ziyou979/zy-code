@@ -1,7 +1,7 @@
 import { homedir, platform } from 'node:os'
 import { join } from 'node:path'
-import { getFsImplementation } from './fsOperations.js'
-import type { IdeType } from '../services/ide/ide.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
+import type { IdeType } from '../ide/ide.js'
 
 const PLUGIN_PREFIX = 'zy-code-jetbrains-plugin'
 

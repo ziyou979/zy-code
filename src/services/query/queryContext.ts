@@ -9,19 +9,19 @@
  */
 
 import { getMainLoopModel } from 'src/services/model/model.js'
-import type { Command } from '../commands/index.js'
-import { getSystemPrompt } from '../constants/prompts.js'
-import { getSystemContext, getUserContext } from '../services/context/context.js'
-import type { MCPServerConnection } from '../services/mcp/types.js'
-import type { AppState } from '../state/AppStateStore.js'
-import type { Tools, ToolUseContext } from '../tools/tool.js'
-import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
-import type { Message } from '../types/message.js'
-import { createAbortController } from './abortController.js'
-import type { FileStateCache } from './fileStateCache.js'
-import type { CacheSafeParams } from './forkedAgent.js'
-import { asSystemPrompt } from './systemPromptType.js'
-import { shouldEnableThinkingByDefault, type ThinkingConfig } from './thinking.js'
+import type { Command } from '../../commands/index.js'
+import { getSystemPrompt } from '../../constants/prompts.js'
+import { getSystemContext, getUserContext } from '../context/context.js'
+import type { MCPServerConnection } from '../mcp/types.js'
+import type { AppState } from '../../state/AppStateStore.js'
+import type { Tools, ToolUseContext } from '../../tools/tool.js'
+import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
+import type { Message } from '../../types/message.js'
+import { createAbortController } from '../../utils/abortController.js'
+import type { FileStateCache } from '../../utils/fileStateCache.js'
+import type { CacheSafeParams } from '../../utils/forkedAgent.js'
+import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { shouldEnableThinkingByDefault, type ThinkingConfig } from '../../utils/thinking.js'
 
 /**
  * 获取构成 API 缓存键前缀的三个上下文部分：
