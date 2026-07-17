@@ -1,7 +1,7 @@
 import { type ToolUseContext, type ToolPermissionContext } from '../../../tools/tool.js'
 import { getViewedTeammateTask } from '../../../state/selectors.js'
 import type { Message } from 'src/types/message.js'
-import { getContextWindowForModel } from '../../utils/context.js'
+import { getContextWindowForModel } from '../../context/modelContext.js'
 import { matchingRuleForInput } from '../../permissions/filesystem.js'
 import {
   getTotalCost,
@@ -27,7 +27,7 @@ import {
 import { getAgentName, getAgentId, getTeamName, isTeamLead } from '../../utils/teammate.js'
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
 import { removeTeammateFromTeamFile } from 'src/services/swarm/teamHelpers.js'
-import { unassignTeammateTasks } from '../../utils/tasks.js'
+import { unassignTeammateTasks } from '../../tasks-service/tasks.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { Attachment, VERIFY_PLAN_REMINDER_CONFIG } from './types.js'
 /**

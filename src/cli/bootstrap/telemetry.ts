@@ -15,7 +15,7 @@ import {
 import { logSkillsLoaded } from '../../services/telemetry/skillLoadedEvent.js'
 import type { LoadedPlugin, PluginError, PluginLoadResult } from '../../services/plugins/types.js'
 import { isAutoUpdaterDisabled } from '../../services/config/config.js'
-import { getContextWindowForModel } from '../../utils/context.js'
+import { getContextWindowForModel } from '../../services/context/modelContext.js'
 import { getCwd } from '../../utils/cwd.js'
 import {
   hasNodeOption,

@@ -56,7 +56,7 @@ import {
   saveMode,
   saveWorktreeState,
 } from '../sessionStorage.js'
-import { isTodoV2Enabled } from '../../utils/tasks.js'
+import { isTodoV2Enabled } from '../../services/tasks-service/tasks.js'
 import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
 import { getCurrentWorktreeSession, restoreWorktreeSession } from '../worktree/worktree.js'
 

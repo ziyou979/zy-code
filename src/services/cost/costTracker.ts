@@ -39,7 +39,7 @@ import {
 import type { TokenUsage as Usage } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import { getCurrentProjectConfig, saveCurrentProjectConfig } from '../config/config.js'
-import { getContextWindowForModel, getModelMaxOutputTokens } from '../../utils/context.js'
+import { getContextWindowForModel, getModelMaxOutputTokens } from '../../services/context/modelContext.js'
 import { formatDuration, formatNumber } from '../../utils/format.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
 import { SYNTHETIC_MODEL } from '../messages/constants.js'

@@ -29,7 +29,7 @@ import type {
   SystemMessage,
   UserMessage,
 } from '../../types/message.js'
-import { COMPACT_MAX_OUTPUT_TOKENS } from '../../utils/context.js'
+import { COMPACT_MAX_OUTPUT_TOKENS } from '../../services/context/modelContext.js'
 import { analyzeContext, tokenStatsToStatsigMetrics } from '../compact/contextAnalysis.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'

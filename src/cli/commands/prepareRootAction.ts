@@ -52,7 +52,7 @@ import { getSessionIngressAuthToken } from '../../services/auth/sessionIngressAu
 import { sessionIdExists } from '../../services/sessionStorage.js'
 import type { ValidationError } from '../../services/settings/validation.js'
 import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
-import { DEFAULT_TASKS_MODE_TASK_LIST_ID } from '../../utils/tasks.js'
+import { DEFAULT_TASKS_MODE_TASK_LIST_ID } from '../../services/tasks-service/tasks.js'
 import { validateUuid } from '../../utils/uuid.js'
 import { isWorktreeModeEnabled } from '../../utils/worktreeModeEnabled.js'
 import type { RootActionOptions } from '../assembly/types.js'

@@ -39,7 +39,7 @@ import {
   createUserMessage,
 } from '../services/messages/./constructors.js'
 import type { SystemPrompt } from '../utils/systemPromptType.js'
-import { getTaskListId, listTasks } from '../utils/tasks.js'
+import { getTaskListId, listTasks } from '../services/tasks-service/tasks.js'
 import { getAgentName, getTeamName, isTeammate } from '../utils/teammate.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */

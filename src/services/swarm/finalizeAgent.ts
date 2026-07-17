@@ -19,7 +19,7 @@ import type { AppState } from '../../state/AppStateStore.js'
 import { isTerminalTaskStatus } from '../../tasks/task.js'
 import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getTask, updateTaskCAS } from '../../utils/tasks.js'
+import { getTask, updateTaskCAS } from '../../services/tasks-service/tasks.js'
 import { clearExternalToolResults } from './externalToolResult.js'
 import { deleteHibernateSnapshot } from './hibernateSnapshot.js'
 import { removeMemberByAgentId } from './teamHelpers.js'
@@ -195,8 +195,8 @@ export async function finalizeInProcessAgent(
  */
 async function reconcileOnFinalize(taskId: string, agentId: string): Promise<void> {
   try {
-    const { getTask } = await import('../../utils/tasks.js')
-    const { updateTaskCAS } = await import('../../utils/tasks.js')
+    const { getTask } = await import('../../services/tasks-service/tasks.js')
+    const { updateTaskCAS } = await import('../../services/tasks-service/tasks.js')
     logForDebugging(`[finalizeAgent] reconcileOnFinalize ${taskId} (agent=${agentId})`)
   } catch {
     // 安全网，失败不阻塞

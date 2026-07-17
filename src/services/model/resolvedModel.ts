@@ -1,7 +1,7 @@
 // 模型信息值对象 —— 在模型选择时一次性解析所有信息，后续流程只传该对象。
 // 消除对全局状态（settings、env、缓存文件）的反复查询。
 
-import { getContextWindowForModel, getMaxThinkingTokensForModel } from '../../utils/context.js'
+import { getContextWindowForModel, getMaxThinkingTokensForModel } from '../../services/context/modelContext.js'
 import { modelSupportsEffort } from '../effort/effort.js'
 import { modelSupportsAdaptiveThinking, modelSupportsThinking } from '../../utils/thinking.js'
 import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'

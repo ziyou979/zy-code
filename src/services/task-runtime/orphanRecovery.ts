@@ -10,7 +10,7 @@
 import type { AppState } from '../../state/AppStateStore.js'
 import { getRunningTeammatesSorted } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { listTasks, updateTask } from '../../utils/tasks.js'
+import { listTasks, updateTask } from '../../services/tasks-service/tasks.js'
 
 /** Orphan 判定宽限期（owner 消失后多久才标记为 orphaned） */
 const ORPHAN_GRACE_MS = 5 * 60 * 1000 // 5 分钟

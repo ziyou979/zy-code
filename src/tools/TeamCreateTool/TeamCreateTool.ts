@@ -21,7 +21,7 @@ import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js
 import { getCwd } from '../../utils/cwd.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { ensureTasksDir, resetTaskList, setLeaderTeamName } from '../../utils/tasks.js'
+import { ensureTasksDir, resetTaskList, setLeaderTeamName } from '../../services/tasks-service/tasks.js'
 import { generateWordSlug } from '../../utils/words.js'
 import { TEAM_CREATE_TOOL_NAME } from './constants.js'
 import { getPrompt } from './prompt.js'

@@ -30,7 +30,7 @@ import {
 } from '../services/permissions/permissionMode.js'
 import { applyPermissionUpdate } from '../services/permissions/permissionUpdate.js'
 import { jsonStringify } from '../utils/slowOperations.js'
-import { unassignTeammateTasks } from '../utils/tasks.js'
+import { unassignTeammateTasks } from '../services/tasks-service/tasks.js'
 import { getAgentName, isPlanModeRequired, isTeamLead, isTeammate } from '../utils/teammate.js'
 import { isInProcessTeammate } from '../utils/teammateContext.js'
 import {

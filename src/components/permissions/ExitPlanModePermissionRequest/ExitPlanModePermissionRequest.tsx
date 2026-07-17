@@ -26,7 +26,7 @@ import { EXIT_PLAN_MODE_TOOL_NAME } from '../../../tools/ExitPlanModeTool/consta
 import type { AllowedPrompt } from '../../../tools/ExitPlanModeTool/ExitPlanModeTool.js'
 import { TEAM_CREATE_TOOL_NAME } from '../../../tools/TeamCreateTool/constants.js'
 import { isAgentSwarmsEnabled } from '../../../services/swarm/agentSwarmsEnabled.js'
-import { calculateContextPercentages, getContextWindowForModel } from '../../../utils/context.js'
+import { calculateContextPercentages, getContextWindowForModel } from '../../../services/context/modelContext.js'
 import { getExternalEditor } from '../../../terminal-ui/editor.js'
 import { getDisplayPath } from '../../../utils/file.js'
 import { toIDEDisplayName } from '../../../services/ide/ide.js'

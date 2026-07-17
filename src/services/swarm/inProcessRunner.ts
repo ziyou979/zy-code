@@ -90,7 +90,7 @@ import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { claimTask, getTask, listTasks, type Task, updateTask } from '../../utils/tasks.js'
+import { claimTask, getTask, listTasks, type Task, updateTask } from '../../services/tasks-service/tasks.js'
 import type { TeammateContext } from '../../utils/teammateContext.js'
 import { runWithTeammateContext } from '../../utils/teammateContext.js'
 import {

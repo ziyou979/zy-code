@@ -5,7 +5,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { type ToolUseContext } from '../../../tools/tool.js'
 import type { IDESelection } from '../../../hooks/useIdeSelection.js'
-import { isTodoV2Enabled } from '../../utils/tasks.js'
+import { isTodoV2Enabled } from '../../tasks-service/tasks.js'
 import { getPlanFilePath, getPlan } from '../../plans/plans.js'
 import { logError } from '../../utils/log.js'
 import { logAntError } from '../../utils/debug.js'

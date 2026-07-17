@@ -1,11 +1,11 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import 标记不可重排序
 import { getModelCapability } from 'src/services/model/modelCapabilities.js'
-import { getInitialSettings } from '../services/settings/settings.js'
+import { getInitialSettings } from '../settings/settings.js'
 import {
   getLocalMaxOutputTokens,
   getLocalContextWindow,
   getLocalMaxThinkingTokens,
-} from '../services/settings/localModelCapabilities.js'
+} from '../settings/localModelCapabilities.js'
 
 // 默认上下文窗口大小（200k tokens）
 export const MODEL_CONTEXT_WINDOW_DEFAULT = 200_000

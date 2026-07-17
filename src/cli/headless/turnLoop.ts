@@ -64,7 +64,7 @@ import {
   isShutdownApproved,
 } from '../../utils/teammateMailbox.js'
 import { removeTeammateFromTeamFile } from '../../services/swarm/teamHelpers.js'
-import { unassignTeammateTasks } from '../../utils/tasks.js'
+import { unassignTeammateTasks } from '../../services/tasks-service/tasks.js'
 import { getRunningTasks } from '../../services/task-runtime/framework.js'
 import { isBackgroundTask } from '../../tasks/types.js'
 import { drainWireEvents } from '../../utils/bridgeEventQueue.js'

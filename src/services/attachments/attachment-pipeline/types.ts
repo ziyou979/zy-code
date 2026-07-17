@@ -1,6 +1,6 @@
 import { type Output as FileReadToolOutput } from '../../../tools/FileReadTool/FileReadTool.js'
 import type { TodoList } from 'src/services/todo/types.js'
-import { type Task } from '../../utils/tasks.js'
+import { type Task } from '../../tasks-service/tasks.js'
 import { type MemoryFileInfo } from '../../utils/agentsMd.js'
 import type { DiagnosticFile } from '../../diagnosticTracking.js'
 import type { MessageOrigin } from 'src/types/message.js'

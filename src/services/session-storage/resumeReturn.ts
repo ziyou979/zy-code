@@ -1,5 +1,5 @@
 import type { Message } from '../../types/message.js'
-import { getContextWindowForModel } from '../../utils/context.js'
+import { getContextWindowForModel } from '../../services/context/modelContext.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
 
 export type ResumeReturnPrompt = {

@@ -1,6 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { CIRCLE_DOUBLE } from '../../constants/figures.js'
-import type { Task } from '../../utils/tasks.js'
+import type { Task } from '../../services/tasks-service/tasks.js'
 import { feature } from 'bun:bundle'
 // Dead code elimination: conditional import for COORDINATOR_MODE
 /* eslint-disable @typescript-eslint/no-require-imports */

@@ -16,7 +16,7 @@ import type { Command } from '../../../commands/types.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { getProjectRoot } from '../../../bootstrap/runtime/runtimeContext.js'
 import { formatCommandsWithinBudget } from '../../../tools/SkillTool/prompt.js'
-import { getContextWindowForModel } from '../../utils/context.js'
+import { getContextWindowForModel } from '../../context/modelContext.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { FILE_READ_TOOL_NAME } from 'src/tools/FileReadTool/prompt.js'
 import { type FileStateCache } from '../../utils/fileStateCache.js'

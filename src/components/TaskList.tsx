@@ -20,7 +20,7 @@ import { isAgentSwarmsEnabled } from '../services/swarm/agentSwarmsEnabled.js'
 import { count } from '../utils/array.js'
 import { summarizeRecentActivities } from '../services/compact/collapseReadSearch.js'
 import { truncateToWidth } from '../utils/format.js'
-import { isTodoV2Enabled, type Task } from '../utils/tasks.js'
+import { isTodoV2Enabled, type Task } from '../services/tasks-service/tasks.js'
 import type { Theme } from '../utils/theme.js'
 import ThemedText from './design-system/ThemedText.js'
 

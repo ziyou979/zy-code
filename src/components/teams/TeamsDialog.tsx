@@ -37,7 +37,7 @@ import {
   permissionModeSymbol,
 } from '../../services/permissions/permissionMode.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { listTasks, unassignTeammateTasks } from '../../utils/tasks.js'
+import { listTasks, unassignTeammateTasks } from '../../services/tasks-service/tasks.js'
 import {
   getTeammateStatuses,
   type TeammateStatus,

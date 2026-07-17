@@ -15,7 +15,7 @@ import {
   type TaskStatus,
   TaskStatusSchema,
   updateTask,
-} from '../../utils/tasks.js'
+} from '../../services/tasks-service/tasks.js'
 import { getAgentId, getAgentName, getTeammateColor, getTeamName } from '../../utils/teammate.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'
 import { VERIFICATION_AGENT_TYPE } from '../AgentTool/constants.js'

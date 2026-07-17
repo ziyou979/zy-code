@@ -29,7 +29,7 @@ import {
 import type { Message } from '../../types/message.js'
 import { countToolDefinitionTokens, TOOL_TOKEN_COUNT_OVERHEAD } from '../../services/compact/analyzeContext.js'
 import { count } from '../../utils/array.js'
-import { getContextWindowForModel } from '../../utils/context.js'
+import { getContextWindowForModel } from '../../services/context/modelContext.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { jsonStringify } from '../../utils/slowOperations.js'

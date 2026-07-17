@@ -20,7 +20,7 @@ import {
   TOKEN_EFFICIENT_TOOLS_BETA_HEADER,
   TOOL_SEARCH_TOOL_BETA_HEADER,
 } from '../../constants/betas.js'
-import { getContextWindowForModel } from '../../utils/context.js'
+import { getContextWindowForModel } from '../../services/context/modelContext.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import {
   getLocalModelBetaHeaders,
