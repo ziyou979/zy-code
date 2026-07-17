@@ -6,10 +6,10 @@ import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import { CROSS } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { color, Text } from '../../ink/index.js'
-import type { MCPServerConnection } from '../mcp/types.js'
+import type { MCPServerConnection } from '../../services/mcp/types.js'
 import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from '../../utils/agentsMd.js'
-import { getAccountInformation } from '../auth/auth.js'
-import { getDoctorDiagnostic } from '../doctor/doctorDiagnostic.js'
+import { getAccountInformation } from '../../services/auth/auth.js'
+import { getDoctorDiagnostic } from '../../services/doctor/doctorDiagnostic.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { getDisplayPath } from '../../utils/file.js'
 import { formatNumber } from '../../utils/format.js'
@@ -18,19 +18,19 @@ import {
   type IDEExtensionInstallationStatus,
   isJetBrainsIde,
   toIDEDisplayName,
-} from '../ide/ide.js'
+} from '../../services/ide/ide.js'
 import { getMTLSConfig } from '../../utils/mtls.js'
 import { getProxyUrl } from '../../utils/proxy.js'
-import { getSettingsWithAllErrors } from '../settings/allErrors.js'
+import { getSettingsWithAllErrors } from '../../services/settings/allErrors.js'
 import {
   getEnabledSettingSources,
   getSettingSourceDisplayNameCapitalized,
-} from '../settings/constants.js'
+} from '../../services/settings/constants.js'
 import {
   getManagedFileSettingsPresence,
   getPolicySettingsOrigin,
   getSettingsForSource,
-} from '../settings/settings.js'
+} from '../../services/settings/settings.js'
 import type { ThemeName } from '../../utils/theme.js'
 export type Property = {
   label?: string

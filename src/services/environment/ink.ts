@@ -1,4 +1,4 @@
-import type { TextProps } from '../../ink/index.js'
+type TextProps = import('../../ink/index.js').TextProps
 import {
   AGENT_COLOR_TO_THEME_COLOR,
   type AgentColorName,

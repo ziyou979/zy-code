@@ -1,7 +1,6 @@
 import chalk from 'chalk'
 import { marked, type Token, type Tokens } from 'marked'
 import stripAnsi from 'strip-ansi'
-import { color } from '../../components/design-system/color.js'
 import { BLOCKQUOTE_BAR } from '../../constants/figures.js'
 import { stringWidth } from '../../utils/stringWidth.js'
 import { supportsHyperlinks } from '../../utils/supportsHyperlinks.js'
@@ -125,7 +124,7 @@ export function formatToken(
     }
     case 'codespan': {
       // 行内代码
-      return color('permission', theme)(token.text)
+      return chalk.magenta(token.text)
     }
     case 'em':
       return chalk.italic(

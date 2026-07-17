@@ -13,7 +13,11 @@ import {
   getCommandName,
   isCommandEnabled,
 } from '../../commands/index.js'
-import { selectableUserMessagesFilter } from '../../components/messageSelectorUtils.js'
+import type { Message, UserMessage } from '../../types/message.js'
+
+function selectableUserMessagesFilter(message: Message): message is UserMessage {
+  return message.type === 'user' && message.message.content.length > 0
+}
 import type { SpinnerMode } from '../../types/spinner.js'
 import type { QuerySource } from '../../constants/querySource.js'
 import { expandPastedTextRefs, parseReferences } from '../session-storage/history.js'
