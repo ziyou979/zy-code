@@ -49,7 +49,7 @@ import {
   isSessionActivityTrackingActive,
   sendSessionActivitySignal,
 } from '../../utils/sessionActivity.js'
-import { processSessionStartHooks } from '../../utils/sessionStart.js'
+import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 /* eslint-enable @typescript-eslint/no-require-imports */

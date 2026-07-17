@@ -37,7 +37,7 @@ import { isInternalBuild } from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 import { applyConfigEnvironmentVariables } from '../../services/environment/managedEnv.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'
-import { processSessionStartHooks, processSetupHooks } from '../../utils/sessionStart.js'
+import { processSessionStartHooks, processSetupHooks } from '../../services/session-storage/sessionStart.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
 import {
   dispatchResumeMode,

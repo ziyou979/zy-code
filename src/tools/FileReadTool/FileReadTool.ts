@@ -55,8 +55,8 @@ import { isAutoMemFile } from '../../utils/memoryFileDetection.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'
 import { mapNotebookCellsToToolResult, readNotebook } from '../../services/attachments/notebook.js'
 import { expandPath } from '../../utils/path.js'
-import { extractPDFPages, getPDFPageCount, readPDF } from '../../utils/pdf.js'
-import { isPDFExtension, isPDFSupported, parsePDFPageRange } from '../../utils/pdfUtils.js'
+import { extractPDFPages, getPDFPageCount, readPDF } from '../../services/attachments/pdf.js'
+import { isPDFExtension, isPDFSupported, parsePDFPageRange } from '../../services/attachments/pdfUtils.js'
 import {
   checkReadPermissionForTool,
   matchingRuleForInput,

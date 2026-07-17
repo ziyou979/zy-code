@@ -337,7 +337,7 @@ export async function setup(
         })
       })
     }
-    void import('../utils/sessionFileAccessHooks.js').then((m) => m.registerSessionFileAccessHooks()) // 注册会话文件访问分析 hooks
+    void import('../services/hooks/sessionFileAccessHooks.js').then((m) => m.registerSessionFileAccessHooks()) // 注册会话文件访问分析 hooks
     if (feature('TEAMMEM')) {
       void import('../services/team-memory-sync/watcher.js').then((m) => m.startTeamMemoryWatcher()) // 启动团队内存同步监视器
     }

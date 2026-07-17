@@ -12,7 +12,7 @@ import { errorMessage } from '../../utils/errors.js'
 import { createCompactBoundaryMessage, createUserMessage } from '../messages/constructors.js'
 import { isCompactBoundaryMessage } from '../messages/predicates.js'
 import { getSessionMemoryPath } from '../permissions/filesystem.js'
-import { processSessionStartHooks } from '../../utils/sessionStart.js'
+import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
 import { extractDiscoveredToolNames } from '../../utils/toolSearch.js'
 import {

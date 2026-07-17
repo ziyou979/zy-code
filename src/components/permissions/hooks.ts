@@ -18,7 +18,7 @@ import { useSetAppState } from '../../state/AppState.js'
 import { env } from '../../utils/env.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { type CompletionType, logUnaryEvent } from '../../utils/unaryLogging.js'
+import { type CompletionType, logUnaryEvent } from '../../services/telemetry/unaryLogging.js'
 
 export type UnaryEvent = {
   completion_type: CompletionType

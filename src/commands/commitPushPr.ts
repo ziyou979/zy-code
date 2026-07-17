@@ -3,7 +3,7 @@ import { getAttributionTexts, getEnhancedPRAttribution } from '../services/attri
 import { isInternalBuild } from '../utils/envUtils.js'
 import { getDefaultBranch } from '../utils/git.js'
 import { executeShellCommandsInPrompt } from '../utils/promptShellExecution.js'
-import { getUndercoverInstructions, isUndercover } from '../utils/undercover.js'
+import { getUndercoverInstructions, isUndercover } from '../services/undercover/undercover.js'
 
 const ALLOWED_TOOLS = [
   'Bash(git checkout --branch:*)',

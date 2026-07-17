@@ -32,7 +32,7 @@ import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../servic
 import { logError } from '../../utils/log.js'
 import { clearAllPlanSlugs } from '../../utils/plans.js'
 import { setCwd } from '../../services/shell/shell.js'
-import { processSessionStartHooks } from '../../utils/sessionStart.js'
+import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
 import {
   clearSessionMetadata,
   getAgentTranscriptPath,

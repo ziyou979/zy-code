@@ -1,15 +1,15 @@
 import { getMainThreadAgentType } from 'src/bootstrap/runtime/runtimeContext.js'
-import type { AggregatedHookResult } from '../services/hooks/types.js'
-import type { Message } from '../types/message.js'
-import { createAttachmentMessage } from '../services/attachments/attachments.js'
-import { logForDebugging } from './debug.js'
-import { withDiagnosticsTiming } from './diagLogs.js'
-import { isBareMode } from './envUtils.js'
-import { updateWatchPaths } from '../services/hooks/fileChangedWatcher.js'
-import { shouldAllowManagedHooksOnly } from '../services/hooks/hooksConfigSnapshot.js'
-import { executeSessionStartHooks, executeSetupHooks } from '../services/hooks.js'
-import { logError } from './log.js'
-import { loadPluginHooks } from '../services/plugins/loadPluginHooks.js'
+import type { AggregatedHookResult } from '../hooks/types.js'
+import type { Message } from '../../types/message.js'
+import { createAttachmentMessage } from '../attachments/attachments.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { withDiagnosticsTiming } from '../../utils/diagLogs.js'
+import { isBareMode } from '../../utils/envUtils.js'
+import { updateWatchPaths } from '../hooks/fileChangedWatcher.js'
+import { shouldAllowManagedHooksOnly } from '../hooks/hooksConfigSnapshot.js'
+import { executeSessionStartHooks, executeSetupHooks } from '../hooks.js'
+import { logError } from '../../utils/log.js'
+import { loadPluginHooks } from '../plugins/loadPluginHooks.js'
 
 type SessionStartHooksOptions = {
   sessionId?: string
@@ -44,10 +44,10 @@ export function takeSessionTitle(): string | undefined {
  */
 async function reloadSkillsFromHook(): Promise<void> {
   try {
-    const { clearCommandMemoizationCaches, getSkillToolCommands } = await import('../commands/index.js')
-    const { clearDynamicSkills } = await import('../skills/loadSkillsDir.js')
-    const { clearSkillCaches } = await import('../skills/loadSkillsDir.js')
-    const { clearPluginSkillsCache } = await import('../services/plugins/loadPluginCommands.js')
+    const { clearCommandMemoizationCaches, getSkillToolCommands } = await import('../../commands/index.js')
+    const { clearDynamicSkills } = await import('../../skills/loadSkillsDir.js')
+    const { clearSkillCaches } = await import('../../skills/loadSkillsDir.js')
+    const { clearPluginSkillsCache } = await import('../plugins/loadPluginCommands.js')
     clearCommandMemoizationCaches()
     clearSkillCaches()
     clearDynamicSkills()

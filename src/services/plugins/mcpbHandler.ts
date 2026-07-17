@@ -16,7 +16,7 @@ import { getFsImplementation } from '../../utils/fsOperations.js'
 import { logError } from '../../utils/log.js'
 import { getInitialSettings, updateSettingsForSource } from '../settings/settings.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
-import { getSystemDirectories } from '../../utils/systemDirectories.js'
+import { getSystemDirectories } from '../../services/environment/systemDirectories.js'
 import type { McpServerConfig } from '../mcp/types.js'
 import { classifyFetchError, logPluginFetch } from './fetchTelemetry.js'
 /**

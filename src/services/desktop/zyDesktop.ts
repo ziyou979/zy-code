@@ -1,11 +1,11 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { type McpServerConfig, McpStdioServerConfigSchema } from '../services/mcp/types.js'
-import { getErrnoCode } from './errors.js'
-import { safeParseJSON } from './json.js'
-import { logError } from './log.js'
-import { getPlatform, SUPPORTED_PLATFORMS } from '../services/shell/platform.js'
+import { type McpServerConfig, McpStdioServerConfigSchema } from '../mcp/types.js'
+import { getErrnoCode } from '../../utils/errors.js'
+import { safeParseJSON } from '../../utils/json.js'
+import { logError } from '../../utils/log.js'
+import { getPlatform, SUPPORTED_PLATFORMS } from '../shell/platform.js'
 
 export async function getZyDesktopConfigPath(): Promise<string> {
   const platform = getPlatform()

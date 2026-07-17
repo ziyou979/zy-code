@@ -20,7 +20,7 @@ import { findGitRoot, gitExe } from '../utils/git.js'
 import { createBaseHookInput, executeFileSuggestionCommand } from '../services/hooks.js'
 import { logError } from '../utils/log.js'
 import { expandPath } from '../utils/path.js'
-import { ripGrep } from '../utils/ripgrep.js'
+import { ripGrep } from '../services/file-search/ripgrep.js'
 import { getInitialSettings } from '../services/settings/settings.js'
 import { createSignal } from '../utils/signal.js'
 

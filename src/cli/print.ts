@@ -108,7 +108,7 @@ import {
   processSessionStartHooks,
   processSetupHooks,
   takeInitialUserMessage,
-} from 'src/utils/sessionStart.js'
+} from 'src/services/session-storage/sessionStart.js'
 import { DEFAULT_OUTPUT_STYLE_NAME, getAllOutputStyles } from 'src/constants/outputStyles.js'
 import { TICK_TAG } from 'src/constants/xml.js'
 import { getInitialSettings } from 'src/services/settings/settings.js'

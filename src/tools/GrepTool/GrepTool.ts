@@ -15,7 +15,7 @@ import {
 import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
 import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
 import { getGlobExclusionsForPluginCache } from '../../services/plugins/orphanedPluginFilter.js'
-import { ripGrep } from '../../utils/ripgrep.js'
+import { ripGrep } from '../../services/file-search/ripgrep.js'
 import { semanticBoolean } from '../../utils/semanticBoolean.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
 import { plural } from '../../utils/stringUtils.js'

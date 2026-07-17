@@ -6,13 +6,13 @@ import { join as posixJoin } from 'node:path/posix'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { getPlatform } from '../../services/shell/platform.js'
-import { getSessionEnvironmentScript } from '../../utils/sessionEnvironment.js'
+import { getSessionEnvironmentScript } from '../../services/environment/sessionEnvironment.js'
 import { getSessionEnvVars } from '../../utils/sessionEnvVars.js'
 import {
   ensureSocketInitialized,
   getZyTmuxEnv,
   hasTmuxToolBeenUsed,
-} from '../../utils/tmuxSocket.js'
+} from '../../services/shell/tmuxSocket.js'
 import { windowsPathToPosixPath } from '../../services/shell/windowsPaths.js'
 import { rearrangePipeCommand } from '../bash/bashPipeCommand.js'
 import { createAndSaveSnapshot } from '../bash/shellSnapshot.js'

@@ -8,7 +8,7 @@ import { shouldIncludeGitInstructions } from '../../services/git/settingsBehavio
 import { getZyTempDir } from '../../services/permissions/filesystem.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getDefaultBashTimeoutMs, getMaxBashTimeoutMs } from '../../utils/timeouts.js'
-import { getUndercoverInstructions, isUndercover } from '../../utils/undercover.js'
+import { getUndercoverInstructions, isUndercover } from '../../services/undercover/undercover.js'
 import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
 import { FILE_EDIT_TOOL_NAME } from '../FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'

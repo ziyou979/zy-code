@@ -4,7 +4,7 @@ import type { ShellCommand } from '../shell/shellCommand.js'
 
 const hookLog = createDebugLog('hooks')
 
-import { invalidateSessionEnvCache } from '../../utils/sessionEnvironment.js'
+import { invalidateSessionEnvCache } from '../../services/environment/sessionEnvironment.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { emitHookResponse, startHookProgressInterval } from './hookEvents.js'
 

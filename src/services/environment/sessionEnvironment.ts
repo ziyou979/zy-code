@@ -1,10 +1,10 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { logForDebugging } from './debug.js'
-import { getZyConfigHomeDir } from './envUtils.js'
-import { errorMessage, getErrnoCode } from './errors.js'
-import { getPlatform } from '../services/shell/platform.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { errorMessage, getErrnoCode } from '../../utils/errors.js'
+import { getPlatform } from '../shell/platform.js'
 // Cache states:
 // undefined = not yet loaded (need to check disk)
 // null = checked disk, no files exist (don't check again)

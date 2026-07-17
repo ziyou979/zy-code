@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { PDF_MAX_EXTRACT_SIZE, PDF_TARGET_RAW_SIZE } from '../constants/apiLimits.js'
-import { errorMessage } from './errors.js'
-import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
-import { formatFileSize } from './format.js'
-import { getFsImplementation } from './fsOperations.js'
-import { getToolResultsDir } from './toolResultStorage.js'
+import { PDF_MAX_EXTRACT_SIZE, PDF_TARGET_RAW_SIZE } from '../../constants/apiLimits.js'
+import { errorMessage } from '../../utils/errors.js'
+import { execFileNoThrow } from '../shell/execFileNoThrow.js'
+import { formatFileSize } from '../../utils/format.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getToolResultsDir } from '../../utils/toolResultStorage.js'
 
 export type PDFError = {
   reason: 'empty' | 'too_large' | 'password_protected' | 'corrupted' | 'unknown' | 'unavailable'

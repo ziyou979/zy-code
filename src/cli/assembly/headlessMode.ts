@@ -32,7 +32,7 @@ import {
   checkAndDisableBypassPermissions,
   verifyAutoModeGateAccess,
 } from '../../services/permissions/permissionSetup.js'
-import { processSessionStartHooks } from '../../utils/sessionStart.js'
+import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
 import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 // ---------- 参数接口 ----------

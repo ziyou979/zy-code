@@ -393,7 +393,7 @@ export async function mcpAddFromDesktopHandler(options: { scope?: string }): Pro
       platform: platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       source: 'desktop' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
-    const { readZyDesktopMcpServers } = await import('../../utils/zyDesktop.js')
+    const { readZyDesktopMcpServers } = await import('../../services/desktop/zyDesktop.js')
     const servers = await readZyDesktopMcpServers()
     if (Object.keys(servers).length === 0) {
       cliOk(

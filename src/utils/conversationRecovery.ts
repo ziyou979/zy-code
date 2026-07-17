@@ -27,7 +27,7 @@ import { filterUnresolvedToolUses } from '../services/messages/./api.js'
 import { isToolUseResultMessage } from '../services/messages/./predicates.js'
 import { NO_RESPONSE_REQUESTED } from '../services/messages/./constants.js'
 import { copyPlanForResume } from './plans.js'
-import { processSessionStartHooks } from './sessionStart.js'
+import { processSessionStartHooks } from '../services/session-storage/sessionStart.js'
 import {
   buildConversationChain,
   checkResumeConsistency,

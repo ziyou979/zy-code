@@ -12,7 +12,7 @@ import {
 import { env } from '../../../utils/env.js'
 import { generateSuggestions } from '../../../services/permissions/filesystem.js'
 import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
-import { type CompletionType, logUnaryEvent } from '../../../utils/unaryLogging.js'
+import { type CompletionType, logUnaryEvent } from '../../../services/telemetry/unaryLogging.js'
 import type { ToolUseConfirm } from '../PermissionRequest.js'
 import type { FileOperationType, PermissionOption } from './PermissionOptions.js'
 

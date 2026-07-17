@@ -8,39 +8,39 @@ import { registerHookCallbacks } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from '../services/analytics/index.js'
-import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
-import { inputSchema as editInputSchema } from '../tools/FileEditTool/types.js'
-import { FileReadTool } from '../tools/FileReadTool/FileReadTool.js'
-import { FILE_READ_TOOL_NAME } from '../tools/FileReadTool/prompt.js'
-import { FileWriteTool } from '../tools/FileWriteTool/FileWriteTool.js'
-import { FILE_WRITE_TOOL_NAME } from '../tools/FileWriteTool/prompt.js'
-import { GlobTool } from '../tools/GlobTool/GlobTool.js'
-import { GLOB_TOOL_NAME } from '../tools/GlobTool/prompt.js'
-import { GrepTool } from '../tools/GrepTool/GrepTool.js'
-import { GREP_TOOL_NAME } from '../tools/GrepTool/prompt.js'
-import type { HookCallback } from '../types/hooks/index.js'
-import type { HookInput, HookJSONOutput } from '../types/index.js'
+} from '../analytics/index.js'
+import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
+import { inputSchema as editInputSchema } from '../../tools/FileEditTool/types.js'
+import { FileReadTool } from '../../tools/FileReadTool/FileReadTool.js'
+import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
+import { FileWriteTool } from '../../tools/FileWriteTool/FileWriteTool.js'
+import { FILE_WRITE_TOOL_NAME } from '../../tools/FileWriteTool/prompt.js'
+import { GlobTool } from '../../tools/GlobTool/GlobTool.js'
+import { GLOB_TOOL_NAME } from '../../tools/GlobTool/prompt.js'
+import { GrepTool } from '../../tools/GrepTool/GrepTool.js'
+import { GREP_TOOL_NAME } from '../../tools/GrepTool/prompt.js'
+import type { HookCallback } from '../../types/hooks/index.js'
+import type { HookInput, HookJSONOutput } from '../../types/index.js'
 import {
   detectSessionFileType,
   detectSessionPatternType,
   isAutoMemFile,
   memoryScopeForPath,
-} from './memoryFileDetection.js'
+} from '../../utils/memoryFileDetection.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemPaths = feature('TEAMMEM')
-  ? (require('../memdir/teamMemPaths.js') as typeof import('../memdir/teamMemPaths.js'))
+  ? (require('../../memdir/teamMemPaths.js') as typeof import('../../memdir/teamMemPaths.js'))
   : null
 const teamMemWatcher = feature('TEAMMEM')
-  ? (require('../services/team-memory-sync/watcher.js') as typeof import('../services/team-memory-sync/watcher.js'))
+  ? (require('../team-memory-sync/watcher.js') as typeof import('../team-memory-sync/watcher.js'))
   : null
 const memoryShapeTelemetry = feature('MEMORY_SHAPE_TELEMETRY')
-  ? (require('../memdir/memoryShapeTelemetry.js') as typeof import('../memdir/memoryShapeTelemetry.js'))
+  ? (require('../../memdir/memoryShapeTelemetry.js') as typeof import('../../memdir/memoryShapeTelemetry.js'))
   : null
 
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { getSubagentLogName } from './agentContext.js'
+import { getSubagentLogName } from '../../utils/agentContext.js'
 
 /**
  * Extract the file path from a tool input for memdir detection.

@@ -4,13 +4,13 @@
 
 import { access, chmod, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { type ReleaseChannel, saveGlobalConfig } from '../services/config/config.js'
-import { getZyConfigHomeDir } from './envUtils.js'
-import { getErrnoCode } from './errors.js'
-import { execFileNoThrowWithCwd } from '../services/shell/execFileNoThrow.js'
-import { getFsImplementation } from './fsOperations.js'
-import { logError } from './log.js'
-import { jsonStringify } from './slowOperations.js'
+import { type ReleaseChannel, saveGlobalConfig } from '../config/config.js'
+import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getErrnoCode } from '../../utils/errors.js'
+import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
+import { logError } from '../../utils/log.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
 
 // Lazy getters: getZyConfigHomeDir() is memoized and reads process.env.
 // Evaluating at module scope would capture the value before entrypoints like

@@ -52,7 +52,7 @@ import {
   restoreSessionStateFromLog,
   restoreWorktreeForResume,
 } from '../../utils/sessionRestore.js'
-import { processSessionStartHooks } from '../../utils/sessionStart.js'
+import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
 import {
   cacheSessionTitle,
   getCurrentSessionTitle,

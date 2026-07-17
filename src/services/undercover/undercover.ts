@@ -21,9 +21,9 @@
  * function in this file reduces to a trivial return.
  */
 
-import { getRepoClassCached } from './commitAttribution.js'
-import { getGlobalConfig } from '../services/config/config.js'
-import { isEnvTruthy, isInternalBuild } from './envUtils.js'
+import { getRepoClassCached } from '../../utils/commitAttribution.js'
+import { getGlobalConfig } from '../config/config.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 
 export function isUndercover(): boolean {
   if (isInternalBuild()) {

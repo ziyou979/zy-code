@@ -20,7 +20,7 @@ import { getGlobalConfig, isAutoUpdaterDisabled } from '../services/config/confi
 import { logForDebugging } from '../utils/debug.js'
 import { getCurrentInstallationType } from '../services/doctor/doctorDiagnostic.js'
 import { isDevEnv, isTestEnv } from '../utils/envUtils.js'
-import { installOrUpdateZyPackage, localInstallationExists } from '../utils/localInstaller.js'
+import { installOrUpdateZyPackage, localInstallationExists } from '../services/native-installer/localInstaller.js'
 import { gt, gte } from '../utils/semver.js'
 import { getInitialSettings } from '../services/settings/settings.js'
 

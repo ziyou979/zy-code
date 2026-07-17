@@ -10,7 +10,7 @@ import { checkHasTrustDialogAccepted } from '../../services/config/config.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { countFilesRoundedRg } from '../../utils/ripgrep.js'
+import { countFilesRoundedRg } from '../../services/file-search/ripgrep.js'
 import { settingsChangeDetector } from '../../services/settings/changeDetector.js'
 import { initUser } from '../../utils/user.js'
 /**

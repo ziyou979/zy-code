@@ -63,7 +63,7 @@ import { stopCapturingEarlyInput } from './utils/earlyInput.js'
 import { isEnvTruthy, isInternalBuild } from './utils/envUtils.js'
 import { clearPluginCache } from './services/plugins/pluginLoader.js'
 import { ensureMdmSettingsLoaded } from './services/settings/mdm/settings.js'
-import { initializeWarningHandler } from './utils/warningHandler.js'
+import { initializeWarningHandler } from './services/errors/warningHandler.js'
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 profileCheckpoint('main_tsx_imports_loaded')

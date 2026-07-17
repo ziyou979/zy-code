@@ -16,7 +16,7 @@
  */
 
 import { dirname, isAbsolute, join, normalize, relative, sep } from 'node:path'
-import { ripGrep } from '../../utils/ripgrep.js'
+import { ripGrep } from '../../services/file-search/ripgrep.js'
 import { getPluginsDirectory } from './pluginDirectories.js'
 
 // Inlined from cacheUtils.ts to avoid a circular dep through commands.js.

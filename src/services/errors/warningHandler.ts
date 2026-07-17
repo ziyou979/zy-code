@@ -3,9 +3,9 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { logForDebugging } from './debug.js'
-import { isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { getPlatform } from '../services/shell/platform.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { getPlatform } from '../shell/platform.js'
 
 // Track warnings to avoid spam — bounded to prevent unbounded memory growth
 export const MAX_WARNING_KEYS = 1000

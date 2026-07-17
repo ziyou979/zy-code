@@ -13,7 +13,7 @@ import { pathExists } from '../../utils/file.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { logError } from '../../utils/log.js'
 import { getPlatform } from '../../services/shell/platform.js'
-import { ripgrepCommand } from '../../utils/ripgrep.js'
+import { ripgrepCommand } from '../../services/file-search/ripgrep.js'
 import { subprocessEnv } from '../../utils/subprocessEnv.js'
 import { quote } from './shellQuote.js'
 

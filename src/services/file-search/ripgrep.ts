@@ -5,11 +5,11 @@ import { homedir } from 'node:os'
 import * as path from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import { logForDebugging } from './debug.js'
-import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
-import { logError } from './log.js'
-import { getPlatform } from '../services/shell/platform.js'
-import { countCharInString } from './stringUtils.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { execFileNoThrow } from '../shell/execFileNoThrow.js'
+import { logError } from '../../utils/log.js'
+import { getPlatform } from '../shell/platform.js'
+import { countCharInString } from '../../utils/stringUtils.js'
 
 const require = createRequire(import.meta.url)
 

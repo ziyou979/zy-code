@@ -34,7 +34,7 @@ import type { ShellProvider, ShellType } from '../../shell-eval/shared/shellProv
 import { onCwdChangedForHooks } from '../hooks/fileChangedWatcher.js'
 import { getZyTempDirName } from '../permissions/filesystem.js'
 import { getPlatform } from './platform.js'
-import { invalidateSessionEnvCache } from '../../utils/sessionEnvironment.js'
+import { invalidateSessionEnvCache } from '../../services/environment/sessionEnvironment.js'
 import { subprocessEnv } from '../../utils/subprocessEnv.js'
 import { posixPathToWindowsPath } from './windowsPaths.js'
 

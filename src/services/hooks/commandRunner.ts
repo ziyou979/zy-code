@@ -23,7 +23,7 @@ import {
   substituteUserConfigVariables,
 } from '../plugins/pluginOptionsStorage.js'
 import { type ShellCommand, wrapSpawn } from '../shell/shellCommand.js'
-import { getHookEnvFilePath } from '../../utils/sessionEnvironment.js'
+import { getHookEnvFilePath } from '../../services/environment/sessionEnvironment.js'
 import type { HookCommand } from '../settings/types.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { firstLineOf } from '../../utils/stringUtils.js'

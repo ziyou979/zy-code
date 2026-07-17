@@ -45,7 +45,7 @@ import {
 } from '../services/permissions/filesystem.js'
 import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from './plans.js'
 import { getPlatform } from '../services/shell/platform.js'
-import { countFilesRoundedRg } from './ripgrep.js'
+import { countFilesRoundedRg } from '../services/file-search/ripgrep.js'
 import { getModelPromptCachingMode } from '../services/settings/localModelCapabilities.js'
 import { getInitialSettings } from '../services/settings/settings.js'
 import { jsonStringify } from './slowOperations.js'

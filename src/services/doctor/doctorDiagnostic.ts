@@ -30,9 +30,9 @@ import {
   getShellType,
   isRunningFromLocalInstallation,
   localInstallationExists,
-} from '../../utils/localInstaller.js'
+} from '../../services/native-installer/localInstaller.js'
 import { getPlatform } from '../shell/platform.js'
-import { getRipgrepStatus } from '../../utils/ripgrep.js'
+import { getRipgrepStatus } from '../../services/file-search/ripgrep.js'
 import { getManagedFilePath } from '../settings/managedPath.js'
 import { CUSTOMIZATION_SURFACES } from '../settings/types.js'
 import {

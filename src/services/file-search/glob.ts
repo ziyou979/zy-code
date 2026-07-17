@@ -4,7 +4,7 @@ import { getFileReadIgnorePatterns, normalizePatternsToPath } from '../permissio
 import { getGlobExclusionsForPluginCache } from '../plugins/orphanedPluginFilter.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { getPlatform } from '../shell/platform.js'
-import { ripGrep } from '../../utils/ripgrep.js'
+import { ripGrep } from '../../services/file-search/ripgrep.js'
 
 /**
  * Extracts the static base directory from a glob pattern.
