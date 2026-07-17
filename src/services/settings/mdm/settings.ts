@@ -24,7 +24,7 @@ import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { readFileSync } from '../../utils/fileRead.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { safeParseJSON } from '../../utils/json.js'
-import { profileCheckpoint } from '../../../services/telemetry/startupProfiler.js'
+import { profileCheckpoint } from '../../telemetry/startupProfiler.js'
 import { getManagedFilePath, getManagedSettingsDropInDir } from '../managedPath.js'
 import { type SettingsJson, SettingsSchema } from '../types.js'
 import {

@@ -10,9 +10,9 @@ import type {
   TaskBudgetParam,
 } from '../../../types/llm.js'
 import type { AssistantMessage, Message, StreamEvent } from '../../../types/message.js'
-import { logAPIPrefix, toolToAPISchema } from '../../utils/api.js'
-import { getMergedBetas } from '../../../services/feature-flags/betas.js'
-import { resolveAppliedEffort } from '../../../services/effort/effort.js'
+import { logAPIPrefix, toolToAPISchema } from '../../services/api/api.js'
+import { getMergedBetas } from '../../feature-flags/betas.js'
+import { resolveAppliedEffort } from '../../effort/effort.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { createUserMessage } from '../../messages/constructors.js'
 import { ensureToolResultPairing, normalizeMessagesForAPI } from '../../messages/api.js'

@@ -6,7 +6,7 @@ import { stringWidth } from '../ink/stringWidth.js'
 import { wrapAnsi } from '../ink/wrapAnsi.js'
 import { Ansi, useTheme } from '../ink/index.js'
 import type { CliHighlight } from '../utils/cliHighlight.js'
-import { formatToken, padAligned } from '../utils/markdown.js'
+import { formatToken, padAligned } from '../services/markdown/markdown.js'
 
 /** Accounts for parent indentation (e.g. message dot prefix) and terminal
  *  resize races. Without enough margin the table overflows its layout box

@@ -2,7 +2,7 @@
 import { MODEL_ALIASES } from './aliases.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import { getAPIProvider, isAnthropicProvider, isOpenAIProvider } from './providers.js'
-import { sideQuery } from '../../utils/sideQuery.js'
+import { sideQuery } from '../../services/query/sideQuery.js'
 import { isAPIError, isConnectionError, getErrorStatus } from '../../types/llm.js'
 
 // Cache valid models to avoid repeated API calls

@@ -10,7 +10,7 @@ import { findToolByName, type Tools } from '../../tools/tool.js'
 import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js'
 import type { AssistantMessage, CollapsedReadSearchGroup } from '../../types/message.js'
 import { uniq } from '../../utils/array.js'
-import { getToolUseIdsFromCollapsedGroup } from '../../utils/collapseReadSearch.js'
+import { getToolUseIdsFromCollapsedGroup } from '../../services/compact/collapseReadSearch.js'
 import { getDisplayPath } from '../../utils/file.js'
 import {
   formatDuration,

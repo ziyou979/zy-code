@@ -4,7 +4,7 @@ import {
   getDefaultStandardModel,
 } from '../model/model.js'
 import type { TextBlock } from '../../types/llm.js'
-import { splitSysPromptPrefix } from '../../utils/api.js'
+import { splitSysPromptPrefix } from '../../services/api/api.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { getModelPromptCachingMode } from '../settings/localModelCapabilities.js'
 import { getInitialSettings } from '../settings/settings.js'

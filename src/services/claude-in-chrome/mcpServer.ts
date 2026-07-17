@@ -16,7 +16,7 @@ import { getZyAIOAuthTokens } from '../auth/auth.js'
 import { enableConfigs, getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { DebugLogger, logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { sideQuery } from '../../utils/sideQuery.js'
+import { sideQuery } from '../../services/query/sideQuery.js'
 import { getAllSocketPaths, getSecureSocketPath } from './common.js'
 
 const EXTENSION_DOWNLOAD_URL = 'https://claude.ai/chrome'

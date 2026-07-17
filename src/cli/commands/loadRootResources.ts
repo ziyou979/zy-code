@@ -58,7 +58,7 @@ import { getInitialSettings, getSettingsWithErrors } from '../../services/settin
 import { resetSettingsCache } from '../../services/settings/settingsCache.js'
 import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js'
-import { logContextMetrics } from 'src/utils/api.js'
+import { logContextMetrics } from 'src/services/api/api.js'
 import { registerCleanup } from 'src/utils/cleanupRegistry.js'
 import {
   countConcurrentSessions,

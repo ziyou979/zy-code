@@ -4,7 +4,7 @@ import { count } from '../../utils/array.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getLogDisplayTitle, logError } from '../../utils/log.js'
 import { isLiteLog, loadFullLog } from '../sessionStorage.js'
-import { sideQuery } from '../../utils/sideQuery.js'
+import { sideQuery } from '../../services/query/sideQuery.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 
 // Limits for transcript extraction

@@ -43,8 +43,8 @@ import { checkForLSPDiagnostics, clearAllLSPDiagnostics } from '../../lsp/lspDia
 import { logForDebugging } from '../../utils/debug.js'
 import { isThinkingMessage } from '../../messages/predicates.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { isPDFExtension } from '../../../services/attachments/pdfUtils.js'
-import { getPDFPageCount } from '../../../services/attachments/pdf.js'
+import { isPDFExtension } from '../../attachments/pdfUtils.js'
+import { getPDFPageCount } from '../../attachments/pdf.js'
 import { PDF_AT_MENTION_INLINE_THRESHOLD } from '../../../constants/apiLimits.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import {

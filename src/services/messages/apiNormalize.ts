@@ -20,7 +20,7 @@ import type {
   SystemMessage,
   UserMessage,
 } from '../../types/message.js'
-import { normalizeToolInputForAPI } from '../../utils/api.js'
+import { normalizeToolInputForAPI } from '../../services/api/api.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { validateImagesForAPI } from '../attachments/imageValidation.js'
 import { normalizeLegacyToolName } from '../permissions/permissionRuleParser.js'

@@ -1,4 +1,4 @@
-import { env } from '../../../services/environment/env.js'
+import { env } from '../../environment/env.js'
 import { execFileNoThrow } from '../../shell/execFileNoThrow.js'
 import { TMUX_COMMAND } from '../constants.js'
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { FileReadTool } from '../../src/tools/FileReadTool/FileReadTool.js'
 import type { RenderableMessage } from '../../src/types/message.js'
-import { collapseReadSearchGroups } from '../../src/utils/collapseReadSearch.js'
+import { collapseReadSearchGroups } from '../../src/services/compact/collapseReadSearch.js'
 import { createTestAssistantMessage } from '../_helpers/messageFixtures.js'
 
 function thinking(uuid: string, text: string, timestamp: string): RenderableMessage {

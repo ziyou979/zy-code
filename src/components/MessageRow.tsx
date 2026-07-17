@@ -16,7 +16,7 @@ import {
   getToolSearchOrReadInfo,
   getToolUseIdsFromCollapsedGroup,
   hasAnyToolInProgress,
-} from '../utils/collapseReadSearch.js'
+} from '../services/compact/collapseReadSearch.js'
 import {
   EMPTY_STRING_SET,
   getProgressMessagesFromLookup,

@@ -1,21 +1,21 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
-import { tSync } from '../i18n/index.js'
-import { findToolByName, type Tools } from '../tools/tool.js'
-import { extractBashCommentLabel } from '../tools/BashTool/commentLabel.js'
-import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
-import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
-import { FILE_WRITE_TOOL_NAME } from '../tools/FileWriteTool/prompt.js'
-import { REPL_TOOL_NAME } from '../tools/REPLTool/constants.js'
-import { getReplPrimitiveTools } from '../tools/REPLTool/primitiveTools.js'
+import { tSync } from '../../i18n/index.js'
+import { findToolByName, type Tools } from '../../tools/tool.js'
+import { extractBashCommentLabel } from '../../tools/BashTool/commentLabel.js'
+import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
+import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
+import { FILE_WRITE_TOOL_NAME } from '../../tools/FileWriteTool/prompt.js'
+import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
+import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js'
 import {
   type BranchAction,
   type CommitKind,
   detectGitOperation,
   type PrAction,
-} from '../tools/shared/gitOperationTracking.js'
-import { TOOL_SEARCH_TOOL_NAME } from '../tools/ToolSearchTool/prompt.js'
-import type { ContentBlock } from '../types/llm.js'
+} from '../../tools/shared/gitOperationTracking.js'
+import { TOOL_SEARCH_TOOL_NAME } from '../../tools/ToolSearchTool/prompt.js'
+import type { ContentBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
   CollapsedReadSearchGroup,
@@ -24,19 +24,19 @@ import type {
   RenderableMessage,
   StopHookInfo,
   SystemStopHookSummaryMessage,
-} from '../types/message.js'
-import { getDisplayPath } from './file.js'
-import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
+} from '../../types/message.js'
+import { getDisplayPath } from '../../utils/file.js'
+import { isFullscreenEnvEnabled } from '../terminal/fullscreen.js'
 import {
   isAutoManagedMemoryFile,
   isAutoManagedMemoryPattern,
   isMemoryDirectory,
   isShellCommandTargetingMemory,
-} from '../services/memory/memoryFileDetection.js'
+} from '../memory/memoryFileDetection.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemOps = feature('TEAMMEM')
-  ? (require('../services/swarm/teamMemoryOps.js') as typeof import('../services/swarm/teamMemoryOps.js'))
+  ? (require('../swarm/teamMemoryOps.js') as typeof import('../swarm/teamMemoryOps.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

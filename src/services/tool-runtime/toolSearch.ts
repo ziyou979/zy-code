@@ -27,7 +27,7 @@ import {
   TOOL_SEARCH_TOOL_NAME,
 } from '../../tools/ToolSearchTool/prompt.js'
 import type { Message } from '../../types/message.js'
-import { countToolDefinitionTokens, TOOL_TOKEN_COUNT_OVERHEAD } from '../../utils/analyzeContext.js'
+import { countToolDefinitionTokens, TOOL_TOKEN_COUNT_OVERHEAD } from '../../services/compact/analyzeContext.js'
 import { count } from '../../utils/array.js'
 import { getContextWindowForModel } from '../../utils/context.js'
 import { logForDebugging } from '../../utils/debug.js'

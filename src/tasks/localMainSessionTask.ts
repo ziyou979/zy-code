@@ -33,7 +33,7 @@ import type { AgentDefinition, CustomAgentDefinition } from '../tools/AgentTool/
 import { asAgentId } from '../types/ids.js'
 import type { Message } from '../types/message.js'
 import { createAbortController } from '../utils/abortController.js'
-import { runWithAgentContext, type SubagentContext } from '../utils/agentContext.js'
+import { runWithAgentContext, type SubagentContext } from '../services/agent/agentContext.js'
 import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { logForDebugging } from '../utils/debug.js'

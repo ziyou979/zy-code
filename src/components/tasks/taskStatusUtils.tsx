@@ -7,7 +7,7 @@ import type { InProcessTeammateTaskState } from 'src/tasks/in-process-teammate-t
 import { isPanelAgentTask } from 'src/tasks/local-agent-task/LocalAgentTask.js'
 import { isBackgroundTask, type TaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
-import { summarizeRecentActivities } from 'src/utils/collapseReadSearch.js'
+import { summarizeRecentActivities } from 'src/services/compact/collapseReadSearch.js'
 import {
   BULLET,
   CROSS,

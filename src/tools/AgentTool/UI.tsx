@@ -37,7 +37,7 @@ import { count } from '../../utils/array.js'
 import {
   getSearchOrReadFromContent,
   getSearchReadSummaryText,
-} from '../../utils/collapseReadSearch.js'
+} from '../../services/compact/collapseReadSearch.js'
 import { env } from '../../services/environment/env.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { getDisplayPath } from '../../utils/file.js'

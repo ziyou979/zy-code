@@ -47,12 +47,12 @@ import {
   isToolSearchToolAvailable,
   modelSupportsToolReference,
   type DeferredToolsDeltaScanContext,
-} from '../../../services/tool-runtime/toolSearch.js'
+} from '../../tool-runtime/toolSearch.js'
 import {
   getMcpInstructionsDelta,
   isMcpInstructionsDeltaEnabled,
   type ClientSideInstruction,
-} from '../../../services/mcp/mcpInstructionsDelta.js'
+} from '../../mcp/mcpInstructionsDelta.js'
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claude-in-chrome/common.js'
 import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claude-in-chrome/prompt.js'
 import type { MCPServerConnection } from '../../mcp/types.js'

@@ -2,7 +2,7 @@ import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import { GREP_TOOL_NAME } from '../../tools/GrepTool/prompt.js'
 import { WEB_FETCH_TOOL_NAME } from '../../tools/WebFetchTool/prompt.js'
-import type { ContextData } from '../../utils/analyzeContext.js'
+import type { ContextData } from '../../services/compact/analyzeContext.js'
 import { getDisplayPath } from '../../utils/file.js'
 import { formatTokens } from '../../utils/format.js'
 

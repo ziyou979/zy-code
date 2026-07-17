@@ -9,7 +9,7 @@ import {
   advanceStreamingMarkdownBoundary,
   configureMarked,
   formatToken,
-} from '../utils/markdown.js'
+} from '../services/markdown/markdown.js'
 import { stripPromptXMLTags } from '../services/messages/./predicates.js'
 import { MarkdownTable } from './MarkdownTable.js'
 

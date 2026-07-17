@@ -11,7 +11,7 @@ const permLog = createDebugLog('permissions')
 import { errorMessage } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
-import { sideQuery } from '../../utils/sideQuery.js'
+import { sideQuery } from '../../services/query/sideQuery.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH'

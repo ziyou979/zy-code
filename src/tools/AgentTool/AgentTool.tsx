@@ -40,7 +40,7 @@ import {
 } from '../../tasks/remote-agent-task/RemoteAgentTask.js'
 import { assembleToolPool } from '../../tools/tools.js'
 import { asAgentId } from '../../types/ids.js'
-import { runWithAgentContext } from '../../utils/agentContext.js'
+import { runWithAgentContext } from '../../services/agent/agentContext.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { enqueueWireEvent } from '../../utils/bridgeEventQueue.js'
 import { getCwd, runWithCwdOverride } from '../../utils/cwd.js'

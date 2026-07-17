@@ -18,7 +18,7 @@ import {
 } from '../tools/AgentTool/agentColorManager.js'
 import { isAgentSwarmsEnabled } from '../services/swarm/agentSwarmsEnabled.js'
 import { count } from '../utils/array.js'
-import { summarizeRecentActivities } from '../utils/collapseReadSearch.js'
+import { summarizeRecentActivities } from '../services/compact/collapseReadSearch.js'
 import { truncateToWidth } from '../utils/format.js'
 import { isTodoV2Enabled, type Task } from '../utils/tasks.js'
 import type { Theme } from '../utils/theme.js'

@@ -3,11 +3,11 @@ import {
   getLastApiCompletionTimestamp,
   setLastApiCompletionTimestamp,
 } from 'src/bootstrap/runtime/runtimeContext.js'
-import type { QuerySource } from '../constants/querySource.js'
-import { getCLISyspromptPrefix } from '../constants/system.js'
-import { logEvent } from '../services/analytics/index.js'
-import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/metadata.js'
-import { getLLMAdapter } from '../services/api/client.js'
+import type { QuerySource } from '../../constants/querySource.js'
+import { getCLISyspromptPrefix } from '../../constants/system.js'
+import { logEvent } from '../analytics/index.js'
+import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/metadata.js'
+import { getLLMAdapter } from '../api/client.js'
 import type {
   CreateParams,
   JSONOutputFormat,
@@ -16,8 +16,8 @@ import type {
   TextBlock,
   ToolChoice,
   ToolDefinition,
-} from '../types/llm.js'
-import { getModelBetas } from '../services/feature-flags/betas.js'
+} from '../../types/llm.js'
+import { getModelBetas } from '../feature-flags/betas.js'
 
 export type SideQueryOptions = {
   /** 用于查询的模型 */

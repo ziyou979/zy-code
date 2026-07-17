@@ -5,7 +5,7 @@ import type { AutoCompactTrackingState } from '../services/compact/autoCompact.j
 import { buildPostCompactMessages } from '../services/compact/compact.js'
 import type { ToolUseContext } from '../tools/tool.js'
 import type { Message } from '../types/message.js'
-import { appendSystemContext } from '../utils/api.js'
+import { appendSystemContext } from '../services/api/api.js'
 import { createDebugLog } from '../utils/debug.js'
 import { queryCheckpoint } from '../utils/queryProfiler.js'
 import { asSystemPrompt, type SystemPrompt } from '../utils/systemPromptType.js'

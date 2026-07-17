@@ -120,7 +120,7 @@ function buildReviewPrompt(
 async function performReview(diff: string, info: string, args: CodeReviewArgs): Promise<string> {
   const prompt = buildReviewPrompt(diff, info, args.effort, args.fix, args.comment)
 
-  const { sideQuery } = await import('../../utils/sideQuery.js')
+  const { sideQuery } = await import('../../services/query/sideQuery.js')
   const { getMainLoopModel } = await import('../../services/model/model.js')
 
   const model = getMainLoopModel() || 'default'

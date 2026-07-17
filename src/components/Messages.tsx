@@ -29,7 +29,7 @@ import type {
 } from '../types/message.js'
 import { collapseBackgroundBashNotifications } from '../services/compact/collapseBackgroundBashNotifications.js'
 import { collapseHookSummaries } from '../utils/collapseHookSummaries.js'
-import { collapseReadSearchGroups } from '../utils/collapseReadSearch.js'
+import { collapseReadSearchGroups } from '../services/compact/collapseReadSearch.js'
 import { collapseTeammateShutdowns } from '../services/swarm/collapseTeammateShutdowns.js'
 import { getGlobalConfig } from '../services/config/config.js'
 import { isEnvTruthy } from '../utils/envUtils.js'

@@ -47,7 +47,7 @@ import {
   createUserMessage,
 } from '../services/messages/constructors.js'
 import { stripSignatureBlocks } from '../services/messages/prune.js'
-import { prependUserContext } from '../utils/api.js'
+import { prependUserContext } from '../services/api/api.js'
 import {
   createAttachmentMessage,
   filterDuplicateMemoryAttachments,

@@ -4,7 +4,7 @@ import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../../ink/stringWidth.js'
 import { Ansi, Box, Text, useTheme } from '../../../ink/index.js'
 import { getCliHighlightPromise } from '../../../utils/cliHighlight.js'
-import { applyMarkdown } from '../../../utils/markdown.js'
+import { applyMarkdown } from '../../../services/markdown/markdown.js'
 import sliceAnsi from '../../../utils/sliceAnsi.js'
 
 type PreviewBoxProps = {
