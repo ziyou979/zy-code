@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { getZyAIOAuthTokens, hasProfileScope, isOAuthTokenExpired } from '../auth/auth.js'
-import { getAuthHeaders } from '../../services/http/http.js'
+import { getAuthHeaders } from '../http/http.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 
 export type RateLimit = {

@@ -9,7 +9,7 @@ import { Box, Text } from '../../ink/index.js'
 import type { ToolProgressData } from '../../tools/tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import { getDisplayPath } from '../../utils/file.js'
-import { getPlan } from '../../utils/plans.js'
+import { getPlan } from '../../services/plans/plans.js'
 import type { ThemeName } from '../../utils/theme.js'
 import type { Output } from './ExitPlanModeTool.js'
 export function renderToolUseMessage(): React.ReactNode {

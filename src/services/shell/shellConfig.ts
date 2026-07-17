@@ -7,7 +7,7 @@ import { open, readFile, stat } from 'node:fs/promises'
 import { homedir as osHomedir } from 'node:os'
 import { join } from 'node:path'
 import { isFsInaccessible } from '../../utils/errors.js'
-import { getLocalZyPath } from '../../services/native-installer/localInstaller.js'
+import { getLocalZyPath } from '../native-installer/localInstaller.js'
 
 export const CLAUDE_ALIAS_REGEX = /^\s*alias\s+zy\s*=/
 

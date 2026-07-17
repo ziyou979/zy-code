@@ -1,4 +1,4 @@
-import { getHistory } from '../../services/session-storage/history.js'
+import { getHistory } from '../session-storage/history.js'
 import { logForDebugging } from '../../utils/debug.js'
 
 /**

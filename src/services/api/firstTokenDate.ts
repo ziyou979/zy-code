@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
-import { getAuthHeaders } from '../../services/http/http.js'
+import { getAuthHeaders } from '../http/http.js'
 import { logError } from '../../utils/log.js'
 import { getZyCodeUserAgent } from '../../utils/userAgent.js'
 

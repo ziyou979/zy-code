@@ -1,5 +1,5 @@
 import type { UUID } from 'node:crypto'
-import type { DiffStats } from 'src/utils/fileHistory.js'
+import type { DiffStats } from 'src/services/file-persistence/fileHistory.js'
 import type { FileEditOutput } from 'src/tools/FileEditTool/types.js'
 import type { Output as FileWriteToolOutput } from 'src/tools/FileWriteTool/FileWriteTool.js'
 import {

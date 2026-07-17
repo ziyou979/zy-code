@@ -3,7 +3,7 @@ import type { UUID } from 'node:crypto'
 import { relative } from 'node:path'
 import { getCwd } from 'src/utils/cwd.js'
 import { addInvokedSkill } from 'src/bootstrap/runtime/runtimeContext.js'
-import { asSessionId } from '../types/ids.js'
+import { asSessionId } from '../../types/ids.js'
 import type {
   AttributionSnapshotMessage,
   ContextCollapseCommitEntry,
@@ -11,23 +11,23 @@ import type {
   LogOption,
   PersistedWorktreeSession,
   SerializedMessage,
-} from '../types/logs.js'
-import type { Message, UserMessage } from '../types/message.js'
-import { PERMISSION_MODES } from '../types/permissions.js'
-import { suppressNextSkillListing } from '../services/attachments/attachments.js'
-import { copyFileHistoryForResume, type FileHistorySnapshot } from './fileHistory.js'
-import { logError } from './log.js'
-import { createAssistantMessage, createUserMessage } from '../services/messages/./constructors.js'
+} from '../../types/logs.js'
+import type { Message, UserMessage } from '../../types/message.js'
+import { PERMISSION_MODES } from '../../types/permissions.js'
+import { suppressNextSkillListing } from '../attachments/attachments.js'
+import { copyFileHistoryForResume, type FileHistorySnapshot } from '../file-persistence/fileHistory.js'
+import { logError } from '../../utils/log.js'
+import { createAssistantMessage, createUserMessage } from '../messages/./constructors.js'
 import {
   filterOrphanedThinkingOnlyMessages,
   filterWhitespaceOnlyAssistantMessages,
   normalizeMessages,
-} from '../services/messages/./normalize.js'
-import { filterUnresolvedToolUses } from '../services/messages/./api.js'
-import { isToolUseResultMessage } from '../services/messages/./predicates.js'
-import { NO_RESPONSE_REQUESTED } from '../services/messages/./constants.js'
-import { copyPlanForResume } from './plans.js'
-import { processSessionStartHooks } from '../services/session-storage/sessionStart.js'
+} from '../messages/./normalize.js'
+import { filterUnresolvedToolUses } from '../messages/./api.js'
+import { isToolUseResultMessage } from '../messages/./predicates.js'
+import { NO_RESPONSE_REQUESTED } from '../messages/./constants.js'
+import { copyPlanForResume } from '../plans/plans.js'
+import { processSessionStartHooks } from '../session-storage/sessionStart.js'
 import {
   buildConversationChain,
   checkResumeConsistency,
@@ -38,25 +38,25 @@ import {
   loadMessageLogs,
   loadTranscriptFile,
   removeExtraFields,
-} from '../services/sessionStorage.js'
-import type { ContentReplacementRecord } from './toolResultStorage.js'
+} from '../sessionStorage.js'
+import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
 
 // 死代码消除：ant 专属的工具名通过条件 require 引入，
 // 避免其字符串泄漏到外部构建产物中。静态 import 会始终被打包。
 /* eslint-disable @typescript-eslint/no-require-imports */
 const BRIEF_TOOL_NAME: string | null =
   feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? (require('../tools/BriefTool/prompt.js') as typeof import('../tools/BriefTool/prompt.js'))
+    ? (require('../tools/BriefTool/prompt.js') as typeof import('../../tools/BriefTool/prompt.js'))
         .BRIEF_TOOL_NAME
     : null
 const LEGACY_BRIEF_TOOL_NAME: string | null =
   feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? (require('../tools/BriefTool/prompt.js') as typeof import('../tools/BriefTool/prompt.js'))
+    ? (require('../tools/BriefTool/prompt.js') as typeof import('../../tools/BriefTool/prompt.js'))
         .LEGACY_BRIEF_TOOL_NAME
     : null
 const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS')
   ? (
-      require('../tools/SendUserFileTool/prompt.js') as typeof import('../tools/SendUserFileTool/prompt.js')
+      require('../tools/SendUserFileTool/prompt.js') as typeof import('../../tools/SendUserFileTool/prompt.js')
     ).SEND_USER_FILE_TOOL_NAME
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -462,7 +462,7 @@ export async function loadConversationForResume(
       let skip = new Set<string>()
       if (feature('BG_SESSIONS')) {
         try {
-          const udsClient = await import('./udsClient.js')
+          const udsClient = await import('../../utils/udsClient.js')
           const live = await (
             udsClient as unknown as {
               listAllLiveSessions: () => Promise<Array<{ kind?: string; sessionId?: string }>>

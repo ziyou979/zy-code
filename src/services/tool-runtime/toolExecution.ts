@@ -69,12 +69,12 @@ import { withMemoryCorrectionHint } from '../messages/predicates.js'
 import type { PermissionDecisionReason, PermissionResult } from '../permissions/permissionResult.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { Stream } from '../../utils/stream.js'
-import { formatZodValidationError } from '../../services/tool-runtime/toolErrors.js'
+import { formatZodValidationError } from '../tool-runtime/toolErrors.js'
 import {
   extractDiscoveredToolNames,
   isToolSearchEnabledOptimistic,
   isToolSearchToolAvailable,
-} from '../../services/tool-runtime/toolSearch.js'
+} from '../tool-runtime/toolSearch.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
 import { executePermissionDeniedHooks } from '../hooks.js'
 import { mcpInfoFromString } from '../mcp/mcpStringUtils.js'

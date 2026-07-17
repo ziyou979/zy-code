@@ -14,7 +14,7 @@ import {
   getPackageManager,
 } from 'src/services/native-installer/packageManagers.js'
 import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
-import { checkGlobalInstallPermissions } from '../../utils/autoUpdater.js'
+import { checkGlobalInstallPermissions } from '../updater/autoUpdater.js'
 import { isInBundledMode } from '../../utils/bundledMode.js'
 import {
   formatAutoUpdaterDisabledReason,
@@ -30,9 +30,9 @@ import {
   getShellType,
   isRunningFromLocalInstallation,
   localInstallationExists,
-} from '../../services/native-installer/localInstaller.js'
+} from '../native-installer/localInstaller.js'
 import { getPlatform } from '../shell/platform.js'
-import { getRipgrepStatus } from '../../services/file-search/ripgrep.js'
+import { getRipgrepStatus } from '../file-search/ripgrep.js'
 import { getManagedFilePath } from '../settings/managedPath.js'
 import { CUSTOMIZATION_SURFACES } from '../settings/types.js'
 import {

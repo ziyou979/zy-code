@@ -83,13 +83,13 @@ import {
   getAutoRunIssueReasonText,
   shouldAutoRunIssue,
 } from '../../components/Runtime/AutoRunIssue.js'
-import type { AutoUpdaterResult } from '../../utils/autoUpdater.js'
+import type { AutoUpdaterResult } from '../../services/updater/autoUpdater.js'
 import type { PastedContent } from '../../services/config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import type { FileHistoryState } from '../../utils/fileHistory.js'
-import { fileHistoryRewind } from '../../utils/fileHistory.js'
+import type { FileHistoryState } from '../../services/file-persistence/fileHistory.js'
+import { fileHistoryRewind } from '../../services/file-persistence/fileHistory.js'
 import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
 import type { IDEExtensionInstallationStatus } from '../../services/ide/ide.js'

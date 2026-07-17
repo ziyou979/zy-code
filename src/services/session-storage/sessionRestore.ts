@@ -14,40 +14,40 @@ import {
   switchSession,
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setMainThreadAgentType } from 'src/bootstrap/runtime/runtimeContext.js'
-import { clearSystemPromptSections } from '../constants/systemPromptSections.js'
-import { restoreCostStateForSession } from '../services/cost/costTracker.js'
-import type { AppState } from '../state/AppStateStore.js'
-import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
+import { clearSystemPromptSections } from '../../constants/systemPromptSections.js'
+import { restoreCostStateForSession } from '../cost/costTracker.js'
+import type { AppState } from '../../state/AppStateStore.js'
+import type { AgentColorName } from '../../tools/AgentTool/agentColorManager.js'
 import {
   type AgentDefinition,
   type AgentDefinitionsResult,
   getActiveAgentsFromList,
   getAgentDefinitionsWithOverrides,
-} from '../tools/AgentTool/loadAgentsDir.js'
-import { TODO_WRITE_TOOL_NAME } from '../tools/TodoWriteTool/constants.js'
-import { asSessionId } from '../types/ids.js'
+} from '../../tools/AgentTool/loadAgentsDir.js'
+import { TODO_WRITE_TOOL_NAME } from '../../tools/TodoWriteTool/constants.js'
+import { asSessionId } from '../../types/ids.js'
 import type {
   AttributionSnapshotMessage,
   ContextCollapseCommitEntry,
   ContextCollapseSnapshotEntry,
   PersistedWorktreeSession,
-} from '../types/logs.js'
-import type { Message } from '../types/message.js'
-import { clearMemoryFileCaches } from './agentsMd.js'
-import { renameRecordingForSession } from '../services/shell/asciicast.js'
+} from '../../types/logs.js'
+import type { Message } from '../../types/message.js'
+import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
+import { renameRecordingForSession } from '../shell/asciicast.js'
 import {
   type AttributionState,
   attributionRestoreStateFromLog,
   restoreAttributionStateFromSnapshots,
-} from './commitAttribution.js'
-import { updateSessionName } from './concurrentSessions.js'
-import { getCwd } from './cwd.js'
-import { logForDebugging } from './debug.js'
-import type { FileHistorySnapshot } from './fileHistory.js'
-import { fileHistoryRestoreStateFromLog } from './fileHistory.js'
-import { createSystemMessage } from '../services/messages/./constructors.js'
-import { getPlansDirectory } from './plans.js'
-import { setCwd } from '../services/shell/shell.js'
+} from '../git/commitAttribution.js'
+import { updateSessionName } from '../session/concurrentSessions.js'
+import { getCwd } from '../../utils/cwd.js'
+import { logForDebugging } from '../../utils/debug.js'
+import type { FileHistorySnapshot } from '../file-persistence/fileHistory.js'
+import { fileHistoryRestoreStateFromLog } from '../file-persistence/fileHistory.js'
+import { createSystemMessage } from '../messages/./constructors.js'
+import { getPlansDirectory } from '../plans/plans.js'
+import { setCwd } from '../shell/shell.js'
 import {
   adoptResumedSessionFile,
   recordContentReplacement,
@@ -55,10 +55,10 @@ import {
   restoreSessionMetadata,
   saveMode,
   saveWorktreeState,
-} from '../services/sessionStorage.js'
-import { isTodoV2Enabled } from './tasks.js'
-import type { ContentReplacementRecord } from './toolResultStorage.js'
-import { getCurrentWorktreeSession, restoreWorktreeSession } from '../services/worktree/worktree.js'
+} from '../sessionStorage.js'
+import { isTodoV2Enabled } from '../../utils/tasks.js'
+import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
+import { getCurrentWorktreeSession, restoreWorktreeSession } from '../worktree/worktree.js'
 
 type ResumeResult = {
   messages?: Message[]
@@ -130,7 +130,7 @@ export function restoreSessionStateFromLog(
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(
-      require('../services/compact/context-collapse/persist.js') as typeof import('../services/compact/context-collapse/persist.js')
+      require('../services/compact/context-collapse/persist.js') as typeof import('../compact/context-collapse/persist.js')
     ).restoreFromEntries(result.contextCollapseCommits ?? [], result.contextCollapseSnapshot)
     /* eslint-enable @typescript-eslint/no-require-imports */
   }
@@ -470,7 +470,7 @@ export async function processResumedConversation(
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(
-      require('../services/compact/context-collapse/persist.js') as typeof import('../services/compact/context-collapse/persist.js')
+      require('../services/compact/context-collapse/persist.js') as typeof import('../compact/context-collapse/persist.js')
     ).restoreFromEntries(result.contextCollapseCommits ?? [], result.contextCollapseSnapshot)
     /* eslint-enable @typescript-eslint/no-require-imports */
   }

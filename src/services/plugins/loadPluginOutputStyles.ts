@@ -5,7 +5,7 @@ import { getPluginErrorMessage } from './types.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { coerceDescriptionToString, parseFrontmatter } from '../markdown/frontmatterParser.js'
 import { getFsImplementation, isDuplicatePath } from '../../utils/fsOperations.js'
-import { extractDescriptionFromMarkdown } from '../../utils/markdownConfigLoader.js'
+import { extractDescriptionFromMarkdown } from '../markdown/markdownConfigLoader.js'
 import { loadAllPluginsCacheOnly } from './pluginLoader.js'
 import { walkPluginMarkdown } from './walkPluginMarkdown.js'
 

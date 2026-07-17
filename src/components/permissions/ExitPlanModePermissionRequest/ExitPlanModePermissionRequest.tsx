@@ -51,7 +51,7 @@ import {
   getPewterLedgerVariant,
   isPlanModeInterviewPhaseEnabled,
 } from '../../../services/mode-instructions/planModeConfig.js'
-import { getPlan, getPlanFilePath } from '../../../utils/plans.js'
+import { getPlan, getPlanFilePath } from '../../../services/plans/plans.js'
 import { editFileInEditor, editPromptInEditor } from '../../../terminal-ui/promptEditor.js'
 import {
   getCurrentSessionTitle,

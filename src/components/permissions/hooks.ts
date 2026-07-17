@@ -15,7 +15,7 @@ import { extractRules, hasRules } from 'src/services/permissions/permissionUpdat
 import { permissionRuleValueToString } from 'src/services/permissions/permissionRuleParser.js'
 import type { ToolUseConfirm } from './PermissionRequest.js'
 import { useSetAppState } from '../../state/AppState.js'
-import { env } from '../../utils/env.js'
+import { env } from '../../services/environment/env.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { type CompletionType, logUnaryEvent } from '../../services/telemetry/unaryLogging.js'

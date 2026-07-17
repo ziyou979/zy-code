@@ -39,19 +39,19 @@ import type { ResumeEntrypoint } from '../../commands/types.js'
 import { asSessionId } from '../../types/ids.js'
 import type { LogOption } from '../../types/logs.js'
 import type { Message as MessageType } from '../../types/message.js'
-import { updateSessionName } from '../../utils/concurrentSessions.js'
-import { deserializeMessages } from '../../utils/conversationRecovery.js'
-import { copyFileHistoryForResume } from '../../utils/fileHistory.js'
+import { updateSessionName } from '../../services/session/concurrentSessions.js'
+import { deserializeMessages } from '../../services/session-storage/conversationRecovery.js'
+import { copyFileHistoryForResume } from '../../services/file-persistence/fileHistory.js'
 import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../services/hooks.js'
 import { createSystemMessage } from '../../services/messages/./constructors.js'
-import { copyPlanForFork, copyPlanForResume } from '../../utils/plans.js'
+import { copyPlanForFork, copyPlanForResume } from '../../services/plans/plans.js'
 import {
   computeStandaloneAgentContext,
   exitRestoredWorktree,
   restoreAgentFromSession,
   restoreSessionStateFromLog,
   restoreWorktreeForResume,
-} from '../../utils/sessionRestore.js'
+} from '../../services/session-storage/sessionRestore.js'
 import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
 import {
   cacheSessionTitle,
@@ -59,7 +59,7 @@ import {
   saveAiGeneratedTitle,
   saveWorktreeState,
 } from '../../services/sessionStorage.js'
-import { generateSessionTitle } from '../../utils/sessionTitle.js'
+import { generateSessionTitle } from '../../services/session-storage/sessionTitle.js'
 import { reconstructContentReplacementState } from '../../utils/toolResultStorage.js'
 import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 

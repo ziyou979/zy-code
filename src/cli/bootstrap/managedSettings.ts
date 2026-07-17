@@ -20,7 +20,7 @@ import {
 } from '../../services/settings/settings.js'
 import { resetSettingsCache } from '../../services/settings/settingsCache.js'
 import { writeFileSync_DEPRECATED } from '../../utils/slowOperations.js'
-import { profileCheckpoint } from '../../utils/startupProfiler.js'
+import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
 import { generateTempFilePath } from '../../utils/tempfile.js'
 /**
  * 将托管设置键记录到 Statsig 用于分析。

@@ -18,7 +18,7 @@ import {
   createFileStateCacheWithSizeLimit,
   mergeFileStateCaches,
 } from 'src/utils/fileStateCache.js'
-import { extractReadFilesFromMessages } from 'src/utils/queryHelpers.js'
+import { extractReadFilesFromMessages } from 'src/services/query/queryHelpers.js'
 import { executeFilePersistence } from 'src/services/file-persistence/filePersistence.js'
 import { finalizePendingAsyncHooks } from 'src/services/hooks/asyncHookRegistry.js'
 import { gracefulShutdownSync, isShuttingDown } from 'src/utils/gracefulShutdown.js'

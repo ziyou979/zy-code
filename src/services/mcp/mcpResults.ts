@@ -9,13 +9,13 @@ import {
   getFormatDescription,
   getLargeOutputInstructions,
   persistBinaryContent,
-} from '../../services/mcp/mcpOutputStorage.js'
+} from '../mcp/mcpOutputStorage.js'
 import {
   getContentSizeEstimate,
   type MCPToolResult,
   mcpContentNeedsTruncation,
   truncateMcpContentIfNeeded,
-} from '../../services/mcp/mcpValidation.js'
+} from '../mcp/mcpValidation.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { isPersistError, persistToolResult } from '../../utils/toolResultStorage.js'
 import {

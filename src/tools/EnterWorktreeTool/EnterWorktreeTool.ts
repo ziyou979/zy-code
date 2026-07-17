@@ -9,7 +9,7 @@ import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
 import { getCwd } from '../../utils/cwd.js'
 import { findCanonicalGitRoot } from '../../utils/git.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { getPlanSlug, getPlansDirectory } from '../../utils/plans.js'
+import { getPlanSlug, getPlansDirectory } from '../../services/plans/plans.js'
 import { setCwd } from '../../services/shell/shell.js'
 import { saveWorktreeState } from '../../services/sessionStorage.js'
 import {

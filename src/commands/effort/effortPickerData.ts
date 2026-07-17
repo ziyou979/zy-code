@@ -10,7 +10,7 @@ import {
   getModelEffortLevels,
   modelSupportsEffort,
   resolveEffortForModel,
-} from '../../utils/effort.js'
+} from '../../services/effort/effort.js'
 import { modelSupportsThinking } from '../../utils/thinking.js'
 
 // ---------------------------------------------------------------------------

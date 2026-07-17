@@ -9,7 +9,7 @@ import { Box, Text } from '../../ink/index.js'
 import type { InProcessTeammateTaskState } from '../../tasks/in-process-teammate-task/types.js'
 import { summarizeRecentActivities } from '../../utils/collapseReadSearch.js'
 import { getLocalizedDurationFormatter, truncateToWidth } from '../../utils/format.js'
-import { toInkColor } from '../../utils/ink.js'
+import { toInkColor } from '../../services/environment/ink.js'
 import { TEAMMATE_SELECT_HINT } from './teammateSelectHint.js'
 
 function formatToolUseCount(count: number): string {

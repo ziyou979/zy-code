@@ -10,7 +10,7 @@ import { detectUnreachableRules } from '../permissions/shadowedRuleDetection.js'
 import {
   AGENT_DESCRIPTIONS_THRESHOLD,
   getAgentDescriptionsTotalTokens,
-} from '../../services/status/statusNoticeHelpers.js'
+} from '../status/statusNoticeHelpers.js'
 import { plural } from '../../utils/stringUtils.js'
 // Thresholds (matching status notices and existing patterns)
 const MCP_TOOLS_THRESHOLD = 25_000 // 15k tokens

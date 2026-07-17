@@ -6,8 +6,8 @@
  * affect the teammate mode for the current session.
  */
 
-import { logForDebugging } from '../../../utils/debug.js'
-import { logError } from '../../../utils/log.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { logError } from '../../utils/log.js'
 import { getGlobalConfig } from '../../config/config.js'
 
 export type TeammateMode = 'auto' | 'tmux' | 'in-process'

@@ -9,11 +9,11 @@ import { checkHasTrustDialogAccepted, getGlobalConfig, saveGlobalConfig } from '
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'
-import { getAuthHeaders } from '../../services/http/http.js'
+import { getAuthHeaders } from '../http/http.js'
 import { logError } from '../../utils/log.js'
 import { createSignal } from '../../utils/signal.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { type GitHubActionsMetadata, getUserForGrowthBook } from '../../utils/user.js'
+import { type GitHubActionsMetadata, getUserForGrowthBook } from '../auth/user.js'
 import { isZyEventLoggingEnabled, logGrowthBookExperimentToZy } from './zyEventLogger.js'
 
 /**

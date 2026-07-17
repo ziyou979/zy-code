@@ -30,7 +30,7 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import { COMPACT_MAX_OUTPUT_TOKENS } from '../../utils/context.js'
-import { analyzeContext, tokenStatsToStatsigMetrics } from '../../services/compact/contextAnalysis.js'
+import { analyzeContext, tokenStatsToStatsigMetrics } from '../compact/contextAnalysis.js'
 import { createDebugLog } from '../../utils/debug.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import { cacheToObject } from '../../utils/fileStateCache.js'
@@ -44,12 +44,12 @@ import {
 } from '../messages/predicates.js'
 import { normalizeMessagesForAPI } from '../messages/api.js'
 import { expandPath } from '../../utils/path.js'
-import { getPlan, getPlanFilePath } from '../../utils/plans.js'
+import { getPlan, getPlanFilePath } from '../plans/plans.js'
 import {
   isSessionActivityTrackingActive,
   sendSessionActivitySignal,
 } from '../../utils/sessionActivity.js'
-import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
+import { processSessionStartHooks } from '../session-storage/sessionStart.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -59,7 +59,7 @@ import {
   tokenCountFromLastAPIResponse,
   tokenCountWithEstimation,
 } from '../../utils/tokens.js'
-import { extractDiscoveredToolNames, isToolSearchEnabled } from '../../services/tool-runtime/toolSearch.js'
+import { extractDiscoveredToolNames, isToolSearchEnabled } from '../tool-runtime/toolSearch.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

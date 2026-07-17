@@ -17,7 +17,7 @@ import { type FilesApiConfig, uploadSessionFiles } from '../api/filesApi.js'
 import { getCwd } from '../../utils/cwd.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { getSessionIngressAuthToken } from '../../services/auth/sessionIngressAuth.js'
+import { getSessionIngressAuthToken } from '../auth/sessionIngressAuth.js'
 import { findModifiedFiles, getEnvironmentKind, logDebug } from './outputsScanner.js'
 import {
   DEFAULT_UPLOAD_CONCURRENCY,

@@ -32,7 +32,7 @@ import { CURRENCY_SYMBOLS, getCurrencySymbol } from '../../types/currency.js'
 import type { Message } from '../../types/message.js'
 import { calculateContextPercentages, getContextWindowForModel } from '../../utils/context.js'
 import { getCwd } from '../../utils/cwd.js'
-import { getDisplayedEffortLevel, modelSupportsEffort } from '../../utils/effort.js'
+import { getDisplayedEffortLevel, modelSupportsEffort } from '../../services/effort/effort.js'
 import { formatTokens } from '../../utils/format.js'
 import { getDisplayContextUsage } from '../../utils/tokens.js'
 import {

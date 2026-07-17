@@ -1,7 +1,7 @@
 import { basename } from 'node:path'
 import * as React from 'react'
 import { tSync } from 'src/i18n/index.js'
-import type { DiffStats } from 'src/utils/fileHistory.js'
+import type { DiffStats } from 'src/services/file-persistence/fileHistory.js'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
 import { COMMAND_MESSAGE_TAG } from '../constants/xml.js'
 import { Box, Text } from '../ink/index.js'

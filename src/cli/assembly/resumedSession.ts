@@ -6,7 +6,7 @@
 
 import { launchRepl } from '../../cli/ReplLauncher.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import type { ProcessedResume } from '../../utils/sessionRestore.js'
+import type { ProcessedResume } from '../../services/session-storage/sessionRestore.js'
 import type { AssemblyContext, SessionConfig } from './types.js'
 export type ResumedSessionParams = AssemblyContext & {
   sessionConfig: SessionConfig

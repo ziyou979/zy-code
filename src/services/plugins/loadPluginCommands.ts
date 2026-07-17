@@ -6,7 +6,7 @@ import type { Command } from '../../commands/types.js'
 import { getPluginErrorMessage, type LoadedPlugin, type PluginError } from './types.js'
 import { parseArgumentNames, substituteArguments } from '../../utils/argumentParser.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { EFFORT_LEVELS, parseEffortValue } from '../../utils/effort.js'
+import { EFFORT_LEVELS, parseEffortValue } from '../effort/effort.js'
 import { isBareMode } from '../../utils/envUtils.js'
 import { isENOENT } from '../../utils/errors.js'
 import {
@@ -20,8 +20,8 @@ import { getFsImplementation, isDuplicatePath } from '../../utils/fsOperations.j
 import {
   extractDescriptionFromMarkdown,
   parseSlashCommandToolsFromFrontmatter,
-} from '../../utils/markdownConfigLoader.js'
-import { executeShellCommandsInPrompt } from '../../services/shell/promptShellExecution.js'
+} from '../markdown/markdownConfigLoader.js'
+import { executeShellCommandsInPrompt } from '../shell/promptShellExecution.js'
 import { loadAllPluginsCacheOnly } from './pluginLoader.js'
 import {
   loadPluginOptions,

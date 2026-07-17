@@ -1,5 +1,5 @@
 import figuresLib from 'figures'
-import { env } from '../utils/env.js'
+import { env } from '../services/environment/env.js'
 
 // VS15 —— 强制文本展示（黑白字形），避免部分终端 / 系统把符号渲染为彩色 emoji。
 // 注意：VS15 会改变模糊宽度字符的终端列宽（emoji=2列, text=1列），

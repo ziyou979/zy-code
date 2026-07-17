@@ -38,7 +38,7 @@ import { logForDiagnosticsNoPII } from './diagLogs.js'
 import { isEnvTruthy } from './envUtils.js'
 import { getCurrentSessionTitle, sessionIdExists } from '../services/sessionStorage.js'
 import { sleep } from './sleep.js'
-import { profileReport } from './startupProfiler.js'
+import { profileReport } from '../services/telemetry/startupProfiler.js'
 
 /**
  * Clean up terminal modes synchronously before process exit.

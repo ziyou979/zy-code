@@ -2,7 +2,7 @@ import { envDynamic } from 'src/services/environment/envDynamic.js'
 import { Box, Text } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
-import { env } from '../utils/env.js'
+import { env } from '../services/environment/env.js'
 import {
   getTerminalIdeType,
   type IDEExtensionInstallationStatus,

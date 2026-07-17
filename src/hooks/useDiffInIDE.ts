@@ -14,7 +14,7 @@ import type { ToolUseContext } from '../tools/tool.js'
 import type { FileEdit } from '../tools/FileEditTool/types.js'
 import { getEditsForPatch, getPatchForEdits } from '../tools/FileEditTool/utils.js'
 import { getGlobalConfig } from '../services/config/config.js'
-import { getPatchFromContents } from '../utils/diff.js'
+import { getPatchFromContents } from '../services/git/diff.js'
 import { isENOENT } from '../utils/errors.js'
 import {
   callIdeRpc,

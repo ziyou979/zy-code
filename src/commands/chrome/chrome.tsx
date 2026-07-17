@@ -11,7 +11,7 @@ import { isChromeExtensionInstalled } from '../../services/claude-in-chrome/setu
 import { useAppState } from '../../state/AppState.js'
 import { openBrowser } from '../../services/browser/browser.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
-import { env } from '../../utils/env.js'
+import { env } from '../../services/environment/env.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'
 
 const CHROME_EXTENSION_URL = 'https://zy.ai/chrome'

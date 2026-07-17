@@ -6,7 +6,7 @@ import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 import { useAppState, useAppStateStore, useSetAppState } from '../state/AppState.js'
 import { backgroundAll, hasForegroundTasks } from '../tasks/local-shell-task/LocalShellTask.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
-import { env } from '../utils/env.js'
+import { env } from '../services/environment/env.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 

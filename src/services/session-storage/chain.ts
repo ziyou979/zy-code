@@ -13,7 +13,7 @@ import {
   type TranscriptMessage,
 } from '../../types/logs.js'
 import type { Message, SystemCompactBoundaryMessage } from '../../types/message.js'
-import type { FileHistorySnapshot } from '../../utils/fileHistory.js'
+import type { FileHistorySnapshot } from '../file-persistence/fileHistory.js'
 import { logError } from '../../utils/log.js'
 import { extractTag, isCompactBoundaryMessage } from '../messages/predicates.js'
 

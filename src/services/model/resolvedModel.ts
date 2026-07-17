@@ -2,7 +2,7 @@
 // 消除对全局状态（settings、env、缓存文件）的反复查询。
 
 import { getContextWindowForModel, getMaxThinkingTokensForModel } from '../../utils/context.js'
-import { modelSupportsEffort } from '../../utils/effort.js'
+import { modelSupportsEffort } from '../effort/effort.js'
 import { modelSupportsAdaptiveThinking, modelSupportsThinking } from '../../utils/thinking.js'
 import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'
 import { getProviderForModel, normalizeModelStringForAPI } from './model.js'

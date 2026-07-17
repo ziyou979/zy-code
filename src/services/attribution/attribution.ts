@@ -21,16 +21,16 @@ import {
   isInternalModelRepo,
   isInternalModelRepoCached,
   sanitizeModelName,
-} from '../../utils/commitAttribution.js'
+} from '../git/commitAttribution.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { parseJSONL } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
-import { isMemoryFileAccess } from '../../services/hooks/sessionFileAccessHooks.js'
+import { isMemoryFileAccess } from '../hooks/sessionFileAccessHooks.js'
 import { getTranscriptPath } from '../sessionStorage.js'
 import { readTranscriptForLoad } from '../../utils/sessionStoragePortable.js'
 import { getInitialSettings } from '../settings/settings.js'
-import { isUndercover } from '../../services/undercover/undercover.js'
+import { isUndercover } from '../undercover/undercover.js'
 export type AttributionTexts = {
   commit: string
   pr: string

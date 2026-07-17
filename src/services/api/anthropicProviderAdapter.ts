@@ -14,7 +14,7 @@ import type {
   StreamResult,
   ToolDefinition,
 } from '../../types/llm.js'
-import { getModelBetas } from '../../services/feature-flags/betas.js'
+import { getModelBetas } from '../feature-flags/betas.js'
 import { logError } from '../../utils/log.js'
 import { getAnthropicClient } from './client.js'
 import {

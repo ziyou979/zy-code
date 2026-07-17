@@ -4,7 +4,7 @@ import sample from 'lodash-es/sample.js'
 import * as React from 'react'
 import { ExitFlow } from '../../components/ExitFlow.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
-import { isBgSession } from '../../utils/concurrentSessions.js'
+import { isBgSession } from '../../services/session/concurrentSessions.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 

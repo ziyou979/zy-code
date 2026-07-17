@@ -5,7 +5,7 @@
 // 3. startKeychainPrefetch 并行触发两个 macOS keychain 读取（OAuth + 旧版 API
 //    密钥）—— 否则 isRemoteManagedSettingsEligible() 会在 applySafeConfigEnvironmentVariables()
 //    内部通过同步 spawn 顺序读取它们（每次 macOS 启动约 65ms）
-import { profileCheckpoint, profileReport } from './utils/startupProfiler.js'
+import { profileCheckpoint, profileReport } from './services/telemetry/startupProfiler.js'
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 profileCheckpoint('main_tsx_entry')

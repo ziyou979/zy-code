@@ -1,5 +1,5 @@
 import type { UUID } from 'node:crypto'
-import type { FileHistorySnapshot } from 'src/utils/fileHistory.js'
+import type { FileHistorySnapshot } from 'src/services/file-persistence/fileHistory.js'
 import type { ContentReplacementRecord } from 'src/utils/toolResultStorage.js'
 import type { AgentId } from './ids.js'
 import type { Message } from './message.js'

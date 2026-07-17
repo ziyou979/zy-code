@@ -20,11 +20,11 @@
 
 import { join, sep } from 'node:path'
 import isEqual from 'lodash-es/isEqual.js'
-import { logForDebugging } from '../../../utils/debug.js'
-import { ConfigParseError, errorMessage, isENOENT } from '../../../utils/errors.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { ConfigParseError, errorMessage, isENOENT } from '../../utils/errors.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from '../../shell/execFileNoThrow.js'
-import { getFsImplementation } from '../../../utils/fsOperations.js'
-import { gitExe } from '../../../utils/git.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
+import { gitExe } from '../../utils/git.js'
 import {
   getInitialSettings,
   getSettingsForSource,
@@ -34,7 +34,7 @@ import {
   jsonParse,
   jsonStringify,
   writeFileSync_DEPRECATED,
-} from '../../../utils/slowOperations.js'
+} from '../../utils/slowOperations.js'
 import { getAddDirEnabledPlugins, getAddDirExtraMarketplaces } from '../addDirPluginSettings.js'
 import { OFFICIAL_MARKETPLACE_NAME, OFFICIAL_MARKETPLACE_SOURCE } from '../officialMarketplace.js'
 import { getPluginSeedDirs, getPluginsDirectory } from '../pluginDirectories.js'

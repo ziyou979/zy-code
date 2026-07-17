@@ -14,12 +14,12 @@ import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from '../services/analytics/index.js'
-import { logForDebugging } from './debug.js'
-import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { getFsImplementation } from './fsOperations.js'
-import { formatMs, formatTimelineLine, getPerformance } from './profilerBase.js'
-import { writeFileSync_DEPRECATED } from './slowOperations.js'
+} from '../analytics/index.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
+import { formatMs, formatTimelineLine, getPerformance } from '../../utils/profilerBase.js'
+import { writeFileSync_DEPRECATED } from '../../utils/slowOperations.js'
 // Module-level state - decided once at module load
 // eslint-disable-next-line custom-rules/no-process-env-top-level
 const DETAILED_PROFILING = isEnvTruthy(process.env.ZY_CODE_PROFILE_STARTUP)

@@ -4,7 +4,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import type { LocalCommandCall } from '../types.js'
-import { isBgSession } from '../../utils/concurrentSessions.js'
+import { isBgSession } from '../../services/session/concurrentSessions.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
 import { resolveFullscreenEnabled, setFullscreenRuntimeOverride } from '../../services/terminal/fullscreen.js'

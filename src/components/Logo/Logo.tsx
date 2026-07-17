@@ -5,7 +5,7 @@ import { getGlobalConfig, saveGlobalConfig } from 'src/services/config/config.js
 import { getDebugLogPath, isDebugMode, isDebugToStdErr } from 'src/utils/debug.js'
 import { isEnvTruthy } from 'src/utils/envUtils.js'
 import { getInitialSettings } from 'src/services/settings/settings.js'
-import { getStartupPerfLogPath, isDetailedProfilingEnabled } from 'src/utils/startupProfiler.js'
+import { getStartupPerfLogPath, isDetailedProfilingEnabled } from 'src/services/telemetry/startupProfiler.js'
 import { resolveThemeSetting } from 'src/utils/systemTheme.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'

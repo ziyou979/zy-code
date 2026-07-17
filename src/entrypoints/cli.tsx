@@ -51,7 +51,7 @@ async function main(): Promise<void> {
   }
 
   // 其他路径：加载启动性能分析器
-  const { profileCheckpoint } = await import('../utils/startupProfiler.js')
+  const { profileCheckpoint } = await import('../services/telemetry/startupProfiler.js')
   profileCheckpoint('cli_entry')
 
   // --dump-system-prompt 快速路径：输出渲染后的系统提示并退出。

@@ -46,7 +46,7 @@ import {
 import { isSyntheticMessage } from '../services/messages/./constants.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../services/sessionStorage.js'
-import { extractConversationText, generateSessionTitle } from '../utils/sessionTitle.js'
+import { extractConversationText, generateSessionTitle } from '../services/session-storage/sessionTitle.js'
 import { generateShortWordSlug } from '../utils/words.js'
 import { getWireAccessToken, getWireBaseUrl, getWireTokenOverride } from './bridgeConfig.js'
 import {

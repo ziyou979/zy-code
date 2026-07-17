@@ -9,13 +9,13 @@ import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeConte
 import { logEvent } from 'src/services/analytics/index.js'
 import { notifyVscodeFileUpdated } from 'src/services/mcp/vscodeMcp.js'
 import type { LogOption } from 'src/types/logs.js'
-import { getGlobalConfig } from '../services/config/config.js'
-import { logForDebugging } from './debug.js'
-import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
-import { getErrnoCode, isENOENT } from './errors.js'
-import { pathExists } from './file.js'
-import { logError } from './log.js'
-import { recordFileHistorySnapshot } from '../services/sessionStorage.js'
+import { getGlobalConfig } from '../config/config.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
+import { getErrnoCode, isENOENT } from '../../utils/errors.js'
+import { pathExists } from '../../utils/file.js'
+import { logError } from '../../utils/log.js'
+import { recordFileHistorySnapshot } from '../sessionStorage.js'
 type BackupFileName = string | null // The null value means the file does not exist in this version
 
 export type FileHistoryBackup = {

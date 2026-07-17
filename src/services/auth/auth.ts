@@ -25,17 +25,17 @@ import {
 import {
   getApiKeyFromFileDescriptor,
   getOAuthTokenFromFileDescriptor,
-} from '../../services/auth/authFileDescriptor.js'
+} from '../auth/authFileDescriptor.js'
 import {
   maybeRemoveApiKeyFromMacOSKeychainThrows,
   normalizeApiKeyForConfig,
-} from '../../services/auth/authPortable.js'
-import { clearBetasCaches } from '../../services/feature-flags/betas.js'
+} from '../auth/authPortable.js'
+import { clearBetasCaches } from '../feature-flags/betas.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { execSyncWithDefaults_DEPRECATED } from '../shell/execFileNoThrow.js'
-import * as lockfile from '../../services/file-persistence/lockfile.js'
+import * as lockfile from '../file-persistence/lockfile.js'
 import { logError } from '../../utils/log.js'
 import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'
 import { sleep } from '../../utils/sleep.js'

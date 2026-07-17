@@ -47,8 +47,8 @@ import type { QuerySource } from '../constants/querySource.js'
 import type { AppState } from '../state/AppStateStore.js'
 import type { AgentId } from '../types/ids.js'
 import type { DeepImmutable } from '../types/utils.js'
-import type { AttributionState } from '../utils/commitAttribution.js'
-import type { FileHistoryState } from '../utils/fileHistory.js'
+import type { AttributionState } from '../services/git/commitAttribution.js'
+import type { FileHistoryState } from '../services/file-persistence/fileHistory.js'
 import type { Theme, ThemeName } from '../utils/theme.js'
 
 export type QueryChainTracking = {

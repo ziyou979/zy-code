@@ -12,7 +12,7 @@ import {
   installLatest,
 } from '../services/native-installer/index.js'
 import { logForDebugging } from '../utils/debug.js'
-import { env } from '../utils/env.js'
+import { env } from '../services/environment/env.js'
 import { errorMessage } from '../utils/errors.js'
 import { getInitialSettings, updateSettingsForSource } from '../services/settings/settings.js'
 

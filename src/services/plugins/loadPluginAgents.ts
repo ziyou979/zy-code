@@ -9,7 +9,7 @@ import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from '../../tools/FileWriteTool/prompt.js'
 import { getPluginErrorMessage } from './types.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { EFFORT_LEVELS, parseEffortValue } from '../../utils/effort.js'
+import { EFFORT_LEVELS, parseEffortValue } from '../effort/effort.js'
 import {
   coerceDescriptionToString,
   parseFrontmatter,
@@ -19,7 +19,7 @@ import { getFsImplementation, isDuplicatePath } from '../../utils/fsOperations.j
 import {
   parseAgentToolsFromFrontmatter,
   parseSlashCommandToolsFromFrontmatter,
-} from '../../utils/markdownConfigLoader.js'
+} from '../markdown/markdownConfigLoader.js'
 import { loadAllPluginsCacheOnly } from './pluginLoader.js'
 import {
   loadPluginOptions,

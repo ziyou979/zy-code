@@ -37,7 +37,7 @@ import type { SetAppState } from '../../utils/messageQueueManager.js'
 import { createSystemMessage, createUserMessage } from '../messages/constructors.js'
 import { INTERRUPT_MESSAGE, INTERRUPT_MESSAGE_FOR_TOOL_USE } from '../messages/constants.js'
 import { getZyTempDir } from '../permissions/filesystem.js'
-import { extractReadFilesFromMessages } from '../../utils/queryHelpers.js'
+import { extractReadFilesFromMessages } from '../query/queryHelpers.js'
 import { getTranscriptPath } from '../sessionStorage.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {

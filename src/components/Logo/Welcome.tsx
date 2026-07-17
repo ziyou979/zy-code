@@ -1,5 +1,5 @@
 import { Box, Text, useTheme } from 'src/ink/index.js'
-import { env } from '../../utils/env.js'
+import { env } from '../../services/environment/env.js'
 
 const WELCOME_V2_WIDTH = 58
 

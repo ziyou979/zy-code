@@ -13,7 +13,7 @@ import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
 import type { Command, PromptCommand } from '../commands/types.js'
 import { parseArgumentNames, substituteArguments } from '../utils/argumentParser.js'
 import { logForDebugging } from '../utils/debug.js'
-import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../utils/effort.js'
+import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../services/effort/effort.js'
 import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../utils/envUtils.js'
 import { isENOENT, isFsInaccessible } from '../utils/errors.js'
 import {
@@ -34,7 +34,7 @@ import {
   loadMarkdownFilesForSubdir,
   type MarkdownFile,
   parseSlashCommandToolsFromFrontmatter,
-} from '../utils/markdownConfigLoader.js'
+} from '../services/markdown/markdownConfigLoader.js'
 import { executeShellCommandsInPrompt } from '../services/shell/promptShellExecution.js'
 import type { SettingSource } from '../services/settings/constants.js'
 import { isSettingSourceEnabled } from '../services/settings/constants.js'

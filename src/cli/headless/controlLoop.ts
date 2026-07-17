@@ -35,7 +35,7 @@ import { buildWireConnectUrl } from 'src/bridge/bridgeStatusUtil.js'
 import { extractInboundMessageFields } from 'src/bridge/inboundMessages.js'
 import { resolveAndPrepend } from 'src/bridge/inboundAttachments.js'
 import { createAbortController } from 'src/utils/abortController.js'
-import { generateSessionTitle } from 'src/utils/sessionTitle.js'
+import { generateSessionTitle } from 'src/services/session-storage/sessionTitle.js'
 import { buildSideQuestionFallbackParams } from 'src/services/query/queryContext.js'
 import { runSideQuestion } from 'src/services/assistant/sideQuestion.js'
 import { getSettingsWithSources } from 'src/services/settings/settings.js'
@@ -48,7 +48,7 @@ import {
   recordAttributionSnapshot,
   saveAiGeneratedTitle,
 } from 'src/services/sessionStorage.js'
-import { incrementPromptCount } from 'src/utils/commitAttribution.js'
+import { incrementPromptCount } from 'src/services/git/commitAttribution.js'
 import { clearServerCache, reconnectMcpServerImpl } from 'src/services/mcp/client.js'
 import {
   getMcpConfigByName,
@@ -62,7 +62,7 @@ import { toInternalMessages } from 'src/services/messages/mappers.js'
 import { collectContextData } from 'src/commands/context/contextNoninteractive.js'
 import { statusListeners, type ZyAILimits } from 'src/services/zyAiLimits.js'
 import { getDefaultMainLoopModel, getMainLoopModel } from 'src/services/model/model.js'
-import { modelSupportsEffort, resolveAppliedEffort } from 'src/utils/effort.js'
+import { modelSupportsEffort, resolveAppliedEffort } from 'src/services/effort/effort.js'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'

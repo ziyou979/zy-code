@@ -7,7 +7,7 @@ import { afterEach, describe, expect, mock, test } from 'bun:test'
 import * as realRuntimeContext from '../../src/bootstrap/runtime/runtimeContext.js'
 import * as realGrowthbook from '../../src/services/analytics/growthbook.js'
 import * as realConfig from '../../src/services/config/config.js'
-import * as realConcurrentSessions from '../../src/utils/concurrentSessions.js'
+import * as realConcurrentSessions from '../../src/services/session/concurrentSessions.js'
 import * as realDebug from '../../src/utils/debug.js'
 import * as realEnvUtils from '../../src/utils/envUtils.js'
 import * as realExecFileNoThrow from '../../src/services/shell/execFileNoThrow.js'
@@ -53,7 +53,7 @@ mock.module('../../src/services/config/config.js', () => ({
   createDefaultGlobalConfig: () => ({}),
 }))
 
-mock.module('../../src/utils/concurrentSessions.js', () => ({
+mock.module('../../src/services/session/concurrentSessions.js', () => ({
   ...realConcurrentSessions,
   isBgSession: () => mockIsBgSession,
 }))

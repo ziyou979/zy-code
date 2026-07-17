@@ -15,7 +15,7 @@ import {
   type InstallStatus,
   installGlobalPackage,
   shouldSkipVersion,
-} from '../utils/autoUpdater.js'
+} from '../services/updater/autoUpdater.js'
 import { getGlobalConfig, isAutoUpdaterDisabled } from '../services/config/config.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getCurrentInstallationType } from '../services/doctor/doctorDiagnostic.js'

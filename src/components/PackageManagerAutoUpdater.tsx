@@ -8,7 +8,7 @@ import {
   getLatestVersionFromGcs,
   getMaxVersion,
   shouldSkipVersion,
-} from '../utils/autoUpdater.js'
+} from '../services/updater/autoUpdater.js'
 import { isAutoUpdaterDisabled } from '../services/config/config.js'
 import { logForDebugging } from '../utils/debug.js'
 import { gt, gte } from '../utils/semver.js'

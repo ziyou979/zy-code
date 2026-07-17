@@ -9,7 +9,7 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 
-import { isToolReferenceBlock } from '../../services/tool-runtime/toolSearch.js'
+import { isToolReferenceBlock } from '../tool-runtime/toolSearch.js'
 
 /**
  * 已完成 turn 的 UI-only 消息类型（progress/stream 等），可安全丢弃。

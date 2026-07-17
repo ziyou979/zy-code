@@ -10,17 +10,17 @@ import type {
   TaskBudgetParam,
 } from '../../../types/llm.js'
 import type { AssistantMessage, Message, StreamEvent } from '../../../types/message.js'
-import { logAPIPrefix, toolToAPISchema } from '../../../utils/api.js'
+import { logAPIPrefix, toolToAPISchema } from '../../utils/api.js'
 import { getMergedBetas } from '../../../services/feature-flags/betas.js'
-import { resolveAppliedEffort } from '../../../utils/effort.js'
-import { isEnvTruthy } from '../../../utils/envUtils.js'
+import { resolveAppliedEffort } from '../../../services/effort/effort.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
 import { createUserMessage } from '../../messages/constructors.js'
 import { ensureToolResultPairing, normalizeMessagesForAPI } from '../../messages/api.js'
 import {
   stripCallerFieldFromAssistantMessage,
   stripToolReferenceBlocksFromUserMessage,
 } from '../../messages/prune.js'
-import { asSystemPrompt, type SystemPrompt } from '../../../utils/systemPromptType.js'
+import { asSystemPrompt, type SystemPrompt } from '../../utils/systemPromptType.js'
 import { getAPIContextManagement } from '../../compact/apiMicrocompact.js'
 import { currentLimits } from '../../zyAiLimits.js'
 import { feature } from 'bun:bundle'
@@ -38,7 +38,7 @@ import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claude-in-chrome/
 import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claude-in-chrome/prompt.js'
 import { getToolSearchBetaHeader, shouldIncludeExperimentalBetas } from 'src/services/feature-flags/betas.js'
 import { logForDebugging } from 'src/utils/debug.js'
-import { type EffortLevel } from 'src/utils/effort.js'
+import { type EffortLevel } from 'src/services/effort/effort.js'
 import { isMcpInstructionsDeltaEnabled } from 'src/services/mcp/mcpInstructionsDelta.js'
 import { queryCheckpoint } from 'src/utils/queryProfiler.js'
 import { type ThinkingConfig } from 'src/utils/thinking.js'
@@ -58,8 +58,8 @@ import {
   isDeferredTool,
   TOOL_SEARCH_TOOL_NAME,
 } from '../../../tools/ToolSearchTool/prompt.js'
-import { count } from '../../../utils/array.js'
-import { jsonStringify } from '../../../utils/slowOperations.js'
+import { count } from '../../utils/array.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { logEvent } from '../../analytics/index.js'
 import { consumePendingCacheEdits, getPinnedCacheEdits } from '../../compact/microCompact.js'

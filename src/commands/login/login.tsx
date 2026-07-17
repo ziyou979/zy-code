@@ -20,7 +20,7 @@ import {
   resetAutoModeGateCheck,
   resetBypassPermissionsCheck,
 } from '../../services/permissions/bypassPermissionsKillswitch.js'
-import { resetUserCache } from '../../utils/user.js'
+import { resetUserCache } from '../../services/auth/user.js'
 export async function call(
   onDone: LocalJSXCommandOnDone,
   context: LocalJSXCommandContext,

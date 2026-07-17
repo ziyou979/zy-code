@@ -26,7 +26,7 @@ import { createSystemMessage } from '../services/messages/./constructors.js'
 import { extractTextContent } from '../services/messages/./predicates.js'
 import { handleMessageFromStream } from '../services/messages/./streaming.js'
 import type { StreamingToolUse } from '../services/messages/./streaming.js'
-import { generateSessionTitle } from '../utils/sessionTitle.js'
+import { generateSessionTitle } from '../services/session-storage/sessionTitle.js'
 
 // How long to wait for a response before showing a warning
 const RESPONSE_TIMEOUT_MS = 60000 // 60 seconds

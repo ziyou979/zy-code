@@ -46,7 +46,7 @@ import { EMPTY_USAGE } from 'src/services/api/logging.js'
 import {
   loadConversationForResume,
   type TurnInterruptionState,
-} from 'src/utils/conversationRecovery.js'
+} from 'src/services/session-storage/conversationRecovery.js'
 import type {
   MCPServerConnection,
   McpSdkServerConfig,
@@ -61,12 +61,12 @@ import {
 import { parsePluginIdentifier } from 'src/services/plugins/pluginIdentifier.js'
 import { validateUuid } from 'src/utils/uuid.js'
 import { fromArray } from 'src/utils/generators.js'
-import type { PermissionPromptTool } from 'src/utils/queryHelpers.js'
+import type { PermissionPromptTool } from 'src/services/query/queryHelpers.js'
 import {
   createFileStateCacheWithSizeLimit,
   READ_FILE_STATE_CACHE_SIZE,
 } from 'src/utils/fileStateCache.js'
-import { extractReadFilesFromMessages } from 'src/utils/queryHelpers.js'
+import { extractReadFilesFromMessages } from 'src/services/query/queryHelpers.js'
 import { registerHookEventHandler } from 'src/services/hooks/hookEvents.js'
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
 import { registerCleanup } from 'src/utils/cleanupRegistry.js'
@@ -160,7 +160,7 @@ import {
   parseUserSpecifiedModel,
 } from 'src/services/model/model.js'
 import { getModelOptions } from 'src/services/model/modelOptions.js'
-import { getModelEffortLevels } from 'src/utils/effort.js'
+import { getModelEffortLevels } from 'src/services/effort/effort.js'
 import { modelSupportsAdaptiveThinking } from 'src/utils/thinking.js'
 import { modelSupportsAutoMode } from 'src/services/feature-flags/betas.js'
 import { ensureModelStringsInitialized } from 'src/services/model/modelStrings.js'
@@ -184,8 +184,8 @@ import {
   fileHistoryCanRestore,
   fileHistoryEnabled,
   fileHistoryGetDiffStats,
-} from 'src/utils/fileHistory.js'
-import { restoreAgentFromSession, restoreSessionStateFromLog } from 'src/utils/sessionRestore.js'
+} from 'src/services/file-persistence/fileHistory.js'
+import { restoreAgentFromSession, restoreSessionStateFromLog } from 'src/services/session-storage/sessionRestore.js'
 import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import {
   headlessProfilerStartTurn,

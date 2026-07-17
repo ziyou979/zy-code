@@ -23,7 +23,7 @@ import {
   resolveEffortForModel,
   resolvePickerEffortPersistence,
   toPersistableEffort,
-} from '../utils/effort.js'
+} from '../services/effort/effort.js'
 import { getSettingsForSource, updateSettingsForSource } from '../services/settings/settings.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { Select } from './CustomSelect/index.js'

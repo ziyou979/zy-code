@@ -13,15 +13,15 @@ import type {
 } from 'src/types/message.js'
 import { getPlanSlugCache } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { EXIT_PLAN_MODE_TOOL_NAME } from '../tools/ExitPlanModeTool/constants.js'
-import { getCwd } from './cwd.js'
-import { logForDebugging } from './debug.js'
-import { getZyConfigHomeDir } from './envUtils.js'
-import { isENOENT } from './errors.js'
-import { getFsImplementation } from './fsOperations.js'
-import { logError } from './log.js'
-import { getInitialSettings } from '../services/settings/settings.js'
-import { generateWordSlug } from './words.js'
+import { EXIT_PLAN_MODE_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
+import { getCwd } from '../../utils/cwd.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { isENOENT } from '../../utils/errors.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
+import { logError } from '../../utils/log.js'
+import { getInitialSettings } from '../settings/settings.js'
+import { generateWordSlug } from '../../utils/words.js'
 
 const MAX_SLUG_RETRIES = 10
 
@@ -375,7 +375,7 @@ export async function persistFileSnapshotIfRemote(): Promise<void> {
       snapshotFiles,
     }
 
-    const { recordTranscript } = await import('../services/sessionStorage.js')
+    const { recordTranscript } = await import('../sessionStorage.js')
     // SystemFileSnapshotMessage 不在 Message 联合中，需通过 unknown 桥接
     await recordTranscript([message as unknown as import('src/types/message.js').Message])
   } catch (error) {

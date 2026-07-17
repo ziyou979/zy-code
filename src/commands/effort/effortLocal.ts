@@ -5,7 +5,7 @@ import {
   getDisplayedEffortLevel,
   getEffortEnvOverride,
   getModelEffortLevels,
-} from '../../utils/effort.js'
+} from '../../services/effort/effort.js'
 import { executeEffort, showCurrentEffort } from './effort.js'
 
 const COMMON_HELP_ARGS = ['help', '-h', '--help']

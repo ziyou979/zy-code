@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { tSync } from '../i18n/index.js'
 import { COMMAND_DESCRIPTION_I18N_KEYS } from '../commands/descriptionI18n.js'
-import { isBgSession } from '../utils/concurrentSessions.js'
+import { isBgSession } from '../services/session/concurrentSessions.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import addDir from '../commands/add-dir/index.js'
 import background from 'src/commands/background/index.js'

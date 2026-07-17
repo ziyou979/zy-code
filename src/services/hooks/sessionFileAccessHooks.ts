@@ -26,7 +26,7 @@ import {
   detectSessionPatternType,
   isAutoMemFile,
   memoryScopeForPath,
-} from '../../services/memory/memoryFileDetection.js'
+} from '../memory/memoryFileDetection.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemPaths = feature('TEAMMEM')

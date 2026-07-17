@@ -7,7 +7,7 @@ import { logError } from '../utils/log.js'
 import {
   extractDescriptionFromMarkdown,
   loadMarkdownFilesForSubdir,
-} from '../utils/markdownConfigLoader.js'
+} from '../services/markdown/markdownConfigLoader.js'
 import { clearPluginOutputStyleCache } from '../services/plugins/loadPluginOutputStyles.js'
 
 /**

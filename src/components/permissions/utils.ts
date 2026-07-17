@@ -1,4 +1,4 @@
-import { getHostPlatformForAnalytics } from '../../utils/env.js'
+import { getHostPlatformForAnalytics } from '../../services/environment/env.js'
 import { type CompletionType, logUnaryEvent } from '../../services/telemetry/unaryLogging.js'
 import type { ToolUseConfirm } from './PermissionRequest.js'
 

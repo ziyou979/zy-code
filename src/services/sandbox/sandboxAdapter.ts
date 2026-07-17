@@ -55,7 +55,7 @@ import { WEB_FETCH_TOOL_NAME } from 'src/tools/WebFetchTool/prompt.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getZyTempDir } from '../permissions/filesystem.js'
 import type { PermissionRuleValue } from '../permissions/permissionRule.js'
-import { ripgrepCommand } from '../../services/file-search/ripgrep.js'
+import { ripgrepCommand } from '../file-search/ripgrep.js'
 
 // Local copies to avoid circular dependency
 // (permissions.ts imports SandboxManager, bashPermissions.ts imports permissions.ts)

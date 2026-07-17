@@ -2,7 +2,7 @@ import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink/index.js'
 import { useAppState } from '../state/AppState.js'
 import { getViewedTeammateTask } from '../state/selectors.js'
-import { toInkColor } from '../utils/ink.js'
+import { toInkColor } from '../services/environment/ink.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { OffscreenFreeze } from './OffscreenFreeze.js'
 

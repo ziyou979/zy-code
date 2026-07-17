@@ -9,7 +9,7 @@ import {
   isPluginAgent,
 } from '../../tools/AgentTool/loadAgentsDir.js'
 import { getCwd } from '../../utils/cwd.js'
-import type { EffortLevel } from '../../utils/effort.js'
+import type { EffortLevel } from '../../services/effort/effort.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { AGENT_PATHS } from './types.js'

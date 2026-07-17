@@ -22,9 +22,9 @@ import type {
   StreamEvent,
   SystemAPIErrorMessage,
 } from '../../../types/message.js'
-import { isEnvTruthy, isInternalBuild } from '../../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { normalizeContentFromAPI } from '../../messages/normalize.js'
-import { type SystemPrompt } from '../../../utils/systemPromptType.js'
+import { type SystemPrompt } from '../../utils/systemPromptType.js'
 import { getLLMAdapter } from '../client.js'
 import type { ClientOptions } from '@anthropic-ai/sdk'
 import type { QuerySource } from 'src/constants/querySource.js'
@@ -32,7 +32,7 @@ import type { Notification } from 'src/context/notifications.js'
 import type { AgentId } from 'src/types/ids.js'
 import { createDebugLog, logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
-import { type EffortLevel } from 'src/utils/effort.js'
+import { type EffortLevel } from 'src/services/effort/effort.js'
 import { type ThinkingConfig } from 'src/utils/thinking.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {

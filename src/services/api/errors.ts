@@ -21,7 +21,7 @@ import { getErrorHeader, isAPIError, isConnectionError } from '../../types/llm.j
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { formatFileSize } from '../../utils/format.js'
 import { ImageResizeError } from '../../utils/imageResizer.js'
-import { ImageSizeError } from '../../services/attachments/imageValidation.js'
+import { ImageSizeError } from '../attachments/imageValidation.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

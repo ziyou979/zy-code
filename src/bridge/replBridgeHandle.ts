@@ -1,4 +1,4 @@
-import { updateSessionWireId } from '../utils/concurrentSessions.js'
+import { updateSessionWireId } from '../services/session/concurrentSessions.js'
 import type { ReplWireHandle } from './replBridge.js'
 import { toCompatSessionId } from './sessionIdCompat.js'
 /**

@@ -1,5 +1,5 @@
 import { getIsNonInteractiveSession } from '../../../bootstrap/runtime/runtimeContext.js'
-import { logForDebugging } from '../../../utils/debug.js'
+import { logForDebugging } from '../../utils/debug.js'
 import { getPlatform } from '../../shell/platform.js'
 import {
   isInITerm2,

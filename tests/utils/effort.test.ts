@@ -25,7 +25,7 @@ import {
   resolveInitialEffortSetting,
   resolvePickerEffortPersistence,
   toPersistableEffort,
-} from '../../src/utils/effort.js'
+} from '../../src/services/effort/effort.js'
 
 describe('effort', () => {
   describe('isEffortLevel', () => {

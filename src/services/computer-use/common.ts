@@ -1,5 +1,5 @@
 import { normalizeNameForMCP } from '../mcp/normalization.js'
-import { env } from '../../utils/env.js'
+import { env } from '../environment/env.js'
 
 export const COMPUTER_USE_MCP_SERVER_NAME = 'computer-use'
 

@@ -1,7 +1,7 @@
 import { type ToolUseContext, type ToolPermissionContext } from '../../../tools/tool.js'
 import { getViewedTeammateTask } from '../../../state/selectors.js'
 import type { Message } from 'src/types/message.js'
-import { getContextWindowForModel } from '../../../utils/context.js'
+import { getContextWindowForModel } from '../../utils/context.js'
 import { matchingRuleForInput } from '../../permissions/filesystem.js'
 import {
   getTotalCost,
@@ -9,11 +9,11 @@ import {
   getCurrentTurnTokenBudget,
   getTurnOutputTokens,
 } from '../../../bootstrap/runtime/runtimeContext.js'
-import { logForDebugging } from '../../../utils/debug.js'
-import { isHumanTurn } from '../../../utils/messagePredicates.js'
-import { isEnvTruthy, getZyConfigHomeDir } from '../../../utils/envUtils.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { isHumanTurn } from '../../utils/messagePredicates.js'
+import { isEnvTruthy, getZyConfigHomeDir } from '../../utils/envUtils.js'
 import { feature } from 'bun:bundle'
-import { tokenCountFromLastAPIResponse, tokenCountWithEstimation } from '../../../utils/tokens.js'
+import { tokenCountFromLastAPIResponse, tokenCountWithEstimation } from '../../utils/tokens.js'
 import { getEffectiveContextWindowSize, isAutoCompactEnabled } from '../../compact/autoCompact.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../analytics/growthbook.js'
 import { isAgentSwarmsEnabled } from '../../swarm/agentSwarmsEnabled.js'
@@ -23,12 +23,12 @@ import {
   isShutdownApproved,
   isStructuredProtocolMessage,
   isIdleNotification,
-} from '../../../utils/teammateMailbox.js'
-import { getAgentName, getAgentId, getTeamName, isTeamLead } from '../../../utils/teammate.js'
-import { isInProcessTeammate } from '../../../utils/teammateContext.js'
+} from '../../utils/teammateMailbox.js'
+import { getAgentName, getAgentId, getTeamName, isTeamLead } from '../../utils/teammate.js'
+import { isInProcessTeammate } from '../../utils/teammateContext.js'
 import { removeTeammateFromTeamFile } from 'src/services/swarm/teamHelpers.js'
-import { unassignTeammateTasks } from '../../../utils/tasks.js'
-import { isInternalBuild } from '../../../utils/envUtils.js'
+import { unassignTeammateTasks } from '../../utils/tasks.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import { Attachment, VERIFY_PLAN_REMINDER_CONFIG } from './types.js'
 /**
  * Get teammate mailbox attachments for agent swarm communication

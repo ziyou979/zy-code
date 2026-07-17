@@ -56,7 +56,7 @@ import { processSessionStartHooks } from '../../services/session-storage/session
 import { saveAgentSetting } from '../../services/sessionStorage.js'
 import { getInitialSettings, getSettingsWithErrors } from '../../services/settings/settings.js'
 import { resetSettingsCache } from '../../services/settings/settingsCache.js'
-import { profileCheckpoint } from '../../utils/startupProfiler.js'
+import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js'
 import { logContextMetrics } from 'src/utils/api.js'
 import { registerCleanup } from 'src/utils/cleanupRegistry.js'
@@ -64,7 +64,7 @@ import {
   countConcurrentSessions,
   registerSession,
   updateSessionName,
-} from 'src/utils/concurrentSessions.js'
+} from 'src/services/session/concurrentSessions.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
 import {
@@ -80,7 +80,7 @@ import {
 import { initializeLspServerManager } from '../../services/lsp/manager.js'
 import { isInBundledMode } from '../../utils/bundledMode.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
-import { resetUserCache } from '../../utils/user.js'
+import { resetUserCache } from '../../services/auth/user.js'
 import {
   appendProactiveModePrompt,
   createMcpPrefetchPromises,

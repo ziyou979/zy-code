@@ -55,25 +55,25 @@ describe('3.3 effort 注入', () => {
 
   describe('getCurrentHookEffortLevel', () => {
     test('模型支持 effort：返回传入档位', async () => {
-      const { getCurrentHookEffortLevel } = await import('../../../src/utils/effort.js')
+      const { getCurrentHookEffortLevel } = await import('../../../src/services/effort/effort.js')
       expect(getCurrentHookEffortLevel('thorough')).toBe('thorough')
       expect(getCurrentHookEffortLevel('light')).toBe('light')
     })
 
     test('请求模型不支持的档位：夹取到可用档位', async () => {
-      const { getCurrentHookEffortLevel } = await import('../../../src/utils/effort.js')
+      const { getCurrentHookEffortLevel } = await import('../../../src/services/effort/effort.js')
       expect(getCurrentHookEffortLevel('extreme')).toBe('thorough')
     })
 
     test('模型不支持 effort：返回 undefined', async () => {
       LEVELS = []
-      const { getCurrentHookEffortLevel } = await import('../../../src/utils/effort.js')
+      const { getCurrentHookEffortLevel } = await import('../../../src/services/effort/effort.js')
       expect(getCurrentHookEffortLevel('thorough')).toBeUndefined()
     })
 
     test('无当前模型：返回 undefined', async () => {
       MODEL = undefined
-      const { getCurrentHookEffortLevel } = await import('../../../src/utils/effort.js')
+      const { getCurrentHookEffortLevel } = await import('../../../src/services/effort/effort.js')
       expect(getCurrentHookEffortLevel('thorough')).toBeUndefined()
     })
   })

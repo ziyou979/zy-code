@@ -22,7 +22,7 @@ import { extname, join } from 'node:path'
 import { logEvent } from '../services/analytics/index.js'
 import { getZyConfigHomeDir } from '../utils/envUtils.js'
 import { logError } from '../utils/log.js'
-import { getProjectDirsUpToHome } from '../utils/markdownConfigLoader.js'
+import { getProjectDirsUpToHome } from '../services/markdown/markdownConfigLoader.js'
 import { adaptExternalTool, type ExternalToolDefinition } from './externalToolAdapter.js'
 import { toolRegistry } from './registry.js'
 

@@ -4,7 +4,7 @@ import ignore from 'ignore'
 import {
   loadMarkdownFilesForSubdir,
   ZY_CONFIG_DIRECTORIES,
-} from 'src/utils/markdownConfigLoader.js'
+} from 'src/services/markdown/markdownConfigLoader.js'
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
 import { CHUNK_MS, FileIndex, yieldToEventLoop } from '../native-ts/file-index/index.js'
 import { logEvent } from '../services/analytics/index.js'

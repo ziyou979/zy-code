@@ -6,7 +6,7 @@ import { classifyMcpToolForCollapse } from '../../../tools/MCPTool/classifyForCo
 import {
   errorMessage,
   TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-} from '../../../utils/errors.js'
+} from '../../utils/errors.js'
 import {
   getClaudeInChromeToolOverrides,
   getComputerUseToolOverrides,

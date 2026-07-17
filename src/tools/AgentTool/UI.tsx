@@ -38,7 +38,7 @@ import {
   getSearchOrReadFromContent,
   getSearchReadSummaryText,
 } from '../../utils/collapseReadSearch.js'
-import { env } from '../../utils/env.js'
+import { env } from '../../services/environment/env.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { getDisplayPath } from '../../utils/file.js'
 import { formatNumber, getLocalizedDurationFormatter } from '../../utils/format.js'

@@ -5,7 +5,7 @@ import {
 import { tSync } from '../../i18n/index.js'
 import type { Key } from '../../ink/index.js'
 import { getGlobalConfig } from '../../services/config/config.js'
-import { env } from '../../utils/env.js'
+import { env } from '../../services/environment/env.js'
 /**
  * Helper function to check if vim mode is currently enabled
  * @returns boolean indicating if vim mode is active

@@ -25,7 +25,7 @@ import type { Command } from '../../commands/types.js'
 import { validateForceLoginOrg } from '../../services/auth/auth.js'
 import { filterAllowedSdkBetas } from '../../services/feature-flags/betas.js'
 import { logForDebugging, setHasFormattedOutput } from '../../utils/debug.js'
-import { resolveInitialEffortSetting } from '../../utils/effort.js'
+import { resolveInitialEffortSetting } from '../../services/effort/effort.js'
 import { isBareMode } from '../../utils/envUtils.js'
 import { applyConfigEnvironmentVariables } from '../../services/environment/managedEnv.js'
 import {
@@ -33,7 +33,7 @@ import {
   verifyAutoModeGateAccess,
 } from '../../services/permissions/permissionSetup.js'
 import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
-import { profileCheckpoint } from '../../utils/startupProfiler.js'
+import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 // ---------- 参数接口 ----------
 

@@ -10,7 +10,7 @@ import {
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { type SessionId } from '../../types/ids.js'
 import { type PersistedWorktreeSession } from '../../types/logs.js'
-import { updateSessionName } from '../../utils/concurrentSessions.js'
+import { updateSessionName } from '../session/concurrentSessions.js'
 import { getTranscriptPathForSession } from './paths.js'
 import { getProject } from './project.js'
 import { updateSessionSidecar } from './sessionSidecar.js'

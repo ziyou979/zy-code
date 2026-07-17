@@ -14,12 +14,12 @@ import { toUUID } from '../../types/ids.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import type { FileHistoryState } from '../../utils/fileHistory.js'
-import { fileHistoryEnabled, fileHistoryMakeSnapshot } from '../../utils/fileHistory.js'
+import type { FileHistoryState } from '../../services/file-persistence/fileHistory.js'
+import { fileHistoryEnabled, fileHistoryMakeSnapshot } from '../../services/file-persistence/fileHistory.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
 import { applyPermissionUpdates } from '../../services/permissions/permissionUpdate.js'
 import { stripDangerousPermissionsForAutoMode } from '../../services/permissions/permissionSetup.js'
-import { getPlanSlug, setPlanSlug } from '../../utils/plans.js'
+import { getPlanSlug, setPlanSlug } from '../../services/plans/plans.js'
 
 export interface UseReplInitialMessageParams {
   replStore: ReplStoreInstance

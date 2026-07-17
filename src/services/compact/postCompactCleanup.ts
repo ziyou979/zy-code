@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { QuerySource } from '../../constants/querySource.js'
 import { clearSystemPromptSections } from '../../constants/systemPromptSections.js'
-import { getUserContext } from '../../services/context/context.js'
+import { getUserContext } from '../context/context.js'
 import { clearBetaTracingState } from '../telemetry/betaSessionTracing.js'
 import { clearSpeculativeChecks } from '../../tools/BashTool/bashPermissions.js'
 import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'

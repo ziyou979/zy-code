@@ -31,8 +31,8 @@ import {
   getRemoteControlAtStartup,
   saveGlobalConfig,
 } from '../../services/config/config.js'
-import { loadConversationForResume } from '../../utils/conversationRecovery.js'
-import { resolveInitialEffortSetting } from '../../utils/effort.js'
+import { loadConversationForResume } from '../../services/session-storage/conversationRecovery.js'
+import { resolveInitialEffortSetting } from '../../services/effort/effort.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 import { applyConfigEnvironmentVariables } from '../../services/environment/managedEnv.js'
@@ -48,9 +48,9 @@ import {
   runInteractiveMode,
   runSshMode,
 } from '../assembly/index.js'
-import { createEmptyAttributionState } from 'src/utils/commitAttribution.js'
+import { createEmptyAttributionState } from 'src/services/git/commitAttribution.js'
 import { gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
-import { processResumedConversation } from 'src/utils/sessionRestore.js'
+import { processResumedConversation } from 'src/services/session-storage/sessionRestore.js'
 import { plural } from 'src/utils/stringUtils.js'
 import { getUserMsgOptIn } from 'src/bootstrap/runtime/runtimeContext.js'
 import { shouldEnablePromptSuggestion } from '../../services/prompt-suggestion/availability.js'

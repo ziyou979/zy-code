@@ -18,7 +18,7 @@ import {
 } from '../../services/shell/appleTerminalBackup.js'
 import { setupShellCompletion } from '../../services/cache/completionCache.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
-import { env } from '../../utils/env.js'
+import { env } from '../../services/environment/env.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { isFsInaccessible } from '../../utils/errors.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'

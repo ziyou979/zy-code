@@ -46,7 +46,7 @@ import {
   getFileModificationTime,
   writeTextContent,
 } from '../../utils/file.js'
-import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../utils/fileHistory.js'
+import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../services/file-persistence/fileHistory.js'
 import { truncate } from '../../utils/format.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
 import { lazySchema } from '../../utils/lazySchema.js'

@@ -20,7 +20,7 @@ import {
 } from '../../services/swarm/inProcessTeammateHelpers.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
-import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from '../../utils/plans.js'
+import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from '../../services/plans/plans.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getAgentName, getTeamName, isPlanModeRequired, isTeammate } from '../../utils/teammate.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'

@@ -24,7 +24,7 @@ import type {
 } from '../../types/message.js'
 import type { PermissionMode } from '../../types/permissions.js'
 import { isValidImagePaste, type PromptInputMode } from '../../types/textInputTypes.js'
-import type { EffortLevel } from '../../utils/effort.js'
+import type { EffortLevel } from '../effort/effort.js'
 import { toArray } from '../../utils/generators.js'
 import { executeUserPromptExpansionHooks } from '../hooks/executors/notification.js'
 import { hasHookForEvent } from '../hooks/matcher.js'
@@ -32,7 +32,7 @@ import {
   createImageMetadataText,
   maybeResizeAndDownsampleImageBlock,
 } from '../../utils/imageResizer.js'
-import { storeImages } from '../../services/attachments/imageStore.js'
+import { storeImages } from '../attachments/imageStore.js'
 import {
   createCommandInputMessage,
   createSystemMessage,

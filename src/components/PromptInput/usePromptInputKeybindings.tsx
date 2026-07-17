@@ -13,7 +13,7 @@ import type { ToolPermissionContext } from '../../tools/tool.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { saveGlobalConfig } from '../../services/config/config.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { env } from '../../utils/env.js'
+import { env } from '../../services/environment/env.js'
 import { getImageFromClipboard } from '../../services/attachments/imagePaste.js'
 import { setAutoModeActive } from '../../services/permissions/autoModeState.js'
 import {

@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { tSync } from '../i18n/index.js'
-import { isUltrathinkEnabled, modelSupportsThinking } from './thinking.js'
-import { getInitialSettings } from '../services/settings/settings.js'
+import { tSync } from '../../i18n/index.js'
+import { isUltrathinkEnabled, modelSupportsThinking } from '../../utils/thinking.js'
+import { getInitialSettings } from '../settings/settings.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { getEffectiveApiFormat, getProviderAttr } from 'src/services/model/providers.js'
 import {
@@ -14,13 +14,13 @@ import {
   getLocalModelEffortLevels,
   getLocalModelEffortMap,
   getLocalModelPreserveThinking,
-} from '../services/settings/localModelCapabilities.js'
-import { isEnvTruthy } from './envUtils.js'
+} from '../settings/localModelCapabilities.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
 import {
   PERSISTABLE_EFFORT_LEVELS,
   type EffortLevel,
   type PersistableEffortLevel,
-} from './effortTypes.js'
+} from '../../utils/effortTypes.js'
 
 // 向后兼容 re-export
 export { PERSISTABLE_EFFORT_LEVELS, type PersistableEffortLevel, type EffortLevel }

@@ -29,7 +29,7 @@ import { checkAndRestoreTerminalBackup } from '../services/shell/appleTerminalBa
 import { prefetchApiKeyFromApiKeyHelperIfSafe } from '../services/auth/auth.js'
 import { getCurrentProjectConfig, getGlobalConfig } from '../services/config/config.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
-import { env } from '../utils/env.js'
+import { env } from '../services/environment/env.js'
 import { envDynamic } from '../services/environment/envDynamic.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
@@ -44,9 +44,9 @@ import { checkAndRestoreITerm2Backup } from '../services/shell/iTermBackup.js'
 import { logError } from '../utils/log.js'
 import { getRecentActivity } from '../services/branding/logoUtils.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
-import { getPlanSlug } from '../utils/plans.js'
+import { getPlanSlug } from '../services/plans/plans.js'
 import { saveWorktreeState } from '../services/sessionStorage.js'
-import { profileCheckpoint } from '../utils/startupProfiler.js'
+import { profileCheckpoint } from '../services/telemetry/startupProfiler.js'
 import {
   createTmuxSessionForWorktree,
   createWorktreeForSession,
@@ -319,7 +319,7 @@ export async function setup(
       // 预热仓库分类缓存，用于 auto-undercover 模式。默认
       // undercover 开启，直到确认为内部仓库；如果解析为内部仓库，
       // 清除 prompt 缓存使下一轮获取 OFF 状态。
-      void import('../utils/commitAttribution.js').then(async (m) => {
+      void import('../services/git/commitAttribution.js').then(async (m) => {
         if (await m.isInternalModelRepo()) {
           const { clearSystemPromptSections } = await import('../constants/systemPromptSections.js')
           clearSystemPromptSections()

@@ -8,24 +8,24 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { type ReleaseChannel, saveGlobalConfig } from '../services/config/config.js'
-import { logForDebugging } from './debug.js'
-import { env } from './env.js'
-import { getZyConfigHomeDir, isInternalBuild } from './envUtils.js'
-import { getErrnoCode, isENOENT, ZyError } from './errors.js'
-import { execFileNoThrowWithCwd } from '../services/shell/execFileNoThrow.js'
-import { getFsImplementation } from './fsOperations.js'
-import { gracefulShutdownSync } from './gracefulShutdown.js'
-import { logError } from './log.js'
-import { gte, lt } from './semver.js'
-import { getInitialSettings } from '../services/settings/settings.js'
+import { type ReleaseChannel, saveGlobalConfig } from '../config/config.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { env } from '../environment/env.js'
+import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
+import { getErrnoCode, isENOENT, ZyError } from '../../utils/errors.js'
+import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
+import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
+import { logError } from '../../utils/log.js'
+import { gte, lt } from '../../utils/semver.js'
+import { getInitialSettings } from '../settings/settings.js'
 import {
   filterZyAliases,
   getShellConfigPaths,
   readFileLines,
   writeFileLines,
-} from '../services/shell/shellConfig.js'
-import { jsonParse } from './slowOperations.js'
+} from '../shell/shellConfig.js'
+import { jsonParse } from '../../utils/slowOperations.js'
 
 const GCS_BUCKET_URL =
   'https://storage.googleapis.com/zy-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/zy-code-releases'

@@ -186,8 +186,8 @@ export async function applyCollapsesIfNeeded(
   _querySource?: QuerySource,
 ): Promise<{ messages: Message[] }> {
   // 动态导入以避免循环依赖
-  const { tokenCountWithEstimation } = await import('../../../utils/tokens.js')
-  const { getContextWindowForModel } = await import('../../../utils/context.js')
+  const { tokenCountWithEstimation } = await import('../../utils/tokens.js')
+  const { getContextWindowForModel } = await import('../../utils/context.js')
   const { getMaxOutputTokensForModel } = await import('../../api/apiHelpers.js')
 
   // 获取当前模型

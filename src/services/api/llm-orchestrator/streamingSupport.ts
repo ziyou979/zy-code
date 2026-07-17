@@ -25,13 +25,13 @@ import type {
   StreamEvent,
   SystemAPIErrorMessage,
 } from '../../../types/message.js'
-import { isEnvTruthy, isInternalBuild } from '../../../utils/envUtils.js'
-import { errorMessage } from '../../../utils/errors.js'
-import { captureAPIRequest } from '../../../utils/log.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { errorMessage } from '../../utils/errors.js'
+import { captureAPIRequest } from '../../utils/log.js'
 import { createAssistantAPIErrorMessage } from '../../messages/constructors.js'
 import { normalizeContentFromAPI } from '../../messages/normalize.js'
-import { type SystemPrompt } from '../../../utils/systemPromptType.js'
-import { tokenCountFromLastAPIResponse } from '../../../utils/tokens.js'
+import { type SystemPrompt } from '../../utils/systemPromptType.js'
+import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
 import { extractQuotaStatusFromError, extractQuotaStatusFromHeaders } from '../../zyAiLimits.js'
 import { getLLMAdapter } from '../client.js'
 import { feature } from 'bun:bundle'
@@ -47,7 +47,7 @@ import { endQueryProfile, queryCheckpoint } from 'src/utils/queryProfiler.js'
 import { type ThinkingConfig } from 'src/utils/thinking.js'
 // LLMConnectionError 用于流式超时回退时创建错误实例
 import { LLMConnectionError } from '../../../types/llm.js'
-import { startSessionActivity, stopSessionActivity } from '../../../utils/sessionActivity.js'
+import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

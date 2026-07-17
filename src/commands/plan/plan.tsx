@@ -7,7 +7,7 @@ import { getExternalEditor } from '../../terminal-ui/editor.js'
 import { toIDEDisplayName } from '../../services/ide/ide.js'
 import { applyPermissionUpdate } from '../../services/permissions/permissionUpdate.js'
 import { prepareContextForPlanMode } from '../../services/permissions/permissionSetup.js'
-import { getPlan, getPlanFilePath } from '../../utils/plans.js'
+import { getPlan, getPlanFilePath } from '../../services/plans/plans.js'
 import { editFileInEditor } from '../../terminal-ui/promptEditor.js'
 import { renderToString } from '../../components/Runtime/StaticRender.js'
 

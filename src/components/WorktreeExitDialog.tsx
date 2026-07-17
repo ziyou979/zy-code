@@ -5,7 +5,7 @@ import { logEvent } from 'src/services/analytics/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { Box, Text } from '../ink/index.js'
 import { execFileNoThrow } from '../services/shell/execFileNoThrow.js'
-import { getPlansDirectory } from '../utils/plans.js'
+import { getPlansDirectory } from '../services/plans/plans.js'
 import { setCwd } from '../services/shell/shell.js'
 import {
   cleanupWorktree,

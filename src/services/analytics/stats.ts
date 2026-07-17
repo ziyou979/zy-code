@@ -22,7 +22,7 @@ import {
   saveStatsCache,
   toDateString,
   withStatsCacheLock,
-} from '../../services/analytics/statsCache.js'
+} from '../analytics/statsCache.js'
 
 export type DailyActivity = {
   date: string // YYYY-MM-DD format

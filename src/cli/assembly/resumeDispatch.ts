@@ -42,7 +42,7 @@ import { asSessionId } from '../../types/ids.js'
 import type { LogOption } from '../../types/logs.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { count } from '../../utils/array.js'
-import { loadConversationForResume } from '../../utils/conversationRecovery.js'
+import { loadConversationForResume } from '../../services/session-storage/conversationRecovery.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { errorMessage, isENOENT, TeleportOperationError, toError } from '../../utils/errors.js'
@@ -54,7 +54,7 @@ import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { logError } from '../../utils/log.js'
 import { createSystemMessage, createUserMessage } from '../../services/messages/./constructors.js'
 import { setCwd } from '../../services/shell/shell.js'
-import { type ProcessedResume, processResumedConversation } from '../../utils/sessionRestore.js'
+import { type ProcessedResume, processResumedConversation } from '../../services/session-storage/sessionRestore.js'
 import {
   getSessionIdFromLog,
   loadTranscriptFromFile,

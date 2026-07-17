@@ -25,7 +25,7 @@ import {
 } from './bridgeMessaging.js'
 import { decodeWorkSecret, buildSdkUrl, buildCCRv2SdkUrl, sameSessionId } from './workSecret.js'
 import { toCompatSessionId, toInfraSessionId } from './sessionIdCompat.js'
-import { updateSessionWireId } from '../utils/concurrentSessions.js'
+import { updateSessionWireId } from '../services/session/concurrentSessions.js'
 import { getTrustedDeviceToken } from './trustedDevice.js'
 import { HybridTransport } from '../cli/transports/hybridTransport.js'
 import {

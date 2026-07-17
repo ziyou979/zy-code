@@ -10,7 +10,7 @@ import {
   type ToolPermissionContext,
 } from '../../../tools/tool.js'
 import { FileReadTool, readImageWithTokenBudget } from '../../../tools/FileReadTool/FileReadTool.js'
-import { expandPath } from '../../../utils/path.js'
+import { expandPath } from '../../utils/path.js'
 import { readdir, stat } from 'node:fs/promises'
 import type { IDESelection } from '../../../hooks/useIdeSelection.js'
 import { getConnectedIdeName } from '../../ide/ide.js'
@@ -19,16 +19,16 @@ import {
   getMemoryFilesForNestedDirectory,
   getConditionalRulesForCwdLevelDirectory,
   type MemoryFileInfo,
-} from '../../../utils/agentsMd.js'
+} from '../../utils/agentsMd.js'
 import { dirname, parse, relative, resolve } from 'node:path'
 import { getCwd } from 'src/utils/cwd.js'
-import { logError } from '../../../utils/log.js'
-import { isENOENT } from '../../../utils/errors.js'
+import { logError } from '../../utils/log.js'
+import { isENOENT } from '../../utils/errors.js'
 import type { Message } from 'src/types/message.js'
 import { getInitialSettings } from '../../settings/settings.js'
 import { getSnippetForTwoFileDiff } from 'src/tools/FileEditTool/utils.js'
-import { cacheKeys } from '../../../utils/fileStateCache.js'
-import { getFileModificationTimeAsync } from '../../../utils/file.js'
+import { cacheKeys } from '../../utils/fileStateCache.js'
+import { getFileModificationTimeAsync } from '../../utils/file.js'
 import type { AgentDefinition } from '../../../tools/AgentTool/loadAgentsDir.js'
 import { filterAgentsByMcpRequirements } from '../../../tools/AgentTool/loadAgentsDir.js'
 import { AGENT_TOOL_NAME } from '../../../tools/AgentTool/constants.js'

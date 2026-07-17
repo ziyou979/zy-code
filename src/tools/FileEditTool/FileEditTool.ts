@@ -16,7 +16,7 @@ import type { ToolUseContext } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { countLinesChanged } from '../../utils/diff.js'
+import { countLinesChanged } from '../../services/git/diff.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isENOENT } from '../../utils/errors.js'
 import {
@@ -26,7 +26,7 @@ import {
   suggestPathUnderCwd,
   writeTextContent,
 } from '../../utils/file.js'
-import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../utils/fileHistory.js'
+import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../services/file-persistence/fileHistory.js'
 import { logFileOperation } from '../../services/analytics/fileOperationAnalytics.js'
 import { type LineEndingType, readFileSyncWithMetadata } from '../../utils/fileRead.js'
 import { formatFileSize } from '../../utils/format.js'

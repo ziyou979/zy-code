@@ -23,7 +23,7 @@ import {
 import {
   deserializeMessages,
   type TeleportRemoteResponse,
-} from '../../utils/conversationRecovery.js'
+} from '../session-storage/conversationRecovery.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {

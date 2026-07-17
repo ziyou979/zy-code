@@ -16,7 +16,7 @@ import { context as otelContext, type Span, trace } from '@opentelemetry/api'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import type { AssistantMessage, UserMessage } from '../../types/message.js'
 import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { getTelemetryAttributes } from '../../services/telemetry/telemetryAttributes.js'
+import { getTelemetryAttributes } from '../telemetry/telemetryAttributes.js'
 import {
   addBetaInteractionAttributes,
   addBetaLLMRequestAttributes,

@@ -5,7 +5,7 @@ import {
 } from '../../bootstrap/runtime/runtimeContext.js'
 import { checkHasTrustDialogAccepted } from '../config/config.js'
 import { getCwd } from '../../utils/cwd.js'
-import { type EffortLevel, getCurrentHookEffortLevel } from '../../utils/effort.js'
+import { type EffortLevel, getCurrentHookEffortLevel } from '../effort/effort.js'
 import { getTranscriptPathForSession } from '../sessionStorage.js'
 
 export const TOOL_HOOK_EXECUTION_TIMEOUT_MS = 10 * 60 * 1000

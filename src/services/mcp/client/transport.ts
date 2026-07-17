@@ -17,30 +17,30 @@ import { getOriginalCwd, getSessionId } from '../../../bootstrap/runtime/runtime
 import { getOauthConfig } from '../../../constants/oauth.js'
 import { PRODUCT_URL } from '../../../constants/product.js'
 import { getZyAIOAuthTokens } from '../../auth/auth.js'
-import { registerCleanup } from '../../../utils/cleanupRegistry.js'
+import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import {
   errorMessage,
   TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-} from '../../../utils/errors.js'
+} from '../../utils/errors.js'
 import { getMCPUserAgent } from '../../http/http.js'
 import { maybeNotifyIDEConnected } from '../../ide/ide.js'
-import { logMCPDebug, logMCPError } from '../../../utils/log.js'
-import { WebSocketTransport } from '../../../utils/mcpWebSocketTransport.js'
-import { getWebSocketTLSOptions } from '../../../utils/mtls.js'
+import { logMCPDebug, logMCPError } from '../../utils/log.js'
+import { WebSocketTransport } from '../../utils/mcpWebSocketTransport.js'
+import { getWebSocketTLSOptions } from '../../utils/mtls.js'
 import {
   getProxyFetchOptions,
   getWebSocketProxyAgent,
   getWebSocketProxyUrl,
-} from '../../../utils/proxy.js'
+} from '../../utils/proxy.js'
 import { getSessionIngressAuthToken } from '../../../services/auth/sessionIngressAuth.js'
-import { subprocessEnv } from '../../../utils/subprocessEnv.js'
+import { subprocessEnv } from '../../utils/subprocessEnv.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../analytics/index.js'
 import { isMcpSessionExpiredError, MAX_MCP_DESCRIPTION_LENGTH } from '../mcpShared.js'
 import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js'
-import { sleep } from '../../../utils/sleep.js'
+import { sleep } from '../../utils/sleep.js'
 import { wrapFetchWithStepUpDetection, ZyAuthProvider } from '../auth.js'
 import { getMcpServerHeaders } from '../headersHelper.js'
 import type { MCPServerConnection, ScopedMcpServerConfig } from '../types.js'
@@ -52,7 +52,7 @@ import type { MCPServerConnection, ScopedMcpServerConfig } from '../types.js'
 
 import { isClaudeInChromeMCPServer } from '../../claude-in-chrome/common.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { jsonStringify } from '../../../utils/slowOperations.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
 import {
   MCP_REQUEST_TIMEOUT_MS,
   WsClientLike,

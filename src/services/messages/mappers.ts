@@ -14,7 +14,7 @@ import type { DeepImmutable } from 'src/types/utils.js'
 import stripAnsi from 'strip-ansi'
 import type { AssistantContentBlock, UserContentBlock } from '../../types/llm.js'
 import { createAssistantMessage } from './constructors.js'
-import { getPlan } from '../../utils/plans.js'
+import { getPlan } from '../plans/plans.js'
 
 export function toInternalMessages(messages: readonly DeepImmutable<WireMessage>[]): Message[] {
   return messages.flatMap((message) => {

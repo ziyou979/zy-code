@@ -20,7 +20,7 @@ import { cacheImagePath, storeImage } from '../../../services/attachments/imageS
 import { logError } from '../../../utils/log.js'
 import { applyMarkdown } from '../../../utils/markdown.js'
 import { isPlanModeInterviewPhaseEnabled } from '../../../services/mode-instructions/planModeConfig.js'
-import { getPlanFilePath } from '../../../utils/plans.js'
+import { getPlanFilePath } from '../../../services/plans/plans.js'
 import type { PermissionRequestProps } from '../PermissionRequest.js'
 import { QuestionView } from './QuestionView.js'
 import { SubmitQuestionsView } from './SubmitQuestionsView.js'

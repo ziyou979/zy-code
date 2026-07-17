@@ -28,7 +28,7 @@ import type { CompactProgressEvent } from '../../tools/tool.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { StreamingThinking } from '../../services/messages/./streaming.js'
 import type { QueryGuard } from '../../utils/queryGuard.js'
-import { extractBashToolsFromMessages } from '../../utils/queryHelpers.js'
+import { extractBashToolsFromMessages } from '../../services/query/queryHelpers.js'
 import type { Theme, ThemeName } from '../../utils/theme.js'
 
 // ── 公共类型 ──────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../analytics/index.js'
 import { logEvent } from '../../analytics/index.js'
-import { logForDiagnosticsNoPII } from '../../../utils/diagLogs.js'
-import { isEnvTruthy } from '../../../utils/envUtils.js'
+import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
 import { streamLog } from './nonStreaming.js'
 
 type Options = {

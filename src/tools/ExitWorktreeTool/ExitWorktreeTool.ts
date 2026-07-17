@@ -15,7 +15,7 @@ import { count } from '../../utils/array.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { updateHooksConfigSnapshot } from '../../services/hooks/hooksConfigSnapshot.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { getPlansDirectory } from '../../utils/plans.js'
+import { getPlansDirectory } from '../../services/plans/plans.js'
 import { setCwd } from '../../services/shell/shell.js'
 import { saveWorktreeState } from '../../services/sessionStorage.js'
 import {

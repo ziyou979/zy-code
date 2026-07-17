@@ -16,7 +16,7 @@ import {
   getModelEffortLevels,
   isEffortLevel,
   toPersistableEffort,
-} from '../../utils/effort.js'
+} from '../../services/effort/effort.js'
 import { updateSettingsForSource } from '../../services/settings/settings.js'
 import { EffortPicker } from './EffortPicker.js'
 

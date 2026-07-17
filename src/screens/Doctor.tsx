@@ -33,7 +33,7 @@ import {
 } from '../shell-eval/shared/outputLimits.js'
 import { useAppState } from '../state/AppState.js'
 import { getPluginErrorMessage } from '../services/plugins/types.js'
-import { getGcsDistTags, getNpmDistTags, type NpmDistTags } from '../utils/autoUpdater.js'
+import { getGcsDistTags, getNpmDistTags, type NpmDistTags } from '../services/updater/autoUpdater.js'
 import { type ContextWarnings, checkContextWarnings } from '../services/doctor/doctorContextWarnings.js'
 import { type DiagnosticInfo, getDoctorDiagnostic } from '../services/doctor/doctorDiagnostic.js'
 import { validateBoundedIntEnvVar } from '../utils/envValidation.js'

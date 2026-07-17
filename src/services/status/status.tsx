@@ -7,20 +7,20 @@ import { CROSS } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { color, Text } from '../../ink/index.js'
 import type { MCPServerConnection } from '../mcp/types.js'
-import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from '../../../utils/agentsMd.js'
+import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from '../../utils/agentsMd.js'
 import { getAccountInformation } from '../auth/auth.js'
 import { getDoctorDiagnostic } from '../doctor/doctorDiagnostic.js'
-import { isInternalBuild } from '../../../utils/envUtils.js'
-import { getDisplayPath } from '../../../utils/file.js'
-import { formatNumber } from '../../../utils/format.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
+import { getDisplayPath } from '../../utils/file.js'
+import { formatNumber } from '../../utils/format.js'
 import {
   getIdeClientName,
   type IDEExtensionInstallationStatus,
   isJetBrainsIde,
   toIDEDisplayName,
 } from '../ide/ide.js'
-import { getMTLSConfig } from '../../../utils/mtls.js'
-import { getProxyUrl } from '../../../utils/proxy.js'
+import { getMTLSConfig } from '../../utils/mtls.js'
+import { getProxyUrl } from '../../utils/proxy.js'
 import { getSettingsWithAllErrors } from '../settings/allErrors.js'
 import {
   getEnabledSettingSources,
@@ -31,7 +31,7 @@ import {
   getPolicySettingsOrigin,
   getSettingsForSource,
 } from '../settings/settings.js'
-import type { ThemeName } from '../../../utils/theme.js'
+import type { ThemeName } from '../../utils/theme.js'
 export type Property = {
   label?: string
   value: React.ReactNode | Array<string>

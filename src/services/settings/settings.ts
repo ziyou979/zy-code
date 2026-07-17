@@ -23,7 +23,7 @@ import { safeParseJSON } from '../../utils/json.js'
 import { logError } from '../../utils/log.js'
 import { getPlatform } from '../shell/platform.js'
 import { clone, jsonStringify } from '../../utils/slowOperations.js'
-import { profileCheckpoint } from '../../utils/startupProfiler.js'
+import { profileCheckpoint } from '../telemetry/startupProfiler.js'
 import {
   type EditableSettingSource,
   getEnabledSettingSources,

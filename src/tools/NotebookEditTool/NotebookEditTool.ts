@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import { extname, isAbsolute, resolve } from 'node:path'
-import { fileHistoryEnabled, fileHistoryTrackEdit } from 'src/utils/fileHistory.js'
+import { fileHistoryEnabled, fileHistoryTrackEdit } from 'src/services/file-persistence/fileHistory.js'
 import { z } from 'zod/v4'
 import { buildTool, type ToolDef, type ToolUseContext } from '../../tools/tool.js'
 import type { NotebookCell, NotebookContent } from '../../types/notebook.js'

@@ -1,11 +1,11 @@
 import { execa } from 'execa'
 import memoize from 'lodash-es/memoize.js'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getOauthAccountInfo, getRateLimitTier } from '../services/auth/auth.js'
-import { getGlobalConfig, getOrCreateUserID } from '../services/config/config.js'
-import { getCwd } from './cwd.js'
-import { type env, getHostPlatformForAnalytics } from './env.js'
-import { isEnvTruthy, isInternalBuild } from './envUtils.js'
+import { getOauthAccountInfo, getRateLimitTier } from '../auth/auth.js'
+import { getGlobalConfig, getOrCreateUserID } from '../config/config.js'
+import { getCwd } from '../../utils/cwd.js'
+import { type env, getHostPlatformForAnalytics } from '../environment/env.js'
+import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 
 // Cache for email fetched asynchronously at startup
 let cachedEmail: string | undefined | null = null // null means not fetched yet

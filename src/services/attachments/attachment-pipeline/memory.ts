@@ -8,26 +8,26 @@ import {
   FileReadTool,
   MaxFileReadTokenExceededError,
 } from '../../../tools/FileReadTool/FileReadTool.js'
-import { FileTooLargeError } from '../../../utils/readFileInRange.js'
-import { countCharInString } from '../../../utils/stringUtils.js'
-import { getFsImplementation } from '../../../utils/fsOperations.js'
+import { FileTooLargeError } from '../../utils/readFileInRange.js'
+import { countCharInString } from '../../utils/stringUtils.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
 import type { IDESelection } from '../../../hooks/useIdeSelection.js'
 import { TODO_WRITE_TOOL_NAME } from '../../../tools/TodoWriteTool/constants.js'
 import { TASK_CREATE_TOOL_NAME } from '../../../tools/TaskCreateTool/constants.js'
 import { TASK_UPDATE_TOOL_NAME } from '../../../tools/TaskUpdateTool/constants.js'
 import { BASH_TOOL_NAME } from '../../../tools/BashTool/toolName.js'
-import { listTasks, getTaskListId, isTodoV2Enabled } from '../../../utils/tasks.js'
+import { listTasks, getTaskListId, isTodoV2Enabled } from '../../utils/tasks.js'
 import { parse, relative } from 'node:path'
 import { getCwd } from 'src/utils/cwd.js'
-import { logError } from '../../../utils/log.js'
-import { toError } from '../../../utils/errors.js'
+import { logError } from '../../utils/log.js'
+import { toError } from '../../utils/errors.js'
 import type { AttachmentMessage, Message } from 'src/types/message.js'
 import { type QueuedCommand } from 'src/types/textInputTypes.js'
 import { randomUUID } from 'node:crypto'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { MAX_LINES_TO_READ } from 'src/tools/FileReadTool/prompt.js'
 import { getDefaultFileReadingLimits } from 'src/tools/FileReadTool/limits.js'
-import { getFileModificationTimeAsync, isFileWithinReadSizeLimit } from '../../../utils/file.js'
+import { getFileModificationTimeAsync, isFileWithinReadSizeLimit } from '../../utils/file.js'
 import {
   generateTaskAttachments,
   applyTaskOffsetsAndEvictions,
@@ -40,13 +40,13 @@ import {
   removeDeliveredAsyncHooks,
 } from '../../hooks/asyncHookRegistry.js'
 import { checkForLSPDiagnostics, clearAllLSPDiagnostics } from '../../lsp/lspDiagnosticRegistry.js'
-import { logForDebugging } from '../../../utils/debug.js'
+import { logForDebugging } from '../../utils/debug.js'
 import { isThinkingMessage } from '../../messages/predicates.js'
-import { jsonStringify } from '../../../utils/slowOperations.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
 import { isPDFExtension } from '../../../services/attachments/pdfUtils.js'
 import { getPDFPageCount } from '../../../services/attachments/pdf.js'
 import { PDF_AT_MENTION_INLINE_THRESHOLD } from '../../../constants/apiLimits.js'
-import { isInternalBuild } from '../../../utils/envUtils.js'
+import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   AlreadyReadFileAttachment,
   Attachment,

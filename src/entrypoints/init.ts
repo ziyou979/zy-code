@@ -1,4 +1,4 @@
-import { profileCheckpoint } from '../utils/startupProfiler.js'
+import { profileCheckpoint } from '../services/telemetry/startupProfiler.js'
 import { registerMCPToolOverrides } from '../components/mcp/registerToolOverrides.js'
 import '../services/config/config.js'
 import type { Attributes, MetricOptions } from '@opentelemetry/api'

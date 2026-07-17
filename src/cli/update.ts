@@ -9,7 +9,7 @@ import {
   getLatestVersion,
   type InstallStatus,
   installGlobalPackage,
-} from 'src/utils/autoUpdater.js'
+} from 'src/services/updater/autoUpdater.js'
 import { regenerateCompletionCache } from 'src/services/cache/completionCache.js'
 import {
   getGlobalConfig,

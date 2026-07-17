@@ -9,7 +9,7 @@ import { join } from 'node:path'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { getAutoMemPath } from '../../memdir/paths.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { isProcessRunning } from '../../services/shell/genericProcessUtils.js'
+import { isProcessRunning } from '../shell/genericProcessUtils.js'
 import { listCandidates } from '../../utils/listSessionsImpl.js'
 import { getProjectDir } from '../sessionStorage.js'
 

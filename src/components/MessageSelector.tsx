@@ -13,7 +13,7 @@ import {
   fileHistoryCanRestore,
   fileHistoryEnabled,
   fileHistoryGetDiffStats,
-} from 'src/utils/fileHistory.js'
+} from 'src/services/file-persistence/fileHistory.js'
 import { logError } from 'src/utils/log.js'
 import { POINTER, WARNING } from '../constants/figures.js'
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js'

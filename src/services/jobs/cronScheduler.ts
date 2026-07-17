@@ -31,7 +31,7 @@ import {
   readCronTasks,
   removeCronTasks,
 } from '../jobs/cronTasks.js'
-import { releaseSchedulerLock, tryAcquireSchedulerLock } from '../../services/jobs/cronTasksLock.js'
+import { releaseSchedulerLock, tryAcquireSchedulerLock } from '../jobs/cronTasksLock.js'
 import { logForDebugging } from '../../utils/debug.js'
 
 const CHECK_INTERVAL_MS = 1000

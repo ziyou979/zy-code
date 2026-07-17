@@ -8,9 +8,9 @@
 
 import { extname } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { env, getHostPlatformForAnalytics } from '../../utils/env.js'
-import { envDynamic } from '../../services/environment/envDynamic.js'
-import { getModelBetas } from '../../services/feature-flags/betas.js'
+import { env, getHostPlatformForAnalytics } from '../environment/env.js'
+import { envDynamic } from '../environment/envDynamic.js'
+import { getModelBetas } from '../feature-flags/betas.js'
 import { getMainLoopModel } from '../model/model.js'
 import {
   getSessionId,
@@ -23,7 +23,7 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isOfficialMcpUrl } from '../mcp/officialRegistry.js'
 import { getRepoRemoteHash } from '../../utils/git.js'
 import { getWslVersion, getLinuxDistroInfo, detectVcs } from '../shell/platform.js'
-import type { CoreUserData } from 'src/utils/user.js'
+import type { CoreUserData } from 'src/services/auth/user.js'
 import { getAgentContext } from '../../utils/agentContext.js'
 import type { EnvironmentMetadata } from '../../types/generated/events_mono/claude_code/v1/claude_code_internal_event.js'
 import type { PublicApiAuth } from '../../types/generated/events_mono/common/v1/auth.js'

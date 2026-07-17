@@ -14,7 +14,7 @@ import { renderAndRun, showSetupDialog } from './InteractiveHelpers.js'
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js'
 import type { AppState } from '../state/AppStateStore.js'
 import type { AgentMemoryScope } from '../tools/AgentTool/agentMemory.js'
-import type { TeleportRemoteResponse } from '../utils/conversationRecovery.js'
+import type { TeleportRemoteResponse } from '../services/session-storage/conversationRecovery.js'
 import type { FpsMetrics } from '../utils/fpsTracker.js'
 import type { ValidationError } from '../services/settings/validation.js'
 

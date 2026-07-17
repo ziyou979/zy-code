@@ -12,7 +12,7 @@ import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { countFilesRoundedRg } from '../../services/file-search/ripgrep.js'
 import { settingsChangeDetector } from '../../services/settings/changeDetector.js'
-import { initUser } from '../../utils/user.js'
+import { initUser } from '../../services/auth/user.js'
 /**
  * 仅在安全的情况下预取系统上下文（包括 git 状态）。
  * Git 命令可以通过钩子和配置执行任意代码（例如 core.fsmonitor、

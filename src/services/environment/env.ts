@@ -1,12 +1,12 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { fileSuffixForOauthConfig } from '../constants/oauth.js'
-import { isRunningWithBun } from './bundledMode.js'
-import { getZyConfigHomeDir, isEnvTruthy } from './envUtils.js'
-import { findExecutable } from '../services/shell/findExecutable.js'
-import { getFsImplementation } from './fsOperations.js'
-import { which } from '../services/shell/which.js'
+import { fileSuffixForOauthConfig } from '../../constants/oauth.js'
+import { isRunningWithBun } from '../../utils/bundledMode.js'
+import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
+import { findExecutable } from '../shell/findExecutable.js'
+import { getFsImplementation } from '../../utils/fsOperations.js'
+import { which } from '../shell/which.js'
 
 type Platform = 'win32' | 'darwin' | 'linux'
 

@@ -46,7 +46,7 @@ import {
   isSyntheticOutputToolEnabled,
 } from '../../tools/SyntheticOutputTool/SyntheticOutputTool.js'
 import { getTools, loadExternalTools } from '../../tools/tools.js'
-import { assertMinVersion } from '../../utils/autoUpdater.js'
+import { assertMinVersion } from '../../services/updater/autoUpdater.js'
 import { getGlobalConfig } from '../../services/config/config.js'
 import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import { safeParseJSON } from '../../utils/json.js'
@@ -62,7 +62,7 @@ import { getPlatform } from '../../services/shell/platform.js'
 import { cacheSessionTitle } from '../../services/sessionStorage.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
 import { jsonParse } from '../../utils/slowOperations.js'
-import { profileCheckpoint } from '../../utils/startupProfiler.js'
+import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
 import { validateUuid } from '../../utils/uuid.js'
 import {
   areMcpConfigsAllowedWithEnterpriseMcpConfig,

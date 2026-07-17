@@ -14,7 +14,7 @@ import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message as MessageType } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
 import type { PastedContent } from '../../services/config/config.js'
-import type { EffortLevel } from '../../utils/effort.js'
+import type { EffortLevel } from '../../services/effort/effort.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
 import type { SetAppState } from '../../utils/messageQueueManager.js'
 

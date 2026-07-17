@@ -22,9 +22,9 @@ import type {
 } from '../../types/message.js'
 import { normalizeToolInputForAPI } from '../../utils/api.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { validateImagesForAPI } from '../../services/attachments/imageValidation.js'
+import { validateImagesForAPI } from '../attachments/imageValidation.js'
 import { normalizeLegacyToolName } from '../permissions/permissionRuleParser.js'
-import { isToolReferenceBlock, isToolSearchEnabledOptimistic } from '../../services/tool-runtime/toolSearch.js'
+import { isToolReferenceBlock, isToolSearchEnabledOptimistic } from '../tool-runtime/toolSearch.js'
 import { normalizeAttachmentForAPI } from './api.js'
 import { SYNTHETIC_MODEL } from './constants.js'
 import { createUserMessage } from './constructors.js'
@@ -858,7 +858,7 @@ export function normalizeMessagesForAPI(
         }
         case 'attachment': {
           const rawAttachmentMessage = normalizeAttachmentForAPI(
-            message.attachment as import('../../services/attachments/attachment-pipeline/types.js').Attachment,
+            message.attachment as import('../attachments/attachment-pipeline/types.js').Attachment,
           )
           const attachmentMessage = checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_chair_sermon')
             ? rawAttachmentMessage.map(ensureSystemReminderWrap)

@@ -54,7 +54,7 @@ import useCanUseTool from '../hooks/useCanUseTool.js'
 import type { Tool } from '../tools/tool.js'
 import { clearSpeculativeChecks } from '../tools/BashTool/bashPermissions.js'
 import { getLoadGeneration } from '../tools/externalToolLoader.js'
-import type { AutoUpdaterResult } from '../utils/autoUpdater.js'
+import type { AutoUpdaterResult } from '../services/updater/autoUpdater.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { createAgentsKilledMessage } from '../services/messages/./constructors.js'
@@ -75,14 +75,14 @@ import { resolveAgentTools } from '../tools/AgentTool/agentToolUtils.js'
 import { useMainLoopModel } from '../hooks/useMainLoopModel.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../state/AppState.js'
 import { getCurrentSessionTitle } from '../services/sessionStorage.js'
-import { extractReadFilesFromMessages } from '../utils/queryHelpers.js'
+import { extractReadFilesFromMessages } from '../services/query/queryHelpers.js'
 import {
   provisionContentReplacementState,
   type ContentReplacementRecord,
 } from '../utils/toolResultStorage.js'
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
-import { type FileHistorySnapshot } from '../utils/fileHistory.js'
-import { updateSessionActivity } from '../utils/concurrentSessions.js'
+import { type FileHistorySnapshot } from '../services/file-persistence/fileHistory.js'
+import { updateSessionActivity } from '../services/session/concurrentSessions.js'
 import { useInboxPoller } from '../hooks/useInboxPoller.js'
 const PROACTIVE_NO_OP_SUBSCRIBE = (_cb: () => void) => () => {}
 const PROACTIVE_FALSE = () => false

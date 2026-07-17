@@ -25,17 +25,17 @@ import type { LogOption } from '../types/logs.js'
 import type { Message } from '../types/message.js'
 import { agenticSessionSearch } from '../services/agent/agenticSessionSearch.js'
 import { renameRecordingForSession } from '../services/shell/asciicast.js'
-import { updateSessionName } from '../utils/concurrentSessions.js'
-import { loadConversationForResume } from '../utils/conversationRecovery.js'
+import { updateSessionName } from '../services/session/concurrentSessions.js'
+import { loadConversationForResume } from '../services/session-storage/conversationRecovery.js'
 import { checkCrossProjectResume } from '../services/session-storage/crossProjectResume.js'
-import type { FileHistorySnapshot } from '../utils/fileHistory.js'
+import type { FileHistorySnapshot } from '../services/file-persistence/fileHistory.js'
 import { logError } from '../utils/log.js'
 import { createSystemMessage } from '../services/messages/./constructors.js'
 import {
   computeStandaloneAgentContext,
   restoreAgentFromSession,
   restoreWorktreeForResume,
-} from '../utils/sessionRestore.js'
+} from '../services/session-storage/sessionRestore.js'
 import {
   adoptResumedSessionFile,
   enrichLogs,
