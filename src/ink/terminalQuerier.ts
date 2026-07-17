@@ -19,7 +19,7 @@
  *   // sync 和 grapheme 是 DECRPM 响应，不支持则为 undefined
  */
 
-import type { TerminalResponse } from './parse-keypress.js'
+import type { TerminalResponse } from './parseKeypress.js'
 import { csi } from './termio/csi.js'
 import { osc } from './termio/osc.js'
 

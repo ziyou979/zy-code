@@ -7,7 +7,7 @@ import {
 import { WorkflowMultiselectDialog } from '../../components/WorkflowMultiselectDialog.js'
 import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/githubApp.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
-import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
+import type { KeyboardEvent } from '../../ink/events/keyboardEvent.js'
 import { Box } from '../../ink/index.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import { getApiKey, isAuthEnabled } from '../../services/auth/auth.js'

@@ -12,7 +12,7 @@ import {
 import { useVirtualScroll } from '../hooks/useVirtualScroll.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import type { DOMElement } from '../ink/dom.js'
-import type { MatchPosition } from '../ink/render-to-screen.js'
+import type { MatchPosition } from '../ink/renderToScreen.js'
 import { Box } from '../ink/index.js'
 import { isAttachmentMessage, isUserMessage, type RenderableMessage } from '../types/message.js'
 import { TextHoverColorContext } from './design-system/ThemedText.js'

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { supportsHyperlinks } from '../supports-hyperlinks.js'
+import { supportsHyperlinks } from '../supportsHyperlinks.js'
 import Text from './Text.js'
 export type Props = {
   readonly children?: ReactNode

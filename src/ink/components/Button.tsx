@@ -45,7 +45,7 @@ function Button({ onAction, tabIndex = 0, autoFocus, children, ref, ...style }: 
     },
     [],
   )
-  const handleKeyDown = (e: import('../events/keyboard-event.js').KeyboardEvent) => {
+  const handleKeyDown = (e: import('../events/keyboardEvent.js').KeyboardEvent) => {
     if (e.key === 'return' || e.key === ' ') {
       e.preventDefault()
       setIsActive(true)

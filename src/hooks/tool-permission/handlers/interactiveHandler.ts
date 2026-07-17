@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { logForDebugging } from 'src/utils/debug.js'
 import { getAllowedChannels } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { WirePermissionCallbacks } from '../../../bridge/bridgePermissionCallbacks.js'
-import { getTerminalFocused } from '../../../ink/terminal-focus-state.js'
+import { getTerminalFocused } from '../../../ink/terminalFocusState.js'
 import {
   CHANNEL_PERMISSION_REQUEST_METHOD,
   type ChannelPermissionRequestParams,

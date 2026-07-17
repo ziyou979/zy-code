@@ -2,7 +2,7 @@ import { useContext, useMemo } from 'react'
 import StdinContext from '../components/StdinContext.js'
 import type { DOMElement } from '../dom.js'
 import instances from '../instances.js'
-import type { MatchPosition } from '../render-to-screen.js'
+import type { MatchPosition } from '../renderToScreen.js'
 
 /**
  * 在 Ink 实例上设置搜索高亮查询。非空值 → 下一帧所有

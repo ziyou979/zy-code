@@ -24,7 +24,7 @@ import {
   shiftRows,
 } from './screen.js'
 import { stringWidth } from './stringWidth.js'
-import { widestLine } from './widest-line.js'
+import { widestLine } from './widestLine.js'
 
 /**
  * 带有预计算终端宽度、styleId 和 hyperlink 的字素簇。

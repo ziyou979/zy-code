@@ -401,7 +401,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
       setIsSearchMode(false)
     },
   })
-  const handleKeyDown = (e: import('../../../ink/events/keyboard-event.js').KeyboardEvent) => {
+  const handleKeyDown = (e: import('../../../ink/events/keyboardEvent.js').KeyboardEvent) => {
     if (!isSearchModeActive) {
       return
     }

@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
 import { useStdin, useTheme, useTabStatus } from '../ink/index.js'
-import type { TabStatusKind } from '../ink/hooks/use-tab-status.js'
+import type { TabStatusKind } from '../ink/hooks/useTabStatus.js'
 import * as React from 'react'
 import {
   useEffect,

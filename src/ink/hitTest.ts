@@ -1,7 +1,7 @@
 import type { DOMElement } from './dom.js'
-import { ClickEvent } from './events/click-event.js'
-import type { EventHandlerProps } from './events/event-handlers.js'
-import { nodeCache } from './node-cache.js'
+import { ClickEvent } from './events/clickEvent.js'
+import type { EventHandlerProps } from './events/eventHandlers.js'
+import { nodeCache } from './nodeCache.js'
 
 /**
  * 查找渲染矩形包含 (col, row) 的最深 DOM 元素。

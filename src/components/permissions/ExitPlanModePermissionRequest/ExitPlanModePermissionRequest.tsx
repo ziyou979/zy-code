@@ -17,7 +17,7 @@ import {
 } from '../../../bootstrap/runtime/runtimeContext.js'
 import { generateSessionName } from '../../../commands/rename/generateSessionName.js'
 import { TICK, WARNING } from '../../../constants/figures.js'
-import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js'
+import type { KeyboardEvent } from '../../../ink/events/keyboardEvent.js'
 import { Box, Text } from '../../../ink/index.js'
 import { getMainLoopModel } from '../../../services/model/model.js'
 import type { AppState } from '../../../state/AppStateStore.js'

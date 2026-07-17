@@ -1,4 +1,4 @@
-import { oscColor, type TerminalQuerier } from '../ink/terminal-querier.js'
+import { oscColor, type TerminalQuerier } from '../ink/terminalQuerier.js'
 import { type SystemTheme, setCachedSystemTheme, themeFromOscColor } from './systemTheme.js'
 
 /**

@@ -290,11 +290,11 @@ type Props = {
   /** 将现有 DOM 子树绘制到新的 Screen 上进行扫描。元素来自主树（所有真实的 providers）。消息相对位置。 */
   scanElement?: (
     el: import('../ink/dom.js').DOMElement,
-  ) => import('../ink/render-to-screen.js').MatchPosition[]
+  ) => import('../ink/renderToScreen.js').MatchPosition[]
   /** 基于位置的当前高亮。位置稳定（消息相对），rowOffset 追踪滚动。null 时清除。 */
   setPositions?: (
     state: {
-      positions: import('../ink/render-to-screen.js').MatchPosition[]
+      positions: import('../ink/renderToScreen.js').MatchPosition[]
       rowOffset: number
       currentIdx: number
     } | null,

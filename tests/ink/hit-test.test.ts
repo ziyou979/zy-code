@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { appendChildNode, createNode } from '../../src/ink/dom.js'
-import { dispatchHover, hitTest } from '../../src/ink/hit-test.js'
-import { nodeCache } from '../../src/ink/node-cache.js'
+import { dispatchHover, hitTest } from '../../src/ink/hitTest.js'
+import { nodeCache } from '../../src/ink/nodeCache.js'
 
 describe('hit-test', () => {
   test('应命中逃出父布局框的 absolute 子节点', () => {

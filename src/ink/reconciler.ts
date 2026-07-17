@@ -22,7 +22,7 @@ import {
   type TextNode,
 } from './dom.js'
 import { Dispatcher } from './events/dispatcher.js'
-import { EVENT_HANDLER_PROPS } from './events/event-handlers.js'
+import { EVENT_HANDLER_PROPS } from './events/eventHandlers.js'
 import { getFocusManager, getRootNode } from './focus.js'
 import { LayoutDisplay } from './layout/node.js'
 import applyStyles, { type Styles, type TextStyles } from './styles.js'

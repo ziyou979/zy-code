@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import type { ClickEvent } from '../../ink/events/click-event.js'
+import type { ClickEvent } from '../../ink/events/clickEvent.js'
 import { ListItem } from '../design-system/ListItem.js'
 export type SelectOptionProps = {
   /**

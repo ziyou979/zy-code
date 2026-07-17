@@ -1,5 +1,5 @@
 import type { DOMElement } from './dom.js'
-import { FocusEvent } from './events/focus-event.js'
+import { FocusEvent } from './events/focusEvent.js'
 
 const MAX_FOCUS_STACK = 32
 

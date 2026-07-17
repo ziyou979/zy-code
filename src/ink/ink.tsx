@@ -21,16 +21,16 @@ import type {
 } from './components/CursorDeclarationContext.js'
 import { FRAME_INTERVAL_MS } from './constants.js'
 import * as dom from './dom.js'
-import { KeyboardEvent } from './events/keyboard-event.js'
+import { KeyboardEvent } from './events/keyboardEvent.js'
 import { FocusManager } from './focus.js'
 import { emptyFrame, type Frame, type FrameEvent } from './frame.js'
-import { dispatchClick, dispatchHover, hitTest } from './hit-test.js'
+import { dispatchClick, dispatchHover, hitTest } from './hitTest.js'
 import instances from './instances.js'
-import { LogUpdate } from './log-update.js'
-import { nodeCache } from './node-cache.js'
+import { LogUpdate } from './logUpdate.js'
+import { nodeCache } from './nodeCache.js'
 import { optimize } from './optimizer.js'
 import Output from './output.js'
-import type { ParsedKey } from './parse-keypress.js'
+import type { ParsedKey } from './parseKeypress.js'
 import reconciler, {
   dispatcher,
   getLastCommitMs,
@@ -39,8 +39,8 @@ import reconciler, {
   recordYogaMs,
   resetProfileCounters,
 } from './reconciler.js'
-import renderNodeToOutput, { consumeFollowScroll, didLayoutShift } from './render-node-to-output.js'
-import { applyPositionedHighlight, type MatchPosition, scanPositions } from './render-to-screen.js'
+import renderNodeToOutput, { consumeFollowScroll, didLayoutShift } from './renderNodeToOutput.js'
+import { applyPositionedHighlight, type MatchPosition, scanPositions } from './renderToScreen.js'
 import createRenderer, { type Renderer } from './renderer.js'
 import {
   CellWidth,

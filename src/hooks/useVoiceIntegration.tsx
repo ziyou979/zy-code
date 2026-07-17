@@ -9,7 +9,7 @@ import {
   useVoiceState,
   type VoiceState,
 } from '../context/voice.js'
-import { KeyboardEvent } from '../ink/events/keyboard-event.js'
+import { KeyboardEvent } from '../ink/events/keyboardEvent.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- backward-compat bridge until REPL wires handleKeyDown to <Box onKeyDown>
 import { useInput } from '../ink/index.js'
 import { useOptionalKeybindingContext } from '../keybindings/KeybindingContext.js'

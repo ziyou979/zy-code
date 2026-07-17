@@ -2,7 +2,7 @@
 import { ARROW_UP, POINTER, ARROW_DOWN } from '../../constants/figures.js'
 import { feature } from 'bun:bundle'
 import { Box, Text, useTheme, useThemeSetting, useTerminalFocus } from '../../ink/index.js'
-import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
+import type { KeyboardEvent } from '../../ink/events/keyboardEvent.js'
 import * as React from 'react'
 import { useState, useCallback } from 'react'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'

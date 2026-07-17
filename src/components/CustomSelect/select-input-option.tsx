@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
-import type { ClickEvent } from '../../ink/events/click-event.js'
+import type { ClickEvent } from '../../ink/events/clickEvent.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- UP arrow exit not in Attachments bindings
 import { Box, Text, useInput } from '../../ink/index.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'

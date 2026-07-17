@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 import { EventEmitter } from '../events/emitter.js'
-import type { TerminalQuerier } from '../terminal-querier.js'
+import type { TerminalQuerier } from '../terminalQuerier.js'
 
 export type Props = {
   /**

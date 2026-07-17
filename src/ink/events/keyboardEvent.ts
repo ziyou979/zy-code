@@ -1,5 +1,5 @@
-import type { ParsedKey } from '../parse-keypress.js'
-import { TerminalEvent } from './terminal-event.js'
+import type { ParsedKey } from '../parseKeypress.js'
+import { TerminalEvent } from './terminalEvent.js'
 
 /**
  * Keyboard event dispatched through the DOM tree via capture/bubble.

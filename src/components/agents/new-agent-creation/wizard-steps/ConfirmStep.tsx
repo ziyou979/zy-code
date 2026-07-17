@@ -1,5 +1,5 @@
 import { tSync } from '../../../../i18n/index.js'
-import type { KeyboardEvent } from '../../../../ink/events/keyboard-event.js'
+import type { KeyboardEvent } from '../../../../ink/events/keyboardEvent.js'
 import { Box, Text } from '../../../../ink/index.js'
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js'
 import { isAutoMemoryEnabled } from '../../../../memdir/paths.js'

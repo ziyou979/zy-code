@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { tSync } from '../../i18n/index.js'
 import { POINTER } from '../../constants/figures.js'
-import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
+import type { KeyboardEvent } from '../../ink/events/keyboardEvent.js'
 import { Box, Text } from '../../ink/index.js'
 import {
   AGENT_COLOR_TO_THEME_COLOR,

@@ -6,8 +6,8 @@ import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isMouseClicksDisabled } from '../../services/terminal/fullscreen.js'
 import { logError } from '../../utils/log.js'
 import { EventEmitter } from '../events/emitter.js'
-import { InputEvent } from '../events/input-event.js'
-import { TerminalFocusEvent } from '../events/terminal-focus-event.js'
+import { InputEvent } from '../events/inputEvent.js'
+import { TerminalFocusEvent } from '../events/terminalFocusEvent.js'
 import instances from '../instances.js'
 import {
   INITIAL_STATE,
@@ -15,7 +15,7 @@ import {
   type ParsedKey,
   type ParsedMouse,
   parseMultipleKeypresses,
-} from '../parse-keypress.js'
+} from '../parseKeypress.js'
 import reconciler from '../reconciler.js'
 import {
   clearSelection,
@@ -30,8 +30,8 @@ import {
   getTerminalFocused,
   setTerminalFocused,
   type TerminalFocusState,
-} from '../terminal-focus-state.js'
-import { TerminalQuerier, xtversion } from '../terminal-querier.js'
+} from '../terminalFocusState.js'
+import { TerminalQuerier, xtversion } from '../terminalQuerier.js'
 import {
   DISABLE_KITTY_KEYBOARD,
   DISABLE_MODIFY_OTHER_KEYS,

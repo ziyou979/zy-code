@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import { ClockContext } from '../components/ClockContext.js'
 import type { DOMElement } from '../dom.js'
-import { useTerminalViewport } from './use-terminal-viewport.js'
+import { useTerminalViewport } from './useTerminalViewport.js'
 
 /**
  * 用于同步动画的 Hook，离屏时暂停。

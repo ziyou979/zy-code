@@ -1,4 +1,4 @@
-import { lineWidth } from './line-width-cache.js'
+import { lineWidth } from './lineWidthCache.js'
 
 type Output = {
   width: number

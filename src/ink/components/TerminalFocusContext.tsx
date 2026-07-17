@@ -4,7 +4,7 @@ import {
   getTerminalFocusState,
   subscribeTerminalFocus,
   type TerminalFocusState,
-} from '../terminal-focus-state.js'
+} from '../terminalFocusState.js'
 
 export type { TerminalFocusState }
 export type TerminalFocusContextProps = {

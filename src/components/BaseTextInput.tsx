@@ -1,7 +1,7 @@
 import React from 'react'
 import { renderPlaceholder } from '../hooks/renderPlaceholder.js'
 import { usePasteHandler } from '../hooks/usePasteHandler.js'
-import { useDeclaredCursor } from '../ink/hooks/use-declared-cursor.js'
+import { useDeclaredCursor } from '../ink/hooks/useDeclaredCursor.js'
 import { Ansi, Box, Text, useInput } from '../ink/index.js'
 import type { BaseInputState, BaseTextInputProps } from '../types/textInputTypes.js'
 import type { TextHighlight } from '../utils/textHighlighting.js'

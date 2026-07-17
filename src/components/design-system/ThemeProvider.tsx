@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import useStdin from '../../ink/hooks/use-stdin.js'
+import useStdin from '../../ink/hooks/useStdin.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { getSystemThemeName, type SystemTheme } from '../../utils/systemTheme.js'
 import type { ThemeName, ThemeSetting } from '../../utils/theme.js'

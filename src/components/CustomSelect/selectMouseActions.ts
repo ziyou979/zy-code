@@ -1,4 +1,4 @@
-import type { ClickEvent } from '../../ink/events/click-event.js'
+import type { ClickEvent } from '../../ink/events/clickEvent.js'
 import type { OptionWithDescription } from './select.js'
 
 /**

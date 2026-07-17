@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getModeFromInput, getValueFromInput } from '../components/PromptInput/inputModes.js'
 import { makeHistoryReader } from '../services/session-storage/history.js'
-import { KeyboardEvent } from '../ink/events/keyboard-event.js'
+import { KeyboardEvent } from '../ink/events/keyboardEvent.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- backward-compat bridge until consumers wire handleKeyDown to <Box onKeyDown>
 import { useInput } from '../ink/index.js'
 import { useKeybinding, useKeybindings } from '../keybindings/useKeybinding.js'

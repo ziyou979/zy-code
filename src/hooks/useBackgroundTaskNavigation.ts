@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { KeyboardEvent } from '../ink/events/keyboard-event.js'
+import { KeyboardEvent } from '../ink/events/keyboardEvent.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- backward-compat bridge until REPL wires handleKeyDown to <Box onKeyDown>
 import { useInput } from '../ink/index.js'
 import type { AppState } from '../state/AppStateStore.js'

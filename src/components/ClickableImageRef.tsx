@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url'
 import Link from '../ink/components/Link.js'
-import { supportsHyperlinks } from '../ink/supports-hyperlinks.js'
+import { supportsHyperlinks } from '../ink/supportsHyperlinks.js'
 import { Text } from '../ink/index.js'
 import { getStoredImagePath } from '../services/attachments/imageStore.js'
 import type { Theme } from '../utils/theme.js'

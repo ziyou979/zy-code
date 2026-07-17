@@ -38,7 +38,7 @@ export function AsyncAgentDetailDialog({ agent, onDone, onKillAgent, onBack }: P
       context: 'Confirmation',
     },
   )
-  const handleKeyDown = (e: import('../../ink/events/keyboard-event.js').KeyboardEvent) => {
+  const handleKeyDown = (e: import('../../ink/events/keyboardEvent.js').KeyboardEvent) => {
     if (e.key === ' ') {
       e.preventDefault()
       onDone()

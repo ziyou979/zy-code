@@ -3,9 +3,9 @@ import React, { type Ref } from 'react'
 
 import type { Except } from 'type-fest'
 import type { DOMElement } from '../dom.js'
-import type { ClickEvent } from '../events/click-event.js'
-import type { FocusEvent } from '../events/focus-event.js'
-import type { KeyboardEvent } from '../events/keyboard-event.js'
+import type { ClickEvent } from '../events/clickEvent.js'
+import type { FocusEvent } from '../events/focusEvent.js'
+import type { KeyboardEvent } from '../events/keyboardEvent.js'
 import type { Styles } from '../styles.js'
 import * as warn from '../warn.js'
 export type Props = Except<Styles, 'textWrap'> & {

@@ -2,12 +2,12 @@ import type { FocusManager } from './focus.js'
 import { createLayoutNode } from './layout/engine.js'
 import type { LayoutNode } from './layout/node.js'
 import { LayoutDisplay, LayoutMeasureMode } from './layout/node.js'
-import measureText from './measure-text.js'
-import { addPendingClear, nodeCache } from './node-cache.js'
-import squashTextNodes from './squash-text-nodes.js'
+import measureText from './measureText.js'
+import { addPendingClear, nodeCache } from './nodeCache.js'
+import squashTextNodes from './squashTextNodes.js'
 import type { Styles, TextStyles } from './styles.js'
 import { expandTabs } from './tabstops.js'
-import wrapText from './wrap-text.js'
+import wrapText from './wrapText.js'
 
 type InkNode = {
   parentNode: DOMElement | undefined

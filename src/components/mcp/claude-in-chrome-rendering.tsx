@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { MessageResponse } from '../MessageResponse.js'
-import { supportsHyperlinks } from '../../ink/supports-hyperlinks.js'
+import { supportsHyperlinks } from '../../ink/supportsHyperlinks.js'
 import { Link, Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 import { renderToolResultMessage as renderDefaultMCPToolResultMessage } from '../../tools/MCPTool/UI.js'
