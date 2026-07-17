@@ -21,7 +21,7 @@ import { pendingAssistantChat, pendingConnect, pendingSSH } from '../argvDispatc
 import { logSessionTelemetry, logStartupTelemetry } from '../bootstrap/telemetry.js'
 import { coordinatorModeModule, getTeammateUtils } from '../lazyModules.js'
 import { addToHistory } from '../../services/session-storage/history.js'
-import { exitWithError, renderAndRun } from '../../cli/interactiveHelpers.js'
+import { exitWithError, renderAndRun } from '../../cli/InteractiveHelpers.js'
 import { computeInitialTeamContext } from '../../services/swarm/reconnection.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'

@@ -6,7 +6,7 @@
  * - 设置未定义或为 false 时不阻止
  */
 import { afterEach, describe, expect, test } from 'bun:test'
-import type { ToolUseContext } from '../../src/tools/Tool.js'
+import type { ToolUseContext } from '../../src/tools/tool.js'
 
 /**
  * 统一注册所有传递依赖模块的 mock，阻断重依赖链加载。

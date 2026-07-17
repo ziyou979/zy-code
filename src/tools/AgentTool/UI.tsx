@@ -23,7 +23,7 @@ import {
   renderModelName,
 } from '../../services/model/model.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
-import { findToolByName, type Tools } from '../../tools/Tool.js'
+import { findToolByName, type Tools } from '../../tools/tool.js'
 import { backgroundAll } from '../../tasks/local-shell-task/LocalShellTask.js'
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
 import type {

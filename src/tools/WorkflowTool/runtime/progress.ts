@@ -1,6 +1,6 @@
 import { appendFileSync } from 'node:fs'
 import { updateTaskState } from '../../../services/task-runtime/framework.js'
-import type { SetAppState } from '../../../tasks/Task.js'
+import type { SetAppState } from '../../../tasks/task.js'
 import type { LocalWorkflowTaskState } from '../../../tasks/local-workflow-task/localWorkflowTask.js'
 
 export interface ProgressContext {

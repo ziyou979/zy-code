@@ -11,7 +11,7 @@
  */
 
 import type { ToolUseConfirm } from '../permissions/toolUseConfirm.js'
-import type { ToolPermissionContext } from '../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../tools/tool.js'
 
 export type SetToolUseConfirmQueueFn = (
   updater: (prev: ToolUseConfirm[]) => ToolUseConfirm[],

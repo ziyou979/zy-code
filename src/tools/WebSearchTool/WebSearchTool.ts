@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
 import { getMainLoopModel } from '../../services/model/model.js'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'

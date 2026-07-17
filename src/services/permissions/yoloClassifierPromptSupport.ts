@@ -1,5 +1,5 @@
 import { getCachedAgentsMdContent } from '../../bootstrap/runtime/runtimeContext.js'
-import type { ToolPermissionContext } from '../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../tools/tool.js'
 import type { LLMMessage } from '../../types/llm.js'
 import { getAutoModeConfig } from '../settings/settings.js'
 

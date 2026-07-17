@@ -35,7 +35,7 @@ import type { ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import { getDefaultMainLoopModel } from '../../services/model/model.js'
 import { ensureModelStringsInitialized } from '../../services/model/modelStrings.js'
 import { initBundledSkills } from '../../skills/bundled/index.js'
-import type { ToolInputJSONSchema } from '../../tools/Tool.js'
+import type { ToolInputJSONSchema } from '../../tools/tool.js'
 import {
   getActiveAgentsFromList,
   getAgentDefinitionsWithOverrides,

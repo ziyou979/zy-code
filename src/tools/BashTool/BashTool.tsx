@@ -25,8 +25,8 @@ import type {
   ToolCallProgress,
   ToolUseContext,
   ValidationResult,
-} from '../../tools/Tool.js'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+} from '../../tools/tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 import {
   backgroundExistingForegroundTask,
   markTaskNotified,

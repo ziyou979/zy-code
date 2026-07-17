@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
-import { toolMatchesName, type Tool, type Tools } from '../tools/Tool.js'
-import type { ToolPermissionContext } from '../tools/Tool.js'
+import { toolMatchesName, type Tool, type Tools } from '../tools/tool.js'
+import type { ToolPermissionContext } from '../tools/tool.js'
 import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
 import { toolRegistry } from '../tools/registry.js'
 export {

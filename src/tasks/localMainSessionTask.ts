@@ -1,5 +1,5 @@
 /**
- * LocalMainSessionTask - Handles backgrounding the main session query.
+ * localMainSessionTask - Handles backgrounding the main session query.
  *
  * When user presses Ctrl+B twice during a query, the session is "backgrounded":
  * - The query continues running in the background
@@ -27,8 +27,8 @@ import {
 } from '../services/task-runtime/diskOutput.js'
 import { registerTask, updateTaskState } from '../services/task-runtime/framework.js'
 import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
-import type { SetAppState } from '../tasks/Task.js'
-import { createTaskStateBase } from '../tasks/Task.js'
+import type { SetAppState } from '../tasks/task.js'
+import { createTaskStateBase } from '../tasks/task.js'
 import type { AgentDefinition, CustomAgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { asAgentId } from '../types/ids.js'
 import type { Message } from '../types/message.js'
@@ -43,7 +43,7 @@ import { getAgentTranscriptPath, recordSidechainTranscript } from '../services/s
 import type { LocalAgentTaskState } from './local-agent-task/LocalAgentTask.js'
 
 // Main session tasks use LocalAgentTaskState with agentType='main-session'
-export type LocalMainSessionTaskState = LocalAgentTaskState & {
+export type localMainSessionTaskState = LocalAgentTaskState & {
   agentType: 'main-session'
 }
 
@@ -113,7 +113,7 @@ export function registerMainSessionTask(
   const selectedAgent = mainThreadAgentDefinition ?? DEFAULT_MAIN_SESSION_AGENT
 
   // Create task state - already backgrounded since this is called when user backgrounds
-  const taskState: LocalMainSessionTaskState = {
+  const taskState: localMainSessionTaskState = {
     ...createTaskStateBase(taskId, 'local_agent', description),
     type: 'local_agent',
     status: 'running',
@@ -133,7 +133,7 @@ export function registerMainSessionTask(
   }
 
   logForDebugging(
-    `[LocalMainSessionTask] Registering task ${taskId} with description: ${description}`,
+    `[localMainSessionTask] Registering task ${taskId} with description: ${description}`,
   )
   registerTask(taskState, setAppState)
 
@@ -141,7 +141,7 @@ export function registerMainSessionTask(
   setAppState((prev) => {
     const hasTask = taskId in prev.tasks
     logForDebugging(
-      `[LocalMainSessionTask] After registration, task ${taskId} exists in state: ${hasTask}`,
+      `[localMainSessionTask] After registration, task ${taskId} exists in state: ${hasTask}`,
     )
     return prev
   })
@@ -161,7 +161,7 @@ export function completeMainSessionTask(
   let wasBackgrounded = true
   let toolUseId: string | undefined
 
-  updateTaskState<LocalMainSessionTaskState>(taskId, setAppState, (task) => {
+  updateTaskState<localMainSessionTaskState>(taskId, setAppState, (task) => {
     if (task.status !== 'running') {
       return task
     }
@@ -265,7 +265,7 @@ export function foregroundMainSessionTask(
       return prev
     }
 
-    taskMessages = (task as LocalMainSessionTaskState).messages
+    taskMessages = (task as localMainSessionTaskState).messages
 
     // Restore previous foregrounded task to background if it exists
     const prevId = prev.foregroundedTaskId
@@ -289,12 +289,12 @@ export function foregroundMainSessionTask(
 /**
  * Check if a task is a main session task (vs a regular agent task).
  */
-export function isMainSessionTask(task: unknown): task is LocalMainSessionTaskState {
+export function isMainSessionTask(task: unknown): task is localMainSessionTaskState {
   if (typeof task !== 'object' || task === null || !('type' in task) || !('agentType' in task)) {
     return false
   }
   return (
-    task.type === 'local_agent' && (task as LocalMainSessionTaskState).agentType === 'main-session'
+    task.type === 'local_agent' && (task as localMainSessionTaskState).agentType === 'main-session'
   )
 }
 

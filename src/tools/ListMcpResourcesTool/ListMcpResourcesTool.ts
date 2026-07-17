@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
 import { ensureConnectedClient, fetchResourcesForClient } from '../../services/mcp/client.js'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { errorMessage } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logMCPError } from '../../utils/log.js'

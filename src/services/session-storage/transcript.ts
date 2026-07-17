@@ -47,7 +47,7 @@ export type TeamInfo = {
 //
 // 跳过跟踪：已记录的消息仅在它们形成前缀（出现在任何新消息之前）时
 // 才作为父级跟踪。这处理了两种情况：
-//  - 增长数组调用者（QueryEngine、queryHelpers、LocalMainSessionTask、
+//  - 增长数组调用者（QueryEngine、queryHelpers、localMainSessionTask、
 //    trajectory）：已记录消息总是前缀 → 被跟踪 → 新消息的
 //    父链正确。
 //  - 压缩（useLogMessages）：新的 CB/摘要先出现，然后是已记录的

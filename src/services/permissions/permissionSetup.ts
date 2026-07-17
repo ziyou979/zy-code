@@ -6,7 +6,7 @@ import {
   setHasExitedPlanMode,
   setNeedsAutoModeExitAttachment,
 } from '../../bootstrap/runtime/runtimeContext.js'
-import type { ToolPermissionContext } from '../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../tools/tool.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
 import {
   getInitialSettings,

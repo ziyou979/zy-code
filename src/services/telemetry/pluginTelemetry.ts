@@ -146,7 +146,7 @@ export function buildPluginTelemetryFields(
 }
 
 /**
- * Per-invocation callers (SkillTool, processSlashCommand) pass
+ * Per-invocation callers (SkillTool, ProcessSlashCommand) pass
  * managedNames=null — the session-level zy_plugin_enabled_for_session
  * event carries the authoritative plugin_scope, and per-invocation rows can
  * join on plugin_id_hash to recover it. This keeps hot-path call sites free

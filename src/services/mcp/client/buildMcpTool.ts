@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import type { ListToolsResult } from '@modelcontextprotocol/sdk/types.js'
-import { type Tool, type ToolCallProgress } from '../../../tools/Tool.js'
+import { type Tool, type ToolCallProgress } from '../../../tools/tool.js'
 import { type MCPProgress, MCPTool } from '../../../tools/MCPTool/MCPTool.js'
 import { classifyMcpToolForCollapse } from '../../../tools/MCPTool/classifyForCollapse.js'
 import {

@@ -25,7 +25,7 @@ import {
   findUltrareviewTriggerPositions,
 } from '../../services/ultraplan/keyword.js'
 import { getViewedTeammateTask } from '../../state/selectors.js'
-import type { ToolPermissionContext } from '../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../tools/tool.js'
 import { getRunningTeammatesSorted } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import { isPanelAgentTask } from '../../tasks/local-agent-task/LocalAgentTask.js'
 import { isBackgroundTask } from '../../tasks/types.js'

@@ -12,7 +12,7 @@ import {
   type PromptCommand,
 } from 'src/commands/index.js'
 import { getNoContentMessage } from 'src/constants/messages.js'
-import type { SetToolJSXFn, ToolUseContext } from 'src/tools/Tool.js'
+import type { SetToolJSXFn, ToolUseContext } from 'src/tools/tool.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -363,7 +363,7 @@ async function executeForkedSlashCommand(
   }
 }
 
-export async function processSlashCommand(
+export async function ProcessSlashCommand(
   inputString: string,
   precedingInputBlocks: UserContentBlock[],
   imageContentBlocks: UserContentBlock[],

@@ -19,7 +19,7 @@ import { microcompactMessages } from '../../services/compact/microCompact.js'
 import { runPostCompactCleanup } from '../../services/compact/postCompactCleanup.js'
 import { trySessionMemoryCompaction } from '../../services/compact/sessionMemoryCompact.js'
 import { setLastSummarizedMessageId } from '../../services/session-memory/sessionMemoryUtils.js'
-import type { ToolUseContext } from '../../tools/Tool.js'
+import type { ToolUseContext } from '../../tools/tool.js'
 import type { LocalCommandCall } from '../types.js'
 import type { Message } from '../../types/message.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
@@ -183,7 +183,7 @@ async function compactViaReactive(
     }
 
     // Mirrors the post-success cleanup in tryReactiveCompact, minus
-    // resetMicrocompactState — processSlashCommand calls that for all
+    // resetMicrocompactState — ProcessSlashCommand calls that for all
     // type:'compact' results.
     setLastSummarizedMessageId(undefined)
     runPostCompactCleanup()

@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import { buildTool, type Tool, type ToolDef } from '../../tools/Tool.js'
+import { buildTool, type Tool, type ToolDef } from '../../tools/tool.js'
 import type { PermissionUpdate } from '../../types/permissions.js'
 import { formatFileSize } from '../../utils/format.js'
 import { lazySchema } from '../../utils/lazySchema.js'

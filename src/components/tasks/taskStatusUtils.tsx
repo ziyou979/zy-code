@@ -2,7 +2,7 @@
  * Shared utilities for displaying task status across different task types.
  */
 
-import type { TaskStatus } from 'src/tasks/Task.js'
+import type { TaskStatus } from 'src/tasks/task.js'
 import type { InProcessTeammateTaskState } from 'src/tasks/in-process-teammate-task/types.js'
 import { isPanelAgentTask } from 'src/tasks/local-agent-task/LocalAgentTask.js'
 import { isBackgroundTask, type TaskState } from 'src/tasks/types.js'

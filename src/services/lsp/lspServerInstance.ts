@@ -28,10 +28,10 @@ const MAX_RETRIES_FOR_TRANSIENT_ERRORS = 3
  */
 const RETRY_BASE_DELAY_MS = 500
 /**
- * LSP server instance interface returned by createLSPServerInstance.
+ * LSP server instance interface returned by createlspServerInstance.
  * Manages the lifecycle of a single LSP server with state tracking and health monitoring.
  */
-export type LSPServerInstance = {
+export type lspServerInstance = {
   /** Unique server identifier */
   readonly name: string
   /** Server configuration */
@@ -83,15 +83,15 @@ export type LSPServerInstance = {
  * @returns LSP server instance with lifecycle management methods
  *
  * @example
- * const instance = createLSPServerInstance('my-server', config)
+ * const instance = createlspServerInstance('my-server', config)
  * await instance.start()
  * const result = await instance.sendRequest('textDocument/definition', params)
  * await instance.stop()
  */
-export function createLSPServerInstance(
+export function createlspServerInstance(
   name: string,
   config: ScopedLspServerConfig,
-): LSPServerInstance {
+): lspServerInstance {
   const configExt = config as ScopedLspServerConfig & {
     restartOnCrash?: unknown
     shutdownTimeout?: unknown

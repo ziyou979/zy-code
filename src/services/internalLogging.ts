@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import memoize from 'lodash-es/memoize.js'
-import type { ToolPermissionContext } from '../tools/Tool.js'
+import type { ToolPermissionContext } from '../tools/tool.js'
 import { isInternalBuild } from '../utils/envUtils.js'
 import { jsonStringify } from '../utils/slowOperations.js'
 import {

@@ -1,4 +1,4 @@
-import type { ValidationResult } from 'src/tools/Tool.js'
+import type { ValidationResult } from 'src/tools/tool.js'
 import { isZySettingsPath } from '../permissions/filesystem.js'
 import { validateSettingsFileContent } from './validation.js'
 

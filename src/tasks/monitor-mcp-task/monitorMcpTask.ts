@@ -1,7 +1,7 @@
 // Monitor MCP Task module stub implementation
 // This module provides monitor task functionality for MONITOR_TOOL feature
 
-import type { SetAppState, Task, TaskStateBase } from '../../tasks/Task.js'
+import type { SetAppState, Task, TaskStateBase } from '../../tasks/task.js'
 import type { AgentId } from '../../types/ids.js'
 
 export type MonitorMcpTaskState = TaskStateBase & {

@@ -1,7 +1,7 @@
 import { tSync } from 'src/i18n/index.js'
 import type { Command } from '../../../commands/index.js'
 import type { MCPServerConnection, ServerResource } from '../../../services/mcp/types.js'
-import type { Tool } from '../../../tools/Tool.js'
+import type { Tool } from '../../../tools/tool.js'
 export interface ReconnectResult {
   message: string
   success: boolean

@@ -1,6 +1,6 @@
 import type { UUID } from 'node:crypto'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import type { ToolUseContext } from '../../tools/Tool.js'
+import type { ToolUseContext } from '../../tools/tool.js'
 import { AGENT_COLORS, type AgentColorName } from '../../tools/AgentTool/agentColorManager.js'
 import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types.js'
 import { getTranscriptPath, saveAgentColor } from '../../services/sessionStorage.js'

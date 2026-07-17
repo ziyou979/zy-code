@@ -25,8 +25,8 @@ import {
   addSkillDirectories,
   discoverSkillDirsForPaths,
 } from '../../skills/loadSkillsDir.js'
-import type { ToolUseContext } from '../../tools/Tool.js'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+import type { ToolUseContext } from '../../tools/tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 import type { ImageSource } from '../../types/llm.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'

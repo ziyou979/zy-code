@@ -26,7 +26,7 @@ import {
 import * as React from 'react'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { ComputerUseApproval } from '../permissions/ComputerUseApproval/ComputerUseApproval.js'
-import type { Tool, ToolUseContext } from '../../tools/Tool.js'
+import type { Tool, ToolUseContext } from '../../tools/tool.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
   checkComputerUseLock,

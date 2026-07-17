@@ -7,7 +7,7 @@ import {
   type EnvironmentResource,
   fetchEnvironments,
 } from '../../services/teleport/environments.js'
-import type { ToolUseContext } from '../../tools/Tool.js'
+import type { ToolUseContext } from '../../tools/tool.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js'
 import { REMOTE_TRIGGER_TOOL_NAME } from '../../tools/RemoteTriggerTool/prompt.js'
 import { getZyAIOAuthTokens } from '../../services/auth/auth.js'

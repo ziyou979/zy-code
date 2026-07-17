@@ -10,7 +10,7 @@ import { getIsRemoteMode } from '../../bootstrap/runtime/runtimeContext.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import { getSystemContext, getUserContext } from '../../services/context/context.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
-import type { Tool, ToolUseContext } from '../../tools/Tool.js'
+import type { Tool, ToolUseContext } from '../../tools/tool.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
 import {
   FileReadTool,

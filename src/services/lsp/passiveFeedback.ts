@@ -10,7 +10,7 @@ import { logError } from '../../utils/log.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import type { DiagnosticFile } from '../diagnosticTracking.js'
 import { registerPendingLSPDiagnostic } from './lspDiagnosticRegistry.js'
-import type { LSPServerManager } from './lspServerManager.js'
+import type { lspServerManager } from './lspServerManager.js'
 
 /**
  * Map LSP severity to Zy diagnostic severity
@@ -115,7 +115,7 @@ export type HandlerRegistrationResult = {
  * @returns Tracking data for registration status and runtime failures
  */
 export function registerLSPNotificationHandlers(
-  manager: LSPServerManager,
+  manager: lspServerManager,
 ): HandlerRegistrationResult {
   // Register handlers on all configured servers to capture diagnostics from any language
   const servers = manager.getAllServers()

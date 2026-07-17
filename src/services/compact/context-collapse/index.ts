@@ -15,7 +15,7 @@
 
 import { randomUUID } from 'node:crypto'
 import type { QuerySource } from '../../../constants/querySource.js'
-import type { ToolUseContext } from '../../../tools/Tool.js'
+import type { ToolUseContext } from '../../../tools/tool.js'
 import type { Message } from '../../../types/message.js'
 import { createUserMessage } from '../../messages/constructors.js'
 import { getMainLoopModel } from '../../model/model.js'

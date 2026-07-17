@@ -12,7 +12,7 @@ import {
   getPipelineSegments,
   PS_TOKENIZER_DASH_CHARS,
 } from '../../shell-eval/powershell/parser.js'
-import type { ToolPermissionContext } from '../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../tools/tool.js'
 import type { PermissionResult } from '../../services/permissions/permissionResult.js'
 import {
   argLeaksValue,

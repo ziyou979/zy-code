@@ -1,7 +1,7 @@
 /**
  * Terminal preference capture for deep link handling.
  *
- * Separate from terminalLauncher.ts so interactiveHelpers.tsx can import
+ * Separate from terminalLauncher.ts so InteractiveHelpers.tsx can import
  * this without pulling the full launcher module into the startup path
  * (which would defeat LODESTONE tree-shaking).
  */

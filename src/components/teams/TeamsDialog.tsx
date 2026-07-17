@@ -24,7 +24,7 @@ import {
 } from '../../services/swarm/teamHelpers.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import { getEmptyToolPermissionContext } from '../../tools/Tool.js'
+import { getEmptyToolPermissionContext } from '../../tools/tool.js'
 import { AGENT_COLOR_TO_THEME_COLOR } from '../../tools/AgentTool/agentColorManager.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'

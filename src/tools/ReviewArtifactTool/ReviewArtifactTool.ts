@@ -3,7 +3,7 @@
 
 import { z } from 'zod/v4'
 import { tSync } from '../../i18n/index.js'
-import type { Tool } from '../../tools/Tool.js'
+import type { Tool } from '../../tools/tool.js'
 
 const inputSchema = z.object({}).passthrough()
 

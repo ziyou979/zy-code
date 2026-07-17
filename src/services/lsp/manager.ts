@@ -2,7 +2,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { isBareMode } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
-import { createLSPServerManager, type LSPServerManager } from './lspServerManager.js'
+import { createlspServerManager, type lspServerManager } from './lspServerManager.js'
 import { registerLSPNotificationHandlers } from './passiveFeedback.js'
 
 /**
@@ -14,7 +14,7 @@ type InitializationState = 'not-started' | 'pending' | 'success' | 'failed'
  * Global singleton instance of the LSP server manager.
  * Initialized during ZY Code startup.
  */
-let lspManagerInstance: LSPServerManager | undefined
+let lspManagerInstance: lspServerManager | undefined
 
 /**
  * Current initialization state
@@ -57,7 +57,7 @@ export function _resetLspManagerForTesting(): void {
  * asynchronously during ZY Code startup. Use getInitializationStatus() to
  * distinguish between pending, failed, and not-started states.
  */
-export function getLspServerManager(): LSPServerManager | undefined {
+export function getLspServerManager(): lspServerManager | undefined {
   // Don't return a broken instance if initialization failed
   if (initializationState === 'failed') {
     return undefined
@@ -168,7 +168,7 @@ export function initializeLspServerManager(): void {
   }
 
   // Create the manager instance and mark as pending
-  lspManagerInstance = createLSPServerManager()
+  lspManagerInstance = createlspServerManager()
   initializationState = 'pending'
   logForDebugging('[LSP MANAGER] Created manager instance, state=pending')
 

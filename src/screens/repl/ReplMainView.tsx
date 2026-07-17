@@ -65,7 +65,7 @@ import type { ProcessUserInputContext } from '../../services/process-user-input/
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import { useReplState } from '../../state/ReplState.js'
 import type { ReplStoreInstance } from '../../state/replStore.js'
-import type { Tool, ToolPermissionContext } from '../../tools/Tool.js'
+import type { Tool, ToolPermissionContext } from '../../tools/tool.js'
 import { getAllInProcessTeammateTasks } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import type { InProcessTeammateTaskState } from '../../tasks/in-process-teammate-task/types.js'
 import { isInProcessTeammateTask } from '../../tasks/in-process-teammate-task/types.js'

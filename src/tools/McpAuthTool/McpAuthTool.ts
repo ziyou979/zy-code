@@ -8,7 +8,7 @@ import type {
   McpSSEServerConfig,
   ScopedMcpServerConfig,
 } from '../../services/mcp/types.js'
-import type { Tool } from '../../tools/Tool.js'
+import type { Tool } from '../../tools/tool.js'
 import { errorMessage } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logMCPDebug, logMCPError } from '../../utils/log.js'

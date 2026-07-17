@@ -33,7 +33,7 @@ export async function call(
         // strip them so the new key doesn't reject stale signatures.
         context.setMessages(stripSignatureBlocks)
         if (success) {
-          // Post-login refresh logic. Keep in sync with onboarding in src/interactiveHelpers.tsx
+          // Post-login refresh logic. Keep in sync with onboarding in src/InteractiveHelpers.tsx
           // Reset cost state when switching accounts
           resetCostState()
           // Refresh remotely managed settings after login (non-blocking)

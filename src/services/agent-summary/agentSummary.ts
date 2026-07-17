@@ -8,7 +8,7 @@
  * 工具保留在请求中以匹配缓存键，但通过 canUseTool 回调拒绝。
  */
 
-import type { TaskContext } from '../../tasks/Task.js'
+import type { TaskContext } from '../../tasks/task.js'
 import { updateAgentSummary } from '../../tasks/local-agent-task/LocalAgentTask.js'
 import { filterIncompleteToolCalls } from '../../tools/AgentTool/runAgent.js'
 import type { AgentId } from '../../types/ids.js'

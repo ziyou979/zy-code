@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text } from '../../ink/index.js'
-import type { Tools } from '../../tools/Tool.js'
-import { findToolByName } from '../../tools/Tool.js'
+import type { Tools } from '../../tools/tool.js'
+import { findToolByName } from '../../tools/tool.js'
 import type { ToolActivity } from '../../tasks/local-agent-task/LocalAgentTask.js'
 import type { ThemeName } from '../../utils/theme.js'
 export function renderToolActivity(

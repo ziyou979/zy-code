@@ -22,7 +22,7 @@ import {
   errorMessage,
   TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from '../../../utils/errors.js'
-import { getMCPUserAgent } from '../../../utils/http.js'
+import { getMCPUserAgent } from '../../http/http.js'
 import { maybeNotifyIDEConnected } from '../../ide/ide.js'
 import { logMCPDebug, logMCPError } from '../../../utils/log.js'
 import { WebSocketTransport } from '../../../utils/mcpWebSocketTransport.js'

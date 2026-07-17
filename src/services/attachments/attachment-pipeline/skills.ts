@@ -1,4 +1,4 @@
-import { type ToolUseContext, type ToolPermissionContext } from '../../../tools/Tool.js'
+import { type ToolUseContext, type ToolPermissionContext } from '../../../tools/tool.js'
 import { getViewedTeammateTask } from '../../../state/selectors.js'
 import type { Message } from 'src/types/message.js'
 import { getContextWindowForModel } from '../../../utils/context.js'

@@ -4,25 +4,25 @@ import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { getAllLspServers } from './config.js'
-import { createLSPServerInstance, type LSPServerInstance } from './lspServerInstance.js'
+import { createlspServerInstance, type lspServerInstance } from './lspServerInstance.js'
 import type { ScopedLspServerConfig } from './types.js'
 /**
- * LSP Server Manager interface returned by createLSPServerManager.
+ * LSP Server Manager interface returned by createlspServerManager.
  * Manages multiple LSP server instances and routes requests based on file extensions.
  */
-export type LSPServerManager = {
+export type lspServerManager = {
   /** Initialize the manager by loading all configured LSP servers */
   initialize(): Promise<void>
   /** Shutdown all running servers and clear state */
   shutdown(): Promise<void>
   /** Get the LSP server instance for a given file path */
-  getServerForFile(filePath: string): LSPServerInstance | undefined
+  getServerForFile(filePath: string): lspServerInstance | undefined
   /** Ensure the appropriate LSP server is started for the given file */
-  ensureServerStarted(filePath: string): Promise<LSPServerInstance | undefined>
+  ensureServerStarted(filePath: string): Promise<lspServerInstance | undefined>
   /** Send a request to the appropriate LSP server for the given file */
   sendRequest<T>(filePath: string, method: string, params: unknown): Promise<T | undefined>
   /** Get all running server instances */
-  getAllServers(): Map<string, LSPServerInstance>
+  getAllServers(): Map<string, lspServerInstance>
   /** Synchronize file open to LSP server (sends didOpen notification) */
   openFile(filePath: string, content: string): Promise<void>
   /** Synchronize file change to LSP server (sends didChange notification) */
@@ -44,14 +44,14 @@ export type LSPServerManager = {
  * @returns LSP server manager instance
  *
  * @example
- * const manager = createLSPServerManager()
+ * const manager = createlspServerManager()
  * await manager.initialize()
  * const result = await manager.sendRequest('/path/to/file.ts', 'textDocument/definition', params)
  * await manager.shutdown()
  */
-export function createLSPServerManager(): LSPServerManager {
+export function createlspServerManager(): lspServerManager {
   // Private state managed via closures
-  const servers: Map<string, LSPServerInstance> = new Map()
+  const servers: Map<string, lspServerInstance> = new Map()
   const extensionMap: Map<string, string[]> = new Map()
   // Track which files have been opened on which servers (URI -> server name)
   const openedFiles: Map<string, string> = new Map()
@@ -107,7 +107,7 @@ export function createLSPServerManager(): LSPServerManager {
         }
 
         // Create server instance
-        const instance = createLSPServerInstance(serverName, config)
+        const instance = createlspServerInstance(serverName, config)
         servers.set(serverName, instance)
 
         // Register handler for workspace/configuration requests from the server
@@ -167,7 +167,7 @@ export function createLSPServerManager(): LSPServerManager {
    * If multiple servers handle the same extension, returns the first registered server.
    * Returns undefined if no server handles this file type.
    */
-  function getServerForFile(filePath: string): LSPServerInstance | undefined {
+  function getServerForFile(filePath: string): lspServerInstance | undefined {
     const ext = path.extname(filePath).toLowerCase()
     const serverNames = extensionMap.get(ext)
 
@@ -190,7 +190,7 @@ export function createLSPServerManager(): LSPServerManager {
    *
    * @throws {Error} If server fails to start
    */
-  async function ensureServerStarted(filePath: string): Promise<LSPServerInstance | undefined> {
+  async function ensureServerStarted(filePath: string): Promise<lspServerInstance | undefined> {
     const server = getServerForFile(filePath)
     if (!server) {
       return undefined
@@ -237,7 +237,7 @@ export function createLSPServerManager(): LSPServerManager {
   }
 
   // Return public interface
-  function getAllServers(): Map<string, LSPServerInstance> {
+  function getAllServers(): Map<string, lspServerInstance> {
     return servers
   }
 

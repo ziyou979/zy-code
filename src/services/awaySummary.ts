@@ -1,5 +1,5 @@
 import { getDefaultCompactModel } from './model/model.js'
-import { getEmptyToolPermissionContext } from '../tools/Tool.js'
+import { getEmptyToolPermissionContext } from '../tools/tool.js'
 import { isAbortError } from '../types/llm.js'
 import type { Message } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'

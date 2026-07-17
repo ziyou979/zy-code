@@ -4,7 +4,7 @@ import type { Readable } from 'node:stream'
 import { MAX_TASK_OUTPUT_BYTES, MAX_TASK_OUTPUT_BYTES_DISPLAY } from '../task-runtime/diskOutput.js'
 import { TaskOutput } from '../task-runtime/taskOutput.js'
 import treeKill from 'tree-kill'
-import { generateTaskId } from '../../tasks/Task.js'
+import { generateTaskId } from '../../tasks/task.js'
 import { formatDuration } from '../../utils/format.js'
 
 export type ExecResult = {

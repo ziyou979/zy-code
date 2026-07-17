@@ -14,8 +14,8 @@ import { getTaskOutputPath } from '../../services/task-runtime/diskOutput.js'
 import { TaskOutput } from '../../services/task-runtime/taskOutput.js'
 import { getCachedPowerShellPath } from '../../shell-eval/shared/powershellDetection.js'
 import { tSync } from '../../i18n/index.js'
-import type { SetToolJSXFn, Tool, ToolCallProgress, ValidationResult } from '../../tools/Tool.js'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+import type { SetToolJSXFn, Tool, ToolCallProgress, ValidationResult } from '../../tools/tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 import {
   backgroundExistingForegroundTask,
   markTaskNotified,

@@ -1,5 +1,5 @@
 import { extractOutputRedirections } from 'src/shell-eval/bash/commands.js'
-import type { Tool, ToolPermissionContext } from '../../tools/Tool.js'
+import type { Tool, ToolPermissionContext } from '../../tools/tool.js'
 import { getSettingSourceDisplayNameLowercase, SETTING_SOURCES } from '../settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
 import { getToolNameForPermissionCheck, mcpInfoFromString } from '../mcp/mcpStringUtils.js'

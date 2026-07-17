@@ -11,9 +11,9 @@ import type { StatsStore } from '../../context/stats.js'
 import {
   launchAssistantInstallWizard,
   launchAssistantSessionChooser,
-} from '../../cli/dialogLaunchers.js'
+} from '../../cli/DialogLaunchers.js'
 import type { Root } from '../../ink/index.js'
-import { exitWithError, exitWithMessage } from '../../cli/interactiveHelpers.js'
+import { exitWithError, exitWithMessage } from '../../cli/InteractiveHelpers.js'
 import { createRemoteSessionConfig } from '../../remote/remoteSessionManager.js'
 import { prepareApiRequest } from '../../services/teleport/api.js'
 import type { AppState } from '../../state/AppStateStore.js'

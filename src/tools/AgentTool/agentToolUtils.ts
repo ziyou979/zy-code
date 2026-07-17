@@ -14,8 +14,8 @@ import {
 import { clearDumpState } from '../../services/api/dumpPrompts.js'
 import { emitTaskProgress as emitTaskProgressEvent } from '../../services/task-runtime/taskProgress.js'
 import type { AppState } from '../../state/AppStateStore.js'
-import type { Tool, ToolPermissionContext, Tools, ToolUseContext } from '../../tools/Tool.js'
-import { toolMatchesName } from '../../tools/Tool.js'
+import type { Tool, ToolPermissionContext, Tools, ToolUseContext } from '../../tools/tool.js'
+import { toolMatchesName } from '../../tools/tool.js'
 import {
   completeAgentTask as completeAsyncAgent,
   createActivityDescriptionResolver,

@@ -10,7 +10,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { type McpServerConfig, McpServerConfigSchema } from '../../services/mcp/types.js'
-import type { ToolUseContext } from '../../tools/Tool.js'
+import type { ToolUseContext } from '../../tools/tool.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../../utils/effort.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'

@@ -4,7 +4,7 @@ import type { ToolUseConfirm } from '../components/permissions/PermissionRequest
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink/index.js'
 import type { SetToolPermissionContextFn } from '../services/swarm/leaderPermissionBridge.js'
-import type { Tool as ToolType, ToolUseContext } from '../tools/Tool.js'
+import type { Tool as ToolType, ToolUseContext } from '../tools/tool.js'
 import {
   consumeSpeculativeClassifierCheck,
   peekSpeculativeClassifierCheck,

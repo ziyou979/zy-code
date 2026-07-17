@@ -23,7 +23,7 @@ import {
   unregisterAgent as unregisterPerfettoAgent,
 } from '../telemetry/perfettoTracing.js'
 import type { AppState } from '../../state/AppStateStore.js'
-import { createTaskStateBase, generateTaskId } from '../../tasks/Task.js'
+import { createTaskStateBase, generateTaskId } from '../../tasks/task.js'
 import type {
   AgentLifecycleMode,
   InProcessTeammateTaskState,

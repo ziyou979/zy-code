@@ -6,7 +6,7 @@ import type {
   UserPromptSubmitHookInput,
 } from 'src/types/index.js'
 import { getSessionId } from '../../../bootstrap/runtime/runtimeContext.js'
-import type { ToolUseContext } from '../../../tools/Tool.js'
+import type { ToolUseContext } from '../../../tools/tool.js'
 import { createBaseHookInput, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from '../config.js'
 import { executeHooks } from '../executeEngine.js'
 import { hasHookForEvent } from '../matcher.js'

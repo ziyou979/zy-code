@@ -1,6 +1,6 @@
 import { tSync } from 'src/i18n/index.js'
 import { Text } from 'src/ink/index.js'
-import type { TaskStatus } from 'src/tasks/Task.js'
+import type { TaskStatus } from 'src/tasks/task.js'
 import type { Theme } from 'src/utils/theme.ts'
 
 type TaskStatusTextProps = {

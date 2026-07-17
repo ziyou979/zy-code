@@ -16,7 +16,7 @@ import {
   type SetAppState,
   type Task,
   type TaskStateBase,
-} from '../../tasks/Task.js'
+} from '../../tasks/task.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'

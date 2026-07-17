@@ -14,7 +14,7 @@ import { sendPermissionResponseViaMailbox } from '../services/swarm/permissionSy
 import { removeTeammateFromTeamFile, setMemberMode } from '../services/swarm/teamHelpers.js'
 import type { AppState } from '../state/AppStateStore.js'
 import { useAppState, useAppStateStore, useSetAppState } from '../state/AppState.js'
-import { findToolByName } from '../tools/Tool.js'
+import { findToolByName } from '../tools/tool.js'
 import { isInProcessTeammateTask } from '../tasks/in-process-teammate-task/types.js'
 import { getAllBaseTools } from '../tools/tools.js'
 import type { PermissionUpdate } from '../types/permissions.js'

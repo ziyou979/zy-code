@@ -24,9 +24,9 @@ import {
   launchResumeChooser,
   launchTeleportRepoMismatchDialog,
   launchTeleportResumeWrapper,
-} from '../../cli/dialogLaunchers.js'
+} from '../../cli/DialogLaunchers.js'
 import type { Root } from '../../ink/index.js'
-import { exitWithError } from '../../cli/interactiveHelpers.js'
+import { exitWithError } from '../../cli/InteractiveHelpers.js'
 import { createRemoteSessionConfig } from '../../remote/remoteSessionManager.js'
 import type { DownloadResult } from '../../services/api/filesApi.js'
 import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../../services/policy-limits/index.js'

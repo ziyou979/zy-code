@@ -8,8 +8,8 @@ import {
   setDirectConnectServerUrl,
   setOriginalCwd,
 } from 'src/bootstrap/runtime/runtimeContext.js'
-import { exitWithError } from '../../cli/interactiveHelpers.js'
-import { launchRepl } from '../../cli/replLauncher.js'
+import { exitWithError } from '../../cli/InteractiveHelpers.js'
+import { launchRepl } from '../../cli/ReplLauncher.js'
 import type { SSHSession } from '../../ssh/createSSHSession.js'
 import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
 import { createSystemMessage } from '../../services/messages/./constructors.js'

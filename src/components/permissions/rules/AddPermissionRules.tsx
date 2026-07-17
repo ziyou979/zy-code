@@ -2,7 +2,7 @@ import { tSync } from 'src/i18n/index.js'
 import { Select } from '../../CustomSelect/select.js'
 import { Box, Text } from '../../../ink/index.js'
 import { SandboxManager } from '../../../services/sandbox/sandbox-adapter.js'
-import type { ToolPermissionContext } from '../../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../../tools/tool.js'
 import type {
   PermissionBehavior,
   PermissionRule,

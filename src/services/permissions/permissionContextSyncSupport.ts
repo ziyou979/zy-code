@@ -1,4 +1,4 @@
-import type { ToolPermissionContext } from '../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../tools/tool.js'
 import type { PermissionBehavior, PermissionRule, PermissionRuleValue } from './permissionRule.js'
 import { applyPermissionUpdate, applyPermissionUpdates } from './permissionUpdate.js'
 import type { PermissionUpdate, PermissionUpdateDestination } from './permissionUpdateSchema.js'

@@ -15,7 +15,7 @@ import {
   isBetaTracingEnabled,
   type Span,
 } from 'src/services/telemetry/sessionTracing.js'
-import type { QueryChainTracking } from 'src/tools/Tool.js'
+import type { QueryChainTracking } from 'src/tools/tool.js'
 import { isConnectorTextBlock } from 'src/types/connectorText.js'
 import type { AssistantMessage } from 'src/types/message.js'
 import { logForDebugging } from 'src/utils/debug.js'

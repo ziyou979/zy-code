@@ -3,7 +3,7 @@ import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from 'src/services/analytics/index.js'
-import { toolMatchesName, type ToolUseContext } from '../../../tools/Tool.js'
+import { toolMatchesName, type ToolUseContext } from '../../../tools/tool.js'
 import {
   FileReadTool,
   MaxFileReadTokenExceededError,

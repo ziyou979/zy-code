@@ -25,7 +25,7 @@ import {
   toolsToAnthropic,
 } from './conversions/anthropic.js'
 
-export class AnthropicProviderAdapter implements LLMAdapter {
+export class anthropicProviderAdapter implements LLMAdapter {
   readonly name = 'anthropic'
 
   /**

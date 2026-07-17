@@ -12,7 +12,7 @@ import {
 } from '../../commands/index.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
-import type { SetToolJSXFn, ToolUseContext } from '../../tools/Tool.js'
+import type { SetToolJSXFn, ToolUseContext } from '../../tools/tool.js'
 import type { ImageBlock, ImageSource, UserContentBlock } from '../../types/llm.js'
 import type {
   AssistantMessage,
@@ -507,8 +507,8 @@ async function processUserInputBase(
   ) {
     logEvent('zy_ultraplan_keyword', {})
     const rewritten = replaceUltraplanKeyword(inputString).trim()
-    const { processSlashCommand } = await import('./ProcessSlashCommand.js')
-    const slashResult = await processSlashCommand(
+    const { ProcessSlashCommand } = await import('./ProcessSlashCommand.js')
+    const slashResult = await ProcessSlashCommand(
       `/ultraplan ${rewritten}`,
       precedingInputBlocks,
       imageContentBlocks,
@@ -573,8 +573,8 @@ async function processUserInputBase(
   // Slash commands
   // Skip for remote bridge messages — input from CCR clients is plain text
   if (inputString !== null && !effectiveSkipSlash && inputString.startsWith('/')) {
-    const { processSlashCommand } = await import('./ProcessSlashCommand.js')
-    const slashResult = await processSlashCommand(
+    const { ProcessSlashCommand } = await import('./ProcessSlashCommand.js')
+    const slashResult = await ProcessSlashCommand(
       inputString,
       precedingInputBlocks,
       imageContentBlocks,

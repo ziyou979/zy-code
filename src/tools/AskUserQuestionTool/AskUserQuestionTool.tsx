@@ -7,8 +7,8 @@ import { getModeColor } from 'src/services/permissions/permissionMode.js'
 import { z } from 'zod/v4'
 import { t, tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
-import type { Tool } from '../../tools/Tool.js'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+import type { Tool } from '../../tools/tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import {
   ASK_USER_QUESTION_TOOL_CHIP_WIDTH,

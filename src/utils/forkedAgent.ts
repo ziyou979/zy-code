@@ -20,7 +20,7 @@ import {
 } from '../services/analytics/index.js'
 import { EMPTY_USAGE, type NonNullableUsage } from '../services/api/logging.js'
 import { accumulateUsage, updateUsage } from '../services/api/usageTracker.js'
-import type { ToolUseContext } from '../tools/Tool.js'
+import type { ToolUseContext } from '../tools/tool.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import type { AgentId } from '../types/ids.js'
 import type { Message } from '../types/message.js'

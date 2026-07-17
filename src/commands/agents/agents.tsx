@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { AgentSessionView } from '../../components/agents/AgentSessionView.js'
 import { AgentsMenu } from '../../components/agents/AgentsMenu.js'
-import type { ToolUseContext } from '../../tools/Tool.js'
+import type { ToolUseContext } from '../../tools/tool.js'
 import { getTools } from '../../tools/tools.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 export async function call(

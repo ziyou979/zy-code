@@ -160,7 +160,7 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
   })
 
   test('CRITICAL 防线：tool_use input 是 string 时，A2 conversions/anthropic.ts 主动 safeParse 成 object', () => {
-    // 历史：旧 AnthropicProviderAdapter 把字符串 input 原样透传给 SDK，校验报错。
+    // 历史：旧 anthropicProviderAdapter 把字符串 input 原样透传给 SDK，校验报错。
     // A2 防线：conversions/anthropic.ts 的 blockToAnthropic 在 input 是字符串时
     // 调用 safeParseToolArguments 转回 object，避免到达 SDK 时报错。
     const params = buildAnthropicCreateParams({

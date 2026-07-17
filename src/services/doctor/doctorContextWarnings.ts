@@ -1,7 +1,7 @@
 import { getMainLoopModel } from 'src/services/model/model.js'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { roughTokenCountEstimation } from '../tokenEstimation.js'
-import type { Tool, ToolPermissionContext } from '../../tools/Tool.js'
+import type { Tool, ToolPermissionContext } from '../../tools/tool.js'
 import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
 import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from '../../utils/agentsMd.js'
 import { countMcpToolTokens } from '../../utils/analyzeContext.js'

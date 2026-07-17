@@ -5,7 +5,7 @@ import { TICK } from '../../../constants/figures.js'
 import { tSync } from '../../../i18n/index.js'
 import { Box, Text, useTheme } from '../../../ink/index.js'
 import { useAppState } from '../../../state/AppState.js'
-import { filterToolProgressMessages, type Tool, type Tools } from '../../../tools/Tool.js'
+import { filterToolProgressMessages, type Tool, type Tools } from '../../../tools/tool.js'
 import type { ProgressMessage, UserMessage } from '../../../types/message.js'
 import {
   deleteClassifierApproval,

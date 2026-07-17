@@ -10,8 +10,8 @@ import type {
   ToolResult,
   ToolUseContext,
   ValidationResult,
-} from 'src/tools/Tool.js'
-import { buildTool, type ToolDef } from 'src/tools/Tool.js'
+} from 'src/tools/tool.js'
+import { buildTool, type ToolDef } from 'src/tools/tool.js'
 import type { Command } from 'src/commands/types.js'
 import type {
   AssistantMessage,
@@ -996,7 +996,7 @@ async function executeRemoteSkill(
   // post-compact restoration knows where the content came from. Must use
   // finalContent (not raw content) so the base directory header and
   // ${CLAUDE_SKILL_DIR} substitutions survive compaction — matches how local
-  // skills store their already-transformed content via processSlashCommand.
+  // skills store their already-transformed content via ProcessSlashCommand.
   addInvokedSkill(commandName, skillPath, finalContent, getAgentContext()?.agentId ?? null)
 
   // Direct injection — wrap SKILL.md content in a meta user message. Matches

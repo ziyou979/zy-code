@@ -20,7 +20,7 @@ import { expandPastedTextRefs, parseReferences } from '../services/session-stora
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import type { IDESelection } from '../hooks/useIdeSelection.js'
 import type { AppState } from '../state/AppStateStore.js'
-import type { SetToolJSXFn } from '../tools/Tool.js'
+import type { SetToolJSXFn } from '../tools/tool.js'
 import type { LocalJSXCommandOnDone } from '../commands/types.js'
 import type { Message } from '../types/message.js'
 import {
@@ -307,7 +307,7 @@ export async function handlePromptSubmit(params: HandlePromptSubmitParams): Prom
       )
 
       // Skip if onDone already fired — prevents stuck isLocalJSXCommand
-      // (see processSlashCommand.tsx local-jsx case for full mechanism).
+      // (see ProcessSlashCommand.tsx local-jsx case for full mechanism).
       if (jsx && !doneWasCalled) {
         setToolJSX({
           jsx,
@@ -435,7 +435,7 @@ async function executeUserInput(params: ExecuteUserInputParams): Promise<void> {
   // that case (only acts on dispatching state).
   try {
     // Reserve the guard BEFORE processUserInput — processBashCommand awaits
-    // BashTool.call() and processSlashCommand awaits getMessagesForSlashCommand,
+    // BashTool.call() and ProcessSlashCommand awaits getMessagesForSlashCommand,
     // so the guard must be active during those awaits to ensure concurrent
     // handlePromptSubmit calls queue (via the isActive check above) instead
     // of starting a second executeUserInput. This call is a no-op if the

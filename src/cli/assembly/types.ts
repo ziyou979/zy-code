@@ -8,10 +8,10 @@ import type { Root } from '../../ink/index.js'
 import type { Props as REPLProps } from '../../screens/REPL.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
-// renderAndRun 在 main.tsx 内构造，沿用 replLauncher 的签名形态。
+// renderAndRun 在 main.tsx 内构造，沿用 ReplLauncher 的签名形态。
 export type RenderAndRun = (root: Root, element: React.ReactNode) => Promise<void>
 
-// App 容器属性，对应 replLauncher.tsx:8-12 的 AppWrapperProps。
+// App 容器属性，对应 ReplLauncher.tsx:8-12 的 AppWrapperProps。
 export type AssemblyAppProps = {
   getFpsMetrics: () => FpsMetrics | undefined
   stats?: StatsStore

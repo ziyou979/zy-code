@@ -1,5 +1,5 @@
 import { posix } from 'node:path'
-import type { ToolPermissionContext } from '../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../tools/tool.js'
 // Types extracted to src/types/permissions.ts to break import cycles
 import type { AdditionalWorkingDirectory, WorkingDirectorySource } from '../../types/permissions.js'
 import { createDebugLog } from '../../utils/debug.js'

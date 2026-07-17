@@ -14,8 +14,8 @@ import {
   writeTeamFileAsync,
 } from '../../services/swarm/teamHelpers.js'
 import { assignTeammateColor } from '../../services/swarm/teammateLayoutManager.js'
-import type { Tool } from '../../tools/Tool.js'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+import type { Tool } from '../../tools/tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { formatAgentId } from '../../utils/agentId.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { getCwd } from '../../utils/cwd.js'

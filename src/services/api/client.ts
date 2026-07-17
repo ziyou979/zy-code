@@ -21,8 +21,8 @@ import { getOauthConfig } from '../../constants/oauth.js'
 import type { LLMAdapter } from '../../types/llm.js'
 import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js'
 import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../utils/envUtils.js'
-import { AnthropicProviderAdapter } from './anthropicProviderAdapter.js'
-import { GoogleProviderAdapter } from './googleProviderAdapter.js'
+import { anthropicProviderAdapter } from './anthropicProviderAdapter.js'
+import { googleProviderAdapter } from './googleProviderAdapter.js'
 import { OpenAIProviderAdapter } from './openAIProviderAdapter.js'
 
 /**
@@ -560,7 +560,7 @@ function buildProxiedFetch():
  *
  * @param options.anthropicClient 可选。Anthropic SDK client 实例，用于复用
  *   withRetry 等基础设施提供的 retry/auth 配置。仅在 Anthropic 路径生效。
- *   未提供时 AnthropicProviderAdapter 会自取 client。
+ *   未提供时 anthropicProviderAdapter 会自取 client。
  * @param options.model 当前请求模型。双格式 provider 可按模型选择不同 adapter。
  */
 export function getLLMAdapter(options?: {
@@ -575,7 +575,7 @@ export function getLLMAdapter(options?: {
 
   // Google 原生格式优先检查（最具体）
   if (isGoogleProvider(apiProvider, model)) {
-    return new GoogleProviderAdapter()
+    return new googleProviderAdapter()
   }
 
   if (isOpenAIProvider(apiProvider, model)) {
@@ -584,9 +584,9 @@ export function getLLMAdapter(options?: {
   }
 
   if (isAnthropicProvider(apiProvider, model)) {
-    return new AnthropicProviderAdapter(options?.anthropicClient)
+    return new anthropicProviderAdapter(options?.anthropicClient)
   }
 
   // 兜底：所有已知 provider 均已按 effective format 分派，此处不可达
-  return new AnthropicProviderAdapter(options?.anthropicClient)
+  return new anthropicProviderAdapter(options?.anthropicClient)
 }

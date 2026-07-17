@@ -18,7 +18,7 @@ import {
   type ToolProgressData,
   type ToolResult,
   type ToolUseContext,
-} from '../../tools/Tool.js'
+} from '../../tools/tool.js'
 import { addToToolDuration } from '../../bootstrap/runtime/runtimeContext.js'
 import type { BashToolInput } from '../../tools/BashTool/BashTool.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'

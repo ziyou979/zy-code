@@ -7,7 +7,7 @@ import { RemoteIO } from 'src/cli/remoteIO.js'
 import { type Command, formatDescriptionWithSource, getCommandName } from 'src/commands/index.js'
 import { createStreamlinedTransformer } from 'src/utils/streamlinedTransform.js'
 import { installStreamJsonStdoutGuard } from 'src/utils/streamJsonStdoutGuard.js'
-import type { ToolPermissionContext } from 'src/tools/Tool.js'
+import type { ToolPermissionContext } from 'src/tools/tool.js'
 import type { ThinkingConfig } from 'src/utils/thinking.js'
 import { assembleToolPool, filterToolsByDenyRules } from 'src/tools/tools.js'
 import uniqBy from 'lodash-es/uniqBy.js'
@@ -18,7 +18,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
-import { toolMatchesName, type Tool, type Tools } from 'src/tools/Tool.js'
+import { toolMatchesName, type Tool, type Tools } from 'src/tools/tool.js'
 import {
   type AgentDefinition,
   isBuiltInAgent,

@@ -1,7 +1,7 @@
 import { z } from 'zod/v4'
 import { setScheduledTasksEnabled } from 'src/bootstrap/runtime/runtimeContext.js'
-import type { ValidationResult } from '../../tools/Tool.js'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+import type { ValidationResult } from '../../tools/tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { cronToHuman, parseCronExpression } from '../../utils/cron.js'
 import {
   addCronTask,

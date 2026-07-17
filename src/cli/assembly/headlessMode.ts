@@ -19,7 +19,7 @@ import { excludeCommandsByServer, excludeResourcesByServer } from '../../service
 import { type AppState, getDefaultAppState } from '../../state/AppStateStore.js'
 import { onChangeAppState } from '../../state/onChangeAppState.js'
 import { createStore } from '../../state/store.js'
-import type { ToolInputJSONSchema, ToolPermissionContext, Tools } from '../../tools/Tool.js'
+import type { ToolInputJSONSchema, ToolPermissionContext, Tools } from '../../tools/tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Command } from '../../commands/types.js'
 import { validateForceLoginOrg } from '../../services/auth/auth.js'
@@ -208,7 +208,7 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
     toolPermissionContext,
     effortValue: resolveInitialEffortSetting(options.effort),
     // kairosEnabled 门控 executeForkedSlashCommand 中的异步 fire-and-forget 路径
-    //（processSlashCommand.tsx:132）和 AgentTool 的 shouldRunAsync。
+    //（ProcessSlashCommand.tsx:132）和 AgentTool 的 shouldRunAsync。
     // REPL initialState 在约 3459 处设置此；无头默认为 false，
     // 所以守护进程子计划的任务和 Agent-tool 调用同步运行
     // —— 生成时 N 个逾期的 cron 任务 = N 个串行子代理回合阻塞用户输入。

@@ -24,7 +24,7 @@ import {
 import { getTipToShowOnSpinner, recordShownTip } from '../../components/tips/tipScheduler.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { ReplStoreInstance } from '../../state/replStore.js'
-import type { CompactProgressEvent } from '../../tools/Tool.js'
+import type { CompactProgressEvent } from '../../tools/tool.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { StreamingThinking } from '../../services/messages/./streaming.js'
 import type { QueryGuard } from '../../utils/queryGuard.js'

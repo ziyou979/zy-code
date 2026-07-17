@@ -84,7 +84,7 @@ export async function clearConversation({
   // isBackgrounded === false. Main-session tasks (Ctrl+B) are preserved —
   // they write to an isolated per-task transcript and run under an agent
   // context, so they're safe across session ID regeneration. See
-  // LocalMainSessionTask.ts startBackgroundSession.
+  // localMainSessionTask.ts startBackgroundSession.
   const preservedAgentIds = new Set<string>()
   const preservedLocalAgents: LocalAgentTaskState[] = []
   const shouldKillTask = (task: AppState['tasks'][string]): boolean =>

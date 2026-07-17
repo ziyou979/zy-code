@@ -23,7 +23,7 @@ import {
   type Tools,
   type ToolUseContext,
   toolMatchesName,
-} from '../tools/Tool.js'
+} from '../tools/tool.js'
 import type { AgentDefinition, AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import { SKILL_TOOL_NAME } from '../tools/SkillTool/constants.js'
 import {

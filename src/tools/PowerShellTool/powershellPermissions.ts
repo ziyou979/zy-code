@@ -16,7 +16,7 @@ import {
   stripModulePrefix,
 } from '../../shell-eval/powershell/parser.js'
 import { containsVulnerableUncPath } from '../../shell-eval/shared/readOnlyCommandValidation.js'
-import type { ToolPermissionContext, ToolUseContext } from '../../tools/Tool.js'
+import type { ToolPermissionContext, ToolUseContext } from '../../tools/tool.js'
 import type { PermissionDecisionReason, PermissionResult } from '../../types/permissions.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'

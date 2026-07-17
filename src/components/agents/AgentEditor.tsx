@@ -7,7 +7,7 @@ import { tSync } from '../../i18n/index.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
-import type { Tools } from '../../tools/Tool.js'
+import type { Tools } from '../../tools/tool.js'
 import { type AgentColorName, setAgentColor } from '../../tools/AgentTool/agentColorManager.js'
 import {
   type AgentDefinition,

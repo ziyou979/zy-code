@@ -1,4 +1,4 @@
-import type { ToolUseContext } from 'src/tools/Tool.js'
+import type { ToolUseContext } from 'src/tools/tool.js'
 import type { PermissionUpdate } from 'src/types/index.js'
 import { executePermissionRequestHooks } from '../services/hooks.js'
 import {

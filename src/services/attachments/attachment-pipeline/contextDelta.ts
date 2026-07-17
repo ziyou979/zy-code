@@ -1,6 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { logEvent } from 'src/services/analytics/index.js'
-import { toolMatchesName, type ToolUseContext } from '../../../tools/Tool.js'
+import { toolMatchesName, type ToolUseContext } from '../../../tools/tool.js'
 import { readFileInRange } from '../../../utils/readFileInRange.js'
 import { uniq } from '../../../utils/array.js'
 import { readdir, stat } from 'node:fs/promises'

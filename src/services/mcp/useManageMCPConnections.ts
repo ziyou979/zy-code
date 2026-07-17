@@ -3,7 +3,7 @@ import { basename } from 'node:path'
 import { useCallback, useEffect, useRef } from 'react'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../../commands/index.js'
-import type { Tool } from '../../tools/Tool.js'
+import type { Tool } from '../../tools/tool.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import {
   clearServerCache,

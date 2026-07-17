@@ -15,7 +15,7 @@ import { createCacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.j
 import { createUserMessage, createMemorySavedMessage } from '../messages/constructors.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../utils/debug.js'
-import type { ToolUseContext } from '../../tools/Tool.js'
+import type { ToolUseContext } from '../../tools/tool.js'
 import { logEvent } from '../analytics/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { isAutoMemoryEnabled, getAutoMemPath } from '../../memdir/paths.js'
@@ -269,7 +269,7 @@ ${sessionIds.map((id) => `- ${id}`).join('\n')}`
  */
 function makeDreamProgressWatcher(
   taskId: string,
-  setAppState: import('../../tasks/Task.js').SetAppState,
+  setAppState: import('../../tasks/task.js').SetAppState,
 ): (msg: Message) => void {
   return (msg) => {
     if (msg.type !== 'assistant') {

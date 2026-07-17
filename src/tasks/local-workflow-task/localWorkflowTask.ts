@@ -7,8 +7,8 @@ import {
 } from '../../constants/xml.js'
 import { getTaskOutputPath, initTaskOutput } from '../../services/task-runtime/diskOutput.js'
 import { registerTask, updateTaskState } from '../../services/task-runtime/framework.js'
-import type { SetAppState, Task, TaskStateBase } from '../../tasks/Task.js'
-import { createTaskStateBase, generateTaskId } from '../../tasks/Task.js'
+import type { SetAppState, Task, TaskStateBase } from '../../tasks/task.js'
+import { createTaskStateBase, generateTaskId } from '../../tasks/task.js'
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
 
 export type LocalWorkflowTaskState = TaskStateBase & {

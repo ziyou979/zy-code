@@ -14,7 +14,7 @@ import {
 import type { z } from 'zod/v4'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
-import type { AnyObject, Tool, ToolPermissionContext } from '../../tools/Tool.js'
+import type { AnyObject, Tool, ToolPermissionContext } from '../../tools/tool.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getZyConfigHomeDir } from '../../utils/envUtils.js'

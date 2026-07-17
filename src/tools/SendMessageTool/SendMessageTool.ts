@@ -5,8 +5,8 @@ import { getReplWireHandle } from '../../bridge/replBridgeHandle.js'
 import type { BackendType } from '../../services/swarm/backends/types.js'
 import { TEAM_LEAD_NAME } from '../../services/swarm/constants.js'
 import { readTeamFileAsync } from '../../services/swarm/teamHelpers.js'
-import type { Tool, ToolUseContext } from '../../tools/Tool.js'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+import type { Tool, ToolUseContext } from '../../tools/tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { findTeammateTaskByAgentId } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import {
   isLocalAgentTask,

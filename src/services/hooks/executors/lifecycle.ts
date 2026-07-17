@@ -13,7 +13,7 @@ import type {
 } from 'src/types/index.js'
 import { getSessionId } from '../../../bootstrap/runtime/runtimeContext.js'
 import type { AppState } from '../../../state/AppStateStore.js'
-import type { ToolUseContext } from '../../../tools/Tool.js'
+import type { ToolUseContext } from '../../../tools/tool.js'
 import { isBackgroundTask } from '../../../tasks/types.js'
 import type { AgentId } from '../../../types/ids.js'
 import type { AssistantMessage, Message } from '../../../types/message.js'

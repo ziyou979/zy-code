@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { buildTool, type ToolDef, toolMatchesName } from 'src/tools/Tool.js'
+import { buildTool, type ToolDef, toolMatchesName } from 'src/tools/tool.js'
 import type { Message as MessageType, UserMessage } from 'src/types/message.js'
 import { getQuerySourceForAgent } from 'src/services/analytics/querySource.js'
 import { z } from 'zod/v4'

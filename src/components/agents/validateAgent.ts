@@ -1,5 +1,5 @@
 import { tSync } from '../../i18n/index.js'
-import type { Tools } from '../../tools/Tool.js'
+import type { Tools } from '../../tools/tool.js'
 import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'
 import type { AgentDefinition, CustomAgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { getAgentSourceDisplayName } from './utils.js'

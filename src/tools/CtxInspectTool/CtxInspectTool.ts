@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod/v4'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 
 const DESCRIPTION =
   'Inspect a previously collapsed context span by its collapse ID. Returns the original summary or placeholder content for that span. Useful when the model needs to recall details from a collapsed portion of the conversation.'

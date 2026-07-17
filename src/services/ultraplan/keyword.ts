@@ -34,7 +34,7 @@ const OPEN_TO_CLOSE: Record<string, string> = {
  *   Other sentence punctuation (`.`, `,`, `!`) still triggers.
  *
  * - Slash command input: text starting with `/` is a slash command
- *   invocation (processUserInput.ts routes it to processSlashCommand,
+ *   invocation (processUserInput.ts routes it to ProcessSlashCommand,
  *   not keyword detection), so `/rename ultraplan foo` never triggers.
  *   Without this, PromptInput would rainbow-highlight the word and show
  *   the "will launch ultraplan" notification even though submitting the

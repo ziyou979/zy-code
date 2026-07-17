@@ -3,8 +3,8 @@ import { z } from 'zod/v4'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { isPolicyAllowed } from '../../services/policy-limits/index.js'
-import type { ToolUseContext } from '../../tools/Tool.js'
-import { buildTool, type ToolDef } from '../../tools/Tool.js'
+import type { ToolUseContext } from '../../tools/tool.js'
+import { buildTool, type ToolDef } from '../../tools/tool.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getOrganizationUUID,

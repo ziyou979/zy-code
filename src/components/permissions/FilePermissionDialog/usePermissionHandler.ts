@@ -3,7 +3,7 @@ import {
   logEvent,
 } from '../../../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js'
-import type { ToolPermissionContext } from '../../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../../tools/tool.js'
 import {
   CLAUDE_FOLDER_PERMISSION_PATTERN,
   FILE_EDIT_TOOL_NAME,

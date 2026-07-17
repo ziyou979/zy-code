@@ -3,8 +3,8 @@ import { join } from 'node:path'
 import { z } from 'zod/v4'
 import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
-import { buildTool, type ToolDef, type ToolUseContext } from '../../tools/Tool.js'
-import type { SetAppState } from '../../tasks/Task.js'
+import { buildTool, type ToolDef, type ToolUseContext } from '../../tools/tool.js'
+import type { SetAppState } from '../../tasks/task.js'
 import {
   completeWorkflowTask,
   failWorkflowTask,

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import type { Tools } from '../../../src/tools/Tool.js'
+import type { Tools } from '../../../src/tools/tool.js'
 import { selectDisplayMessages } from '../../../src/tools/AgentTool/UI.js'
 
 // 构造最小化的 ProcessedMessage 用于测试

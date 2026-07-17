@@ -18,7 +18,7 @@ import { getSystemContext, getUserContext } from '../../services/context/context
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import type { ReplStoreInstance } from '../../state/replStore.js'
-import type { ToolPermissionContext } from '../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../tools/tool.js'
 import { startBackgroundSession } from '../../tasks/localMainSessionTask.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message as MessageType } from '../../types/message.js'

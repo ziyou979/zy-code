@@ -28,7 +28,7 @@ import {
 
 const log = createDebugLog('google')
 
-export class GoogleProviderAdapter implements LLMAdapter {
+export class googleProviderAdapter implements LLMAdapter {
   readonly name = 'google'
 
   /**

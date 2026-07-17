@@ -11,7 +11,7 @@ import type {
   PreToolUseHookInput,
 } from 'src/types/index.js'
 import { getSessionId } from '../../../bootstrap/runtime/runtimeContext.js'
-import type { ToolUseContext } from '../../../tools/Tool.js'
+import type { ToolUseContext } from '../../../tools/tool.js'
 import type { Message } from '../../../types/message.js'
 import { createAttachmentMessage } from '../../attachments/attachments.js'
 import { createDebugLog } from '../../../utils/debug.js'

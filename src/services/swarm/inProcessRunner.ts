@@ -34,7 +34,7 @@ import { evictTaskOutput } from '../task-runtime/diskOutput.js'
 import { evictTerminalTask } from '../task-runtime/framework.js'
 import { unregisterAgent as unregisterPerfettoAgent } from '../telemetry/perfettoTracing.js'
 import type { AppState } from '../../state/AppStateStore.js'
-import type { Tool, ToolUseContext } from '../../tools/Tool.js'
+import type { Tool, ToolUseContext } from '../../tools/tool.js'
 import { appendTeammateMessage } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import type {
   AgentLifecycleMode,

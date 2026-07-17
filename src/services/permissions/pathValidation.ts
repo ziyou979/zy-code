@@ -3,7 +3,7 @@ import { dirname, isAbsolute, resolve } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
 import { containsVulnerableUncPath } from 'src/shell-eval/shared/readOnlyCommandValidation.js'
-import type { ToolPermissionContext } from '../../tools/Tool.js'
+import type { ToolPermissionContext } from '../../tools/tool.js'
 import {
   getFsImplementation,
   getPathsForPermissionCheck,

@@ -38,7 +38,7 @@ import {
   type ToolProgress,
   type ToolProgressData,
   type ToolUseContext,
-} from '../../tools/Tool.js'
+} from '../../tools/tool.js'
 import type { BashToolInput } from '../../tools/BashTool/BashTool.js'
 import { startSpeculativeClassifierCheck } from '../../tools/BashTool/bashPermissions.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
