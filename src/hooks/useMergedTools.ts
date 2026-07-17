@@ -2,7 +2,7 @@
 import { useMemo } from 'react'
 import type { Tools, ToolPermissionContext } from '../tools/tool.js'
 import { assembleToolPool } from '../tools/tools.js'
-import { mergeAndFilterTools } from '../utils/toolPool.js'
+import { mergeAndFilterTools } from '../services/tool-runtime/toolPool.js'
 
 /**
  * React hook that assembles the full tool pool for the REPL.

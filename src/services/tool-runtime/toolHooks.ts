@@ -17,7 +17,7 @@ import {
   type PermissionResult,
 } from '../permissions/permissionResult.js'
 import { checkRuleBasedPermissions } from '../permissions/permissions.js'
-import { formatError } from '../../utils/toolErrors.js'
+import { formatError } from '../../services/tool-runtime/toolErrors.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
 import {
   executePostToolHooks,

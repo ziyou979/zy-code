@@ -14,7 +14,7 @@ import { isCompactBoundaryMessage } from '../messages/predicates.js'
 import { getSessionMemoryPath } from '../permissions/filesystem.js'
 import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
-import { extractDiscoveredToolNames } from '../../utils/toolSearch.js'
+import { extractDiscoveredToolNames } from '../../services/tool-runtime/toolSearch.js'
 import {
   getDynamicConfig_BLOCKS_ON_INIT,
   getFeatureValue_CACHED_MAY_BE_STALE,

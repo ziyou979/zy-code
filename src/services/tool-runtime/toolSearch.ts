@@ -13,27 +13,27 @@ import {
   isAnthropicBaseUrl,
   isAnthropicModel,
 } from 'src/services/model/providers.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
-} from '../services/analytics/index.js'
-import type { Tool } from '../tools/tool.js'
-import { type ToolPermissionContext, type Tools, toolMatchesName } from '../tools/tool.js'
-import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
+} from '../analytics/index.js'
+import type { Tool } from '../../tools/tool.js'
+import { type ToolPermissionContext, type Tools, toolMatchesName } from '../../tools/tool.js'
+import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import {
   formatDeferredToolLine,
   isDeferredTool,
   TOOL_SEARCH_TOOL_NAME,
-} from '../tools/ToolSearchTool/prompt.js'
-import type { Message } from '../types/message.js'
-import { countToolDefinitionTokens, TOOL_TOKEN_COUNT_OVERHEAD } from './analyzeContext.js'
-import { count } from './array.js'
-import { getContextWindowForModel } from './context.js'
-import { logForDebugging } from './debug.js'
-import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from './envUtils.js'
-import { jsonStringify } from './slowOperations.js'
-import { zodToJsonSchema } from './zodToJsonSchema.js'
+} from '../../tools/ToolSearchTool/prompt.js'
+import type { Message } from '../../types/message.js'
+import { countToolDefinitionTokens, TOOL_TOKEN_COUNT_OVERHEAD } from '../../utils/analyzeContext.js'
+import { count } from '../../utils/array.js'
+import { getContextWindowForModel } from '../../utils/context.js'
+import { logForDebugging } from '../../utils/debug.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { jsonStringify } from '../../utils/slowOperations.js'
+import { zodToJsonSchema } from '../../utils/zodToJsonSchema.js'
 
 /**
  * Default percentage of context window at which to auto-enable tool search.

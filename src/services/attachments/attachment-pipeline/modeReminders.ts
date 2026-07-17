@@ -47,7 +47,7 @@ import {
   isToolSearchToolAvailable,
   modelSupportsToolReference,
   type DeferredToolsDeltaScanContext,
-} from '../../../utils/toolSearch.js'
+} from '../../../services/tool-runtime/toolSearch.js'
 import {
   getMcpInstructionsDelta,
   isMcpInstructionsDeltaEnabled,

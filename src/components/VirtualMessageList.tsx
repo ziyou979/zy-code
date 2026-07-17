@@ -24,7 +24,7 @@ const HEADROOM = 3
 import { registerMessageHitTarget } from '../ink/messageHitTarget.js'
 import { logForDebugging } from '../utils/debug.js'
 import { sleep } from '../utils/sleep.js'
-import { renderableSearchText } from '../utils/transcriptSearch.js'
+import { renderableSearchText } from '../services/session-transcript/transcriptSearch.js'
 import {
   isNavigableMessage,
   type MessageActionsNav,

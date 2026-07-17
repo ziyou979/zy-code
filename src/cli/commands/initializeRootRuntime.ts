@@ -527,7 +527,7 @@ export async function initializeRootRuntime(
   // 为无头路径应用协调器模式工具过滤
   //（镜像 useMergedTools.ts 对 REPL/交互路径的过滤）
   if (feature('COORDINATOR_MODE') ? isEnvTruthy(process.env.ZY_CODE_COORDINATOR_MODE) : false) {
-    const { applyCoordinatorToolFilter } = await import('../../utils/toolPool.js')
+    const { applyCoordinatorToolFilter } = await import('../../services/tool-runtime/toolPool.js')
     tools = applyCoordinatorToolFilter(tools)
   }
 

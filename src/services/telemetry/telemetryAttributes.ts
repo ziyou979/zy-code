@@ -1,10 +1,10 @@
 import type { Attributes } from '@opentelemetry/api'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getOauthAccountInfo } from '../services/auth/auth.js'
-import { getOrCreateUserID } from '../services/config/config.js'
-import { envDynamic } from '../services/environment/envDynamic.js'
-import { isEnvTruthy } from './envUtils.js'
-import { toTaggedId } from './taggedId.js'
+import { getOauthAccountInfo } from '../auth/auth.js'
+import { getOrCreateUserID } from '../config/config.js'
+import { envDynamic } from '../environment/envDynamic.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
+import { toTaggedId } from '../../utils/taggedId.js'
 
 // Default configuration for metrics cardinality
 const METRICS_CARDINALITY_DEFAULTS = {

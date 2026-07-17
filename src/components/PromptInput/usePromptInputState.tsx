@@ -36,7 +36,7 @@ import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js
 import { count } from '../../utils/array.js'
 import { isInternalBuild } from '../../utils/envUtils.js'
 import { findBtwTriggerPositions } from '../../utils/sideQuestion.js'
-import type { TeamSummary } from '../../utils/teamDiscovery.js'
+import type { TeamSummary } from '../../services/swarm/teamDiscovery.js'
 import { findThinkingTriggerPositions } from '../../utils/thinking.js'
 import { findTokenBudgetPositions } from '../../utils/tokenBudget.js'
 import { useCoordinatorTaskCount } from '../CoordinatorAgentStatus.js'

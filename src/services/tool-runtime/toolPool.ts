@@ -1,9 +1,9 @@
 import { feature } from 'bun:bundle'
 import partition from 'lodash-es/partition.js'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { COORDINATOR_MODE_ALLOWED_TOOLS } from '../constants/tools.js'
-import { isMcpTool } from '../services/mcp/utils.js'
-import type { Tool, ToolPermissionContext, Tools } from '../tools/tool.js'
+import { COORDINATOR_MODE_ALLOWED_TOOLS } from '../../constants/tools.js'
+import { isMcpTool } from '../mcp/utils.js'
+import type { Tool, ToolPermissionContext, Tools } from '../../tools/tool.js'
 
 // MCP tool name suffixes for PR activity subscription. These are lightweight
 // orchestration actions the coordinator calls directly rather than delegating
@@ -17,7 +17,7 @@ export function isPrActivitySubscriptionTool(name: string): boolean {
 // Dead code elimination: conditional imports for feature-gated modules
 /* eslint-disable @typescript-eslint/no-require-imports */
 const coordinatorModeModule = feature('COORDINATOR_MODE')
-  ? (require('../coordinator/coordinatorMode.js') as typeof import('../coordinator/coordinatorMode.js'))
+  ? (require('../../coordinator/coordinatorMode.js') as typeof import('../../coordinator/coordinatorMode.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

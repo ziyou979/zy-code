@@ -362,7 +362,7 @@ async function countBuiltInToolTokens(
   }
 
   // 检查工具搜索是否启用
-  const { isToolSearchEnabled } = await import('./toolSearch.js')
+  const { isToolSearchEnabled } = await import('../services/tool-runtime/toolSearch.js')
   const { isDeferredTool } = await import('../tools/ToolSearchTool/prompt.js')
   const isDeferred = await isToolSearchEnabled(
     model ?? '',
@@ -623,7 +623,7 @@ export async function countMcpToolTokens(
 
   // 检查工具搜索是否启用——如果启用，MCP 工具将被延迟加载
   // isToolSearchEnabled 内部处理了 TstAuto 模式的阈值计算
-  const { isToolSearchEnabled } = await import('./toolSearch.js')
+  const { isToolSearchEnabled } = await import('../services/tool-runtime/toolSearch.js')
   const { isDeferredTool } = await import('../tools/ToolSearchTool/prompt.js')
 
   const isDeferred = await isToolSearchEnabled(

@@ -5,13 +5,13 @@ import { downloadUserSettings } from 'src/services/settings-sync/index.js'
 import { StructuredIO } from 'src/cli/structuredIO.js'
 import { RemoteIO } from 'src/cli/remoteIO.js'
 import { type Command, formatDescriptionWithSource, getCommandName } from 'src/commands/index.js'
-import { createStreamlinedTransformer } from 'src/utils/streamlinedTransform.js'
+import { createStreamlinedTransformer } from 'src/services/compact/streamlinedTransform.js'
 import { installStreamJsonStdoutGuard } from 'src/utils/streamJsonStdoutGuard.js'
 import type { ToolPermissionContext } from 'src/tools/tool.js'
 import type { ThinkingConfig } from 'src/utils/thinking.js'
 import { assembleToolPool, filterToolsByDenyRules } from 'src/tools/tools.js'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { mergeAndFilterTools } from 'src/utils/toolPool.js'
+import { mergeAndFilterTools } from 'src/services/tool-runtime/toolPool.js'
 import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

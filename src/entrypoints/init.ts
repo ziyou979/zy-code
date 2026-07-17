@@ -41,7 +41,7 @@ import { ensureScratchpadDir, isScratchpadEnabled } from '../services/permission
 // ~400KB 的 OpenTelemetry + protobuf 模块，直到真正初始化遥测时才加载。
 // gRPC 导出器（通过 @grpc/grpc-js 约 ~700KB）在 instrumentation.ts 中进一步延迟加载。
 import { configureGlobalAgents } from '../utils/proxy.js'
-import { getTelemetryAttributes } from '../utils/telemetryAttributes.js'
+import { getTelemetryAttributes } from '../services/telemetry/telemetryAttributes.js'
 import { setShellIfWindows } from '../services/shell/windowsPaths.js'
 
 const log = createDebugLog('init')

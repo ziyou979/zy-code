@@ -3,35 +3,35 @@ import { modelDisplayString } from 'src/services/model/model.js'
 import { getAPIProvider } from 'src/services/model/providers.js'
 import { checkInstall } from 'src/services/native-installer/index.js'
 import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
-import { CROSS } from '../constants/figures.js'
-import { tSync } from '../i18n/index.js'
-import { color, Text } from '../ink/index.js'
-import type { MCPServerConnection } from '../services/mcp/types.js'
-import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './agentsMd.js'
-import { getAccountInformation } from '../services/auth/auth.js'
-import { getDoctorDiagnostic } from '../services/doctor/doctorDiagnostic.js'
-import { isInternalBuild } from './envUtils.js'
-import { getDisplayPath } from './file.js'
-import { formatNumber } from './format.js'
+import { CROSS } from '../../constants/figures.js'
+import { tSync } from '../../i18n/index.js'
+import { color, Text } from '../../ink/index.js'
+import type { MCPServerConnection } from '../mcp/types.js'
+import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from '../../../utils/agentsMd.js'
+import { getAccountInformation } from '../auth/auth.js'
+import { getDoctorDiagnostic } from '../doctor/doctorDiagnostic.js'
+import { isInternalBuild } from '../../../utils/envUtils.js'
+import { getDisplayPath } from '../../../utils/file.js'
+import { formatNumber } from '../../../utils/format.js'
 import {
   getIdeClientName,
   type IDEExtensionInstallationStatus,
   isJetBrainsIde,
   toIDEDisplayName,
-} from '../services/ide/ide.js'
-import { getMTLSConfig } from './mtls.js'
-import { getProxyUrl } from './proxy.js'
-import { getSettingsWithAllErrors } from '../services/settings/allErrors.js'
+} from '../ide/ide.js'
+import { getMTLSConfig } from '../../../utils/mtls.js'
+import { getProxyUrl } from '../../../utils/proxy.js'
+import { getSettingsWithAllErrors } from '../settings/allErrors.js'
 import {
   getEnabledSettingSources,
   getSettingSourceDisplayNameCapitalized,
-} from '../services/settings/constants.js'
+} from '../settings/constants.js'
 import {
   getManagedFileSettingsPresence,
   getPolicySettingsOrigin,
   getSettingsForSource,
-} from '../services/settings/settings.js'
-import type { ThemeName } from './theme.js'
+} from '../settings/settings.js'
+import type { ThemeName } from '../../../utils/theme.js'
 export type Property = {
   label?: string
   value: React.ReactNode | Array<string>

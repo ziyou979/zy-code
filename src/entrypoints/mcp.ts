@@ -20,7 +20,7 @@ import { createAssistantMessage } from '../services/messages/./constructors.js'
 import { hasPermissionsToUseTool } from '../services/permissions/permissions.js'
 import { setCwd } from '../services/shell/shell.js'
 import { jsonStringify } from '../utils/slowOperations.js'
-import { getErrorParts } from '../utils/toolErrors.js'
+import { getErrorParts } from '../services/tool-runtime/toolErrors.js'
 import { zodToJsonSchema } from '../utils/zodToJsonSchema.js'
 
 type ToolInput = Tool['inputSchema']

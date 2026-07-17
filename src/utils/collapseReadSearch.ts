@@ -36,7 +36,7 @@ import {
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemOps = feature('TEAMMEM')
-  ? (require('./teamMemoryOps.js') as typeof import('./teamMemoryOps.js'))
+  ? (require('../services/swarm/teamMemoryOps.js') as typeof import('../services/swarm/teamMemoryOps.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 

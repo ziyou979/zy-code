@@ -50,7 +50,7 @@ import {
 import { logError } from '../../utils/log.js'
 import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { formatError } from '../../utils/toolErrors.js'
+import { formatError } from '../../services/tool-runtime/toolErrors.js'
 import {
   processPreMappedToolResultBlock,
   processToolResultBlock,

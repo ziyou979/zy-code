@@ -46,7 +46,7 @@ import {
   extractDiscoveredToolNames,
   isDeferredToolsDeltaEnabled,
   isToolSearchEnabled,
-} from 'src/utils/toolSearch.js'
+} from 'src/services/tool-runtime/toolSearch.js'
 import { API_MAX_MEDIA_PER_REQUEST } from '../../../constants/apiLimits.js'
 import {
   isBetaTracingEnabled,

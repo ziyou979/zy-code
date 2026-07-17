@@ -14,7 +14,7 @@ import * as realDebug from '../../../src/utils/debug.js'
 import * as realHooks from '../../../src/services/hooks.js'
 import * as realLog from '../../../src/utils/log.js'
 import * as realPermissionResult from '../../../src/services/permissions/permissionResult.js'
-import * as realToolErrors from '../../../src/utils/toolErrors.js'
+import * as realToolErrors from '../../../src/services/tool-runtime/toolErrors.js'
 
 // checkRuleBasedPermissions 的可控返回值（每个 case 单独设置）+ 调用计数。
 const ruleCheck: { result: unknown; calls: number } = { result: null, calls: 0 }
@@ -64,7 +64,7 @@ async function setupMocks() {
     ...realPermissionResult,
     getRuleBehaviorDescription: () => '',
   }))
-  mock.module('../../../src/utils/toolErrors.js', () => ({
+  mock.module('../../../src/services/tool-runtime/toolErrors.js', () => ({
     ...realToolErrors,
     formatError: (e: unknown) => String(e),
   }))

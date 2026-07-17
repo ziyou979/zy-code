@@ -531,7 +531,7 @@ export type Tool<
    * 是 count≠highlight bug。
    *
    * 可选：省略 → transcriptSearch.ts 中的字段名启发式。
-   * test/utils/transcriptSearch.renderFidelity.test.tsx 捕获的漂移
+   * test/services/session-transcript/transcriptSearch.renderFidelity.test.tsx 捕获的漂移
    * 会渲染样本输出并标记已索引但未渲染（幽灵）或
    * 已渲染但未索引（统计不足警告）的文本。
    */

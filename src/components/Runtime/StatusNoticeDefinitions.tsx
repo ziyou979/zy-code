@@ -25,7 +25,7 @@ import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir
 import {
   getAgentDescriptionsTotalTokens,
   AGENT_DESCRIPTIONS_THRESHOLD,
-} from '../../utils/statusNoticeHelpers.js'
+} from '../../services/status/statusNoticeHelpers.js'
 import { toIDEDisplayName, getTerminalIdeType } from '../../services/ide/ide.js'
 
 // Types

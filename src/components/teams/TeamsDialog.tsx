@@ -42,7 +42,7 @@ import {
   getTeammateStatuses,
   type TeammateStatus,
   type TeamSummary,
-} from '../../utils/teamDiscovery.js'
+} from '../../services/swarm/teamDiscovery.js'
 import {
   createModeSetRequestMessage,
   sendShutdownRequestToMailbox,
