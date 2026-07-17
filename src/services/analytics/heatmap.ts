@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import { tSync } from '../../i18n/index.js'
-import { stringWidth } from '../../ink/stringWidth.js'
+import { stringWidth } from '../../utils/stringWidth.js'
 import type { DailyActivity } from '../analytics/stats.js'
 import { toDateString } from './statsCache.js'
 
