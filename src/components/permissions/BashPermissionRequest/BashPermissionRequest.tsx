@@ -10,7 +10,7 @@ import {
   logEvent,
 } from '../../../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js'
-import { SandboxManager } from '../../../services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../../services/sandbox/sandboxAdapter.js'
 import { getCompoundCommandPrefixesStatic } from '../../../shell-eval/bash/prefix.js'
 import { useAppState } from '../../../state/AppState.js'
 import { BashTool } from '../../../tools/BashTool/BashTool.js'

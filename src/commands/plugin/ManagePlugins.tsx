@@ -1986,7 +1986,7 @@ export function ManagePlugins({
       setResult(msg)
       // Plugin is enabled regardless of whether config was saved or
       // skipped — onManageComplete → markPluginsChanged → the
-      // persistent "run /reload-plugins" notice.
+      // persistent "run /reloadPlugins" notice.
       if (onManageComplete) {
         void onManageComplete()
       }

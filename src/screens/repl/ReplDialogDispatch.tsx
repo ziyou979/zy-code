@@ -32,8 +32,8 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import type { NetworkHostPattern } from '../../services/sandbox/sandbox-adapter.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import type { NetworkHostPattern } from '../../services/sandbox/sandboxAdapter.js'
+import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 import { sendSandboxPermissionResponseViaMailbox } from '../../services/swarm/permissionSync.js'
 import { useAppState, useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import { useReplStore } from '../../state/ReplState.js'

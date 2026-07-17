@@ -5,7 +5,7 @@
  */
 import { describe, expect, mock, test } from 'bun:test'
 import type { OptionWithDescription } from '../../../src/components/CustomSelect/select.js'
-import { handleOptionClick } from '../../../src/components/CustomSelect/select-mouse-actions.js'
+import { handleOptionClick } from '../../../src/components/CustomSelect/selectMouseActions.js'
 
 describe('SelectMulti 鼠标点击', () => {
   test('点击未选中选项应聚焦并 toggle', () => {

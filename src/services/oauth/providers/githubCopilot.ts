@@ -6,7 +6,7 @@
  * Copilot session token 作为 API key 使用。
  */
 
-import { pollOAuthDeviceCodeFlow } from './device-code.js'
+import { pollOAuthDeviceCodeFlow } from './deviceCode.js'
 import type {
   OAuthCredentials,
   OAuthDeviceCodeInfo,

@@ -4,7 +4,7 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import { splitCommand_DEPRECATED } from 'src/shell-eval/bash/commands.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import type {

@@ -1,4 +1,4 @@
-import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js'
+import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/githubApp.js'
 import { Box, Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 

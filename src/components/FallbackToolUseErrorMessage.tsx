@@ -1,5 +1,5 @@
 import { stripUnderlineAnsi } from 'src/components/shell/OutputLine.js'
-import { removeSandboxViolationTags } from 'src/services/sandbox/sandbox-ui-utils.js'
+import { removeSandboxViolationTags } from 'src/services/sandbox/sandboxUiUtils.js'
 import { extractTag } from 'src/services/messages/predicates.js'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink/index.js'

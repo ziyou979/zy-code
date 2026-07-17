@@ -9,9 +9,9 @@ import {
   createHoverLeaveHandler,
   createMultiOptionClickHandler,
   createOptionHoverHandler,
-} from './select-mouse-actions.js'
+} from './selectMouseActions.js'
 import { SelectOption } from './select-option.js'
-import { useMultiSelectState } from './use-multi-select-state.js'
+import { useMultiSelectState } from './useMultiSelectState.js'
 export type SelectMultiProps<T> = {
   readonly isDisabled?: boolean
   readonly visibleOptionCount?: number

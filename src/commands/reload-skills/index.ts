@@ -11,7 +11,7 @@ const reloadSkills = {
   name: 'reload-skills',
   description: 'Rescan skill directories and apply skill changes to the current session',
   supportsNonInteractive: false,
-  load: () => import('./reload-skills.js'),
+  load: () => import('./reloadSkills.js'),
 } satisfies Command
 
 export default reloadSkills

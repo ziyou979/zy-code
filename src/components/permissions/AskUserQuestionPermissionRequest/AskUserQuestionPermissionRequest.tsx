@@ -24,7 +24,7 @@ import { getPlanFilePath } from '../../../utils/plans.js'
 import type { PermissionRequestProps } from '../PermissionRequest.js'
 import { QuestionView } from './QuestionView.js'
 import { SubmitQuestionsView } from './SubmitQuestionsView.js'
-import { useMultipleChoiceState } from './use-multiple-choice-state.js'
+import { useMultipleChoiceState } from './useMultipleChoiceState.js'
 
 const MIN_CONTENT_HEIGHT = 12
 const MIN_CONTENT_WIDTH = 40

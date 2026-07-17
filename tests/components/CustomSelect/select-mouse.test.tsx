@@ -11,7 +11,7 @@ import {
   createOptionClickHandler,
   createOptionHoverHandler,
   handleOptionClick,
-} from '../../../src/components/CustomSelect/select-mouse-actions.js'
+} from '../../../src/components/CustomSelect/selectMouseActions.js'
 
 describe('handleOptionClick', () => {
   test('点击普通选项应聚焦并选择', () => {

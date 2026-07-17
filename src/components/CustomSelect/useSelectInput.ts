@@ -5,7 +5,7 @@ import { useInput } from '../../ink/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import { normalizeFullWidthDigits, normalizeFullWidthSpace } from '../../utils/stringUtils.js'
 import type { OptionWithDescription } from './select.js'
-import type { SelectState } from './use-select-state.js'
+import type { SelectState } from './useSelectState.js'
 
 export type UseSelectProps<T> = {
   /**

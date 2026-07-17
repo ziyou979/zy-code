@@ -142,7 +142,7 @@ const command = {
           }
         },
       },
-      '/commit-push-pr',
+      '/commitPushPr',
     )
 
     return [{ type: 'text', text: finalContent }]

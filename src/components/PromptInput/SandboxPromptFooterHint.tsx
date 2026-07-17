@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Box, Text } from '../../ink/index.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 export function SandboxPromptFooterHint() {
   const [recentViolationCount, setRecentViolationCount] = useState(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)

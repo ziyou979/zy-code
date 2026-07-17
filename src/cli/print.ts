@@ -186,7 +186,7 @@ import {
   fileHistoryGetDiffStats,
 } from 'src/utils/fileHistory.js'
 import { restoreAgentFromSession, restoreSessionStateFromLog } from 'src/utils/sessionRestore.js'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import {
   headlessProfilerStartTurn,
   headlessProfilerCheckpoint,

@@ -6,8 +6,8 @@
  * 2. 设备码登录（RFC 8628）— 适用于无浏览器环境
  */
 
-import { pollOAuthDeviceCodeFlow } from './device-code.js'
-import { oauthErrorHtml, oauthSuccessHtml } from './oauth-page.js'
+import { pollOAuthDeviceCodeFlow } from './deviceCode.js'
+import { oauthErrorHtml, oauthSuccessHtml } from './oauthPage.js'
 import { generatePKCE } from './pkce.js'
 import type {
   OAuthCredentials,

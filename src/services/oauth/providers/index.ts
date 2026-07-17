@@ -8,7 +8,7 @@
 export { anthropicOAuthProvider, loginAnthropic, refreshAnthropicToken } from './anthropic.js'
 
 // Device Code（RFC 8628）
-export * from './device-code.js'
+export * from './deviceCode.js'
 
 // GitHub Copilot
 export {
@@ -17,7 +17,7 @@ export {
   loginGitHubCopilot,
   normalizeDomain,
   refreshGitHubCopilotToken,
-} from './github-copilot.js'
+} from './githubCopilot.js'
 
 // OpenAI Codex
 export {
@@ -27,7 +27,7 @@ export {
   OPENAI_CODEX_DEVICE_CODE_LOGIN_METHOD,
   openaiCodexOAuthProvider,
   refreshOpenAICodexToken,
-} from './openai-codex.js'
+} from './openaiCodex.js'
 
 // PKCE
 export { generatePKCE } from './pkce.js'

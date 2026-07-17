@@ -12,7 +12,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { notifyVscodeFileUpdated } from '../../services/mcp/vscodeMcp.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 import { getTaskOutputPath } from '../../services/task-runtime/diskOutput.js'
 import { TaskOutput } from '../../services/task-runtime/taskOutput.js'
 import { parseForSecurity } from '../../shell-eval/bash/ast.js'

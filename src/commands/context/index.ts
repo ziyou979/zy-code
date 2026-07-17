@@ -20,5 +20,5 @@ export const contextNonInteractive: Command = {
   isEnabled() {
     return getIsNonInteractiveSession()
   },
-  load: () => import('./context-noninteractive.js'),
+  load: () => import('./contextNoninteractive.js'),
 }

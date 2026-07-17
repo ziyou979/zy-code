@@ -1,5 +1,5 @@
 import { WARNING } from '../../constants/figures.js'
-import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js'
+import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/githubApp.js'
 import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import type { Warning } from './types.js'

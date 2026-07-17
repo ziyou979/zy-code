@@ -6,7 +6,7 @@ import type { InputEvent } from '../../ink/events/input-event.js'
 import { useInput } from '../../ink/index.js'
 import { normalizeFullWidthDigits, normalizeFullWidthSpace } from '../../utils/stringUtils.js'
 import type { OptionWithDescription } from './select.js'
-import { useSelectNavigation } from './use-select-navigation.js'
+import { useSelectNavigation } from './useSelectNavigation.js'
 
 export type UseMultiSelectStateProps<T> = {
   /**

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink/index.js'
-import { SandboxManager } from '../services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../services/sandbox/sandboxAdapter.js'
 
 /**
  * Format a timestamp as "h:mm:ssa" (e.g., "1:30:45pm").

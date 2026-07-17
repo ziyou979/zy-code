@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { prependBullets } from '../../constants/prompts.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 import { getAttributionTexts } from '../../services/attribution/attribution.js'
 import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
 import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'

@@ -9,7 +9,7 @@ import { MessageResponse } from '../../components/MessageResponse.js'
 import { AddWorkspaceDirectory } from '../../components/permissions/rules/AddWorkspaceDirectory.js'
 import { POINTER } from '../../constants/figures.js'
 import { Box, Text } from '../../ink/index.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import {
   applyPermissionUpdate,

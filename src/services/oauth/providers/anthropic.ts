@@ -6,7 +6,7 @@
  */
 
 import type { Server } from 'node:http'
-import { oauthErrorHtml, oauthSuccessHtml } from './oauth-page.js'
+import { oauthErrorHtml, oauthSuccessHtml } from './oauthPage.js'
 import { generatePKCE } from './pkce.js'
 import type {
   OAuthCredentials,

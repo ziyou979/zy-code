@@ -8,7 +8,7 @@ import {
   PR_BODY,
   PR_TITLE,
   WORKFLOW_CONTENT,
-} from '../../constants/github-app.js'
+} from '../../constants/githubApp.js'
 import { openBrowser } from '../../services/browser/browser.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { logError } from '../../utils/log.js'

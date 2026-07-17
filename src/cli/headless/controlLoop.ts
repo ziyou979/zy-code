@@ -59,7 +59,7 @@ import { performMCPOAuthFlow, revokeServerTokens } from 'src/services/mcp/auth.j
 import { getMcpPrefix } from 'src/services/mcp/mcpStringUtils.js'
 import { commandBelongsToServer } from 'src/services/mcp/utils.js'
 import { toInternalMessages } from 'src/services/messages/mappers.js'
-import { collectContextData } from 'src/commands/context/context-noninteractive.js'
+import { collectContextData } from 'src/commands/context/contextNoninteractive.js'
 import { statusListeners, type ZyAILimits } from 'src/services/zyAiLimits.js'
 import { getDefaultMainLoopModel, getMainLoopModel } from 'src/services/model/model.js'
 import { modelSupportsEffort, resolveAppliedEffort } from 'src/utils/effort.js'

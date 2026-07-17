@@ -26,7 +26,7 @@ import {
   type NetworkHostPattern,
   type SandboxAskCallback,
   SandboxManager,
-} from '../../services/sandbox/sandbox-adapter.js'
+} from '../../services/sandbox/sandboxAdapter.js'
 import {
   generateSandboxRequestId,
   isSwarmWorker,

@@ -23,7 +23,7 @@ const DEFAULT_HTTP_HOOK_TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes (matches TOOL_
 async function getSandboxProxyConfig(): Promise<
   { host: string; port: number; protocol: string } | undefined
 > {
-  const { SandboxManager } = await import('src/services/sandbox/sandbox-adapter.js')
+  const { SandboxManager } = await import('src/services/sandbox/sandboxAdapter.js')
 
   if (!SandboxManager.isSandboxingEnabled()) {
     return undefined

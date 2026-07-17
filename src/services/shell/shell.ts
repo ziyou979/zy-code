@@ -26,7 +26,7 @@ import { which } from './which.js'
 export type { ExecResult } from './shellCommand.js'
 
 import { accessSync } from 'node:fs'
-import { SandboxManager } from '../sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../sandbox/sandboxAdapter.js'
 import { createBashShellProvider } from '../../shell-eval/shared/bashProvider.js'
 import { getCachedPowerShellPath } from '../../shell-eval/shared/powershellDetection.js'
 import { createPowerShellProvider } from '../../shell-eval/shared/powershellProvider.js'

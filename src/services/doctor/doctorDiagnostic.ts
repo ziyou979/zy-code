@@ -13,7 +13,7 @@ import {
   detectWinget,
   getPackageManager,
 } from 'src/services/native-installer/packageManagers.js'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import { checkGlobalInstallPermissions } from '../../utils/autoUpdater.js'
 import { isInBundledMode } from '../../utils/bundledMode.js'
 import {

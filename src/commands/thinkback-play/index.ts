@@ -10,7 +10,7 @@ const thinkbackPlay = {
   isEnabled: () => checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_thinkback'),
   isHidden: true,
   supportsNonInteractive: false,
-  load: () => import('./thinkback-play.js'),
+  load: () => import('./thinkbackPlay.js'),
 } satisfies Command
 
 export default thinkbackPlay

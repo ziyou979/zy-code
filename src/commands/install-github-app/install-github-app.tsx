@@ -5,7 +5,7 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { WorkflowMultiselectDialog } from '../../components/WorkflowMultiselectDialog.js'
-import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js'
+import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/githubApp.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js'
 import { Box } from '../../ink/index.js'

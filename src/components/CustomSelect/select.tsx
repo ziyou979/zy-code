@@ -12,10 +12,10 @@ import {
   createHoverLeaveHandler,
   createOptionClickHandler,
   createOptionHoverHandler,
-} from './select-mouse-actions.js'
+} from './selectMouseActions.js'
 import { SelectOption } from './select-option.js'
-import { useSelectInput } from './use-select-input.js'
-import { useSelectState } from './use-select-state.js'
+import { useSelectInput } from './useSelectInput.js'
+import { useSelectState } from './useSelectState.js'
 
 // Extract text content from ReactNode for width calculation
 function getTextContent(node: ReactNode): string {

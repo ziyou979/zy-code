@@ -10,7 +10,7 @@ const reloadTools = {
   name: 'reload-tools',
   description: 'Rescan external tool directories and apply tool changes to the current session',
   supportsNonInteractive: false,
-  load: () => import('./reload-tools.js'),
+  load: () => import('./reloadTools.js'),
 } satisfies Command
 
 export default reloadTools

@@ -9,7 +9,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 import { getTaskOutputPath } from '../../services/task-runtime/diskOutput.js'
 import { TaskOutput } from '../../services/task-runtime/taskOutput.js'
 import { getCachedPowerShellPath } from '../../shell-eval/shared/powershellDetection.js'

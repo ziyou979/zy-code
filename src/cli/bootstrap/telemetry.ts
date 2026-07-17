@@ -7,7 +7,7 @@ import {
 } from '../../services/analytics/index.js'
 import { getGhAuthStatus } from '../../services/github/ghAuthStatus.js'
 import { getDefaultMainLoopModel, parseUserSpecifiedModel } from '../../services/model/model.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 import {
   logPluginLoadErrors,
   logPluginsEnabledForSession,

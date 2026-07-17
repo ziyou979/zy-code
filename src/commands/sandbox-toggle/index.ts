@@ -1,6 +1,6 @@
 import type { Command } from '../../commands/index.js'
 import { CIRCLE, TICK, WARNING } from '../../constants/figures.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 
 const command = {
   name: 'sandbox',

@@ -3,7 +3,7 @@ import React from 'react'
 import { getCwdState } from 'src/bootstrap/runtime/runtimeContext.js'
 import { SandboxSettings } from '../../components/sandbox/SandboxSettings.js'
 import { color } from '../../ink/index.js'
-import { addToExcludedCommands, SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { addToExcludedCommands, SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import {
   getInitialSettings,

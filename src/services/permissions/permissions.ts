@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { tSync } from '../../i18n/index.js'
 import type { Tool, ToolPermissionContext, ToolUseContext } from '../../tools/tool.js'

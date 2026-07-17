@@ -1,6 +1,6 @@
 import type { z } from 'zod/v4'
 import { getOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
-import { SandboxManager } from '../../services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 import {
   extractOutputRedirections,
   splitCommand_DEPRECATED,

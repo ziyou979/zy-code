@@ -15,7 +15,7 @@ import TextInput from '../../TextInput.js'
 import { PermissionRequestTitle } from '../PermissionRequestTitle.js'
 import { PreviewBox } from './PreviewBox.js'
 import { QuestionNavigationBar } from './QuestionNavigationBar.js'
-import type { QuestionState } from './use-multiple-choice-state.js'
+import type { QuestionState } from './useMultipleChoiceState.js'
 
 type Props = {
   question: Question

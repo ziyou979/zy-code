@@ -6,7 +6,7 @@ const installSlackApp = {
   description: 'Install the Zy Slack app',
   availability: ['zy-ai'],
   supportsNonInteractive: false,
-  load: () => import('./install-slack-app.js'),
+  load: () => import('./installSlackApp.js'),
 } satisfies Command
 
 export default installSlackApp

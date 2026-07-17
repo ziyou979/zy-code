@@ -1,5 +1,5 @@
 import { getMainLoopModel } from 'src/services/model/model.js'
-import { SandboxManager } from 'src/services/sandbox/sandbox-adapter.js'
+import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import { roughTokenCountEstimation } from '../tokenEstimation.js'
 import type { Tool, ToolPermissionContext } from '../../tools/tool.js'
 import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
