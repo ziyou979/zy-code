@@ -12,33 +12,33 @@ import {
   getBgSessionBlockReason,
   getCommandName,
   isCommandEnabled,
-} from '../commands/index.js'
-import { selectableUserMessagesFilter } from '../components/messageSelectorUtils.js'
-import type { SpinnerMode } from '../types/spinner.js'
-import type { QuerySource } from '../constants/querySource.js'
-import { expandPastedTextRefs, parseReferences } from '../services/session-storage/history.js'
-import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
-import type { IDESelection } from '../hooks/useIdeSelection.js'
-import type { AppState } from '../state/AppStateStore.js'
-import type { SetToolJSXFn } from '../tools/tool.js'
-import type { LocalJSXCommandOnDone } from '../commands/types.js'
-import type { Message } from '../types/message.js'
+} from '../../commands/index.js'
+import { selectableUserMessagesFilter } from '../../components/messageSelectorUtils.js'
+import type { SpinnerMode } from '../../types/spinner.js'
+import type { QuerySource } from '../../constants/querySource.js'
+import { expandPastedTextRefs, parseReferences } from '../session-storage/history.js'
+import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
+import type { IDESelection } from '../../hooks/useIdeSelection.js'
+import type { AppState } from '../../state/AppStateStore.js'
+import type { SetToolJSXFn } from '../../tools/tool.js'
+import type { LocalJSXCommandOnDone } from '../../commands/types.js'
+import type { Message } from '../../types/message.js'
 import {
   isValidImagePaste,
   type PromptInputMode,
   type QueuedCommand,
-} from '../types/textInputTypes.js'
-import { createAbortController } from './abortController.js'
-import type { PastedContent } from '../services/config/config.js'
-import { logForDebugging } from './debug.js'
-import type { EffortLevel } from './effort.js'
-import type { FileHistoryState } from './fileHistory.js'
-import { fileHistoryEnabled, fileHistoryMakeSnapshot } from './fileHistory.js'
-import { gracefulShutdownSync } from './gracefulShutdown.js'
-import { enqueue } from './messageQueueManager.js'
-import type { QueryGuard } from './queryGuard.js'
-import { queryCheckpoint, startQueryProfile } from './queryProfiler.js'
-import { runWithWorkload } from './workloadContext.js'
+} from '../../types/textInputTypes.js'
+import { createAbortController } from '../../utils/abortController.js'
+import type { PastedContent } from '../config/config.js'
+import { logForDebugging } from '../../utils/debug.js'
+import type { EffortLevel } from '../../utils/effort.js'
+import type { FileHistoryState } from '../../utils/fileHistory.js'
+import { fileHistoryEnabled, fileHistoryMakeSnapshot } from '../../utils/fileHistory.js'
+import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
+import { enqueue } from '../../utils/messageQueueManager.js'
+import type { QueryGuard } from '../../utils/queryGuard.js'
+import { queryCheckpoint, startQueryProfile } from '../../utils/queryProfiler.js'
+import { runWithWorkload } from '../../utils/workloadContext.js'
 
 function exit(): void {
   gracefulShutdownSync(0)

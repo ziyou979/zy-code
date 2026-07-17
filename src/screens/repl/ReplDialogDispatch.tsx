@@ -39,7 +39,7 @@ import { useAppState, useAppStateStore, useSetAppState } from '../../state/AppSt
 import { useReplStore } from '../../state/ReplState.js'
 import { WEB_FETCH_TOOL_NAME } from '../../tools/WebFetchTool/prompt.js'
 import { saveGlobalConfig } from '../../services/config/config.js'
-import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
+import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
 import type { IDEExtensionInstallationStatus } from '../../services/ide/ide.js'
 import { logError } from '../../utils/log.js'
 import {

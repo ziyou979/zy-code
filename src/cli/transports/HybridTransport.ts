@@ -2,7 +2,7 @@ import axios, { type AxiosError } from 'axios'
 import type { StdoutMessage } from 'src/types/wire/control.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
-import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
+import { getSessionIngressAuthToken } from '../../services/auth/sessionIngressAuth.js'
 import { SerialBatchEventUploader } from './serialBatchEventUploader.js'
 import { WebSocketTransport, type WebSocketTransportOptions } from './webSocketTransport.js'
 

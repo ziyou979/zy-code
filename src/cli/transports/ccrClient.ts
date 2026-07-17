@@ -13,7 +13,7 @@ import {
 import {
   getSessionIngressAuthHeaders,
   getSessionIngressAuthToken,
-} from '../../utils/sessionIngressAuth.js'
+} from '../../services/auth/sessionIngressAuth.js'
 import type {
   RequiresActionDetails,
   SessionState,

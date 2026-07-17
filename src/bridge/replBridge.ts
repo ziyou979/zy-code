@@ -33,7 +33,7 @@ import {
   createV1ReplTransport,
   createV2ReplTransport,
 } from './replBridgeTransport.js'
-import { updateSessionIngressAuthToken } from '../utils/sessionIngressAuth.js'
+import { updateSessionIngressAuthToken } from '../services/auth/sessionIngressAuth.js'
 import { isEnvTruthy, isInProtectedNamespace } from '../utils/envUtils.js'
 import { validateWireId } from './bridgeApi.js'
 import { describeAxiosError, extractHttpStatus, logWireSkip } from './debugUtils.js'

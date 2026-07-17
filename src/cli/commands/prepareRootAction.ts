@@ -48,7 +48,7 @@ import {
   isDefaultPermissionModeAuto,
 } from '../../services/permissions/permissionSetup.js'
 import { getPlatform } from '../../services/shell/platform.js'
-import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
+import { getSessionIngressAuthToken } from '../../services/auth/sessionIngressAuth.js'
 import { sessionIdExists } from '../../services/sessionStorage.js'
 import type { ValidationError } from '../../services/settings/validation.js'
 import { profileCheckpoint } from '../../utils/startupProfiler.js'

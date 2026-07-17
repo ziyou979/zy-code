@@ -12,7 +12,7 @@ import { errorMessage } from '../utils/errors.js'
 import { gracefulShutdown } from '../utils/gracefulShutdown.js'
 import { logError } from '../utils/log.js'
 import { writeToStdout } from '../services/shell/process.js'
-import { getSessionIngressAuthToken } from '../utils/sessionIngressAuth.js'
+import { getSessionIngressAuthToken } from '../services/auth/sessionIngressAuth.js'
 import {
   setSessionMetadataChangedListener,
   setSessionStateChangedListener,

@@ -14,7 +14,7 @@ import type { Message } from '../../types/message.js'
 import type { PromptInputMode, VimMode } from '../../types/textInputTypes.js'
 import type { AutoUpdaterResult } from '../../utils/autoUpdater.js'
 import { type PastedContent } from '../../services/config/config.js'
-import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js'
+import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
 
 export type Props = {
   debug: boolean

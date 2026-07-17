@@ -12,7 +12,7 @@
 import { useIsModalOverlayActive } from '../context/OverlayContext.js'
 import { useOptionalKeybindingContext } from '../keybindings/KeybindingContext.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
-import type { PromptInputHelpers } from '../utils/handlePromptSubmit.js'
+import type { PromptInputHelpers } from '../services/input/handlePromptSubmit.js'
 
 type Props = {
   // onSubmit accepts additional parameters beyond what we pass here,

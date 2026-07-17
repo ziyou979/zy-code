@@ -32,7 +32,7 @@ import {
   getWebSocketProxyAgent,
   getWebSocketProxyUrl,
 } from '../../../utils/proxy.js'
-import { getSessionIngressAuthToken } from '../../../utils/sessionIngressAuth.js'
+import { getSessionIngressAuthToken } from '../../../services/auth/sessionIngressAuth.js'
 import { subprocessEnv } from '../../../utils/subprocessEnv.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

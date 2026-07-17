@@ -8,7 +8,7 @@ import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 import { sequential } from '../../utils/sequential.js'
-import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js'
+import { getSessionIngressAuthToken } from '../../services/auth/sessionIngressAuth.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 
