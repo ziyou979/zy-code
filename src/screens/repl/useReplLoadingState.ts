@@ -27,9 +27,9 @@ import type { ReplStoreInstance } from '../../state/replStore.js'
 import type { CompactProgressEvent } from '../../tools/tool.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { StreamingThinking } from '../../services/messages/./streaming.js'
-import type { QueryGuard } from '../../utils/queryGuard.js'
+import type { QueryGuard } from '../../services/query/queryGuard.js'
 import { extractBashToolsFromMessages } from '../../services/query/queryHelpers.js'
-import type { Theme, ThemeName } from '../../utils/theme.js'
+import type { Theme, ThemeName } from '../../services/environment/theme.js'
 
 // ── 公共类型 ──────────────────────────────────────────────
 
