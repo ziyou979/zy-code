@@ -1,12 +1,11 @@
 /**
- * Shared Intl object instances with lazy initialization.
+ * 共享 Intl 对象实例，延迟初始化。
  *
- * Intl constructors are expensive (~0.05-0.1ms each), so we cache instances
- * for reuse across the codebase instead of creating new ones each time.
- * Lazy initialization ensures we only pay the cost when actually needed.
+ * Intl 构造器开销较大（约 0.05-0.1ms 每次），因此缓存实例以便全仓复用，
+ * 而非每次都新建。延迟初始化确保仅在真正需要时才付出该开销。
  */
 
-// Segmenters for Unicode text processing (lazily initialized)
+// Unicode 文本分割器（延迟初始化）
 let graphemeSegmenter: Intl.Segmenter | null = null
 let wordSegmenter: Intl.Segmenter | null = null
 
@@ -20,8 +19,8 @@ export function getGraphemeSegmenter(): Intl.Segmenter {
 }
 
 /**
- * Extract the first grapheme cluster from a string.
- * Returns '' for empty strings.
+ * 提取字符串的第一个 grapheme 簇。
+ * 空字符串返回 ''。
  */
 export function firstGrapheme(text: string): string {
   if (!text) {
@@ -33,8 +32,8 @@ export function firstGrapheme(text: string): string {
 }
 
 /**
- * Extract the last grapheme cluster from a string.
- * Returns '' for empty strings.
+ * 提取字符串的最后一个 grapheme 簇。
+ * 空字符串返回 ''。
  */
 export function lastGrapheme(text: string): string {
   if (!text) {
@@ -54,7 +53,7 @@ export function getWordSegmenter(): Intl.Segmenter {
   return wordSegmenter
 }
 
-// RelativeTimeFormat cache (keyed by style:numeric)
+// RelativeTimeFormat 缓存（键为 style:numeric）
 const rtfCache = new Map<string, Intl.RelativeTimeFormat>()
 
 export function getRelativeTimeFormat(
@@ -70,7 +69,7 @@ export function getRelativeTimeFormat(
   return rtf
 }
 
-// Timezone is constant for the process lifetime
+// 时区在进程生命周期内是常量
 let cachedTimeZone: string | null = null
 
 export function getTimeZone(): string {
@@ -80,9 +79,8 @@ export function getTimeZone(): string {
   return cachedTimeZone
 }
 
-// System locale language subtag (e.g. 'en', 'ja') is constant for the process
-// lifetime. null = not yet computed; undefined = computed but unavailable (so
-// a stripped-ICU environment fails once instead of retrying on every call).
+// 系统 locale 语言子标签（如 'en'、'ja'）在进程生命周期内是常量。
+// null = 尚未计算；undefined = 计算过但不可用（避免剥离 ICU 的环境每次调用都重试）。
 let cachedSystemLocaleLanguage: string | undefined | null = null
 
 export function getSystemLocaleLanguage(): string | undefined {
@@ -95,4 +93,32 @@ export function getSystemLocaleLanguage(): string | undefined {
     }
   }
   return cachedSystemLocaleLanguage
+}
+
+/**
+ * 从 POSIX 环境变量（LC_ALL/LC_TIME/LANG）推导 BCP 47 语言标签。
+ */
+export function getLocale(): string | undefined {
+  const raw = process.env.LC_ALL || process.env.LC_TIME || process.env.LANG || ''
+  if (!raw || raw === 'C' || raw === 'POSIX') {
+    return undefined
+  }
+  const base = raw.split('.')[0]!.split('@')[0]!
+  if (!base) {
+    return undefined
+  }
+  const tag = base.replaceAll('_', '-')
+  try {
+    new Intl.DateTimeFormat(tag)
+    return tag
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * 返回 date 当天 00:00:00 UTC 的时间戳（ms）。
+ */
+export function startOfDay(d: Date): number {
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).getTime()
 }

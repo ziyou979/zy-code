@@ -11,12 +11,12 @@ import {
 } from '../../services/analytics/index.js'
 import { type McpServerConfig, McpServerConfigSchema } from '../../services/mcp/types.js'
 import type { ToolUseContext } from '../../tools/tool.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../../services/effort/effort.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { parsePositiveIntFromFrontmatter } from '../../services/markdown/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import {
   loadMarkdownFilesForSubdir,
   parseAgentToolsFromFrontmatter,
@@ -24,8 +24,9 @@ import {
 } from '../../services/markdown/markdownConfigLoader.js'
 import { PERMISSION_MODES, type PermissionMode } from '../../services/permissions/permissionMode.js'
 import { clearPluginAgentCache, loadPluginAgents } from '../../services/plugins/loadPluginAgents.js'
+import { parseHooksFromFrontmatter } from '../../services/hooks/parseHooksFromFrontmatter.js'
 import { HooksSchema, type HooksSettings } from '../../services/settings/types.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { FILE_EDIT_TOOL_NAME } from '../FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
 import { FILE_WRITE_TOOL_NAME } from '../FileWriteTool/prompt.js'
@@ -353,28 +354,6 @@ function getParseError(frontmatter: Record<string, unknown>): string {
   }
 
   return tSync('loadAgent.unknownError')
-}
-
-/**
- * Parse hooks from frontmatter using the HooksSchema
- * @param frontmatter The frontmatter object containing potential hooks
- * @param agentType The agent type for logging purposes
- * @returns Parsed hooks settings or undefined if invalid/missing
- */
-function parseHooksFromFrontmatter(
-  frontmatter: Record<string, unknown>,
-  agentType: string,
-): HooksSettings | undefined {
-  if (!frontmatter.hooks) {
-    return undefined
-  }
-
-  const result = HooksSchema().safeParse(frontmatter.hooks)
-  if (!result.success) {
-    logForDebugging(`Invalid hooks in agent '${agentType}': ${result.error.message}`)
-    return undefined
-  }
-  return result.data
 }
 
 /**

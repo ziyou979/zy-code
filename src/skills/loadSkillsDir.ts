@@ -12,9 +12,9 @@ import { parseUserSpecifiedModel } from '../services/model/model.js'
 import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
 import type { Command, PromptCommand } from '../commands/types.js'
 import { parseArgumentNames, substituteArguments } from '../utils/argumentParser.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../services/effort/effort.js'
-import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../utils/envUtils.js'
+import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../services/infra/envUtils.js'
 import { isENOENT, isFsInaccessible } from '../utils/errors.js'
 import {
   coerceDescriptionToString,
@@ -25,9 +25,9 @@ import {
   parseShellFrontmatter,
   splitPathInFrontmatter,
 } from '../services/markdown/frontmatterParser.js'
-import { getFsImplementation } from '../utils/fsOperations.js'
+import { getFsImplementation } from '../services/infra/fsOperations.js'
 import { isPathGitignored } from '../services/git/gitignore.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 import {
   extractDescriptionFromMarkdown,
   getProjectDirsUpToHome,
@@ -40,7 +40,8 @@ import type { SettingSource } from '../services/settings/constants.js'
 import { isSettingSourceEnabled } from '../services/settings/constants.js'
 import { getManagedFilePath } from '../services/settings/managedPath.js'
 import { isRestrictedToPluginOnly } from '../services/settings/pluginOnlyPolicy.js'
-import { HooksSchema, type HooksSettings } from '../services/settings/types.js'
+import { parseHooksFromFrontmatter } from '../services/hooks/parseHooksFromFrontmatter.js'
+import type { HooksSettings } from '../services/settings/types.js'
 import { createSignal } from '../utils/signal.js'
 import { registerMCPSkillBuilders } from './mcpSkillBuilders.js'
 
@@ -99,27 +100,6 @@ async function getFileIdentity(filePath: string): Promise<string | null> {
 type SkillWithPath = {
   skill: Command
   filePath: string
-}
-
-/**
- * Parse and validate hooks from frontmatter.
- * Returns undefined if hooks are not defined or invalid.
- */
-function parseHooksFromFrontmatter(
-  frontmatter: FrontmatterData,
-  skillName: string,
-): HooksSettings | undefined {
-  if (!frontmatter.hooks) {
-    return undefined
-  }
-
-  const result = HooksSchema().safeParse(frontmatter.hooks)
-  if (!result.success) {
-    logForDebugging(`Invalid hooks in skill '${skillName}': ${result.error.message}`)
-    return undefined
-  }
-
-  return result.data
 }
 
 /**
@@ -213,7 +193,7 @@ export function parseSkillFrontmatterFields(
     model,
     disableModelInvocation: parseBooleanFrontmatter(frontmatter['disable-model-invocation']),
     userInvocable,
-    hooks: parseHooksFromFrontmatter(frontmatter, resolvedName),
+    hooks: parseHooksFromFrontmatter(frontmatter as Record<string, unknown>, resolvedName),
     executionContext: frontmatter.context === 'fork' ? 'fork' : undefined,
     agent: frontmatter.agent as string | undefined,
     effort,

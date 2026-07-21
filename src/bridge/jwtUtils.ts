@@ -1,9 +1,9 @@
 import { logEvent } from '../services/analytics/index.js'
-import { logForDebugging } from '../utils/debug.js'
-import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { logForDiagnosticsNoPII } from '../services/telemetry/diagLogs.js'
 import { errorMessage } from '../utils/errors.js'
-import { jsonParse } from '../utils/slowOperations.js'
-import { formatDuration } from '../utils/dateUtils.js'
+import { jsonParse } from '../services/infra/slowOperations.js'
+import { formatDuration } from '../utils/format.js'
 
 /**
  * Decode a JWT's payload segment without verifying the signature.

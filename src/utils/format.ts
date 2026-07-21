@@ -1,7 +1,7 @@
 // 纯展示格式化函数 — 叶节点安全（不依赖 Ink）。宽度感知的截断逻辑位于 ./truncate.ts。
 
 import { getUiLanguage } from '../i18n/index.js'
-import { getRelativeTimeFormat, getTimeZone } from './intl.js'
+import { getLocale, getRelativeTimeFormat, getTimeZone, startOfDay } from './intl.js'
 
 /**
  * 将字节数格式化为人类可读的字符串（KB、MB、GB）。
@@ -424,6 +424,71 @@ export function formatResetText(
 ): string {
   const dt = new Date(resetsAt)
   return `${formatResetTime(Math.floor(dt.getTime() / 1000), showTimezone, showTime)}`
+}
+
+/**
+ * 智能时间戳：同一天显示时间，6天内显示星期+时间，更早显示完整日期。
+ */
+export function formatBriefTimestamp(isoString: string, now: Date = new Date()): string {
+  const d = new Date(isoString)
+  if (Number.isNaN(d.getTime())) {
+    return ''
+  }
+
+  const locale = getLocale()
+  const dayDiff = startOfDay(now) - startOfDay(d)
+  const daysAgo = Math.round(dayDiff / 86_400_000)
+
+  if (daysAgo === 0) {
+    return d.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
+  }
+
+  if (daysAgo > 0 && daysAgo < 7) {
+    return d.toLocaleString(locale, { weekday: 'long', hour: 'numeric', minute: '2-digit' })
+  }
+
+  return d.toLocaleString(locale, {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+/** 短日期：按 locale 显示为 "Jan 5" 或 "1月5日"。 */
+export function formatShortDate(date: Date, locale?: string): string {
+  const resolvedLocale = locale ?? getLocale() ?? 'en-US'
+  return date.toLocaleDateString(resolvedLocale, { month: 'short', day: 'numeric' })
+}
+
+/** 短时间：按 locale 显示为 "3:45 PM" 或 "15:45"。 */
+export function formatTimeShort(date: Date, locale?: string): string {
+  const resolvedLocale = locale ?? getLocale() ?? 'en-US'
+  return date.toLocaleTimeString(resolvedLocale, { hour: 'numeric', minute: '2-digit' })
+}
+
+/** 短日期+时间：按 locale 显示为 "Jan 5, 3:45 PM" 或 "1月5日 15:45"。 */
+export function formatDateTimeShort(date: Date, locale?: string): string {
+  const resolvedLocale = locale ?? getLocale() ?? 'en-US'
+  return date.toLocaleString(resolvedLocale, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+/** 月份+年份：按 locale 显示为 "January 2026" 或 "2026年1月"。 */
+export function formatMonthYear(date: Date, locale?: string): string {
+  const resolvedLocale = locale ?? getLocale() ?? 'en-US'
+  return date.toLocaleDateString(resolvedLocale, { year: 'numeric', month: 'long' })
+}
+
+/** 星期名称：按 locale 显示为 "Monday" 或 "星期一"。 */
+export function formatWeekday(date: Date, locale?: string): string {
+  const resolvedLocale = locale ?? getLocale() ?? 'en-US'
+  return date.toLocaleDateString(resolvedLocale, { weekday: 'long' })
 }
 
 // 向后兼容：截断辅助函数已移至 ./truncate.ts（依赖 ink/stringWidth）
