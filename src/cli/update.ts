@@ -16,11 +16,14 @@ import {
   type InstallMethod,
   saveGlobalConfig,
 } from 'src/services/config/config.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
 import { getDoctorDiagnostic } from 'src/services/doctor/doctorDiagnostic.js'
-import { isInternalBuild } from 'src/utils/envUtils.js'
-import { gracefulShutdown } from 'src/utils/gracefulShutdown.js'
-import { installOrUpdateZyPackage, localInstallationExists } from 'src/services/native-installer/localInstaller.js'
+import { isInternalBuild } from 'src/services/infra/envUtils.js'
+import { gracefulShutdown } from 'src/bootstrap/lifecycle/gracefulShutdown.js'
+import {
+  installOrUpdateZyPackage,
+  localInstallationExists,
+} from 'src/services/native-installer/localInstaller.js'
 import { writeToStdout } from 'src/services/shell/process.js'
 import { gte } from 'src/utils/semver.js'
 import { getInitialSettings } from 'src/services/settings/settings.js'

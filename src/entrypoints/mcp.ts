@@ -11,17 +11,21 @@ import { getDefaultAppState } from 'src/state/AppStateStore.js'
 import type { Command } from '../commands/index.js'
 import { getMainLoopModel } from '../services/model/model.js'
 import { reviewCommand } from '../skills/bundled/review.js'
-import { findToolByName, getEmptyToolPermissionContext, type ToolUseContext } from '../tools/tool.js'
+import {
+  findToolByName,
+  getEmptyToolPermissionContext,
+  type ToolUseContext,
+} from '../tools/tool.js'
 import { getTools } from '../tools/tools.js'
 import { createAbortController } from '../utils/abortController.js'
-import { createFileStateCacheWithSizeLimit } from '../utils/fileStateCache.js'
-import { logError } from '../utils/log.js'
+import { createFileStateCacheWithSizeLimit } from '../services/file-persistence/fileStateCache.js'
+import { logError } from '../services/infra/log.js'
 import { createAssistantMessage } from '../services/messages/./constructors.js'
 import { hasPermissionsToUseTool } from '../services/permissions/permissions.js'
 import { setCwd } from '../services/shell/shell.js'
-import { jsonStringify } from '../utils/slowOperations.js'
+import { jsonStringify } from '../services/infra/slowOperations.js'
 import { getErrorParts } from '../services/tool-runtime/toolErrors.js'
-import { zodToJsonSchema } from '../utils/zodToJsonSchema.js'
+import { zodToJsonSchema } from '../services/api/zodToJsonSchema.js'
 
 type ToolInput = Tool['inputSchema']
 type ToolOutput = Tool['outputSchema']

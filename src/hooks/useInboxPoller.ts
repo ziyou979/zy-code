@@ -18,7 +18,7 @@ import { findToolByName } from '../tools/tool.js'
 import { isInProcessTeammateTask } from '../tasks/in-process-teammate-task/types.js'
 import { getAllBaseTools } from '../tools/tools.js'
 import type { PermissionUpdate } from '../types/permissions.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import {
   findInProcessTeammateTaskId,
   handlePlanApprovalResponse,
@@ -29,10 +29,15 @@ import {
   toExternalPermissionMode,
 } from '../services/permissions/permissionMode.js'
 import { applyPermissionUpdate } from '../services/permissions/permissionUpdate.js'
-import { jsonStringify } from '../utils/slowOperations.js'
+import { jsonStringify } from '../services/infra/slowOperations.js'
 import { unassignTeammateTasks } from '../services/tasks-service/tasks.js'
-import { getAgentName, isPlanModeRequired, isTeamLead, isTeammate } from '../utils/teammate.js'
-import { isInProcessTeammate } from '../utils/teammateContext.js'
+import {
+  getAgentName,
+  isPlanModeRequired,
+  isTeamLead,
+  isTeammate,
+} from '../services/swarm/teammate.js'
+import { isInProcessTeammate } from '../services/swarm/teammateContext.js'
 import {
   isModeSetRequest,
   isPermissionRequest,
@@ -48,7 +53,7 @@ import {
   readUnreadMessages,
   type TeammateMessage,
   writeToMailbox,
-} from '../utils/teammateMailbox.js'
+} from '../services/swarm/teammateMailbox.js'
 import {
   hasPermissionCallback,
   hasSandboxPermissionCallback,

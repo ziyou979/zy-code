@@ -5,13 +5,13 @@ import { SHELL_TOOL_NAMES } from 'src/shell-eval/shared/shellToolUtils.js'
 import type { ModelUsage } from 'src/types/index.js'
 import { DEFAULT_CURRENCY } from '../../types/currency.js'
 import type { Entry, TranscriptMessage } from '../../types/logs.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage, isENOENT } from '../../utils/errors.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { readJSONLFile } from '../../utils/json.js'
 import { SYNTHETIC_MODEL } from '../messages/./constants.js'
 import { getProjectsDir, isTranscriptMessage } from '../sessionStorage.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import {
   getTodayDateString,
   getYesterdayDateString,

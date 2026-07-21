@@ -1,6 +1,6 @@
 import type { Command } from '../../commands/index.js'
 import { isBgSession } from '../../services/session/concurrentSessions.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 
 const installGitHubApp = {
   type: 'local-jsx',

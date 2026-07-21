@@ -6,8 +6,11 @@ import { z } from 'zod/v4'
 import { ensureConnectedClient } from '../../services/mcp/client.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { getBinaryBlobSavedMessage, persistBinaryContent } from '../../services/mcp/mcpOutputStorage.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import {
+  getBinaryBlobSavedMessage,
+  persistBinaryContent,
+} from '../../services/mcp/mcpOutputStorage.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { isOutputLineTruncated } from '../../terminal-ui/terminal.js'
 import { DESCRIPTION, PROMPT } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage, userFacingName } from './UI.js'

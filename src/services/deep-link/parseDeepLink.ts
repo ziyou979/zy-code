@@ -18,7 +18,7 @@
  * use (terminalLauncher.ts) — that escaping is the injection boundary.
  */
 
-import { partiallySanitizeUnicode } from '../../utils/sanitization.js'
+import { partiallySanitizeUnicode } from '../permissions/sanitization.js'
 
 export const DEEP_LINK_PROTOCOL = 'zy-cli'
 

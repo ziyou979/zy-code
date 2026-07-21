@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { categorizeAgentError } from '../../src/utils/agentErrorCategorizer.js'
+import { categorizeAgentError } from '../../src/services/agent/agentErrorCategorizer.js'
 
 describe('categorizeAgentError', () => {
   test('usage_limit: API usage limit exceeded', () => {

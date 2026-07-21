@@ -11,7 +11,7 @@ import {
   getCurrentUsage,
   getDisplayContextUsage,
   tokenCountWithEstimation,
-} from '../../src/utils/tokens.js'
+} from '../../src/services/api/tokens.js'
 import { createTestAssistantMessage, createTestUserMessage } from '../_helpers/messageFixtures.js'
 
 function makeAssistantWithUsage(

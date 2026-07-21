@@ -36,9 +36,9 @@ interface NotebookOutputImage {
   image_data: string
 }
 
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { expandPath } from '../../utils/path.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 
 const LARGE_OUTPUT_THRESHOLD = 10000
 

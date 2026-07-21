@@ -15,7 +15,7 @@ import type {
   ToolDefinition,
 } from '../../types/llm.js'
 import { getModelBetas } from '../feature-flags/betas.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { getAnthropicClient } from './client.js'
 import {
   anthropicResponseToStandard,

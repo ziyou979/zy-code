@@ -466,7 +466,9 @@ export function copyTextOf(msg: NavigableMessage): string {
       const a = msg.attachment
       if (a.type === 'queued_command') {
         // biome-ignore lint/suspicious/noExplicitAny: Attachment 联合窄化后 prompt 字段不可见
-        const p = (a as { type: 'queued_command'; prompt: string | Array<{ type: string; text?: string }> }).prompt
+        const p = (
+          a as { type: 'queued_command'; prompt: string | Array<{ type: string; text?: string }> }
+        ).prompt
         return typeof p === 'string'
           ? p
           : p.flatMap((b) => (b.type === 'text' ? [b.text ?? ''] : [])).join('\n')

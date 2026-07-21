@@ -1,5 +1,5 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/index.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   getLocalModelApiFormat,
   getLocalModelCapability,

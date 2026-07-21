@@ -1,6 +1,6 @@
 import type { Command } from '@commander-js/extra-typings'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { getBaseRenderOptions } from '../../utils/renderOptions.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
+import { getBaseRenderOptions } from '../../terminal-ui/renderOptions.js'
 
 /**
  * 注册公开实用命令：doctor、update/upgrade、install。

@@ -34,9 +34,9 @@ import { chmod, lstat, readdir, readFile, rename, rm, stat, writeFile } from 'no
 import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { parseZipModes, unzipFile } from 'src/services/dxt/zip.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { expandTilde } from '../permissions/pathValidation.js'
 import type { MarketplaceSource } from './schemas.js'
 

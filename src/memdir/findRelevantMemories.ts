@@ -1,9 +1,9 @@
 import { feature } from 'bun:bundle'
 import { getDefaultStandardModel } from '../services/model/model.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { sideQuery } from '../services/query/sideQuery.js'
-import { jsonParse } from '../utils/slowOperations.js'
+import { jsonParse } from '../services/infra/slowOperations.js'
 import { formatMemoryManifest, type MemoryHeader, scanMemoryFiles } from './memoryScan.js'
 
 export type RelevantMemory = {

@@ -1,9 +1,13 @@
 import { useCallback, useEffect } from 'react'
 import type { Command } from '../commands/index.js'
-import { clearCommandMemoizationCaches, clearCommandsCache, getCommands } from '../commands/index.js'
+import {
+  clearCommandMemoizationCaches,
+  clearCommandsCache,
+  getCommands,
+} from '../commands/index.js'
 import { onGrowthBookRefresh } from '../services/analytics/growthbook.js'
 import { skillChangeDetector } from '../services/skill-runtime/skillChangeDetector.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 
 /**
  * Keep the commands list fresh across two triggers:

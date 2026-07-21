@@ -16,8 +16,8 @@ import type {
   PermissionDecisionReason,
   PermissionDenyDecision,
 } from '../../types/permissions.js'
-import { setClassifierApproval } from '../../utils/classifierApprovals.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { setClassifierApproval } from '../../services/permissions/classifierApprovals.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { executePermissionRequestHooks } from '../../services/hooks.js'
 import {
   REJECT_MESSAGE,

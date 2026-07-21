@@ -15,7 +15,7 @@ import {
   parseEnvNumber,
   parseEnvVars,
   shouldMaintainProjectWorkingDir,
-} from '../../src/utils/envUtils.js'
+} from '../../src/services/infra/envUtils.js'
 
 describe('envUtils', () => {
   describe('isEnvTruthy', () => {

@@ -35,11 +35,11 @@ import memoize from 'lodash-es/memoize.js'
 import { getInlinePlugins } from '../../../bootstrap/runtime/runtimeContext.js'
 import { getBuiltinPlugins } from '../builtinRegistry.js'
 import type { LoadedPlugin, PluginError, PluginLoadResult, PluginManifest } from '../types.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
-import { errorMessage } from '../../utils/errors.js'
-import { pathExists } from '../../utils/file.js'
-import { logError } from '../../utils/log.js'
+import { logForDebugging } from '../../../services/infra/debug.js'
+import { isEnvTruthy } from '../../../services/infra/envUtils.js'
+import { errorMessage } from '../../../utils/errors.js'
+import { pathExists } from '../../../services/infra/file.js'
+import { logError } from '../../../services/infra/log.js'
 import {
   clearPluginSettingsBase,
   getPluginSettingsBase,

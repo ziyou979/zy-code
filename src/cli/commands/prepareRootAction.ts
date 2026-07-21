@@ -40,8 +40,8 @@ import type { McpServerConfig, ScopedMcpServerConfig } from '../../services/mcp/
 import { setAutoModeFlagCli } from '../../services/permissions/autoModeState.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { checkHasTrustDialogAccepted, getGlobalConfig } from '../../services/config/config.js'
-import { seedEarlyInput } from '../../utils/earlyInput.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { seedEarlyInput } from '../../services/input/earlyInput.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { safeParseJSON } from '../../utils/json.js'
 import {
   initialPermissionModeFromCLI,
@@ -54,7 +54,7 @@ import type { ValidationError } from '../../services/settings/validation.js'
 import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
 import { DEFAULT_TASKS_MODE_TASK_LIST_ID } from '../../services/tasks-service/tasks.js'
 import { validateUuid } from '../../utils/uuid.js'
-import { isWorktreeModeEnabled } from '../../utils/worktreeModeEnabled.js'
+import { isWorktreeModeEnabled } from '../../services/worktree/worktreeModeEnabled.js'
 import type { RootActionOptions } from '../assembly/types.js'
 // 插件启动检查现在在 REPL.tsx 中以非阻塞方式处理
 
@@ -67,7 +67,7 @@ import {
   parseMcpConfig,
   parseMcpConfigFromFilePath,
 } from 'src/services/mcp/config.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
 import { errorMessage, getErrnoCode } from 'src/utils/errors.js'
 import { setAllHookEventsEnabled } from 'src/services/hooks/hookEvents.js'
 import { plural } from 'src/utils/stringUtils.js'

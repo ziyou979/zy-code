@@ -8,7 +8,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { getProjectRoot } from '../../bootstrap/runtime/runtimeContext.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 
 type SkillEntry = {
   name: string

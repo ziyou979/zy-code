@@ -1,5 +1,5 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import { evaluateStopHookBlockCap, isInternalBuild } from '../utils/envUtils.js'
+import { evaluateStopHookBlockCap, isInternalBuild } from '../services/infra/envUtils.js'
 import type { ToolResultBlock, ToolCallBlock, AssistantContentBlock } from '../types/llm.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import { FallbackTriggeredError } from '../services/api/withRetry.js'
@@ -22,9 +22,9 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from 'src/services/analytics/index.js'
 import { ImageSizeError } from '../services/attachments/imageValidation.js'
-import { ImageResizeError } from '../utils/imageResizer.js'
+import { ImageResizeError } from '../services/attachments/imageResizer.js'
 import { findToolByName, type ToolUseContext } from '../tools/tool.js'
-import type { SystemPrompt } from '../utils/systemPromptType.js'
+import type { SystemPrompt } from '../services/api/systemPromptType.js'
 import type {
   AssistantMessage,
   AttachmentMessage,
@@ -35,9 +35,9 @@ import type {
   UserMessage,
   TombstoneMessage,
 } from '../types/message.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 import { PROMPT_TOO_LONG_ERROR_MESSAGE, isPromptTooLongMessage } from '../services/api/errors.js'
-import { createDebugLog, logAntError } from '../utils/debug.js'
+import { createDebugLog, logAntError } from '../services/infra/debug.js'
 import { normalizeMessagesForAPI } from '../services/messages/api.js'
 import {
   createAssistantAPIErrorMessage,
@@ -62,10 +62,13 @@ const _jobClassifier = feature('TEMPLATES')
   ? (require('../services/jobs/classifier.js') as typeof import('../services/jobs/classifier.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { notifyCommandLifecycle } from '../utils/commandLifecycle.js'
+import { notifyCommandLifecycle } from '../services/hooks/commandLifecycle.js'
 import { headlessProfilerCheckpoint } from '../services/analytics/headlessProfiler.js'
 import { renderModelName } from '../services/model/model.js'
-import { finalContextTokensFromLastResponse, tokenCountWithEstimation } from '../utils/tokens.js'
+import {
+  finalContextTokensFromLastResponse,
+  tokenCountWithEstimation,
+} from '../services/api/tokens.js'
 import { ESCALATED_MAX_TOKENS } from '../services/context/modelContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import { executePostSamplingHooks } from '../services/hooks/postSamplingHooks.js'
@@ -73,7 +76,7 @@ import { executeStopFailureHooks } from '../services/hooks.js'
 import type { QuerySource } from '../constants/querySource.js'
 import { createDumpPromptsFetch } from '../services/api/dumpPrompts.js'
 import { StreamingToolExecutor } from '../services/tool-runtime/streamingToolExecutor.js'
-import { queryCheckpoint } from '../utils/queryProfiler.js'
+import { queryCheckpoint } from '../services/query/queryProfiler.js'
 import { handleStopHooks } from '../query/stopHooks.js'
 import { buildQueryConfig } from '../query/config.js'
 import { preprocessMessages } from '../query/preprocess.js'
@@ -296,12 +299,7 @@ async function* queryLoop(
     // （生产中 97% 的调用什么都没找到）。轮次 0 用户输入发现
     // 仍然阻塞在 userInputAttachments 中 — 这是唯一一个没有
     // 先前工作可以隐藏的信号的信号。
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const pendingSkillPrefetch = (skillPrefetch as any)?.startSkillDiscoveryPrefetch(
-      null,
-      messages,
-      toolUseContext,
-    )
+    skillPrefetch?.startSkillDiscoveryPrefetch(messages, turnCount === 0)
 
     // StreamRequestStartEvent 信号 — 仅用于触发流式请求开始
     yield { type: 'stream_request_start' } as unknown as StreamEvent
@@ -414,16 +412,13 @@ async function* queryLoop(
     // 和恢复（之后）必须一致；CACHED_MAY_BE_STALE 可以在
     // 5-30s 流期间翻转，扣留而不恢复会吞掉消息。PTL 不提升
     // 因为其扣留是无门控的 — 它早于实验且已是对照臂基线。
-    // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    const mediaRecoveryEnabled = (reactiveCompact as any)?.isReactiveCompactEnabled() ?? false
+    const mediaRecoveryEnabled = reactiveCompact?.isReactiveCompactEnabled() ?? false
+    const querySourceName: string = querySource
     if (
       !compactionHappened &&
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      (querySource as any) !== 'compact' &&
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      (querySource as any) !== 'session_memory' &&
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      !((reactiveCompact as any)?.isReactiveCompactEnabled() && isAutoCompactEnabled()) &&
+      querySourceName !== 'compact' &&
+      querySourceName !== 'session_memory' &&
+      !(reactiveCompact?.isReactiveCompactEnabled() && isAutoCompactEnabled()) &&
       !collapseOwnsIt
     ) {
       const { isAtBlockingLimit } = calculateTokenWarningState(
@@ -575,25 +570,15 @@ async function* queryLoop(
             // 恢复检查可以找到它们。任一子系统的扣留都足够了 —
             // 它们是独立的，所以关闭一个不会破坏另一个的恢复路径。
             let withheld = false
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
             if (
-              (contextCollapse as any)?.isWithheldPromptTooLong(
-                message,
-                isPromptTooLongMessage,
-                querySource,
-              )
+              contextCollapse?.isWithheldPromptTooLong(message, isPromptTooLongMessage, querySource)
             ) {
               withheld = true
             }
-            // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-            if ((reactiveCompact as any)?.isWithheldPromptTooLong(message)) {
+            if (reactiveCompact?.isWithheldPromptTooLong(message)) {
               withheld = true
             }
-            if (
-              mediaRecoveryEnabled &&
-              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-              (reactiveCompact as any)?.isWithheldMediaSizeError(message)
-            ) {
+            if (mediaRecoveryEnabled && reactiveCompact?.isWithheldMediaSizeError(message)) {
               withheld = true
             }
             if (isWithheldMaxOutputTokens(message)) {
@@ -803,7 +788,9 @@ async function* queryLoop(
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 释放主线程锁的理由。
       if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
         try {
-          const { cleanupComputerUseAfterTurn } = await import('../services/computer-use/cleanup.js')
+          const { cleanupComputerUseAfterTurn } = await import(
+            '../services/computer-use/cleanup.js'
+          )
           await cleanupComputerUseAfterTurn(toolUseContext)
         } catch {
           // 失败是静默的 — 这是实验性清理，不是关键路径
@@ -848,23 +835,18 @@ async function* queryLoop(
       // 压缩后轮次将再次媒体错误；hasAttemptedReactiveCompact
       // 防止螺旋并让错误浮现。
       const isWithheldMedia =
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        mediaRecoveryEnabled && (reactiveCompact as any)?.isWithheldMediaSizeError(lastMessage)
+        mediaRecoveryEnabled &&
+        lastMessage !== undefined &&
+        reactiveCompact?.isWithheldMediaSizeError(lastMessage)
       if (isWithheld413) {
         // 首先：排出所有暂存的上下文折叠。门控在前一个
         // 转换不是 collapse_drain_retry — 如果我们已经排出
         // 且重试仍然 413，则落入 reactive compact。
         if (contextCollapse && state.transition?.reason !== 'collapse_drain_retry') {
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          const drained = (contextCollapse as any).recoverFromOverflow(
-            messagesForQuery,
-            querySource,
-          )
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          if ((drained as any).committed > 0) {
+          const drained = await contextCollapse.recoverFromOverflow(messagesForQuery, querySource)
+          if (drained.committed > 0) {
             const next: State = {
-              // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-              messages: (drained as any).messages,
+              messages: drained.messages,
               toolUseContext,
               autoCompactTracking: tracking,
               maxOutputTokensRecoveryCount,
@@ -875,8 +857,7 @@ async function* queryLoop(
               turnCount,
               transition: {
                 reason: 'collapse_drain_retry',
-                // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-                committed: (drained as any).committed,
+                committed: drained.committed,
               },
             }
             state = next
@@ -885,8 +866,7 @@ async function* queryLoop(
         }
       }
       if ((isWithheld413 || isWithheldMedia) && reactiveCompact) {
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        const compacted = await (reactiveCompact as any).tryReactiveCompact({
+        const compacted = await reactiveCompact.tryReactiveCompact({
           hasAttempted: hasAttemptedReactiveCompact,
           querySource,
           aborted: toolUseContext.abortController.signal.aborted,
@@ -1205,7 +1185,9 @@ async function* queryLoop(
       // 仅主线程 — 参见 stopHooks.ts 关于子 agent 的理由。
       if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
         try {
-          const { cleanupComputerUseAfterTurn } = await import('../services/computer-use/cleanup.js')
+          const { cleanupComputerUseAfterTurn } = await import(
+            '../services/computer-use/cleanup.js'
+          )
           await cleanupComputerUseAfterTurn(toolUseContext)
         } catch {
           // 失败是静默的 — 这是实验性清理，不是关键路径
@@ -1286,19 +1268,6 @@ async function* queryLoop(
         toolResults.push(msg)
       }
       pendingMemoryPrefetch.consumedOnIteration = turnCount - 1
-    }
-
-    // Skill prefetch 消费（依赖 iteration-scoped 变量）
-    if (skillPrefetch && pendingSkillPrefetch) {
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      const skillAttachments = await (skillPrefetch as any).collectSkillDiscoveryPrefetch(
-        pendingSkillPrefetch,
-      )
-      for (const att of skillAttachments) {
-        const msg = createAttachmentMessage(att)
-        yield msg
-        toolResults.push(msg)
-      }
     }
 
     const toolUseContextWithQueryTracking = {

@@ -5,8 +5,8 @@ import { PDF_MAX_EXTRACT_SIZE, PDF_TARGET_RAW_SIZE } from '../../constants/apiLi
 import { errorMessage } from '../../utils/errors.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 import { formatFileSize } from '../../utils/format.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { getToolResultsDir } from '../../utils/toolResultStorage.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { getToolResultsDir } from '../../services/mcp/toolResultStorage.js'
 
 export type PDFError = {
   reason: 'empty' | 'too_large' | 'password_protected' | 'corrupted' | 'unknown' | 'unavailable'

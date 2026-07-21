@@ -18,10 +18,13 @@ import type { Tools, ToolUseContext } from '../../tools/tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message } from '../../types/message.js'
 import { createAbortController } from '../../utils/abortController.js'
-import type { FileStateCache } from '../../utils/fileStateCache.js'
-import type { CacheSafeParams } from '../../utils/forkedAgent.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { shouldEnableThinkingByDefault, type ThinkingConfig } from '../../utils/thinking.js'
+import type { FileStateCache } from '../file-persistence/fileStateCache.js'
+import type { CacheSafeParams } from '../../services/agent/forkedAgent.js'
+import { asSystemPrompt } from '../api/systemPromptType.js'
+import {
+  shouldEnableThinkingByDefault,
+  type ThinkingConfig,
+} from '../../services/messages/thinking.js'
 
 /**
  * 获取构成 API 缓存键前缀的三个上下文部分：

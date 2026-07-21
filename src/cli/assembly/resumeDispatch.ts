@@ -43,18 +43,24 @@ import type { LogOption } from '../../types/logs.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { count } from '../../utils/array.js'
 import { loadConversationForResume } from '../../services/session-storage/conversationRecovery.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { errorMessage, isENOENT, TeleportOperationError, toError } from '../../utils/errors.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
 import { getWorktreePaths } from '../../services/worktree/getWorktreePaths.js'
-import { getBranch } from '../../utils/git.js'
-import { filterExistingPaths, getKnownPathsForRepo } from '../../services/github/githubRepoPathMapping.js'
-import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
-import { logError } from '../../utils/log.js'
+import { getBranch } from '../../services/infra/git.js'
+import {
+  filterExistingPaths,
+  getKnownPathsForRepo,
+} from '../../services/github/githubRepoPathMapping.js'
+import { gracefulShutdown } from '../../bootstrap/lifecycle/gracefulShutdown.js'
+import { logError } from '../../services/infra/log.js'
 import { createSystemMessage, createUserMessage } from '../../services/messages/./constructors.js'
 import { setCwd } from '../../services/shell/shell.js'
-import { type ProcessedResume, processResumedConversation } from '../../services/session-storage/sessionRestore.js'
+import {
+  type ProcessedResume,
+  processResumedConversation,
+} from '../../services/session-storage/sessionRestore.js'
 import {
   getSessionIdFromLog,
   loadTranscriptFromFile,
@@ -67,7 +73,7 @@ import {
   validateSessionRepository,
 } from '../../services/teleport/teleport.js'
 import { teleportToRemoteWithErrorHandling } from '../../components/TeleportController.js'
-import type { ThinkingConfig } from '../../utils/thinking.js'
+import type { ThinkingConfig } from '../../services/messages/thinking.js'
 import { validateUuid } from '../../utils/uuid.js'
 import { maybeActivateBrief } from '../activate/brief.js'
 import { maybeActivateProactive } from '../activate/proactive.js'
@@ -402,52 +408,8 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
   if (isInternalBuild()) {
     if (options.resume && typeof options.resume === 'string' && !maybeSessionId) {
       // 检查 ccshare URL（如 https://go/ccshare/boris-20260311-211036）
-      const {
-        // @ts-expect-error
-        parseCcshareId,
-        // @ts-expect-error
-        loadCcshare,
-      } = await import('../../utils/ccshareResume.js')
-      const ccshareId = parseCcshareId(options.resume)
-      if (ccshareId) {
-        try {
-          const resumeStart = performance.now()
-          const logOption = await loadCcshare(ccshareId)
-          const result = await loadConversationForResume(logOption, undefined)
-          if (result) {
-            processedResume = await processResumedConversation(
-              result,
-              {
-                forkSession: true,
-                transcriptPath: result.fullPath,
-              },
-              resumeContext,
-            )
-            if (processedResume.restoredAgentDef) {
-              mainThreadAgentDefinition = processedResume.restoredAgentDef
-            }
-            logEvent('zy_session_resumed', {
-              entrypoint: 'ccshare' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-              success: true,
-              resume_duration_ms: Math.round(performance.now() - resumeStart),
-            })
-          } else {
-            logEvent('zy_session_resumed', {
-              entrypoint: 'ccshare' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-              success: false,
-            })
-          }
-        } catch (error) {
-          logEvent('zy_session_resumed', {
-            entrypoint: 'ccshare' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-            success: false,
-          })
-          logError(error)
-          await exitWithError(root, `Unable to resume from ccshare: ${errorMessage(error)}`, () =>
-            gracefulShutdown(1),
-          )
-        }
-      } else {
+      // ccshareResume 已移除（导出从未实际定义）
+      {
         const resolvedPath = resolve(options.resume)
         try {
           const resumeStart = performance.now()

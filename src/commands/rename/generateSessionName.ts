@@ -1,11 +1,11 @@
 import { queryCompactModel } from '../../services/api/compactQueries.js'
 import type { Message } from '../../types/message.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { extractTextContent } from '../../services/messages/./predicates.js'
 import { extractConversationText } from '../../services/session-storage/sessionTitle.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { asSystemPrompt } from '../../services/api/systemPromptType.js'
 
 const SESSION_NAME_PROMPT = `Generate a short kebab-case name (2-4 words) that captures the main topic of this conversation. Use lowercase words separated by hyphens. Examples: "fix-login-bug", "add-auth-feature", "refactor-api-client", "debug-test-failures". Return JSON with a "name" field.
 

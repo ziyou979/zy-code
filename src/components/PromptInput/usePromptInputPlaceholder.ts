@@ -4,7 +4,7 @@ import { useCommandQueue } from 'src/hooks/useCommandQueue.js'
 import { useAppState } from 'src/state/AppState.js'
 import { getGlobalConfig } from 'src/services/config/config.js'
 import { getExampleCommandFromCache } from 'src/services/hints/exampleCommands.js'
-import { isQueuedCommandEditable } from 'src/utils/messageQueueManager.js'
+import { isQueuedCommandEditable } from 'src/services/input/messageQueueManager.js'
 
 // Dead code elimination: conditional import for proactive mode
 /* eslint-disable @typescript-eslint/no-require-imports */

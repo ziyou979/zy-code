@@ -6,7 +6,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { getCwd } from 'src/utils/cwd.js'
+import { getCwd } from 'src/services/environment/cwd.js'
 import { checkForReleaseNotes } from 'src/services/release-notes/releaseNotes.js'
 import { setCwd } from 'src/services/shell/shell.js'
 import { initSinks } from 'src/services/telemetry/sinks.js'
@@ -24,16 +24,16 @@ import { lockCurrentVersion } from '../services/native-installer/index.js'
 import { initSessionMemory } from '../services/session-memory/sessionMemory.js'
 import { asSessionId } from '../types/ids.js'
 import { isAgentSwarmsEnabled } from '../services/swarm/agentSwarmsEnabled.js'
-import { clearMemoryFileCaches } from '../utils/agentsMd.js'
+import { clearMemoryFileCaches } from '../services/memory/agentsMd.js'
 import { checkAndRestoreTerminalBackup } from '../services/shell/appleTerminalBackup.js'
 import { prefetchApiKeyFromApiKeyHelperIfSafe } from '../services/auth/auth.js'
 import { getCurrentProjectConfig, getGlobalConfig } from '../services/config/config.js'
-import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
+import { logForDiagnosticsNoPII } from '../services/telemetry/diagLogs.js'
 import { env } from '../services/environment/env.js'
 import { envDynamic } from '../services/environment/envDynamic.js'
-import { isBareMode, isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
+import { isBareMode, isEnvTruthy, isInternalBuild } from '../services/infra/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
-import { findCanonicalGitRoot, findGitRoot, getIsGit } from '../utils/git.js'
+import { findCanonicalGitRoot, findGitRoot, getIsGit } from '../services/infra/git.js'
 import { initializeFileChangedWatcher } from '../services/hooks/fileChangedWatcher.js'
 import {
   captureHooksConfigSnapshot,
@@ -41,7 +41,7 @@ import {
 } from '../services/hooks/hooksConfigSnapshot.js'
 import { hasWorktreeCreateHook } from '../services/hooks.js'
 import { checkAndRestoreITerm2Backup } from '../services/shell/iTermBackup.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 import { getRecentActivity } from '../services/branding/logoUtils.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { getPlanSlug } from '../services/plans/plans.js'
@@ -90,11 +90,13 @@ export async function setup(
     // $ZY_CODE_MESSAGING_SOCKET 已导出，然后任何 hook
     // （特别是 SessionStart）才能派生并快照 process.env。
     if (feature('UDS_INBOX')) {
-      const m = await import('../utils/udsMessaging.js')
-      // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-      await (m as any).startUdsMessaging(
-        // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        messagingSocketPath ?? (m as any).getDefaultUdsSocketPath(),
+      const m = await import('../services/bridge/udsMessaging.js')
+      const udsMessaging = m as unknown as {
+        startUdsMessaging: (socketPath: string, options: { isExplicit: boolean }) => Promise<void>
+        getDefaultUdsSocketPath: () => string
+      }
+      await udsMessaging.startUdsMessaging(
+        messagingSocketPath ?? udsMessaging.getDefaultUdsSocketPath(),
         { isExplicit: messagingSocketPath !== undefined },
       )
     }
@@ -332,12 +334,14 @@ export async function setup(
       // 而不是在 setup() 微任务窗口期间运行。
       setImmediate(() => {
         // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-        void import('../utils/attributionHooks.js').then((m: any) => {
+        void import('../services/attribution/attributionHooks.js').then((m: any) => {
           m.registerAttributionHooks() // 注册归因追踪 hooks（仅 ant 功能）
         })
       })
     }
-    void import('../services/hooks/sessionFileAccessHooks.js').then((m) => m.registerSessionFileAccessHooks()) // 注册会话文件访问分析 hooks
+    void import('../services/hooks/sessionFileAccessHooks.js').then((m) =>
+      m.registerSessionFileAccessHooks(),
+    ) // 注册会话文件访问分析 hooks
     if (feature('TEAMMEM')) {
       void import('../services/team-memory-sync/watcher.js').then((m) => m.startTeamMemoryWatcher()) // 启动团队内存同步监视器
     }

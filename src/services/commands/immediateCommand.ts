@@ -1,5 +1,5 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 
 /**
  * Whether inference-config commands (/model, /effort) should execute

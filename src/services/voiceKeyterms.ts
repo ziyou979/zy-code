@@ -6,7 +6,7 @@
 
 import { basename } from 'node:path'
 import { getProjectRoot } from '../bootstrap/runtime/runtimeContext.js'
-import { getBranch } from '../utils/git.js'
+import { getBranch } from '../services/infra/git.js'
 
 // ─── Global keyterms ────────────────────────────────────────────────
 

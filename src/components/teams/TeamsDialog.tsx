@@ -26,7 +26,7 @@ import type { AppState } from '../../state/AppStateStore.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import { getEmptyToolPermissionContext } from '../../tools/tool.js'
 import { AGENT_COLOR_TO_THEME_COLOR } from '../../tools/AgentTool/agentColorManager.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { truncateToWidth } from '../../utils/format.js'
 import { getNextPermissionMode } from '../../services/permissions/getNextPermissionMode.js'
@@ -36,7 +36,7 @@ import {
   permissionModeFromString,
   permissionModeSymbol,
 } from '../../services/permissions/permissionMode.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { listTasks, unassignTeammateTasks } from '../../services/tasks-service/tasks.js'
 import {
   getTeammateStatuses,
@@ -47,7 +47,7 @@ import {
   createModeSetRequestMessage,
   sendShutdownRequestToMailbox,
   writeToMailbox,
-} from '../../utils/teammateMailbox.js'
+} from '../../services/swarm/teammateMailbox.js'
 import { Dialog } from '../design-system/Dialog.js'
 import ThemedText from '../design-system/ThemedText.js'
 

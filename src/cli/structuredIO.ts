@@ -19,8 +19,8 @@ import type {
   WireControlResponse,
 } from 'src/types/wire/control.js'
 import { WireControlElicitationResponseSchema } from 'src/types/wire/controlSchemas.js'
-import { logForDebugging } from 'src/utils/debug.js'
-import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
+import { logForDiagnosticsNoPII } from 'src/services/telemetry/diagLogs.js'
 import { AbortError } from 'src/utils/errors.js'
 import {
   type Output as PermissionToolOutput,
@@ -33,16 +33,16 @@ import type {
 } from 'src/services/permissions/permissionResult.js'
 import { hasPermissionsToUseTool } from 'src/services/permissions/permissions.js'
 import { writeToStdout } from 'src/services/shell/process.js'
-import { jsonStringify } from 'src/utils/slowOperations.js'
+import { jsonStringify } from 'src/services/infra/slowOperations.js'
 import { z } from 'zod/v4'
-import { notifyCommandLifecycle } from '../utils/commandLifecycle.js'
-import { normalizeControlMessageKeys } from '../utils/controlMessageCompat.js'
+import { notifyCommandLifecycle } from '../services/hooks/commandLifecycle.js'
+import { normalizeControlMessageKeys } from '../services/messages/controlMessageCompat.js'
 import {
   notifySessionStateChanged,
   type RequiresActionDetails,
   type SessionExternalMetadata,
 } from '../services/session-state/sessionState.js'
-import { jsonParse } from '../utils/slowOperations.js'
+import { jsonParse } from '../services/infra/slowOperations.js'
 import { Stream } from '../utils/stream.js'
 import { ndjsonSafeStringify } from './ndjsonSafeStringify.js'
 import { executePermissionRequestHooksForSDK } from './sdkPermissionBridge.js'

@@ -12,9 +12,9 @@ import type { ToolProgressData } from '../../tools/tool.js'
 import type { ProgressMessage } from '../../types/message.js'
 import type { MCPProgress } from '../../types/tools.js'
 import { formatNumber } from '../../utils/format.js'
-import { createHyperlink } from '../../utils/hyperlink.js'
+import { createHyperlink } from '../../terminal-ui/hyperlink.js'
 import { getContentSizeEstimate, type MCPToolResult } from '../../services/mcp/mcpValidation.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import type { inputSchema } from './MCPTool.js'
 
 // 显示大型 MCP 响应警告的阈值

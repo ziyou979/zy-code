@@ -2,27 +2,27 @@
 import { feature } from 'bun:bundle'
 import { StructuredIO } from 'src/cli/structuredIO.js'
 import { RemoteIO } from 'src/cli/remoteIO.js'
-import type { ThinkingConfig } from 'src/utils/thinking.js'
+import type { ThinkingConfig } from 'src/services/messages/thinking.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import { logForDebugging } from 'src/utils/debug.js'
-import { type Tools } from 'src/tools/tool.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
+import type { Tools, ToolUseContext } from 'src/tools/tool.js'
 import type { QueuedCommand } from 'src/types/textInputTypes.js'
-import { dequeue, enqueue, peek } from 'src/utils/messageQueueManager.js'
-import { notifyCommandLifecycle } from 'src/utils/commandLifecycle.js'
+import { dequeue, enqueue, peek } from 'src/services/input/messageQueueManager.js'
+import { notifyCommandLifecycle } from 'src/services/hooks/commandLifecycle.js'
 import { notifySessionStateChanged } from 'src/services/session-state/sessionState.js'
-import { getInMemoryErrors, logError } from 'src/utils/log.js'
+import { getInMemoryErrors, logError } from 'src/services/infra/log.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
-import { ask } from 'src/queryEngine.js'
+import { ask } from 'src/query/queryEngine.js'
 import {
   createFileStateCacheWithSizeLimit,
   mergeFileStateCaches,
-} from 'src/utils/fileStateCache.js'
+} from 'src/services/file-persistence/fileStateCache.js'
 import { extractReadFilesFromMessages } from 'src/services/query/queryHelpers.js'
 import { executeFilePersistence } from 'src/services/file-persistence/filePersistence.js'
 import { finalizePendingAsyncHooks } from 'src/services/hooks/asyncHookRegistry.js'
-import { gracefulShutdownSync, isShuttingDown } from 'src/utils/gracefulShutdown.js'
-import { createIdleTimeoutManager } from 'src/utils/idleTimeout.js'
+import { gracefulShutdownSync, isShuttingDown } from 'src/bootstrap/lifecycle/gracefulShutdown.js'
+import { createIdleTimeoutManager } from 'src/services/session/idleTimeout.js'
 import type { WireStatus, WireUserMessageReplay } from 'src/types/index.js'
 import type { StdoutMessage } from 'src/types/wire/control.js'
 import { cwd } from 'node:process'
@@ -36,11 +36,11 @@ import {
   logSuggestionSuppressed,
   type PromptVariant,
 } from 'src/services/prompt-suggestion/promptSuggestion.js'
-import { getLastCacheSafeParams } from 'src/utils/forkedAgent.js'
+import { getLastCacheSafeParams } from 'src/services/agent/forkedAgent.js'
 import { getInitJsonSchema } from 'src/bootstrap/runtime/runtimeContext.js'
 import { statusListeners, type ZyAILimits } from 'src/services/zyAiLimits.js'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { runWithWorkload } from 'src/utils/workloadContext.js'
+import { runWithWorkload } from 'src/services/swarm/workloadContext.js'
 import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
 import type { AppState } from 'src/state/AppStateStore.js'
@@ -50,24 +50,24 @@ import {
   headlessProfilerMemorySample,
   logHeadlessProfilerTurn,
 } from 'src/services/analytics/headlessProfiler.js'
-import { startQueryProfile, logQueryProfileReport } from 'src/utils/queryProfiler.js'
-import { isEnvDefinedFalsy } from '../../utils/envUtils.js'
+import { startQueryProfile, logQueryProfileReport } from 'src/services/query/queryProfiler.js'
+import { isEnvDefinedFalsy } from '../../services/infra/envUtils.js'
 import {
   isTeamLead,
   hasActiveInProcessTeammates,
   hasWorkingInProcessTeammates,
   waitForTeammatesToBecomeIdle,
-} from '../../utils/teammate.js'
+} from '../../services/swarm/teammate.js'
 import {
   readUnreadMessages,
   markMessagesAsRead,
   isShutdownApproved,
-} from '../../utils/teammateMailbox.js'
+} from '../../services/swarm/teammateMailbox.js'
 import { removeTeammateFromTeamFile } from '../../services/swarm/teamHelpers.js'
 import { unassignTeammateTasks } from '../../services/tasks-service/tasks.js'
 import { getRunningTasks } from '../../services/task-runtime/framework.js'
 import { isBackgroundTask } from '../../tasks/types.js'
-import { drainWireEvents } from '../../utils/bridgeEventQueue.js'
+import { drainWireEvents } from '../../services/bridge/bridgeEventQueue.js'
 import { errorMessage, toError } from '../../utils/errors.js'
 import { sleep } from '../../utils/sleep.js'
 import { createHeadlessSession } from './headlessSession.js'
@@ -435,7 +435,9 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
         }
 
         loopState.abortController = createAbortController()
-        const turnStartTime = feature('FILE_PERSISTENCE') ? Date.now() : undefined
+        const turnStartTime = feature('FILE_PERSISTENCE')
+          ? { wallMs: Date.now(), processMs: performance.now() }
+          : undefined
 
         headlessProfilerCheckpoint('before_ask')
         startQueryProfile()
@@ -485,7 +487,11 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
             abortController: loopState.abortController,
             replayUserMessages: options.replayUserMessages,
             includePartialMessages: options.includePartialMessages,
-            handleElicitation: (serverName, params, elicitSignal) =>
+            handleElicitation: (
+              ...[serverName, params, elicitSignal]: Parameters<
+                NonNullable<ToolUseContext['handleElicitation']>
+              >
+            ) =>
               structuredIO.handleElicitation(
                 serverName,
                 params.message,
@@ -552,24 +558,17 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
         getBridgeHandle()?.sendResult()
 
         if (feature('FILE_PERSISTENCE') && turnStartTime !== undefined) {
-          void executeFilePersistence(
-            // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-            turnStartTime as any,
-            loopState.abortController.signal,
-            (result) => {
-              output.enqueue({
-                type: 'system' as const,
-                subtype: 'files_persisted' as const,
-                // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-                files: result.files as any,
-                // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-                failed: result.failed as any,
-                processed_at: new Date().toISOString(),
-                uuid: randomUUID(),
-                session_id: getSessionId(),
-              })
-            },
-          )
+          void executeFilePersistence(turnStartTime, loopState.abortController.signal, (result) => {
+            output.enqueue({
+              type: 'system' as const,
+              subtype: 'files_persisted' as const,
+              files: result.files,
+              failed: result.failed,
+              processed_at: new Date().toISOString(),
+              uuid: randomUUID(),
+              session_id: getSessionId(),
+            })
+          })
         }
 
         // Generate and emit prompt suggestion for SDK consumers

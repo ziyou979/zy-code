@@ -6,9 +6,9 @@ import chalk from 'chalk'
 import ignore from 'ignore'
 import { isInITerm2 } from 'src/services/swarm/backends/detection.js'
 import { saveCurrentProjectConfig } from '../config/config.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { getCwd } from '../environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
 import { parseGitConfigValue } from '../git/gitConfigParser.js'
@@ -24,7 +24,7 @@ import {
   getBranch,
   getDefaultBranch,
   gitExe,
-} from '../../utils/git.js'
+} from '../../services/infra/git.js'
 import {
   executeWorktreeCreateHook,
   executeWorktreeRemoveHook,
@@ -562,7 +562,7 @@ async function performPostCreationSetup(repoRoot: string, worktreePath: string):
   // value verbatim when it's absolute.
   if (feature('COMMIT_ATTRIBUTION')) {
     const worktreeHooksDir = hooksPath === huskyPath ? join(worktreePath, '.husky') : undefined
-    void import('../../utils/postCommitAttribution.js')
+    void import('../../services/attribution/postCommitAttribution.js')
       .then((m) =>
         (m as { installPrepareCommitMsgHook: (path: string, hooksDir?: string) => Promise<void> })
           .installPrepareCommitMsgHook(worktreePath, worktreeHooksDir)

@@ -22,7 +22,7 @@ import { Box, Text } from '../../ink/index.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import { type EffortLevel } from '../../services/effort/effort.js'
-import type { Theme } from '../../utils/theme.js'
+import type { Theme } from '../../services/environment/theme.js'
 import { executeEffort } from './effort.js'
 import {
   computePickerLayout,

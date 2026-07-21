@@ -4,10 +4,10 @@ import type {
   MarkupContent,
   PublishDiagnosticsParams,
 } from 'vscode-languageserver-protocol'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { logError } from '../../services/infra/log.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import type { DiagnosticFile } from '../diagnosticTracking.js'
 import { registerPendingLSPDiagnostic } from './lspDiagnosticRegistry.js'
 import type { lspServerManager } from './lspServerManager.js'

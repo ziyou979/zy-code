@@ -43,7 +43,8 @@ async function _temp2() {
 function _temp(current: import('../../services/config/config.js').GlobalConfig) {
   return {
     ...current,
-    subscriptionNoticeCount: ((current as { subscriptionNoticeCount?: number }).subscriptionNoticeCount ?? 0) + 1,
+    subscriptionNoticeCount:
+      ((current as { subscriptionNoticeCount?: number }).subscriptionNoticeCount ?? 0) + 1,
   }
 }
 async function getExistingZySubscription(): Promise<'Max' | 'Pro' | null> {

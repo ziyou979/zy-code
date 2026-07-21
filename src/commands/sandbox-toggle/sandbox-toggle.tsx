@@ -9,7 +9,7 @@ import {
   getInitialSettings,
   getSettingsFilePathForSource,
 } from '../../services/settings/settings.js'
-import type { ThemeName } from '../../utils/theme.js'
+import type { ThemeName } from '../../services/environment/theme.js'
 export async function call(
   onDone: (result?: string) => void,
   _context: unknown,

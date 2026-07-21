@@ -13,9 +13,9 @@ import {
   checkHasTrustDialogAccepted,
   saveCurrentProjectConfig,
 } from '../../services/config/config.js'
-import { getCwd } from '../../utils/cwd.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { gracefulShutdownSync } from '../../bootstrap/lifecycle/gracefulShutdown.js'
 import { Select } from '../CustomSelect/index.js'
 import { PermissionDialog } from '../permissions/PermissionDialog.js'
 import {

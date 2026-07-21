@@ -1,7 +1,7 @@
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import type { SessionId } from '../types/ids.js'
-import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../services/infra/envUtils.js'
 
 // 在 query() 入口处一次性快照的不可变值。
 // 与每次迭代的 State 和可变的 ToolUseContext 分离，便于后续提取为纯 reducer。

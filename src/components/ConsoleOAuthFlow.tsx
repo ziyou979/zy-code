@@ -19,7 +19,7 @@ import type {
   OAuthSelectOption,
 } from '../services/oauth/providers/types.js'
 import { openBrowser } from '../services/browser/browser.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 import { Select } from './CustomSelect/select.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { Spinner } from './Spinner.js'

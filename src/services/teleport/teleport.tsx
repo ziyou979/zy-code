@@ -24,25 +24,25 @@ import {
   deserializeMessages,
   type TeleportRemoteResponse,
 } from '../session-storage/conversationRecovery.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { getCwd } from '../environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import {
   detectCurrentRepositoryWithHost,
   parseGitHubRepository,
   parseGitRemote,
-} from '../../utils/detectRepository.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+} from '../git/detectRepository.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { TeleportOperationError, toError } from '../../utils/errors.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 import { truncateToWidth } from '../../utils/format.js'
-import { findGitRoot, getDefaultBranch, getIsClean, gitExe } from '../../utils/git.js'
+import { findGitRoot, getDefaultBranch, getIsClean, gitExe } from '../../services/infra/git.js'
 import { safeParseJSON } from '../../utils/json.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { createSystemMessage, createUserMessage } from '../messages/constructors.js'
 import { isTranscriptMessage } from '../sessionStorage.js'
 import { getInitialSettings } from '../settings/settings.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import { asSystemPrompt } from '../api/systemPromptType.js'
 import { queryCompactModel } from '../api/compactQueries.js'
 import { getSessionLogsViaOAuth, getTeleportEvents } from '../api/sessionIngress.js'
 import {

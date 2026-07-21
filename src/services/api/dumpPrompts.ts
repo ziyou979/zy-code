@@ -3,8 +3,8 @@ import { promises as fs } from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { ClientOptions } from '@anthropic-ai/sdk'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { getZyConfigHomeDir, isInternalBuild } from '../../services/infra/envUtils.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 
 function hashString(str: string): string {
   return createHash('sha256').update(str).digest('hex')

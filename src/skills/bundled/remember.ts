@@ -1,5 +1,5 @@
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
 export function registerRememberSkill(): void {

@@ -1,10 +1,10 @@
 import { z } from 'zod/v4'
 import type { ValidationResult } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import { isENOENT } from '../../utils/errors.js'
-import { FILE_NOT_FOUND_CWD_NOTE, suggestPathUnderCwd } from '../../utils/file.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { FILE_NOT_FOUND_CWD_NOTE, suggestPathUnderCwd } from '../../services/infra/file.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { expandPath, toRelativePath } from '../../utils/path.js'
 import {
@@ -539,7 +539,7 @@ export const GrepTool = buildTool({
   },
 } satisfies ToolDef<InputSchema, Output>)
 
-import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
+import { hasEmbeddedSearchTools } from '../../services/tool-runtime/embeddedTools.js'
 // 插件化注册
 import { toolRegistry } from '../registry.js'
 

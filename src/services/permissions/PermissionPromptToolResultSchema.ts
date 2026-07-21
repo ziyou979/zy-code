@@ -1,6 +1,6 @@
 import type { Tool, ToolUseContext } from 'src/tools/tool.js'
 import z from 'zod/v4'
-import { createDebugLog } from '../../utils/debug.js'
+import { createDebugLog } from '../../services/infra/debug.js'
 
 const permLog = createDebugLog('permissions')
 

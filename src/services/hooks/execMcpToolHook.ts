@@ -4,7 +4,7 @@ import type { ToolUseContext } from '../../tools/tool.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
 import { errorMessage } from '../../utils/errors.js'
 import type { McpToolHook } from '../settings/types.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import type { HookResultMessage } from '../../types/message.js'
 import type { HookResult } from './types.js'
 

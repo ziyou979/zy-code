@@ -6,8 +6,8 @@ import {
   getZyAIOAuthTokens,
   handleOAuth401Error,
 } from '../../auth/auth.js'
-import { createDebugLog } from '../../utils/debug.js'
-import { logMCPDebug } from '../../utils/log.js'
+import { createDebugLog } from '../../../services/infra/debug.js'
+import { logMCPDebug } from '../../../services/infra/log.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -16,9 +16,9 @@ import { getLoggingSafeMcpBaseUrl } from '../utils.js'
 import type { MCPServerConnection, ScopedMcpServerConfig } from '../types.js'
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../../services/infra/envUtils.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../../services/infra/slowOperations.js'
 export const mcpLog = createDebugLog('mcp')
 
 /* eslint-disable @typescript-eslint/no-require-imports */

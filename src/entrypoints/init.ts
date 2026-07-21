@@ -18,29 +18,32 @@ import {
   waitForRemoteManagedSettingsToLoad,
 } from '../services/remote-managed-settings/index.js'
 import { isBetaTracingEnabled } from '../services/telemetry/betaSessionTracing.js'
-import { preconnectAnthropicApi } from '../utils/apiPreconnect.js'
+import { preconnectAnthropicApi } from '../services/api/apiPreconnect.js'
 import { populateOAuthAccountInfoIfNeeded } from '../services/auth/auth.js'
 import { applyExtraCACertsFromConfig } from '../services/settings/caCertsConfig.js'
-import { registerCleanup } from '../utils/cleanupRegistry.js'
+import { registerCleanup } from '../services/cleanup/cleanupRegistry.js'
 import { enableConfigs, recordFirstStartTime } from '../services/config/config.js'
-import { createDebugLog } from '../utils/debug.js'
-import { detectCurrentRepository } from '../utils/detectRepository.js'
-import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
+import { createDebugLog } from '../services/infra/debug.js'
+import { detectCurrentRepository } from '../services/git/detectRepository.js'
+import { logForDiagnosticsNoPII } from '../services/telemetry/diagLogs.js'
 import { initJetBrainsDetection } from '../services/environment/envDynamic.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { isEnvTruthy } from '../services/infra/envUtils.js'
 import { ConfigParseError, errorMessage } from '../utils/errors.js'
 // showInvalidConfigDialog 在错误路径中动态导入，以避免在初始化时加载 React
-import { gracefulShutdownSync, setupGracefulShutdown } from '../utils/gracefulShutdown.js'
+import {
+  gracefulShutdownSync,
+  setupGracefulShutdown,
+} from '../bootstrap/lifecycle/gracefulShutdown.js'
 import {
   applyConfigEnvironmentVariables,
   applySafeConfigEnvironmentVariables,
 } from '../services/environment/managedEnv.js'
-import { configureGlobalMTLS } from '../utils/mtls.js'
+import { configureGlobalMTLS } from '../services/http/mtls.js'
 import { ensureScratchpadDir, isScratchpadEnabled } from '../services/permissions/filesystem.js'
 // initializeTelemetry 通过 setMeterState() 中的 import('../services/analytics/zyEventLogger.js') 延迟加载，以推迟
 // ~400KB 的 OpenTelemetry + protobuf 模块，直到真正初始化遥测时才加载。
 // gRPC 导出器（通过 @grpc/grpc-js 约 ~700KB）在 instrumentation.ts 中进一步延迟加载。
-import { configureGlobalAgents } from '../utils/proxy.js'
+import { configureGlobalAgents } from '../services/http/proxy.js'
 import { getTelemetryAttributes } from '../services/telemetry/telemetryAttributes.js'
 import { setShellIfWindows } from '../services/shell/windowsPaths.js'
 
@@ -185,7 +188,9 @@ export const init = memoize(async (): Promise<void> => {
         const { initUpstreamProxy, getUpstreamProxyEnv } = await import(
           '../upstreamproxy/upstreamproxy.js'
         )
-        const { registerUpstreamProxyEnvFn } = await import('../utils/subprocessEnv.js')
+        const { registerUpstreamProxyEnvFn } = await import(
+          '../services/environment/subprocessEnv.js'
+        )
         registerUpstreamProxyEnvFn(getUpstreamProxyEnv)
         await initUpstreamProxy()
       } catch (err) {

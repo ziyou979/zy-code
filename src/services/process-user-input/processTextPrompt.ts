@@ -5,7 +5,7 @@ import { logEvent } from '../analytics/index.js'
 import type { UserContentBlock } from '../../types/llm.js'
 import type { PermissionMode } from '../../types/permissions.js'
 import { createUserMessage } from '../messages/constructors.js'
-import { matchesKeepGoingKeyword, matchesNegativeKeyword } from '../../utils/userPromptKeywords.js'
+import { matchesKeepGoingKeyword, matchesNegativeKeyword } from '../input/userPromptKeywords.js'
 import { logOTelEvent, redactIfDisabled } from '../telemetry/events.js'
 import { startInteractionSpan } from '../telemetry/sessionTracing.js'
 

@@ -10,7 +10,10 @@ import TextInput from '../../../TextInput.js'
 import { useWizard } from '../../../wizard/index.js'
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js'
 export function PromptStep() {
-  const { goNext, goBack, updateWizardData, wizardData } = useWizard<{ systemPrompt?: string; agentType?: string }>()
+  const { goNext, goBack, updateWizardData, wizardData } = useWizard<{
+    systemPrompt?: string
+    agentType?: string
+  }>()
   const [systemPrompt, setSystemPrompt] = useState(wizardData.systemPrompt ?? '')
   const [cursorOffset, setCursorOffset] = useState(systemPrompt.length)
   const [error, setError] = useState<string | null>(null)

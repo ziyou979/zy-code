@@ -1,20 +1,23 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import { extname, isAbsolute, resolve } from 'node:path'
-import { fileHistoryEnabled, fileHistoryTrackEdit } from 'src/services/file-persistence/fileHistory.js'
+import {
+  fileHistoryEnabled,
+  fileHistoryTrackEdit,
+} from 'src/services/file-persistence/fileHistory.js'
 import { z } from 'zod/v4'
 import { buildTool, type ToolDef, type ToolUseContext } from '../../tools/tool.js'
 import type { NotebookCell, NotebookContent } from '../../types/notebook.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import { isENOENT } from '../../utils/errors.js'
-import { getFileModificationTime, writeTextContent } from '../../utils/file.js'
-import { readFileSyncWithMetadata } from '../../utils/fileRead.js'
+import { getFileModificationTime, writeTextContent } from '../../services/infra/file.js'
+import { readFileSyncWithMetadata } from '../../services/file-persistence/fileRead.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { parseCellId } from '../../services/attachments/notebook.js'
 import { checkWritePermissionForTool } from '../../services/permissions/filesystem.js'
 import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import { NOTEBOOK_EDIT_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, PROMPT } from './prompt.js'
 import {

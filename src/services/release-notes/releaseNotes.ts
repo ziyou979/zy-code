@@ -4,10 +4,10 @@ import axios from 'axios'
 import { coerce } from 'semver'
 import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
-import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir, isInternalBuild } from '../../services/infra/envUtils.js'
 import { toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
-import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
+import { logError } from '../../services/infra/log.js'
+import { isEssentialTrafficOnly } from '../telemetry/privacyLevel.js'
 import { gt } from '../../utils/semver.js'
 
 const MAX_RELEASE_NOTES_SHOWN = 5

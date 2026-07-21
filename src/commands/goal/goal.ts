@@ -8,7 +8,7 @@ import { getTotalInputTokens } from '../../services/cost/costTracker.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { LocalJSXCommandCall } from '../types.js'
 import { checkHasTrustDialogAccepted } from '../../services/config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import {
   shouldAllowManagedHooksOnly,
   shouldDisableAllHooksIncludingManaged,

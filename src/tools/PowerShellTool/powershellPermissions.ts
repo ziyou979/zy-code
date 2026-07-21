@@ -18,8 +18,8 @@ import {
 import { containsVulnerableUncPath } from '../../shell-eval/shared/readOnlyCommandValidation.js'
 import type { ToolPermissionContext, ToolUseContext } from '../../tools/tool.js'
 import type { PermissionDecisionReason, PermissionResult } from '../../types/permissions.js'
-import { getCwd } from '../../utils/cwd.js'
-import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { isCurrentDirectoryBareGitRepo } from '../../services/infra/git.js'
 import type { PermissionRule } from '../../services/permissions/permissionRule.js'
 import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import {

@@ -14,16 +14,16 @@ import {
 } from '../../tasks/local-agent-task/LocalAgentTask.js'
 import { isMainSessionTask } from '../../tasks/localMainSessionTask.js'
 import { toAgentId } from '../../types/ids.js'
-import { generateRequestId } from '../../utils/agentId.js'
+import { generateRequestId } from '../../services/agent/agentId.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { truncate } from '../../utils/format.js'
-import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
+import { gracefulShutdown } from '../../bootstrap/lifecycle/gracefulShutdown.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { parseAddress } from '../../utils/peerAddress.js'
+import { parseAddress } from '../../services/bridge/peerAddress.js'
 import { semanticBoolean } from '../../utils/semanticBoolean.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   getAgentId,
   getAgentName,
@@ -31,13 +31,13 @@ import {
   getTeamName,
   isTeamLead,
   isTeammate,
-} from '../../utils/teammate.js'
+} from '../../services/swarm/teammate.js'
 import {
   createShutdownApprovedMessage,
   createShutdownRejectedMessage,
   createShutdownRequestMessage,
   writeToMailbox,
-} from '../../utils/teammateMailbox.js'
+} from '../../services/swarm/teammateMailbox.js'
 import { resumeAgentBackground } from '../AgentTool/resumeAgent.js'
 import { SEND_MESSAGE_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, getPrompt } from './prompt.js'
@@ -765,7 +765,7 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
       }
       if (addr.scheme === 'uds') {
         /* eslint-disable @typescript-eslint/no-require-imports */
-        const { sendToUdsSocket } = require('../../utils/udsClient.js')
+        const { sendToUdsSocket } = require('../../services/bridge/udsClient.js')
         /* eslint-enable @typescript-eslint/no-require-imports */
         try {
           await (sendToUdsSocket as (target: string, message: string) => Promise<void>)(

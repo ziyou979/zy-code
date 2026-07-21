@@ -26,9 +26,9 @@ import {
   createAttachmentMessage,
   getQueuedCommandAttachments,
 } from '../../services/attachments/attachments.js'
-import { removeByFilter } from '../../utils/messageQueueManager.js'
+import { removeByFilter } from '../../services/input/messageQueueManager.js'
 import { getQuerySourceForREPL } from '../../services/analytics/querySource.js'
-import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
+import { buildEffectiveSystemPrompt } from '../../services/messages/systemPrompt.js'
 
 export type UseReplBackgroundQueryParams = {
   abortController: AbortController | null

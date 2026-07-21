@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react'
-import { Mailbox } from '../utils/mailbox.js'
+import { Mailbox } from '../services/swarm/mailbox.js'
 
 const MailboxContext = createContext<Mailbox | undefined>(undefined)
 type Props = {

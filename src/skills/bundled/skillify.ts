@@ -1,6 +1,6 @@
 import { getSessionMemoryContent } from '../../services/session-memory/sessionMemoryUtils.js'
 import type { Message } from '../../types/message.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 

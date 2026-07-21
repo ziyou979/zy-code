@@ -15,8 +15,8 @@ import type { Tool, ToolUseContext } from '../tools/tool.js'
 import { findToolByName } from '../tools/tool.js'
 import type { Message as MessageType } from '../types/message.js'
 import type { PermissionAskDecision, PermissionUpdate } from '../types/permissions.js'
-import { logForDebugging } from '../utils/debug.js'
-import { gracefulShutdown } from '../utils/gracefulShutdown.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { gracefulShutdown } from '../bootstrap/lifecycle/gracefulShutdown.js'
 
 type UseDirectConnectResult = {
   isRemoteMode: boolean

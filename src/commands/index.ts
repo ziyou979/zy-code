@@ -2,7 +2,7 @@
 import { tSync } from '../i18n/index.js'
 import { COMMAND_DESCRIPTION_I18N_KEYS } from '../commands/descriptionI18n.js'
 import { isBgSession } from '../services/session/concurrentSessions.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 import addDir from '../commands/add-dir/index.js'
 import background from 'src/commands/background/index.js'
 import goal from '../commands/goal/index.js'
@@ -84,9 +84,9 @@ import perfIssue from '../commands/perf-issue/index.js'
 import sandboxToggle from '../commands/sandbox-toggle/index.js'
 import chrome from '../commands/chrome/index.js'
 import stickers from '../commands/stickers/index.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 import { toError } from '../utils/errors.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { clearSkillCaches, getDynamicSkills, getSkillDirCommands } from '../skills/loadSkillsDir.js'
 import { getBundledSkills } from '../skills/bundledSkills.js'
 import { getBuiltinPluginSkillCommands } from '../services/plugins/builtinRegistry.js'
@@ -130,7 +130,9 @@ if (feature('KAIROS')) {
   briefCommand = require('../commands/brief.js').default as Command
 }
 
-const assistantCommand = feature('KAIROS') ? require('../commands/assistant/index.js').default : null
+const assistantCommand = feature('KAIROS')
+  ? require('../commands/assistant/index.js').default
+  : null
 const bridge = feature('BRIDGE_MODE') ? require('../commands/bridge/index.js').default : null
 let remoteControlServerCommand: Command | null = null
 if (feature('DAEMON')) {

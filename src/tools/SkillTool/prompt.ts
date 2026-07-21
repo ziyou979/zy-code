@@ -1,6 +1,10 @@
 import { memoize } from 'lodash-es'
 import type { Command } from 'src/commands/index.js'
-import { getCommandName, getSkillToolCommands, getSlashCommandToolSkills } from 'src/commands/index.js'
+import {
+  getCommandName,
+  getSkillToolCommands,
+  getSlashCommandToolSkills,
+} from 'src/commands/index.js'
 import { COMMAND_NAME_TAG } from '../../constants/xml.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import {
@@ -8,11 +12,11 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { count } from '../../utils/array.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { toError } from '../../utils/errors.js'
 import { truncate } from '../../utils/format.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 
 // Skill listing gets 1% of the context window (in characters)
 export const SKILL_BUDGET_CONTEXT_PERCENT = 0.01

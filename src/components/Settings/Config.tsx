@@ -34,7 +34,7 @@ import {
   hasAutoModeOptInAnySource,
   transitionPlanAutoMode,
 } from '../../services/permissions/permissionSetup.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -53,7 +53,7 @@ import {
   getExternalAgentsMdIncludes,
   getMemoryFiles,
   hasExternalAgentsMdIncludes,
-} from 'src/utils/agentsMd.js'
+} from 'src/services/memory/agentsMd.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'
@@ -68,7 +68,7 @@ import {
 } from '../../services/settings/settings.js'
 import { getUserMsgOptIn, setUserMsgOptIn } from '../../bootstrap/runtime/runtimeContext.js'
 import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles.js'
-import { isEnvTruthy, isRunningOnHomespace, isInternalBuild } from 'src/utils/envUtils.js'
+import { isEnvTruthy, isRunningOnHomespace, isInternalBuild } from 'src/services/infra/envUtils.js'
 import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
@@ -2133,8 +2133,7 @@ export function Config({
                               </>
                             ) : setting_2.id === 'theme' ? (
                               <Text color={isSelected ? 'suggestion' : undefined}>
-                                {THEME_LABELS[setting_2.value.toString()] ??
-                                  setting_2.value.toString()}
+                                {getThemeLabel(setting_2.value.toString())}
                               </Text>
                             ) : setting_2.id === 'notifChannel' ? (
                               <Text color={isSelected ? 'suggestion' : undefined}>
@@ -2246,14 +2245,17 @@ function teammateModelDisplayString(value: string | null | undefined): string {
   }
   return modelDisplayString(value)
 }
-const THEME_LABELS: Record<string, string> = {
-  auto: tSync('settings.themeAuto'),
-  dark: tSync('settings.themeDark'),
-  light: tSync('settings.themeLight'),
-  'dark-daltonized': tSync('settings.themeDarkDaltonized'),
-  'light-daltonized': tSync('settings.themeLightDaltonized'),
-  'dark-ansi': tSync('settings.themeDarkAnsi'),
-  'light-ansi': tSync('settings.themeLightAnsi'),
+function getThemeLabel(value: string): string {
+  const labels: Record<string, string> = {
+    auto: tSync('settings.themeAuto'),
+    dark: tSync('settings.themeDark'),
+    light: tSync('settings.themeLight'),
+    'dark-daltonized': tSync('settings.themeDarkDaltonized'),
+    'light-daltonized': tSync('settings.themeLightDaltonized'),
+    'dark-ansi': tSync('settings.themeDarkAnsi'),
+    'light-ansi': tSync('settings.themeLightAnsi'),
+  }
+  return labels[value] ?? value
 }
 function NotifChannelLabel({ value }: { value: string }) {
   switch (value) {

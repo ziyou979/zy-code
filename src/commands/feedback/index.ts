@@ -1,7 +1,7 @@
 import type { Command } from '../../commands/index.js'
 import { isPolicyAllowed } from '../../services/policy-limits/index.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
+import { isEssentialTrafficOnly } from '../../services/telemetry/privacyLevel.js'
 
 const feedback = {
   aliases: ['bug'],

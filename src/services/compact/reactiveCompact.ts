@@ -8,17 +8,17 @@ import type {
   Message,
   UserMessage,
 } from '../../types/message.js'
-import { logForDebugging } from '../../utils/debug.js'
-import type { CacheSafeParams } from '../../utils/forkedAgent.js'
-import { runForkedAgent } from '../../utils/forkedAgent.js'
-import { logError } from '../../utils/log.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import type { CacheSafeParams } from '../../services/agent/forkedAgent.js'
+import { runForkedAgent } from '../../services/agent/forkedAgent.js'
+import { logError } from '../../services/infra/log.js'
 import { createCompactBoundaryMessage, createUserMessage } from '../messages/constructors.js'
 import { getAssistantMessageText, getLastAssistantMessage } from '../messages/predicates.js'
 import {
   getTokenUsage,
   tokenCountFromLastAPIResponse,
   tokenCountWithEstimation,
-} from '../../utils/tokens.js'
+} from '../../services/api/tokens.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

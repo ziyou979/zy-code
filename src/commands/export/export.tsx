@@ -4,9 +4,9 @@ import { ExportDialog } from '../../components/ExportDialog.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import type { Message } from '../../types/message.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import { renderMessagesToPlainText } from '../../components/Runtime/ExportRenderer.js'
-import { writeFileSync_DEPRECATED } from '../../utils/slowOperations.js'
+import { writeFileSync_DEPRECATED } from '../../services/infra/slowOperations.js'
 
 function formatTimestamp(date: Date): string {
   const year = date.getFullYear()

@@ -7,7 +7,7 @@
 
 import { homedir, userInfo } from 'node:os'
 import { join } from 'node:path'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../../services/infra/envUtils.js'
 
 /** macOS preference domain for ZY Code MDM profiles. */
 export const MACOS_PREFERENCE_DOMAIN = 'com.zy.zycode'

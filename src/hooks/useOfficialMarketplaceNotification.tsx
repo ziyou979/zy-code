@@ -1,5 +1,5 @@
 import { Text } from '../ink/index.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { checkAndInstallOfficialMarketplace } from '../services/plugins/officialMarketplaceStartupCheck.js'
 import { useStartupNotification } from './notifs/useStartupNotification.js'
 

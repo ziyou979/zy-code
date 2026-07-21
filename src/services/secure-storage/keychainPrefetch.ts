@@ -22,7 +22,7 @@
  */
 
 import { execFile } from 'node:child_process'
-import { isBareMode } from '../../utils/envUtils.js'
+import { isBareMode } from '../../services/infra/envUtils.js'
 import {
   CREDENTIALS_SERVICE_SUFFIX,
   getMacOsKeychainStorageServiceName,

@@ -5,9 +5,9 @@ import { getInlinePlugins, getSessionId } from '../../bootstrap/runtime/runtimeC
 import type { Command } from '../../commands/types.js'
 import { getPluginErrorMessage, type LoadedPlugin, type PluginError } from './types.js'
 import { parseArgumentNames, substituteArguments } from '../../utils/argumentParser.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { EFFORT_LEVELS, parseEffortValue } from '../effort/effort.js'
-import { isBareMode } from '../../utils/envUtils.js'
+import { isBareMode } from '../../services/infra/envUtils.js'
 import { isENOENT } from '../../utils/errors.js'
 import {
   coerceDescriptionToString,
@@ -16,7 +16,7 @@ import {
   parseFrontmatter,
   parseShellFrontmatter,
 } from '../markdown/frontmatterParser.js'
-import { getFsImplementation, isDuplicatePath } from '../../utils/fsOperations.js'
+import { getFsImplementation, isDuplicatePath } from '../../services/infra/fsOperations.js'
 import {
   extractDescriptionFromMarkdown,
   parseSlashCommandToolsFromFrontmatter,

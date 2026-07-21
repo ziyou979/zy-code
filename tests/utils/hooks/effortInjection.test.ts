@@ -40,7 +40,7 @@ async function setupMocks() {
   await spread('../../../src/services/sessionStorage.js', {
     getTranscriptPathForSession: () => '/t',
   })
-  await spread('../../../src/utils/cwd.js', { getCwd: () => '/cwd' })
+  await spread('../../../src/services/environment/cwd.js', { getCwd: () => '/cwd' })
 }
 
 describe('3.3 effort 注入', () => {

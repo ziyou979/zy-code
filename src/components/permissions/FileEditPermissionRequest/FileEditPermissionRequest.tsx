@@ -1,6 +1,6 @@
 import { basename, relative } from 'node:path'
 import { FileEditToolDiff } from 'src/components/FileEditToolDiff.js'
-import { getCwd } from 'src/utils/cwd.js'
+import { getCwd } from 'src/services/environment/cwd.js'
 import type { z } from 'zod/v4'
 import { tSync } from '../../../i18n/index.js'
 import { Text } from '../../../ink/index.js'

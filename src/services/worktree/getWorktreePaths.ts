@@ -1,7 +1,7 @@
 import { sep } from 'node:path'
 import { logEvent } from '../analytics/index.js'
 import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
-import { gitExe } from '../../utils/git.js'
+import { gitExe } from '../../services/infra/git.js'
 
 /**
  * Returns the paths of all worktrees for the current git repository.

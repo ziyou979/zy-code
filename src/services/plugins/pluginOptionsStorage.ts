@@ -15,8 +15,8 @@
 import memoize from 'lodash-es/memoize.js'
 import { getSecureStorage } from 'src/services/secure-storage/index.js'
 import type { LoadedPlugin } from './types.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logError } from '../../utils/log.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logError } from '../../services/infra/log.js'
 import type { SettingSource } from '../settings/constants.js'
 import {
   getInitialSettings,

@@ -6,8 +6,8 @@ import { type CodeSession, fetchCodeSessionsFromSessionsAPI } from 'src/services
 import { Box, Text, useInput } from '../ink/index.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
-import { logForDebugging } from '../utils/debug.js'
-import { detectCurrentRepository } from '../utils/detectRepository.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { detectCurrentRepository } from '../services/git/detectRepository.js'
 import { formatRelativeTime } from '../utils/format.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { Select } from './CustomSelect/index.js'
@@ -22,7 +22,6 @@ type Props = {
   isEmbedded?: boolean
 }
 type LoadErrorType = 'network' | 'auth' | 'api' | 'other'
-const UPDATED_STRING = tSync('resumeTask.updated')
 const SPACE_BETWEEN_TABLE_COLUMNS = '  '
 export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): React.ReactNode {
   const { rows } = useTerminalSize()
@@ -168,8 +167,9 @@ export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): R
     ...session_0,
     timeString: formatRelativeTime(new Date(session_0.updated_at)),
   }))
+  const updatedString = tSync('resumeTask.updated')
   const maxTimeStringLength = Math.max(
-    UPDATED_STRING.length,
+    updatedString.length,
     ...sessionMetadata.map((meta) => meta.timeString.length),
   )
   const options = sessionMetadata.map(({ timeString, title, id }) => {
@@ -210,7 +210,7 @@ export function ResumeTask({ onSelect, onCancel, isEmbedded = false }: Props): R
       <Box flexDirection="column" marginTop={1} flexGrow={1}>
         <Box marginLeft={2}>
           <Text bold>
-            {UPDATED_STRING.padEnd(maxTimeStringLength, ' ')}
+            {updatedString.padEnd(maxTimeStringLength, ' ')}
             {SPACE_BETWEEN_TABLE_COLUMNS}
             {tSync('resumeTask.sessionTitle')}
           </Text>

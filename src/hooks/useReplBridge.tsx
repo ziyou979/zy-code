@@ -22,10 +22,10 @@ import { useAppState, useAppStateStore, useSetAppState } from '../state/AppState
 import type { PermissionMode, WireMessage } from '../types/index.js'
 import type { Message } from '../types/message.js'
 import type { WireControlResponse } from '../types/wire/control.js'
-import { getCwd } from '../utils/cwd.js'
-import { logForDebugging } from '../utils/debug.js'
+import { getCwd } from '../services/environment/cwd.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { errorMessage } from '../utils/errors.js'
-import { enqueue } from '../utils/messageQueueManager.js'
+import { enqueue } from '../services/input/messageQueueManager.js'
 import { buildSystemInitMessage } from '../services/messages/systemInit.js'
 import {
   createSystemMessage,

@@ -7,7 +7,7 @@ import { enterTeammateView, exitTeammateView } from 'src/state/teammateViewHelpe
 import { isPanelAgentTask } from 'src/tasks/local-agent-task/LocalAgentTask.js'
 import { getPillLabel, pillNeedsCta } from 'src/tasks/pillLabel.js'
 import { isBackgroundTask, type TaskState } from 'src/tasks/types.js'
-import { calculateHorizontalScrollWindow } from 'src/utils/horizontalScroll.js'
+import { calculateHorizontalScrollWindow } from 'src/services/environment/horizontalScroll.js'
 import { ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
@@ -16,7 +16,7 @@ import {
   AGENT_COLORS,
   type AgentColorName,
 } from '../../tools/AgentTool/agentColorManager.js'
-import type { Theme } from '../../utils/theme.js'
+import type { Theme } from '../../services/environment/theme.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { shouldHideTasksFooter } from './TaskStatusUtils.js'
 

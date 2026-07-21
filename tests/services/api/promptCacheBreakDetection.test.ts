@@ -77,11 +77,11 @@ describe('promptCacheBreakDetection', () => {
         logEvent: () => {},
         default: {},
       }))
-      mock.module('../../../src/utils/debug.js', () => ({
+      mock.module('../../../src/services/infra/debug.js', () => ({
         logForDebugging: () => {},
         default: {},
       }))
-      mock.module('../../../src/utils/log.js', () => ({
+      mock.module('../../../src/services/infra/log.js', () => ({
         logError: () => {},
         default: {},
       }))
@@ -126,11 +126,11 @@ describe('promptCacheBreakDetection', () => {
         logEvent: () => {},
         default: {},
       }))
-      mock.module('../../../src/utils/debug.js', () => ({
+      mock.module('../../../src/services/infra/debug.js', () => ({
         logForDebugging: () => {},
         default: {},
       }))
-      mock.module('../../../src/utils/log.js', () => ({
+      mock.module('../../../src/services/infra/log.js', () => ({
         logError: () => {},
         default: {},
       }))
@@ -178,11 +178,11 @@ describe('promptCacheBreakDetection', () => {
         logEvent: () => {},
         default: {},
       }))
-      mock.module('../../../src/utils/debug.js', () => ({
+      mock.module('../../../src/services/infra/debug.js', () => ({
         logForDebugging: () => {},
         default: {},
       }))
-      mock.module('../../../src/utils/log.js', () => ({
+      mock.module('../../../src/services/infra/log.js', () => ({
         logError: () => {},
         default: {},
       }))
@@ -225,11 +225,11 @@ describe('promptCacheBreakDetection', () => {
         logEvent: () => {},
         default: {},
       }))
-      mock.module('../../../src/utils/debug.js', () => ({
+      mock.module('../../../src/services/infra/debug.js', () => ({
         logForDebugging: () => {},
         default: {},
       }))
-      mock.module('../../../src/utils/log.js', () => ({
+      mock.module('../../../src/services/infra/log.js', () => ({
         logError: () => {},
         default: {},
       }))

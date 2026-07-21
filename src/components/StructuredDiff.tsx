@@ -3,7 +3,7 @@ import { memo } from 'react'
 import { useSettings } from '../hooks/useSettings.js'
 import { Box, NoSelect, RawAnsi, useTheme } from '../ink/index.js'
 import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
-import sliceAnsi from '../utils/sliceAnsi.js'
+import sliceAnsi from '../terminal-ui/sliceAnsi.js'
 import { expectColorDiff } from './StructuredDiff/colorDiff.js'
 import { StructuredDiffFallback } from './StructuredDiff/Fallback.js'
 

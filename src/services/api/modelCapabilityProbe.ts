@@ -3,7 +3,7 @@
 // 能力动态降级写入运行时缓存，避免后续请求重复触发相同错误。
 // 与 ~/.zy/model-capabilities.json 互补：本地白名单优先，API error 用作运行时反向探测。
 
-import { createDebugLog } from '../../utils/debug.js'
+import { createDebugLog } from '../../services/infra/debug.js'
 
 const log = createDebugLog('capability-probe')
 

@@ -13,7 +13,7 @@ import {
   MAX_CONCURRENT_IN_PROCESS_AGENTS,
   MAX_RESIDENT_AGENTS,
 } from '../../tasks/in-process-teammate-task/types.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 
 export type CapacityCheckResult = {
   /** 是否可以继续 spawn */

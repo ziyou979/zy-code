@@ -3,7 +3,7 @@ import { feature } from 'bun:bundle'
 // cycle — authModule.foo is a live binding, so by the time the helpers below
 // call it, auth.js is fully loaded.
 import * as authModule from '../services/auth/auth.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { isEnvTruthy } from '../services/infra/envUtils.js'
 /**
  * Runtime check for bridge mode entitlement.
  *

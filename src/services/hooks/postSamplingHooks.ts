@@ -2,8 +2,8 @@ import type { QuerySource } from '../../constants/querySource.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import type { Message } from '../../types/message.js'
 import { toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
-import type { SystemPrompt } from '../../utils/systemPromptType.js'
+import { logError } from '../../services/infra/log.js'
+import type { SystemPrompt } from '../api/systemPromptType.js'
 
 // Post-sampling hook - 尚未在 settings.json 配置中暴露，仅供程序内部使用
 

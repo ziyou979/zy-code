@@ -11,7 +11,7 @@ import {
   onTasksUpdated,
   resetTaskList,
 } from '../services/tasks-service/tasks.js'
-import { isTeamLead } from '../utils/teammate.js'
+import { isTeamLead } from '../services/swarm/teammate.js'
 
 const HIDE_DELAY_MS = 5000
 const DEBOUNCE_MS = 50

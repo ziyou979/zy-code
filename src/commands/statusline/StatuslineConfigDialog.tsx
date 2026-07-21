@@ -27,8 +27,8 @@ import { useAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import { getGlobalConfig } from '../../services/config/config.js'
 import { getEffectiveStatuslineConfig } from '../../services/settings/statuslineConfig.js'
-import { resolveThemeSetting } from '../../utils/systemTheme.js'
-import { getTheme, type Theme } from '../../utils/theme.js'
+import { resolveThemeSetting } from '../../services/environment/systemTheme.js'
+import { getTheme, type Theme } from '../../services/environment/theme.js'
 
 type Mode = 'main' | 'icon' | 'color'
 

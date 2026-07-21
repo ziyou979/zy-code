@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import React, { useContext } from 'react'
 import Text from '../../ink/components/Text.js'
 import type { Color, Styles } from '../../ink/styles.js'
-import { getTheme, type Theme } from '../../utils/theme.js'
+import { getTheme, type Theme } from '../../services/environment/theme.js'
 import { useTheme } from './ThemeProvider.js'
 
 /** Colors uncolored ThemedText in the subtree. Precedence: explicit `color` >

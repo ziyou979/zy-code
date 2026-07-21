@@ -20,8 +20,8 @@ async function setupMocks() {
     ...state,
     getSessionId: () => 'sess-test',
   }))
-  const envUtils = await import('../../../src/utils/envUtils.js')
-  mock.module('../../../src/utils/envUtils.js', () => ({
+  const envUtils = await import('../../../src/services/infra/envUtils.js')
+  mock.module('../../../src/services/infra/envUtils.js', () => ({
     ...envUtils,
     getZyConfigHomeDir: () => tmpRoot,
   }))

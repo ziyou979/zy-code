@@ -8,7 +8,7 @@ import {
 import { shouldUseSessionMemoryCompaction } from '../../services/compact/sessionMemoryCompact.js'
 import { logOTelEvent } from '../../services/telemetry/events.js'
 import type { Message } from '../../types/message.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { isCompactBoundaryMessage } from '../../services/messages/./predicates.js'
 import { useSurveyState } from './useSurveyState.js'
 

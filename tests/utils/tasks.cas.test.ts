@@ -11,7 +11,7 @@ import {
   type Task,
   updateTask,
   updateTaskCAS,
-} from '../../src/utils/tasks.js'
+} from '../../src/services/tasks-service/tasks.js'
 import { createTestDataDirectory } from '../_helpers/testDataDirectory.js'
 
 const testData = await createTestDataDirectory('zy-test-tasks-cas', {

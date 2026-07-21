@@ -3,7 +3,7 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import * as path from 'node:path'
 import { errorMessage, getErrnoCode, isENOENT } from '../../utils/errors.js'
 import { FRONTMATTER_REGEX } from '../markdown/frontmatterParser.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import { parseYaml } from '../../utils/yaml.js'
 import { PluginHooksSchema } from './schemas.js'
 import {

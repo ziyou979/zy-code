@@ -1,15 +1,15 @@
 import type { AppState } from '../../state/AppStateStore.js'
 import type { Message } from '../../types/message.js'
 import { count } from '../../utils/array.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { toError } from '../../utils/errors.js'
 import {
   type CacheSafeParams,
   createCacheSafeParams,
   runForkedAgent,
-} from '../../utils/forkedAgent.js'
+} from '../../services/agent/forkedAgent.js'
 import type { REPLHookContext } from '../hooks/postSamplingHooks.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { createUserMessage } from '../messages/constructors.js'
 import { getLastAssistantMessage } from '../messages/predicates.js'
 import {

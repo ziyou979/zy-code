@@ -1,11 +1,11 @@
 import type { AsyncHookJSONOutput, HookEvent, SyncHookJSONOutput } from 'src/types/index.js'
-import { createDebugLog } from '../../utils/debug.js'
+import { createDebugLog } from '../../services/infra/debug.js'
 import type { ShellCommand } from '../shell/shellCommand.js'
 
 const hookLog = createDebugLog('hooks')
 
 import { invalidateSessionEnvCache } from '../environment/sessionEnvironment.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import { emitHookResponse, startHookProgressInterval } from './hookEvents.js'
 
 export type PendingAsyncHook = {

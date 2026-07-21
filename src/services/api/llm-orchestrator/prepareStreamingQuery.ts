@@ -10,17 +10,17 @@ import type {
   TaskBudgetParam,
 } from '../../../types/llm.js'
 import type { AssistantMessage, Message, StreamEvent } from '../../../types/message.js'
-import { logAPIPrefix, toolToAPISchema } from '../../services/api/api.js'
+import { logAPIPrefix, toolToAPISchema } from '../api.js'
 import { getMergedBetas } from '../../feature-flags/betas.js'
 import { resolveAppliedEffort } from '../../effort/effort.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../../services/infra/envUtils.js'
 import { createUserMessage } from '../../messages/constructors.js'
 import { ensureToolResultPairing, normalizeMessagesForAPI } from '../../messages/api.js'
 import {
   stripCallerFieldFromAssistantMessage,
   stripToolReferenceBlocksFromUserMessage,
 } from '../../messages/prune.js'
-import { asSystemPrompt, type SystemPrompt } from '../../utils/systemPromptType.js'
+import { asSystemPrompt, type SystemPrompt } from '../systemPromptType.js'
 import { getAPIContextManagement } from '../../compact/apiMicrocompact.js'
 import { currentLimits } from '../../zyAiLimits.js'
 import { feature } from 'bun:bundle'
@@ -36,12 +36,15 @@ import {
 import { AFK_MODE_BETA_HEADER, CONTEXT_MANAGEMENT_BETA_HEADER } from 'src/constants/betas.js'
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/services/claude-in-chrome/common.js'
 import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/services/claude-in-chrome/prompt.js'
-import { getToolSearchBetaHeader, shouldIncludeExperimentalBetas } from 'src/services/feature-flags/betas.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import {
+  getToolSearchBetaHeader,
+  shouldIncludeExperimentalBetas,
+} from 'src/services/feature-flags/betas.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
 import { type EffortLevel } from 'src/services/effort/effort.js'
 import { isMcpInstructionsDeltaEnabled } from 'src/services/mcp/mcpInstructionsDelta.js'
-import { queryCheckpoint } from 'src/utils/queryProfiler.js'
-import { type ThinkingConfig } from 'src/utils/thinking.js'
+import { queryCheckpoint } from 'src/services/query/queryProfiler.js'
+import { type ThinkingConfig } from 'src/services/messages/thinking.js'
 import {
   extractDiscoveredToolNames,
   isDeferredToolsDeltaEnabled,
@@ -58,8 +61,8 @@ import {
   isDeferredTool,
   TOOL_SEARCH_TOOL_NAME,
 } from '../../../tools/ToolSearchTool/prompt.js'
-import { count } from '../../utils/array.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { count } from '../../../utils/array.js'
+import { jsonStringify } from '../../../services/infra/slowOperations.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { logEvent } from '../../analytics/index.js'
 import { consumePendingCacheEdits, getPinnedCacheEdits } from '../../compact/microCompact.js'

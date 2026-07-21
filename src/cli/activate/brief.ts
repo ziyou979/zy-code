@@ -4,7 +4,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 /**
  * 处理 `--brief` flag / ZY_CODE_BRIEF env：检查 KAIROS / KAIROS_BRIEF 授权后，
  * 设置 userMsgOptIn 并上报 zy_brief_mode_enabled 事件。

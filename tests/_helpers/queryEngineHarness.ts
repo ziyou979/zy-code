@@ -58,8 +58,8 @@ export async function installQueryEngineMocks(): Promise<void> {
     processUserInput: async () => _processResult,
   }))
 
-  const queryMod = await import('../../src/query.js')
-  mock.module('src/query.js', () => ({
+  const queryMod = await import('../../src/query/index.js')
+  mock.module('src/query/index.js', () => ({
     ...queryMod,
     // eslint-disable-next-line require-yield
     query: async function* fakeQuery() {
@@ -144,7 +144,7 @@ export async function runEngine(
     ...opts.processResult,
   }
 
-  const { QueryEngine } = await import('../../src/queryEngine.js')
+  const { QueryEngine } = await import('../../src/query/queryEngine.js')
 
   let appState: Record<string, unknown> = {
     toolPermissionContext: {

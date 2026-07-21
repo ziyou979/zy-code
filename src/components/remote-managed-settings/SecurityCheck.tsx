@@ -8,7 +8,7 @@ import {
   type SecurityCheckResult,
 } from '../../services/remote-managed-settings/securityPolicy.js'
 import { AppStateProvider } from '../../state/AppState.js'
-import { getBaseRenderOptions } from '../../utils/renderOptions.js'
+import { getBaseRenderOptions } from '../../terminal-ui/renderOptions.js'
 import type { SettingsJson } from '../../services/settings/types.js'
 
 /**

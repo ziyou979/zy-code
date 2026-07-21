@@ -7,14 +7,14 @@ import {
   isSuppressible403,
 } from './bridgeApi.js'
 import type { WireConfig, WireApiClient } from './types.js'
-import { logForDebugging } from '../utils/debug.js'
-import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { logForDiagnosticsNoPII } from '../services/telemetry/diagLogs.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
-import { registerCleanup } from '../utils/cleanupRegistry.js'
+import { registerCleanup } from '../services/cleanup/cleanupRegistry.js'
 import {
   handleIngressMessage,
   handleServerControlRequest,
@@ -34,7 +34,7 @@ import {
   createV2ReplTransport,
 } from './replBridgeTransport.js'
 import { updateSessionIngressAuthToken } from '../services/auth/sessionIngressAuth.js'
-import { isEnvTruthy, isInProtectedNamespace } from '../utils/envUtils.js'
+import { isEnvTruthy, isInProtectedNamespace } from '../services/infra/envUtils.js'
 import { validateWireId } from './bridgeApi.js'
 import { describeAxiosError, extractHttpStatus, logWireSkip } from './debugUtils.js'
 import type { Message } from '../types/message.js'

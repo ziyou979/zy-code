@@ -8,20 +8,20 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { eagerParseCliFlag } from '../../utils/cliArgs.js'
+import { eagerParseCliFlag } from '../../services/environment/cliArgs.js'
 import { errorMessage, isENOENT } from '../../utils/errors.js'
-import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'
+import { getFsImplementation, safeResolvePath } from '../../services/infra/fsOperations.js'
 import { safeParseJSON } from '../../utils/json.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { parseSettingSourcesFlag } from '../../services/settings/constants.js'
 import {
   getManagedSettingsKeysForLogging,
   getSettingsForSource,
 } from '../../services/settings/settings.js'
 import { resetSettingsCache } from '../../services/settings/settingsCache.js'
-import { writeFileSync_DEPRECATED } from '../../utils/slowOperations.js'
+import { writeFileSync_DEPRECATED } from '../../services/infra/slowOperations.js'
 import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
-import { generateTempFilePath } from '../../utils/tempfile.js'
+import { generateTempFilePath } from '../../services/file-persistence/tempfile.js'
 /**
  * 将托管设置键记录到 Statsig 用于分析。
  * 在 init() 完成后调用，以确保在模型解析之前

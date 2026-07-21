@@ -8,7 +8,7 @@ import { Box, Text, useTheme } from '../../ink/index.js'
 import { getExtensionInventory } from '../../services/diagnostics/extensionInventory.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import { useAppState } from '../../state/AppState.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import { getCurrentSessionTitle } from '../../services/sessionStorage.js'
 import {
   buildAccountProperties,
@@ -23,8 +23,8 @@ import {
   type Diagnostic,
   getModelDisplayLabel,
   type Property,
-} from '../../utils/status.js'
-import type { ThemeName } from '../../utils/theme.js'
+} from '../status/status.js'
+import type { ThemeName } from '../../services/environment/theme.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 
 type Props = {

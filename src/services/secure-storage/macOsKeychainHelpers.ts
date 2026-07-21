@@ -17,7 +17,7 @@
 import { createHash } from 'node:crypto'
 import { userInfo } from 'node:os'
 import { getOauthConfig } from 'src/constants/oauth.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import type { SecureStorageData } from './types.js'
 
 // Suffix distinguishing the OAuth credentials keychain entry from the legacy

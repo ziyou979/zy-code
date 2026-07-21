@@ -1,11 +1,11 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 
 const LOCK_FILENAME = 'computer-use.lock'
 

@@ -5,7 +5,11 @@
  * 客户端创建统一走 client.ts 的 getGoogleClient()，与其他 provider 路径共享基础设施。
  */
 
-import { GoogleGenerativeAI, type GenerateContentRequest, type CountTokensRequest } from '@google/generative-ai'
+import {
+  GoogleGenerativeAI,
+  type GenerateContentRequest,
+  type CountTokensRequest,
+} from '@google/generative-ai'
 import { getMainLoopModel, normalizeModelStringForAPI } from '../model/model.js'
 import type {
   CreateParams,
@@ -15,8 +19,8 @@ import type {
   StreamResult,
   ToolDefinition,
 } from '../../types/llm.js'
-import { createDebugLog } from '../../utils/debug.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { createDebugLog } from '../../services/infra/debug.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { getGoogleClient } from './client.js'
 import {
   buildGoogleRequestParams,
@@ -72,7 +76,9 @@ export class googleProviderAdapter implements LLMAdapter {
     )
 
     // SDK 类型严格区分联合类型，适配层需要类型断言
-    const result = await model.generateContentStream(requestParams as unknown as GenerateContentRequest)
+    const result = await model.generateContentStream(
+      requestParams as unknown as GenerateContentRequest,
+    )
 
     // Google SDK 的 stream 是 AsyncIterable<GenerateContentResponse>
     const googleStream = result.stream as unknown as AsyncIterable<GoogleGenerateContentResponse>
@@ -125,7 +131,9 @@ export class googleProviderAdapter implements LLMAdapter {
 
       // Google SDK 的 countTokens 接受 { contents } 或 { generateContentRequest } 参数
       // SDK countTokens 参数类型与自定义 Content 不兼容
-      const result = await generativeModel.countTokens({ contents } as unknown as CountTokensRequest)
+      const result = await generativeModel.countTokens({
+        contents,
+      } as unknown as CountTokensRequest)
 
       return result.totalTokens ?? null
     } catch (error) {

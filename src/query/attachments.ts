@@ -11,16 +11,16 @@ import {
   createAttachmentMessage,
   getAttachmentMessages,
 } from '../services/attachments/attachments.js'
-import { notifyCommandLifecycle } from '../utils/commandLifecycle.js'
+import { notifyCommandLifecycle } from '../services/hooks/commandLifecycle.js'
 import {
   getCommandsByMaxPriority,
   isSlashCommand,
   remove as removeFromQueue,
-} from '../utils/messageQueueManager.js'
+} from '../services/input/messageQueueManager.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const taskSummaryModule = feature('BG_SESSIONS')
-  ? (require('../utils/taskSummary.js') as typeof import('../utils/taskSummary.js'))
+  ? (require('../services/task-runtime/taskSummary.js') as typeof import('../services/task-runtime/taskSummary.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -43,7 +43,7 @@ export async function* injectAttachments(
   queryTracking: { chainId: string; depth: number },
   querySource: QuerySource,
   params: {
-    systemPrompt: import('../utils/systemPromptType.js').SystemPrompt
+    systemPrompt: import('../services/api/systemPromptType.js').SystemPrompt
     userContext: Record<string, string>
     systemContext: Record<string, string>
   },

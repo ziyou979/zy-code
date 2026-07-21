@@ -17,10 +17,13 @@ import {
   shouldSkipVersion,
 } from '../services/updater/autoUpdater.js'
 import { getGlobalConfig, isAutoUpdaterDisabled } from '../services/config/config.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { getCurrentInstallationType } from '../services/doctor/doctorDiagnostic.js'
-import { isDevEnv, isTestEnv } from '../utils/envUtils.js'
-import { installOrUpdateZyPackage, localInstallationExists } from '../services/native-installer/localInstaller.js'
+import { isDevEnv, isTestEnv } from '../services/infra/envUtils.js'
+import {
+  installOrUpdateZyPackage,
+  localInstallationExists,
+} from '../services/native-installer/localInstaller.js'
 import { gt, gte } from '../utils/semver.js'
 import { getInitialSettings } from '../services/settings/settings.js'
 

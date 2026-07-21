@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 
 export const CONTEXT_1M_BETA_HEADER = 'context-1m-2025-08-07'
 export const CONTEXT_MANAGEMENT_BETA_HEADER = 'context-management-2025-06-27'

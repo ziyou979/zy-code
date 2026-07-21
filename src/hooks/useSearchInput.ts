@@ -11,7 +11,7 @@ import {
   resetYankState,
   updateYankLength,
   yankPop,
-} from '../utils/cursor.js'
+} from '../terminal-ui/cursor.js'
 import { useTerminalSize } from './useTerminalSize.js'
 
 type UseSearchInputOptions = {

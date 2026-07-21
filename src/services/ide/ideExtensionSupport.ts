@@ -6,12 +6,12 @@ import {
   execFileNoThrowWithCwd,
   execSyncWithDefaults_DEPRECATED,
 } from '../shell/execFileNoThrow.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { logError } from '../../utils/log.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { logError } from '../../services/infra/log.js'
 import { getPlatform } from '../shell/platform.js'
 import { lt } from '../../utils/semver.js'
 import { sleep } from '../../utils/sleep.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import type { IdeType } from './ide.js'
 
 export const EXTENSION_ID = isInternalBuild() ? 'anthropic.zy-code-internal' : 'anthropic.zy-code'

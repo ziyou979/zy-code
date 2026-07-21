@@ -2,14 +2,14 @@ import { randomUUID } from 'node:crypto'
 import type { StdoutMessage } from 'src/types/wire/control.js'
 import type { WirePartialAssistantMessage } from 'src/types/wire/messages.js'
 import { decodeJwtExpiry } from '../../bridge/jwtUtils.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logForDiagnosticsNoPII } from '../../services/telemetry/diagLogs.js'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
-import { createAxiosInstance } from '../../utils/proxy.js'
+import { createAxiosInstance } from '../../services/http/proxy.js'
 import {
   registerSessionActivityCallback,
   unregisterSessionActivityCallback,
-} from '../../utils/sessionActivity.js'
+} from '../../services/session-storage/sessionActivity.js'
 import {
   getSessionIngressAuthHeaders,
   getSessionIngressAuthToken,
@@ -19,7 +19,7 @@ import type {
   SessionState,
 } from '../../services/session-state/sessionState.js'
 import { sleep } from '../../utils/sleep.js'
-import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 import { RetryableError, SerialBatchEventUploader } from './serialBatchEventUploader.js'
 import type { SSETransport, StreamClientEvent } from './sseTransport.js'
 import { WorkerStateUploader } from './workerStateUploader.js'

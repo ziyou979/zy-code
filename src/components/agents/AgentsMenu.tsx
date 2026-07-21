@@ -13,7 +13,7 @@ import {
   getActiveAgentsFromList,
 } from '../../tools/AgentTool/loadAgentsDir.js'
 import { toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import type { SettingSource } from '../../services/settings/constants.js'
 import { Select } from '../CustomSelect/select.js'
 import { Dialog } from '../design-system/Dialog.js'

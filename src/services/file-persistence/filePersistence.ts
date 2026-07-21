@@ -14,9 +14,9 @@ import {
   logEvent,
 } from '../analytics/index.js'
 import { type FilesApiConfig, uploadSessionFiles } from '../api/filesApi.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../environment/cwd.js'
 import { errorMessage } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { getSessionIngressAuthToken } from '../auth/sessionIngressAuth.js'
 import { findModifiedFiles, getEnvironmentKind, logDebug } from './outputsScanner.js'
 import {
@@ -116,7 +116,7 @@ export async function runFilePersistence(
       files: [],
       failed: [
         {
-          path: outputsDir,
+          filename: outputsDir,
           error: errorMessage(error),
         },
       ],
@@ -160,7 +160,7 @@ async function executeBYOCPersistence(
       files: [],
       failed: [
         {
-          path: outputsDir,
+          filename: outputsDir,
           error: `Too many files modified (${modifiedFiles.length}). Maximum: ${FILE_COUNT_LIMIT}.`,
         },
       ],

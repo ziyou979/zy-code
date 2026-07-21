@@ -4,7 +4,7 @@ import {
   getSessionId,
 } from '../../bootstrap/runtime/runtimeContext.js'
 import { checkHasTrustDialogAccepted } from '../config/config.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../environment/cwd.js'
 import { type EffortLevel, getCurrentHookEffortLevel } from '../effort/effort.js'
 import { getTranscriptPathForSession } from '../sessionStorage.js'
 

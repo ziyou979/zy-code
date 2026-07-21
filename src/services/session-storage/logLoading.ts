@@ -37,8 +37,8 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import { uniq } from '../../utils/array.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import type { FileHistorySnapshot } from '../file-persistence/fileHistory.js'
 import { getWorktreePaths } from '../worktree/getWorktreePaths.js'
 import { parseJSONL } from '../../utils/json.js'
@@ -51,9 +51,9 @@ import {
   readHeadAndTail,
   readTranscriptForLoad,
   SKIP_PRECOMPACT_THRESHOLD,
-} from '../../utils/sessionStoragePortable.js'
-import { jsonParse } from '../../utils/slowOperations.js'
-import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
+} from './sessionStoragePortable.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
+import type { ContentReplacementRecord } from '../../services/mcp/toolResultStorage.js'
 import { validateUuid } from '../../utils/uuid.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { getUserType } from './env.js'

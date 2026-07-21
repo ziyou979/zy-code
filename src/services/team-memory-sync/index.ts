@@ -16,8 +16,8 @@
  *   - 本地文件删除不会传播到服务器；下次 pull 会重新恢复到本地。
  */
 
-import { logForDebugging } from '../../utils/debug.js'
-import { getGithubRepo } from '../../utils/git.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getGithubRepo } from '../../services/infra/git.js'
 import { logEvent } from '../analytics/index.js'
 import { type SkippedSecretFile, type TeamMemorySyncPushResult } from './types.js'
 import {
@@ -125,7 +125,7 @@ export async function pullTeamMemory(
 
   const filesWritten = await writeRemoteEntriesToLocal(entries)
   if (filesWritten > 0) {
-    const { clearMemoryFileCaches } = await import('../../utils/agentsMd.js')
+    const { clearMemoryFileCaches } = await import('../../services/memory/agentsMd.js')
     clearMemoryFileCaches()
   }
 

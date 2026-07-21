@@ -3,7 +3,7 @@ import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../../context/notifications.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink/index.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { onPluginsAutoUpdated } from '../../services/plugins/pluginAutoupdate.js'
 
 /**

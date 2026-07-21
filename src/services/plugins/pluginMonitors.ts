@@ -7,8 +7,8 @@
  */
 import { type ChildProcess, spawn } from 'node:child_process'
 import type { LoadedPlugin } from './types.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { getCwd } from '../environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 
 type MonitorConfig = NonNullable<LoadedPlugin['monitors']>[number]
 

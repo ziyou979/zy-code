@@ -3,7 +3,11 @@ import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import { roughTokenCountEstimation } from '../tokenEstimation.js'
 import type { Tool, ToolPermissionContext } from '../../tools/tool.js'
 import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
-import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from '../../utils/agentsMd.js'
+import {
+  getLargeMemoryFiles,
+  getMemoryFiles,
+  MAX_MEMORY_CHARACTER_COUNT,
+} from '../../services/memory/agentsMd.js'
 import { countMcpToolTokens } from '../../services/compact/analyzeContext.js'
 import { permissionRuleValueToString } from '../permissions/permissionRuleParser.js'
 import { detectUnreachableRules } from '../permissions/shadowedRuleDetection.js'

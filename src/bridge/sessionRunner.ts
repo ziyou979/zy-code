@@ -3,8 +3,8 @@ import { createWriteStream, type WriteStream } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
-import { isInternalBuild } from '../utils/envUtils.js'
-import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
+import { jsonParse, jsonStringify } from '../services/infra/slowOperations.js'
 import { debugTruncate } from './debugUtils.js'
 import type {
   SessionActivity,

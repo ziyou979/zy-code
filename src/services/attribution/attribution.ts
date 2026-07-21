@@ -22,13 +22,13 @@ import {
   isInternalModelRepoCached,
   sanitizeModelName,
 } from '../git/commitAttribution.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { parseJSONL } from '../../utils/json.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { isMemoryFileAccess } from '../hooks/sessionFileAccessHooks.js'
 import { getTranscriptPath } from '../sessionStorage.js'
-import { readTranscriptForLoad } from '../../utils/sessionStoragePortable.js'
+import { readTranscriptForLoad } from '../../services/session-storage/sessionStoragePortable.js'
 import { getInitialSettings } from '../settings/settings.js'
 import { isUndercover } from '../undercover/undercover.js'
 export type AttributionTexts = {
@@ -360,7 +360,7 @@ export async function getEnhancedPRAttribution(getAppState: () => AppState): Pro
   // 末尾的 trailer 行会成为 squash commit 上的正式 git trailers。
   if (feature('COMMIT_ATTRIBUTION') && isInternal && attributionData) {
     // @ts-expect-error
-    const { buildPRTrailers } = await import('../../utils/attributionTrailer.js')
+    const { buildPRTrailers } = await import('../../services/attribution/attributionTrailer.js')
     const trailers = buildPRTrailers(attributionData, appState.attribution)
     const result = `${summary}\n\n${trailers.join('\n')}`
     logForDebugging(`PR Attribution: returning with trailers: ${result}`)

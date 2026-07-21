@@ -18,8 +18,8 @@ import {
   parseHeaders,
 } from '../../services/mcp/utils.js'
 import { getXaaIdpSettings, isXaaEnabled } from '../../services/mcp/xaaIdpLogin.js'
-import { parseEnvVars } from '../../utils/envUtils.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { parseEnvVars } from '../../services/infra/envUtils.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 
 /**
  * Registers the `mcp add` subcommand on the given Commander command.

@@ -1,6 +1,6 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { getRateLimitTier } from '../auth/auth.js'
-import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 
 export function getPlanModeAgentCount(): number {
   // 环境变量覆盖优先

@@ -5,7 +5,7 @@ import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink/index.js'
 import type { ToolProgressData } from '../../tools/tool.js'
 import type { ProgressMessage } from '../../types/message.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import type { Output } from './ListMcpResourcesTool.js'
 export function renderToolUseMessage(
   input: Partial<{

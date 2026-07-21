@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
 import { SandboxSettingsSchema } from '../../entrypoints/sandboxTypes.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import {
   CustomModelSchema,

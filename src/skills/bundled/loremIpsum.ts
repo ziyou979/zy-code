@@ -1,4 +1,4 @@
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
 // Verified 1-token words (tested via API token counting)

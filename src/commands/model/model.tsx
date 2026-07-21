@@ -18,7 +18,7 @@ import { validateModel } from '../../services/model/validateModel.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../types.js'
 import { resolveEffortForModelSetting } from '../../services/effort/effort.js'
-import { shouldEnableThinkingByDefault } from '../../utils/thinking.js'
+import { shouldEnableThinkingByDefault } from '../../services/messages/thinking.js'
 
 function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
   const mainLoopModel = useAppState((s) => s.mainLoopModel)

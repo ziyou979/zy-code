@@ -6,7 +6,7 @@ export function useInstallMessages() {
 }
 async function _temp2(): Promise<Notification[]> {
   const messages = await checkInstall()
-  return messages.map(_temp as (m: typeof messages[number], i: number) => Notification)
+  return messages.map(_temp as (m: (typeof messages)[number], i: number) => Notification)
 }
 function _temp(
   message: { type: string; message: string; userActionRequired?: boolean },

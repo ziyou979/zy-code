@@ -3,7 +3,7 @@ import Link from '../ink/components/Link.js'
 import { supportsHyperlinks } from '../ink/supportsHyperlinks.js'
 import { Text } from '../ink/index.js'
 import { getStoredImagePath } from '../services/attachments/imageStore.js'
-import type { Theme } from '../utils/theme.js'
+import type { Theme } from '../services/environment/theme.js'
 
 type Props = {
   imageId: number

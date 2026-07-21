@@ -8,7 +8,7 @@
  * 4. 长列表/表格分块追加时，unstable 长度相对全文保持有界
  */
 import { describe, expect, test } from 'bun:test'
-import { advanceStreamingMarkdownBoundary } from '../../src/services/markdown/markdown.js'
+import { advanceStreamingMarkdownBoundary } from '../../src/markdown/markdown.js'
 
 /** 模拟流式追加：逐段增长 content，收集每步的 stable/unstable */
 function simulateStream(chunks: string[]): Array<{

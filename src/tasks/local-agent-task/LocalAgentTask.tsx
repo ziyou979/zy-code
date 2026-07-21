@@ -34,9 +34,9 @@ import { SYNTHETIC_OUTPUT_TOOL_NAME } from '../../tools/SyntheticOutputTool/Synt
 import { asAgentId } from '../../types/ids.js'
 import type { Message } from '../../types/message.js'
 import { createAbortController, createChildAbortController } from '../../utils/abortController.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
+import { registerCleanup } from '../../services/cleanup/cleanupRegistry.js'
 import { getToolSearchOrReadInfo } from '../../services/compact/collapseReadSearch.js'
-import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
+import { enqueuePendingNotification } from '../../services/input/messageQueueManager.js'
 import { getAgentTranscriptPath } from '../../services/sessionStorage.js'
 import type { TaskState } from '../types.js'
 export type ToolActivity = {

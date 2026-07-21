@@ -11,10 +11,10 @@
 // (tests call initAutoDream() in beforeEach for a fresh closure).
 
 import type { REPLHookContext } from '../hooks/postSamplingHooks.js'
-import { createCacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
+import { createCacheSafeParams, runForkedAgent } from '../../services/agent/forkedAgent.js'
 import { createUserMessage, createMemorySavedMessage } from '../messages/constructors.js'
 import type { Message } from '../../types/message.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import { logEvent } from '../analytics/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'

@@ -11,7 +11,7 @@ import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import { convertSDKMessage } from '../remote/messageAdapter.js'
 import type { RemoteSessionConfig } from '../remote/remoteSessionManager.js'
 import type { Message, SystemInformationalMessage } from '../types/message.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 
 type Props = {
   /** Gated on viewerOnly — non-viewer sessions have no remote history to page. */

@@ -3,9 +3,9 @@ import { copyFile, mkdir, mkdtemp, readdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { extname, join } from 'node:path'
 import { getDefaultAdvancedModel } from '../../services/model/model.js'
-import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir, isInternalBuild } from '../../services/infra/envUtils.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 // Model for facet extraction and summarization (advanced - best quality)
 export function getAnalysisModel(): string {
   return getDefaultAdvancedModel()!

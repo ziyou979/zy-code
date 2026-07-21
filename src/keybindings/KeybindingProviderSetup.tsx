@@ -13,7 +13,7 @@ import { useNotifications } from '../context/notifications.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings
 import { type InputEvent, type Key, useInput } from '../ink/index.js'
 import { count } from '../utils/array.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { plural } from '../utils/stringUtils.js'
 import { KeybindingProvider } from './KeybindingContext.js'
 import {

@@ -3,7 +3,7 @@
  */
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { randomUUID } from 'node:crypto'
-import { createTask, getTask, listTasks } from '../../../src/utils/tasks.js'
+import { createTask, getTask, listTasks } from '../../../src/services/tasks-service/tasks.js'
 import { createTestDataDirectory } from '../../_helpers/testDataDirectory.js'
 
 const testData = await createTestDataDirectory('zy-test-orphan', { includeTeams: true })

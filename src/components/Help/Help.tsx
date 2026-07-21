@@ -1,7 +1,11 @@
 import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKeybindings.js'
 import { tSync } from 'src/i18n/index.js'
 import { useShortcutDisplay } from 'src/keybindings/useShortcutDisplay.js'
-import { builtInCommandNames, type Command, type CommandResultDisplay } from '../../commands/index.js'
+import {
+  builtInCommandNames,
+  type Command,
+  type CommandResultDisplay,
+} from '../../commands/index.js'
 import { useIsInsideModal } from '../../context/ModalContext.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, Link, Text } from '../../ink/index.js'

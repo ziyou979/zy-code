@@ -9,10 +9,10 @@
  */
 
 import { join } from 'node:path'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'

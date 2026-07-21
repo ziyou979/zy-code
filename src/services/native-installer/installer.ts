@@ -35,18 +35,18 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { getMaxVersion, shouldSkipVersion } from '../updater/autoUpdater.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { getCurrentInstallationType } from '../doctor/doctorDiagnostic.js'
 import { env } from '../environment/env.js'
 import { envDynamic } from '../environment/envDynamic.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { errorMessage, getErrnoCode, isENOENT, toError } from '../../utils/errors.js'
 import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
 import { getShellType } from '../native-installer/localInstaller.js'
 import * as lockfile from '../file-persistence/lockfile.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { gt, gte } from '../../utils/semver.js'
 import {
   filterZyAliases,
@@ -55,7 +55,12 @@ import {
   writeFileLines,
 } from '../shell/shellConfig.js'
 import { sleep } from '../../utils/sleep.js'
-import { getUserBinDir, getXDGCacheHome, getXDGDataHome, getXDGStateHome } from '../../utils/xdg.js'
+import {
+  getUserBinDir,
+  getXDGCacheHome,
+  getXDGDataHome,
+  getXDGStateHome,
+} from '../environment/xdg.js'
 import { downloadVersion, getLatestVersion } from './download.js'
 import {
   acquireProcessLifetimeLock,

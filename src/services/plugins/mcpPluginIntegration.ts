@@ -1,9 +1,9 @@
 import { join } from 'node:path'
 import type { LoadedPlugin, PluginError } from './types.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage, isENOENT } from '../../utils/errors.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import { expandEnvVarsInString } from '../mcp/envExpansion.js'
 import {
   type McpServerConfig,

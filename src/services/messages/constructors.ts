@@ -41,9 +41,9 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import type { PermissionMode } from '../../types/permissions.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { formatTokens } from '../../utils/format.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   CANCEL_MESSAGE,
   INTERRUPT_MESSAGE,

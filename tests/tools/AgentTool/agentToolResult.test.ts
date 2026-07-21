@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { agentToolResultSchema } from '../../../src/utils/agentToolResultSchema.js'
+import { agentToolResultSchema } from '../../../src/services/agent/agentToolResultSchema.js'
 
 describe('agentToolResultSchema', () => {
   // 基础成功结果（向后兼容）

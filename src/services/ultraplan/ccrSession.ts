@@ -8,12 +8,9 @@ import { isTransientNetworkError } from 'src/services/teleport/api.js'
 import type { WireMessage } from 'src/types/index.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
 import type { ToolCallBlock, ToolResultBlock } from '../../types/llm.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { sleep } from '../../utils/sleep.js'
-import {
-  type PollRemoteSessionResponse,
-  pollRemoteSessionEvents,
-} from '../teleport/teleport.js'
+import { type PollRemoteSessionResponse, pollRemoteSessionEvents } from '../teleport/teleport.js'
 
 const POLL_INTERVAL_MS = 3000
 // pollRemoteSessionEvents doesn't retry. A 30min poll makes ~600 calls;

@@ -6,7 +6,7 @@ import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { useSettings } from '../../hooks/useSettings.js'
 import { Text, useAnimationFrame } from '../../ink/index.js'
 import { count } from '../../utils/array.js'
-import { getRainbowColor } from '../../utils/thinking.js'
+import { getRainbowColor } from '../../services/messages/thinking.js'
 
 const TICK_MS = 80
 type ReviewStage = NonNullable<NonNullable<RemoteAgentTaskState['reviewProgress']>['stage']>

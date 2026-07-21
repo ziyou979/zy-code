@@ -17,9 +17,9 @@ import {
   RIPGREP_READ_ONLY_COMMANDS,
   validateFlags,
 } from '../../shell-eval/shared/readOnlyCommandValidation.js'
-import { getCwd } from '../../utils/cwd.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
+import { isCurrentDirectoryBareGitRepo } from '../../services/infra/git.js'
 import type { PermissionResult } from '../../services/permissions/permissionResult.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import type { BashTool } from './BashTool.js'

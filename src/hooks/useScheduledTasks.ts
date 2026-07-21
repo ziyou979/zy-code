@@ -10,10 +10,10 @@ import type { Message } from '../types/message.js'
 import { getCronJitterConfig } from '../services/jobs/cronJitterConfig.js'
 import { createCronScheduler } from '../services/jobs/cronScheduler.js'
 import { removeCronTasks } from '../services/jobs/cronTasks.js'
-import { logForDebugging } from '../utils/debug.js'
-import { enqueuePendingNotification } from '../utils/messageQueueManager.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { enqueuePendingNotification } from '../services/input/messageQueueManager.js'
 import { createScheduledTaskFireMessage } from '../services/messages/./constructors.js'
-import { WORKLOAD_CRON } from '../utils/workloadContext.js'
+import { WORKLOAD_CRON } from '../services/swarm/workloadContext.js'
 
 type Props = {
   isLoading: boolean

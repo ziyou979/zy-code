@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import * as path from 'node:path'
 import { z } from 'zod/v4'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import {
   PluginHooksSchema,
   PluginManifestSchema,

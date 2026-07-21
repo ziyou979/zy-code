@@ -6,8 +6,13 @@ import { Box, Text } from '../ink/index.js'
 import type { FileEdit } from '../tools/FileEditTool/types.js'
 import { findActualString, preserveQuoteStyle } from '../tools/FileEditTool/utils.js'
 import { adjustHunkLineNumbers, CONTEXT_LINES, getPatchForDisplay } from '../services/git/diff.js'
-import { logError } from '../utils/log.js'
-import { CHUNK_SIZE, openForScan, readCapped, scanForContext } from '../utils/readEditContext.js'
+import { logError } from '../services/infra/log.js'
+import {
+  CHUNK_SIZE,
+  openForScan,
+  readCapped,
+  scanForContext,
+} from '../services/file-persistence/readEditContext.js'
 import { firstLineOf } from '../utils/stringUtils.js'
 import { StructuredDiffList } from './StructuredDiffList.js'
 

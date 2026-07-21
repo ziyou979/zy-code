@@ -1,10 +1,18 @@
 import { type StructuredPatchHunk } from 'diff'
-import { logError } from 'src/utils/log.js'
+import { logError } from 'src/services/infra/log.js'
 import { expandPath } from 'src/utils/path.js'
 import { countCharInString } from 'src/utils/stringUtils.js'
-import { DIFF_TIMEOUT_MS, getPatchForDisplay, getPatchFromContents } from '../../services/git/diff.js'
+import {
+  DIFF_TIMEOUT_MS,
+  getPatchForDisplay,
+  getPatchFromContents,
+} from '../../services/git/diff.js'
 import { errorMessage, isENOENT } from '../../utils/errors.js'
-import { addLineNumbers, convertLeadingTabsToSpaces, readFileSyncCached } from '../../utils/file.js'
+import {
+  addLineNumbers,
+  convertLeadingTabsToSpaces,
+  readFileSyncCached,
+} from '../../services/infra/file.js'
 import type { EditInput, FileEdit } from './types.js'
 
 // The AI can't output curly quotes, so we define them as constants here for it to use

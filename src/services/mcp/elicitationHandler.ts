@@ -11,8 +11,8 @@ import {
   executeElicitationResultHooks,
   executeNotificationHooks,
 } from '../hooks.js'
-import { logMCPDebug, logMCPError } from '../../utils/log.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { logMCPDebug, logMCPError } from '../../services/infra/log.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

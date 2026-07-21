@@ -3,8 +3,8 @@ import { tSync } from '../../i18n/index.js'
 import { getProjectRoot } from 'src/bootstrap/runtime/runtimeContext.js'
 import { buildMemoryPrompt, ensureMemoryDirExists } from '../../memdir/memdir.js'
 import { getMemoryBaseDir } from '../../memdir/paths.js'
-import { getCwd } from '../../utils/cwd.js'
-import { findCanonicalGitRoot } from '../../utils/git.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { findCanonicalGitRoot } from '../../services/infra/git.js'
 import { sanitizePath } from '../../utils/path.js'
 
 // Persistent agent memory scope: 'user' (~/.zy/agent-memory/), 'project' (.zy/agent-memory/), or 'local' (.zy/agent-memory-local/)

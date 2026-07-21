@@ -1,4 +1,4 @@
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { parseFrontmatter } from '../../services/markdown/frontmatterParser.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 import { SKILL_FILES, SKILL_MD } from './verifyContent.js'

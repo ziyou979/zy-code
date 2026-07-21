@@ -1,6 +1,6 @@
 // replWire 领域的运行时状态访问器。
 
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { STATE } from './core.js'
 
 export function isReplWireActive(): boolean {

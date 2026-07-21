@@ -32,7 +32,7 @@ import {
   removeCronTasks,
 } from '../jobs/cronTasks.js'
 import { releaseSchedulerLock, tryAcquireSchedulerLock } from '../jobs/cronTasksLock.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 
 const CHECK_INTERVAL_MS = 1000
 const FILE_STABILITY_MS = 300

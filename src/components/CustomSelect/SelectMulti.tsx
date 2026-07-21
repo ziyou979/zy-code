@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { POINTER, TICK } from '../../constants/figures.js'
 import { Box, Text } from '../../ink/index.js'
 import type { PastedContent } from '../../services/config/config.js'
-import type { ImageDimensions } from '../../utils/imageResizer.js'
+import type { ImageDimensions } from '../../services/attachments/imageResizer.js'
 import type { OptionWithDescription } from './select.js'
 import { SelectInputOption } from './select-input-option.js'
 import {

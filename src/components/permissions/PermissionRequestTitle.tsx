@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Box, Text } from '../../ink/index.js'
-import type { Theme } from '../../utils/theme.js'
+import type { Theme } from '../../services/environment/theme.js'
 import type { WorkerBadgeProps } from './WorkerBadge.js'
 
 type Props = {

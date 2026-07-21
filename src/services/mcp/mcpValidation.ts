@@ -1,11 +1,8 @@
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-import {
-  countMessagesTokensWithAPI,
-  roughTokenCountEstimation,
-} from '../tokenEstimation.js'
+import { countMessagesTokensWithAPI, roughTokenCountEstimation } from '../tokenEstimation.js'
 import type { ContentBlock, LLMMessage } from '../../types/llm.js'
-import { compressImageBlock } from '../../utils/imageResizer.js'
-import { logError } from '../../utils/log.js'
+import { compressImageBlock } from '../attachments/imageResizer.js'
+import { logError } from '../../services/infra/log.js'
 
 // @deprecated 请直接导入 src/utils/mcpContentSizeUtils.js 中的同名函数/变量
 import {

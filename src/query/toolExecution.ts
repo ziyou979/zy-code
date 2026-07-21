@@ -18,7 +18,7 @@ import { executePostToolBatchHooks } from '../services/hooks/executors/tool.js'
 import { hasHookForEvent } from '../services/hooks/matcher.js'
 import { createToolUseSummaryMessage } from '../services/messages/./constructors.js'
 import { normalizeMessagesForAPI } from '../services/messages/./api.js'
-import { queryCheckpoint } from '../utils/queryProfiler.js'
+import { queryCheckpoint } from '../services/query/queryProfiler.js'
 import type { QueryConfig } from './config.js'
 
 // -- 结果类型

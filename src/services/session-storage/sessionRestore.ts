@@ -33,7 +33,7 @@ import type {
   PersistedWorktreeSession,
 } from '../../types/logs.js'
 import type { Message } from '../../types/message.js'
-import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
+import { clearMemoryFileCaches } from '../../services/memory/agentsMd.js'
 import { renameRecordingForSession } from '../shell/asciicast.js'
 import {
   type AttributionState,
@@ -41,8 +41,8 @@ import {
   restoreAttributionStateFromSnapshots,
 } from '../git/commitAttribution.js'
 import { updateSessionName } from '../session/concurrentSessions.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { getCwd } from '../environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import type { FileHistorySnapshot } from '../file-persistence/fileHistory.js'
 import { fileHistoryRestoreStateFromLog } from '../file-persistence/fileHistory.js'
 import { createSystemMessage } from '../messages/./constructors.js'
@@ -57,7 +57,7 @@ import {
   saveWorktreeState,
 } from '../sessionStorage.js'
 import { isTodoV2Enabled } from '../../services/tasks-service/tasks.js'
-import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
+import type { ContentReplacementRecord } from '../../services/mcp/toolResultStorage.js'
 import { getCurrentWorktreeSession, restoreWorktreeSession } from '../worktree/worktree.js'
 
 type ResumeResult = {

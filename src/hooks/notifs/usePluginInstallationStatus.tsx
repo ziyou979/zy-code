@@ -3,7 +3,7 @@ import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../../context/notifications.js'
 import { Text } from '../../ink/index.js'
 import { useAppState } from '../../state/AppState.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { plural } from '../../utils/stringUtils.js'
 export function usePluginInstallationStatus() {
   const { addNotification } = useNotifications()

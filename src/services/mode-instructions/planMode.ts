@@ -14,7 +14,7 @@ import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
 import type { UserMessage } from '../../types/message.js'
 import { getCurrentProjectConfig } from '../config/config.js'
-import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
+import { hasEmbeddedSearchTools } from '../tool-runtime/embeddedTools.js'
 import { createUserMessage } from '../messages/constructors.js'
 import { wrapMessagesInSystemReminder } from '../messages/systemReminder.js'
 import {

@@ -12,9 +12,9 @@ import { join } from 'node:path'
 import type { StoredToolResultReference } from '../../tasks/in-process-teammate-task/types.js'
 import { TOOL_RESULT_EXTERNAL_THRESHOLD_BYTES } from '../../tasks/in-process-teammate-task/types.js'
 import type { ContentBlock } from '../../types/llm.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 
 /**
  * 获取工具结果存储目录。

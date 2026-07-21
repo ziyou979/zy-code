@@ -27,13 +27,17 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir, isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import {
+  getZyConfigHomeDir,
+  isEnvDefinedFalsy,
+  isEnvTruthy,
+} from '../../services/infra/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { djb2Hash } from '../../utils/hash.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { getAgentId, getAgentName, getParentSessionId } from '../../utils/teammate.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import { getAgentId, getAgentName, getParentSessionId } from '../swarm/teammate.js'
 
 /**
  * Chrome Trace Event format types

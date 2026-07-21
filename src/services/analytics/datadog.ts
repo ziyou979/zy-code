@@ -5,7 +5,7 @@ import memoize from 'lodash-es/memoize.js'
 import { getStaticPricingForModel } from '../model/modelCapabilities.js'
 import { getAPIProvider } from '../model/providers.js'
 import { getOrCreateUserID } from '../config/config.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { getEventMetadata } from './metadata.js'
 
 // All events that were previously sent to Datadog are now written to a local

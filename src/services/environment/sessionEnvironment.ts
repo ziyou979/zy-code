@@ -1,8 +1,8 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
 import { getPlatform } from '../shell/platform.js'
 // Cache states:

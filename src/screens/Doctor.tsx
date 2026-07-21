@@ -3,7 +3,7 @@ import { Suspense, use, useEffect, useState } from 'react'
 import { KeybindingWarnings } from 'src/components/KeybindingWarnings.js'
 import { McpParsingWarnings } from 'src/components/mcp/McpParsingWarnings.js'
 import { getModelMaxOutputTokens } from 'src/services/context/modelContext.js'
-import { getZyConfigHomeDir } from 'src/utils/envUtils.js'
+import { getZyConfigHomeDir } from 'src/services/infra/envUtils.js'
 import type { SettingSource } from 'src/services/settings/constants.js'
 import { getOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { CommandResultDisplay } from '../commands/index.js'
@@ -33,13 +33,20 @@ import {
 } from '../shell-eval/shared/outputLimits.js'
 import { useAppState } from '../state/AppState.js'
 import { getPluginErrorMessage } from '../services/plugins/types.js'
-import { getGcsDistTags, getNpmDistTags, type NpmDistTags } from '../services/updater/autoUpdater.js'
-import { type ContextWarnings, checkContextWarnings } from '../services/doctor/doctorContextWarnings.js'
+import {
+  getGcsDistTags,
+  getNpmDistTags,
+  type NpmDistTags,
+} from '../services/updater/autoUpdater.js'
+import {
+  type ContextWarnings,
+  checkContextWarnings,
+} from '../services/doctor/doctorContextWarnings.js'
 import { type DiagnosticInfo, getDoctorDiagnostic } from '../services/doctor/doctorDiagnostic.js'
-import { validateBoundedIntEnvVar } from '../utils/envValidation.js'
-import { pathExists } from '../utils/file.js'
+import { validateBoundedIntEnvVar } from '../services/environment/envValidation.js'
+import { pathExists } from '../services/infra/file.js'
 import { getInitialSettings } from '../services/settings/settings.js'
-import { getXDGStateHome } from '../utils/xdg.js'
+import { getXDGStateHome } from '../services/environment/xdg.js'
 
 type Props = {
   onDone: (

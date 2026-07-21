@@ -18,12 +18,12 @@ import {
 import xss from 'xss'
 import { getSecureStorage } from '../secure-storage/index.js'
 import { openBrowser } from '../browser/browser.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { toError } from '../../utils/errors.js'
-import { logMCPDebug } from '../../utils/log.js'
+import { logMCPDebug } from '../../services/infra/log.js'
 import { getPlatform } from '../shell/platform.js'
 import { getInitialSettings } from '../settings/settings.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import { buildRedirectUri, findAvailablePort } from './oauthPort.js'
 
 export function isXaaEnabled(): boolean {

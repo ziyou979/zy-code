@@ -15,7 +15,7 @@ import { initializeTeammateHooks } from '../services/swarm/teammateInit.js'
 import type { AppState } from '../state/AppStateStore.js'
 import type { Message } from '../types/message.js'
 import { isAgentSwarmsEnabled } from '../services/swarm/agentSwarmsEnabled.js'
-import { getDynamicTeamContext } from '../utils/teammate.js'
+import { getDynamicTeamContext } from '../services/swarm/teammate.js'
 
 type SetAppState = (f: (prevState: AppState) => AppState) => void
 

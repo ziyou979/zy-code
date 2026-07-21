@@ -6,8 +6,8 @@ import {
   getSessionProjectDir,
 } from '../../bootstrap/runtime/runtimeContext.js'
 import type { AgentId } from '../../types/ids.js'
-import { getCwd } from '../../utils/cwd.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getCwd } from '../environment/cwd.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { sanitizePath } from '../../utils/path.js'
 
 export function getProjectsDir(): string {

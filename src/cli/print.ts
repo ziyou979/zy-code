@@ -6,9 +6,9 @@ import { StructuredIO } from 'src/cli/structuredIO.js'
 import { RemoteIO } from 'src/cli/remoteIO.js'
 import { type Command, formatDescriptionWithSource, getCommandName } from 'src/commands/index.js'
 import { createStreamlinedTransformer } from 'src/services/compact/streamlinedTransform.js'
-import { installStreamJsonStdoutGuard } from 'src/utils/streamJsonStdoutGuard.js'
+import { installStreamJsonStdoutGuard } from 'src/services/telemetry/streamJsonStdoutGuard.js'
 import type { ToolPermissionContext } from 'src/tools/tool.js'
-import type { ThinkingConfig } from 'src/utils/thinking.js'
+import type { ThinkingConfig } from 'src/services/messages/thinking.js'
 import { assembleToolPool, filterToolsByDenyRules } from 'src/tools/tools.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { mergeAndFilterTools } from 'src/services/tool-runtime/toolPool.js'
@@ -16,8 +16,8 @@ import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from 'src/services/analytics/index.js'
-import { logForDebugging } from 'src/utils/debug.js'
-import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
+import { logForDiagnosticsNoPII } from 'src/services/telemetry/diagLogs.js'
 import { toolMatchesName, type Tool, type Tools } from 'src/tools/tool.js'
 import {
   type AgentDefinition,
@@ -30,7 +30,7 @@ import {
   enqueue,
   subscribeToCommandQueue,
   getCommandsByMaxPriority,
-} from 'src/utils/messageQueueManager.js'
+} from 'src/services/input/messageQueueManager.js'
 import {
   getSessionState,
   notifySessionStateChanged,
@@ -39,7 +39,7 @@ import {
   type SessionExternalMetadata,
 } from 'src/services/session-state/sessionState.js'
 import { externalMetadataToAppState } from 'src/state/onChangeAppState.js'
-import { logError, logMCPDebug } from 'src/utils/log.js'
+import { logError, logMCPDebug } from 'src/services/infra/log.js'
 import { writeToStdout, registerProcessOutputErrorHandlers } from 'src/services/shell/process.js'
 import type { Stream } from 'src/utils/stream.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
@@ -65,12 +65,12 @@ import type { PermissionPromptTool } from 'src/services/query/queryHelpers.js'
 import {
   createFileStateCacheWithSizeLimit,
   READ_FILE_STATE_CACHE_SIZE,
-} from 'src/utils/fileStateCache.js'
+} from 'src/services/file-persistence/fileStateCache.js'
 import { extractReadFilesFromMessages } from 'src/services/query/queryHelpers.js'
 import { registerHookEventHandler } from 'src/services/hooks/hookEvents.js'
-import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
-import { registerCleanup } from 'src/utils/cleanupRegistry.js'
-import { createIdleTimeoutManager } from 'src/utils/idleTimeout.js'
+import { gracefulShutdown, gracefulShutdownSync } from 'src/bootstrap/lifecycle/gracefulShutdown.js'
+import { registerCleanup } from 'src/services/cleanup/cleanupRegistry.js'
+import { createIdleTimeoutManager } from 'src/services/session/idleTimeout.js'
 import type {
   WireStatus,
   ModelInfo,
@@ -93,7 +93,7 @@ import type {
 import type { PermissionMode } from '@zy-ai/agent-sdk'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
 import { cwd } from 'node:process'
-import { getCwd } from 'src/utils/cwd.js'
+import { getCwd } from 'src/services/environment/cwd.js'
 import { isPolicyAllowed } from 'src/services/policy-limits/index.js'
 import type { ReplWireHandle } from 'src/bridge/replBridge.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
@@ -125,7 +125,7 @@ import { type PromptVariant } from 'src/services/prompt-suggestion/promptSuggest
 import { getAccountInformation } from 'src/services/auth/auth.js'
 import { getAPIProvider } from 'src/services/model/providers.js'
 import type { HookCallbackMatcher } from 'src/types/hooks/index.js'
-import { AwsAuthStatusManager } from 'src/utils/awsAuthStatusManager.js'
+import { AwsAuthStatusManager } from 'src/services/api/awsAuthStatusManager.js'
 import type { HookEvent } from 'src/types/index.js'
 import {
   registerHookCallbacks,
@@ -133,7 +133,7 @@ import {
   getInitJsonSchema,
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { createSyntheticOutputTool } from 'src/tools/SyntheticOutputTool/SyntheticOutputTool.js'
-import { parseSessionIdentifier } from 'src/utils/sessionUrl.js'
+import { parseSessionIdentifier } from 'src/services/session-storage/sessionUrl.js'
 import {
   hydrateRemoteSession,
   hydrateFromCCRv2InternalEvents,
@@ -161,7 +161,7 @@ import {
 } from 'src/services/model/model.js'
 import { getModelOptions } from 'src/services/model/modelOptions.js'
 import { getModelEffortLevels } from 'src/services/effort/effort.js'
-import { modelSupportsAdaptiveThinking } from 'src/utils/thinking.js'
+import { modelSupportsAdaptiveThinking } from 'src/services/messages/thinking.js'
 import { modelSupportsAutoMode } from 'src/services/feature-flags/betas.js'
 import { ensureModelStringsInitialized } from 'src/services/model/modelStrings.js'
 import { getSessionId, switchSession } from 'src/bootstrap/runtime/runtimeContext.js'
@@ -174,7 +174,7 @@ import {
 import { isSessionPersistenceDisabled } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getAllowedChannels, setAllowedChannels } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { ChannelEntry } from 'src/bootstrap/runtime/runtimeContext.js'
-import { WORKLOAD_CRON } from 'src/utils/workloadContext.js'
+import { WORKLOAD_CRON } from 'src/services/swarm/workloadContext.js'
 import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
 import type { UserContentBlock } from '../types/llm.js'
@@ -185,7 +185,10 @@ import {
   fileHistoryEnabled,
   fileHistoryGetDiffStats,
 } from 'src/services/file-persistence/fileHistory.js'
-import { restoreAgentFromSession, restoreSessionStateFromLog } from 'src/services/session-storage/sessionRestore.js'
+import {
+  restoreAgentFromSession,
+  restoreSessionStateFromLog,
+} from 'src/services/session-storage/sessionRestore.js'
 import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import {
   headlessProfilerStartTurn,
@@ -194,10 +197,10 @@ import {
   logHeadlessProfilerTurn,
 } from 'src/services/analytics/headlessProfiler.js'
 import { asSessionId } from 'src/types/ids.js'
-import { jsonStringify } from '../utils/slowOperations.js'
+import { jsonStringify } from '../services/infra/slowOperations.js'
 import { skillChangeDetector } from '../services/skill-runtime/skillChangeDetector.js'
 import { getCommands, clearCommandsCache } from '../commands/index.js'
-import { isBareMode, isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
+import { isBareMode, isEnvTruthy, isInternalBuild } from '../services/infra/envUtils.js'
 import { getRunningTasks } from '../services/task-runtime/framework.js'
 import { isBackgroundTask } from '../tasks/types.js'
 import { initializeGrowthBook } from '../services/analytics/growthbook.js'
@@ -1217,7 +1220,7 @@ function runHeadlessStreaming(
   // when a message arrives via the UDS socket in headless mode.
   if (feature('UDS_INBOX')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
-    const { setOnEnqueue } = require('../utils/udsMessaging.js')
+    const { setOnEnqueue } = require('../services/bridge/udsMessaging.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     setOnEnqueue(() => {
       if (!loopState.inputClosed) {

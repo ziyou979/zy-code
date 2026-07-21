@@ -21,7 +21,7 @@ mock.module('../../../src/services/permissions/permissionSetup.js', () => ({
     mode: _to,
   }),
 }))
-mock.module('../../../src/utils/debug.js', () => ({
+mock.module('../../../src/services/infra/debug.js', () => ({
   logForDebugging: () => {},
   createDebugLog: () => () => {},
 }))

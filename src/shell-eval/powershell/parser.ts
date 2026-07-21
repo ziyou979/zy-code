@@ -1,7 +1,7 @@
 import { execa } from 'execa'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { memoizeWithLRU } from '../../utils/memoize.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import { getCachedPowerShellPath } from '../shared/powershellDetection.js'
 
 // ---------------------------------------------------------------------------

@@ -39,21 +39,21 @@ import type { ImageBlock } from '../../types/llm.js'
 import type { Message as MessageType, UserMessage } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
 import { createAbortController } from '../../utils/abortController.js'
-import { getMemoryFiles } from '../../utils/agentsMd.js'
+import { getMemoryFiles } from '../../services/memory/agentsMd.js'
 import { isBgSession } from '../../services/session/concurrentSessions.js'
 import type { PastedContent } from '../../services/config/config.js'
-import { createDebugLog } from '../../utils/debug.js'
+import { createDebugLog } from '../../services/infra/debug.js'
 import type { EffortLevel } from '../../services/effort/effort.js'
 import { errorMessage } from '../../utils/errors.js'
 import type { FileHistoryState } from '../../services/file-persistence/fileHistory.js'
 import { fileHistoryHasAnyChanges } from '../../services/file-persistence/fileHistory.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
 import { handlePromptSubmit } from '../../services/input/handlePromptSubmit.js'
-import { getCommandQueue } from '../../utils/messageQueueManager.js'
+import { getCommandQueue } from '../../services/input/messageQueueManager.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'
 import { textForResubmit } from '../../services/messages/./predicates.js'
 import { getQuerySourceForREPL } from '../../services/analytics/querySource.js'
-import type { QueryGuard } from '../../utils/queryGuard.js'
+import type { QueryGuard } from '../../services/query/queryGuard.js'
 import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 
 const log = createDebugLog('repl')
@@ -275,7 +275,7 @@ export async function handleExitImpl(
 // ── executeQueuedInput ──
 
 import type { QueuedCommand } from '../../types/textInputTypes.js'
-import type { SetAppState } from '../../utils/messageQueueManager.js'
+import type { SetAppState } from '../../services/input/messageQueueManager.js'
 
 export interface ExecuteQueuedInputParams {
   queryGuard: QueryGuard

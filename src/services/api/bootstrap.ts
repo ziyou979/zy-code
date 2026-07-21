@@ -1,9 +1,9 @@
 import isEqual from 'lodash-es/isEqual.js'
 import { z } from 'zod'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 
 const bootstrapResponseSchema = lazySchema(() =>
   z.object({

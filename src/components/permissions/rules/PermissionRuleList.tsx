@@ -13,7 +13,7 @@ import { useExitOnCtrlCDWithKeybindings } from '../../../hooks/useExitOnCtrlCDWi
 import { useSearchInput } from '../../../hooks/useSearchInput.js'
 import { Box, Text, useTerminalFocus } from '../../../ink/index.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'
-import { getAutoModeDenials } from '../../../utils/autoModeDenials.js'
+import { getAutoModeDenials } from '../../../services/hooks/autoModeDenials.js'
 import type {
   PermissionBehavior,
   PermissionRule,
@@ -26,7 +26,7 @@ import {
   getDenyRules,
   permissionRuleSourceDisplayString,
 } from '../../../services/permissions/permissions.js'
-import { jsonStringify } from '../../../utils/slowOperations.js'
+import { jsonStringify } from '../../../services/infra/slowOperations.js'
 import { Pane } from '../../design-system/Pane.js'
 import { Tab, Tabs, useTabHeaderFocus, useTabsWidth } from '../../design-system/Tabs.js'
 import { SearchBox } from '../../SearchBox.js'
@@ -172,7 +172,10 @@ type RulesTabContentProps = {
   onHeaderFocusChange?: (focused: boolean) => void
   tab?: TabType
   // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
-  getRulesOptions?: (tab: TabType, query?: string) => { options: Option[]; rulesByKey: Map<string, PermissionRule> }
+  getRulesOptions?: (
+    tab: TabType,
+    query?: string,
+  ) => { options: Option[]; rulesByKey: Map<string, PermissionRule> }
   // biome-ignore lint/suspicious/noExplicitAny: 权限系统动态类型处理
   handleToolSelect?: (value: string, tab: TabType) => void
 }
@@ -444,14 +447,20 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
   const handleRuleInputCancel = () => {
     setAddingRuleToTab(null)
   }
-  const handleRuleInputSubmit = (ruleValue: PermissionRule['ruleValue'], ruleBehavior: PermissionBehavior) => {
+  const handleRuleInputSubmit = (
+    ruleValue: PermissionRule['ruleValue'],
+    ruleBehavior: PermissionBehavior,
+  ) => {
     setValidatedRule({
       ruleValue,
       ruleBehavior,
     })
     setAddingRuleToTab(null)
   }
-  const handleAddRulesSuccess = (rules: PermissionRule[], unreachable?: Array<{ shadowType: string; rule: PermissionRule; reason: string; fix: string }>) => {
+  const handleAddRulesSuccess = (
+    rules: PermissionRule[],
+    unreachable?: Array<{ shadowType: string; rule: PermissionRule; reason: string; fix: string }>,
+  ) => {
     setValidatedRule(null)
     for (const rule of rules) {
       setChanges((prev) => [
@@ -597,10 +606,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
             directories: [path_0],
             destination,
           }
-          const updatedContext = applyPermissionUpdate(
-            toolPermissionContext,
-            permissionUpdate,
-          )
+          const updatedContext = applyPermissionUpdate(toolPermissionContext, permissionUpdate)
           setAppState((prev_4) => ({
             ...prev_4,
             toolPermissionContext: updatedContext,
@@ -652,7 +658,7 @@ export function PermissionRuleList({ onExit, initialTab, onRetryDenials }: Props
     getRulesOptions,
     handleToolSelect,
     onHeaderFocusChange: handleHeaderFocusChange,
-    } satisfies Partial<RulesTabContentProps> as Omit<RulesTabContentProps, 'tab'>
+  } satisfies Partial<RulesTabContentProps> as Omit<RulesTabContentProps, 'tab'>
   const isHidden =
     !!selectedRule ||
     !!addingRuleToTab ||

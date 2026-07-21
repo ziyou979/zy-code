@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- 'r' is a view-specific key, not a global keybinding
 import { Box, Text, useInput } from '../../../ink/index.js'
-import { type AutoModeDenial, getAutoModeDenials } from '../../../utils/autoModeDenials.js'
+import { type AutoModeDenial, getAutoModeDenials } from '../../../services/hooks/autoModeDenials.js'
 import { Select } from '../../CustomSelect/select.js'
 import { StatusIcon } from '../../design-system/StatusIcon.js'
 import { useTabHeaderFocus } from '../../design-system/Tabs.js'

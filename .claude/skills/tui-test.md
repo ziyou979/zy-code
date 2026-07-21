@@ -32,7 +32,7 @@ set timeout 120
 set env(TERM) "xterm-256color"
 log_file -a /tmp/zy-test.log
 
-spawn bun --preload ./src/entrypoints/dev-preload.ts src/entrypoints/cli.tsx
+spawn bun --preload ./src/entrypoints/devPreload.ts src/entrypoints/cli.tsx
 
 # Wait for app startup (prompt appears). 12-18s is safe for cold start.
 sleep 15

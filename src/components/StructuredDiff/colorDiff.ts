@@ -4,7 +4,7 @@ import {
   type SyntaxTheme,
   getSyntaxTheme as tsGetSyntaxTheme,
 } from '../../native-ts/color-diff/index.js'
-import { isEnvDefinedFalsy } from '../../utils/envUtils.js'
+import { isEnvDefinedFalsy } from '../../services/infra/envUtils.js'
 
 export type ColorModuleUnavailableReason = 'env'
 

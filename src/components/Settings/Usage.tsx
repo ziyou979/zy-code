@@ -13,8 +13,8 @@ import {
   type Utilization,
 } from '../../services/api/usage.js'
 import { formatResetText } from '../../utils/format.js'
-import { logError } from '../../utils/log.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { logError } from '../../services/infra/log.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { Byline } from '../design-system/Byline.js'
 import { ProgressBar } from '../design-system/ProgressBar.js'
@@ -247,7 +247,8 @@ type ExtraUsageSectionProps = {
 function ExtraUsageSection({ extraUsage, maxWidth }: ExtraUsageSectionProps) {
   const EXTRA_USAGE_SECTION_TITLE = tSync('usage.extraUsage')
   const subscriptionType = getSubscriptionType()
-  const isProOrMax = (subscriptionType as string) === 'pro' || (subscriptionType as string) === 'max'
+  const isProOrMax =
+    (subscriptionType as string) === 'pro' || (subscriptionType as string) === 'max'
   if (!isProOrMax) {
     return false
   }

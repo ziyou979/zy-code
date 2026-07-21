@@ -35,7 +35,11 @@ export function UserToolResultMessage({
   width,
   isTranscriptMode,
 }: Props) {
-  const toolUse = useGetToolFromMessages(param.toolCallId, tools, lookups as unknown as Parameters<typeof useGetToolFromMessages>[2])
+  const toolUse = useGetToolFromMessages(
+    param.toolCallId,
+    tools,
+    lookups as unknown as Parameters<typeof useGetToolFromMessages>[2],
+  )
   if (!toolUse) {
     return null
   }

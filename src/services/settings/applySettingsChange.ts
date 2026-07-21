@@ -1,6 +1,6 @@
 import type { AppState } from '../../state/AppStateStore.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { updateHooksConfigSnapshot } from '../hooks/hooksConfigSnapshot.js'
 import {
   createDisabledBypassPermissionsContext,

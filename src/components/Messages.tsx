@@ -28,11 +28,11 @@ import type {
   UserMessage,
 } from '../types/message.js'
 import { collapseBackgroundBashNotifications } from '../services/compact/collapseBackgroundBashNotifications.js'
-import { collapseHookSummaries } from '../utils/collapseHookSummaries.js'
+import { collapseHookSummaries } from '../services/messages/collapseHookSummaries.js'
 import { collapseReadSearchGroups } from '../services/compact/collapseReadSearch.js'
 import { collapseTeammateShutdowns } from '../services/swarm/collapseTeammateShutdowns.js'
 import { getGlobalConfig } from '../services/config/config.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { isEnvTruthy } from '../services/infra/envUtils.js'
 import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
 import { applyGrouping } from '../services/tool-runtime/groupToolUses.js'
 import {
@@ -591,9 +591,15 @@ const MessagesImpl = ({
     const briefFiltered =
       briefToolNames.length > 0 && !isTranscriptMode
         ? isBriefOnly
-          ? filterForBriefTool(messagesToShowNotTruncated as Parameters<typeof filterForBriefTool>[0], briefToolNames)
+          ? filterForBriefTool(
+              messagesToShowNotTruncated as Parameters<typeof filterForBriefTool>[0],
+              briefToolNames,
+            )
           : dropTextToolNames.length > 0
-            ? dropTextInBriefTurns(messagesToShowNotTruncated as Parameters<typeof dropTextInBriefTurns>[0], dropTextToolNames)
+            ? dropTextInBriefTurns(
+                messagesToShowNotTruncated as Parameters<typeof dropTextInBriefTurns>[0],
+                dropTextToolNames,
+              )
             : messagesToShowNotTruncated
         : messagesToShowNotTruncated
     const messagesToShow = shouldTruncate
@@ -601,14 +607,21 @@ const MessagesImpl = ({
       : briefFiltered
     const hasTruncatedMessages =
       shouldTruncate && briefFiltered.length > MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE
-    const { messages: groupedMessages } = applyGrouping(messagesToShow as Parameters<typeof applyGrouping>[0], tools, verbose)
+    const { messages: groupedMessages } = applyGrouping(
+      messagesToShow as Parameters<typeof applyGrouping>[0],
+      tools,
+      verbose,
+    )
     const collapsed = collapseBackgroundBashNotifications(
       collapseHookSummaries(
         collapseTeammateShutdowns(collapseReadSearchGroups(groupedMessages, tools)),
       ),
       verbose,
     )
-    const lookups = buildMessageLookups(normalizedMessages, messagesToShow as Parameters<typeof buildMessageLookups>[1])
+    const lookups = buildMessageLookups(
+      normalizedMessages,
+      messagesToShow as Parameters<typeof buildMessageLookups>[1],
+    )
     const hiddenMessageCount =
       messagesToShowNotTruncated.length - MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE
     return {

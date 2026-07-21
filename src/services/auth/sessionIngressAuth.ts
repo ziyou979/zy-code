@@ -7,9 +7,9 @@ import {
   maybePersistTokenForSubprocesses,
   readTokenFromWellKnownFile,
 } from '../auth/authFileDescriptor.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 
 /**
  * Read token via file descriptor, falling back to well-known file.

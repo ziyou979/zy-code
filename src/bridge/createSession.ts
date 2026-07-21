@@ -1,5 +1,5 @@
 import type { WireMessage } from '../types/index.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { extractErrorDetail } from './debugUtils.js'
 import { toCompatSessionId } from './sessionIdCompat.js'
@@ -55,8 +55,8 @@ export async function createWireSession({
   const { getOrganizationUUID } = await import('../services/auth/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
   const { getOAuthHeaders } = await import('../services/teleport/api.js')
-  const { parseGitHubRepository } = await import('../utils/detectRepository.js')
-  const { getDefaultBranch } = await import('../utils/git.js')
+  const { parseGitHubRepository } = await import('../services/git/detectRepository.js')
+  const { getDefaultBranch } = await import('../services/infra/git.js')
   const { getMainLoopModel } = await import('../services/model/model.js')
   const { default: axios } = await import('axios')
 
@@ -77,7 +77,7 @@ export async function createWireSession({
   let gitOutcome: GitOutcome | null = null
 
   if (gitRepoUrl) {
-    const { parseGitRemote } = await import('../utils/detectRepository.js')
+    const { parseGitRemote } = await import('../services/git/detectRepository.js')
     const parsed = parseGitRemote(gitRepoUrl)
     if (parsed) {
       const { host, owner, name } = parsed

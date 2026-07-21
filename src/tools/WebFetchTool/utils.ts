@@ -7,13 +7,13 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { queryCompactModel } from '../../services/api/compactQueries.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
 import { getWebFetchUserAgent } from '../../services/http/http.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { isBinaryContentType, persistBinaryContent } from '../../services/mcp/mcpOutputStorage.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { asSystemPrompt } from '../../services/api/systemPromptType.js'
 import { isPreapprovedHost } from './preapproved.js'
 import { makeSecondaryModelPrompt } from './prompt.js'
 

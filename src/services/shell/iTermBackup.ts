@@ -2,7 +2,7 @@ import { copyFile, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 
 export function markITerm2SetupComplete(): void {
   saveGlobalConfig((current) => ({

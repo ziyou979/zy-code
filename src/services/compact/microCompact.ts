@@ -12,8 +12,8 @@ import { WEB_FETCH_TOOL_NAME } from '../../tools/WebFetchTool/prompt.js'
 import { WEB_SEARCH_TOOL_NAME } from '../../tools/WebSearchTool/prompt.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

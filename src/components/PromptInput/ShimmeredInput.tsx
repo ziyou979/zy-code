@@ -1,5 +1,5 @@
 import { Ansi, Box, Text, useAnimationFrame } from '../../ink/index.js'
-import { segmentTextByHighlights, type TextHighlight } from '../../utils/textHighlighting.js'
+import { segmentTextByHighlights, type TextHighlight } from '../../terminal-ui/textHighlighting.js'
 import { ShimmerChar } from '../Spinner/ShimmerChar.js'
 
 type Props = {

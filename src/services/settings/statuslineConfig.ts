@@ -11,11 +11,11 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { logError } from '../../utils/log.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { logError } from '../../services/infra/log.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import type { StatuslineModuleConfig } from './statuslineTypes.js'
 
 // ─── Schema ────────────────────────────────────────────────────────

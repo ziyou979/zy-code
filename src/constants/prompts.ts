@@ -1,8 +1,8 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { type as osType, version as osVersion, release as osRelease } from 'node:os'
 import { env } from '../services/environment/env.js'
-import { getIsGit } from '../utils/git.js'
-import { getCwd } from '../utils/cwd.js'
+import { getIsGit } from '../services/infra/git.js'
+import { getCwd } from '../services/environment/cwd.js'
 
 import { getCurrentWorktreeSession } from '../services/worktree/worktree.js'
 import { getSessionStartDate } from './common.js'
@@ -18,7 +18,7 @@ import { getOutputStyleConfig } from './outputStyles.js'
 import type { MCPServerConnection, ConnectedMCPServer } from '../services/mcp/types.js'
 import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
-import { hasEmbeddedSearchTools } from 'src/utils/embeddedTools.js'
+import { hasEmbeddedSearchTools } from 'src/services/tool-runtime/embeddedTools.js'
 
 import {
   EXPLORE_AGENT,
@@ -26,7 +26,7 @@ import {
 } from 'src/tools/AgentTool/built-in/exploreAgent.js'
 
 import { isScratchpadEnabled, getScratchpadDir } from '../services/permissions/filesystem.js'
-import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../services/infra/envUtils.js'
 
 import { feature } from 'bun:bundle'
 
@@ -38,7 +38,7 @@ import {
 } from './systemPromptSections.js'
 import { SLEEP_TOOL_NAME } from '../tools/SleepTool/prompt.js'
 import { TICK_TAG } from './xml.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { loadMemoryPrompt } from '../memdir/memdir.js'
 import { isUndercover } from '../services/undercover/undercover.js'
 import { isMcpInstructionsDeltaEnabled } from '../services/mcp/mcpInstructionsDelta.js'

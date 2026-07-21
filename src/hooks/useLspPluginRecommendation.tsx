@@ -19,8 +19,8 @@ import {
 import { useNotifications } from '../context/notifications.js'
 import { useAppState } from '../state/AppState.js'
 import { saveGlobalConfig } from '../services/config/config.js'
-import { logForDebugging } from '../utils/debug.js'
-import { logError } from '../utils/log.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { logError } from '../services/infra/log.js'
 import {
   addToNeverSuggest,
   getMatchingLspPlugins,

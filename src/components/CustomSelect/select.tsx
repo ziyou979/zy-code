@@ -6,7 +6,7 @@ import { stringWidth } from '../../ink/stringWidth.js'
 import { Ansi, Box, Text } from '../../ink/index.js'
 import { count } from '../../utils/array.js'
 import type { PastedContent } from '../../services/config/config.js'
-import type { ImageDimensions } from '../../utils/imageResizer.js'
+import type { ImageDimensions } from '../../services/attachments/imageResizer.js'
 import { SelectInputOption } from './select-input-option.js'
 import {
   createHoverLeaveHandler,

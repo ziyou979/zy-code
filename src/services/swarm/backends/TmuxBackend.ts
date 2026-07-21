@@ -1,9 +1,9 @@
 import type { AgentColorName } from '../../../tools/AgentTool/agentColorManager.js'
-import { count } from '../../utils/array.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { count } from '../../../utils/array.js'
+import { logForDebugging } from '../../../services/infra/debug.js'
 import { execFileNoThrow } from '../../shell/execFileNoThrow.js'
-import { logError } from '../../utils/log.js'
-import { sleep } from '../../utils/sleep.js'
+import { logError } from '../../../services/infra/log.js'
+import { sleep } from '../../../utils/sleep.js'
 import {
   getSwarmSocketName,
   HIDDEN_SESSION_NAME,

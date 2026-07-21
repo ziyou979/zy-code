@@ -6,8 +6,8 @@ import { useNotifications } from '../../context/notifications.js'
 import { Text } from '../../ink/index.js'
 import { getInitializationStatus, getLspServerManager } from '../../services/lsp/manager.js'
 import { useSetAppState } from '../../state/AppState.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 
 const LSP_POLL_INTERVAL_MS = 5000
 

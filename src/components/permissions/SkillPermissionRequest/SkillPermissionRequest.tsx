@@ -1,5 +1,5 @@
 import { tSync } from 'src/i18n/index.js'
-import { logError } from 'src/utils/log.js'
+import { logError } from 'src/services/infra/log.js'
 import { getOriginalCwd } from '../../../bootstrap/runtime/runtimeContext.js'
 import { Box, Text } from '../../../ink/index.js'
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js'

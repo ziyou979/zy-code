@@ -4,7 +4,7 @@ import { homedir, platform } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import chalk from 'chalk'
-import type { ThemeName } from 'src/utils/theme.js'
+import type { ThemeName } from 'src/services/environment/theme.js'
 import { supportsHyperlinks } from '../../ink/supportsHyperlinks.js'
 import { color } from '../../ink/index.js'
 import { maybeMarkProjectOnboardingComplete } from '../../services/settings/projectOnboardingState.js'
@@ -19,13 +19,13 @@ import {
 import { setupShellCompletion } from '../../services/cache/completionCache.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { env } from '../../services/environment/env.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { isFsInaccessible } from '../../utils/errors.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { addItemToJSONCArray, safeParseJSONC } from '../../utils/json.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { getPlatform } from '../../services/shell/platform.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import { tSync } from '../../i18n/index.js'
 
 const EOL = '\n'
@@ -404,9 +404,7 @@ async function enableOptionAsMetaForTerminal(theme: ThemeName): Promise<string> 
       }
     }
     if (!wasAnyProfileUpdated) {
-      throw new Error(
-        tSync('terminalSetup.failedConfigureProfiles'),
-      )
+      throw new Error(tSync('terminalSetup.failedConfigureProfiles'))
     }
 
     // Flush the preferences cache

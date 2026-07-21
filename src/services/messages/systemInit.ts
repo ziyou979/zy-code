@@ -6,7 +6,7 @@ import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles.js'
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from 'src/tools/AgentTool/constants.js'
 import type { ApiKeySource, PermissionMode, WireMessage } from 'src/types/index.js'
 import { getApiKeyWithSource } from '../auth/auth.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../environment/cwd.js'
 import { getInitialSettings } from '../settings/settings.js'
 
 // TODO(next-minor): remove this translation once SDK consumers have migrated
@@ -76,7 +76,7 @@ export function buildSystemInitMessage(inputs: SystemInitInputs): WireMessage {
   if (feature('UDS_INBOX')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(initMessage as unknown as Record<string, unknown>).messaging_socket_path =
-      require('../../utils/udsMessaging.js').getUdsMessagingSocketPath()
+      require('../../services/bridge/udsMessaging.js').getUdsMessagingSocketPath()
     /* eslint-enable @typescript-eslint/no-require-imports */
   }
   return initMessage

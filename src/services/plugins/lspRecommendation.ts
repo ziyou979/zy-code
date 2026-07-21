@@ -13,7 +13,7 @@
 import { extname } from 'node:path'
 import { isBinaryInstalled } from '../permissions/binaryCheck.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { isPluginInstalled } from './installedPluginsManager.js'
 import { getMarketplace, loadKnownMarketplacesConfig } from './marketplaceManager.js'
 import { ALLOWED_OFFICIAL_MARKETPLACE_NAMES, type PluginMarketplaceEntry } from './schemas.js'

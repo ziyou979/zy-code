@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { logError } from 'src/utils/log.js'
+import { logError } from 'src/services/infra/log.js'
 import { z } from 'zod/v4'
 import type { ConnectedMCPServer, MCPServerConnection } from '../services/mcp/types.js'
 import { getConnectedIdeClient } from '../services/ide/ide.js'

@@ -37,18 +37,21 @@ import {
 import type { AgentId } from '../../types/ids.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
-import { detectCodeIndexingFromCommand } from '../../utils/codeIndexing.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { detectCodeIndexingFromCommand } from '../../services/search/codeIndexing.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { isENOENT, ShellError } from '../../utils/errors.js'
 import {
   detectFileEncoding,
   detectLineEndings,
   getFileModificationTime,
   writeTextContent,
-} from '../../utils/file.js'
-import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../services/file-persistence/fileHistory.js'
+} from '../../services/infra/file.js'
+import {
+  fileHistoryEnabled,
+  fileHistoryTrackEdit,
+} from '../../services/file-persistence/fileHistory.js'
 import { truncate } from '../../utils/format.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { expandPath } from '../../utils/path.js'
 import type { PermissionResult } from '../../services/permissions/permissionResult.js'
@@ -65,8 +68,8 @@ import {
   generatePreview,
   getToolResultPath,
   PREVIEW_SIZE_BYTES,
-} from '../../utils/toolResultStorage.js'
-import { extractZyCodeHints } from '../../utils/zyCodeHints.js'
+} from '../../services/mcp/toolResultStorage.js'
+import { extractZyCodeHints } from '../../services/hints/zyCodeHints.js'
 import { userFacingName as fileEditUserFacingName } from '../FileEditTool/UI.js'
 import { trackGitOperations } from '../shared/gitOperationTracking.js'
 import {

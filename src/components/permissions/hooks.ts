@@ -16,8 +16,8 @@ import { permissionRuleValueToString } from 'src/services/permissions/permission
 import type { ToolUseConfirm } from './PermissionRequest.js'
 import { useSetAppState } from '../../state/AppState.js'
 import { env } from '../../services/environment/env.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { type CompletionType, logUnaryEvent } from '../../services/telemetry/unaryLogging.js'
 
 export type UnaryEvent = {

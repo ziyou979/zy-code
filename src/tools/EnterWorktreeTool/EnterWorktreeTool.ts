@@ -5,9 +5,9 @@ import { clearSystemPromptSections } from '../../constants/systemPromptSections.
 import { logEvent } from '../../services/analytics/index.js'
 import type { Tool } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
-import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
-import { getCwd } from '../../utils/cwd.js'
-import { findCanonicalGitRoot } from '../../utils/git.js'
+import { clearMemoryFileCaches } from '../../services/memory/agentsMd.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { findCanonicalGitRoot } from '../../services/infra/git.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { getPlanSlug, getPlansDirectory } from '../../services/plans/plans.js'
 import { setCwd } from '../../services/shell/shell.js'
@@ -130,7 +130,7 @@ export const EnterWorktreeTool: Tool<InputSchema, Output> = buildTool({
   },
 } satisfies ToolDef<InputSchema, Output>)
 
-import { isWorktreeModeEnabled } from '../../utils/worktreeModeEnabled.js'
+import { isWorktreeModeEnabled } from '../../services/worktree/worktreeModeEnabled.js'
 // 插件化注册
 import { toolRegistry } from '../registry.js'
 

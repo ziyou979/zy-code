@@ -15,11 +15,11 @@ import {
   resetYankState,
   updateYankLength,
   yankPop,
-} from '../utils/cursor.js'
+} from '../terminal-ui/cursor.js'
 import { env } from '../services/environment/env.js'
 import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
-import type { ImageDimensions } from '../utils/imageResizer.js'
-import { isModifierPressed, prewarmModifiers } from '../utils/modifiers.js'
+import type { ImageDimensions } from '../services/attachments/imageResizer.js'
+import { isModifierPressed, prewarmModifiers } from '../services/input/modifiers.js'
 import { useDoublePress } from './useDoublePress.js'
 
 type MaybeCursor = undefined | Cursor

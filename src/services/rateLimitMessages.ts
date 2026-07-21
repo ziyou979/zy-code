@@ -5,7 +5,7 @@
 
 import { tSync } from '../i18n/index.js'
 import { hasZyAiBillingAccess } from '../services/billing/billing.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 import { formatResetTime } from '../utils/format.js'
 import {
   getOauthAccountInfo,

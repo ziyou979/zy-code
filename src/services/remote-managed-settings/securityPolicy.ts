@@ -1,7 +1,10 @@
-import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
-import { DANGEROUS_SHELL_SETTINGS, SAFE_ENV_VARS } from '../../utils/managedEnvConstants.js'
+import { gracefulShutdownSync } from '../../bootstrap/lifecycle/gracefulShutdown.js'
+import {
+  DANGEROUS_SHELL_SETTINGS,
+  SAFE_ENV_VARS,
+} from '../../services/environment/managedEnvConstants.js'
 import type { SettingsJson } from '../settings/types.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 
 type DangerousShellSetting = (typeof DANGEROUS_SHELL_SETTINGS)[number]
 

@@ -7,8 +7,8 @@ import { type ToolUseContext } from '../../../tools/tool.js'
 import type { IDESelection } from '../../../hooks/useIdeSelection.js'
 import { isTodoV2Enabled } from '../../tasks-service/tasks.js'
 import { getPlanFilePath, getPlan } from '../../plans/plans.js'
-import { logError } from '../../utils/log.js'
-import { logAntError } from '../../utils/debug.js'
+import { logError } from '../../../services/infra/log.js'
+import { logAntError } from '../../../services/infra/debug.js'
 import type { Message } from 'src/types/message.js'
 import {
   type QueuedCommand,
@@ -16,9 +16,9 @@ import {
   isValidImagePaste,
 } from 'src/types/textInputTypes.js'
 import type { ContentBlock, ImageBlock, ImageSource } from '../../../types/llm.js'
-import { maybeResizeAndDownsampleImageBlock } from '../../utils/imageResizer.js'
+import { maybeResizeAndDownsampleImageBlock } from '../../../services/attachments/imageResizer.js'
 import type { PastedContent } from '../../config/config.js'
-import { createAbortController } from '../../utils/abortController.js'
+import { createAbortController } from '../../../utils/abortController.js'
 import { drainPendingMessages } from '../../../tasks/local-agent-task/LocalAgentTask.js'
 import {
   hasExitedPlanModeInSession,
@@ -33,13 +33,13 @@ import {
 } from '../../../bootstrap/runtime/runtimeContext.js'
 import type { QuerySource } from '../../../constants/querySource.js'
 import { extractTextContent } from '../../messages/predicates.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../../services/infra/envUtils.js'
 import { feature } from 'bun:bundle'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { hasUltrathinkKeyword, isUltrathinkEnabled } from '../../utils/thinking.js'
+import { hasUltrathinkKeyword, isUltrathinkEnabled } from '../../../services/messages/thinking.js'
 import { hasWorkflowKeyword } from '../../workflow/keyword.js'
 import { isOrchestrateEffort } from '../../effort/effort.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../../services/infra/slowOperations.js'
 import { getLocalISODate } from '../../../constants/common.js'
 import { isAgentSwarmsEnabled } from '../../swarm/agentSwarmsEnabled.js'
 import {

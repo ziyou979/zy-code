@@ -22,9 +22,9 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { registerCleanup } from '../utils/cleanupRegistry.js'
-import { logForDebugging } from '../utils/debug.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { registerCleanup } from '../services/cleanup/cleanupRegistry.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { isEnvTruthy } from '../services/infra/envUtils.js'
 import { isENOENT } from '../utils/errors.js'
 import { startUpstreamProxyRelay } from './relay.js'
 

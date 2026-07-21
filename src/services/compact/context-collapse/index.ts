@@ -16,7 +16,7 @@
 import { randomUUID } from 'node:crypto'
 import type { QuerySource } from '../../../constants/querySource.js'
 import type { ToolUseContext } from '../../../tools/tool.js'
-import type { Message } from '../../../types/message.js'
+import type { AssistantMessage, Message } from '../../../types/message.js'
 import { createUserMessage } from '../../messages/constructors.js'
 import { getMainLoopModel } from '../../model/model.js'
 import { projectView } from './operations.js'
@@ -186,8 +186,8 @@ export async function applyCollapsesIfNeeded(
   _querySource?: QuerySource,
 ): Promise<{ messages: Message[] }> {
   // 动态导入以避免循环依赖
-  const { tokenCountWithEstimation } = await import('../../utils/tokens.js')
-  const { getContextWindowForModel } = await import('../../utils/context.js')
+  const { tokenCountWithEstimation } = await import('../../../services/api/tokens.js')
+  const { getContextWindowForModel } = await import('../../context/modelContext.js')
   const { getMaxOutputTokensForModel } = await import('../../api/apiHelpers.js')
 
   // 获取当前模型
@@ -333,10 +333,16 @@ export async function recoverFromOverflow(
  */
 export function isWithheldPromptTooLong(
   message: unknown,
-  isPromptTooLongFn: (msg: unknown) => boolean,
+  isPromptTooLongFn: (msg: AssistantMessage) => boolean,
   _querySource?: QuerySource,
 ): boolean {
-  if (!isPromptTooLongFn(message)) {
+  if (
+    typeof message !== 'object' ||
+    message === null ||
+    !('type' in message) ||
+    message.type !== 'assistant' ||
+    !isPromptTooLongFn(message as AssistantMessage)
+  ) {
     return false
   }
   return staged.length > 0

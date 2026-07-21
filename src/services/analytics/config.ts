@@ -5,7 +5,7 @@
  * across all analytics systems (Datadog, direct API)
  */
 
-import { isTelemetryDisabled } from '../../utils/privacyLevel.js'
+import { isTelemetryDisabled } from '../telemetry/privacyLevel.js'
 
 /**
  * Check if analytics operations should be disabled

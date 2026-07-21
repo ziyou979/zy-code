@@ -1,11 +1,11 @@
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getAuthHeaders, withOAuth401Retry } from '../http/http.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { memoizeWithTTLAsync } from '../../utils/memoize.js'
-import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
-import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { isEssentialTrafficOnly } from '../telemetry/privacyLevel.js'
+import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 
 type MetricsEnabledResponse = {
   metrics_logging_enabled: boolean

@@ -3,13 +3,13 @@ import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import z from 'zod/v4'
 import { getOrganizationUUID, getZyAIOAuthTokens } from '../auth/auth.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { parseGitHubRepository } from '../../utils/detectRepository.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { parseGitHubRepository } from '../git/detectRepository.js'
 import { errorMessage, toError } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { sleep } from '../../utils/sleep.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 
 // Retry configuration for teleport API requests
 const TELEPORT_RETRY_DELAYS = [2000, 4000, 8000, 16000] // 4 retries with exponential backoff

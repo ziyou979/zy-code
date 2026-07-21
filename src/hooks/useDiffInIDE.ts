@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { basename } from 'node:path'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
-import { readFileSync } from 'src/utils/fileRead.js'
+import { readFileSync } from 'src/services/file-persistence/fileRead.js'
 import { expandPath } from 'src/utils/path.js'
 import type { PermissionOption } from '../components/permissions/FilePermissionDialog/PermissionOptions.js'
 import type {
@@ -22,8 +22,8 @@ import {
   getConnectedIdeName,
   hasAccessToIDEExtensionDiffFeature,
 } from '../services/ide/ide.js'
-import { WindowsToWSLConverter } from '../utils/idePathConversion.js'
-import { logError } from '../utils/log.js'
+import { WindowsToWSLConverter } from '../services/ide/idePathConversion.js'
+import { logError } from '../services/infra/log.js'
 import { getPlatform } from '../services/shell/platform.js'
 
 type Props = {

@@ -15,12 +15,16 @@ import chalk from 'chalk'
 import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logEvent } from '../analytics/index.js'
 import { checkHasTrustDialogAccepted } from '../config/config.js'
-import { checkStsCallerIdentity, clearAwsIniCache, isValidAwsStsOutput } from '../../utils/aws.js'
-import { AwsAuthStatusManager } from '../../utils/awsAuthStatusManager.js'
-import { logAntError, logForDebugging } from '../../utils/debug.js'
+import {
+  checkStsCallerIdentity,
+  clearAwsIniCache,
+  isValidAwsStsOutput,
+} from '../../services/api/aws.js'
+import { AwsAuthStatusManager } from '../../services/api/awsAuthStatusManager.js'
+import { logAntError, logForDebugging } from '../../services/infra/debug.js'
 import { execSyncWithDefaults_DEPRECATED } from '../shell/execFileNoThrow.js'
 import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 
 // ─── 常量 ────────────────────────────────────────────────────────────────────
 

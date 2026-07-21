@@ -44,7 +44,7 @@ function hljs(): HLJSApi {
 }
 
 import { stringWidth } from '../../ink/stringWidth.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 
 // ---------------------------------------------------------------------------
 // Public API 类型（与 vendor/color-diff-src/index.d.ts 一致）

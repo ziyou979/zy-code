@@ -3,7 +3,7 @@ import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
 import type { Message } from '../../types/message.js'
 import { checkAndRefreshOAuthTokenIfNeeded } from '../../services/auth/auth.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getAuthHeaders, getUserAgent } from '../../services/http/http.js'
 import { normalizeMessagesForAPI } from '../../services/messages/./api.js'
@@ -13,7 +13,7 @@ import {
   loadSubagentTranscripts,
   MAX_TRANSCRIPT_READ_BYTES,
 } from '../../services/sessionStorage.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { redactSensitiveInfo } from '../Feedback.js'
 
 type TranscriptShareResult = {

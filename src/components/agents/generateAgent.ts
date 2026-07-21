@@ -15,8 +15,8 @@ import {
 } from '../../services/analytics/index.js'
 import type { AssistantContentBlock, TextBlock } from '../../types/llm.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
-import { jsonParse } from '../../utils/slowOperations.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
+import { asSystemPrompt } from '../../services/api/systemPromptType.js'
 
 type GeneratedAgent = {
   identifier: string

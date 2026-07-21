@@ -1,7 +1,7 @@
 import { homedir } from 'node:os'
 import { relative } from 'node:path'
 import { Box, Text } from '../../ink/index.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 export function getRelativeMemoryPath(path: string): string {
   const homeDir = homedir()
   const cwd = getCwd()

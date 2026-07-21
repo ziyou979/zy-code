@@ -12,9 +12,9 @@ import {
   onDynamicSkillsLoaded,
 } from '../../skills/loadSkillsDir.js'
 import { resetSentSkillNames } from '../attachments/attachments.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { executeConfigChangeHooks, hasBlockingResult } from '../hooks.js'
 import { createSignal } from '../../utils/signal.js'
 

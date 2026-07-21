@@ -20,16 +20,16 @@
 
 import { basename, join } from 'node:path'
 import axios from 'axios'
-import { logForDebugging } from '../../utils/debug.js'
-import { ConfigParseError, errorMessage, isENOENT } from '../../utils/errors.js'
+import { logForDebugging } from '../../../services/infra/debug.js'
+import { ConfigParseError, errorMessage, isENOENT } from '../../../utils/errors.js'
 import { execFileNoThrowWithCwd } from '../../shell/execFileNoThrow.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { gitExe } from '../../utils/git.js'
+import { getFsImplementation } from '../../../services/infra/fsOperations.js'
+import { gitExe } from '../../../services/infra/git.js'
 import {
   jsonParse,
   jsonStringify,
   writeFileSync_DEPRECATED,
-} from '../../utils/slowOperations.js'
+} from '../../../services/infra/slowOperations.js'
 import { classifyFetchError, logPluginFetch } from '../fetchTelemetry.js'
 import { type MarketplaceSource, PluginMarketplaceSchema } from '../schemas.js'
 import {

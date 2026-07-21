@@ -10,10 +10,10 @@ import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
 import { isAbortError } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
-import { createDebugLog } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { createDebugLog } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { AbortError, toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { isAutoModeAllowlistedTool } from './classifierDecision.js'
 import type {
   PermissionAskDecision,
@@ -44,8 +44,11 @@ import {
   getTotalInputTokens,
   getTotalOutputTokens,
 } from '../../bootstrap/runtime/runtimeContext.js'
-import { clearClassifierChecking, setClassifierChecking } from '../../utils/classifierApprovals.js'
-import { isInProtectedNamespace } from '../../utils/envUtils.js'
+import {
+  clearClassifierChecking,
+  setClassifierChecking,
+} from '../permissions/classifierApprovals.js'
+import { isInProtectedNamespace } from '../../services/infra/envUtils.js'
 import { executePermissionRequestHooks } from '../hooks.js'
 import {
   AUTO_REJECT_MESSAGE,
@@ -56,7 +59,7 @@ import {
 import { calculateCostFromTokens } from '../model/modelCost.js'
 import { getAutoModeConfig } from '../settings/settings.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

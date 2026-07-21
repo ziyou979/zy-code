@@ -3,11 +3,11 @@ import { access } from 'node:fs/promises'
 import { tmpdir as osTmpdir } from 'node:os'
 import { join as nativeJoin } from 'node:path'
 import { join as posixJoin } from 'node:path/posix'
-import { logForDebugging } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import { getSessionEnvironmentScript } from '../../services/environment/sessionEnvironment.js'
-import { getSessionEnvVars } from '../../utils/sessionEnvVars.js'
+import { getSessionEnvVars } from '../../services/environment/sessionEnvVars.js'
 import {
   ensureSocketInitialized,
   getZyTmuxEnv,

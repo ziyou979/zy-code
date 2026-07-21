@@ -60,7 +60,7 @@ import {
   saveWorktreeState,
 } from '../../services/sessionStorage.js'
 import { generateSessionTitle } from '../../services/session-storage/sessionTitle.js'
-import { reconstructContentReplacementState } from '../../utils/toolResultStorage.js'
+import { reconstructContentReplacementState } from '../../services/mcp/toolResultStorage.js'
 import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 
 // ── 公共类型 ──────────────────────────────────────────────

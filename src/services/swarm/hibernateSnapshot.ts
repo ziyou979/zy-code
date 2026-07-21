@@ -15,9 +15,9 @@ import type {
 } from '../../tasks/in-process-teammate-task/types.js'
 import type { Message } from '../../types/message.js'
 import type { PermissionMode } from '../../types/permissions.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 
 /**
  * hibernate 快照的版本号，用于校验 resume 合法性。

@@ -1,7 +1,7 @@
 import { checkGate_CACHED_OR_BLOCKING } from '../../services/analytics/growthbook.js'
-import { isInBundledMode } from '../../utils/bundledMode.js'
+import { isInBundledMode } from '../../services/environment/bundledMode.js'
 import { errorMessage } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { type SessionHandle, type SessionSpawner, type SessionSpawnOpts } from '../types.js'
 export type BackoffConfig = {
   connInitialMs: number

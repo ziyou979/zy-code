@@ -22,7 +22,7 @@ import { ScrollChromeContext } from './FullscreenLayout.js'
 const HEADROOM = 3
 
 import { registerMessageHitTarget } from '../ink/messageHitTarget.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { sleep } from '../utils/sleep.js'
 import { renderableSearchText } from '../services/session-transcript/transcriptSearch.js'
 import {

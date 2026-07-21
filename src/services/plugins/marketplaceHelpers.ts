@@ -1,6 +1,6 @@
 import isEqual from 'lodash-es/isEqual.js'
 import { toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { getSettingsForSource } from '../settings/settings.js'
 import { plural } from '../../utils/stringUtils.js'
 import { checkGitAvailable } from './gitAvailability.js'

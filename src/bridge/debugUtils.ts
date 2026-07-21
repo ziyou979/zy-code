@@ -2,9 +2,9 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { errorMessage } from '../utils/errors.js'
-import { jsonStringify } from '../utils/slowOperations.js'
+import { jsonStringify } from '../services/infra/slowOperations.js'
 const DEBUG_MSG_LIMIT = 2000
 
 const SECRET_FIELD_NAMES = [

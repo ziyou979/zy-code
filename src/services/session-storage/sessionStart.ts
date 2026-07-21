@@ -2,13 +2,13 @@ import { getMainThreadAgentType } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { AggregatedHookResult } from '../hooks/types.js'
 import type { Message } from '../../types/message.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { withDiagnosticsTiming } from '../../utils/diagLogs.js'
-import { isBareMode } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { withDiagnosticsTiming } from '../telemetry/diagLogs.js'
+import { isBareMode } from '../../services/infra/envUtils.js'
 import { updateWatchPaths } from '../hooks/fileChangedWatcher.js'
 import { shouldAllowManagedHooksOnly } from '../hooks/hooksConfigSnapshot.js'
 import { executeSessionStartHooks, executeSetupHooks } from '../hooks.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { loadPluginHooks } from '../plugins/loadPluginHooks.js'
 
 type SessionStartHooksOptions = {
@@ -44,7 +44,9 @@ export function takeSessionTitle(): string | undefined {
  */
 async function reloadSkillsFromHook(): Promise<void> {
   try {
-    const { clearCommandMemoizationCaches, getSkillToolCommands } = await import('../../commands/index.js')
+    const { clearCommandMemoizationCaches, getSkillToolCommands } = await import(
+      '../../commands/index.js'
+    )
     const { clearDynamicSkills } = await import('../../skills/loadSkillsDir.js')
     const { clearSkillCaches } = await import('../../skills/loadSkillsDir.js')
     const { clearPluginSkillsCache } = await import('../plugins/loadPluginCommands.js')

@@ -1,7 +1,8 @@
 import type { UUID } from 'node:crypto'
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-type FileHistorySnapshot = import('src/services/file-persistence/fileHistory.js').FileHistorySnapshot
-import type { ContentReplacementRecord } from 'src/utils/toolResultStorage.js'
+type FileHistorySnapshot =
+  import('src/services/file-persistence/fileHistory.js').FileHistorySnapshot
+import type { ContentReplacementRecord } from './toolResultStorage.js'
 import type { AgentId } from './ids.js'
 import type { Message } from './message.js'
 import type { QueueOperationMessage } from './messageQueueTypes.js'

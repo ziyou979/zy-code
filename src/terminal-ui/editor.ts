@@ -2,7 +2,7 @@ import { type SpawnOptions, type SpawnSyncOptions, spawn, spawnSync } from 'node
 import { basename } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import instances from '../ink/instances.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { whichSync } from '../services/shell/which.js'
 
 function isCommandAvailable(command: string): boolean {

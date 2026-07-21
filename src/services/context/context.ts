@@ -3,13 +3,17 @@ import memoize from 'lodash-es/memoize.js'
 import { getAdditionalDirectoriesForAgentsMd } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setCachedAgentsMdContent } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getLocalISODate } from '../../constants/common.js'
-import { filterInjectedMemoryFiles, getAgentsMds, getMemoryFiles } from '../../utils/agentsMd.js'
-import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
-import { isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
+import {
+  filterInjectedMemoryFiles,
+  getAgentsMds,
+  getMemoryFiles,
+} from '../../services/memory/agentsMd.js'
+import { logForDiagnosticsNoPII } from '../telemetry/diagLogs.js'
+import { isBareMode, isEnvTruthy } from '../../services/infra/envUtils.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
-import { getBranch, getDefaultBranch, getIsGit, gitExe } from '../../utils/git.js'
+import { getBranch, getDefaultBranch, getIsGit, gitExe } from '../../services/infra/git.js'
 import { shouldIncludeGitInstructions } from '../git/settingsBehavior.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 
 const MAX_STATUS_CHARS = 2000
 

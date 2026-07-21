@@ -34,10 +34,10 @@ import { asAgentId } from '../../types/ids.js'
 import type { AssistantContentBlock } from '../../types/llm.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isInProtectedNamespace } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isInProtectedNamespace } from '../../services/infra/envUtils.js'
 import { AbortError, errorMessage } from '../../utils/errors.js'
-import type { CacheSafeParams } from '../../utils/forkedAgent.js'
+import type { CacheSafeParams } from '../../services/agent/forkedAgent.js'
 import {
   extractTextContent,
   getLastAssistantMessage,
@@ -48,8 +48,8 @@ import {
   buildTranscriptForClassifier,
   classifyYoloAction,
 } from '../../services/permissions/yoloClassifier.js'
-import { isInProcessTeammate } from '../../utils/teammateContext.js'
-import { getTokenCountFromUsage } from '../../utils/tokens.js'
+import { isInProcessTeammate } from '../../services/swarm/teammateContext.js'
+import { getTokenCountFromUsage } from '../../services/api/tokens.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from '../ExitPlanModeTool/constants.js'
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from './constants.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
@@ -205,7 +205,10 @@ export function resolveAgentTools(
   }
 }
 
-import { type AgentToolResult, agentToolResultSchema } from '../../utils/agentToolResultSchema.js'
+import {
+  type AgentToolResult,
+  agentToolResultSchema,
+} from '../../services/agent/agentToolResultSchema.js'
 
 export type { AgentToolResult }
 export { agentToolResultSchema }
@@ -457,7 +460,7 @@ export async function classifyHandoffIfNeeded({
  * Used by the async agent lifecycle to classify errors so parent agents can
  * make informed retry/fallback decisions.
  */
-import { categorizeAgentError } from '../../utils/agentErrorCategorizer.js'
+import { categorizeAgentError } from '../../services/agent/agentErrorCategorizer.js'
 
 export { categorizeAgentError }
 

@@ -15,15 +15,15 @@ import { logEvent } from '../services/analytics/index.js'
 import type { LogOption, SerializedMessage } from '../types/logs.js'
 import { formatLogMetadata, truncateToWidth } from '../utils/format.js'
 import { getWorktreePaths } from '../services/worktree/getWorktreePaths.js'
-import { getBranch } from '../utils/git.js'
-import { getLogDisplayTitle } from '../utils/log.js'
+import { getBranch } from '../services/infra/git.js'
+import { getLogDisplayTitle } from '../services/infra/log.js'
 import {
   getFirstMeaningfulUserMessageTextContent,
   getSessionIdFromLog,
   isCustomTitleEnabled,
   saveCustomTitle,
 } from '../services/sessionStorage.js'
-import { getTheme } from '../utils/theme.js'
+import { getTheme } from '../services/environment/theme.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { Select } from './CustomSelect/select.js'
 import { Byline } from './design-system/Byline.js'

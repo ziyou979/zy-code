@@ -21,13 +21,13 @@ import {
 import type { ValidationResult } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { uniq } from '../../utils/array.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { isENOENT, toError } from '../../utils/errors.js'
 import { execFileNoThrowWithCwd } from '../../services/shell/execFileNoThrow.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { expandPath } from '../../utils/path.js'
 import { checkReadPermissionForTool } from '../../services/permissions/filesystem.js'
 import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
@@ -786,7 +786,7 @@ function countUniqueFilesFromOutgoingCalls(calls: CallHierarchyOutgoingCall[]): 
   return new Set(validUris).size
 }
 
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 // 插件化注册
 import { toolRegistry } from '../registry.js'
 

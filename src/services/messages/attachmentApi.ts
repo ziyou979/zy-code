@@ -19,7 +19,7 @@ import type { ContentBlock, TextBlock, UserContentBlock } from '../../types/llm.
 import type { MessageOrigin, UserMessage } from '../../types/message.js'
 import { isAgentSwarmsEnabled } from '../swarm/agentSwarmsEnabled.js'
 import { type Attachment, memoryHeader } from '../attachments/attachments.js'
-import { logAntError } from '../../utils/debug.js'
+import { logAntError } from '../../services/infra/debug.js'
 import { formatFileSize } from '../../utils/format.js'
 import { isTodoV2Enabled } from '../../services/tasks-service/tasks.js'
 import { normalizeMetaAttachmentForAPI } from './attachment-api/metaAttachmentMessages.js'

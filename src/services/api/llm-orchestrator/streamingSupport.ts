@@ -25,13 +25,13 @@ import type {
   StreamEvent,
   SystemAPIErrorMessage,
 } from '../../../types/message.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { errorMessage } from '../../utils/errors.js'
-import { captureAPIRequest } from '../../utils/log.js'
+import { isEnvTruthy, isInternalBuild } from '../../../services/infra/envUtils.js'
+import { errorMessage } from '../../../utils/errors.js'
+import { captureAPIRequest } from '../../../services/infra/log.js'
 import { createAssistantAPIErrorMessage } from '../../messages/constructors.js'
 import { normalizeContentFromAPI } from '../../messages/normalize.js'
-import { type SystemPrompt } from '../../utils/systemPromptType.js'
-import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
+import { type SystemPrompt } from '../systemPromptType.js'
+import { tokenCountFromLastAPIResponse } from '../../../services/api/tokens.js'
 import { extractQuotaStatusFromError, extractQuotaStatusFromHeaders } from '../../zyAiLimits.js'
 import { getLLMAdapter } from '../client.js'
 import { feature } from 'bun:bundle'
@@ -39,15 +39,18 @@ import { setLastMainRequestId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { addToTotalSessionCost } from 'src/services/cost/costTracker.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { getAgentContext } from 'src/services/agent/agentContext.js'
-import { logForDebugging } from 'src/utils/debug.js'
-import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
+import { logForDiagnosticsNoPII } from 'src/services/telemetry/diagLogs.js'
 import { headlessProfilerCheckpoint } from 'src/services/analytics/headlessProfiler.js'
 import { calculateCost, getModelCurrency } from 'src/services/model/modelCost.js'
-import { endQueryProfile, queryCheckpoint } from 'src/utils/queryProfiler.js'
-import { type ThinkingConfig } from 'src/utils/thinking.js'
+import { endQueryProfile, queryCheckpoint } from 'src/services/query/queryProfiler.js'
+import { type ThinkingConfig } from 'src/services/messages/thinking.js'
 // LLMConnectionError 用于流式超时回退时创建错误实例
 import { LLMConnectionError } from '../../../types/llm.js'
-import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
+import {
+  startSessionActivity,
+  stopSessionActivity,
+} from '../../../services/session-storage/sessionActivity.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -929,7 +932,8 @@ export async function* queryModel(
       // 404 在分配 streamRequestId 之前在 .withResponse() 处抛出，
       // 且 CannotRetryError 意味着每次重试都失败——所以从错误 header 中获取
       // 失败的请求 ID。
-      const failedRequestId = (errorFromRetry.originalError as unknown as { requestID?: string }).requestID ?? 'unknown'
+      const failedRequestId =
+        (errorFromRetry.originalError as unknown as { requestID?: string }).requestID ?? 'unknown'
       logForDebugging('Streaming endpoint returned 404, falling back to non-streaming mode', {
         level: 'warn',
       })
@@ -1005,8 +1009,12 @@ export async function* queryModel(
 
         const requestId =
           streamRequestId ||
-          (isAPIError(error) ? (error as unknown as { requestID?: string }).requestID : undefined) ||
-          (isAPIError(error) ? ((error as unknown as { error?: { request_id?: string } }).error?.request_id) : undefined)
+          (isAPIError(error)
+            ? (error as unknown as { requestID?: string }).requestID
+            : undefined) ||
+          (isAPIError(error)
+            ? (error as unknown as { error?: { request_id?: string } }).error?.request_id
+            : undefined)
 
         logAPIError({
           error,
@@ -1059,7 +1067,9 @@ export async function* queryModel(
       const requestId =
         streamRequestId ||
         (isAPIError(error) ? (error as unknown as { requestID?: string }).requestID : undefined) ||
-        (isAPIError(error) ? ((error as unknown as { error?: { request_id?: string } }).error?.request_id) : undefined)
+        (isAPIError(error)
+          ? (error as unknown as { error?: { request_id?: string } }).error?.request_id
+          : undefined)
 
       logAPIError({
         error,

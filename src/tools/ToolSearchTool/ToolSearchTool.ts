@@ -6,7 +6,7 @@ import {
 } from '../../services/analytics/index.js'
 import { buildTool, findToolByName, type Tool, type ToolDef, type Tools } from '../../tools/tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { escapeRegExp } from '../../utils/stringUtils.js'
 import { isToolSearchEnabledOptimistic } from '../../services/tool-runtime/toolSearch.js'

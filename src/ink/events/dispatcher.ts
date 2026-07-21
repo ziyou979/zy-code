@@ -5,7 +5,7 @@ import {
   // @ts-expect-error
   NoEventPriority,
 } from 'react-reconciler/constants.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { HANDLER_FOR_EVENT } from './eventHandlers.js'
 import type { EventTarget, TerminalEvent } from './terminalEvent.js'
 

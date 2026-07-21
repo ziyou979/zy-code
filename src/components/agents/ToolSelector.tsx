@@ -26,7 +26,7 @@ import type { KeyboardEvent } from '../../ink/events/keyboardEvent.js'
 import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { count } from '../../utils/array.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { Divider } from '../design-system/Divider.js'
 
 type Props = {

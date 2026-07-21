@@ -1,10 +1,10 @@
 import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import { type AgentMemoryScope, getAgentMemoryDir } from './agentMemory.js'
 
 const SNAPSHOT_BASE = 'agent-memory-snapshots'

@@ -24,9 +24,9 @@ import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Command } from '../../commands/types.js'
 import { validateForceLoginOrg } from '../../services/auth/auth.js'
 import { filterAllowedSdkBetas } from '../../services/feature-flags/betas.js'
-import { logForDebugging, setHasFormattedOutput } from '../../utils/debug.js'
+import { logForDebugging, setHasFormattedOutput } from '../../services/infra/debug.js'
 import { resolveInitialEffortSetting } from '../../services/effort/effort.js'
-import { isBareMode } from '../../utils/envUtils.js'
+import { isBareMode } from '../../services/infra/envUtils.js'
 import { applyConfigEnvironmentVariables } from '../../services/environment/managedEnv.js'
 import {
   checkAndDisableBypassPermissions,
@@ -34,7 +34,7 @@ import {
 } from '../../services/permissions/permissionSetup.js'
 import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
 import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
-import type { ThinkingConfig } from '../../utils/thinking.js'
+import type { ThinkingConfig } from '../../services/messages/thinking.js'
 // ---------- 参数接口 ----------
 
 /** rootAction 传入无头模式的全部上下文。 */

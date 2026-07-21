@@ -11,7 +11,7 @@ import {
 } from '../../constants/githubApp.js'
 import { openBrowser } from '../../services/browser/browser.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import type { Workflow } from './types.js'
 
 async function createWorkflowFile(

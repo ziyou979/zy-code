@@ -12,8 +12,8 @@ import {
   classifyPluginCommandError,
 } from '../telemetry/pluginTelemetry.js'
 import { errorMessage } from '../../utils/errors.js'
-import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
-import { logError } from '../../utils/log.js'
+import { gracefulShutdown } from '../../bootstrap/lifecycle/gracefulShutdown.js'
+import { logError } from '../../services/infra/log.js'
 import { getManagedPluginNames } from './managedPlugins.js'
 import { parsePluginIdentifier } from './pluginIdentifier.js'
 import type { PluginScope } from './schemas.js'

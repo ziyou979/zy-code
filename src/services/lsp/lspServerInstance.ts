@@ -1,10 +1,10 @@
 import * as path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type { InitializeParams } from 'vscode-languageserver-protocol'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { getCwd } from '../environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { sleep } from '../../utils/sleep.js'
 import type { createLSPClient as createLSPClientType } from './lspClient.js'
 // @ts-expect-error

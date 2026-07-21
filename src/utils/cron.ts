@@ -1,7 +1,7 @@
 // Minimal cron expression parsing and next-run calculation.
 //
 // Supports the standard 5-field cron subset:
-import { formatTimeShort } from './dateUtils.js'
+import { formatTimeShort } from './format.js'
 //   minute hour day-of-month month day-of-week
 //
 // Field syntax: wildcard, N, step (star-slash-N), range (N-M), list (N,M,...).

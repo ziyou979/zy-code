@@ -2,7 +2,7 @@ import React from 'react'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink/index.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import type { Input, SendMessageToolOutput } from './SendMessageTool.js'
 export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {
   if (typeof input.message !== 'object' || input.message === null) {

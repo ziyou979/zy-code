@@ -1,6 +1,6 @@
 import type { ToolUseContext } from '../../tools/tool.js'
 
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { withResolvers } from '../../utils/withResolvers.js'
 import { isLockHeldLocally, releaseComputerUseLock } from './computerUseLock.js'

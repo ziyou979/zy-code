@@ -6,7 +6,7 @@ import {
 } from '../services/analytics/index.js'
 import { abortSpeculation } from '../services/prompt-suggestion/speculation.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 
 type Props = {
   inputValue: string

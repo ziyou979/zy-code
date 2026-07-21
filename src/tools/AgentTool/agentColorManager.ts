@@ -1,5 +1,5 @@
 import { getAgentColorMap } from 'src/bootstrap/runtime/runtimeContext.js'
-import type { Theme } from '../../utils/theme.js'
+import type { Theme } from '../../services/environment/theme.js'
 
 export type AgentColorName =
   | 'red'

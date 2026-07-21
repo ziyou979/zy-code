@@ -14,7 +14,7 @@ import { Box, Text, useInput } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
 import { saveGlobalConfig } from '../services/config/config.js'
-import { getBranch } from '../utils/git.js'
+import { getBranch } from '../services/infra/git.js'
 import { Dialog } from './design-system/Dialog.js'
 import { QRCodeDisplay } from './QRCodeDisplay.js'
 

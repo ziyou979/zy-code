@@ -1,9 +1,9 @@
 import { basename, dirname, join, sep } from 'node:path'
 import { LRUCache } from 'lru-cache'
 import type { SuggestionItem } from 'src/services/suggestions/types.js'
-import { getCwd } from 'src/utils/cwd.js'
-import { getFsImplementation } from 'src/utils/fsOperations.js'
-import { logError } from 'src/utils/log.js'
+import { getCwd } from 'src/services/environment/cwd.js'
+import { getFsImplementation } from 'src/services/infra/fsOperations.js'
+import { logError } from 'src/services/infra/log.js'
 import { expandPath } from 'src/utils/path.js'
 // Types
 export type DirectoryEntry = {

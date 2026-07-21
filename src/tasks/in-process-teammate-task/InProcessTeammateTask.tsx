@@ -18,7 +18,7 @@ import {
   type TaskStateBase,
 } from '../../tasks/task.js'
 import type { Message } from '../../types/message.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'
 import type { InProcessTeammateTaskState } from './types.js'
 import { appendCappedMessage, isInProcessTeammateTask } from './types.js'

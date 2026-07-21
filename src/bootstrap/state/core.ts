@@ -31,7 +31,7 @@ import type { PluginHookMatcher } from '../../services/settings/types.js'
 import { createSignal } from 'src/utils/signal.js'
 import { createSessionId } from 'src/utils/uuid.js'
 import type { CreateParams } from '../../types/llm.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 
 // 已注册钩子的联合类型 — 可以是 SDK 回调或原生插件钩子
 export type RegisteredHookMatcher = HookCallbackMatcher | PluginHookMatcher

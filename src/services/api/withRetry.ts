@@ -2,8 +2,8 @@ import { feature } from 'bun:bundle'
 import type { QuerySource } from 'src/constants/querySource.js'
 import { getAPIProviderForStatsig } from 'src/services/model/providers.js'
 import type { SystemAPIErrorMessage } from 'src/types/message.js'
-import { createDebugLog } from 'src/utils/debug.js'
-import { logError } from 'src/utils/log.js'
+import { createDebugLog } from 'src/services/infra/debug.js'
+import { logError } from 'src/services/infra/log.js'
 import { createSystemAPIErrorMessage } from 'src/services/messages/constructors.js'
 import {
   type APIErrorLike,
@@ -16,11 +16,11 @@ import {
   LLMError,
 } from '../../types/llm.js'
 import { clearApiKeyHelperCache, getZyAIOAuthTokens, handleOAuth401Error } from '../auth/auth.js'
-import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../services/infra/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { disableKeepAlive } from '../../utils/proxy.js'
+import { disableKeepAlive } from '../../services/http/proxy.js'
 import { sleep } from '../../utils/sleep.js'
-import type { ThinkingConfig } from '../../utils/thinking.js'
+import type { ThinkingConfig } from '../../services/messages/thinking.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

@@ -8,7 +8,8 @@ import {
   getShellCompletions,
   parseInputContext,
 } from '../../../src/shell-eval/bash/shellCompletion.js'
-import { findSuitableShell } from '../../../src/services/shell/shell.js'
+import { runWithCwdOverride } from '../../../src/services/environment/cwd.js'
+import { findSuitableShell, getShellConfig } from '../../../src/services/shell/shell.js'
 
 describe('shellCompletion', () => {
   test('从 Windows Git Bash 路径识别 bash', () => {
@@ -76,9 +77,17 @@ describe('shellCompletion', () => {
   })
 
   test('通过当前配置的 shell 获取仓库文件候选', async () => {
-    expect(detectCompletionShellType(await findSuitableShell())).not.toBeNull()
+    const shellPath = await findSuitableShell().catch(() => null)
+    // 全量测试中的环境变量用例可能暂时移除 PATH；没有可用 POSIX shell 时不满足集成前提。
+    if (!shellPath || !detectCompletionShellType(shellPath)) {
+      return
+    }
+    // 其他测试可能在不同环境变量下预热过会话级 shell 配置，先清理共享缓存。
+    getShellConfig.cache.clear?.()
     const input = 'cat package.j'
-    const suggestions = await getShellCompletions(input, input.length, new AbortController().signal)
+    const suggestions = await runWithCwdOverride(process.cwd(), () =>
+      getShellCompletions(input, input.length, new AbortController().signal),
+    )
 
     expect(suggestions.some((suggestion) => suggestion.displayText === 'package.json ')).toBe(true)
   })

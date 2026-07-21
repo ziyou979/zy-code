@@ -3,7 +3,7 @@
  * Implementation is lazy-loaded from cost.ts to reduce startup time.
  */
 import type { Command } from '../../commands/index.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 
 const cost = {
   type: 'local',

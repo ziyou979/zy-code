@@ -1,5 +1,5 @@
 import type { WireWorkflowProgress } from '../../types/tools.js'
-import { enqueueWireEvent } from '../../utils/bridgeEventQueue.js'
+import { enqueueWireEvent } from '../bridge/bridgeEventQueue.js'
 
 /**
  * Emit a `task_progress` SDK event. Shared by background agents (per tool_use

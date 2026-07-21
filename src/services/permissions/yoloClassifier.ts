@@ -18,14 +18,14 @@ import type {
 } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import type { ClassifierUsage, YoloClassifierResult } from '../../types/permissions.js'
-import { createDebugLog, isDebugMode } from '../../utils/debug.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { createDebugLog, isDebugMode } from '../../services/infra/debug.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { extractTextContent } from '../messages/predicates.js'
 import { sideQuery } from '../../services/query/sideQuery.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { tokenCountWithEstimation } from '../../utils/tokens.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import { tokenCountWithEstimation } from '../../services/api/tokens.js'
 import { logEvent } from '../analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/metadata.js'
 import { parsePromptTooLongTokenCounts } from '../api/errors.js'
@@ -172,27 +172,29 @@ const yoloClassifierResponseSchema = lazySchema(() =>
 
 export const YOLO_CLASSIFIER_TOOL_NAME = 'classify_result'
 
-const YOLO_CLASSIFIER_TOOL_SCHEMA: ToolDefinition = {
-  name: YOLO_CLASSIFIER_TOOL_NAME,
-  description: tSync('permission.yoloClassifier.schema.description'),
-  inputSchema: {
-    type: 'object',
-    properties: {
-      thinking: {
-        type: 'string',
-        description: tSync('permission.yoloClassifier.schema.thinking'),
+function getYoloClassifierToolSchema(): ToolDefinition {
+  return {
+    name: YOLO_CLASSIFIER_TOOL_NAME,
+    description: tSync('permission.yoloClassifier.schema.description'),
+    inputSchema: {
+      type: 'object',
+      properties: {
+        thinking: {
+          type: 'string',
+          description: tSync('permission.yoloClassifier.schema.thinking'),
+        },
+        shouldBlock: {
+          type: 'boolean',
+          description: tSync('permission.yoloClassifier.schema.shouldBlock'),
+        },
+        reason: {
+          type: 'string',
+          description: tSync('permission.yoloClassifier.schema.reason'),
+        },
       },
-      shouldBlock: {
-        type: 'boolean',
-        description: tSync('permission.yoloClassifier.schema.shouldBlock'),
-      },
-      reason: {
-        type: 'string',
-        description: tSync('permission.yoloClassifier.schema.reason'),
-      },
+      required: ['thinking', 'shouldBlock', 'reason'],
     },
-    required: ['thinking', 'shouldBlock', 'reason'],
-  },
+  }
 }
 // ============================================================================
 // 2 阶段 XML 分类器
@@ -735,7 +737,7 @@ export async function classifyYoloAction(
       temperature: 0,
       thinking: disableThinking,
       messages: [...prefixMessages, { role: 'user' as const, content: userContentBlocks }],
-      tools: [YOLO_CLASSIFIER_TOOL_SCHEMA],
+      tools: [getYoloClassifierToolSchema()],
       tool_choice: {
         type: 'tool' as const,
         name: YOLO_CLASSIFIER_TOOL_NAME,

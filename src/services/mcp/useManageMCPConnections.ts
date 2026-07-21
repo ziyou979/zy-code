@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../../commands/index.js'
 import type { Tool } from '../../tools/tool.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   clearServerCache,
   fetchCommandsForClient,
@@ -44,7 +44,7 @@ import {
 } from 'src/services/mcp/config.js'
 import type { AppState } from 'src/state/AppStateStore.js'
 import type { PluginError } from 'src/services/plugins/types.js'
-import { createDebugLog } from 'src/utils/debug.js'
+import { createDebugLog } from 'src/services/infra/debug.js'
 
 const mcpLog = createDebugLog('mcp')
 
@@ -53,8 +53,8 @@ import { useNotifications } from '../../context/notifications.js'
 import { useAppState, useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import { errorMessage } from '../../utils/errors.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { logMCPDebug, logMCPError } from '../../utils/log.js'
-import { enqueue } from '../../utils/messageQueueManager.js'
+import { logMCPDebug, logMCPError } from '../../services/infra/log.js'
+import { enqueue } from '../../services/input/messageQueueManager.js'
 import {
   CHANNEL_PERMISSION_METHOD,
   ChannelMessageNotificationSchema,

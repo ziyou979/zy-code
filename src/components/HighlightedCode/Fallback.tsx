@@ -1,9 +1,9 @@
 import { extname } from 'node:path'
 import { Suspense, use } from 'react'
 import { Ansi, Text } from '../../ink/index.js'
-import { getCliHighlightPromise } from '../../utils/cliHighlight.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { convertLeadingTabsToSpaces } from '../../utils/file.js'
+import { getCliHighlightPromise } from '../../services/terminal/cliHighlight.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { convertLeadingTabsToSpaces } from '../../services/infra/file.js'
 import { hashPair } from '../../utils/hash.js'
 
 type Props = {

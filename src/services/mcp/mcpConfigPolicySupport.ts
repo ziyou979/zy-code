@@ -1,4 +1,4 @@
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import type { SettingsJson } from '../settings/types.js'
 import {
   isMcpServerCommandEntry,

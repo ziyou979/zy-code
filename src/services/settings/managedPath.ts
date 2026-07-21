@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { getPlatform } from '../shell/platform.js'
 
 /**

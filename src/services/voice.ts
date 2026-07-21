@@ -6,9 +6,9 @@
 
 import { type ChildProcess, spawn, spawnSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
-import { logForDebugging } from '../utils/debug.js'
-import { isEnvTruthy, isRunningOnHomespace } from '../utils/envUtils.js'
-import { logError } from '../utils/log.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { isEnvTruthy, isRunningOnHomespace } from '../services/infra/envUtils.js'
+import { logError } from '../services/infra/log.js'
 import { getPlatform } from './shell/platform.js'
 
 // Lazy-loaded native audio module. audio-capture.node links against

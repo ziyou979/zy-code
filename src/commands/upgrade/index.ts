@@ -1,5 +1,5 @@
 import type { Command } from '../../commands/index.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 
 const upgrade = {
   type: 'local-jsx',

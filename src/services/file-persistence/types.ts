@@ -10,13 +10,12 @@ export type TurnStartTime = {
 }
 
 export type PersistedFile = {
-  path: string
-  content: string
-  encoding: string
+  filename: string
+  file_id: string
 }
 
 export type FailedPersistence = {
-  path: string
+  filename: string
   error: string
 }
 

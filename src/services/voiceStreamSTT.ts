@@ -14,12 +14,12 @@
 import type { ClientRequest, IncomingMessage } from 'node:http'
 import WebSocket from 'ws'
 import { getOauthConfig } from '../constants/oauth.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { getUserAgent } from '../services/http/http.js'
-import { logError } from '../utils/log.js'
-import { getWebSocketTLSOptions } from '../utils/mtls.js'
-import { getWebSocketProxyAgent, getWebSocketProxyUrl } from '../utils/proxy.js'
-import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
+import { logError } from '../services/infra/log.js'
+import { getWebSocketTLSOptions } from '../services/http/mtls.js'
+import { getWebSocketProxyAgent, getWebSocketProxyUrl } from '../services/http/proxy.js'
+import { jsonParse, jsonStringify } from '../services/infra/slowOperations.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getZyAIOAuthTokens,

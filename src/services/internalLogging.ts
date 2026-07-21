@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import type { ToolPermissionContext } from '../tools/tool.js'
-import { isInternalBuild } from '../utils/envUtils.js'
-import { jsonStringify } from '../utils/slowOperations.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
+import { jsonStringify } from '../services/infra/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

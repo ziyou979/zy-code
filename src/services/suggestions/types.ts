@@ -1,4 +1,4 @@
-import type { Theme } from '../../utils/theme.js'
+import type { Theme } from '../environment/theme.js'
 
 /** 补全服务与展示组件之间共享的候选项契约。 */
 export type SuggestionItem = {

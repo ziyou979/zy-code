@@ -1,9 +1,9 @@
 import type { PromptMessage, ResourceLink } from '@modelcontextprotocol/sdk/types.js'
 import type { ContentBlock, ImageSource } from '../../types/llm.js'
-import { isEnvDefinedFalsy } from '../../utils/envUtils.js'
+import { isEnvDefinedFalsy } from '../../services/infra/envUtils.js'
 import { TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../utils/errors.js'
-import { maybeResizeAndDownsampleImageBuffer } from '../../utils/imageResizer.js'
-import { logMCPError } from '../../utils/log.js'
+import { maybeResizeAndDownsampleImageBuffer } from '../attachments/imageResizer.js'
+import { logMCPError } from '../../services/infra/log.js'
 import {
   getBinaryBlobSavedMessage,
   getFormatDescription,
@@ -16,8 +16,8 @@ import {
   mcpContentNeedsTruncation,
   truncateMcpContentIfNeeded,
 } from '../mcp/mcpValidation.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { isPersistError, persistToolResult } from '../../utils/toolResultStorage.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import { isPersistError, persistToolResult } from '../../services/mcp/toolResultStorage.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

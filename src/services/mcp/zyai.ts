@@ -7,11 +7,11 @@ import {
 } from 'src/services/analytics/index.js'
 import { getZyAIOAuthTokens } from 'src/services/auth/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from 'src/services/config/config.js'
-import { createDebugLog } from 'src/utils/debug.js'
+import { createDebugLog } from 'src/services/infra/debug.js'
 
 const mcpLog = createDebugLog('mcp')
 
-import { isEnvDefinedFalsy } from 'src/utils/envUtils.js'
+import { isEnvDefinedFalsy } from 'src/services/infra/envUtils.js'
 import { clearMcpAuthCache } from './client.js'
 import { normalizeNameForMCP } from './normalization.js'
 import type { ScopedMcpServerConfig } from './types.js'

@@ -1,6 +1,6 @@
 import { getApiKey, getAuthTokenSource } from '../auth/auth.js'
 import { getGlobalConfig } from '../config/config.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 
 export function hasConsoleBillingAccess(): boolean {
   // Check if cost reporting is disabled via environment变量

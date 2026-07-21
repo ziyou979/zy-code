@@ -33,11 +33,14 @@ import {
 } from '../../services/config/config.js'
 import { loadConversationForResume } from '../../services/session-storage/conversationRecovery.js'
 import { resolveInitialEffortSetting } from '../../services/effort/effort.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { logError } from '../../utils/log.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
+import { logError } from '../../services/infra/log.js'
 import { applyConfigEnvironmentVariables } from '../../services/environment/managedEnv.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'
-import { processSessionStartHooks, processSetupHooks } from '../../services/session-storage/sessionStart.js'
+import {
+  processSessionStartHooks,
+  processSetupHooks,
+} from '../../services/session-storage/sessionStart.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
 import {
   dispatchResumeMode,
@@ -49,7 +52,7 @@ import {
   runSshMode,
 } from '../assembly/index.js'
 import { createEmptyAttributionState } from 'src/services/git/commitAttribution.js'
-import { gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
+import { gracefulShutdownSync } from 'src/bootstrap/lifecycle/gracefulShutdown.js'
 import { processResumedConversation } from 'src/services/session-storage/sessionRestore.js'
 import { plural } from 'src/utils/stringUtils.js'
 import { getUserMsgOptIn } from 'src/bootstrap/runtime/runtimeContext.js'
@@ -434,7 +437,7 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
   //   - 安全：ZY_CODE_DISABLE_SESSION_DATA_UPLOAD=1 绕过（测试设置此）。
   // 导入是动态 + 异步的，以避免增加启动延迟。
   const sessionUploaderPromise = isInternalBuild()
-    ? import('../../utils/sessionDataUploader.js')
+    ? import('../../services/upload/sessionDataUploader.js')
     : null
 
   // 将会话上传器解析延迟到 onTurnComplete 回调，以避免

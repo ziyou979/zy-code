@@ -10,8 +10,8 @@ import { stat } from 'node:fs/promises'
 
 import type { ValidationResult } from '../../tools/tool.js'
 
-import { getCwd } from '../../utils/cwd.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { IMAGE_EXTENSION_REGEX } from '../../services/attachments/imagePaste.js'
 import { expandPath } from '../../utils/path.js'

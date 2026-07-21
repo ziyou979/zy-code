@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { type Notification, useNotifications } from '../../context/notifications.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 
 type Result = Notification | Notification[] | null
 

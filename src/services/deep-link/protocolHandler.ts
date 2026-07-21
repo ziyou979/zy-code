@@ -12,9 +12,9 @@
  */
 
 import { homedir } from 'node:os'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { filterExistingPaths, getKnownPathsForRepo } from '../github/githubRepoPathMapping.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { readLastFetchTime } from './banner.js'
 import { parseDeepLink } from './parseDeepLink.js'
 import { MACOS_BUNDLE_ID } from './registerProtocol.js'

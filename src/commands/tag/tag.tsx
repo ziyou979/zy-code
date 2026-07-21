@@ -8,7 +8,7 @@ import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
-import { recursivelySanitizeUnicode } from '../../utils/sanitization.js'
+import { recursivelySanitizeUnicode } from '../../services/permissions/sanitization.js'
 import { getCurrentSessionTag, getTranscriptPath, saveTag } from '../../services/sessionStorage.js'
 
 function ConfirmRemoveTag({

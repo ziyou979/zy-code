@@ -1,5 +1,5 @@
 import { Text, useTheme } from '../../ink/index.js'
-import { getTheme, type Theme } from '../../utils/theme.js'
+import { getTheme, type Theme } from '../../services/environment/theme.js'
 import { interpolateColor, parseRGB, toRGBColor } from './utils.js'
 
 type Props = {

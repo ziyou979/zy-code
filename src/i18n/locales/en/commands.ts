@@ -518,8 +518,8 @@ export const enCommands: TranslationResource = {
     'GitHub App installation failed\nFor manual setup instructions, see: {url}',
   'installGitHubApp.warningInvalidUrl': 'Invalid GitHub URL format',
   'installGitHubApp.warningInvalidUrlMsg': 'The repository URL format appears to be invalid.',
-  'installGitHubApp.instructionUrlFormat':
-    'Use format: owner/repo or https://github.com/owner/repo',
+  'installGitHubApp.instructionUrlFormat': 'Use owner/repo or a GitHub repository URL',
+  'installGitHubApp.instructionUrlExample': 'Example: owner/repo',
   'installGitHubApp.warningRepoFormat': 'Repository format warning',
   'installGitHubApp.warningRepoFormatMsg': 'Repository should be in format "owner/repo"',
   'installGitHubApp.warningRepoNotFound': 'Repository not found',

@@ -9,7 +9,7 @@ import {
 } from '../../commands/index.js'
 import { Box, Text } from '../../ink/index.js'
 import { estimateSkillFrontmatterTokens, getSkillsPath } from '../../skills/loadSkillsDir.js'
-import { getDisplayPath } from '../../utils/file.js'
+import { getDisplayPath } from '../../services/infra/file.js'
 import { formatTokens } from '../../utils/format.js'
 import { getSettingSourceName, type SettingSource } from '../../services/settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'

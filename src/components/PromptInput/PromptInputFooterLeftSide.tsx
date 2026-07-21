@@ -48,7 +48,7 @@ import { isXtermJs } from '../../ink/terminal.js'
 import { useHasSelection, useSelection } from '../../ink/hooks/useSelection.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { getPlatform } from '../../services/shell/platform.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { PrBadge } from '../PrBadge.js'
 import { TungstenPill } from '../TungstenPill.js'
 
@@ -108,7 +108,9 @@ function ProactiveCountdown() {
   const formattedDuration = formatDuration(remainingSeconds * 1000, {
     mostSignificantOnly: true,
   })
-  return <Text dimColor={true}>{tSync('promptInput.waiting', { duration: formattedDuration })}</Text>
+  return (
+    <Text dimColor={true}>{tSync('promptInput.waiting', { duration: formattedDuration })}</Text>
+  )
 }
 export function PromptInputFooterLeftSide({
   exitMessage,
@@ -339,7 +341,9 @@ function ModeIndicator({
     !showSpinnerTree &&
     hasBackgroundTasks &&
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
-    (Object.values(tasks) as { type?: string }[]).some((task) => task.type === 'in_process_teammate')
+    (Object.values(tasks) as { type?: string }[]).some(
+      (task) => task.type === 'in_process_teammate',
+    )
   const hasTeammatePills = hasInProcessTeammates || (!showSpinnerTree && isViewingTeammate)
 
   // In remote mode (`zy assistant`, --teleport) the agent runs elsewhere;
@@ -367,7 +371,9 @@ function ModeIndicator({
     ...(remoteSessionUrl
       ? [
           <Link url={remoteSessionUrl} key="remote">
-            <Text color="ide">{CIRCLE_DOUBLE} {tSync('promptInput.remote')}</Text>
+            <Text color="ide">
+              {CIRCLE_DOUBLE} {tSync('promptInput.remote')}
+            </Text>
           </Link>,
         ]
       : []),

@@ -27,9 +27,9 @@ import type { ToolPermissionContext, ToolUseContext } from '../../tools/tool.js'
 import { isAbortError } from '../../types/llm.js'
 import type { PendingClassifierCheck } from '../../types/permissions.js'
 import { count } from '../../utils/array.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
 import type {
   ClassifierBehavior,
@@ -66,7 +66,7 @@ import {
   suggestionForPrefix as sharedSuggestionForPrefix,
 } from '../../services/permissions/shellRuleMatching.js'
 import { getPlatform } from '../../services/shell/platform.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { windowsPathToPosixPath } from '../../services/shell/windowsPaths.js'
 import { BashTool } from './BashTool.js'
 import { checkCommandOperatorPermissions } from './bashCommandHelpers.js'

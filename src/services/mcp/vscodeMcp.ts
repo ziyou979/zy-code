@@ -1,8 +1,8 @@
-import { createDebugLog } from 'src/utils/debug.js'
+import { createDebugLog } from 'src/services/infra/debug.js'
 
 const mcpLog = createDebugLog('mcp')
 
-import { isInternalBuild } from 'src/utils/envUtils.js'
+import { isInternalBuild } from 'src/services/infra/envUtils.js'
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
 import {

@@ -17,13 +17,13 @@ import {
   pollForResponse,
   removeWorkerResponse,
 } from '../services/swarm/permissionSync.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import {
   type PermissionUpdate,
   permissionUpdateSchema,
 } from '../services/permissions/permissionUpdateSchema.js'
-import { getAgentName, getTeamName } from '../utils/teammate.js'
+import { getAgentName, getTeamName } from '../services/swarm/teammate.js'
 
 const POLL_INTERVAL_MS = 500
 

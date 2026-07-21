@@ -18,10 +18,10 @@ import type { Message } from '../../types/message.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { saveGlobalConfig } from '../../services/config/config.js'
 import { errorMessage } from '../../utils/errors.js'
-import { type CacheSafeParams, getLastCacheSafeParams } from '../../utils/forkedAgent.js'
+import { type CacheSafeParams, getLastCacheSafeParams } from '../../services/agent/forkedAgent.js'
 import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
 import { runSideQuestion } from '../../services/assistant/sideQuestion.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { asSystemPrompt } from '../../services/api/systemPromptType.js'
 
 type BtwComponentProps = {
   question: string

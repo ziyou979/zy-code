@@ -2,8 +2,8 @@ import { feature } from 'bun:bundle'
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import useStdin from '../../ink/hooks/useStdin.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
-import { getSystemThemeName, type SystemTheme } from '../../utils/systemTheme.js'
-import type { ThemeName, ThemeSetting } from '../../utils/theme.js'
+import { getSystemThemeName, type SystemTheme } from '../../services/environment/systemTheme.js'
+import type { ThemeName, ThemeSetting } from '../../services/environment/theme.js'
 
 type ThemeContextValue = {
   /** The saved user preference. May be 'auto'. */
@@ -64,8 +64,8 @@ export function ThemeProvider({ children, initialState, onThemeSave = defaultSav
       }
       let cleanup: (() => void) | undefined
       let cancelled = false
-      void import('../../utils/systemThemeWatcher.js').then((mod) => {
-        const { watchSystemTheme } = mod as typeof import('../../utils/systemThemeWatcher.js')
+      void import('../../terminal-ui/systemThemeWatcher.js').then((mod) => {
+        const { watchSystemTheme } = mod as typeof import('../../terminal-ui/systemThemeWatcher.js')
         if (!watchSystemTheme) {
           return
         }

@@ -3,10 +3,10 @@
  */
 
 import axios from 'axios'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { sleep } from '../../utils/sleep.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { getRetryDelay } from '../api/withRetry.js'
 import {
   type TeamMemoryHashesResult,

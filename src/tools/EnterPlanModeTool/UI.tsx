@@ -5,7 +5,7 @@ import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
 import type { ToolProgressData } from '../../tools/tool.js'
 import type { ProgressMessage } from '../../types/message.js'
-import type { ThemeName } from '../../utils/theme.js'
+import type { ThemeName } from '../../services/environment/theme.js'
 import type { Output } from './EnterPlanModeTool.js'
 export function renderToolUseMessage(): React.ReactNode {
   return null

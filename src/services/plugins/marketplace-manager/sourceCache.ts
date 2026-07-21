@@ -22,19 +22,19 @@ import { writeFile } from 'node:fs/promises'
 import { dirname, isAbsolute, join, resolve, sep } from 'node:path'
 import isEqual from 'lodash-es/isEqual.js'
 import memoize from 'lodash-es/memoize.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../../services/infra/debug.js'
 import {
   ConfigParseError,
   errorMessage,
   getErrnoCode,
   isENOENT,
   toError,
-} from '../../utils/errors.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { logError } from '../../utils/log.js'
+} from '../../../utils/errors.js'
+import { getFsImplementation } from '../../../services/infra/fsOperations.js'
+import { logError } from '../../../services/infra/log.js'
 import { getSettingsForSource, updateSettingsForSource } from '../../settings/settings.js'
 import type { SettingsJson } from '../../settings/types.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../../services/infra/slowOperations.js'
 import { markPluginVersionOrphaned } from '../cacheUtils.js'
 import { removeAllPluginsForMarketplace } from '../installedPluginsManager.js'
 import {

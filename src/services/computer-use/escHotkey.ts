@@ -1,4 +1,4 @@
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { releasePump, retainPump } from './drainRunLoop.js'
 import { requireComputerUseSwift } from './swiftLoader.js'
 
@@ -27,11 +27,7 @@ export function registerEscHotkey(onEscape: () => void): boolean {
     return true
   }
   const cu = requireComputerUseSwift()
-  if (
-    !(
-      cu.hotkey.registerEscape(onEscape)
-    )
-  ) {
+  if (!cu.hotkey.registerEscape(onEscape)) {
     // CGEvent.tapCreate failed — typically missing Accessibility permission.
     // CU still works, just without ESC abort. Mirrors Cowork's escAbort.ts:81.
     logForDebugging('[cu-esc] registerEscape returned false', { level: 'warn' })
@@ -59,5 +55,6 @@ export function unregisterEscHotkey(): void {
 export function notifyExpectedEscape(): void {
   if (!registered) {
     return // @ts-ignore
-  } requireComputerUseSwift().hotkey.notifyExpectedEscape()
+  }
+  requireComputerUseSwift().hotkey.notifyExpectedEscape()
 }

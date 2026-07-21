@@ -11,12 +11,8 @@
  */
 
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
-import {
-  hasShownHintThisSession,
-  setPendingHint,
-  type ZyCodeHint,
-} from '../../utils/zyCodeHints.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { hasShownHintThisSession, setPendingHint, type ZyCodeHint } from '../hints/zyCodeHints.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

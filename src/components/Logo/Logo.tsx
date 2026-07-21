@@ -2,11 +2,14 @@ import { feature } from 'bun:bundle'
 import { useEffect, useState } from 'react'
 import { getDumpPromptsPath } from 'src/services/api/dumpPrompts.js'
 import { getGlobalConfig, saveGlobalConfig } from 'src/services/config/config.js'
-import { getDebugLogPath, isDebugMode, isDebugToStdErr } from 'src/utils/debug.js'
-import { isEnvTruthy } from 'src/utils/envUtils.js'
+import { getDebugLogPath, isDebugMode, isDebugToStdErr } from 'src/services/infra/debug.js'
+import { isEnvTruthy } from 'src/services/infra/envUtils.js'
 import { getInitialSettings } from 'src/services/settings/settings.js'
-import { getStartupPerfLogPath, isDetailedProfilingEnabled } from 'src/services/telemetry/startupProfiler.js'
-import { resolveThemeSetting } from 'src/utils/systemTheme.js'
+import {
+  getStartupPerfLogPath,
+  isDetailedProfilingEnabled,
+} from 'src/services/telemetry/startupProfiler.js'
+import { resolveThemeSetting } from 'src/services/environment/systemTheme.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
@@ -16,7 +19,7 @@ import {
   incrementProjectOnboardingSeenCount,
   shouldShowProjectOnboarding,
 } from '../../services/settings/projectOnboardingState.js'
-import { getDisplayPath } from '../../utils/file.js'
+import { getDisplayPath } from '../../services/infra/file.js'
 import { truncate } from '../../utils/format.js'
 import {
   calculateLayoutDimensions,

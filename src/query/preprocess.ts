@@ -5,11 +5,11 @@ import type { AutoCompactTrackingState } from '../services/compact/autoCompact.j
 import type { PendingCacheEdits } from '../services/compact/microCompact.js'
 import type { ToolUseContext } from '../tools/tool.js'
 import type { Message } from '../types/message.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 import { getMessagesAfterCompactBoundary } from '../services/messages/./predicates.js'
-import { queryCheckpoint } from '../utils/queryProfiler.js'
+import { queryCheckpoint } from '../services/query/queryProfiler.js'
 import { recordContentReplacement } from '../services/sessionStorage.js'
-import { applyToolResultBudget } from '../utils/toolResultStorage.js'
+import { applyToolResultBudget } from '../services/mcp/toolResultStorage.js'
 import type { QueryDeps } from './deps.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */

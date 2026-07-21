@@ -9,11 +9,14 @@ import {
   getCurrentTurnTokenBudget,
   getTurnOutputTokens,
 } from '../../../bootstrap/runtime/runtimeContext.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isHumanTurn } from '../../utils/messagePredicates.js'
-import { isEnvTruthy, getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../../services/infra/debug.js'
+import { isHumanTurn } from '../../../services/messages/messagePredicates.js'
+import { isEnvTruthy, getZyConfigHomeDir } from '../../../services/infra/envUtils.js'
 import { feature } from 'bun:bundle'
-import { tokenCountFromLastAPIResponse, tokenCountWithEstimation } from '../../utils/tokens.js'
+import {
+  tokenCountFromLastAPIResponse,
+  tokenCountWithEstimation,
+} from '../../../services/api/tokens.js'
 import { getEffectiveContextWindowSize, isAutoCompactEnabled } from '../../compact/autoCompact.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../analytics/growthbook.js'
 import { isAgentSwarmsEnabled } from '../../swarm/agentSwarmsEnabled.js'
@@ -23,12 +26,17 @@ import {
   isShutdownApproved,
   isStructuredProtocolMessage,
   isIdleNotification,
-} from '../../utils/teammateMailbox.js'
-import { getAgentName, getAgentId, getTeamName, isTeamLead } from '../../utils/teammate.js'
-import { isInProcessTeammate } from '../../utils/teammateContext.js'
+} from '../../../services/swarm/teammateMailbox.js'
+import {
+  getAgentName,
+  getAgentId,
+  getTeamName,
+  isTeamLead,
+} from '../../../services/swarm/teammate.js'
+import { isInProcessTeammate } from '../../../services/swarm/teammateContext.js'
 import { removeTeammateFromTeamFile } from 'src/services/swarm/teamHelpers.js'
 import { unassignTeammateTasks } from '../../tasks-service/tasks.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../../services/infra/envUtils.js'
 import { Attachment, VERIFY_PLAN_REMINDER_CONFIG } from './types.js'
 /**
  * Get teammate mailbox attachments for agent swarm communication

@@ -5,9 +5,9 @@ import { shouldSkipHookDueToTrust } from '../config.js'
 // 该 hook 当前不读取字段，因此用 unknown 占位。
 type FileSuggestionCommandInput = unknown
 
-import { createDebugLog } from '../../utils/debug.js'
+import { createDebugLog } from '../../../services/infra/debug.js'
 import { getInitialSettings, getSettingsForSource } from '../../settings/settings.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../../services/infra/slowOperations.js'
 import { execCommandHook } from '../commandRunner.js'
 import {
   shouldAllowManagedHooksOnly,

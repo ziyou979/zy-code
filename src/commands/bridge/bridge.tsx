@@ -24,7 +24,7 @@ import {
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 
 type Props = {
   onDone: LocalJSXCommandOnDone

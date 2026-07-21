@@ -2,7 +2,7 @@
  * teammate mailbox 畸形消息过滤（对齐 CC 2.1.207 crash loop）
  */
 import { describe, expect, test } from 'bun:test'
-import { isValidTeammateMessage } from '../../src/utils/teammateMailbox.js'
+import { isValidTeammateMessage } from '../../src/services/swarm/teammateMailbox.js'
 
 describe('isValidTeammateMessage', () => {
   test('接受完整消息', () => {

@@ -1,4 +1,4 @@
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { escapeXmlAttr as escapeHtml } from '../../utils/xml.js'
 import { AggregatedData } from './remoteCollection.js'
 import {

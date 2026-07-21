@@ -11,7 +11,7 @@ import {
   findThinkingTriggerPositions,
   getRainbowColor,
   hasUltrathinkKeyword,
-} from '../../src/utils/thinking.js'
+} from '../../src/services/messages/thinking.js'
 
 describe('thinking', () => {
   describe('hasUltrathinkKeyword', () => {

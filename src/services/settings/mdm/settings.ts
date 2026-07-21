@@ -19,11 +19,11 @@
  */
 
 import { join } from 'node:path'
-import { logForDebugging } from '../../utils/debug.js'
-import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
-import { readFileSync } from '../../utils/fileRead.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { safeParseJSON } from '../../utils/json.js'
+import { logForDebugging } from '../../../services/infra/debug.js'
+import { logForDiagnosticsNoPII } from '../../telemetry/diagLogs.js'
+import { readFileSync } from '../../../services/file-persistence/fileRead.js'
+import { getFsImplementation } from '../../../services/infra/fsOperations.js'
+import { safeParseJSON } from '../../../utils/json.js'
 import { profileCheckpoint } from '../../telemetry/startupProfiler.js'
 import { getManagedFilePath, getManagedSettingsDropInDir } from '../managedPath.js'
 import { type SettingsJson, SettingsSchema } from '../types.js'

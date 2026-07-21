@@ -3,8 +3,8 @@ import { getIsInteractive } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { getGlobalConfig } from '../config/config.js'
 import { isBgSession } from '../session/concurrentSessions.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 
 let loggedTmuxCcDisable = false

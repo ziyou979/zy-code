@@ -9,14 +9,14 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { type ReleaseChannel, saveGlobalConfig } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { env } from '../environment/env.js'
-import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir, isInternalBuild } from '../../services/infra/envUtils.js'
 import { getErrnoCode, isENOENT, ZyError } from '../../utils/errors.js'
 import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
-import { logError } from '../../utils/log.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { gracefulShutdownSync } from '../../bootstrap/lifecycle/gracefulShutdown.js'
+import { logError } from '../../services/infra/log.js'
 import { gte, lt } from '../../utils/semver.js'
 import { getInitialSettings } from '../settings/settings.js'
 import {
@@ -25,7 +25,7 @@ import {
   readFileLines,
   writeFileLines,
 } from '../shell/shellConfig.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 
 const GCS_BUCKET_URL =
   'https://storage.googleapis.com/zy-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/zy-code-releases'

@@ -11,12 +11,12 @@ import { checkMetricsEnabled } from 'src/services/api/metricsOptOut.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { checkHasTrustDialogAccepted } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { errorMessage, toError } from '../../utils/errors.js'
 import { getAuthHeaders } from '../http/http.js'
-import { logError } from '../../utils/log.js'
-import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { logError } from '../../services/infra/log.js'
+import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 
 type DataPoint = {
   attributes: Record<string, string>

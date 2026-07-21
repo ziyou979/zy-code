@@ -7,9 +7,9 @@ import { refreshModelCapabilities } from '../../services/model/modelCapabilities
 import { skillChangeDetector } from '../../services/skill-runtime/skillChangeDetector.js'
 import { getRelevantTips } from '../../components/tips/tipRegistry.js'
 import { checkHasTrustDialogAccepted } from '../../services/config/config.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
-import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { logForDiagnosticsNoPII } from '../../services/telemetry/diagLogs.js'
+import { isBareMode, isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { countFilesRoundedRg } from '../../services/file-search/ripgrep.js'
 import { settingsChangeDetector } from '../../services/settings/changeDetector.js'
 import { initUser } from '../../services/auth/user.js'
@@ -85,7 +85,7 @@ export function startDeferredPrefetches(): void {
   // 事件循环停顿检测器 —— 当主线程阻塞超过 500ms 时记录日志
   if (isInternalBuild()) {
     // biome-ignore lint/suspicious/noExplicitAny: CLI 层类型适配
-    void import('../../utils/eventLoopStallDetector.js').then((m: any) =>
+    void import('../../services/telemetry/eventLoopStallDetector.js').then((m: any) =>
       m.startEventLoopStallDetector(),
     )
   }

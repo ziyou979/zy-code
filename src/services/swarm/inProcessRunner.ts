@@ -72,10 +72,10 @@ import type { PermissionDecision } from '../../types/permissions.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { type AgentContext, runWithAgentContext } from '../../services/agent/agentContext.js'
 import { count } from '../../utils/array.js'
-import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { cloneFileStateCache } from '../../utils/fileStateCache.js'
+import { emitTaskTerminatedBridge } from '../bridge/bridgeEventQueue.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
+import { cloneFileStateCache } from '../file-persistence/fileStateCache.js'
 import { createAssistantAPIErrorMessage, createUserMessage } from '../messages/constructors.js'
 import {
   SUBAGENT_REJECT_MESSAGE,
@@ -88,11 +88,17 @@ import {
 import type { PermissionUpdate } from '../permissions/permissionUpdateSchema.js'
 import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { sleep } from '../../utils/sleep.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { claimTask, getTask, listTasks, type Task, updateTask } from '../../services/tasks-service/tasks.js'
-import type { TeammateContext } from '../../utils/teammateContext.js'
-import { runWithTeammateContext } from '../../utils/teammateContext.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import { asSystemPrompt } from '../api/systemPromptType.js'
+import {
+  claimTask,
+  getTask,
+  listTasks,
+  type Task,
+  updateTask,
+} from '../../services/tasks-service/tasks.js'
+import type { TeammateContext } from './teammateContext.js'
+import { runWithTeammateContext } from './teammateContext.js'
 import {
   createIdleNotification,
   getLastPeerDmSummary,
@@ -101,9 +107,9 @@ import {
   markMessageAsReadByIndex,
   readMailbox,
   writeToMailbox,
-} from '../../utils/teammateMailbox.js'
-import { tokenCountWithEstimation } from '../../utils/tokens.js'
-import { createContentReplacementState } from '../../utils/toolResultStorage.js'
+} from '../../services/swarm/teammateMailbox.js'
+import { tokenCountWithEstimation } from '../../services/api/tokens.js'
+import { createContentReplacementState } from '../../services/mcp/toolResultStorage.js'
 import { TEAM_LEAD_NAME } from './constants.js'
 import { deleteHibernateSnapshot, saveHibernateSnapshot } from './hibernateSnapshot.js'
 import {

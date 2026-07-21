@@ -5,11 +5,11 @@ import type { Command } from '../../commands/index.js'
 import type { AgentMcpServerInfo } from './viewTypes.js'
 import type { Tool } from '../../tools/tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../environment/cwd.js'
 import { getGlobalZyFile } from '../environment/env.js'
 import { isSettingSourceEnabled } from '../settings/constants.js'
 import { getInitialSettings, hasSkipDangerousModePermissionPrompt } from '../settings/settings.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { getEnterpriseMcpFilePath, getMcpConfigByName } from './config.js'
 import { mcpInfoFromString } from './mcpStringUtils.js'
 import { normalizeNameForMCP } from './normalization.js'
@@ -478,11 +478,12 @@ export function extractAgentMcpServers(agents: AgentDefinition[]): AgentMcpServe
   for (const [name, { config, sourceAgents }] of serverMap) {
     // Use type guards to properly narrow the discriminated union type
     // Only include transport types that are supported by AgentMcpServerInfo
-    const agentServer: (
-      transport: string,
-      extra: Record<string, unknown>,
-    ) => AgentMcpServerInfo = (transport, extra) =>
-      ({ name, sourceAgents, transport, needsAuth: false, ...extra }) as AgentMcpServerInfo & Record<string, unknown> as AgentMcpServerInfo
+    const agentServer: (transport: string, extra: Record<string, unknown>) => AgentMcpServerInfo = (
+      transport,
+      extra,
+    ) =>
+      ({ name, sourceAgents, transport, needsAuth: false, ...extra }) as AgentMcpServerInfo &
+        Record<string, unknown> as AgentMcpServerInfo
     if (isStdioConfig(config)) {
       result.push(agentServer('stdio', { command: config.command }))
     } else if (isSSEConfig(config)) {

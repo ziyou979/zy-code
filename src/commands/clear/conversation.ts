@@ -26,10 +26,10 @@ import { isLocalShellTask } from '../../tasks/local-shell-task/guards.js'
 import { asAgentId } from '../../types/ids.js'
 import type { Message } from '../../types/message.js'
 import { createEmptyAttributionState } from '../../services/git/commitAttribution.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import type { FileStateCache } from '../../utils/fileStateCache.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
+import type { FileStateCache } from '../../services/file-persistence/fileStateCache.js'
 import { executeSessionEndHooks, getSessionEndHookTimeoutMs } from '../../services/hooks.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { clearAllPlanSlugs } from '../../services/plans/plans.js'
 import { setCwd } from '../../services/shell/shell.js'
 import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
@@ -39,7 +39,7 @@ import {
   resetSessionFilePointer,
   saveWorktreeState,
 } from '../../services/sessionStorage.js'
-import { shouldEnableThinkingByDefault } from '../../utils/thinking.js'
+import { shouldEnableThinkingByDefault } from '../../services/messages/thinking.js'
 import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 import { clearSessionCaches } from './caches.js'
 

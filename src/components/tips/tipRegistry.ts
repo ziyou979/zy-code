@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import { tSync } from 'src/i18n/index.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
 import { fileHistoryEnabled } from 'src/services/file-persistence/fileHistory.js'
 import { getInitialSettings, getSettingsForSource } from 'src/services/settings/settings.js'
 import { loadStatuslineConfig } from 'src/services/settings/statuslineConfig.js'
@@ -14,9 +14,9 @@ import { countConcurrentSessions } from '../../services/session/concurrentSessio
 import { getGlobalConfig } from '../../services/config/config.js'
 import { getEffortEnvOverride, modelSupportsEffort } from '../../services/effort/effort.js'
 import { env } from '../../services/environment/env.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { cacheKeys } from '../../utils/fileStateCache.js'
-import { getWorktreeCount } from '../../utils/git.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
+import { cacheKeys } from '../../services/file-persistence/fileStateCache.js'
+import { getWorktreeCount } from '../../services/infra/git.js'
 import {
   detectRunningIDEsCached,
   getSortedIdeLockfiles,

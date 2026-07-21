@@ -17,7 +17,7 @@ import type { LogOption } from '../../types/logs.js'
 import { agenticSessionSearch } from '../../services/agent/agenticSessionSearch.js'
 import { checkCrossProjectResume } from '../../services/session-storage/crossProjectResume.js'
 import { getWorktreePaths } from '../../services/worktree/getWorktreePaths.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import {
   getLastSessionLog,
   getSessionIdFromLog,

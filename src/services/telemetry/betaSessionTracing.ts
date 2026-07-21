@@ -31,8 +31,8 @@ import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeConte
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { sanitizeToolNameForAnalytics } from '../analytics/metadata.js'
 import type { AssistantMessage, UserMessage } from '../../types/message.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import { logOTelEvent } from './events.js'
 
 // Message type for API calls (UserMessage or AssistantMessage)

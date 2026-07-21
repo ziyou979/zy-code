@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { Tool } from '../tools/tool.js'
 import type { AssistantMessage } from '../types/message.js'
 import type { WireControlPermissionRequest } from '../types/wire/control.js'
-import { jsonStringify } from '../utils/slowOperations.js'
+import { jsonStringify } from '../services/infra/slowOperations.js'
 
 /**
  * Create a synthetic AssistantMessage for remote permission requests.

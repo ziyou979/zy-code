@@ -8,7 +8,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { safeParseJSON } from '../../utils/json.js'
 
 const AuthProviderConfigSchema = z

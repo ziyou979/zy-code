@@ -10,7 +10,7 @@ import {
   shouldSkipVersion,
 } from '../services/updater/autoUpdater.js'
 import { isAutoUpdaterDisabled } from '../services/config/config.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { gt, gte } from '../utils/semver.js'
 import { getInitialSettings } from '../services/settings/settings.js'
 

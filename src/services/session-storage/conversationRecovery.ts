@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import { relative } from 'node:path'
-import { getCwd } from 'src/utils/cwd.js'
+import { getCwd } from 'src/services/environment/cwd.js'
 import { addInvokedSkill } from 'src/bootstrap/runtime/runtimeContext.js'
 import { asSessionId } from '../../types/ids.js'
 import type {
@@ -15,8 +15,11 @@ import type {
 import type { Message, UserMessage } from '../../types/message.js'
 import { PERMISSION_MODES } from '../../types/permissions.js'
 import { suppressNextSkillListing } from '../attachments/attachments.js'
-import { copyFileHistoryForResume, type FileHistorySnapshot } from '../file-persistence/fileHistory.js'
-import { logError } from '../../utils/log.js'
+import {
+  copyFileHistoryForResume,
+  type FileHistorySnapshot,
+} from '../file-persistence/fileHistory.js'
+import { logError } from '../../services/infra/log.js'
 import { createAssistantMessage, createUserMessage } from '../messages/./constructors.js'
 import {
   filterOrphanedThinkingOnlyMessages,
@@ -39,7 +42,7 @@ import {
   loadTranscriptFile,
   removeExtraFields,
 } from '../sessionStorage.js'
-import type { ContentReplacementRecord } from '../../utils/toolResultStorage.js'
+import type { ContentReplacementRecord } from '../../services/mcp/toolResultStorage.js'
 
 // 死代码消除：ant 专属的工具名通过条件 require 引入，
 // 避免其字符串泄漏到外部构建产物中。静态 import 会始终被打包。
@@ -462,7 +465,7 @@ export async function loadConversationForResume(
       let skip = new Set<string>()
       if (feature('BG_SESSIONS')) {
         try {
-          const udsClient = await import('../../utils/udsClient.js')
+          const udsClient = await import('../../services/bridge/udsClient.js')
           const live = await (
             udsClient as unknown as {
               listAllLiveSessions: () => Promise<Array<{ kind?: string; sessionId?: string }>>

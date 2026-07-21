@@ -11,18 +11,18 @@ import {
   saveCurrentProjectConfig,
   saveGlobalConfig,
 } from '../config/config.js'
-import { createDebugLog } from '../../utils/debug.js'
+import { createDebugLog } from '../../services/infra/debug.js'
 
 const mcpLog = createDebugLog('mcp')
 
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { getPluginMcpServers } from '../plugins/mcpPluginIntegration.js'
 import { loadAllPluginsCacheOnly } from '../plugins/pluginLoader.js'
 import { isRestrictedToPluginOnly } from '../settings/pluginOnlyPolicy.js'
 import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'
 import type { SettingsJson } from '../settings/types.js'
 import type { ValidationError } from '../settings/validation.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

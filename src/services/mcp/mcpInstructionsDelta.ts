@@ -2,7 +2,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
 import type { ConnectedMCPServer, MCPServerConnection } from '../mcp/types.js'
 import type { Message } from '../../types/message.js'
-import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 
 export type McpInstructionsDelta = {
   /** Server names — for stateless-scan reconstruction. */

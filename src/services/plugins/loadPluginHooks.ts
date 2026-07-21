@@ -6,11 +6,11 @@ import {
   registerHookCallbacks,
 } from '../../bootstrap/runtime/runtimeContext.js'
 import type { LoadedPlugin } from './types.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { settingsChangeDetector } from '../settings/changeDetector.js'
 import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'
 import type { PluginHookMatcher } from '../settings/types.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { clearPluginCache, loadAllPluginsCacheOnly } from './pluginLoader.js'
 
 // Track if hot reload subscription is set up

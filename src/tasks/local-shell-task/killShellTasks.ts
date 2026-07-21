@@ -6,9 +6,9 @@ import { evictTaskOutput } from '../../services/task-runtime/diskOutput.js'
 import { updateTaskState } from '../../services/task-runtime/framework.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import type { AgentId } from '../../types/ids.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logError } from '../../utils/log.js'
-import { dequeueAllMatching } from '../../utils/messageQueueManager.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logError } from '../../services/infra/log.js'
+import { dequeueAllMatching } from '../../services/input/messageQueueManager.js'
 import { isLocalShellTask } from './guards.js'
 
 type SetAppStateFn = (updater: (prev: AppState) => AppState) => void

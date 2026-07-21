@@ -6,9 +6,9 @@ import { SEND_MESSAGE_TOOL_NAME } from 'src/tools/SendMessageTool/constants.js'
 import { WEB_FETCH_TOOL_NAME } from 'src/tools/WebFetchTool/prompt.js'
 import { WEB_SEARCH_TOOL_NAME } from 'src/tools/WebSearchTool/prompt.js'
 
-import { hasEmbeddedSearchTools } from 'src/utils/embeddedTools.js'
+import { hasEmbeddedSearchTools } from 'src/services/tool-runtime/embeddedTools.js'
 import { getInitialSettings } from 'src/services/settings/settings.js'
-import { jsonStringify } from '../../../utils/slowOperations.js'
+import { jsonStringify } from '../../../services/infra/slowOperations.js'
 import type { AgentDefinition, BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
 const ZY_CODE_DOCS_MAP_URL = 'https://code.zy.com/docs/en/zy_code_docs_map.md'

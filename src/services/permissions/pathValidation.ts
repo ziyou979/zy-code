@@ -8,7 +8,7 @@ import {
   getFsImplementation,
   getPathsForPermissionCheck,
   safeResolvePath,
-} from '../../utils/fsOperations.js'
+} from '../../services/infra/fsOperations.js'
 import { containsPathTraversal } from '../../utils/path.js'
 import { getPlatform } from '../shell/platform.js'
 import {

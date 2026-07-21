@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../services/infra/envUtils.js'
 
 export function useAfterFirstRender(): void {
   useEffect(() => {

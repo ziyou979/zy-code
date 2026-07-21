@@ -11,8 +11,8 @@ import { getSecureStorage } from '../../services/secure-storage/index.js'
 import { getZyAIOAuthTokens, removeApiKey } from '../../services/auth/auth.js'
 import { clearBetasCaches } from '../../services/feature-flags/betas.js'
 import { saveGlobalConfig } from '../../services/config/config.js'
-import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
-import { clearToolSchemaCache } from '../../utils/toolSchemaCache.js'
+import { gracefulShutdownSync } from '../../bootstrap/lifecycle/gracefulShutdown.js'
+import { clearToolSchemaCache } from '../../services/api/toolSchemaCache.js'
 import { resetUserCache } from '../../services/auth/user.js'
 export async function performLogout({ clearOnboarding = false }): Promise<void> {
   // Flush telemetry BEFORE clearing credentials to prevent org data leakage

@@ -11,7 +11,7 @@ import { logOTelEvent } from '../../services/telemetry/events.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import type { Message } from '../../types/message.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { isAutoManagedMemoryFile } from '../../services/memory/memoryFileDetection.js'
 import {
   extractTextContent,

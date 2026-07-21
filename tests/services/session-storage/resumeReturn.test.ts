@@ -5,7 +5,7 @@ import {
   getResumeReturnPrompt,
 } from '../../../src/services/session-storage/resumeReturn.js'
 import type { AssistantMessage } from '../../../src/types/message.js'
-import { MODEL_CONTEXT_WINDOW_DEFAULT } from '../../../src/utils/context.js'
+import { MODEL_CONTEXT_WINDOW_DEFAULT } from '../../../src/services/context/modelContext.js'
 
 const NOW = Date.parse('2026-07-10T12:00:00Z')
 

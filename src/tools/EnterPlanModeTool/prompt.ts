@@ -1,4 +1,4 @@
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { isPlanModeInterviewPhaseEnabled } from '../../services/mode-instructions/planModeConfig.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from '../AskUserQuestionTool/prompt.js'
 

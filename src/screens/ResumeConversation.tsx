@@ -29,7 +29,7 @@ import { updateSessionName } from '../services/session/concurrentSessions.js'
 import { loadConversationForResume } from '../services/session-storage/conversationRecovery.js'
 import { checkCrossProjectResume } from '../services/session-storage/crossProjectResume.js'
 import type { FileHistorySnapshot } from '../services/file-persistence/fileHistory.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 import { createSystemMessage } from '../services/messages/./constructors.js'
 import {
   computeStandaloneAgentContext,
@@ -47,8 +47,8 @@ import {
   restoreSessionMetadata,
   type SessionLogResult,
 } from '../services/sessionStorage.js'
-import type { ThinkingConfig } from '../utils/thinking.js'
-import type { ContentReplacementRecord } from '../utils/toolResultStorage.js'
+import type { ThinkingConfig } from '../services/messages/thinking.js'
+import type { ContentReplacementRecord } from '../services/mcp/toolResultStorage.js'
 import { REPL } from './REPL.js'
 
 function parsePrIdentifier(value: string): number | null {

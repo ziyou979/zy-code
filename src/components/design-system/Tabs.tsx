@@ -5,7 +5,7 @@ import ScrollBox from '../../ink/components/ScrollBox.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text } from '../../ink/index.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
-import type { Theme } from '../../utils/theme.js'
+import type { Theme } from '../../services/environment/theme.js'
 
 type TabsProps = {
   children: Array<React.ReactElement<TabProps>>

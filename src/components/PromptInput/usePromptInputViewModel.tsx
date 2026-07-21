@@ -4,7 +4,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { isQueuedCommandEditable } from 'src/utils/messageQueueManager.js'
+import { isQueuedCommandEditable } from 'src/services/input/messageQueueManager.js'
 import { getNativeCSIuTerminalDisplayName } from '../../commands/terminal-setup/TerminalSetup.js'
 import { useSetPromptOverlayDialog } from '../../context/PromptOverlayContext.js'
 import { Box, type ClickEvent, Text, useInput } from '../../ink/index.js'
@@ -17,11 +17,14 @@ import {
   stopOrDismissAgent,
 } from '../../state/teammateViewHelpers.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
-import { Cursor } from '../../utils/cursor.js'
+import { Cursor } from '../../terminal-ui/cursor.js'
 import type { EffortLevel } from '../../services/effort/effort.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
-import { isMacosOptionChar, MACOS_OPTION_SPECIAL_CHARS } from '../../utils/keyboardShortcuts.js'
+import {
+  isMacosOptionChar,
+  MACOS_OPTION_SPECIAL_CHARS,
+} from '../../services/input/keyboardShortcuts.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import { AutoModeOptInDialog } from '../AutoModeOptInDialog.js'
 import { getVisibleAgentTasks } from '../CoordinatorAgentStatus.js'

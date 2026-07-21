@@ -9,11 +9,11 @@
 import { isAbsolute, resolve } from 'node:path'
 import isEqual from 'lodash-es/isEqual.js'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { pathExists } from '../../utils/file.js'
-import { findCanonicalGitRoot } from '../../utils/git.js'
-import { logError } from '../../utils/log.js'
+import { pathExists } from '../../services/infra/file.js'
+import { findCanonicalGitRoot } from '../../services/infra/git.js'
+import { logError } from '../../services/infra/log.js'
 import {
   addMarketplaceSource,
   type DeclaredMarketplace,

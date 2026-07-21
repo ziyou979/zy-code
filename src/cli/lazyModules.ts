@@ -19,7 +19,7 @@ import { feature } from 'bun:bundle'
 /* eslint-disable @typescript-eslint/no-require-imports */
 // 延迟加载以避免循环依赖：teammate.ts -> AppState.tsx -> ... -> main.tsx
 export const getTeammateUtils = () =>
-  require('../utils/teammate.js') as typeof import('../utils/teammate.js')
+  require('../services/swarm/teammate.js') as typeof import('../services/swarm/teammate.js')
 export const getTeammatePromptAddendum = () =>
   require('../services/swarm/teammatePromptAddendum.js') as typeof import('../services/swarm/teammatePromptAddendum.js')
 export const getTeammateModeSnapshot = () =>

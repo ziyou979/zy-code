@@ -15,19 +15,22 @@ import {
 } from '../../skills/loadSkillsDir.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { countLinesChanged, getPatchForDisplay } from '../../services/git/diff.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { isENOENT } from '../../utils/errors.js'
-import { getFileModificationTime, writeTextContent } from '../../utils/file.js'
-import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../services/file-persistence/fileHistory.js'
+import { getFileModificationTime, writeTextContent } from '../../services/infra/file.js'
+import {
+  fileHistoryEnabled,
+  fileHistoryTrackEdit,
+} from '../../services/file-persistence/fileHistory.js'
 import { logFileOperation } from '../../services/analytics/fileOperationAnalytics.js'
-import { readFileSyncWithMetadata } from '../../utils/fileRead.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { readFileSyncWithMetadata } from '../../services/file-persistence/fileRead.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { fetchSingleFileGitDiff, type ToolUseDiff } from '../../services/git/gitDiff.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { expandPath } from '../../utils/path.js'
 import {
   checkWritePermissionForTool,
@@ -283,7 +286,7 @@ export const FileWriteTool = buildTool({
     } catch (writeError: unknown) {
       const code = (writeError as NodeJS.ErrnoException).code
       if (code === 'EPERM' || code === 'EACCES') {
-        const { isPerforceMode } = await import('../../utils/envUtils.js')
+        const { isPerforceMode } = await import('../../services/infra/envUtils.js')
         const hint = isPerforceMode()
           ? ` Perforce workspace detected — run \`p4 edit ${fullFilePath}\` first to make the file writable.`
           : ''

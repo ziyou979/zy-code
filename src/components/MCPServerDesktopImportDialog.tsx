@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { tSync } from 'src/i18n/index.js'
-import { gracefulShutdown } from 'src/utils/gracefulShutdown.js'
+import { gracefulShutdown } from 'src/bootstrap/lifecycle/gracefulShutdown.js'
 import { writeToStdout } from 'src/services/shell/process.js'
 import { Box, color, Text, useTheme } from '../ink/index.js'
 import { addMcpConfig, getAllMcpConfigs } from '../services/mcp/config.js'

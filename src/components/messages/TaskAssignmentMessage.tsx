@@ -1,6 +1,9 @@
 import * as React from 'react'
 import { Box, Text } from '../../ink/index.js'
-import { isTaskAssignment, type TaskAssignmentMessage } from '../../utils/teammateMailbox.js'
+import {
+  isTaskAssignment,
+  type TaskAssignmentMessage,
+} from '../../services/swarm/teammateMailbox.js'
 
 type Props = {
   assignment: TaskAssignmentMessage

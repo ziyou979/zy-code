@@ -1,7 +1,7 @@
 import { getWireDebugHandle } from '../bridge/bridgeDebug.js'
 import type { Command } from '../commands/index.js'
 import type { LocalCommandCall } from './types.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 
 /**
  * Ant-only: inject bridge failure states to manually test recovery paths.

@@ -9,10 +9,10 @@ import { randomBytes } from 'node:crypto'
 import { rename, rm } from 'node:fs/promises'
 import { dirname, join, resolve, sep } from 'node:path'
 import { buildPluginTelemetryFields } from 'src/services/telemetry/pluginTelemetry.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../environment/cwd.js'
 import { toError } from '../../utils/errors.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { logError } from '../../utils/log.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { logError } from '../../services/infra/log.js'
 import { getSettingsForSource, updateSettingsForSource } from '../settings/settings.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

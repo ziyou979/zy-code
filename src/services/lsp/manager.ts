@@ -1,7 +1,7 @@
-import { logForDebugging } from '../../utils/debug.js'
-import { isBareMode } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isBareMode } from '../../services/infra/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { createlspServerManager, type lspServerManager } from './lspServerManager.js'
 import { registerLSPNotificationHandlers } from './passiveFeedback.js'
 

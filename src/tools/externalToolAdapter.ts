@@ -12,7 +12,7 @@ import { buildTool, type ToolInputJSONSchema } from '../tools/tool.js'
 import type { PermissionResult } from '../types/permissions.js'
 import { errorMessage } from '../utils/errors.js'
 import { lazySchema } from '../utils/lazySchema.js'
-import { jsonStringify } from '../utils/slowOperations.js'
+import { jsonStringify } from '../services/infra/slowOperations.js'
 import { isOutputLineTruncated } from '../terminal-ui/terminal.js'
 
 /**

@@ -11,11 +11,11 @@ import type { AppState } from '../../state/AppStateStore.js'
 import type { MCPProgress } from '../../tools/MCPTool/MCPTool.js'
 import type { ContentBlock } from '../../types/llm.js'
 import { createAbortController } from '../../utils/abortController.js'
-import { detectCodeIndexingFromMcpServerName } from '../../utils/codeIndexing.js'
+import { detectCodeIndexingFromMcpServerName } from '../../services/search/codeIndexing.js'
 import { TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../utils/errors.js'
-import { logMCPDebug, logMCPError } from '../../utils/log.js'
+import { logMCPDebug, logMCPError } from '../../services/infra/log.js'
 import type { MCPToolResult } from '../mcp/mcpValidation.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

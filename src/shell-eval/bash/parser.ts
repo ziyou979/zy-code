@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { logEvent } from '../../services/analytics/index.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { ensureParserInitialized, getParserModule, type TsNode } from './bashParser.js'
 
 export type Node = TsNode

@@ -7,7 +7,7 @@
 
 import type { SubscriptionType } from './oauth/types.js'
 import { setMockBillingAccessOverride } from '../services/billing/billing.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 import type { OverageDisabledReason } from './zyAiLimits.js'
 
 type MockHeaders = {

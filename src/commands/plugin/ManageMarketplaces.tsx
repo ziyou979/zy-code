@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { formatShortDate } from '../../utils/dateUtils.js'
+import { formatShortDate } from '../../utils/format.js'
 import { useEffect, useRef, useState } from 'react'
 import { tSync } from '../../i18n/index.js'
 import {
@@ -164,9 +164,13 @@ export function ManageMarketplaces({
         }
       } catch (err) {
         if (setError) {
-          setError(err instanceof Error ? err.message : tSync('managePlugins.failedToLoadMarketplaces'))
+          setError(
+            err instanceof Error ? err.message : tSync('managePlugins.failedToLoadMarketplaces'),
+          )
         }
-        setProcessError(err instanceof Error ? err.message : tSync('managePlugins.failedToLoadMarketplaces'))
+        setProcessError(
+          err instanceof Error ? err.message : tSync('managePlugins.failedToLoadMarketplaces'),
+        )
       } finally {
         setLoading(false)
       }
@@ -319,10 +323,14 @@ export function ManageMarketplaces({
           updatedPluginCount > 0
             ? ` ${tSync('managePlugins.updatedPluginCount', { pluginCount: String(updatedPluginCount), unit: plural(updatedPluginCount, tSync('managePlugins.pluginBumpedUnit_one'), tSync('managePlugins.pluginBumpedUnit_other')) })}`
             : ''
-        actions.push(`${tSync('managePlugins.updatedSuccess', { updateCount: String(updatedCount), unit: plural(updatedCount, tSync('managePlugins.marketplaceUnit_one'), tSync('managePlugins.marketplaceUnit_other')) })}${pluginPart}`)
+        actions.push(
+          `${tSync('managePlugins.updatedSuccess', { updateCount: String(updatedCount), unit: plural(updatedCount, tSync('managePlugins.marketplaceUnit_one'), tSync('managePlugins.marketplaceUnit_other')) })}${pluginPart}`,
+        )
       }
       if (removedCount > 0) {
-        actions.push(`${tSync('managePlugins.removedSuccess', { removeCount: String(removedCount), unit: plural(removedCount, tSync('managePlugins.marketplaceUnit_one'), tSync('managePlugins.marketplaceUnit_other')) })}`)
+        actions.push(
+          `${tSync('managePlugins.removedSuccess', { removeCount: String(removedCount), unit: plural(removedCount, tSync('managePlugins.marketplaceUnit_one'), tSync('managePlugins.marketplaceUnit_other')) })}`,
+        )
       }
       if (actions.length > 0) {
         const successMsg = `${TICK} ${actions.join(', ')}`
@@ -389,13 +397,17 @@ export function ManageMarketplaces({
       value: string
     }> = [
       {
-        label: tSync('managePlugins.browsePlugins', { count: String(marketplace.pluginCount ?? 0) }),
+        label: tSync('managePlugins.browsePlugins', {
+          count: String(marketplace.pluginCount ?? 0),
+        }),
         value: 'browse',
       },
       {
         label: tSync('managePlugins.updateMarketplace'),
         secondaryLabel: marketplace.lastUpdated
-          ? tSync('managePlugins.lastUpdated', { date: formatShortDate(new Date(marketplace.lastUpdated)) })
+          ? tSync('managePlugins.lastUpdated', {
+              date: formatShortDate(new Date(marketplace.lastUpdated)),
+            })
           : undefined,
         value: 'update',
       },
@@ -404,7 +416,9 @@ export function ManageMarketplaces({
     // Only show auto-update toggle if auto-updater is not globally disabled
     if (!shouldSkipPluginAutoupdate()) {
       options.push({
-        label: marketplace.autoUpdate ? tSync('managePlugins.disableAutoUpdate') : tSync('managePlugins.enableAutoUpdate'),
+        label: marketplace.autoUpdate
+          ? tSync('managePlugins.disableAutoUpdate')
+          : tSync('managePlugins.enableAutoUpdate'),
         value: 'toggle-auto-update',
       })
     }
@@ -443,7 +457,9 @@ export function ManageMarketplaces({
           : prev,
       )
     } catch (err) {
-      setProcessError(err instanceof Error ? err.message : tSync('managePlugins.failedToUpdateSetting'))
+      setProcessError(
+        err instanceof Error ? err.message : tSync('managePlugins.failedToUpdateSetting'),
+      )
     }
   }
 
@@ -632,7 +648,9 @@ export function ManageMarketplaces({
         <Box marginLeft={3}>
           <Text dimColor italic>
             {exitState.pending ? (
-              <>{tSync('managePlugins.pressKeyAgainToGoBack', { keyName: exitState.keyName ?? '' })}</>
+              <>
+                {tSync('managePlugins.pressKeyAgainToGoBack', { keyName: exitState.keyName ?? '' })}
+              </>
             ) : (
               <Byline>
                 <ConfigurableShortcutHint
@@ -667,7 +685,14 @@ export function ManageMarketplaces({
           {pluginCount > 0 && (
             <Box marginTop={1}>
               <Text color="warning">
-                {tSync('managePlugins.removeMarketplaceWarning', { count: String(pluginCount), unit: plural(pluginCount, tSync('managePlugins.pluginCount_one'), tSync('managePlugins.pluginCount_other')) })}
+                {tSync('managePlugins.removeMarketplaceWarning', {
+                  count: String(pluginCount),
+                  unit: plural(
+                    pluginCount,
+                    tSync('managePlugins.pluginCount_one'),
+                    tSync('managePlugins.pluginCount_other'),
+                  ),
+                })}
               </Text>
             </Box>
           )}
@@ -704,7 +729,14 @@ export function ManageMarketplaces({
         <Text dimColor>{selectedMarketplace.source}</Text>
         <Box marginTop={1}>
           <Text>
-            {tSync('managePlugins.availablePlugins', { count: String(selectedMarketplace.pluginCount || 0), unit: plural(selectedMarketplace.pluginCount || 0, tSync('managePlugins.pluginCount_one'), tSync('managePlugins.pluginCount_other')) })}
+            {tSync('managePlugins.availablePlugins', {
+              count: String(selectedMarketplace.pluginCount || 0),
+              unit: plural(
+                selectedMarketplace.pluginCount || 0,
+                tSync('managePlugins.pluginCount_one'),
+                tSync('managePlugins.pluginCount_other'),
+              ),
+            })}
           </Text>
         </Box>
 
@@ -713,7 +745,9 @@ export function ManageMarketplaces({
           selectedMarketplace.installedPlugins.length > 0 && (
             <Box flexDirection="column" marginTop={1}>
               <Text bold>
-                {tSync('managePlugins.installedPlugins', { count: String(selectedMarketplace.installedPlugins.length) })}
+                {tSync('managePlugins.installedPlugins', {
+                  count: String(selectedMarketplace.installedPlugins.length),
+                })}
               </Text>
               <Box flexDirection="column" marginLeft={1}>
                 {selectedMarketplace.installedPlugins.map((plugin) => (
@@ -774,9 +808,7 @@ export function ManageMarketplaces({
         {/* Show explanatory text at the bottom when auto-update is enabled */}
         {!isUpdating && !shouldSkipPluginAutoupdate() && selectedMarketplace.autoUpdate && (
           <Box marginTop={1}>
-            <Text dimColor>
-              {tSync('managePlugins.autoUpdateEnabled')}
-            </Text>
+            <Text dimColor>{tSync('managePlugins.autoUpdateEnabled')}</Text>
           </Box>
         )}
 
@@ -853,12 +885,28 @@ export function ManageMarketplaces({
                 </Box>
                 <Text dimColor>{state.source}</Text>
                 <Text dimColor>
-                  {state.pluginCount !== undefined && <>{tSync('managePlugins.countAvailable', { count: String(state.pluginCount) })}</>}
+                  {state.pluginCount !== undefined && (
+                    <>
+                      {tSync('managePlugins.countAvailable', { count: String(state.pluginCount) })}
+                    </>
+                  )}
                   {state.installedPlugins && state.installedPlugins.length > 0 && (
-                    <> • {tSync('managePlugins.countInstalled', { count: String(state.installedPlugins.length) })}</>
+                    <>
+                      {' '}
+                      •{' '}
+                      {tSync('managePlugins.countInstalled', {
+                        count: String(state.installedPlugins.length),
+                      })}
+                    </>
                   )}
                   {state.lastUpdated && (
-                    <> • {tSync('managePlugins.updatedDate', { date: new Date(state.lastUpdated).toLocaleDateString() })}</>
+                    <>
+                      {' '}
+                      •{' '}
+                      {tSync('managePlugins.updatedDate', {
+                        date: new Date(state.lastUpdated).toLocaleDateString(),
+                      })}
+                    </>
                   )}
                 </Text>
               </Box>
@@ -871,16 +919,33 @@ export function ManageMarketplaces({
       {hasPendingChanges() && (
         <Box marginTop={1} flexDirection="column">
           <Text>
-            <Text bold>{tSync('managePlugins.pendingChanges')}</Text> <Text dimColor>{tSync('managePlugins.enterToApply')}</Text>
+            <Text bold>{tSync('managePlugins.pendingChanges')}</Text>{' '}
+            <Text dimColor>{tSync('managePlugins.enterToApply')}</Text>
           </Text>
           {updateCount > 0 && (
             <Text>
-              • {tSync('managePlugins.updateCount', { count: String(updateCount), unit: plural(updateCount, tSync('managePlugins.marketplaceUnit_one'), tSync('managePlugins.marketplaceUnit_other')) })}
+              •{' '}
+              {tSync('managePlugins.updateCount', {
+                count: String(updateCount),
+                unit: plural(
+                  updateCount,
+                  tSync('managePlugins.marketplaceUnit_one'),
+                  tSync('managePlugins.marketplaceUnit_other'),
+                ),
+              })}
             </Text>
           )}
           {removeCount > 0 && (
             <Text color="warning">
-              • {tSync('managePlugins.removeCount', { count: String(removeCount), unit: plural(removeCount, tSync('managePlugins.marketplaceUnit_one'), tSync('managePlugins.marketplaceUnit_other')) })}
+              •{' '}
+              {tSync('managePlugins.removeCount', {
+                count: String(removeCount),
+                unit: plural(
+                  removeCount,
+                  tSync('managePlugins.marketplaceUnit_one'),
+                  tSync('managePlugins.marketplaceUnit_other'),
+                ),
+              })}
             </Text>
           )}
         </Box>

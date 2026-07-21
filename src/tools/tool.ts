@@ -4,7 +4,7 @@ import type { z } from 'zod/v4'
 import type { Command } from '../commands/index.js'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import type { ToolCallBlock, ToolResultBlock } from '../types/llm.js'
-import type { ThinkingConfig } from '../utils/thinking.js'
+import type { ThinkingConfig } from '../services/messages/thinking.js'
 
 export type ToolInputJSONSchema = {
   [x: string]: unknown
@@ -35,10 +35,10 @@ import type {
 } from '../types/permissions.js'
 // 从集中位置导入工具进度类型以打破导入循环
 import type { ToolProgressData } from '../types/tools.js'
-import type { FileStateCache } from '../utils/fileStateCache.js'
+import type { FileStateCache } from '../services/file-persistence/fileStateCache.js'
 import type { DenialTrackingState } from '../services/permissions/denialTracking.js'
-import type { SystemPrompt } from '../utils/systemPromptType.js'
-import type { ContentReplacementState } from '../utils/toolResultStorage.js'
+import type { SystemPrompt } from '../services/api/systemPromptType.js'
+import type { ContentReplacementState } from '../services/mcp/toolResultStorage.js'
 
 import type { HookProgress, PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { WireStatus } from 'src/types/index.js'
@@ -49,7 +49,7 @@ import type { AgentId } from '../types/ids.js'
 import type { DeepImmutable } from '../types/utils.js'
 import type { AttributionState } from '../services/git/commitAttribution.js'
 import type { FileHistoryState } from '../services/file-persistence/fileHistory.js'
-import type { Theme, ThemeName } from '../utils/theme.js'
+import type { Theme, ThemeName } from '../services/environment/theme.js'
 
 export type QueryChainTracking = {
   chainId: string

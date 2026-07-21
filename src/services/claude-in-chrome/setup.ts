@@ -10,18 +10,18 @@ import {
 } from '../../bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import type { ScopedMcpServerConfig } from '../mcp/types.js'
-import { isInBundledMode } from '../../utils/bundledMode.js'
+import { isInBundledMode } from '../../services/environment/bundledMode.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import {
   getZyConfigHomeDir,
   isEnvDefinedFalsy,
   isEnvTruthy,
   isInternalBuild,
-} from '../../utils/envUtils.js'
+} from '../../services/infra/envUtils.js'
 import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
 import { getPlatform } from '../shell/platform.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   getAllBrowserDataPaths,

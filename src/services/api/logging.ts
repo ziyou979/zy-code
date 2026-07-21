@@ -18,14 +18,14 @@ import {
 import type { QueryChainTracking } from 'src/tools/tool.js'
 import { isConnectorTextBlock } from 'src/types/connectorText.js'
 import type { AssistantMessage } from 'src/types/message.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
 import type { EffortLevel } from 'src/services/effort/effort.js'
-import { logError } from 'src/utils/log.js'
+import { logError } from 'src/services/infra/log.js'
 import type { PermissionMode } from 'src/services/permissions/permissionMode.js'
-import { jsonStringify } from 'src/utils/slowOperations.js'
+import { jsonStringify } from 'src/services/infra/slowOperations.js'
 import { isAPIError, type TokenUsage as Usage } from '../../types/llm.js'
 import { consumeInvokingRequestId } from '../../services/agent/agentContext.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

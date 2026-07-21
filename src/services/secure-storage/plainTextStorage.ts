@@ -1,9 +1,13 @@
 import { chmodSync } from 'node:fs'
 import { join } from 'node:path'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { jsonParse, jsonStringify, writeFileSync_DEPRECATED } from '../../utils/slowOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import {
+  jsonParse,
+  jsonStringify,
+  writeFileSync_DEPRECATED,
+} from '../../services/infra/slowOperations.js'
 import type { SecureStorage, SecureStorageData } from './types.js'
 
 function getStoragePath(): { storageDir: string; storagePath: string } {

@@ -21,13 +21,13 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 import { getInitialSettings } from '../settings/settings.js'
 import { which } from '../shell/which.js'
-import { getUserBinDir, getXDGDataHome } from '../../utils/xdg.js'
+import { getUserBinDir, getXDGDataHome } from '../environment/xdg.js'
 import { DEEP_LINK_PROTOCOL } from './parseDeepLink.js'
 
 export const MACOS_BUNDLE_ID = 'com.anthropic.zy-code-url-handler'

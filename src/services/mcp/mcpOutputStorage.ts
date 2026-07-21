@@ -7,8 +7,8 @@ import {
 import type { MCPResultType } from '../mcp/mcpResults.js'
 import { toError } from '../../utils/errors.js'
 import { formatFileSize } from '../../utils/format.js'
-import { logError } from '../../utils/log.js'
-import { ensureToolResultsDir, getToolResultsDir } from '../../utils/toolResultStorage.js'
+import { logError } from '../../services/infra/log.js'
+import { ensureToolResultsDir, getToolResultsDir } from '../../services/mcp/toolResultStorage.js'
 /**
  * Generates a format description string based on the MCP result type and schema.
  */

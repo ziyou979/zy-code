@@ -268,7 +268,7 @@ async function main(): Promise<void> {
     profileCheckpoint('cli_tmux_worktree_fast_path')
     const { enableConfigs } = await import('../services/config/config.js')
     enableConfigs()
-    const { isWorktreeModeEnabled } = await import('../utils/worktreeModeEnabled.js')
+    const { isWorktreeModeEnabled } = await import('../services/worktree/worktreeModeEnabled.js')
     if (isWorktreeModeEnabled()) {
       const { execIntoTmuxWorktree } = await import('../services/worktree/worktree.js')
       const result = await execIntoTmuxWorktree(args)
@@ -295,7 +295,7 @@ async function main(): Promise<void> {
   }
 
   // 未检测到特殊标志，加载并运行完整 CLI
-  const { startCapturingEarlyInput } = await import('../utils/earlyInput.js')
+  const { startCapturingEarlyInput } = await import('../services/input/earlyInput.js')
   startCapturingEarlyInput()
   profileCheckpoint('cli_before_main_import')
   const { main: cliMain } = await import('../main.js')

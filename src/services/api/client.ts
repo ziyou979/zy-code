@@ -15,12 +15,12 @@ import {
 } from 'src/services/model/providers.js'
 import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/services/auth/auth.js'
 import { getUserAgent } from 'src/services/http/http.js'
-import { getProxyFetchOptions } from 'src/utils/proxy.js'
+import { getProxyFetchOptions } from 'src/services/http/proxy.js'
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import type { LLMAdapter } from '../../types/llm.js'
-import { isDebugToStdErr, logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../utils/envUtils.js'
+import { isDebugToStdErr, logForDebugging } from '../../services/infra/debug.js'
+import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../services/infra/envUtils.js'
 import { anthropicProviderAdapter } from './anthropicProviderAdapter.js'
 import { googleProviderAdapter } from './googleProviderAdapter.js'
 import { OpenAIProviderAdapter } from './openAIProviderAdapter.js'
@@ -118,7 +118,7 @@ export async function getAnthropicClient({
     maxRetries,
     timeout: parseEnvNumber(process.env.API_TIMEOUT_MS) ?? 600 * 1000,
     dangerouslyAllowBrowser: true,
-      fetchOptions: getProxyFetchOptions({
+    fetchOptions: getProxyFetchOptions({
       forAnthropicAPI: true,
     }),
     ...(resolvedFetch && {

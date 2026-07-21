@@ -4,14 +4,14 @@ import React, { useRef } from 'react'
 import { useMinDisplayTime } from '../../hooks/useMinDisplayTime.js'
 import { tSync } from '../../i18n/index.js'
 import { Ansi, Box, Text, useAnimationFrame, useTheme } from '../../ink/index.js'
-import type { ThemeName } from 'src/utils/theme.js'
+import type { ThemeName } from 'src/services/environment/theme.js'
 import { useReplStore } from '../../state/ReplState.js'
 import { findToolByName, type Tools } from '../../tools/tool.js'
 import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js'
 import type { AssistantMessage, CollapsedReadSearchGroup } from '../../types/message.js'
 import { uniq } from '../../utils/array.js'
 import { getToolUseIdsFromCollapsedGroup } from '../../services/compact/collapseReadSearch.js'
-import { getDisplayPath } from '../../utils/file.js'
+import { getDisplayPath } from '../../services/infra/file.js'
 import {
   formatDuration,
   formatSecondsShort,

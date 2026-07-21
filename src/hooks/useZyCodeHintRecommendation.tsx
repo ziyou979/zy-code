@@ -15,7 +15,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
   logEvent,
 } from '../services/analytics/index.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import {
   disableHintRecommendations,
   markHintPluginShown,
@@ -28,7 +28,7 @@ import {
   getPendingHintSnapshot,
   markShownThisSession,
   subscribeToPendingHint,
-} from '../utils/zyCodeHints.js'
+} from '../services/hints/zyCodeHints.js'
 import {
   installPluginAndNotify,
   usePluginRecommendationBase,

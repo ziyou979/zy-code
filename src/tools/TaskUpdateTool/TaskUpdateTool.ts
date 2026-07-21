@@ -16,8 +16,13 @@ import {
   TaskStatusSchema,
   updateTask,
 } from '../../services/tasks-service/tasks.js'
-import { getAgentId, getAgentName, getTeammateColor, getTeamName } from '../../utils/teammate.js'
-import { writeToMailbox } from '../../utils/teammateMailbox.js'
+import {
+  getAgentId,
+  getAgentName,
+  getTeammateColor,
+  getTeamName,
+} from '../../services/swarm/teammate.js'
+import { writeToMailbox } from '../../services/swarm/teammateMailbox.js'
 import { VERIFICATION_AGENT_TYPE } from '../AgentTool/constants.js'
 import { TASK_UPDATE_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, PROMPT } from './prompt.js'

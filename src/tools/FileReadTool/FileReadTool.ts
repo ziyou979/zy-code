@@ -28,8 +28,8 @@ import {
 import type { ToolUseContext } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
 import type { ImageSource } from '../../types/llm.js'
-import { getCwd } from '../../utils/cwd.js'
-import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { getZyConfigHomeDir, isEnvTruthy } from '../../services/infra/envUtils.js'
 import { getErrnoCode, isENOENT } from '../../utils/errors.js'
 import {
   addLineNumbers,
@@ -37,10 +37,10 @@ import {
   findSimilarFile,
   getFileModificationTimeAsync,
   suggestPathUnderCwd,
-} from '../../utils/file.js'
+} from '../../services/infra/file.js'
 import { logFileOperation } from '../../services/analytics/fileOperationAnalytics.js'
 import { formatFileSize } from '../../utils/format.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import {
   compressImageBufferWithTokenLimit,
   createImageMetadataText,
@@ -48,24 +48,28 @@ import {
   type ImageDimensions,
   ImageResizeError,
   maybeResizeAndDownsampleImageBuffer,
-} from '../../utils/imageResizer.js'
+} from '../../services/attachments/imageResizer.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { isAutoMemFile } from '../../services/memory/memoryFileDetection.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'
 import { mapNotebookCellsToToolResult, readNotebook } from '../../services/attachments/notebook.js'
 import { expandPath } from '../../utils/path.js'
 import { extractPDFPages, getPDFPageCount, readPDF } from '../../services/attachments/pdf.js'
-import { isPDFExtension, isPDFSupported, parsePDFPageRange } from '../../services/attachments/pdfUtils.js'
+import {
+  isPDFExtension,
+  isPDFSupported,
+  parsePDFPageRange,
+} from '../../services/attachments/pdfUtils.js'
 import {
   checkReadPermissionForTool,
   matchingRuleForInput,
 } from '../../services/permissions/filesystem.js'
 import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
 import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
-import { readFileInRange } from '../../utils/readFileInRange.js'
+import { readFileInRange } from '../../services/file-persistence/readFileInRange.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { BASH_TOOL_NAME } from '../BashTool/toolName.js'
 import { getDefaultFileReadingLimits } from './limits.js'
 import {

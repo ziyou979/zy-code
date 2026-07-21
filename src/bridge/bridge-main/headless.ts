@@ -9,11 +9,11 @@ import {
   logEventAsync,
 } from '../../services/analytics/index.js'
 import { shutdownZyEventLogging } from '../../services/analytics/zyEventLogger.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logForDiagnosticsNoPII } from '../../services/telemetry/diagLogs.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { sleep } from '../../utils/sleep.js'
 import { createWireApiClient, validateWireId, WireFatalError } from '../bridgeApi.js'
 import { createWireLogger } from '../bridgeUI.js'
@@ -245,7 +245,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
       ? process.env.CLAUDE_BRIDGE_SESSION_INGRESS_URL
       : baseUrl
 
-  const { getBranch, getRemoteUrl, findGitRoot } = await import('../../utils/git.js')
+  const { getBranch, getRemoteUrl, findGitRoot } = await import('../../services/infra/git.js')
 
   // Precheck worktree availability for the first-run dialog and the `w`
   // toggle. Unconditional so we know upfront whether worktree is an option.
@@ -619,7 +619,7 @@ export async function bridgeMain(args: string[]): Promise<void> {
   })
 
   const logger = createWireLogger({ verbose })
-  const { parseGitHubRepository } = await import('../../utils/detectRepository.js')
+  const { parseGitHubRepository } = await import('../../services/git/detectRepository.js')
   const ownerRepo = gitRepoUrl ? parseGitHubRepository(gitRepoUrl) : null
   // Use the repo name from the parsed owner/repo, or fall back to the dir basename
   const repoName = ownerRepo ? ownerRepo.split('/').pop()! : basename(dir)
@@ -872,7 +872,7 @@ export async function runWireHeadless(opts: HeadlessWireOpts, signal: AbortSigna
       ? process.env.CLAUDE_BRIDGE_SESSION_INGRESS_URL
       : baseUrl
 
-  const { getBranch, getRemoteUrl, findGitRoot } = await import('../../utils/git.js')
+  const { getBranch, getRemoteUrl, findGitRoot } = await import('../../services/infra/git.js')
   const { hasWorktreeCreateHook } = await import('../../services/hooks.js')
 
   if (opts.spawnMode === 'worktree') {

@@ -2,9 +2,9 @@ import type {} from '@ant/computer-use-mcp/types'
 
 // biome-ignore lint/suspicious/noExplicitAny: 第三方原生模块类型不完善
 type ComputerUseHostAdapter = any
-type Logger = import('../../utils/debug.js').DebugLogger
+type Logger = import('../../services/infra/debug.js').DebugLogger
 
-import { DebugLogger } from '../../utils/debug.js'
+import { DebugLogger } from '../../services/infra/debug.js'
 import { COMPUTER_USE_MCP_SERVER_NAME } from './common.js'
 import { createCliExecutor } from './executor.js'
 import { getChicagoEnabled, getChicagoSubGates } from './gates.js'

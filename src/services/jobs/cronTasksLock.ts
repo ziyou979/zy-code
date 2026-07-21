@@ -12,13 +12,13 @@ import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { z } from 'zod/v4'
 import { getProjectRoot, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { isProcessRunning } from '../shell/genericProcessUtils.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 
 const LOCK_FILE_REL = join('.zy', 'scheduled_tasks.lock')
 

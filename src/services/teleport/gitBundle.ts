@@ -16,11 +16,11 @@ import {
 } from 'src/services/analytics/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { type FilesApiConfig, uploadFile } from '../api/filesApi.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { getCwd } from '../environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
-import { findGitRoot, gitExe } from '../../utils/git.js'
-import { generateTempFilePath } from '../../utils/tempfile.js'
+import { findGitRoot, gitExe } from '../../services/infra/git.js'
+import { generateTempFilePath } from '../file-persistence/tempfile.js'
 
 // 可通过 zy_ccr_bundle_max_bytes 调节。
 const DEFAULT_BUNDLE_MAX_BYTES = 100 * 1024 * 1024

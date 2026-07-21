@@ -12,7 +12,7 @@ import type {
 } from 'src/types/index.js'
 import type { HookResultMessage } from 'src/types/message.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import { maybeSpillHookOutput } from './spillOutput.js'
 import type { ElicitationResponse, HookResult } from './types.js'
 

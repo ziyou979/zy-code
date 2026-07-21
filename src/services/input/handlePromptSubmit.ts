@@ -26,7 +26,6 @@ import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import type { SetToolJSXFn } from '../../tools/tool.js'
 import type { LocalJSXCommandOnDone } from '../../commands/types.js'
-import type { Message } from '../../types/message.js'
 import {
   isValidImagePaste,
   type PromptInputMode,
@@ -34,15 +33,15 @@ import {
 } from '../../types/textInputTypes.js'
 import { createAbortController } from '../../utils/abortController.js'
 import type { PastedContent } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import type { EffortLevel } from '../effort/effort.js'
 import type { FileHistoryState } from '../file-persistence/fileHistory.js'
 import { fileHistoryEnabled, fileHistoryMakeSnapshot } from '../file-persistence/fileHistory.js'
-import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
-import { enqueue } from '../../utils/messageQueueManager.js'
-import type { QueryGuard } from '../../utils/queryGuard.js'
-import { queryCheckpoint, startQueryProfile } from '../../utils/queryProfiler.js'
-import { runWithWorkload } from '../../utils/workloadContext.js'
+import { gracefulShutdownSync } from '../../bootstrap/lifecycle/gracefulShutdown.js'
+import { enqueue } from '../../services/input/messageQueueManager.js'
+import type { QueryGuard } from '../../services/query/queryGuard.js'
+import { queryCheckpoint, startQueryProfile } from '../../services/query/queryProfiler.js'
+import { runWithWorkload } from '../swarm/workloadContext.js'
 
 function exit(): void {
   gracefulShutdownSync(0)

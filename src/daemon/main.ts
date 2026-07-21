@@ -14,7 +14,7 @@ import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from '
 import { type AddressInfo, createServer } from 'node:net'
 import { homedir, hostname } from 'node:os'
 import { join } from 'node:path'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 
 // --------------- constants ---------------
 

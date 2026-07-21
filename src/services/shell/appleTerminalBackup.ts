@@ -3,7 +3,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { execFileNoThrow } from './execFileNoThrow.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 export function markTerminalSetupInProgress(backupPath: string): void {
   saveGlobalConfig((current) => ({
     ...current,

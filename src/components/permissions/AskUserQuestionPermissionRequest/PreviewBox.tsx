@@ -3,9 +3,9 @@ import { useSettings } from '../../../hooks/useSettings.js'
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../../ink/stringWidth.js'
 import { Ansi, Box, Text, useTheme } from '../../../ink/index.js'
-import { getCliHighlightPromise } from '../../../utils/cliHighlight.js'
-import { applyMarkdown } from '../../../services/markdown/markdown.js'
-import sliceAnsi from '../../../utils/sliceAnsi.js'
+import { getCliHighlightPromise } from '../../../services/terminal/cliHighlight.js'
+import { applyMarkdown } from '../../../markdown/markdown.js'
+import sliceAnsi from '../../../terminal-ui/sliceAnsi.js'
 
 type PreviewBoxProps = {
   /** The preview content to display. Markdown is rendered with syntax highlighting

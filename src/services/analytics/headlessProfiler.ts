@@ -17,10 +17,10 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { getPerformance } from '../../utils/profilerBase.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
+import { getPerformance } from '../telemetry/profilerBase.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 // Detailed profiling mode - same env var as startupProfiler
 // eslint-disable-next-line custom-rules/no-process-env-top-level
 const DETAILED_PROFILING = isEnvTruthy(process.env.ZY_CODE_PROFILE_STARTUP)

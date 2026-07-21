@@ -1,6 +1,6 @@
 import { join } from 'node:path'
-import { logForDebugging } from '../../utils/debug.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 
 const SKILL_MD_RE = /^skill\.md$/i
 

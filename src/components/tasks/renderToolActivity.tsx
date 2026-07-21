@@ -3,7 +3,7 @@ import { Text } from '../../ink/index.js'
 import type { Tools } from '../../tools/tool.js'
 import { findToolByName } from '../../tools/tool.js'
 import type { ToolActivity } from '../../tasks/local-agent-task/LocalAgentTask.js'
-import type { ThemeName } from '../../utils/theme.js'
+import type { ThemeName } from '../../services/environment/theme.js'
 export function renderToolActivity(
   activity: ToolActivity,
   tools: Tools,

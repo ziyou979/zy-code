@@ -16,7 +16,7 @@ import type { PromptInputMode } from '../../types/textInputTypes.js'
 import type { PastedContent } from '../../services/config/config.js'
 import type { EffortLevel } from '../../services/effort/effort.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
-import type { SetAppState } from '../../utils/messageQueueManager.js'
+import type { SetAppState } from '../../services/input/messageQueueManager.js'
 
 import {
   buildToolUseContext,

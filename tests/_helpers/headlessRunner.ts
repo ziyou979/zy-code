@@ -18,7 +18,7 @@ import { join, resolve } from 'node:path'
 export const PROJECT_ROOT = resolve(import.meta.dir, '../..')
 
 /** dev-preload 路径——dist 的 build-time DCE 消除了 VCR/NODE_ENV 路径,故改用 dev 模式。 */
-const DEV_PRELOAD = join(PROJECT_ROOT, 'src/entrypoints/dev-preload.ts')
+const DEV_PRELOAD = join(PROJECT_ROOT, 'src/entrypoints/devPreload.ts')
 const DEV_ENTRY = join(PROJECT_ROOT, 'src/entrypoints/cli.tsx')
 
 /** VCR fixtures 落点,随仓库提交。 */

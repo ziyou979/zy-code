@@ -16,12 +16,16 @@ import {
 import { assignTeammateColor } from '../../services/swarm/teammateLayoutManager.js'
 import type { Tool } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
-import { formatAgentId } from '../../utils/agentId.js'
+import { formatAgentId } from '../../services/agent/agentId.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { ensureTasksDir, resetTaskList, setLeaderTeamName } from '../../services/tasks-service/tasks.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import {
+  ensureTasksDir,
+  resetTaskList,
+  setLeaderTeamName,
+} from '../../services/tasks-service/tasks.js'
 import { generateWordSlug } from '../../utils/words.js'
 import { TEAM_CREATE_TOOL_NAME } from './constants.js'
 import { getPrompt } from './prompt.js'

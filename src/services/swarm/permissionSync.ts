@@ -18,18 +18,18 @@
  * 6. Worker polls mailbox for responses and continues execution
  */
 
-import { logForDebugging } from '../../utils/debug.js'
-import { logError } from '../../utils/log.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logError } from '../../services/infra/log.js'
 import type { PermissionUpdate } from '../permissions/permissionUpdateSchema.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { getAgentId, getAgentName, getTeammateColor, getTeamName } from '../../utils/teammate.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import { getAgentId, getAgentName, getTeammateColor, getTeamName } from './teammate.js'
 import {
   createPermissionRequestMessage,
   createPermissionResponseMessage,
   createSandboxPermissionRequestMessage,
   createSandboxPermissionResponseMessage,
   writeToMailbox,
-} from '../../utils/teammateMailbox.js'
+} from '../../services/swarm/teammateMailbox.js'
 import {
   cleanupOldResolutionsForTeam,
   deleteResolvedPermissionForTeam,

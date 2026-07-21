@@ -35,24 +35,21 @@ import type { ToolDefinition } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import { isAgentSwarmsEnabled } from '../swarm/agentSwarmsEnabled.js'
 import { modelSupportsStructuredOutputs } from '../feature-flags/betas.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { getCwd } from '../environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { createUserMessage } from '../messages/./constructors.js'
-import {
-  getFileReadIgnorePatterns,
-  normalizePatternsToPath,
-} from '../permissions/filesystem.js'
+import { getFileReadIgnorePatterns, normalizePatternsToPath } from '../permissions/filesystem.js'
 import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from '../plans/plans.js'
 import { getPlatform } from '../shell/platform.js'
 import { countFilesRoundedRg } from '../file-search/ripgrep.js'
 import { getModelPromptCachingMode } from '../settings/localModelCapabilities.js'
 import { getInitialSettings } from '../settings/settings.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import type { SystemPrompt } from '../../utils/systemPromptType.js'
-import { type CachedSchema, getToolSchemaCache } from '../../utils/toolSchemaCache.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import type { SystemPrompt } from '../api/systemPromptType.js'
+import { type CachedSchema, getToolSchemaCache } from '../../services/api/toolSchemaCache.js'
 import { windowsPathToPosixPath } from '../shell/windowsPaths.js'
-import { zodToJsonSchema } from '../../utils/zodToJsonSchema.js'
+import { zodToJsonSchema } from '../api/zodToJsonSchema.js'
 
 // 扩展的 ToolDefinition 类型，支持 strict 模式和 defer_loading
 type ToolDefinitionWithExtras = ToolDefinition & {

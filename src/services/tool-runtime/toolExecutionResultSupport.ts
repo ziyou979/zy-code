@@ -38,8 +38,8 @@ import type {
 } from '../../types/message.js'
 import type { PermissionAllowDecision } from '../../types/permissions.js'
 import { count } from '../../utils/array.js'
-import { createDebugLog } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { createDebugLog } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   AbortError,
   errorMessage,
@@ -47,14 +47,17 @@ import {
   ShellError,
   TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
-import { startSessionActivity, stopSessionActivity } from '../../utils/sessionActivity.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { logError } from '../../services/infra/log.js'
+import {
+  startSessionActivity,
+  stopSessionActivity,
+} from '../../services/session-storage/sessionActivity.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { formatError } from '../tool-runtime/toolErrors.js'
 import {
   processPreMappedToolResultBlock,
   processToolResultBlock,
-} from '../../utils/toolResultStorage.js'
+} from '../../services/mcp/toolResultStorage.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
 import { runPostToolUseFailureHooks, runPostToolUseHooks } from './toolHooks.js'
 import { logOTelEvent } from '../telemetry/events.js'

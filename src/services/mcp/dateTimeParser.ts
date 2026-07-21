@@ -1,8 +1,8 @@
 import { queryCompactModel } from '../api/compactQueries.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { extractTextContent } from '../messages/predicates.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { formatWeekday } from '../../utils/dateUtils.js'
+import { asSystemPrompt } from '../api/systemPromptType.js'
+import { formatWeekday } from '../../utils/format.js'
 
 export type DateTimeParseResult =
   | { success: true; value: string }

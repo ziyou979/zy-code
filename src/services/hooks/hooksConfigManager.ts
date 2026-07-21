@@ -2,7 +2,7 @@ import memoize from 'lodash-es/memoize.js'
 import type { HookEvent } from 'src/types/index.js'
 import { getRegisteredHooks } from '../../bootstrap/runtime/runtimeContext.js'
 import type { AppState } from '../../state/AppStateStore.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { getAllHooks, type IndividualHookConfig, sortMatchersByPriority } from './hooksSettings.js'
 
 export type MatcherMetadata = {

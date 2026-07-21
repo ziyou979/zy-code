@@ -1,4 +1,4 @@
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { WireFatalError } from './bridgeApi.js'
 import type { WireApiClient } from './types.js'
 /**

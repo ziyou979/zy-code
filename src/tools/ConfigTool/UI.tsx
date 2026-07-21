@@ -2,7 +2,7 @@ import React from 'react'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink/index.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import type { Input, Output } from './ConfigTool.js'
 export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {
   if (!input.setting) {

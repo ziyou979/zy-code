@@ -24,28 +24,36 @@ import {
   type ToolUseContext,
   toolMatchesName,
 } from '../../tools/tool.js'
-import type { AgentDefinition, AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
+import type {
+  AgentDefinition,
+  AgentDefinitionsResult,
+} from '../../tools/AgentTool/loadAgentsDir.js'
 import { SKILL_TOOL_NAME } from '../../tools/SkillTool/constants.js'
 import {
   getLimitedSkillToolCommands,
   getSkillToolInfo as getSlashCommandInfo,
 } from '../../tools/SkillTool/prompt.js'
 import type { LLMMessage, ToolDefinition } from '../../types/llm.js'
-import type { AssistantMessage, AttachmentMessage, Message, UserMessage } from '../../types/message.js'
-import { filterInjectedMemoryFiles, getMemoryFiles } from '../../utils/agentsMd.js'
+import type {
+  AssistantMessage,
+  AttachmentMessage,
+  Message,
+  UserMessage,
+} from '../../types/message.js'
+import { filterInjectedMemoryFiles, getMemoryFiles } from '../../services/memory/agentsMd.js'
 import { toolToAPISchema } from '../api/api.js'
 import { getContextWindowForModel } from '../../services/context/modelContext.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { getCwd } from '../environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { errorMessage, toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { normalizeMessagesForAPI } from '../messages/./api.js'
 import type { SettingSource } from '../settings/constants.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
-import type { Theme } from '../../utils/theme.js'
-import { getCurrentUsage } from '../../utils/tokens.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import { buildEffectiveSystemPrompt } from '../../services/messages/systemPrompt.js'
+import type { Theme } from '../environment/theme.js'
+import { getCurrentUsage } from '../../services/api/tokens.js'
 
 const RESERVED_CATEGORY_NAME = 'Autocompact buffer'
 const MANUAL_COMPACT_BUFFER_NAME = 'Compact buffer'

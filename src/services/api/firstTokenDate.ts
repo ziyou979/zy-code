@@ -2,8 +2,8 @@ import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { getAuthHeaders } from '../http/http.js'
-import { logError } from '../../utils/log.js'
-import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { logError } from '../../services/infra/log.js'
+import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 
 /**
  * 获取用户的首次 ZY Code 令牌日期并存储到配置。

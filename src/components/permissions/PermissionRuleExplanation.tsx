@@ -6,7 +6,7 @@ import type {
   PermissionDecisionReason,
 } from '../../services/permissions/permissionResult.js'
 import { permissionRuleValueToString } from '../../services/permissions/permissionRuleParser.js'
-import type { Theme } from '../../utils/theme.js'
+import type { Theme } from '../../services/environment/theme.js'
 import ThemedText from '../design-system/ThemedText.js'
 export type PermissionRuleExplanationProps = {
   permissionResult: PermissionDecision

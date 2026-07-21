@@ -2,7 +2,7 @@
 
 ## 背景
 
-- **zy-code**：claude-code 的本地分化项目，源码在 `/Users/zy979/IdeaProjects/zy-code/`，通过 zsh alias `zycode` 启动（实际命令为 `bun --preload .../dev-preload.ts .../cli.tsx`）
+- **zy-code**：claude-code 的本地分化项目，源码在 `/Users/zy979/IdeaProjects/zy-code/`，通过 zsh alias `zycode` 启动（实际命令为 `bun --preload .../devPreload.ts .../cli.tsx`）
 - **目标**：复用 claude-tap 的 trace 追踪能力，看 zy-code 的请求/响应/SSE 流
 - **网关**：百炼 OpenAI 兼容端点 `https://dashscope.aliyuncs.com/compatible-mode/v1`，走标准 `chat.completions` 协议
 
@@ -36,7 +36,7 @@ zsh alias 只在交互式 shell 里有效，claude-tap 用 `asyncio.create_subpr
 ```bash
 cat > ~/.local/bin/zycode <<'EOF'
 #!/usr/bin/env bash
-exec bun --preload /Users/zy979/IdeaProjects/zy-code/src/entrypoints/dev-preload.ts \
+exec bun --preload /Users/zy979/IdeaProjects/zy-code/src/entrypoints/devPreload.ts \
          /Users/zy979/IdeaProjects/zy-code/src/entrypoints/cli.tsx "$@"
 EOF
 chmod +x ~/.local/bin/zycode
@@ -141,7 +141,7 @@ claude-tap --tap-no-launch --tap-proxy-mode forward --tap-live
 uv tool install claude-tap
 cat > ~/.local/bin/zycode <<'EOF'
 #!/usr/bin/env bash
-exec bun --preload /Users/zy979/IdeaProjects/zy-code/src/entrypoints/dev-preload.ts \
+exec bun --preload /Users/zy979/IdeaProjects/zy-code/src/entrypoints/devPreload.ts \
          /Users/zy979/IdeaProjects/zy-code/src/entrypoints/cli.tsx "$@"
 EOF
 chmod +x ~/.local/bin/zycode

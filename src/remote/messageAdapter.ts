@@ -17,7 +17,7 @@ import type {
   SystemMessage,
   SystemMessageLevel,
 } from '../types/message.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { fromSDKCompactMetadata } from '../services/messages/mappers.js'
 import { createUserMessage } from '../services/messages/./constructors.js'
 

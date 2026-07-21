@@ -11,9 +11,9 @@
  */
 
 import { shouldSkipPluginAutoupdate } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import {
   getPendingUpdatesDetails,
   hasPendingUpdates,

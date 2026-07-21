@@ -1,7 +1,7 @@
 import React from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
 import { Box, Link, Newline, Text } from '../ink/index.js'
-import { gracefulShutdownSync } from '../utils/gracefulShutdown.js'
+import { gracefulShutdownSync } from '../bootstrap/lifecycle/gracefulShutdown.js'
 import { updateSettingsForSource } from '../services/settings/settings.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'

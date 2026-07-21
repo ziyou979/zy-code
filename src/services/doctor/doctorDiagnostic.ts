@@ -15,17 +15,17 @@ import {
 } from 'src/services/native-installer/packageManagers.js'
 import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import { checkGlobalInstallPermissions } from '../updater/autoUpdater.js'
-import { isInBundledMode } from '../../utils/bundledMode.js'
+import { isInBundledMode } from '../../services/environment/bundledMode.js'
 import {
   formatAutoUpdaterDisabledReason,
   getAutoUpdaterDisabledReason,
   getGlobalConfig,
   type InstallMethod,
 } from '../config/config.js'
-import { getCwd } from '../../utils/cwd.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { getCwd } from '../environment/cwd.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import {
   getShellType,
   isRunningFromLocalInstallation,
@@ -35,12 +35,8 @@ import { getPlatform } from '../shell/platform.js'
 import { getRipgrepStatus } from '../file-search/ripgrep.js'
 import { getManagedFilePath } from '../settings/managedPath.js'
 import { CUSTOMIZATION_SURFACES } from '../settings/types.js'
-import {
-  findValidZyAlias,
-  findZyAlias,
-  getShellConfigPaths,
-} from '../shell/shellConfig.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { findValidZyAlias, findZyAlias, getShellConfigPaths } from '../shell/shellConfig.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import { which } from '../shell/which.js'
 export type InstallationType =
   | 'npm-global'

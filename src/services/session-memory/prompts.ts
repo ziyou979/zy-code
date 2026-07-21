@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { roughTokenCountEstimation } from '../tokenEstimation.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { getErrnoCode, toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 
 const MAX_SECTION_LENGTH = 2000
 const MAX_TOTAL_SESSION_MEMORY_TOKENS = 12000

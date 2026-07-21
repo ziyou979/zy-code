@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
 import { getProjectRoot, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getCommand, getSkillToolCommands, hasCommand } from '../../commands/index.js'
 import { DEFAULT_AGENT_PROMPT, enhanceSystemPromptWithEnvDetails } from '../../constants/prompts.js'
@@ -40,15 +40,15 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import { createAttachmentMessage } from '../../services/attachments/attachments.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
-import { getDisplayPath } from '../../utils/file.js'
+import { getDisplayPath } from '../../services/infra/file.js'
 import {
   cloneFileStateCache,
   createFileStateCacheWithSizeLimit,
   READ_FILE_STATE_CACHE_SIZE,
-} from '../../utils/fileStateCache.js'
-import { type CacheSafeParams, createSubagentContext } from '../../utils/forkedAgent.js'
+} from '../../services/file-persistence/fileStateCache.js'
+import { type CacheSafeParams, createSubagentContext } from '../../services/agent/forkedAgent.js'
 import { registerFrontmatterHooks } from '../../services/hooks/registerFrontmatterHooks.js'
 import { clearSessionHooks } from '../../services/hooks/sessionHooks.js'
 import { executeSubagentStartHooks } from '../../services/hooks.js'
@@ -63,8 +63,8 @@ import {
   isRestrictedToPluginOnly,
   isSourceAdminTrusted,
 } from '../../services/settings/pluginOnlyPolicy.js'
-import { asSystemPrompt, type SystemPrompt } from '../../utils/systemPromptType.js'
-import type { ContentReplacementState } from '../../utils/toolResultStorage.js'
+import { asSystemPrompt, type SystemPrompt } from '../../services/api/systemPromptType.js'
+import type { ContentReplacementState } from '../../services/mcp/toolResultStorage.js'
 import { createAgentId } from '../../utils/uuid.js'
 import { resolveAgentTools } from './agentToolUtils.js'
 import { type AgentDefinition, isBuiltInAgent } from './loadAgentsDir.js'

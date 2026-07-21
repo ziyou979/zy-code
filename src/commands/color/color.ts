@@ -4,7 +4,7 @@ import type { ToolUseContext } from '../../tools/tool.js'
 import { AGENT_COLORS, type AgentColorName } from '../../tools/AgentTool/agentColorManager.js'
 import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../types.js'
 import { getTranscriptPath, saveAgentColor } from '../../services/sessionStorage.js'
-import { isTeammate } from '../../utils/teammate.js'
+import { isTeammate } from '../../services/swarm/teammate.js'
 
 const RESET_ALIASES = ['default', 'reset', 'none', 'gray', 'grey'] as const
 

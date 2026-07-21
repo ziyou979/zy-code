@@ -16,9 +16,12 @@ import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import type { AnyObject, Tool, ToolPermissionContext } from '../../tools/tool.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
-import { getCwd } from '../../utils/cwd.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
-import { getFsImplementation, getPathsForPermissionCheck } from '../../utils/fsOperations.js'
+import { getCwd } from '../environment/cwd.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
+import {
+  getFsImplementation,
+  getPathsForPermissionCheck,
+} from '../../services/infra/fsOperations.js'
 import {
   containsPathTraversal,
   expandPath,

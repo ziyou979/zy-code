@@ -1,5 +1,5 @@
 import type { AppState } from '../../state/AppStateStore.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { checkHasTrustDialogAccepted } from '../config/config.js'
 import { clearMarketplacesCache, registerSeedMarketplaces } from './marketplaceManager.js'
 import { performBackgroundPluginInstallations } from './pluginInstallationManager.js'

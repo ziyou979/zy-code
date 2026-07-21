@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { Command, Option } from '@commander-js/extra-typings'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 
 /**
  * 运行时 / feature-gate 决定是否注册的根命令选项。

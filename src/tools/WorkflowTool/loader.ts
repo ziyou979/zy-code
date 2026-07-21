@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import { parseMeta, type WorkflowMeta } from './runtime/sandbox.js'
 
 const MAX_SCRIPT_BYTES = 524288

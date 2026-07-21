@@ -23,15 +23,15 @@ import {
   ZY_CODE_INFERENCE_SCOPE,
 } from '../../constants/oauth.js'
 import { getAPIProvider, isAnthropicBaseUrl } from '../model/providers.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
-import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
+import { isEssentialTrafficOnly } from '../telemetry/privacyLevel.js'
 import { sleep } from '../../utils/sleep.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 import { getRetryDelay } from '../api/withRetry.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,

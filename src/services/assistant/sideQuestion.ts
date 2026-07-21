@@ -8,7 +8,7 @@
 import { formatAPIError } from '../api/errorUtils.js'
 import type { NonNullableUsage } from '../api/logging.js'
 import type { Message, SystemAPIErrorMessage } from '../../types/message.js'
-import { type CacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
+import { type CacheSafeParams, runForkedAgent } from '../../services/agent/forkedAgent.js'
 import { createUserMessage } from '../messages/./constructors.js'
 import { extractTextContent } from '../messages/./predicates.js'
 

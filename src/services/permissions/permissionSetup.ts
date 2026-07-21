@@ -7,7 +7,7 @@ import {
   setNeedsAutoModeExitAttachment,
 } from '../../bootstrap/runtime/runtimeContext.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   getInitialSettings,
   getUseAutoModeDuringPlan,
@@ -40,9 +40,9 @@ import {
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { getToolsForDefaultPreset, parseToolPreset } from '../../tools/tools.js'
 import { modelSupportsAutoMode } from '../feature-flags/betas.js'
-import { createDebugLog } from '../../utils/debug.js'
-import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'
-import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
+import { createDebugLog } from '../../services/infra/debug.js'
+import { getFsImplementation, safeResolvePath } from '../../services/infra/fsOperations.js'
+import { gracefulShutdown } from '../../bootstrap/lifecycle/gracefulShutdown.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

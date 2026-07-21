@@ -3,7 +3,7 @@ import type { z } from 'zod/v4'
 import { tSync } from '../../../i18n/index.js'
 import { Text } from '../../../ink/index.js'
 import { NotebookEditTool } from '../../../tools/NotebookEditTool/NotebookEditTool.js'
-import { logError } from '../../../utils/log.js'
+import { logError } from '../../../services/infra/log.js'
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js'
 import { NotebookEditToolDiff } from './NotebookEditToolDiff.js'
 

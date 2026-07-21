@@ -1,4 +1,4 @@
-import { findGitRoot } from '../../utils/git.js'
+import { findGitRoot } from '../../services/infra/git.js'
 
 // Note: This is used to check git repo status synchronously
 // Uses findGitRoot which walks the filesystem (no subprocess)

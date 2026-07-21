@@ -7,12 +7,12 @@ import memoize from 'lodash-es/memoize.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getIsScrollDraining, getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { env } from '../environment/env.js'
-import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir, isEnvTruthy } from '../../services/infra/envUtils.js'
 import { execFileNoThrow, execFileNoThrowWithCwd } from '../shell/execFileNoThrow.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { getAncestorPidsAsync } from '../shell/genericProcessUtils.js'
 import { isJetBrainsPluginInstalledCached } from '../ide/jetbrains.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { getPlatform } from '../shell/platform.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config/config.js'
 import { callIdeRpc } from '../mcp/mcpToolCall.js'
@@ -24,13 +24,13 @@ const ideOnboardingDialog = (): typeof import('src/components/IdeOnboardingDialo
   require('src/components/IdeOnboardingDialog.js')
 
 import { createAbortController } from '../../utils/abortController.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { envDynamic } from '../environment/envDynamic.js'
 import { errorMessage, isFsInaccessible } from '../../utils/errors.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { checkWSLDistroMatch, WindowsToWSLConverter } from '../../utils/idePathConversion.js'
+import { checkWSLDistroMatch, WindowsToWSLConverter } from '../ide/idePathConversion.js'
 import { sleep } from '../../utils/sleep.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import {
   installIDEExtensionForType,
   isCursorInstalled,

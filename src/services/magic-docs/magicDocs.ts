@@ -15,9 +15,9 @@ import {
   type Output as FileReadToolOutput,
   registerFileReadListener,
 } from '../../tools/FileReadTool/FileReadTool.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { isFsInaccessible } from '../../utils/errors.js'
-import { cloneFileStateCache } from '../../utils/fileStateCache.js'
+import { cloneFileStateCache } from '../file-persistence/fileStateCache.js'
 import { type REPLHookContext, registerPostSamplingHook } from '../hooks/postSamplingHooks.js'
 import { createUserMessage } from '../messages/constructors.js'
 import { hasToolCallsInLastAssistantTurn } from '../messages/predicates.js'

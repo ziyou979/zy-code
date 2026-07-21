@@ -1,8 +1,8 @@
 import { execaSync } from 'execa'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 import { execSyncWithDefaults_DEPRECATED } from '../shell/execFileNoThrowPortable.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   CREDENTIALS_SERVICE_SUFFIX,
   clearKeychainCache,

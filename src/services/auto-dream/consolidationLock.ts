@@ -8,9 +8,9 @@ import { mkdir, readFile, stat, unlink, utimes, writeFile } from 'node:fs/promis
 import { join } from 'node:path'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { getAutoMemPath } from '../../memdir/paths.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { isProcessRunning } from '../shell/genericProcessUtils.js'
-import { listCandidates } from '../../utils/listSessionsImpl.js'
+import { listCandidates } from '../../services/session-storage/listSessionsImpl.js'
 import { getProjectDir } from '../sessionStorage.js'
 
 const LOCK_FILE = '.consolidate-lock'

@@ -3,8 +3,8 @@ import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getOauthAccountInfo } from '../auth/auth.js'
 import { getOrCreateUserID } from '../config/config.js'
 import { envDynamic } from '../environment/envDynamic.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
-import { toTaggedId } from '../../utils/taggedId.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
+import { toTaggedId } from '../api/taggedId.js'
 
 // Default configuration for metrics cardinality
 const METRICS_CARDINALITY_DEFAULTS = {

@@ -7,10 +7,10 @@ import {
   getFeatureValue_CACHED_MAY_BE_STALE,
 } from '../services/analytics/growthbook.js'
 import { getSecureStorage } from '../services/secure-storage/index.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { errorMessage } from '../utils/errors.js'
-import { isEssentialTrafficOnly } from '../utils/privacyLevel.js'
-import { jsonStringify } from '../utils/slowOperations.js'
+import { isEssentialTrafficOnly } from '../services/telemetry/privacyLevel.js'
+import { jsonStringify } from '../services/infra/slowOperations.js'
 /**
  * Trusted device token source for bridge (remote-control) sessions.
  *

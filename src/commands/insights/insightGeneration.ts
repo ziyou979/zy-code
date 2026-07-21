@@ -1,4 +1,4 @@
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { escapeXmlAttr as escapeHtml } from '../../utils/xml.js'
 import { LABEL_MAP } from './remoteCollection.js'
 export function generateBarChart(

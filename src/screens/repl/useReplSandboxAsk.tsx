@@ -34,9 +34,9 @@ import {
 } from '../../services/swarm/permissionSync.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { gracefulShutdownSync } from '../../utils/gracefulShutdown.js'
+import { gracefulShutdownSync } from '../../bootstrap/lifecycle/gracefulShutdown.js'
 
 export type SandboxPermissionRequest = {
   hostPattern: NetworkHostPattern

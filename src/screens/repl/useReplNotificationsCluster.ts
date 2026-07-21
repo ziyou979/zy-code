@@ -35,7 +35,7 @@ import { useAppState } from '../../state/AppState.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { count } from '../../utils/array.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   createSystemMessage,
   createTurnDurationMessage,

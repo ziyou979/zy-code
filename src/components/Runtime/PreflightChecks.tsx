@@ -6,7 +6,7 @@ import { useTimeout } from '../../hooks/useTimeout.js'
 import { Box, Text } from '../../ink/index.js'
 import { getSSLErrorHint } from '../../services/api/errorUtils.js'
 import { getUserAgent } from '../../services/http/http.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 export interface PreflightCheckResult {
   success: boolean
   error?: string

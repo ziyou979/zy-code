@@ -2,7 +2,12 @@ import { feature } from 'bun:bundle'
 import { dirname } from 'node:path'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { getProjectRoot } from 'src/bootstrap/runtime/runtimeContext.js'
-import { builtInCommandNames, findCommand, getCommands, type PromptCommand } from 'src/commands/index.js'
+import {
+  builtInCommandNames,
+  findCommand,
+  getCommands,
+  type PromptCommand,
+} from 'src/commands/index.js'
 import { buildPluginCommandTelemetryFields } from 'src/services/telemetry/pluginTelemetry.js'
 import type {
   Tool,
@@ -20,7 +25,7 @@ import type {
   SystemMessage,
   UserMessage,
 } from 'src/types/message.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
 import type { PermissionDecision } from 'src/services/permissions/permissionResult.js'
 import { getRuleByContentsForTool } from 'src/services/permissions/permissions.js'
 import {
@@ -45,9 +50,9 @@ import { resolveSkillModelOverride } from '../../services/model/model.js'
 import { recordSkillUsage } from '../../services/suggestions/skillUsageTracking.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import { getAgentContext } from '../../services/agent/agentContext.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { extractResultText, prepareForkedCommandContext } from '../../utils/forkedAgent.js'
+import { extractResultText, prepareForkedCommandContext } from '../../services/agent/forkedAgent.js'
 import { parseFrontmatter } from '../../services/markdown/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'

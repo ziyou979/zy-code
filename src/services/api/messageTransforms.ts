@@ -10,7 +10,7 @@ import type {
 } from '../../types/llm.js'
 import type { AssistantMessage, UserMessage } from '../../types/message.js'
 import { insertBlockAfterToolResults } from '../../utils/contentArray.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { logEvent } from '../analytics/index.js'
 import { pinCacheEdits } from '../compact/microCompact.js'
 import { getCacheControl } from './cacheControl.js'

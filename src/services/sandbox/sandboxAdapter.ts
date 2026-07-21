@@ -29,7 +29,7 @@ import {
   getCwdState,
   getOriginalCwd,
 } from '../../bootstrap/runtime/runtimeContext.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { expandPath } from '../../utils/path.js'
 import { getPlatform, type Platform } from '../shell/platform.js'
 import { settingsChangeDetector } from '../settings/changeDetector.js'

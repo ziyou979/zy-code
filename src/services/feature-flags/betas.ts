@@ -21,7 +21,7 @@ import {
   TOOL_SEARCH_TOOL_BETA_HEADER,
 } from '../../constants/betas.js'
 import { getContextWindowForModel } from '../../services/context/modelContext.js'
-import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   getLocalModelBetaHeaders,
   localModelHasCapability,

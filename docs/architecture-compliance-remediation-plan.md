@@ -18,50 +18,48 @@
 9. `bun run quality` 真正代表格式、静态检查、类型和测试全部清洁，而不是只因 warning
    或 baseline 未增长而通过。
 
-## 1.2 最新推进进度（更新于 2026-07-15）
+## 1.2 最新推进进度（更新于 2026-07-21）
 
-截至本次落地，方案已从“只读复审与规划”进入持续拆分执行阶段，且最近一轮已经完成
-`src/tools/BashTool/bashSecurity.ts` 的正式拆分与收口。
+本轮已完成当前工作区改动的规范修复和质量门禁收口。架构债务仍未清零，但本轮没有新增
+跨层、命名或类型债务，且历史债务总量继续下降。
 
 最新校验结果：
 
 | 项目 | 当前值 | 相比基线 | 说明 |
 |---|---:|---:|---|
-| 架构违规总数 | 1746 | 无新增 | 当前检查器已启用更多存量规则，结果以”是否超出基线”为准 |
-| `hardcodedText` | 1103 | -22 | 用户可见硬编码文本继续下降 |
-| `featureMacro` | 318 | -25 | 非法 `feature()` 用法继续下降 |
-| `fileLength` | 36 | -27 | React 上限从 800 调整为 1200，违规数下降 |
-| `as any` | 628 | -118 | MCPSettings:27, query.ts:15, loadPluginCommands:13, SystemTextMessage:15, EffortPicker:11, CollapsedReadSearch:6 |
+| 架构违规总数 | 1148 | 无新增 | `bun run lint:architecture` 通过 |
+| `hardcodedText` | 795 | 与当前基线持平 | 本轮新增用户文本均已进入 i18n |
+| `featureMacro` | 318 | 与当前基线持平 | 本轮未新增非法宏组合 |
+| `fileLength` | 29 | 与当前基线持平 | 本轮路径迁移和类型恢复未扩大超长文件债务 |
+| `as any` | 56 | 与当前基线持平 | 适配层 21，非适配层 35 |
+| 跨层违规 | 0 | 已清零 | 本轮发现的 `services -> UI`、`types -> services` 依赖已迁移 |
+| locale key | 英中各 3476 | 完全对称 | key 与插值均一致 |
 
 本轮已完成的正式改造：
 
-1. `permissionSetup` 拆分，危险规则支持逻辑已下沉到独立支持模块。
-2. `yoloClassifier` 拆分为 prompt / transcript 两个支持模块，并补齐相关 i18n 文案。
-3. `bashSecurity` 完成第二轮拆分：
-   - 新增 `src/tools/BashTool/bashSecurityStringSupport.ts`
-   - 新增 `src/tools/BashTool/bashSecuritySyntaxValidatorSupport.ts`
-   - `src/tools/BashTool/bashSecurity.ts` 从 2500+ 行收敛到 1131 行，回到架构阈值内
-4. 第三批大文件拆分（2026-07-15）：
-   - `loadRootResources.ts` → 提取 `sessionBootConfig.ts`（CLI 会话启动配置函数）
-   - `plugins.ts` → 提取 `pluginListSupport.ts`（插件列表构建与渲染）
-   - `structuredIO.ts` → 提取 `sdkPermissionBridge.ts`（SDK 权限钩子桥接）
-   - `commands.ts` → 提取 `descriptionI18n.ts`（命令 i18n key 映射）
-   - `MessageSelector.tsx` → 提取 `MessageSelectorDetails.tsx`（消息选择器 UI）
-   - `MCPRemoteServerMenu.tsx` → 提取 `MCPRemoteServerFlowViews.tsx`（MCP 远端流程视图）
-   - `useTypeahead.tsx` → 提取 `typeaheadTokenUtils.ts`（自动补全 token 工具函数，1809→1465 行）
-   - `utils/git.ts` → 提取 `gitUrlUtils.ts`（Git URL 规范化）
-   - `ProcessSlashCommand.tsx` → 提取 `commandMetadataFormatters.ts`（命令/技能加载元数据格式化）
-5. **注意：** 纯类型提取已恢复原样。后续拆分应以职责命名，而不是以"从哪里切出来"命名。
-6. 上述改造均已验证：
+1. 恢复 `QueryEngine` 唯一正式实现并迁入 `src/query/queryEngine.ts`，调用方和测试已统一到新路径。
+2. 修复 `systemThemeWatcher` 的 OSC 查询/刷新流程以及空响应保护，避免主题探测回归。
+3. 将依赖 Ink 的终端呈现模块从 `services/` 迁入 `terminal-ui/`、`markdown/` 和
+   `bootstrap/lifecycle/`，清除新增跨层依赖。
+4. 将 `ThinkingConfig`、工具结果存储状态等共享类型下沉到 `src/types/`，清除
+   `types -> services` 反向依赖。
+5. 完成 WebSocket、LSP、后端、Shell、Cron 等模块的大小写/命名统一，并同步全部导入路径。
+6. 消除本轮新增的 `as any`，修正文件持久化结果、动态功能模块和上下文压缩调用的类型边界。
+7. 修复英文/中文插值不一致和 GitHub App 示例硬编码；顶层 `t/tSync` 调用已清零。
+8. 格式化与 lint 脚本改为显式扫描正式源码目录，避免嵌套 worktree 配置污染主项目检查。
+9. 上述改造均已验证：
    - `bun run format`
    - `bun tsc --noEmit`
-   - `bun run lint:architecture -- --verbose`
+   - `bun run lint:architecture`
+   - `bun run lint:i18n`
+   - `bun run lint:locale`
+   - 相关测试 46 项全部通过
 
 当前状态判断：
 
-- `R3`（utils/大文件/领域拆分）仍是当前主推进阶段。
-- 最近几轮已经实质性消化了 `fileLength`、`as any`、`hardcodedText` 的一部分存量。
-- “全部清零”距离仍远，但当前方向有效，且每轮改造后都能稳定通过格式化、类型和架构校验。
+- 当前工作区改动已满足“无新增架构债务”的合入门禁。
+- 存量仍有 1148 条架构债务，不能据此宣称仓库已经完全符合零债务规范。
+- 后续主线仍是 `hardcodedText`、非法 `feature()`、超长文件和 `utils` 边界的存量清理。
 
 ### 拆分准则（2026-07-15 补充）
 
@@ -88,7 +86,7 @@
 
 这是当前收益最高的主线，优先继续处理大体积、高扇入、规则密集的模块。
 
-1. 继续筛选并拆分剩余 `fileLength` 文件（当前 50 个）。
+1. 继续筛选并拆分剩余 `fileLength` 文件（当前 29 个）。
 2. 优先处理同时满足以下条件的文件：
    - 超过架构长度阈值或接近阈值；
    - 同时承载解析、状态、IO、UI 组装等多重职责；
@@ -101,7 +99,7 @@
 
 ### P1：继续压降 `as any`
 
-当前剩余 715 处，仍然是中长期高优先级工作。
+当前剩余 56 处（适配层 21，非适配层 35），继续优先消化非适配层存量。
 
 1. 优先处理非适配层、高复用路径和跨层传播点。
 2. 优先文件类型：
@@ -116,7 +114,7 @@
 
 ### P2：继续清理硬编码用户文本并补 i18n
 
-当前 `hardcodedText` 还剩 1103 条，体量仍大，但适合和局部模块治理穿插推进。
+当前 `hardcodedText` 还剩 795 条，体量仍大，但适合和局部模块治理穿插推进。
 
 1. 优先处理用户直接可见、频繁触达的界面与命令输出。
 2. 优先目录：

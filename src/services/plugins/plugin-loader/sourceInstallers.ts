@@ -33,13 +33,13 @@
 import { readFile, realpath, rename, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { LoadedPlugin, PluginComponent, PluginError, PluginManifest } from '../types.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { errorMessage, toError } from '../../utils/errors.js'
-import { pathExists } from '../../utils/file.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { logError } from '../../utils/log.js'
+import { logForDebugging } from '../../../services/infra/debug.js'
+import { errorMessage, toError } from '../../../utils/errors.js'
+import { pathExists } from '../../../services/infra/file.js'
+import { getFsImplementation } from '../../../services/infra/fsOperations.js'
+import { logError } from '../../../services/infra/log.js'
 import type { HooksSettings } from '../../settings/types.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../../services/infra/slowOperations.js'
 import {
   type CommandMetadata,
   PluginHooksSchema,

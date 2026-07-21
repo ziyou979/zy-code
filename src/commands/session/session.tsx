@@ -5,7 +5,7 @@ import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { useAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandCall } from '../types.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 
 type Props = {
   onDone: () => void

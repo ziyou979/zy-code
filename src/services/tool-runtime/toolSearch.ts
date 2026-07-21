@@ -27,13 +27,16 @@ import {
   TOOL_SEARCH_TOOL_NAME,
 } from '../../tools/ToolSearchTool/prompt.js'
 import type { Message } from '../../types/message.js'
-import { countToolDefinitionTokens, TOOL_TOKEN_COUNT_OVERHEAD } from '../../services/compact/analyzeContext.js'
+import {
+  countToolDefinitionTokens,
+  TOOL_TOKEN_COUNT_OVERHEAD,
+} from '../../services/compact/analyzeContext.js'
 import { count } from '../../utils/array.js'
 import { getContextWindowForModel } from '../../services/context/modelContext.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { zodToJsonSchema } from '../../utils/zodToJsonSchema.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvDefinedFalsy, isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import { zodToJsonSchema } from '../api/zodToJsonSchema.js'
 
 /**
  * Default percentage of context window at which to auto-enable tool search.

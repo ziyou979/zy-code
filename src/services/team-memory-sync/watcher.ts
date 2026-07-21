@@ -12,10 +12,10 @@ import { type FSWatcher, watch } from 'node:fs'
 import { mkdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getTeamMemPath, isTeamMemoryEnabled } from '../../memdir/teamMemPaths.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { getGithubRepo } from '../../utils/git.js'
+import { getGithubRepo } from '../../services/infra/git.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

@@ -4,7 +4,7 @@
  * 用于执行 vim 操作符（删除、更改、复制等）的纯函数
  */
 
-import { Cursor } from '../utils/cursor.js'
+import { Cursor } from '../terminal-ui/cursor.js'
 import { firstGrapheme, lastGrapheme } from '../utils/intl.js'
 import { countCharInString } from '../utils/stringUtils.js'
 import { isInclusiveMotion, isLinewiseMotion, resolveMotion } from './motions.js'

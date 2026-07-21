@@ -4,8 +4,8 @@ import { clearSystemPromptSections } from '../../constants/systemPromptSections.
 import { getUserContext } from '../context/context.js'
 import { clearBetaTracingState } from '../telemetry/betaSessionTracing.js'
 import { clearSpeculativeChecks } from '../../tools/BashTool/bashPermissions.js'
-import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'
-import { clearClassifierApprovals } from '../../utils/classifierApprovals.js'
+import { resetGetMemoryFilesCache } from '../../services/memory/agentsMd.js'
+import { clearClassifierApprovals } from '../permissions/classifierApprovals.js'
 import { clearSessionMessagesCache } from '../sessionStorage.js'
 import { resetMicrocompactState } from './microCompact.js'
 
@@ -64,8 +64,8 @@ export function runPostCompactCleanup(querySource?: QuerySource): void {
   // cacheUtils resets. See compactConversation() for full rationale.
   clearBetaTracingState()
   if (feature('COMMIT_ATTRIBUTION')) {
-    void import('../../utils/attributionHooks.js').then(
-      (m: typeof import('../../utils/attributionHooks.js')) => {
+    void import('../attribution/attributionHooks.js').then(
+      (m: typeof import('../attribution/attributionHooks.js')) => {
         ;(m as { sweepFileContentCache?: () => void }).sweepFileContentCache?.()
       },
     )

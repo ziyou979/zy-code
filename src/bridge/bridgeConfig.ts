@@ -13,7 +13,7 @@
 
 import { getOauthConfig } from '../constants/oauth.js'
 import { getZyAIOAuthTokens } from '../services/auth/auth.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 /** Ant-only dev override: CLAUDE_BRIDGE_OAUTH_TOKEN, else undefined. */
 export function getWireTokenOverride(): string | undefined {
   return (isInternalBuild() && process.env.CLAUDE_BRIDGE_OAUTH_TOKEN) || undefined

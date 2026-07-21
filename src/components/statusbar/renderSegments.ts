@@ -30,11 +30,14 @@ import type { ModelName } from '../../services/model/model.js'
 import type { Currency } from '../../types/currency.js'
 import { CURRENCY_SYMBOLS, getCurrencySymbol } from '../../types/currency.js'
 import type { Message } from '../../types/message.js'
-import { calculateContextPercentages, getContextWindowForModel } from '../../services/context/modelContext.js'
-import { getCwd } from '../../utils/cwd.js'
+import {
+  calculateContextPercentages,
+  getContextWindowForModel,
+} from '../../services/context/modelContext.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import { getDisplayedEffortLevel, modelSupportsEffort } from '../../services/effort/effort.js'
 import { formatTokens } from '../../utils/format.js'
-import { getDisplayContextUsage } from '../../utils/tokens.js'
+import { getDisplayContextUsage } from '../../services/api/tokens.js'
 import {
   effectiveColor,
   effectiveIcon,

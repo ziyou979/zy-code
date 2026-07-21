@@ -18,8 +18,8 @@ import {
 } from '../../shell-eval/powershell/parser.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'
 import type { PermissionRule } from '../../types/permissions.js'
-import { getCwd } from '../../utils/cwd.js'
-import { getFsImplementation, safeResolvePath } from '../../utils/fsOperations.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { getFsImplementation, safeResolvePath } from '../../services/infra/fsOperations.js'
 import { containsPathTraversal, getDirectoryForPath } from '../../utils/path.js'
 import {
   allWorkingDirectories,

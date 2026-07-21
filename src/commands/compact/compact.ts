@@ -24,9 +24,12 @@ import type { LocalCommandCall } from '../types.js'
 import type { Message } from '../../types/message.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import { executePreCompactHooks } from '../../services/hooks.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
-import { buildEffectiveSystemPrompt, type SystemPrompt } from '../../utils/systemPrompt.js'
+import {
+  buildEffectiveSystemPrompt,
+  type SystemPrompt,
+} from '../../services/messages/systemPrompt.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const reactiveCompact = feature('REACTIVE_COMPACT')

@@ -8,7 +8,10 @@ import {
 import { prefetchAllMcpResources } from '../../services/mcp/client.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
 import type { McpSdkServerConfig, ScopedMcpServerConfig } from '../../services/mcp/types.js'
-import { shouldEnableThinkingByDefault, type ThinkingConfig } from '../../utils/thinking.js'
+import {
+  shouldEnableThinkingByDefault,
+  type ThinkingConfig,
+} from '../../services/messages/thinking.js'
 
 type PrefetchedMcpResources = Awaited<ReturnType<typeof prefetchAllMcpResources>>
 

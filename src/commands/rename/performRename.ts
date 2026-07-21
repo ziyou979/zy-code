@@ -6,7 +6,7 @@ import type { ToolUseContext } from '../../tools/tool.js'
 import type { LocalJSXCommandContext } from '../types.js'
 import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
 import { getTranscriptPath, saveAgentName, saveCustomTitle } from '../../services/sessionStorage.js'
-import { isTeammate } from '../../utils/teammate.js'
+import { isTeammate } from '../../services/swarm/teammate.js'
 import { generateSessionName } from './generateSessionName.js'
 
 /**

@@ -18,20 +18,20 @@ import {
 } from '../../tools/FileReadTool/FileReadTool.js'
 import type { Message } from '../../types/message.js'
 import { count } from '../../utils/array.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   createCacheSafeParams,
   createSubagentContext,
   runForkedAgent,
-} from '../../utils/forkedAgent.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+} from '../../services/agent/forkedAgent.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { type REPLHookContext, registerPostSamplingHook } from '../hooks/postSamplingHooks.js'
 import { createUserMessage } from '../messages/constructors.js'
 import { hasToolCallsInLastAssistantTurn } from '../messages/predicates.js'
 import { getSessionMemoryDir, getSessionMemoryPath } from '../permissions/filesystem.js'
 import { sequential } from '../../utils/sequential.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { getTokenUsage, tokenCountWithEstimation } from '../../utils/tokens.js'
+import { asSystemPrompt } from '../api/systemPromptType.js'
+import { getTokenUsage, tokenCountWithEstimation } from '../../services/api/tokens.js'
 import { logEvent } from '../analytics/index.js'
 import { isAutoCompactEnabled } from '../compact/autoCompact.js'
 import { buildSessionMemoryUpdatePrompt, loadSessionMemoryTemplate } from './prompts.js'

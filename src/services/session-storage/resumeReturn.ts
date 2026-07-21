@@ -1,6 +1,6 @@
 import type { Message } from '../../types/message.js'
 import { getContextWindowForModel } from '../../services/context/modelContext.js'
-import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
+import { tokenCountFromLastAPIResponse } from '../../services/api/tokens.js'
 
 export type ResumeReturnPrompt = {
   sessionAgeMinutes: number

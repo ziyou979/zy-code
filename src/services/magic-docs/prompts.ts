@@ -1,6 +1,6 @@
 import { join } from 'node:path'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 
 /**
  * Get the Magic Docs update prompt template

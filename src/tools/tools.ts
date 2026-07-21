@@ -2,7 +2,7 @@
 import { feature } from 'bun:bundle'
 import { toolMatchesName, type Tool, type Tools } from '../tools/tool.js'
 import type { ToolPermissionContext } from '../tools/tool.js'
-import { isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../services/infra/envUtils.js'
 import { toolRegistry } from '../tools/registry.js'
 export {
   loadExternalTools,

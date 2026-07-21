@@ -7,10 +7,10 @@ import { getRelativeMemoryPath } from '../../components/memory/MemoryUpdateNotif
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
 import type { LocalJSXCommandCall } from '../types.js'
-import { clearMemoryFileCaches, getMemoryFiles } from '../../utils/agentsMd.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { clearMemoryFileCaches, getMemoryFiles } from '../../services/memory/agentsMd.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { editFileInEditor } from '../../terminal-ui/promptEditor.js'
 
 function MemoryCommand({

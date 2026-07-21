@@ -11,9 +11,9 @@ import { readFile } from 'node:fs/promises'
 import { basename, dirname } from 'node:path'
 import { isSessionPersistenceDisabled } from '../../bootstrap/runtime/runtimeContext.js'
 import type { PersistedWorktreeSession } from '../../types/logs.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { isFsInaccessible } from '../../utils/errors.js'
-import { writeFileSyncAndFlush_DEPRECATED } from '../../utils/file.js'
+import { writeFileSyncAndFlush_DEPRECATED } from '../../services/infra/file.js'
 import { getSessionMetadataPathFromTranscriptPath } from './paths.js'
 
 const SIDECAR_VERSION = 1 as const

@@ -15,7 +15,7 @@ import { Box, Text } from '../../ink/index.js'
 import { clearServerCache } from '../../services/mcp/client.js'
 import type { ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import {
   type DetectedIDEInfo,

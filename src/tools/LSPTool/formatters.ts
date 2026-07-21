@@ -13,7 +13,7 @@ import type {
   SymbolKind,
 } from 'vscode-languageserver-types'
 import { tSync } from '../../i18n/index.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { plural } from '../../utils/stringUtils.js'
 

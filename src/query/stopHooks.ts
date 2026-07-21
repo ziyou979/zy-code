@@ -21,7 +21,7 @@ import {
   createAttachmentMessage,
   type HookAttachment,
 } from '../services/attachments/attachments.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import type { REPLHookContext } from '../services/hooks/postSamplingHooks.js'
 import {
@@ -38,9 +38,9 @@ import {
   createUserInterruptionMessage,
   createUserMessage,
 } from '../services/messages/./constructors.js'
-import type { SystemPrompt } from '../utils/systemPromptType.js'
+import type { SystemPrompt } from '../services/api/systemPromptType.js'
 import { getTaskListId, listTasks } from '../services/tasks-service/tasks.js'
-import { getAgentName, getTeamName, isTeammate } from '../utils/teammate.js'
+import { getAgentName, getTeamName, isTeammate } from '../services/swarm/teammate.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const extractMemoriesModule = feature('MEMORY')
@@ -55,8 +55,8 @@ const jobClassifierModule = feature('TEMPLATES')
 import type { QuerySource } from '../constants/querySource.js'
 import { executeAutoDream } from '../services/auto-dream/autoDream.js'
 import { executePromptSuggestion } from '../services/prompt-suggestion/promptSuggestion.js'
-import { isBareMode, isEnvDefinedFalsy } from '../utils/envUtils.js'
-import { createCacheSafeParams, saveCacheSafeParams } from '../utils/forkedAgent.js'
+import { isBareMode, isEnvDefinedFalsy } from '../services/infra/envUtils.js'
+import { createCacheSafeParams, saveCacheSafeParams } from '../services/agent/forkedAgent.js'
 
 type StopHookResult = {
   blockingErrors: Message[]

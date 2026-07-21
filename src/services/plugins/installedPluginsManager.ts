@@ -14,11 +14,15 @@
  */
 
 import { dirname, join } from 'node:path'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage, isENOENT, toError } from '../../utils/errors.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { logError } from '../../utils/log.js'
-import { jsonParse, jsonStringify, writeFileSync_DEPRECATED } from '../../utils/slowOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { logError } from '../../services/infra/log.js'
+import {
+  jsonParse,
+  jsonStringify,
+  writeFileSync_DEPRECATED,
+} from '../../services/infra/slowOperations.js'
 import { getPluginsDirectory } from './pluginDirectories.js'
 import {
   type InstalledPlugin,
@@ -35,7 +39,7 @@ type InstalledPluginsMap = Record<string, PluginInstallationEntry[]>
 export type PersistableScope = Exclude<PluginScope, never> // All scopes are persistable in the schema
 
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../environment/cwd.js'
 import { getHeadForDir } from '../git/gitFilesystem.js'
 import type { EditableSettingSource } from '../settings/constants.js'
 import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'

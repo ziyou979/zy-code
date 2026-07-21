@@ -1,7 +1,7 @@
 import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, normalize, relative, resolve } from 'node:path'
-import { getCwd } from './cwd.js'
-import { getFsImplementation } from './fsOperations.js'
+import { getCwd } from '../services/environment/cwd.js'
+import { getFsImplementation } from '../services/infra/fsOperations.js'
 import { getPlatform } from '../services/shell/platform.js'
 import { posixPathToWindowsPath } from '../services/shell/windowsPaths.js'
 
@@ -133,7 +133,7 @@ export function containsPathTraversal(path: string): boolean {
 }
 
 // Re-export from the shared zero-dep source.
-export { sanitizePath } from './sessionStoragePortable.js'
+export { sanitizePath } from '../services/session-storage/sessionStoragePortable.js'
 
 /**
  * Normalizes a path for use as a JSON config key.

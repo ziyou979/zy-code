@@ -17,12 +17,12 @@ import { getLanguageSection } from '../../constants/prompts.js'
 import { logEvent } from '../analytics/index.js'
 import { queryCompactModel } from '../api/compactQueries.js'
 import type { Message } from '../../types/message.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { extractTextContent } from '../messages/./predicates.js'
 import { getInitialSettings } from '../settings/settings.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { asSystemPrompt } from '../api/systemPromptType.js'
 
 const MAX_CONVERSATION_TEXT = 1000
 // 输入文本下限：少于该长度直接放弃生成，避免 "hi" / "ok go" / "fix it"

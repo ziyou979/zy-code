@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { stat } from 'node:fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import { env, JETBRAINS_IDES } from '../environment/env.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 import { getAncestorCommandsAsync } from '../shell/genericProcessUtils.js'
 

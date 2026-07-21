@@ -1,7 +1,7 @@
 import { tSync } from 'src/i18n/index.js'
 import { extractOutputRedirections } from '../../../shell-eval/bash/commands.js'
 import { BASH_TOOL_NAME } from '../../../tools/BashTool/toolName.js'
-import { isInternalBuild } from '../../../utils/envUtils.js'
+import { isInternalBuild } from '../../../services/infra/envUtils.js'
 import { isClassifierPermissionsEnabled } from '../../../services/permissions/bashClassifier.js'
 import type { PermissionDecisionReason } from '../../../services/permissions/permissionResult.js'
 import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'

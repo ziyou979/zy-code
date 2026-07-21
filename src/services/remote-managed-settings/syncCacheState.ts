@@ -20,12 +20,12 @@
  */
 
 import { join } from 'node:path'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
-import { readFileSync } from '../../utils/fileRead.js'
-import { stripBOM } from '../../utils/jsonRead.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
+import { readFileSync } from '../file-persistence/fileRead.js'
+import { stripBOM } from '../file-persistence/jsonRead.js'
 import { resetSettingsCache } from '../settings/settingsCache.js'
 import type { SettingsJson } from '../settings/types.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 
 const SETTINGS_FILENAME = 'remote-settings.json'
 

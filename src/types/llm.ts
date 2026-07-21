@@ -1,4 +1,4 @@
-import type { ThinkingConfig } from '../utils/thinking.js'
+import type { ThinkingConfig } from './thinking.js'
 import type { ConnectorTextBlock } from './connectorText.js'
 
 export type { ThinkingConfig }

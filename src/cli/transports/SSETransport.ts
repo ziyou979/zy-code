@@ -1,12 +1,12 @@
 import axios, { type AxiosError } from 'axios'
 import type { StdoutMessage } from 'src/types/wire/control.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logForDiagnosticsNoPII } from '../../services/telemetry/diagLogs.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getSessionIngressAuthHeaders } from '../../services/auth/sessionIngressAuth.js'
 import { sleep } from '../../utils/sleep.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
-import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
+import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 import type { Transport } from './transport.js'
 
 // ---------------------------------------------------------------------------

@@ -7,7 +7,11 @@ import {
   RADIO_ON,
   SLASHED_CIRCLE,
 } from '../constants/figures.js'
-import { type EffortLevel, getDisplayedEffortLevel, modelSupportsEffort } from '../services/effort/effort.js'
+import {
+  type EffortLevel,
+  getDisplayedEffortLevel,
+  modelSupportsEffort,
+} from '../services/effort/effort.js'
 
 /**
  * Build the text for the effort-changed notification, e.g. "◐ medium · /effort".

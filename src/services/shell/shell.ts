@@ -9,12 +9,12 @@ import { getTaskOutputDir } from '../task-runtime/diskOutput.js'
 import { TaskOutput } from '../task-runtime/taskOutput.js'
 import { getOriginalCwd, getSessionId, setCwdState } from 'src/bootstrap/runtime/runtimeContext.js'
 import { generateTaskId } from '../../tasks/task.js'
-import { pwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { pwd } from '../environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { errorMessage, isENOENT } from '../../utils/errors.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { logError } from '../../utils/log.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { logError } from '../../services/infra/log.js'
 import {
   createAbortedCommand,
   createFailedCommand,
@@ -35,7 +35,7 @@ import { onCwdChangedForHooks } from '../hooks/fileChangedWatcher.js'
 import { getZyTempDirName } from '../permissions/filesystem.js'
 import { getPlatform } from './platform.js'
 import { invalidateSessionEnvCache } from '../environment/sessionEnvironment.js'
-import { subprocessEnv } from '../../utils/subprocessEnv.js'
+import { subprocessEnv } from '../environment/subprocessEnv.js'
 import { posixPathToWindowsPath } from './windowsPaths.js'
 
 const DEFAULT_TIMEOUT = 30 * 60 * 1000 // 30 minutes

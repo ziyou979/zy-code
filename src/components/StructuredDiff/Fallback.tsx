@@ -1,9 +1,9 @@
 import { diffWordsWithSpace, type StructuredPatchHunk } from 'diff'
 import * as React from 'react'
-import type { ThemeName } from 'src/utils/theme.js'
+import type { ThemeName } from 'src/services/environment/theme.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, NoSelect, Text, useTheme, wrapText } from '../../ink/index.js'
-import sliceAnsi from '../../utils/sliceAnsi.js'
+import sliceAnsi from '../../terminal-ui/sliceAnsi.js'
 
 /*
  * StructuredDiffFallback Component: Word-Level Diff Highlighting Example

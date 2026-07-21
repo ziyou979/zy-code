@@ -31,15 +31,15 @@ import { hasHookForEvent } from '../hooks/matcher.js'
 import {
   createImageMetadataText,
   maybeResizeAndDownsampleImageBlock,
-} from '../../utils/imageResizer.js'
+} from '../attachments/imageResizer.js'
 import { storeImages } from '../attachments/imageStore.js'
 import {
   createCommandInputMessage,
   createSystemMessage,
   createUserMessage,
 } from '../messages/constructors.js'
-import { queryCheckpoint } from '../../utils/queryProfiler.js'
-import { parseSlashCommand } from '../../utils/slashCommandParsing.js'
+import { queryCheckpoint } from '../../services/query/queryProfiler.js'
+import { parseSlashCommand } from '../commands/slashCommandParsing.js'
 import {
   type AgentMentionAttachment,
   createAttachmentMessage,
@@ -296,7 +296,10 @@ export async function processUserInput({
             ...hookMsg,
             attachment: {
               ...hookMsg.attachment,
-              content: typeof hookMsg.attachment.content === 'string' ? applyTruncation(hookMsg.attachment.content) : hookMsg.attachment.content,
+              content:
+                typeof hookMsg.attachment.content === 'string'
+                  ? applyTruncation(hookMsg.attachment.content)
+                  : hookMsg.attachment.content,
             },
           } as unknown as AttachmentMessage)
           break

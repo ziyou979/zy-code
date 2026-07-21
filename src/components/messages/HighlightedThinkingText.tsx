@@ -2,12 +2,12 @@ import { useContext } from 'react'
 import { POINTER } from '../../constants/figures.js'
 import { useQueuedMessage } from '../../context/QueuedMessageContext.js'
 import { Box, Text } from '../../ink/index.js'
-import { formatBriefTimestamp } from '../../utils/dateUtils.js'
+import { formatBriefTimestamp } from '../../utils/format.js'
 import {
   findThinkingTriggerPositions,
   getRainbowColor,
   isUltrathinkEnabled,
-} from '../../utils/thinking.js'
+} from '../../services/messages/thinking.js'
 import { MessageActionsSelectedContext } from '../MessageActions.js'
 
 type Props = {

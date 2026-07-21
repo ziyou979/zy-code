@@ -11,7 +11,7 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import type { Dirent } from 'node:fs'
 import type { EnvironmentKind } from 'src/services/teleport/environments.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import type { TurnStartTime } from './types.js'
 
 /** Shared debug logger for file persistence modules */

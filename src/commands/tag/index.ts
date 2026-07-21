@@ -1,5 +1,5 @@
 import type { Command } from '../../commands/index.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 
 const tag = {
   type: 'local-jsx',

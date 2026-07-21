@@ -163,9 +163,7 @@ export function DiffDialog({ messages, onDone }: Props) {
         {sources.map((source, i) => {
           const isSelected = i === sourceIndex
           const label =
-            source.type === 'current'
-              ? tSync('diffDialog.current')
-              : `T${source.turn.turnIndex}`
+            source.type === 'current' ? tSync('diffDialog.current') : `T${source.turn.turnIndex}`
           return (
             <Text key={i} dimColor={!isSelected} bold={isSelected}>
               {i > 0 ? ' \xB7 ' : ''}

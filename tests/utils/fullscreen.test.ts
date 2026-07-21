@@ -8,8 +8,8 @@ import * as realRuntimeContext from '../../src/bootstrap/runtime/runtimeContext.
 import * as realGrowthbook from '../../src/services/analytics/growthbook.js'
 import * as realConfig from '../../src/services/config/config.js'
 import * as realConcurrentSessions from '../../src/services/session/concurrentSessions.js'
-import * as realDebug from '../../src/utils/debug.js'
-import * as realEnvUtils from '../../src/utils/envUtils.js'
+import * as realDebug from '../../src/services/infra/debug.js'
+import * as realEnvUtils from '../../src/services/infra/envUtils.js'
 import * as realExecFileNoThrow from '../../src/services/shell/execFileNoThrow.js'
 
 // 可变的 mock 状态（测试之间重置）
@@ -27,7 +27,7 @@ mock.module('../../src/i18n/index.js', () => ({
   SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
 }))
 
-mock.module('../../src/utils/debug.js', () => ({
+mock.module('../../src/services/infra/debug.js', () => ({
   ...realDebug,
   logForDebugging: () => {},
 }))
@@ -58,7 +58,7 @@ mock.module('../../src/services/session/concurrentSessions.js', () => ({
   isBgSession: () => mockIsBgSession,
 }))
 
-mock.module('../../src/utils/envUtils.js', () => ({
+mock.module('../../src/services/infra/envUtils.js', () => ({
   ...realEnvUtils,
   isInternalBuild: () => mockIsInternalBuild,
 }))

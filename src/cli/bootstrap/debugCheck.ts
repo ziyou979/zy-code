@@ -1,4 +1,4 @@
-import { isRunningWithBun } from '../../utils/bundledMode.js'
+import { isRunningWithBun } from '../../services/environment/bundledMode.js'
 /**
  * 检测当前进程是否被 node/bun inspector 附加或通过 --inspect/--debug 标志启动。
  * 顶层调用方在内部构建之外检测到调试时直接 process.exit(1)，避免被外部

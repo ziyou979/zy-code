@@ -4,7 +4,7 @@
  * 用于查找文本对象边界的函数（iw、aw、i"、a( 等）
  */
 
-import { isVimPunctuation, isVimWhitespace, isVimWordChar } from '../utils/cursor.js'
+import { isVimPunctuation, isVimWhitespace, isVimWordChar } from '../terminal-ui/cursor.js'
 import { getGraphemeSegmenter } from '../utils/intl.js'
 
 export type TextObjectRange = { start: number; end: number } | null

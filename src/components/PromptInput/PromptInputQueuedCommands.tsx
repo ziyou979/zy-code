@@ -7,11 +7,11 @@ import { STATUS_TAG, SUMMARY_TAG, TASK_NOTIFICATION_TAG } from '../../constants/
 import { QueuedMessageProvider } from '../../context/QueuedMessageContext.js'
 import { useCommandQueue } from '../../hooks/useCommandQueue.js'
 import type { QueuedCommand } from '../../types/textInputTypes.js'
-import { isQueuedCommandVisible } from '../../utils/messageQueueManager.js'
+import { isQueuedCommandVisible } from '../../services/input/messageQueueManager.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'
 import { EMPTY_LOOKUPS } from '../../services/messages/./lookups.js'
 import { normalizeMessages } from '../../services/messages/./normalize.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import { Message } from '../Message.js'
 
 const EMPTY_SET = new Set<string>()

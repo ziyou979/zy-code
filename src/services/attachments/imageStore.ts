@@ -2,9 +2,9 @@ import { mkdir, open } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { PastedContent } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 const IMAGE_STORE_DIR = 'image-cache'
 const MAX_STORED_IMAGE_PATHS = 200
 

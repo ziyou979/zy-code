@@ -14,15 +14,15 @@ import { ListMcpResourcesTool } from '../../../tools/ListMcpResourcesTool/ListMc
 import { type MCPProgress, MCPTool } from '../../../tools/MCPTool/MCPTool.js'
 import { createMcpAuthTool } from '../../../tools/McpAuthTool/McpAuthTool.js'
 import { ReadMcpResourceTool } from '../../../tools/ReadMcpResourceTool/ReadMcpResourceTool.js'
-import { count } from '../../utils/array.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { count } from '../../../utils/array.js'
+import { isEnvTruthy } from '../../../services/infra/envUtils.js'
 import {
   errorMessage,
   TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-} from '../../utils/errors.js'
-import { logMCPDebug, logMCPError } from '../../utils/log.js'
-import { memoizeWithLRU } from '../../utils/memoize.js'
-import { recursivelySanitizeUnicode } from '../../utils/sanitization.js'
+} from '../../../utils/errors.js'
+import { logMCPDebug, logMCPError } from '../../../services/infra/log.js'
+import { memoizeWithLRU } from '../../../utils/memoize.js'
+import { recursivelySanitizeUnicode } from '../../../services/permissions/sanitization.js'
 import { logEvent } from '../../analytics/index.js'
 import { transformResultContent } from '../mcpResults.js'
 import { buildMcpTool, mcpToolInputToAutoClassifierInput } from './buildMcpTool.js'
@@ -45,7 +45,7 @@ import { markZyAiMcpConnected } from '../zyai.js'
  */
 
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../../services/infra/slowOperations.js'
 import {
   fetchMcpSkillsForClient,
   getMcpServerConnectionBatchSize,

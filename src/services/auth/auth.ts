@@ -31,16 +31,16 @@ import {
   normalizeApiKeyForConfig,
 } from '../auth/authPortable.js'
 import { clearBetasCaches } from '../feature-flags/betas.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../../services/infra/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { execSyncWithDefaults_DEPRECATED } from '../shell/execFileNoThrow.js'
 import * as lockfile from '../file-persistence/lockfile.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'
 import { sleep } from '../../utils/sleep.js'
-import { jsonParse } from '../../utils/slowOperations.js'
-import { clearToolSchemaCache } from '../../utils/toolSchemaCache.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
+import { clearToolSchemaCache } from '../../services/api/toolSchemaCache.js'
 import {
   type AccountInfo,
   checkHasTrustDialogAccepted,

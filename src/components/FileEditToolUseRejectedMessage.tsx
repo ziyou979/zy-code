@@ -1,7 +1,7 @@
 import { relative } from 'node:path'
 import type { StructuredPatchHunk } from 'diff'
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js'
-import { getCwd } from 'src/utils/cwd.js'
+import { getCwd } from 'src/services/environment/cwd.js'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink/index.js'
 import { HighlightedCode } from './HighlightedCode.js'

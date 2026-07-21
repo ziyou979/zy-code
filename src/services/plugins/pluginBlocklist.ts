@@ -8,7 +8,7 @@
  * for UI reason/text only. If re-introduced, serve from downloads.zy.ai.
  */
 
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { loadInstalledPlugins } from './installedPluginsManager.js'
 import { getMarketplace, loadKnownMarketplacesConfigSafe } from './marketplaceManager.js'

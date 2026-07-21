@@ -1,8 +1,8 @@
 import { relative } from 'node:path'
 import type { ToolUseContext } from '../../tools/tool.js'
 import type { LocalCommandResult } from '../types.js'
-import { getCwd } from '../../utils/cwd.js'
-import { cacheKeys } from '../../utils/fileStateCache.js'
+import { getCwd } from '../../services/environment/cwd.js'
+import { cacheKeys } from '../../services/file-persistence/fileStateCache.js'
 
 export async function call(_args: string, context: ToolUseContext): Promise<LocalCommandResult> {
   const files = context.readFileState ? cacheKeys(context.readFileState) : []

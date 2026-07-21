@@ -46,12 +46,7 @@ export function isFsInaccessible(e: unknown): e is NodeJS.ErrnoException {
   )
 }
 
-export type AxiosErrorKind =
-  | 'auth'
-  | 'timeout'
-  | 'network'
-  | 'http'
-  | 'other'
+export type AxiosErrorKind = 'auth' | 'timeout' | 'network' | 'http' | 'other'
 
 /** Local errorMessage to avoid circular dep. */
 function errorMessage(e: unknown): string {
@@ -79,7 +74,11 @@ export function classifyAxiosError(e: unknown): {
     if (s && s >= 400) return { kind: 'http', status: s, message }
   }
   if (axiosErr.code === 'ECONNABORTED') return { kind: 'timeout', message }
-  if (axiosErr.code === 'ECONNREFUSED' || axiosErr.code === 'ENOTFOUND' || axiosErr.code === 'ECONNRESET') {
+  if (
+    axiosErr.code === 'ECONNREFUSED' ||
+    axiosErr.code === 'ENOTFOUND' ||
+    axiosErr.code === 'ECONNRESET'
+  ) {
     return { kind: 'network', message }
   }
   return { kind: 'other', message }

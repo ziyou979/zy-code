@@ -1,6 +1,6 @@
 import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text } from '../ink/index.js'
-import { formatTimeShort } from '../utils/dateUtils.js'
+import { formatTimeShort } from '../utils/format.js'
 import type { Message } from '../types/message.js'
 
 type Props = {

@@ -5,10 +5,10 @@ import {
 } from '../model/model.js'
 import type { TextBlock } from '../../types/llm.js'
 import { splitSysPromptPrefix } from '../../services/api/api.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { getModelPromptCachingMode } from '../settings/localModelCapabilities.js'
 import { getInitialSettings } from '../settings/settings.js'
-import type { SystemPrompt } from '../../utils/systemPromptType.js'
+import type { SystemPrompt } from '../api/systemPromptType.js'
 
 export function getPromptCachingEnabled(model: string): boolean {
   // 全局禁用优先

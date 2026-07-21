@@ -21,7 +21,7 @@ import {
   cleanupOldMessageFilesInBackground,
   cleanupOldVersionsThrottled,
 } from '../cleanup/cleanup.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { autoUpdateMarketplacesAndPluginsInBackground } from '../plugins/pluginAutoupdate.js'
 
 // 24 hours in milliseconds

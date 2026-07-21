@@ -1,5 +1,5 @@
 import { Box, Text, useTheme } from '../../ink/index.js'
-import { getTheme, type Theme } from '../../utils/theme.js'
+import { getTheme, type Theme } from '../../services/environment/theme.js'
 import { getDefaultCharacters, interpolateColor, parseRGB, toRGBColor } from './utils.js'
 
 const DEFAULT_CHARACTERS = getDefaultCharacters()

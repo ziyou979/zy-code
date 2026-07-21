@@ -24,11 +24,11 @@ import {
 } from '../tasks/remote-agent-task/RemoteAgentTask.js'
 import type { LocalJSXCommandCall } from './types.js'
 import { tSync } from '../i18n/index.js'
-import { logForDebugging } from '../utils/debug.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
-import { logError } from '../utils/log.js'
-import { enqueuePendingNotification } from '../utils/messageQueueManager.js'
+import { logError } from '../services/infra/log.js'
+import { enqueuePendingNotification } from '../services/input/messageQueueManager.js'
 import { archiveRemoteSession, teleportToRemote } from '../services/teleport/teleport.js'
 
 // TODO(prod-hardening): OAuth token may go stale over the 30min poll;
@@ -542,8 +542,12 @@ const call: LocalJSXCommandCall = async (onDone, context, args) => {
 export default {
   type: 'local-jsx',
   name: 'ultraplan',
-  description: tSync('commands.ultraplan.description', { termsUrl: CCR_TERMS_URL }),
-  argumentHint: tSync('commands.ultraplan.argumentHint'),
+  get description() {
+    return tSync('commands.ultraplan.description', { termsUrl: CCR_TERMS_URL })
+  },
+  get argumentHint() {
+    return tSync('commands.ultraplan.argumentHint')
+  },
   isEnabled: () => isInternalBuild(),
   load: () =>
     Promise.resolve({

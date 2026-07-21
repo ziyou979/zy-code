@@ -5,7 +5,7 @@ import * as React from 'react'
 import { ExitFlow } from '../../components/ExitFlow.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import { isBgSession } from '../../services/session/concurrentSessions.js'
-import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
+import { gracefulShutdown } from '../../bootstrap/lifecycle/gracefulShutdown.js'
 import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 
 const GOODBYE_MESSAGES = ['Goodbye!', 'See ya!', 'Bye!', 'Catch you later!']

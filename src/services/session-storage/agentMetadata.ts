@@ -2,7 +2,7 @@ import type { Dirent } from 'node:fs'
 import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import type { AgentId } from '../../types/ids.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { isFsInaccessible } from '../../utils/errors.js'
 import { getAgentMetadataPath, getRemoteAgentMetadataPath, getRemoteAgentsDir } from './paths.js'
 

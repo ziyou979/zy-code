@@ -19,21 +19,21 @@ import {
   getClientType,
   getParentSessionId as getParentSessionIdFromState,
 } from '../../bootstrap/runtime/runtimeContext.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { isOfficialMcpUrl } from '../mcp/officialRegistry.js'
-import { getRepoRemoteHash } from '../../utils/git.js'
+import { getRepoRemoteHash } from '../../services/infra/git.js'
 import { getWslVersion, getLinuxDistroInfo, detectVcs } from '../shell/platform.js'
 import type { CoreUserData } from 'src/services/auth/user.js'
 import { getAgentContext } from '../../services/agent/agentContext.js'
 import type { EnvironmentMetadata } from '../../types/generated/events_mono/claude_code/v1/claude_code_internal_event.js'
 import type { PublicApiAuth } from '../../types/generated/events_mono/common/v1/auth.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   getAgentId,
   getParentSessionId as getTeammateParentSessionId,
   getTeamName,
   isTeammate,
-} from '../../utils/teammate.js'
+} from '../swarm/teammate.js'
 import { feature } from 'bun:bundle'
 
 /**

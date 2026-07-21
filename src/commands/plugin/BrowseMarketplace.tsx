@@ -19,7 +19,7 @@ import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.j
 import type { LoadedPlugin } from '../../services/plugins/types.js'
 import { count } from '../../utils/array.js'
 import { openBrowser } from '../../services/browser/browser.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { clearAllCaches } from '../../services/plugins/cacheUtils.js'
 import { formatInstallCount, getInstallCounts } from '../../services/plugins/installCounts.js'
@@ -681,7 +681,7 @@ export function BrowseMarketplace({
             case 'error':
               finish(
                 tSync('managePlugins.browseMarketplace.installConfigFailed', {
-                  detail,
+                  detail: detail ?? '',
                 }),
               )
               break

@@ -10,8 +10,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
-import { createDebugLog } from '../../utils/debug.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { createDebugLog } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 
 const hookLog = createDebugLog('hooks')
 

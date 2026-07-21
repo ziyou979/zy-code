@@ -2,9 +2,9 @@ import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.j
 import { getAPIProvider } from '../services/model/providers.js'
 import { clearApiKeyHelperCache } from '../services/auth/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 import { toError } from '../utils/errors.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 import { applyConfigEnvironmentVariables } from '../services/environment/managedEnv.js'
 import {
   permissionModeFromString,

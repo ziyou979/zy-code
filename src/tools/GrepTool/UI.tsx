@@ -8,7 +8,7 @@ import { Box, Text } from '../../ink/index.js'
 import type { ToolProgressData } from '../../tools/tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { ProgressMessage } from '../../types/message.js'
-import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../utils/file.js'
+import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../services/infra/file.js'
 import { truncate } from '../../utils/format.js'
 import { extractTag } from '../../services/messages/./predicates.js'
 

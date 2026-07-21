@@ -20,7 +20,7 @@ function setupMocks(
   mock.module('../../src/services/settings/settings.js', () => ({
     getInitialSettings: () => settingsOverride,
   }))
-  mock.module('../../src/utils/debug.js', () => ({
+  mock.module('../../src/services/infra/debug.js', () => ({
     logForDebugging: () => {},
   }))
   mock.module('../../src/i18n/index.js', () => ({
@@ -41,7 +41,7 @@ function setupMocks(
   mock.module('../../src/services/messages/constructors.js', () => ({
     createAssistantMessage: () => ({ content: [] }),
   }))
-  mock.module('../../src/utils/toolResultStorage.js', () => ({
+  mock.module('../../src/services/mcp/toolResultStorage.js', () => ({
     processToolResultBlock: async () => ({ content: '' }),
   }))
   mock.module('../../src/utils/shell/shellToolUtils.js', () => ({

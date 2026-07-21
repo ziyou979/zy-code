@@ -12,15 +12,15 @@ import {
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import { LLMAbortError } from '../types/llm.js'
 import type { AssistantMessage } from '../types/message.js'
-import { recordAutoModeDenial } from '../utils/autoModeDenials.js'
+import { recordAutoModeDenial } from '../services/hooks/autoModeDenials.js'
 import {
   clearClassifierChecking,
   setClassifierApproval,
   setYoloClassifierApproval,
-} from '../utils/classifierApprovals.js'
-import { logForDebugging } from '../utils/debug.js'
+} from '../services/permissions/classifierApprovals.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { AbortError } from '../utils/errors.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 import type { PermissionDecision } from '../services/permissions/permissionResult.js'
 import { hasPermissionsToUseTool } from '../services/permissions/permissions.js'
 import { handleCoordinatorPermission } from './tool-permission/handlers/coordinatorHandler.js'

@@ -7,7 +7,7 @@ import { useAppState, useAppStateStore, useSetAppState } from '../state/AppState
 import { backgroundAll, hasForegroundTasks } from '../tasks/local-shell-task/LocalShellTask.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import { env } from '../services/environment/env.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { isEnvTruthy } from '../services/infra/envUtils.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 
 type Props = {

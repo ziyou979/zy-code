@@ -1,7 +1,7 @@
 import * as React from 'react'
 import type { Message, ProgressMessage } from 'src/types/message.js'
 import { extractTag } from 'src/services/messages/predicates.js'
-import type { ThemeName } from 'src/utils/theme.js'
+import type { ThemeName } from 'src/services/environment/theme.js'
 import type { z } from 'zod/v4'
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js'
 import { FilePathLink } from '../../components/FilePathLink.js'
@@ -12,7 +12,7 @@ import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
 import type { Tools } from '../../tools/tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
-import { getDisplayPath } from '../../utils/file.js'
+import { getDisplayPath } from '../../services/infra/file.js'
 import type { inputSchema, Output } from './NotebookEditTool.js'
 export function getToolUseSummary(
   input: Partial<z.infer<ReturnType<typeof inputSchema>>> | undefined,

@@ -3,9 +3,9 @@ import type { z } from 'zod/v4'
 import { tSync } from '../../../i18n/index.js'
 import { Text } from '../../../ink/index.js'
 import { FileWriteTool } from '../../../tools/FileWriteTool/FileWriteTool.js'
-import { getCwd } from '../../../utils/cwd.js'
+import { getCwd } from '../../../services/environment/cwd.js'
 import { isENOENT } from '../../../utils/errors.js'
-import { readFileSync } from '../../../utils/fileRead.js'
+import { readFileSync } from '../../../services/file-persistence/fileRead.js'
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js'
 import {
   createSingleEditDiffConfig,

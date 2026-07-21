@@ -1,6 +1,6 @@
 import { type FSWatcher, watch } from 'node:fs'
 import { useEffect, useRef } from 'react'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import {
   claimTask,
   DEFAULT_TASKS_MODE_TASK_LIST_ID,

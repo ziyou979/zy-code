@@ -16,7 +16,7 @@ import {
   createUserMessage,
   prepareUserContent,
 } from '../../services/messages/./constructors.js'
-import { processToolResultBlock } from '../../utils/toolResultStorage.js'
+import { processToolResultBlock } from '../../services/mcp/toolResultStorage.js'
 import { escapeXml } from '../../utils/xml.js'
 import { BashModeProgress } from '../BashModeProgress.js'
 

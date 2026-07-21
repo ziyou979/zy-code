@@ -24,7 +24,10 @@ import { logManagedSettings } from '../bootstrap/managedSettings.js'
 import { logTenguInit } from '../bootstrap/telemetry.js'
 import { assistantModule, coordinatorModeModule } from '../lazyModules.js'
 import type { StatsStore } from '../../context/stats.js'
-import { launchInvalidSettingsDialog, launchSnapshotUpdateDialog } from '../../cli/DialogLaunchers.js'
+import {
+  launchInvalidSettingsDialog,
+  launchSnapshotUpdateDialog,
+} from '../../cli/DialogLaunchers.js'
 import type { Root } from '../../ink/index.js'
 import { exitWithError, getRenderContext, showSetupScreens } from '../../cli/InteractiveHelpers.js'
 import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js'
@@ -45,10 +48,10 @@ import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js
 import { installAsciicastRecorder } from '../../services/shell/asciicast.js'
 import { validateForceLoginOrg } from '../../services/auth/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
-import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isBareMode, isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { refreshExampleCommands } from '../../services/hints/exampleCommands.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { cleanupOrphanedPluginVersionsInBackground } from '../../services/plugins/cacheUtils.js'
 import { initializeVersionedPlugins } from '../../services/plugins/installedPluginsManager.js'
 import { getGlobExclusionsForPluginCache } from '../../services/plugins/orphanedPluginFilter.js'
@@ -59,14 +62,14 @@ import { resetSettingsCache } from '../../services/settings/settingsCache.js'
 import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js'
 import { logContextMetrics } from 'src/services/api/api.js'
-import { registerCleanup } from 'src/utils/cleanupRegistry.js'
+import { registerCleanup } from 'src/services/cleanup/cleanupRegistry.js'
 import {
   countConcurrentSessions,
   registerSession,
   updateSessionName,
 } from 'src/services/session/concurrentSessions.js'
-import { logForDebugging } from 'src/utils/debug.js'
-import { gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
+import { gracefulShutdownSync } from 'src/bootstrap/lifecycle/gracefulShutdown.js'
 import {
   getInitialMainLoopModel,
   setInitialMainLoopModel,
@@ -78,8 +81,8 @@ import {
 } from 'src/bootstrap/runtime/runtimeContext.js'
 // teleportWithProgress 在调用处动态导入
 import { initializeLspServerManager } from '../../services/lsp/manager.js'
-import { isInBundledMode } from '../../utils/bundledMode.js'
-import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
+import { isInBundledMode } from '../../services/environment/bundledMode.js'
+import { logForDiagnosticsNoPII } from '../../services/telemetry/diagLogs.js'
 import { resetUserCache } from '../../services/auth/user.js'
 import {
   appendProactiveModePrompt,

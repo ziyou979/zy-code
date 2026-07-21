@@ -27,7 +27,7 @@ import * as React from 'react'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { ComputerUseApproval } from '../permissions/ComputerUseApproval/ComputerUseApproval.js'
 import type { Tool, ToolUseContext } from '../../tools/tool.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import {
   checkComputerUseLock,
   tryAcquireComputerUseLock,
@@ -81,7 +81,11 @@ export function buildSessionContext(): ComputerUseSessionContext {
     getLastScreenshotDims: (): ScreenshotDims | undefined => {
       const d = tuc().getAppState().computerUseMcpState?.lastScreenshotDims
       if (!d) return undefined
-      const extended = d as ScreenshotDims & { displayId?: number; originX?: number; originY?: number }
+      const extended = d as ScreenshotDims & {
+        displayId?: number
+        originX?: number
+        originY?: number
+      }
       return {
         ...extended,
         displayId: extended.displayId ?? 0,
@@ -293,15 +297,13 @@ function getOrBind(): Binding {
   const ctx = buildSessionContext()
   binding = {
     ctx,
-    dispatch: (bindSessionContext as unknown as (
-      host: ReturnType<typeof getComputerUseHostAdapter>,
-      mode: ReturnType<typeof getChicagoCoordinateMode>,
-      ctx: ComputerUseSessionContext,
-    ) => Binding['dispatch'])(
-      getComputerUseHostAdapter(),
-      getChicagoCoordinateMode(),
-      ctx,
-    ),
+    dispatch: (
+      bindSessionContext as unknown as (
+        host: ReturnType<typeof getComputerUseHostAdapter>,
+        mode: ReturnType<typeof getChicagoCoordinateMode>,
+        ctx: ComputerUseSessionContext,
+      ) => Binding['dispatch']
+    )(getComputerUseHostAdapter(), getChicagoCoordinateMode(), ctx),
   }
   return binding
 }
@@ -317,7 +319,10 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
   const call: CallOverride = async (args, context: ToolUseContext) => {
     currentToolUseContext = context
     const { dispatch } = getOrBind()
-    const { content: resultContent, telemetry } = await dispatch(toolName, args) as CuCallToolResult & { content?: unknown; telemetry?: { error_kind?: string } }
+    const { content: resultContent, telemetry } = (await dispatch(
+      toolName,
+      args,
+    )) as CuCallToolResult & { content?: unknown; telemetry?: { error_kind?: string } }
     if (telemetry?.error_kind) {
       logForDebugging(`[Computer Use MCP] ${toolName} error_kind=${telemetry.error_kind}`)
     }
@@ -329,20 +334,21 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
     // 类型也允许 audio/resource，但 CU 的 handleToolCall 永远不会发出
     // 这些；默写将它们强制转换为空文本。
     const data = Array.isArray(resultContent)
-      ? resultContent.map((item: { type?: string; mimeType?: string; data?: string; text?: string }) =>
-          item.type === 'image'
-            ? {
-                type: 'image' as const,
-                source: {
-                  type: 'base64' as const,
-                  mediaType: item.mimeType ?? 'image/jpeg',
-                  data: item.data,
+      ? resultContent.map(
+          (item: { type?: string; mimeType?: string; data?: string; text?: string }) =>
+            item.type === 'image'
+              ? {
+                  type: 'image' as const,
+                  source: {
+                    type: 'base64' as const,
+                    mediaType: item.mimeType ?? 'image/jpeg',
+                    data: item.data,
+                  },
+                }
+              : {
+                  type: 'text' as const,
+                  text: item.type === 'text' ? item.text : '',
                 },
-              }
-            : {
-                type: 'text' as const,
-                text: item.type === 'text' ? item.text : '',
-              },
         )
       : resultContent
     return {

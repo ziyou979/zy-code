@@ -4,9 +4,9 @@ import { queryModelWithoutStreaming } from '../api/llmOrchestrator.js'
 import type { Message } from '../../types/message.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { extractTextContent } from '../messages/predicates.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { asSystemPrompt } from '../api/systemPromptType.js'
 import type { REPLHookContext } from './postSamplingHooks.js'
 
 export type ApiQueryHookContext = REPLHookContext & {

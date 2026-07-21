@@ -5,7 +5,7 @@ import { getEmptyToolPermissionContext } from '../../tools/tool.js'
 import type { JSONOutputFormat } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
 import { createUserMessage } from '../messages/constructors.js'
-import { asSystemPrompt, type SystemPrompt } from '../../utils/systemPromptType.js'
+import { asSystemPrompt, type SystemPrompt } from '../api/systemPromptType.js'
 import { withVCR } from '../vcr.js'
 import { type Options, queryModelWithoutStreaming } from './llmOrchestrator.js'
 

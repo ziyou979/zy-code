@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
 import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 
 type Props = {
   onRun: () => void

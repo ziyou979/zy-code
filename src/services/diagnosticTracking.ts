@@ -1,9 +1,9 @@
-import { logError } from 'src/utils/log.js'
+import { logError } from 'src/services/infra/log.js'
 import { BULLET, CROSS, INFO, STAR, WARNING } from '../constants/figures.js'
 import type { MCPServerConnection } from './mcp/types.js'
 import { ZyError } from '../utils/errors.js'
-import { normalizePathForComparison, pathsEqual } from '../utils/file.js'
-import { jsonParse } from '../utils/slowOperations.js'
+import { normalizePathForComparison, pathsEqual } from '../services/infra/file.js'
+import { jsonParse } from '../services/infra/slowOperations.js'
 import { getConnectedIdeClient } from './ide/ide.js'
 import { callIdeRpc } from './mcp/mcpToolCall.js'
 

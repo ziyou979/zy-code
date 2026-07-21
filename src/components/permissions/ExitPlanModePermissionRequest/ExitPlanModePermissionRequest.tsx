@@ -26,11 +26,14 @@ import { EXIT_PLAN_MODE_TOOL_NAME } from '../../../tools/ExitPlanModeTool/consta
 import type { AllowedPrompt } from '../../../tools/ExitPlanModeTool/ExitPlanModeTool.js'
 import { TEAM_CREATE_TOOL_NAME } from '../../../tools/TeamCreateTool/constants.js'
 import { isAgentSwarmsEnabled } from '../../../services/swarm/agentSwarmsEnabled.js'
-import { calculateContextPercentages, getContextWindowForModel } from '../../../services/context/modelContext.js'
+import {
+  calculateContextPercentages,
+  getContextWindowForModel,
+} from '../../../services/context/modelContext.js'
 import { getExternalEditor } from '../../../terminal-ui/editor.js'
-import { getDisplayPath } from '../../../utils/file.js'
+import { getDisplayPath } from '../../../services/infra/file.js'
 import { toIDEDisplayName } from '../../../services/ide/ide.js'
-import { logError } from '../../../utils/log.js'
+import { logError } from '../../../services/infra/log.js'
 import { createUserMessage } from '../../../services/messages/./constructors.js'
 import {
   createPromptRuleContent,
@@ -74,8 +77,8 @@ const autoModeStateModule = true
 import type { ImageBlock, ImageSource, TokenUsage } from '../../../types/llm.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { PastedContent } from '../../../services/config/config.js'
-import type { ImageDimensions } from '../../../utils/imageResizer.js'
-import { maybeResizeAndDownsampleImageBlock } from '../../../utils/imageResizer.js'
+import type { ImageDimensions } from '../../../services/attachments/imageResizer.js'
+import { maybeResizeAndDownsampleImageBlock } from '../../../services/attachments/imageResizer.js'
 import { cacheImagePath, storeImage } from '../../../services/attachments/imageStore.js'
 
 type ResponseValue =

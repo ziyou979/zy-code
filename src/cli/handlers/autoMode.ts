@@ -12,7 +12,7 @@ import {
 } from '../../services/permissions/yoloClassifier.js'
 import { getAutoModeConfig } from '../../services/settings/settings.js'
 import { sideQuery } from '../../services/query/sideQuery.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 
 function writeRules(rules: AutoModeRules): void {
   process.stdout.write(`${jsonStringify(rules, null, 2)}\n`)

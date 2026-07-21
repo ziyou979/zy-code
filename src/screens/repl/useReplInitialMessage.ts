@@ -13,9 +13,12 @@ import type { ReplStoreInstance } from '../../state/replStore.js'
 import { toUUID } from '../../types/ids.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { createAbortController } from '../../utils/abortController.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import type { FileHistoryState } from '../../services/file-persistence/fileHistory.js'
-import { fileHistoryEnabled, fileHistoryMakeSnapshot } from '../../services/file-persistence/fileHistory.js'
+import {
+  fileHistoryEnabled,
+  fileHistoryMakeSnapshot,
+} from '../../services/file-persistence/fileHistory.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
 import { applyPermissionUpdates } from '../../services/permissions/permissionUpdate.js'
 import { stripDangerousPermissionsForAutoMode } from '../../services/permissions/permissionSetup.js'

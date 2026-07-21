@@ -6,8 +6,8 @@ import {
   getExternalAgentsMdIncludes,
   getMemoryFiles,
   shouldShowAgentsMdExternalIncludesWarning,
-} from 'src/utils/agentsMd.js'
-import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js'
+} from 'src/services/memory/agentsMd.js'
+import { gracefulShutdown, gracefulShutdownSync } from 'src/bootstrap/lifecycle/gracefulShutdown.js'
 import type { ChannelEntry } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   getAllowedChannels,
@@ -41,12 +41,12 @@ import {
   getGlobalConfig,
   saveGlobalConfig,
 } from '../services/config/config.js'
-import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from '../utils/envUtils.js'
+import { isEnvTruthy, isRunningOnHomespace, isTestEnv } from '../services/infra/envUtils.js'
 import { type FpsMetrics, FpsTracker } from '../utils/fpsTracker.js'
 import { updateGithubRepoPathMapping } from '../services/github/githubRepoPathMapping.js'
 import { applyConfigEnvironmentVariables } from '../services/environment/managedEnv.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
-import { getBaseRenderOptions } from '../utils/renderOptions.js'
+import { getBaseRenderOptions } from '../terminal-ui/renderOptions.js'
 import { getSettingsWithAllErrors } from '../services/settings/allErrors.js'
 import {
   hasAutoModeOptIn,

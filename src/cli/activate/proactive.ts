@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 
 /**
  * 当 `--proactive` flag 或 ZY_CODE_PROACTIVE env 被设置且对应 feature gate 开启时，

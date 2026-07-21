@@ -26,7 +26,7 @@ import {
   GIT_READ_ONLY_COMMANDS,
   validateFlags,
 } from '../../shell-eval/shared/readOnlyCommandValidation.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import { COMMON_PARAMETERS } from './commonParameters.js'
 

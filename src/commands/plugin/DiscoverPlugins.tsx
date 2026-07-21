@@ -22,7 +22,7 @@ import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.j
 import type { LoadedPlugin } from '../../services/plugins/types.js'
 import { count } from '../../utils/array.js'
 import { openBrowser } from '../../services/browser/browser.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { clearAllCaches } from '../../services/plugins/cacheUtils.js'
 import { formatInstallCount, getInstallCounts } from '../../services/plugins/installCounts.js'
@@ -226,7 +226,9 @@ export function DiscoverPlugins({
         const errorResult = formatMarketplaceLoadingErrors(failures, successCount)
         if (errorResult) {
           if (errorResult.type === 'warning') {
-            setWarning(tSync('managePlugins.showingAvailablePlugins', { message: errorResult.message }))
+            setWarning(
+              tSync('managePlugins.showingAvailablePlugins', { message: errorResult.message }),
+            )
           } else {
             throw new Error(errorResult.message)
           }
@@ -294,14 +296,27 @@ export function DiscoverPlugins({
 
     // Handle installation results
     if (failureCount === 0) {
-      const message =
-        tSync('managePlugins.installedSuccessSingle', { count: String(successCount_0), unit: plural(successCount_0, tSync('managePlugins.pluginCount_one'), tSync('managePlugins.pluginCount_other')) })
+      const message = tSync('managePlugins.installedSuccessSingle', {
+        count: String(successCount_0),
+        unit: plural(
+          successCount_0,
+          tSync('managePlugins.pluginCount_one'),
+          tSync('managePlugins.pluginCount_other'),
+        ),
+      })
       setResult(message)
     } else if (successCount_0 === 0) {
-      setError(tSync('managePlugins.failedToInstall', { details: formatFailureDetails(newFailedPlugins, true) }))
+      setError(
+        tSync('managePlugins.failedToInstall', {
+          details: formatFailureDetails(newFailedPlugins, true),
+        }),
+      )
     } else {
-      const message_0 =
-        tSync('managePlugins.installedSuccessPartial', { successCount: String(successCount_0), totalCount: String(successCount_0 + failureCount), details: formatFailureDetails(newFailedPlugins, false) })
+      const message_0 = tSync('managePlugins.installedSuccessPartial', {
+        successCount: String(successCount_0),
+        totalCount: String(successCount_0 + failureCount),
+        details: formatFailureDetails(newFailedPlugins, false),
+      })
       setResult(message_0)
     }
     if (successCount_0 > 0) {
@@ -587,9 +602,13 @@ export function DiscoverPlugins({
 
         <Box flexDirection="column" marginBottom={1}>
           <Text bold>{selectedPlugin.entry.name}</Text>
-          <Text dimColor>{tSync('managePlugins.fromMarketplace', { name: selectedPlugin.marketplaceName })}</Text>
+          <Text dimColor>
+            {tSync('managePlugins.fromMarketplace', { name: selectedPlugin.marketplaceName })}
+          </Text>
           {selectedPlugin.entry.version && (
-            <Text dimColor>{tSync('managePlugins.version', { version: selectedPlugin.entry.version })}</Text>
+            <Text dimColor>
+              {tSync('managePlugins.version', { version: selectedPlugin.entry.version })}
+            </Text>
           )}
           {selectedPlugin.entry.description && (
             <Box marginTop={1}>
@@ -612,7 +631,9 @@ export function DiscoverPlugins({
 
         {installError && (
           <Box marginBottom={1}>
-            <Text color="error">{tSync('managePlugins.installError', { error: installError })}</Text>
+            <Text color="error">
+              {tSync('managePlugins.installError', { error: installError })}
+            </Text>
           </Box>
         )}
 
@@ -713,7 +734,10 @@ export function DiscoverPlugins({
       {/* Scroll up indicator */}
       {pagination.scrollPosition.canScrollUp && (
         <Box>
-          <Text dimColor> {ARROW_UP} {tSync('managePlugins.moreAbove')}</Text>
+          <Text dimColor>
+            {' '}
+            {ARROW_UP} {tSync('managePlugins.moreAbove')}
+          </Text>
         </Box>
       )}
 
@@ -744,7 +768,8 @@ export function DiscoverPlugins({
                 {installCounts && plugin_5.marketplaceName === OFFICIAL_MARKETPLACE_NAME && (
                   <Text dimColor>
                     {' · '}
-                    {formatInstallCount(installCounts.get(plugin_5.pluginId) ?? 0)}{tSync('managePlugins.installsSuffix')}
+                    {formatInstallCount(installCounts.get(plugin_5.pluginId) ?? 0)}
+                    {tSync('managePlugins.installsSuffix')}
                   </Text>
                 )}
               </Text>
@@ -761,7 +786,10 @@ export function DiscoverPlugins({
       {/* Scroll down indicator */}
       {pagination.scrollPosition.canScrollDown && (
         <Box>
-          <Text dimColor> {ARROW_DOWN} {tSync('managePlugins.moreBelow')}</Text>
+          <Text dimColor>
+            {' '}
+            {ARROW_DOWN} {tSync('managePlugins.moreBelow')}
+          </Text>
         </Box>
       )}
 
@@ -783,7 +811,13 @@ export function DiscoverPlugins({
     </Box>
   )
 }
-function DiscoverPluginsKeyHint({ hasSelection, canToggle }: { hasSelection: boolean; canToggle: boolean }) {
+function DiscoverPluginsKeyHint({
+  hasSelection,
+  canToggle,
+}: {
+  hasSelection: boolean
+  canToggle: boolean
+}) {
   return (
     <Box marginTop={1}>
       <Text dimColor={true} italic={true}>
@@ -843,9 +877,7 @@ function EmptyStateMessage({ reason }: { reason: string }) {
     case 'all-blocked-by-policy':
       return (
         <>
-          <Text dimColor={true}>
-            {tSync('managePlugins.policyNoExternalMarketplaces')}
-          </Text>
+          <Text dimColor={true}>{tSync('managePlugins.policyNoExternalMarketplaces')}</Text>
           <Text dimColor={true}>{tSync('managePlugins.contactAdministrator')}</Text>
         </>
       )

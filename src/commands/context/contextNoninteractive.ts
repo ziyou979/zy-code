@@ -5,7 +5,7 @@ import type { Tools, ToolUseContext } from '../../tools/tool.js'
 import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message } from '../../types/message.js'
 import { analyzeContextUsage, type ContextData } from '../../services/compact/analyzeContext.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { formatTokens } from '../../utils/format.js'
 import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
 import { getSourceDisplayName } from '../../services/settings/constants.js'
@@ -45,10 +45,7 @@ export async function collectContextData(context: CollectContextDataInput): Prom
     apiView = projectView(apiView, []) as Message[]
   }
 
-  const { messages: compactedMessages } = await microcompactMessages(
-    apiView,
-    undefined,
-  )
+  const { messages: compactedMessages } = await microcompactMessages(apiView, undefined)
   const appState = getAppState()
 
   return analyzeContextUsage(

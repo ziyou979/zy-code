@@ -6,7 +6,10 @@
  * 设为 0 禁用熔断（兼容老行为）。
  */
 import { afterEach, describe, expect, test } from 'bun:test'
-import { evaluateStopHookBlockCap, getStopHookBlockCap } from '../../../src/utils/envUtils.js'
+import {
+  evaluateStopHookBlockCap,
+  getStopHookBlockCap,
+} from '../../../src/services/infra/envUtils.js'
 
 const ENV = 'ZY_CODE_STOP_HOOK_BLOCK_CAP'
 

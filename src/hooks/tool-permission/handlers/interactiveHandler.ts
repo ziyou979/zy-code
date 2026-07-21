@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { randomUUID } from 'node:crypto'
-import { logForDebugging } from 'src/utils/debug.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
 import { getAllowedChannels } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { WirePermissionCallbacks } from '../../../bridge/bridgePermissionCallbacks.js'
 import { getTerminalFocused } from '../../../ink/terminalFocusState.js'
@@ -23,7 +23,7 @@ import {
   setClassifierApproval,
   setClassifierChecking,
   setYoloClassifierApproval,
-} from '../../../utils/classifierApprovals.js'
+} from '../../../services/permissions/classifierApprovals.js'
 import { errorMessage } from '../../../utils/errors.js'
 import type { PermissionDecision } from '../../../services/permissions/permissionResult.js'
 import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'

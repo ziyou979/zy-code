@@ -17,9 +17,13 @@ import { Ansi, Box, Text, useInput } from '../ink/index.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { renderModelName } from '../services/model/model.js'
 import { getGlobalConfig } from '../services/config/config.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 import { formatDuration, formatNumber } from '../utils/format.js'
-import { generateHeatmap, generateHeatmapData, type HeatmapCell } from '../services/analytics/heatmap.js'
+import {
+  generateHeatmap,
+  generateHeatmapData,
+  type HeatmapCell,
+} from '../services/analytics/heatmap.js'
 import { copyAnsiToClipboard } from '../services/shell/screenshotClipboard.js'
 import {
   aggregateZyCodeStatsForRange,
@@ -27,8 +31,8 @@ import {
   type StatsDateRange,
   type ZyCodeStats,
 } from '../services/analytics/stats.js'
-import { resolveThemeSetting } from '../utils/systemTheme.js'
-import { getTheme, themeColorToAnsi } from '../utils/theme.js'
+import { resolveThemeSetting } from '../services/environment/systemTheme.js'
+import { getTheme, themeColorToAnsi } from '../services/environment/theme.js'
 import { Pane } from './design-system/Pane.js'
 import { Tab, Tabs, useTabHeaderFocus } from './design-system/Tabs.js'
 import { Spinner } from './Spinner.js'

@@ -31,11 +31,11 @@ import type {
 } from '../../types/message.js'
 import { COMPACT_MAX_OUTPUT_TOKENS } from '../../services/context/modelContext.js'
 import { analyzeContext, tokenStatsToStatsigMetrics } from '../compact/contextAnalysis.js'
-import { createDebugLog } from '../../utils/debug.js'
+import { createDebugLog } from '../../services/infra/debug.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
-import { cacheToObject } from '../../utils/fileStateCache.js'
-import { type CacheSafeParams, runForkedAgent } from '../../utils/forkedAgent.js'
-import { logError } from '../../utils/log.js'
+import { cacheToObject } from '../file-persistence/fileStateCache.js'
+import { type CacheSafeParams, runForkedAgent } from '../../services/agent/forkedAgent.js'
+import { logError } from '../../services/infra/log.js'
 import { createCompactBoundaryMessage, createUserMessage } from '../messages/constructors.js'
 import {
   getAssistantMessageText,
@@ -48,17 +48,17 @@ import { getPlan, getPlanFilePath } from '../plans/plans.js'
 import {
   isSessionActivityTrackingActive,
   sendSessionActivitySignal,
-} from '../../utils/sessionActivity.js'
+} from '../../services/session-storage/sessionActivity.js'
 import { processSessionStartHooks } from '../session-storage/sessionStart.js'
 import { sleep } from '../../utils/sleep.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
+import { asSystemPrompt } from '../api/systemPromptType.js'
 import {
   getTokenUsage,
   tokenCountFromLastAPIResponse,
   tokenCountWithEstimation,
-} from '../../utils/tokens.js'
+} from '../../services/api/tokens.js'
 import { extractDiscoveredToolNames, isToolSearchEnabled } from '../tool-runtime/toolSearch.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {

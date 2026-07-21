@@ -6,11 +6,5 @@ export async function call(
   _context: unknown,
   args?: string,
 ): Promise<React.ReactNode> {
-  return (
-    <PluginSettings
-      onComplete={onDone}
-      args={args ?? ''}
-      showMcpRedirectMessage={undefined}
-    />
-  )
+  return <PluginSettings onComplete={onDone} args={args ?? ''} showMcpRedirectMessage={undefined} />
 }

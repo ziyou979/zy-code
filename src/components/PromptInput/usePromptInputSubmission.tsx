@@ -2,8 +2,8 @@ import * as path from 'node:path'
 import { useCallback, useEffect, useState } from 'react'
 import { type IDEAtMentioned, useIdeAtMentioned } from 'src/hooks/useIdeAtMentioned.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import { getCwd } from 'src/utils/cwd.js'
-import { isQueuedCommandEditable, popAllEditable } from 'src/utils/messageQueueManager.js'
+import { getCwd } from 'src/services/environment/cwd.js'
+import { isQueuedCommandEditable, popAllEditable } from 'src/services/input/messageQueueManager.js'
 import stripAnsi from 'strip-ansi'
 import {
   formatImageRef,
@@ -22,18 +22,18 @@ import {
   type PastedContent,
   saveGlobalConfig,
 } from '../../services/config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import {
   parseDirectMemberMessage,
   sendDirectMemberMessage,
 } from '../../services/swarm/directMemberMessage.js'
 import { errorMessage } from '../../utils/errors.js'
 import { PASTE_THRESHOLD } from '../../services/attachments/imagePaste.js'
-import type { ImageDimensions } from '../../utils/imageResizer.js'
+import type { ImageDimensions } from '../../services/attachments/imageResizer.js'
 import { cacheImagePath, storeImage } from '../../services/attachments/imageStore.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { editPromptInEditor } from '../../terminal-ui/promptEditor.js'
-import { writeToMailbox } from '../../utils/teammateMailbox.js'
+import { writeToMailbox } from '../../services/swarm/teammateMailbox.js'
 import { getModeFromInput, getValueFromInput } from './inputModes.js'
 import { expandExistingPasteRefsInInput, findExistingPastedTextId } from './inputPaste.js'
 import type { SuggestionItem } from './PromptInputFooterSuggestions.js'
@@ -322,7 +322,7 @@ export function usePromptInputSubmission(context: ReturnType<typeof usePromptInp
             clearBuffer()
             resetHistory()
             return
-            } else if ((result as { error?: string }).error === 'no_team_context') {
+          } else if ((result as { error?: string }).error === 'no_team_context') {
             // No team context - fall through to normal prompt submission
           } else {
             // Unknown recipient - fall through to normal prompt submission

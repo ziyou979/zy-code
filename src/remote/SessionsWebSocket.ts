@@ -7,12 +7,12 @@ import type {
   WireControlRequestInner,
   WireControlResponse,
 } from '../types/wire/control.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { errorMessage } from '../utils/errors.js'
-import { logError } from '../utils/log.js'
-import { getWebSocketTLSOptions } from '../utils/mtls.js'
-import { getWebSocketProxyAgent, getWebSocketProxyUrl } from '../utils/proxy.js'
-import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
+import { logError } from '../services/infra/log.js'
+import { getWebSocketTLSOptions } from '../services/http/mtls.js'
+import { getWebSocketProxyAgent, getWebSocketProxyUrl } from '../services/http/proxy.js'
+import { jsonParse, jsonStringify } from '../services/infra/slowOperations.js'
 
 const RECONNECT_DELAY_MS = 2000
 const MAX_RECONNECT_ATTEMPTS = 5

@@ -14,7 +14,7 @@
  */
 
 import { getGlobalConfig } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { getSettingsForSource } from './settings.js'
 
 /**

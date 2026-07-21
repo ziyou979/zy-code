@@ -1,4 +1,8 @@
-import { expandPastedTextRefs, getPastedTextRefNumLines, parseReferences } from 'src/services/session-storage/history.js'
+import {
+  expandPastedTextRefs,
+  getPastedTextRefNumLines,
+  parseReferences,
+} from 'src/services/session-storage/history.js'
 import type { PastedContent } from 'src/services/config/config.js'
 
 const TRUNCATION_THRESHOLD = 10000 // Characters before we truncate

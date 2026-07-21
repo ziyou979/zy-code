@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import type { ScopedMcpServerConfig } from '../services/mcp/types.js'
 import { getGlobalConfig } from '../services/config/config.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from '../utils/envUtils.js'
+import { isEnvDefinedFalsy, isEnvTruthy } from '../services/infra/envUtils.js'
 import {
   type IDEExtensionInstallationStatus,
   type IdeType,

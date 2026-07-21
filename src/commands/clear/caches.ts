@@ -23,13 +23,13 @@ import { resetAllLSPDiagnosticState } from '../../services/lsp/lspDiagnosticRegi
 import { clearTrackedMagicDocs } from '../../services/magic-docs/magicDocs.js'
 import { clearCommandPrefixCaches } from '../../shell-eval/bash/commands.js'
 import { clearDynamicSkills } from '../../skills/loadSkillsDir.js'
-import { resetGetMemoryFilesCache } from '../../utils/agentsMd.js'
+import { resetGetMemoryFilesCache } from '../../services/memory/agentsMd.js'
 import { resetSentSkillNames } from '../../services/attachments/attachments.js'
-import { clearRepositoryCaches } from '../../utils/detectRepository.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { clearRepositoryCaches } from '../../services/git/detectRepository.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { clearResolveGitDirCache } from '../../services/git/gitFilesystem.js'
 import { clearStoredImagePaths } from '../../services/attachments/imageStore.js'
-import { clearSessionEnvVars } from '../../utils/sessionEnvVars.js'
+import { clearSessionEnvVars } from '../../services/environment/sessionEnvVars.js'
 
 /**
  * Clear all session-related caches.
@@ -105,7 +105,9 @@ export function clearSessionCaches(preservedAgentIds: ReadonlySet<string> = new 
   // Dynamic import to preserve dead code elimination for COMMIT_ATTRIBUTION feature flag
   if (feature('COMMIT_ATTRIBUTION')) {
     // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-    void import('../../utils/attributionHooks.js').then((mod: any) => mod.clearAttributionCaches())
+    void import('../../services/attribution/attributionHooks.js').then((mod: any) =>
+      mod.clearAttributionCaches(),
+    )
   }
   // Clear repository detection caches
   clearRepositoryCaches()

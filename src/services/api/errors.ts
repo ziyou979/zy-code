@@ -18,9 +18,9 @@ import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeConte
 import { API_PDF_MAX_PAGES, PDF_TARGET_RAW_SIZE } from '../../constants/apiLimits.js'
 import type { APIErrorLike, StopReason } from '../../types/llm.js'
 import { getErrorHeader, isAPIError, isConnectionError } from '../../types/llm.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { formatFileSize } from '../../utils/format.js'
-import { ImageResizeError } from '../../utils/imageResizer.js'
+import { ImageResizeError } from '../attachments/imageResizer.js'
 import { ImageSizeError } from '../attachments/imageValidation.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

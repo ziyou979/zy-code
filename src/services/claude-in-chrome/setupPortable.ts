@@ -1,7 +1,7 @@
 import { readdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { isFsInaccessible } from '../../utils/errors.js'
 
 export const CHROME_EXTENSION_URL = 'https://zy.ai/chrome'

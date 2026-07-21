@@ -31,7 +31,7 @@ import {
   getMessagesAfterCompactBoundary,
   textForResubmit,
 } from '../../services/messages/./predicates.js'
-import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
+import { buildEffectiveSystemPrompt } from '../../services/messages/systemPrompt.js'
 
 export type HandleSummarizeParams = {
   message: UserMessage

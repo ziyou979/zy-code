@@ -3,16 +3,21 @@ import { join } from 'node:path'
 import { z } from 'zod/v4'
 import { getIsNonInteractiveSession, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { uniq } from '../../utils/array.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getTeamsDir, getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import {
+  getTeamsDir,
+  getZyConfigHomeDir,
+  isEnvTruthy,
+  isInternalBuild,
+} from '../../services/infra/envUtils.js'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import * as lockfile from '../../services/file-persistence/lockfile.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { createSignal } from '../../utils/signal.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
-import { getTeamName } from '../../utils/teammate.js'
-import { getTeammateContext } from '../../utils/teammateContext.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
+import { getTeamName } from '../swarm/teammate.js'
+import { getTeammateContext } from '../swarm/teammateContext.js'
 
 // Listeners for task list updates (used for immediate UI refresh in same process)
 const tasksUpdated = createSignal()

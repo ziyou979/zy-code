@@ -7,7 +7,7 @@ import {
   isAutoMemPath,
 } from '../../memdir/paths.js'
 import { isAgentMemoryPath } from '../../tools/AgentTool/agentMemory.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { posixPathToWindowsPath, windowsPathToPosixPath } from '../shell/windowsPaths.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */

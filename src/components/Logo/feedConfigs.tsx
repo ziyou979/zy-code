@@ -1,10 +1,10 @@
 import { homedir } from 'node:os'
-import { isInternalBuild } from 'src/utils/envUtils.ts'
+import { isInternalBuild } from 'src/services/infra/envUtils.js'
 import { TICK } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
 import type { Step } from '../../services/settings/projectOnboardingState.js'
 import type { LogOption } from '../../types/logs.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import { formatRelativeTimeAgo } from '../../utils/format.js'
 import type { FeedConfig, FeedLine } from './Feed.js'
 export function createRecentActivityFeed(activities: LogOption[]): FeedConfig {

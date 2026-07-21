@@ -10,9 +10,9 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import * as realAnalytics from '../../../src/services/analytics/index.js'
 import * as realAnalyticsMetadata from '../../../src/services/analytics/metadata.js'
 import * as realMcpUtils from '../../../src/services/mcp/utils.js'
-import * as realDebug from '../../../src/utils/debug.js'
+import * as realDebug from '../../../src/services/infra/debug.js'
 import * as realHooks from '../../../src/services/hooks.js'
-import * as realLog from '../../../src/utils/log.js'
+import * as realLog from '../../../src/services/infra/log.js'
 import * as realPermissionResult from '../../../src/services/permissions/permissionResult.js'
 import * as realToolErrors from '../../../src/services/tool-runtime/toolErrors.js'
 
@@ -51,7 +51,10 @@ async function setupMocks() {
     ...realAnalyticsMetadata,
     sanitizeToolNameForAnalytics: (n: string) => n,
   }))
-  mock.module('../../../src/utils/debug.js', () => ({ ...realDebug, logForDebugging: () => {} }))
+  mock.module('../../../src/services/infra/debug.js', () => ({
+    ...realDebug,
+    logForDebugging: () => {},
+  }))
   mock.module('../../../src/services/hooks.js', () => ({
     ...realHooks,
     executePostToolHooks: async function* () {},
@@ -59,7 +62,7 @@ async function setupMocks() {
     executePreToolHooks: async function* () {},
     getPreToolHookBlockingMessage: () => undefined,
   }))
-  mock.module('../../../src/utils/log.js', () => ({ ...realLog, logError: () => {} }))
+  mock.module('../../../src/services/infra/log.js', () => ({ ...realLog, logError: () => {} }))
   mock.module('../../../src/services/permissions/permissionResult.js', () => ({
     ...realPermissionResult,
     getRuleBehaviorDescription: () => '',

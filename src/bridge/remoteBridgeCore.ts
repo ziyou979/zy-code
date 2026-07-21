@@ -46,12 +46,12 @@ import {
   BoundedUUIDSet,
 } from './bridgeMessaging.js'
 import { logWireSkip } from './debugUtils.js'
-import { logForDebugging } from '../utils/debug.js'
-import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
-import { isInProtectedNamespace } from '../utils/envUtils.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { logForDiagnosticsNoPII } from '../services/telemetry/diagLogs.js'
+import { isInProtectedNamespace } from '../services/infra/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import { sleep } from '../utils/sleep.js'
-import { registerCleanup } from '../utils/cleanupRegistry.js'
+import { registerCleanup } from '../services/cleanup/cleanupRegistry.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

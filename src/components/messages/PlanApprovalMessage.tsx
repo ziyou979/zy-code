@@ -2,7 +2,7 @@ import * as React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Markdown } from '../Markdown.js'
 import { Box, Text } from '../../ink/index.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import {
   type IdleNotificationMessage,
   isIdleNotification,
@@ -10,7 +10,7 @@ import {
   isPlanApprovalResponse,
   type PlanApprovalRequestMessage,
   type PlanApprovalResponseMessage,
-} from '../../utils/teammateMailbox.js'
+} from '../../services/swarm/teammateMailbox.js'
 import { getShutdownMessageSummary } from './ShutdownMessage.js'
 import { getTaskAssignmentSummary } from './TaskAssignmentMessage.js'
 

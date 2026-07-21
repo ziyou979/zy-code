@@ -42,12 +42,12 @@ import { assembleToolPool } from '../../tools/tools.js'
 import { asAgentId } from '../../types/ids.js'
 import { runWithAgentContext } from '../../services/agent/agentContext.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
-import { enqueueWireEvent } from '../../utils/bridgeEventQueue.js'
-import { getCwd, runWithCwdOverride } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { enqueueWireEvent } from '../../services/bridge/bridgeEventQueue.js'
+import { getCwd, runWithCwdOverride } from '../../services/environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { AbortError, errorMessage, toError } from '../../utils/errors.js'
-import type { CacheSafeParams } from '../../utils/forkedAgent.js'
+import type { CacheSafeParams } from '../../services/agent/forkedAgent.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { createUserMessage } from '../../services/messages/./constructors.js'
 import { extractTextContent } from '../../services/messages/./predicates.js'
@@ -58,12 +58,12 @@ import type { PermissionResult } from '../../services/permissions/permissionResu
 import { filterDeniedAgents, getDenyRuleForAgent } from '../../services/permissions/permissions.js'
 import { writeAgentMetadata } from '../../services/sessionStorage.js'
 import { sleep } from '../../utils/sleep.js'
-import { buildEffectiveSystemPrompt } from '../../utils/systemPrompt.js'
-import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { getParentSessionId, isTeammate } from '../../utils/teammate.js'
-import { isInProcessTeammate } from '../../utils/teammateContext.js'
+import { buildEffectiveSystemPrompt } from '../../services/messages/systemPrompt.js'
+import { asSystemPrompt } from '../../services/api/systemPromptType.js'
+import { getParentSessionId, isTeammate } from '../../services/swarm/teammate.js'
+import { isInProcessTeammate } from '../../services/swarm/teammateContext.js'
 import { teleportToRemote } from '../../services/teleport/teleport.js'
-import { getAssistantMessageContentLength } from '../../utils/tokens.js'
+import { getAssistantMessageContentLength } from '../../services/api/tokens.js'
 import { createAgentId } from '../../utils/uuid.js'
 import {
   createAgentWorktree,
@@ -1561,7 +1561,9 @@ export const AgentTool = buildTool({
               `Sync agent recovering from error with ${agentMessages.length} messages`,
             )
             // 同步 agent 错误时注入 errorKind（使用共享分类函数）
-            const { categorizeAgentError } = await import('../../utils/agentErrorCategorizer.js')
+            const { categorizeAgentError } = await import(
+              '../../services/agent/agentErrorCategorizer.js'
+            )
             agentErrorKind = categorizeAgentError(syncAgentError)
           }
           const agentResult = finalizeAgentTool(agentMessages, syncAgentId, metadata)

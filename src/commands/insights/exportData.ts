@@ -3,13 +3,13 @@ import { join } from 'node:path'
 import { type Dirent } from 'node:fs'
 import type { Command } from '../../commands/index.js'
 import type { LogOption } from '../../types/logs.js'
-import { getZyConfigHomeDir, isInternalBuild } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir, isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   getProjectsDir,
   getSessionFilesWithMtime,
   loadAllLogsFromSessionFile,
 } from '../../services/sessionStorage.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   AggregatedData,
   RemoteHostInfo,

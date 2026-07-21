@@ -10,8 +10,8 @@ import {
 import type { AppState } from '../../state/AppStateStore.js'
 import { isTerminalTaskStatus, type TaskStatus, type TaskType } from '../../tasks/task.js'
 import type { TaskState } from '../../tasks/types.js'
-import { enqueueWireEvent } from '../../utils/bridgeEventQueue.js'
-import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
+import { enqueueWireEvent } from '../bridge/bridgeEventQueue.js'
+import { enqueuePendingNotification } from '../../services/input/messageQueueManager.js'
 import { getTaskOutputDelta, getTaskOutputPath } from './diskOutput.js'
 
 // Standard polling interval for all tasks

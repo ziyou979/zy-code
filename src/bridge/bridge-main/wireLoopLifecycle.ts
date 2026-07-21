@@ -4,9 +4,9 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logForDiagnosticsNoPII } from '../../services/telemetry/diagLogs.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { WireFatalError } from '../bridgeApi.js'
 import { formatDuration } from '../bridgeStatusUtil.js'

@@ -11,10 +11,10 @@ import type {
   InitializeResult,
   ServerCapabilities,
 } from 'vscode-languageserver-protocol'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
-import { subprocessEnv } from '../../utils/subprocessEnv.js'
+import { logError } from '../../services/infra/log.js'
+import { subprocessEnv } from '../environment/subprocessEnv.js'
 /**
  * LSP client interface.
  */

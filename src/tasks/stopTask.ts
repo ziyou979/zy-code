@@ -4,7 +4,7 @@
 import type { AppState } from '../state/AppStateStore.js'
 import type { TaskStateBase } from '../tasks/task.js'
 import { getTaskByType } from './index.js'
-import { emitTaskTerminatedBridge } from '../utils/bridgeEventQueue.js'
+import { emitTaskTerminatedBridge } from '../services/bridge/bridgeEventQueue.js'
 import { isLocalShellTask } from './local-shell-task/guards.js'
 
 export class StopTaskError extends Error {

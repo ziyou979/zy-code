@@ -43,7 +43,7 @@ import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import type { InlineGhostText, PromptInputMode } from '../types/textInputTypes.js'
 import { isAgentSwarmsEnabled } from '../services/swarm/agentSwarmsEnabled.js'
 import { generateProgressiveArgumentHint, parseArguments } from '../utils/argumentParser.js'
-import { isTestEnv } from '../utils/envUtils.js'
+import { isTestEnv } from '../services/infra/envUtils.js'
 import { formatLogMetadata } from '../utils/format.js'
 import { getSessionIdFromLog, searchSessionsByCustomTitle } from '../services/sessionStorage.js'
 import {

@@ -1,6 +1,6 @@
 import React from 'react'
 import { tSync } from '../../i18n/index.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import type { Output } from './TeamDeleteTool.js'
 export function renderToolUseMessage(_input: Record<string, unknown>): React.ReactNode {
   return `${tSync('toolTeamDelete.cleanupTeam')} current`

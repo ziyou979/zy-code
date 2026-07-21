@@ -26,11 +26,11 @@ import {
 import type { AgentId } from '../../types/ids.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { errorMessage as getErrorMessage, ShellError } from '../../utils/errors.js'
 import { truncate } from '../../utils/format.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import type { PermissionResult } from '../../services/permissions/permissionResult.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import { maybeRecordPluginHint } from '../../services/plugins/hintRecommendation.js'
@@ -46,8 +46,8 @@ import {
   generatePreview,
   getToolResultPath,
   PREVIEW_SIZE_BYTES,
-} from '../../utils/toolResultStorage.js'
-import { extractZyCodeHints } from '../../utils/zyCodeHints.js'
+} from '../../services/mcp/toolResultStorage.js'
+import { extractZyCodeHints } from '../../services/hints/zyCodeHints.js'
 import { shouldUseSandbox } from '../BashTool/shouldUseSandbox.js'
 import { BackgroundHint } from '../BashTool/UI.js'
 import {

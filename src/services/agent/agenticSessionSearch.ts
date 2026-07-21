@@ -1,11 +1,11 @@
 import { getDefaultCompactModel } from 'src/services/model/model.js'
 import type { LogOption, SerializedMessage } from '../../types/logs.js'
 import { count } from '../../utils/array.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getLogDisplayTitle, logError } from '../../utils/log.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getLogDisplayTitle, logError } from '../../services/infra/log.js'
 import { isLiteLog, loadFullLog } from '../sessionStorage.js'
 import { sideQuery } from '../../services/query/sideQuery.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 
 // Limits for transcript extraction
 const MAX_TRANSCRIPT_CHARS = 2000 // Max chars of transcript per session

@@ -10,7 +10,7 @@
  * trailing `*`, ` *`, ` -…*`). PS-specific cmdlet strings live in
  * isDangerousPowerShellPermission (permissionSetup.ts).
  */
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 
 /**
  * Cross-platform code-execution entry points present on both Unix and Windows.

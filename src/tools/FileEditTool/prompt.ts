@@ -1,5 +1,5 @@
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { isCompactLinePrefixEnabled } from '../../utils/file.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
+import { isCompactLinePrefixEnabled } from '../../services/infra/file.js'
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
 
 function getPreReadInstruction(): string {

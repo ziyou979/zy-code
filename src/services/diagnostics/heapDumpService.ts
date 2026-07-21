@@ -15,12 +15,12 @@ import {
 } from 'node:v8'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logEvent } from '../analytics/index.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { toError } from '../../utils/errors.js'
-import { getDesktopPath } from '../../utils/file.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { logError } from '../../utils/log.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { getDesktopPath } from '../../services/infra/file.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { logError } from '../../services/infra/log.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 export type HeapDumpResult = {
   success: boolean
   heapPath?: string

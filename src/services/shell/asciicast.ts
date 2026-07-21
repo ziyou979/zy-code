@@ -1,13 +1,13 @@
 import { appendFile, rename } from 'node:fs/promises'
 import { basename, dirname, join } from 'node:path'
 import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { createBufferedWriter } from '../../utils/bufferedWriter.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { createBufferedWriter } from '../file-persistence/bufferedWriter.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { sanitizePath } from '../../utils/path.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 
 // Mutable recording state — filePath is updated when session ID changes (e.g., --resume)
 const recordingState: { filePath: string | null; timestamp: number } = {

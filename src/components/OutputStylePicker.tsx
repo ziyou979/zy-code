@@ -7,7 +7,7 @@ import {
 } from '../constants/outputStyles.js'
 import { Box, Text } from '../ink/index.js'
 import type { OutputStyle } from '../services/config/config.js'
-import { getCwd } from '../utils/cwd.js'
+import { getCwd } from '../services/environment/cwd.js'
 import type { OptionWithDescription } from './CustomSelect/select.js'
 import { Select } from './CustomSelect/select.js'
 import { Dialog } from './design-system/Dialog.js'

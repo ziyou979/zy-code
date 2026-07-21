@@ -18,11 +18,14 @@ import { getOAuthProvider, getOAuthProviders } from '../../services/oauth/provid
 import type { OAuthCredentials, OAuthLoginCallbacks } from '../../services/oauth/providers/types.js'
 import { getApiKeyWithSource, getAuthTokenSource } from '../../services/auth/auth.js'
 import { openBrowser } from '../../services/browser/browser.js'
-import { isRunningOnHomespace } from '../../utils/envUtils.js'
+import { isRunningOnHomespace } from '../../services/infra/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { buildAccountProperties, buildAPIProviderProperties } from '../../utils/status.js'
+import { logError } from '../../services/infra/log.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import {
+  buildAccountProperties,
+  buildAPIProviderProperties,
+} from '../../components/status/status.js'
 
 /**
  * 使用多 Provider OAuth 流程登录（CLI 版本）。

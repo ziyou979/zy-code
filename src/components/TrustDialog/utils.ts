@@ -2,7 +2,7 @@ import type { PermissionRule } from 'src/services/permissions/permissionRule.js'
 import { getSettingsForSource } from 'src/services/settings/settings.js'
 import type { SettingsJson } from 'src/services/settings/types.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
-import { SAFE_ENV_VARS } from '../../utils/managedEnvConstants.js'
+import { SAFE_ENV_VARS } from '../../services/environment/managedEnvConstants.js'
 import { getPermissionRulesForSource } from '../../services/permissions/permissionsLoader.js'
 
 function hasHooks(settings: SettingsJson | null): boolean {

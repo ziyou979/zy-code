@@ -5,8 +5,8 @@ import {
   type AgentColorName,
 } from 'src/tools/AgentTool/agentColorManager.js'
 import type { PromptInputMode } from 'src/types/textInputTypes.js'
-import { getTeammateColor } from 'src/utils/teammate.js'
-import type { Theme } from 'src/utils/theme.js'
+import { getTeammateColor } from 'src/services/swarm/teammate.js'
+import type { Theme } from 'src/services/environment/theme.js'
 import { POINTER } from '../../constants/figures.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 

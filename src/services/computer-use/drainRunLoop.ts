@@ -1,4 +1,4 @@
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { withResolvers } from '../../utils/withResolvers.js'
 import { requireComputerUseSwift } from './swiftLoader.js'
 

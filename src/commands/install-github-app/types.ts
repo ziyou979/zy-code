@@ -23,7 +23,7 @@ export interface State {
   workflowExists: boolean
   selectedWorkflows: Workflow[]
   selectedApiKeyOption: 'existing' | 'new' | 'oauth'
-  authType: string
+  authType: 'api_key' | 'oauth_token'
   workflowAction?: string
   errorReason?: string
   errorInstructions?: string[]

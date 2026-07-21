@@ -11,7 +11,7 @@ import type { Tool } from '../../tools/tool.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import type { ProgressMessage } from '../../types/message.js'
 import type { PowerShellProgress } from '../../types/tools.js'
-import type { ThemeName } from '../../utils/theme.js'
+import type { ThemeName } from '../../services/environment/theme.js'
 import type { Out, PowerShellToolInput } from './PowerShellTool.js'
 
 // 命令显示常量

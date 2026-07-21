@@ -58,7 +58,9 @@ function renderChromeToolUseMessage(
       break
     case 'find':
       if (typeof input.query === 'string') {
-        secondaryInfo.push(tSync('chromeRendering.pattern', { query: truncateToWidth(input.query, 30) }))
+        secondaryInfo.push(
+          tSync('chromeRendering.pattern', { query: truncateToWidth(input.query, 30) }),
+        )
       }
       break
     case 'computer':
@@ -73,12 +75,19 @@ function renderChromeToolUseMessage(
           if (typeof input.ref === 'string') {
             secondaryInfo.push(tSync('chromeRendering.actionOn', { action, ref: input.ref }))
           } else if (Array.isArray(input.coordinate)) {
-            secondaryInfo.push(tSync('chromeRendering.actionAt', { action, coordinate: input.coordinate.join(', ') }))
+            secondaryInfo.push(
+              tSync('chromeRendering.actionAt', {
+                action,
+                coordinate: input.coordinate.join(', '),
+              }),
+            )
           } else {
             secondaryInfo.push(tSync('chromeRendering.action', { action }))
           }
         } else if (action === 'type' && typeof input.text === 'string') {
-          secondaryInfo.push(tSync('chromeRendering.type', { text: truncateToWidth(input.text, 15) }))
+          secondaryInfo.push(
+            tSync('chromeRendering.type', { text: truncateToWidth(input.text, 15) }),
+          )
         } else if (action === 'key' && typeof input.text === 'string') {
           secondaryInfo.push(tSync('chromeRendering.key', { keyName: input.text }))
         } else if (action === 'scroll' && typeof input.scroll_direction === 'string') {
@@ -104,7 +113,9 @@ function renderChromeToolUseMessage(
       break
     case 'read_console_messages':
       if (typeof input.pattern === 'string') {
-        secondaryInfo.push(tSync('chromeRendering.pattern', { query: truncateToWidth(input.pattern, 20) }))
+        secondaryInfo.push(
+          tSync('chromeRendering.pattern', { query: truncateToWidth(input.pattern, 20) }),
+        )
       }
       if (input.onlyErrors === true) {
         secondaryInfo.push(tSync('chromeRendering.errorsOnly'))
@@ -112,7 +123,9 @@ function renderChromeToolUseMessage(
       break
     case 'read_network_requests':
       if (typeof input.urlPattern === 'string') {
-        secondaryInfo.push(tSync('chromeRendering.pattern', { query: truncateToWidth(input.urlPattern, 20) }))
+        secondaryInfo.push(
+          tSync('chromeRendering.pattern', { query: truncateToWidth(input.urlPattern, 20) }),
+        )
       }
       break
     case 'shortcuts_execute':

@@ -1,4 +1,4 @@
-import { formatMonthYear } from "../utils/dateUtils.js"
+import { formatMonthYear } from '../utils/format.js'
 import memoize from 'lodash-es/memoize.js'
 
 // This ensures you get the LOCAL date in ISO format

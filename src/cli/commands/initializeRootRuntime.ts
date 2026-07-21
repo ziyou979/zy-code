@@ -48,9 +48,9 @@ import {
 import { getTools, loadExternalTools } from '../../tools/tools.js'
 import { assertMinVersion } from '../../services/updater/autoUpdater.js'
 import { getGlobalConfig } from '../../services/config/config.js'
-import { isBareMode, isEnvTruthy, isInternalBuild } from '../../utils/envUtils.js'
+import { isBareMode, isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { safeParseJSON } from '../../utils/json.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { applyConfigEnvironmentVariables } from '../../services/environment/managedEnv.js'
 import {
   initializeToolPermissionContext,
@@ -61,7 +61,7 @@ import {
 import { getPlatform } from '../../services/shell/platform.js'
 import { cacheSessionTitle } from '../../services/sessionStorage.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
-import { jsonParse } from '../../utils/slowOperations.js'
+import { jsonParse } from '../../services/infra/slowOperations.js'
 import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
 import { validateUuid } from '../../utils/uuid.js'
 import {
@@ -71,8 +71,8 @@ import {
   getZyCodeMcpConfigs,
 } from 'src/services/mcp/config.js'
 import { fetchZyAIMcpConfigsIfEligible } from 'src/services/mcp/zyai.js'
-import { getCwd } from 'src/utils/cwd.js'
-import { logForDebugging } from 'src/utils/debug.js'
+import { getCwd } from 'src/services/environment/cwd.js'
+import { logForDebugging } from 'src/services/infra/debug.js'
 import { errorMessage } from 'src/utils/errors.js'
 import { writeToStderr } from 'src/services/shell/process.js'
 import { plural } from 'src/utils/stringUtils.js'

@@ -1,11 +1,12 @@
 import type { SuggestionItem } from 'src/components/PromptInput/PromptInputFooterSuggestions.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import * as Shell from '../../services/shell/shell.js'
 import { type ParseEntry, quote, tryParseShellCommand } from './shellQuote.js'
 
 // Constants
 const MAX_SHELL_COMPLETIONS = 15
-const SHELL_COMPLETION_TIMEOUT_MS = 1000
+// Windows 首次启动 Git Bash 常超过 1 秒；补全请求仍可由输入变化主动中止。
+const SHELL_COMPLETION_TIMEOUT_MS = 3000
 const COMMAND_OPERATORS = ['|', '||', '&&', ';'] as const
 
 export type ShellCompletionType = 'command' | 'variable' | 'file'

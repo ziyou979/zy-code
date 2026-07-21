@@ -8,7 +8,7 @@
 
 import { HOOK_EVENTS } from 'src/types/index.js'
 
-import { createDebugLog } from '../../utils/debug.js'
+import { createDebugLog } from '../../services/infra/debug.js'
 
 const hookLog = createDebugLog('hooks')
 

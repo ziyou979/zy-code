@@ -16,20 +16,20 @@ import { logSkillsLoaded } from '../../services/telemetry/skillLoadedEvent.js'
 import type { LoadedPlugin, PluginError, PluginLoadResult } from '../../services/plugins/types.js'
 import { isAutoUpdaterDisabled } from '../../services/config/config.js'
 import { getContextWindowForModel } from '../../services/context/modelContext.js'
-import { getCwd } from '../../utils/cwd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import {
   hasNodeOption,
   isBareMode,
   isInProtectedNamespace,
   isInternalBuild,
-} from '../../utils/envUtils.js'
-import { findGitRoot, getIsGit, getWorktreeCount } from '../../utils/git.js'
-import { logError } from '../../utils/log.js'
+} from '../../services/infra/envUtils.js'
+import { findGitRoot, getIsGit, getWorktreeCount } from '../../services/infra/git.js'
+import { logError } from '../../services/infra/log.js'
 import { getManagedPluginNames } from '../../services/plugins/managedPlugins.js'
 import { getPluginSeedDirs } from '../../services/plugins/pluginDirectories.js'
 import { loadAllPluginsCacheOnly } from '../../services/plugins/pluginLoader.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
-import type { ThinkingConfig } from '../../utils/thinking.js'
+import type { ThinkingConfig } from '../../services/messages/thinking.js'
 /**
  * 每个会话的技能/插件遥测。从交互路径和无头 -p 路径（在 runHeadless 之前）
  * 调用 —— 两者都经过 main.tsx 但在交互启动路径之前分支，所以需要两个

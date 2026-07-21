@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { gracefulShutdownSync } from '../utils/gracefulShutdown.js'
+import { gracefulShutdownSync } from '../bootstrap/lifecycle/gracefulShutdown.js'
 
 // ─── 跨模块共享的"挂起请求"状态：argv 改写阶段写入，run() 子命令 action 读取 ───
 

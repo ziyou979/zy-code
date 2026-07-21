@@ -1,16 +1,20 @@
 import { appendFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { getProjectRoot, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
 import type { HistoryEntry, PastedContent } from '../config/config.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { getZyConfigHomeDir, isEnvTruthy } from '../../services/infra/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
-import { readLinesReverse } from '../../utils/fsOperations.js'
+import { readLinesReverse } from '../../services/infra/fsOperations.js'
 import { lock } from '../file-persistence/lockfile.js'
-import { hashPastedText, retrievePastedText, storePastedText } from '../session-storage/pasteStore.js'
+import {
+  hashPastedText,
+  retrievePastedText,
+  storePastedText,
+} from '../session-storage/pasteStore.js'
 import { sleep } from '../../utils/sleep.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 
 const MAX_HISTORY_ITEMS = 100
 const MAX_PASTED_CONTENT_LENGTH = 1024

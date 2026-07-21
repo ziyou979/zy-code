@@ -7,24 +7,24 @@ import pickBy from 'lodash-es/pickBy.js'
 import type { MemoryType } from 'src/services/memory/types.js'
 import { getOriginalCwd, getSessionTrustAccepted } from '../../bootstrap/runtime/runtimeContext.js'
 import { getAutoMemEntrypoint } from '../../memdir/paths.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { getCwd } from '../../utils/cwd.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
+import { getCwd } from '../environment/cwd.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logForDiagnosticsNoPII } from '../telemetry/diagLogs.js'
 import { getGlobalZyFile } from '../environment/env.js'
-import { getZyConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir, isEnvTruthy } from '../../services/infra/envUtils.js'
 import { ConfigParseError, getErrnoCode } from '../../utils/errors.js'
-import { writeFileSyncAndFlush_DEPRECATED } from '../../utils/file.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
-import { findCanonicalGitRoot } from '../../utils/git.js'
+import { writeFileSyncAndFlush_DEPRECATED } from '../../services/infra/file.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { findCanonicalGitRoot } from '../../services/infra/git.js'
 import { safeParseJSON } from '../../utils/json.js'
-import { stripBOM } from '../../utils/jsonRead.js'
+import { stripBOM } from '../../services/file-persistence/jsonRead.js'
 import * as lockfile from '../file-persistence/lockfile.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { normalizePathForConfigKey } from '../../utils/path.js'
-import { getEssentialTrafficOnlyReason } from '../../utils/privacyLevel.js'
+import { getEssentialTrafficOnlyReason } from '../telemetry/privacyLevel.js'
 import { getManagedFilePath } from '../settings/managedPath.js'
-import type { ThemeSetting } from '../../utils/theme.js'
+import type { ThemeSetting } from '../environment/theme.js'
 import { logEvent } from '../analytics/index.js'
 import type { McpServerConfig } from '../mcp/types.js'
 import type {
@@ -44,7 +44,7 @@ import type { ModelOption } from 'src/services/model/modelOptions.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { HistoryEntry, PastedContent } from '../../types/inputContent.js'
 export type { HistoryEntry, PastedContent } from '../../types/inputContent.js'
-import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 
 // 重入保护：防止 getConfig → logEvent → getGlobalConfig → getConfig
 // 无限递归（配置文件损坏时）。logEvent 的采样检查会读取 GrowthBook 特性，
@@ -165,9 +165,9 @@ export type InstallMethod = 'local' | 'native' | 'global' | 'unknown'
 export {
   EDITOR_MODES,
   NOTIFICATION_CHANNELS,
-} from '../../utils/configConstants.js'
+} from '../environment/configConstants.js'
 
-import type { EDITOR_MODES, NOTIFICATION_CHANNELS } from '../../utils/configConstants.js'
+import type { EDITOR_MODES, NOTIFICATION_CHANNELS } from '../environment/configConstants.js'
 
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number]
 

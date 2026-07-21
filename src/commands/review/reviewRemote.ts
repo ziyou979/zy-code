@@ -24,9 +24,9 @@ import {
   registerRemoteAgentTask,
 } from '../../tasks/remote-agent-task/RemoteAgentTask.js'
 import type { ContentBlock } from '../../types/llm.js'
-import { detectCurrentRepositoryWithHost } from '../../utils/detectRepository.js'
+import { detectCurrentRepositoryWithHost } from '../../services/git/detectRepository.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
-import { getDefaultBranch, gitExe } from '../../utils/git.js'
+import { getDefaultBranch, gitExe } from '../../services/infra/git.js'
 import { teleportToRemote } from '../../services/teleport/teleport.js'
 
 // One-time session flag: once the user confirms overage billing via the

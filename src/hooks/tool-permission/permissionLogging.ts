@@ -11,7 +11,7 @@ import { getCodeEditToolDecisionCounter } from 'src/bootstrap/runtime/runtimeCon
 import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 import { logOTelEvent } from '../../services/telemetry/events.js'
 import type { Tool as ToolType, ToolUseContext } from '../../tools/tool.js'
-import { getLanguageName } from '../../utils/cliHighlight.js'
+import { getLanguageName } from '../../services/terminal/cliHighlight.js'
 import type { PermissionApprovalSource, PermissionRejectionSource } from './permissionContext.js'
 
 type PermissionLogContext = {

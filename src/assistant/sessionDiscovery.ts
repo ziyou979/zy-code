@@ -7,8 +7,8 @@
 
 import { mkdirSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { logForDebugging } from '../utils/debug.js'
-import { getZyConfigHomeDir } from '../utils/envUtils.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { getZyConfigHomeDir } from '../services/infra/envUtils.js'
 export type AssistantSession = { id: string; name: string; timestamp?: string }
 
 /**

@@ -16,7 +16,10 @@ import type { AgentId } from '../types/ids.js'
 import type { UserMessage } from '../types/message.js'
 import type { LoadedPlugin, PluginError } from '../services/plugins/types.js'
 import type { DeepImmutable } from '../types/utils.js'
-import { type AttributionState, createEmptyAttributionState } from '../services/git/commitAttribution.js'
+import {
+  type AttributionState,
+  createEmptyAttributionState,
+} from '../services/git/commitAttribution.js'
 import type { EffortLevel } from '../services/effort/effort.js'
 import type { FileHistoryState } from '../services/file-persistence/fileHistory.js'
 import type { SessionHooksState } from '../services/hooks/sessionHooks.js'
@@ -24,7 +27,7 @@ import type { DenialTrackingState } from '../services/permissions/denialTracking
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { getInitialSettings } from '../services/settings/settings.js'
 import type { SettingsJson } from '../services/settings/types.js'
-import { shouldEnableThinkingByDefault } from '../utils/thinking.js'
+import { shouldEnableThinkingByDefault } from '../services/messages/thinking.js'
 import type { Store } from './store.js'
 import { createNotificationSlice } from './slices/notificationSlice.js'
 import { createPermissionSlice } from './slices/permissionSlice.js'
@@ -396,7 +399,8 @@ export function getDefaultAppState(): AppState {
   // 确定使用 plan_mode_required 生成的 teammate 的初始权限模式
   // 使用延迟 require 以避免与 teammate.ts 的循环依赖
   /* eslint-disable @typescript-eslint/no-require-imports */
-  const teammateUtils = require('../utils/teammate.js') as typeof import('../utils/teammate.js')
+  const teammateUtils =
+    require('../services/swarm/teammate.js') as typeof import('../services/swarm/teammate.js')
   /* eslint-enable @typescript-eslint/no-require-imports */
   const initialMode: PermissionMode =
     teammateUtils.isTeammate() && teammateUtils.isPlanModeRequired() ? 'plan' : 'default'

@@ -9,8 +9,8 @@ import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { AnyObject, Tool, ToolUseContext } from '../../tools/tool.js'
 import type { AssistantMessage, AttachmentMessage, ProgressMessage } from '../../types/message.js'
 import type { PermissionDecision } from '../../types/permissions.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logError } from '../../utils/log.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logError } from '../../services/infra/log.js'
 import {
   getRuleBehaviorDescription,
   type PermissionDecisionReason,

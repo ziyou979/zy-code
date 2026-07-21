@@ -20,7 +20,7 @@ import {
   saveCustomTitle,
   searchSessionsByCustomTitle,
 } from '../../services/sessionStorage.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { escapeRegExp } from '../../utils/stringUtils.js'
 
 type TranscriptEntry = TranscriptMessage & {

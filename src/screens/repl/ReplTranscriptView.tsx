@@ -29,9 +29,12 @@ import type { ReplStoreInstance, ToolJSXState } from '../../state/replStore.js'
 import type { Tool } from '../../tools/tool.js'
 import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Message as MessageType } from '../../types/message.js'
-import { isFullscreenEnvEnabled, isMouseTrackingEnabled } from '../../services/terminal/fullscreen.js'
+import {
+  isFullscreenEnvEnabled,
+  isMouseTrackingEnabled,
+} from '../../services/terminal/fullscreen.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
-import type { SetAppState } from '../../utils/messageQueueManager.js'
+import type { SetAppState } from '../../services/input/messageQueueManager.js'
 import { StreamingThinking, StreamingToolUse } from '../../services/messages/./streaming.js'
 import type { Screen } from '../REPL.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'

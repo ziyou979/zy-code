@@ -20,7 +20,7 @@
  */
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 export type PromptOverlayData = {
   suggestions: SuggestionItem[]
   selectedSuggestion: number

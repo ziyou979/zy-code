@@ -24,7 +24,7 @@ import {
   VALID_UPDATE_SCOPES,
 } from '../../services/plugins/pluginCliCommands.js'
 import { errorMessage } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { clearAllCaches } from '../../services/plugins/cacheUtils.js'
 import { loadInstalledPlugins } from '../../services/plugins/installedPluginsManager.js'
 import {
@@ -46,7 +46,7 @@ import {
   validateManifest,
   validatePluginContents,
 } from '../../services/plugins/validatePlugin.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   buildAvailablePluginListEntries,
   buildPluginListJsonEntries,

@@ -6,8 +6,8 @@ import {
   getLargeMemoryFiles,
   MAX_MEMORY_CHARACTER_COUNT,
   type MemoryFileInfo,
-} from '../../utils/agentsMd.js'
-import { getCwd } from '../../utils/cwd.js'
+} from '../../services/memory/agentsMd.js'
+import { getCwd } from '../../services/environment/cwd.js'
 import { relative } from 'node:path'
 import { formatNumber } from '../../utils/format.js'
 import type { getGlobalConfig } from '../../services/config/config.js'

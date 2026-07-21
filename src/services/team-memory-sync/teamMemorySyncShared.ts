@@ -9,7 +9,7 @@ import {
   ZY_CODE_INFERENCE_SCOPE,
   ZY_CODE_PROFILE_SCOPE,
 } from '../../constants/oauth.js'
-import { getZyCodeUserAgent } from '../../utils/userAgent.js'
+import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from '../auth/auth.js'
 import { getAPIProvider, isAnthropicBaseUrl } from '../model/providers.js'
 

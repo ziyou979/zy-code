@@ -11,7 +11,7 @@ import { Spinner } from '../../components/Spinner.js'
 import TextInput from '../../components/TextInput.js'
 import { Box, Text } from '../../ink/index.js'
 import { toError } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import { clearAllCaches } from '../../services/plugins/cacheUtils.js'
 import {
   addMarketplaceSource,

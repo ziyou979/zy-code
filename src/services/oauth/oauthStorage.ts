@@ -13,7 +13,7 @@
  */
 
 import memoize from 'lodash-es/memoize.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../services/infra/log.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,

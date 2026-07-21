@@ -1,9 +1,9 @@
 import { open, readFile, stat } from 'node:fs/promises'
 import { applyEdits, modify, parse as parseJsonc } from 'jsonc-parser/lib/esm/main.js'
-import { stripBOM } from './jsonRead.js'
-import { logError } from './log.js'
+import { stripBOM } from '../services/file-persistence/jsonRead.js'
+import { logError } from '../services/infra/log.js'
 import { memoizeWithLRU } from './memoize.js'
-import { jsonStringify } from './slowOperations.js'
+import { jsonStringify } from '../services/infra/slowOperations.js'
 type CachedParse = { ok: true; value: unknown } | { ok: false }
 
 // Memoized inner parse. Uses a discriminated-union wrapper because:

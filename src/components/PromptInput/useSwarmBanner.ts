@@ -14,9 +14,14 @@ import {
   getAgentColor,
 } from '../../tools/AgentTool/agentColorManager.js'
 import { getStandaloneAgentName } from '../../services/agent/standaloneAgent.js'
-import { getAgentName, getTeammateColor, getTeamName, isTeammate } from '../../utils/teammate.js'
-import { isInProcessTeammate } from '../../utils/teammateContext.js'
-import type { Theme } from '../../utils/theme.js'
+import {
+  getAgentName,
+  getTeammateColor,
+  getTeamName,
+  isTeammate,
+} from '../../services/swarm/teammate.js'
+import { isInProcessTeammate } from '../../services/swarm/teammateContext.js'
+import type { Theme } from '../../services/environment/theme.js'
 
 type SwarmBannerInfo = {
   text: string

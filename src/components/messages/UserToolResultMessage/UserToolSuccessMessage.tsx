@@ -11,7 +11,7 @@ import {
   deleteClassifierApproval,
   getClassifierApproval,
   getYoloClassifierApproval,
-} from '../../../utils/classifierApprovals.js'
+} from '../../../services/permissions/classifierApprovals.js'
 import { buildMessageLookups } from '../../../services/messages/./lookups.js'
 import { MessageResponse } from '../../MessageResponse.js'
 import { HookProgressMessage } from '../HookProgressMessage.js'

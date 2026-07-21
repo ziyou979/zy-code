@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import type { Entry, TranscriptMessage } from '../../types/logs.js'
 import type { Message } from '../../types/message.js'
-import { getFsImplementation } from '../../utils/fsOperations.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { getProjectDir } from './paths.js'
 
 /**

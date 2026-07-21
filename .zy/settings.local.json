@@ -103,7 +103,14 @@
       "WebFetch(domain:blog.google)",
       "WebFetch(domain:openai.com)",
       "WebFetch(domain:thursdai.news)",
-      "WebFetch(domain:dentro.de)"
+      "WebFetch(domain:dentro.de)",
+      "Bash(ls \"E:/ProjectCollection/TSProjects/zy-code/src/utils/\"*.ts)",
+      "Bash(xargs -n1 basename)",
+      "Bash(mkdir -p \"E:/ProjectCollection/TSProjects/zy-code/src/services/infra\")",
+      "Bash(cp \"E:/ProjectCollection/TSProjects/zy-code/src/utils/debug.ts\" \"E:/ProjectCollection/TSProjects/zy-code/src/services/infra/debug.ts\")",
+      "Bash(cp \"E:/ProjectCollection/TSProjects/zy-code/src/utils/log.ts\" \"E:/ProjectCollection/TSProjects/zy-code/src/services/infra/log.ts\")",
+      "Bash(cp \"E:/ProjectCollection/TSProjects/zy-code/src/utils/slowOperations.ts\" \"E:/ProjectCollection/TSProjects/zy-code/src/services/infra/slowOperations.ts\")",
+      "Bash(cp \"E:/ProjectCollection/TSProjects/zy-code/src/utils/envUtils.ts\" \"E:/ProjectCollection/TSProjects/zy-code/src/services/infra/envUtils.ts\")"
     ]
   }
 }

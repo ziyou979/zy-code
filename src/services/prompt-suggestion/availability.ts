@@ -1,6 +1,6 @@
 import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
-import { isTeammate } from '../../utils/teammate.js'
+import { isEnvDefinedFalsy, isEnvTruthy } from '../../services/infra/envUtils.js'
+import { isTeammate } from '../swarm/teammate.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,

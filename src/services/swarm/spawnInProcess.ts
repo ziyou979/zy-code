@@ -30,11 +30,11 @@ import type {
   TeammateIdentity,
 } from '../../tasks/in-process-teammate-task/types.js'
 import { createAbortController } from '../../utils/abortController.js'
-import { formatAgentId } from '../../utils/agentId.js'
-import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
-import { registerCleanup } from '../../utils/cleanupRegistry.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { createTeammateContext } from '../../utils/teammateContext.js'
+import { formatAgentId } from '../../services/agent/agentId.js'
+import { emitTaskTerminatedBridge } from '../bridge/bridgeEventQueue.js'
+import { registerCleanup } from '../cleanup/cleanupRegistry.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { createTeammateContext } from './teammateContext.js'
 import { checkSpawnCapacity } from './agentCapacity.js'
 import { removeMemberByAgentId } from './teamHelpers.js'
 

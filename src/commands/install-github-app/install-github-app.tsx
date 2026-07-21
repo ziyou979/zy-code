@@ -13,7 +13,7 @@ import type { LocalJSXCommandOnDone } from '../types.js'
 import { getApiKey, isAuthEnabled } from '../../services/auth/auth.js'
 import { openBrowser } from '../../services/browser/browser.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
-import { getGithubRepo } from '../../utils/git.js'
+import { getGithubRepo } from '../../services/infra/git.js'
 import { plural } from '../../utils/stringUtils.js'
 import { tSync } from '../../i18n/index.js'
 import { ApiKeyStep } from './ApiKeyStep.js'
@@ -50,7 +50,7 @@ const INITIAL_STATE: State = {
 }
 function InstallGitHubApp(props: { onDone: (message: string) => void }): React.ReactNode {
   const [existingApiKey] = useState(() => getApiKey())
-  const [state, setState] = useState({
+  const [state, setState] = useState<State>({
     ...INITIAL_STATE,
     useExistingKey: !!existingApiKey,
     // 跳过 OAuth，默认选择手动输入 API Key 选项
@@ -174,8 +174,7 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
           },
           state.workflowAction === 'skip',
           state.selectedWorkflows,
-          // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
-          state.authType as any,
+          state.authType,
           {
             useCurrentRepo: state.useCurrentRepo,
             workflowExists: state.workflowExists,
@@ -358,7 +357,10 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
           repoWarnings.push({
             title: tSync('installGitHubApp.warningInvalidUrl'),
             message: tSync('installGitHubApp.warningInvalidUrlMsg'),
-            instructions: [tSync('installGitHubApp.instructionUrlFormat'), 'Example: owner/repo'],
+            instructions: [
+              tSync('installGitHubApp.instructionUrlFormat'),
+              tSync('installGitHubApp.instructionUrlExample'),
+            ],
           })
         } else {
           repoName_1 = match[1]?.replace(/\.git$/, '') || ''
@@ -368,7 +370,10 @@ function InstallGitHubApp(props: { onDone: (message: string) => void }): React.R
         repoWarnings.push({
           title: tSync('installGitHubApp.warningRepoFormat'),
           message: tSync('installGitHubApp.warningRepoFormatMsg'),
-          instructions: [tSync('installGitHubApp.instructionUrlFormat'), 'Example: owner/repo'],
+          instructions: [
+            tSync('installGitHubApp.instructionUrlFormat'),
+            tSync('installGitHubApp.instructionUrlExample'),
+          ],
         })
       }
       const permissionCheck = await checkRepositoryPermissions(repoName_1)

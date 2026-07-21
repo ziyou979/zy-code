@@ -4,7 +4,7 @@
 
 import { Buffer } from 'node:buffer'
 import { env } from '../../services/environment/env.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { BEL, ESC, ESC_TYPE, SEP } from './ansi.js'
 import type { Action, Color, TabStatusAction } from './types.js'

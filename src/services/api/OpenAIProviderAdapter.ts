@@ -17,8 +17,8 @@ import type {
   StreamResult,
   ToolDefinition,
 } from '../../types/llm.js'
-import { createDebugLog } from '../../utils/debug.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { createDebugLog } from '../../services/infra/debug.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { countMessagesTokensLocally } from '../tokenEstimation.js'
 import { getOpenAIClient } from './client.js'
 import {

@@ -11,7 +11,7 @@ import {
   cleanupShellAliases,
   installLatest,
 } from '../services/native-installer/index.js'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { env } from '../services/environment/env.js'
 import { errorMessage } from '../utils/errors.js'
 import { getInitialSettings, updateSettingsForSource } from '../services/settings/settings.js'

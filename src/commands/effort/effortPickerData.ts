@@ -11,7 +11,7 @@ import {
   modelSupportsEffort,
   resolveEffortForModel,
 } from '../../services/effort/effort.js'
-import { modelSupportsThinking } from '../../utils/thinking.js'
+import { modelSupportsThinking } from '../../services/messages/thinking.js'
 
 // ---------------------------------------------------------------------------
 // 常量
@@ -189,8 +189,7 @@ export function computePickerLayout(model: string): PickerLayout | null {
   // 7. orchestrate 副标签
   const sublabel = hasOrchestrate
     ? {
-        text:
-          tSync('effort.picker.orchestrateSublabel') || 'extreme + workflows',
+        text: tSync('effort.picker.orchestrateSublabel') || 'extreme + workflows',
       }
     : undefined
 

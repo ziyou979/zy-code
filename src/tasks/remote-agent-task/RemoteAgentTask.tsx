@@ -30,10 +30,10 @@ import type { UltraplanPhase } from '../../services/ultraplan/ccrSession.js'
 import type { SetAppState, Task, TaskContext, TaskStateBase } from '../../tasks/task.js'
 import { createTaskStateBase, generateTaskId } from '../../tasks/task.js'
 import { TodoWriteTool } from '../../tools/TodoWriteTool/TodoWriteTool.js'
-import { emitTaskTerminatedBridge } from '../../utils/bridgeEventQueue.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logError } from '../../utils/log.js'
-import { enqueuePendingNotification } from '../../utils/messageQueueManager.js'
+import { emitTaskTerminatedBridge } from '../../services/bridge/bridgeEventQueue.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logError } from '../../services/infra/log.js'
+import { enqueuePendingNotification } from '../../services/input/messageQueueManager.js'
 import { extractTag, extractTextContent } from '../../services/messages/./predicates.js'
 import {
   deleteRemoteAgentMetadata,
@@ -41,7 +41,7 @@ import {
   type RemoteAgentMetadata,
   writeRemoteAgentMetadata,
 } from '../../services/sessionStorage.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { archiveRemoteSession, pollRemoteSessionEvents } from '../../services/teleport/teleport.js'
 export type RemoteAgentTaskState = TaskStateBase & {
   type: 'remote_agent'

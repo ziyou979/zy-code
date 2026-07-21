@@ -1,6 +1,6 @@
 import type { DiagLogger } from '@opentelemetry/api'
-import { logForDebugging } from '../../utils/debug.js'
-import { logError } from '../../utils/log.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logError } from '../../services/infra/log.js'
 export class ZyCodeDiagLogger implements DiagLogger {
   error(message: string, ..._: unknown[]) {
     logError(new Error(message))

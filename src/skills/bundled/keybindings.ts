@@ -11,7 +11,7 @@ import {
   KEYBINDING_CONTEXT_DESCRIPTIONS,
   KEYBINDING_CONTEXTS,
 } from '../../keybindings/schema.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
 /**

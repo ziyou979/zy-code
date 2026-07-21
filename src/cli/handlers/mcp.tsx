@@ -42,7 +42,7 @@ import {
   saveCurrentProjectConfig,
 } from '../../services/config/config.js'
 import { isFsInaccessible } from '../../utils/errors.js'
-import { gracefulShutdown } from '../../utils/gracefulShutdown.js'
+import { gracefulShutdown } from '../../bootstrap/lifecycle/gracefulShutdown.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import { cliError, cliOk } from '../exit.js'

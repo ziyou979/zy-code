@@ -13,12 +13,12 @@ import type {
   SystemAPIErrorMessage,
   UserMessage,
 } from '../types/message.js'
-import { getCwd } from '../utils/cwd.js'
+import { getCwd } from '../services/environment/cwd.js'
 import { env } from '../services/environment/env.js'
-import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from '../utils/envUtils.js'
+import { getZyConfigHomeDir, isEnvTruthy, isInternalBuild } from '../services/infra/envUtils.js'
 import { getErrnoCode } from '../utils/errors.js'
 import { normalizeMessagesForAPI } from './messages/api.js'
-import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
+import { jsonParse, jsonStringify } from '../services/infra/slowOperations.js'
 
 function shouldUseVCR(): boolean {
   if (process.env.NODE_ENV === 'test') {

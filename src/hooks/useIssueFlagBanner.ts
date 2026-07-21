@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import type { Message } from '../types/message.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 import { getUserMessageText } from '../services/messages/./predicates.js'
 
 const EXTERNAL_COMMAND_PATTERNS = [

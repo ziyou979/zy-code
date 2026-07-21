@@ -11,19 +11,28 @@ import {
 import { logEvent } from '../../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/metadata.js'
 import { buildTool, type Tool, type ToolDef, toolMatchesName } from '../../tools/tool.js'
-import { formatAgentId, generateRequestId } from '../../utils/agentId.js'
+import { formatAgentId, generateRequestId } from '../../services/agent/agentId.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import {
   findInProcessTeammateTaskId,
   setAwaitingPlanApproval,
 } from '../../services/swarm/inProcessTeammateHelpers.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { logError } from '../../utils/log.js'
-import { getPlan, getPlanFilePath, persistFileSnapshotIfRemote } from '../../services/plans/plans.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
-import { getAgentName, getTeamName, isPlanModeRequired, isTeammate } from '../../utils/teammate.js'
-import { writeToMailbox } from '../../utils/teammateMailbox.js'
+import { logError } from '../../services/infra/log.js'
+import {
+  getPlan,
+  getPlanFilePath,
+  persistFileSnapshotIfRemote,
+} from '../../services/plans/plans.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
+import {
+  getAgentName,
+  getTeamName,
+  isPlanModeRequired,
+  isTeammate,
+} from '../../services/swarm/teammate.js'
+import { writeToMailbox } from '../../services/swarm/teammateMailbox.js'
 import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
 import { TEAM_CREATE_TOOL_NAME } from '../TeamCreateTool/constants.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from './constants.js'

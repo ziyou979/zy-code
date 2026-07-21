@@ -7,9 +7,9 @@
  */
 
 import type { AppState } from '../../state/AppStateStore.js'
-import { logForDebugging } from '../../utils/debug.js'
-import { logError } from '../../utils/log.js'
-import { getDynamicTeamContext } from '../../utils/teammate.js'
+import { logForDebugging } from '../../services/infra/debug.js'
+import { logError } from '../../services/infra/log.js'
+import { getDynamicTeamContext } from './teammate.js'
 import { getTeamFilePath, readTeamFile } from './teamHelpers.js'
 
 /**

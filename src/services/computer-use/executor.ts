@@ -38,7 +38,7 @@ import type {
 } from '@ant/computer-use-mcp'
 
 import { API_RESIZE_PARAMS, targetImageSize } from '@ant/computer-use-mcp'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
 import { sleep } from '../../utils/sleep.js'

@@ -2,7 +2,7 @@ import * as React from 'react'
 import { use } from 'react'
 import { Box } from '../ink/index.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
-import { getMemoryFiles } from '../utils/agentsMd.js'
+import { getMemoryFiles } from '../services/memory/agentsMd.js'
 import { getGlobalConfig } from '../services/config/config.js'
 import { getActiveNotices } from '../components/Runtime/StatusNoticeDefinitions.js'
 

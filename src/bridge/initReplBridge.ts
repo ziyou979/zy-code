@@ -33,11 +33,11 @@ import {
   handleOAuth401Error,
 } from '../services/auth/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
-import { logForDebugging } from '../utils/debug.js'
-import { stripDisplayTagsAllowEmpty } from '../utils/xmlTagUtils.js'
-import { isInternalBuild } from '../utils/envUtils.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { stripDisplayTagsAllowEmpty } from '../services/messages/xmlTagUtils.js'
+import { isInternalBuild } from '../services/infra/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
-import { getBranch, getRemoteUrl } from '../utils/git.js'
+import { getBranch, getRemoteUrl } from '../services/infra/git.js'
 import { toSDKMessages } from '../services/messages/mappers.js'
 import {
   getContentText,
@@ -46,7 +46,10 @@ import {
 import { isSyntheticMessage } from '../services/messages/./constants.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../services/sessionStorage.js'
-import { extractConversationText, generateSessionTitle } from '../services/session-storage/sessionTitle.js'
+import {
+  extractConversationText,
+  generateSessionTitle,
+} from '../services/session-storage/sessionTitle.js'
 import { generateShortWordSlug } from '../utils/words.js'
 import { getWireAccessToken, getWireBaseUrl, getWireTokenOverride } from './bridgeConfig.js'
 import {
@@ -532,7 +535,7 @@ function deriveTitle(raw: string): string | undefined {
   // Strip <ide_opened_file>, <session-start-hook>, etc. — these appear in
   // user messages when IDE/hooks inject context. stripDisplayTagsAllowEmpty
   // returns '' (not the original) so pure-tag messages are skipped.
-  const clean = stripDisplayTagsAllowEmpty(raw)
+  const clean = stripDisplayTagsAllowEmpty(raw) ?? ''
   // First sentence is usually the intent; rest is often context/detail.
   // Capture group instead of lookbehind — keeps YARR JIT happy.
   const firstSentence = /^(.*?[.!?])\s/.exec(clean)?.[1] ?? clean

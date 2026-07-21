@@ -11,7 +11,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
-import { getZyConfigHomeDir } from '../../utils/envUtils.js'
+import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 
 function getTranscriptDir(): string {
   const dir = join(getZyConfigHomeDir(), 'transcripts')

@@ -1,12 +1,12 @@
 import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { z } from 'zod/v4'
-import { logForDebugging } from '../utils/debug.js'
+import { logForDebugging } from '../services/infra/debug.js'
 import { isENOENT } from '../utils/errors.js'
-import { getWorktreePathsPortable } from '../utils/getWorktreePathsPortable.js'
+import { getWorktreePathsPortable } from '../services/worktree/getWorktreePathsPortable.js'
 import { lazySchema } from '../utils/lazySchema.js'
-import { getProjectsDir, sanitizePath } from '../utils/sessionStoragePortable.js'
-import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
+import { getProjectsDir, sanitizePath } from '../services/session-storage/sessionStoragePortable.js'
+import { jsonParse, jsonStringify } from '../services/infra/slowOperations.js'
 /**
  * Upper bound on worktree fanout. git worktree list is naturally bounded
  * (50 is a LOT), but this caps the parallel stat() burst and guards against

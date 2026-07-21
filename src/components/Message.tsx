@@ -1,6 +1,11 @@
 import { feature } from 'bun:bundle'
 import * as React from 'react'
-import type { AssistantContentBlock, TextBlock, ToolCallBlock, UserContentBlock } from 'src/types/llm.ts'
+import type {
+  AssistantContentBlock,
+  TextBlock,
+  ToolCallBlock,
+  UserContentBlock,
+} from 'src/types/llm.ts'
 import type { Attachment } from 'src/services/attachments/attachments.js'
 import type { Command } from '../commands/index.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
@@ -17,7 +22,7 @@ import type {
   UserMessage,
 } from '../types/message.js'
 import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
-import { logError } from '../utils/log.js'
+import { logError } from '../services/infra/log.js'
 import { buildMessageLookups } from '../services/messages/./lookups.js'
 import { CompactSummary } from './CompactSummary.js'
 import { AssistantRedactedThinkingMessage } from './messages/AssistantRedactedThinkingMessage.js'
@@ -337,16 +342,28 @@ type AssistantMessageBlockProps = {
 }
 function AssistantMessageBlock(props: AssistantMessageBlockProps) {
   const {
-    param: rawParam, addMargin, tools, commands, verbose,
-    inProgressToolUseIDs, progressMessagesForMessage,
-    shouldAnimate, shouldShowDot, width,
-    inProgressToolCallCount, isTranscriptMode,
-    lookups, onOpenRateLimitOptions,
-    thinkingBlockId, lastThinkingBlockId,
+    param: rawParam,
+    addMargin,
+    tools,
+    commands,
+    verbose,
+    inProgressToolUseIDs,
+    progressMessagesForMessage,
+    shouldAnimate,
+    shouldShowDot,
+    width,
+    inProgressToolCallCount,
+    isTranscriptMode,
+    lookups,
+    onOpenRateLimitOptions,
+    thinkingBlockId,
+    lastThinkingBlockId,
   } = props
   // Some providers return tool_use (API shape) instead of tool_call (stream shape)
   // Both have the same structure (id, name, input), handled identically below
-  const param = rawParam as AssistantContentBlock | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
+  const param = rawParam as
+    | AssistantContentBlock
+    | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
   if (feature('CONNECTOR_TEXT')) {
     if (isConnectorTextBlock(param as AssistantContentBlock)) {
       const ctParam = param as AssistantContentBlock & { connectorText?: string }

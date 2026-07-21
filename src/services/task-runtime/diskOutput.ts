@@ -3,8 +3,8 @@ import { type FileHandle, mkdir, open, stat, symlink, unlink } from 'node:fs/pro
 import { join } from 'node:path'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { getErrnoCode } from '../../utils/errors.js'
-import { readFileRange, tailFile } from '../../utils/fsOperations.js'
-import { logError } from '../../utils/log.js'
+import { readFileRange, tailFile } from '../../services/infra/fsOperations.js'
+import { logError } from '../../services/infra/log.js'
 import { getProjectTempDir } from '../permissions/filesystem.js'
 
 // SECURITY: O_NOFOLLOW prevents following symlinks when opening task output files.

@@ -55,9 +55,9 @@ import type {
   StopHookInfo,
 } from '../../types/message.js'
 import { count } from '../../utils/array.js'
-import { createDebugLog } from '../../utils/debug.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
-import { logError } from '../../utils/log.js'
+import { createDebugLog } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
+import { logError } from '../../services/infra/log.js'
 import { CANCEL_MESSAGE } from '../messages/constants.js'
 import {
   createProgressMessage,
@@ -67,7 +67,7 @@ import {
 } from '../messages/constructors.js'
 import { withMemoryCorrectionHint } from '../messages/predicates.js'
 import type { PermissionDecisionReason, PermissionResult } from '../permissions/permissionResult.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { Stream } from '../../utils/stream.js'
 import { formatZodValidationError } from '../tool-runtime/toolErrors.js'
 import {

@@ -21,9 +21,9 @@ import { z } from 'zod/v4'
 
 import { getWireAccessToken, getWireBaseUrlOverride } from '../../bridge/bridgeConfig.js'
 import { getOauthConfig } from '../../constants/oauth.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+import { jsonStringify } from '../../services/infra/slowOperations.js'
 
 // Matches the private_api backend limit
 const MAX_UPLOAD_BYTES = 30 * 1024 * 1024

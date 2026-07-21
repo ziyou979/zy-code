@@ -1,5 +1,5 @@
 import type { Command } from '@commander-js/extra-typings'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { TASK_STATUSES } from '../../services/tasks-service/tasks.js'
 import { validateUuid } from '../../utils/uuid.js'
 /**

@@ -17,7 +17,7 @@ import {
   TICK,
   WARNING,
 } from '../../constants/figures.js'
-import { isInternalBuild } from '../../utils/envUtils.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
 
 /**
  * Returns true if the given task status represents a terminal (finished) state.

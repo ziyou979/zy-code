@@ -10,7 +10,7 @@ import {
   validateTeamMemKey,
 } from '../../memdir/teamMemPaths.js'
 import { count } from '../../utils/array.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { logEvent } from '../analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/metadata.js'
 import { scanForSecrets } from './secretScanner.js'

@@ -10,7 +10,7 @@ import { clearSystemPromptSections } from '../../constants/systemPromptSections.
 import { logEvent } from '../../services/analytics/index.js'
 import type { Tool } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
-import { clearMemoryFileCaches } from '../../utils/agentsMd.js'
+import { clearMemoryFileCaches } from '../../services/memory/agentsMd.js'
 import { count } from '../../utils/array.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import { updateHooksConfigSnapshot } from '../../services/hooks/hooksConfigSnapshot.js'
@@ -317,7 +317,7 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
   },
 } satisfies ToolDef<InputSchema, Output>)
 
-import { isWorktreeModeEnabled } from '../../utils/worktreeModeEnabled.js'
+import { isWorktreeModeEnabled } from '../../services/worktree/worktreeModeEnabled.js'
 // 插件化注册
 import { toolRegistry } from '../registry.js'
 

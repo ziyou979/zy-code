@@ -2,13 +2,13 @@ import { randomUUID } from 'node:crypto'
 import { tSync } from '../../i18n/index.js'
 import type { Tool, ToolUseContext } from '../../tools/tool.js'
 import { BashTool } from '../../tools/BashTool/BashTool.js'
-import { logForDebugging } from '../../utils/debug.js'
+import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage, MalformedCommandError, ShellError } from '../../utils/errors.js'
 import type { FrontmatterShell } from '../markdown/frontmatterParser.js'
 import { createAssistantMessage } from '../messages/./constructors.js'
 import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { getInitialSettings } from '../settings/settings.js'
-import { processToolResultBlock } from '../../utils/toolResultStorage.js'
+import { processToolResultBlock } from '../../services/mcp/toolResultStorage.js'
 
 // Narrow structural slice both BashTool and PowerShellTool satisfy.
 // We can't use `typeof BashTool` directly: BashTool's input schema has

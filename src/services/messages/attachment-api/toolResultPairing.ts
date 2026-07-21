@@ -12,7 +12,7 @@ import type {
   UserContentBlock,
 } from '../../../types/llm.js'
 import type { AssistantMessage, UserMessage } from '../../../types/message.js'
-import { logError } from '../../utils/log.js'
+import { logError } from '../../../services/infra/log.js'
 import { smooshSystemReminderSiblings } from '../apiNormalize.js'
 import { SYNTHETIC_TOOL_RESULT_PLACEHOLDER } from '../constants.js'
 import { createUserMessage } from '../constructors.js'

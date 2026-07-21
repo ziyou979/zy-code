@@ -1,5 +1,5 @@
 import { URL } from 'node:url'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { HybridTransport } from './hybridTransport.js'
 import { SSETransport } from './sseTransport.js'
 import type { Transport } from './transport.js'

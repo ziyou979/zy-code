@@ -6,8 +6,8 @@ import type {
   WireControlRequest,
   WireControlResponse,
 } from '../types/wire/control.js'
-import { logForDebugging } from '../utils/debug.js'
-import { logError } from '../utils/log.js'
+import { logForDebugging } from '../services/infra/debug.js'
+import { logError } from '../services/infra/log.js'
 import { SessionsWebSocket, type SessionsWebSocketCallbacks } from './sessionsWebSocket.js'
 
 /**
