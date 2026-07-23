@@ -2,7 +2,7 @@ import { basename, relative } from 'node:path'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink/index.js'
 import { getCwd } from '../services/environment/cwd.js'
-import { isSupportedVSCodeTerminal } from '../services/ide/ide.js'
+import { isSupportedVSCodeTerminal } from '../services/ide/ideCatalog.js'
 import { Select } from './CustomSelect/index.js'
 import { Pane } from './design-system/Pane.js'
 import type {

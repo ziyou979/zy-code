@@ -3,12 +3,8 @@ import { useNotifications } from 'src/context/notifications.js'
 import { Text } from 'src/ink/index.js'
 import type { MCPServerConnection } from 'src/services/mcp/types.js'
 import { getGlobalConfig, saveGlobalConfig } from 'src/services/config/config.js'
-import {
-  detectIDEs,
-  type IDEExtensionInstallationStatus,
-  isJetBrainsIde,
-  isSupportedTerminal,
-} from 'src/services/ide/ide.js'
+import { isJetBrainsIde, isSupportedTerminal } from 'src/services/ide/ideCatalog.js'
+import { detectIDEs, type IDEExtensionInstallationStatus } from 'src/services/ide/ide.js'
 import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useIdeConnectionStatus } from '../useIdeConnectionStatus.js'
 import type { IDESelection } from '../useIdeSelection.js'

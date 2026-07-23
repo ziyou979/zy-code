@@ -32,7 +32,7 @@ import {
 } from '../../../services/context/modelContext.js'
 import { getExternalEditor } from '../../../terminal-ui/editor.js'
 import { getDisplayPath } from '../../../services/infra/file.js'
-import { toIDEDisplayName } from '../../../services/ide/ide.js'
+import { toIDEDisplayName } from '../../../services/ide/ideCatalog.js'
 import { logError } from '../../../services/infra/log.js'
 import { createUserMessage } from '../../../services/messages/./constructors.js'
 import {
@@ -45,11 +45,11 @@ import {
   toExternalPermissionMode,
 } from '../../../services/permissions/permissionMode.js'
 import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
+import { isAutoModeGateEnabled } from '../../../services/permissions/autoModePolicy.js'
 import {
-  isAutoModeGateEnabled,
   restoreDangerousPermissions,
   stripDangerousPermissionsForAutoMode,
-} from '../../../services/permissions/permissionSetup.js'
+} from '../../../services/permissions/dangerousPermissionRules.js'
 import {
   getPewterLedgerVariant,
   isPlanModeInterviewPhaseEnabled,

@@ -17,12 +17,8 @@ import { getDoctorDiagnostic } from '../../services/doctor/doctorDiagnostic.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { getDisplayPath } from '../../services/infra/file.js'
 import { formatNumber } from '../../utils/format.js'
-import {
-  getIdeClientName,
-  type IDEExtensionInstallationStatus,
-  isJetBrainsIde,
-  toIDEDisplayName,
-} from '../../services/ide/ide.js'
+import { isJetBrainsIde, toIDEDisplayName } from '../../services/ide/ideCatalog.js'
+import { getIdeClientName, type IDEExtensionInstallationStatus } from '../../services/ide/ide.js'
 import { getMTLSConfig } from '../../services/http/mtls.js'
 import { getProxyUrl } from '../../services/http/proxy.js'
 import { getSettingsWithAllErrors } from '../../services/settings/allErrors.js'

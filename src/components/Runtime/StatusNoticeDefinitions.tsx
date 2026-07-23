@@ -26,7 +26,7 @@ import {
   getAgentDescriptionsTotalTokens,
   AGENT_DESCRIPTIONS_THRESHOLD,
 } from '../../services/status/statusNoticeHelpers.js'
-import { toIDEDisplayName, getTerminalIdeType } from '../../services/ide/ide.js'
+import { toIDEDisplayName, getTerminalIdeType } from '../../services/ide/ideCatalog.js'
 
 // Types
 export type StatusNoticeType = 'warning' | 'info'

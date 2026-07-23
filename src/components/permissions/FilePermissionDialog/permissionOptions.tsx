@@ -7,10 +7,8 @@ import { Text } from '../../../ink/index.js'
 import { getShortcutDisplay } from '../../../keybindings/shortcutFormat.js'
 import type { ToolPermissionContext } from '../../../tools/tool.js'
 import { expandPath, getDirectoryForPath } from '../../../utils/path.js'
-import {
-  normalizeCaseForComparison,
-  pathInAllowedWorkingPath,
-} from '../../../services/permissions/filesystem.js'
+import { normalizeCaseForComparison } from '../../../services/permissions/internalPaths.js'
+import { pathInAllowedWorkingPath } from '../../../services/permissions/filesystem.js'
 import type { OptionWithDescription } from '../../CustomSelect/select.js'
 /**
  * Check if a path is within the project's .zy/ folder.

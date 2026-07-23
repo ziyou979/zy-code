@@ -35,9 +35,9 @@ import {
   getAutoModeUnavailableNotification,
   getAutoModeUnavailableReason,
   isAutoModeGateEnabled,
-  isBypassPermissionsModeDisabled,
-  transitionPermissionMode,
-} from '../services/permissions/permissionSetup.js'
+} from '../services/permissions/autoModePolicy.js'
+import { isBypassPermissionsModeDisabled } from '../services/permissions/bypassPermissionPolicy.js'
+import { transitionPermissionMode } from '../services/permissions/permissionModeTransitions.js'
 
 /** 失败后多久自动清除 replBridgeEnabled（停止重试）。 */
 export const BRIDGE_FAILURE_DISMISS_MS = 10_000

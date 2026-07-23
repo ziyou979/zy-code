@@ -24,7 +24,7 @@ import {
 } from './PlanApprovalMessage.js'
 import { BLACK_CIRCLE } from '../../constants/figures.js'
 import { TeammateMessageContent } from './UserTeammateMessage.js'
-import { isShutdownApproved } from '../../services/swarm/teammateMailbox.js'
+import { isShutdownApproved } from '../../services/swarm/teammateMailboxMessages.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { FilePathLink } from '../FilePathLink.js'
 import { feature } from 'bun:bundle'

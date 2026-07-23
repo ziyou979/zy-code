@@ -722,9 +722,9 @@ const MessagesImpl = ({
       teamMemoryWriteCount: 0,
       latestThinkingSummary: streamingThinking.thinking.trim(),
       latestDisplayKind: 'thinking',
-      thinkingDurationMs: streamingThinking.isStreaming
-        ? 0
-        : replStore.mutable.lastThinkingDurationMs,
+      // 流式阶段也保留之前已完成的 thinking 时长，避免从“思考了 N 秒”
+      // 跳回“正在思考 1 秒”。当前阶段的实时增量由 ThinkingDurationTick 叠加。
+      thinkingDurationMs: replStore.mutable.lastThinkingDurationMs,
     }
   }, [
     conversationId,

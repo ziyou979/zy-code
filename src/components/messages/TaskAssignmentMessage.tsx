@@ -3,7 +3,7 @@ import { Box, Text } from '../../ink/index.js'
 import {
   isTaskAssignment,
   type TaskAssignmentMessage,
-} from '../../services/swarm/teammateMailbox.js'
+} from '../../services/swarm/teammateMailboxMessages.js'
 
 type Props = {
   assignment: TaskAssignmentMessage

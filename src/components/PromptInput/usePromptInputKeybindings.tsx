@@ -20,7 +20,7 @@ import {
   cyclePermissionMode,
   getNextPermissionMode,
 } from '../../services/permissions/getNextPermissionMode.js'
-import { transitionPermissionMode } from '../../services/permissions/permissionSetup.js'
+import { transitionPermissionMode } from '../../services/permissions/permissionModeTransitions.js'
 import { hasAutoModeOptIn } from '../../services/settings/settings.js'
 import { usePromptInputSubmission } from './usePromptInputSubmission.js'
 export function usePromptInputKeybindings(context: ReturnType<typeof usePromptInputSubmission>) {

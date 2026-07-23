@@ -21,7 +21,7 @@ import {
 } from '../../services/file-persistence/fileHistory.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
 import { applyPermissionUpdates } from '../../services/permissions/permissionUpdate.js'
-import { stripDangerousPermissionsForAutoMode } from '../../services/permissions/permissionSetup.js'
+import { stripDangerousPermissionsForAutoMode } from '../../services/permissions/dangerousPermissionRules.js'
 import { getPlanSlug, setPlanSlug } from '../../services/plans/plans.js'
 
 export interface UseReplInitialMessageParams {

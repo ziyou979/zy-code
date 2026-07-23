@@ -1,5 +1,5 @@
 import { tSync } from 'src/i18n/index.js'
-import { getMcpConfigsByScope } from 'src/services/mcp/config.js'
+import { getMcpConfigsByScope } from 'src/services/mcp/configRepository.js'
 import type { ConfigScope } from 'src/services/mcp/types.js'
 import { describeMcpConfigFilePath, getScopeLabel } from 'src/services/mcp/utils.js'
 import type { ValidationError } from 'src/services/settings/validation.js'

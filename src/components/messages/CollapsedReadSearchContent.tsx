@@ -24,6 +24,7 @@ import { useSelectedMessageBg } from '../MessageActions.js'
 import { PrBadge } from '../PrBadge.js'
 import { ToolUseLoader } from '../ToolUseLoader.js'
 import { AssistantThinkingMessage } from './AssistantThinkingMessage.js'
+import { Markdown } from '../Markdown.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemCollapsed = feature('TEAMMEM')
@@ -384,7 +385,10 @@ export function CollapsedReadSearchContent({
   // 思考时长引领行首（无 git 操作时）
   // 正在思考（streamMode === 'thinking'）&& fullscreen → 实时 tick "正在思考 Xs"
   // 完成后 → 静态 "思考了 Xs"（下限 1s）
-  const thinkingMs = message.thinkingDurationMs ?? 0
+  const thinkingMs = Math.max(
+    message.thinkingDurationMs ?? 0,
+    isActiveGroup && streamMode === 'thinking' ? store.mutable.lastThinkingDurationMs : 0,
+  )
   const isCurrentlyThinking = streamMode === 'thinking'
   const showThinkingTick = isActiveGroup && isFullscreenEnvEnabled() && isCurrentlyThinking
   if (thinkingMs > 0 || showThinkingTick) {
@@ -680,12 +684,7 @@ export function CollapsedReadSearchContent({
             <Text dimColor>{'  ⎿  '}</Text>
           </Box>
           <Box flexDirection="column" flexGrow={1}>
-            {displayedHint.split('\n').map((line, i, arr) => (
-              <Text key={`hint-${i}`} dimColor>
-                {line}
-                {i === arr.length - 1 && shellProgressSuffix}
-              </Text>
-            ))}
+            <Markdown dimColor>{displayedHint + shellProgressSuffix}</Markdown>
           </Box>
         </Box>
       )}

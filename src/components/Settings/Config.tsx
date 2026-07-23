@@ -32,8 +32,8 @@ import {
 import {
   getAutoModeEnabledState,
   hasAutoModeOptInAnySource,
-  transitionPlanAutoMode,
-} from '../../services/permissions/permissionSetup.js'
+} from '../../services/permissions/autoModePolicy.js'
+import { transitionPlanAutoMode } from '../../services/permissions/permissionModeTransitions.js'
 import { logError } from '../../services/infra/log.js'
 import {
   logEvent,
@@ -60,7 +60,8 @@ import { Byline } from '../design-system/Byline.js'
 import { useTabHeaderFocus } from '../design-system/Tabs.js'
 import { useIsInsideModal } from '../../context/ModalContext.js'
 import { SearchBox } from '../SearchBox.js'
-import { isSupportedTerminal, hasAccessToIDEExtensionDiffFeature } from '../../services/ide/ide.js'
+import { hasAccessToIDEExtensionDiffFeature } from '../../services/ide/ide.js'
+import { isSupportedTerminal } from '../../services/ide/ideCatalog.js'
 import {
   getInitialSettings,
   getSettingsForSource,

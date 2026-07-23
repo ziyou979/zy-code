@@ -19,13 +19,13 @@ import type {
   PermissionRule,
 } from '../../../services/permissions/permissionRule.js'
 import { permissionRuleValueToString } from '../../../services/permissions/permissionRuleParser.js'
+import { deletePermissionRule } from '../../../services/permissions/permissionRuleRepository.js'
 import {
-  deletePermissionRule,
   getAllowRules,
   getAskRules,
   getDenyRules,
   permissionRuleSourceDisplayString,
-} from '../../../services/permissions/permissions.js'
+} from '../../../services/permissions/permissionRuleQueries.js'
 import { jsonStringify } from '../../../services/infra/slowOperations.js'
 import { Pane } from '../../design-system/Pane.js'
 import { Tab, Tabs, useTabHeaderFocus, useTabsWidth } from '../../design-system/Tabs.js'

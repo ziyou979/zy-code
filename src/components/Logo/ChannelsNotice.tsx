@@ -13,7 +13,7 @@ import {
 import { Box, Text } from '../../ink/index.js'
 import { isChannelsEnabled } from '../../services/mcp/channelAllowlist.js'
 import { getEffectiveChannelAllowlist } from '../../services/mcp/channelNotification.js'
-import { getMcpConfigsByScope } from '../../services/mcp/config.js'
+import { getMcpConfigsByScope } from '../../services/mcp/configRepository.js'
 import { getZyAIOAuthTokens } from '../../services/auth/auth.js'
 import { loadInstalledPlugins } from '../../services/plugins/installedPluginsManager.js'
 import { getSettingsForSource } from '../../services/settings/settings.js'

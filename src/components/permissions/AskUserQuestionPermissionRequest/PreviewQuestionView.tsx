@@ -8,7 +8,7 @@ import { useKeybinding, useKeybindings } from '../../../keybindings/useKeybindin
 import { useAppState } from '../../../state/AppState.js'
 import type { Question } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js'
 import { getExternalEditor } from '../../../terminal-ui/editor.js'
-import { toIDEDisplayName } from '../../../services/ide/ide.js'
+import { toIDEDisplayName } from '../../../services/ide/ideCatalog.js'
 import { editPromptInEditor } from '../../../terminal-ui/promptEditor.js'
 import { Divider } from '../../design-system/Divider.js'
 import TextInput from '../../TextInput.js'

@@ -49,9 +49,11 @@ import {
   isShutdownApproved,
   isShutdownRequest,
   isTeamPermissionUpdate,
+  type TeammateMessage,
+} from '../services/swarm/teammateMailboxMessages.js'
+import {
   markMessagesAsRead,
   readUnreadMessages,
-  type TeammateMessage,
   writeToMailbox,
 } from '../services/swarm/teammateMailbox.js'
 import {

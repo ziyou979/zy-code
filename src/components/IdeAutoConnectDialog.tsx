@@ -1,7 +1,7 @@
 import { tSync } from 'src/i18n/index.js'
 import { Text } from '../ink/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
-import { isSupportedTerminal } from '../services/ide/ide.js'
+import { isSupportedTerminal } from '../services/ide/ideCatalog.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
 

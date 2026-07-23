@@ -7,7 +7,7 @@ import {
   isShutdownRequest,
   type ShutdownRejectedMessage,
   type ShutdownRequestMessage,
-} from '../../services/swarm/teammateMailbox.js'
+} from '../../services/swarm/teammateMailboxMessages.js'
 
 type ShutdownRequestProps = {
   request: ShutdownRequestMessage

@@ -43,8 +43,8 @@ import {
   type TeammateStatus,
   type TeamSummary,
 } from '../../services/swarm/teamDiscovery.js'
+import { createModeSetRequestMessage } from '../../services/swarm/teammateMailboxMessages.js'
 import {
-  createModeSetRequestMessage,
   sendShutdownRequestToMailbox,
   writeToMailbox,
 } from '../../services/swarm/teammateMailbox.js'

@@ -84,8 +84,9 @@ import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
 import { handlePromptSubmit } from '../../services/input/handlePromptSubmit.js'
 import { executeMessageDisplayHooks } from '../../services/hooks/executors/messageDisplay.js'
-import type { IDEExtensionInstallationStatus, IdeType } from '../../services/ide/ide.js'
+import type { IDEExtensionInstallationStatus } from '../../services/ide/ide.js'
 import { closeOpenDiffs, getConnectedIdeClient } from '../../services/ide/ide.js'
+import type { IdeType } from '../../services/ide/ideTypes.js'
 import type { SetAppState } from '../../services/input/messageQueueManager.js'
 import { enqueue, getCommandQueueLength } from '../../services/input/messageQueueManager.js'
 import { StreamingThinking } from '../../services/messages/./streaming.js'
@@ -105,7 +106,10 @@ import {
   checkAndDisableAutoModeIfNeeded,
   checkAndDisableBypassPermissionsIfNeeded,
 } from '../../services/permissions/bypassPermissionsKillswitch.js'
-import { getScratchpadDir, isScratchpadEnabled } from '../../services/permissions/filesystem.js'
+import {
+  getScratchpadDir,
+  isScratchpadEnabled,
+} from '../../services/permissions/scratchpadStorage.js'
 import { getQuerySourceForREPL } from '../../services/analytics/querySource.js'
 import { logQueryProfileReport, queryCheckpoint } from '../../services/query/queryProfiler.js'
 import {
@@ -357,7 +361,10 @@ export function handleQueryEvent(
           ctx.replStore.setMessages(() => [newMessage])
         }
         ctx.replStore.regenerateConversationId()
-        if (feature('PROACTIVE') || feature('KAIROS')) {
+        if (feature('PROACTIVE')) {
+          proactiveModule?.setContextBlocked(false)
+        }
+        if (feature('KAIROS')) {
           proactiveModule?.setContextBlocked(false)
         }
       } else if (newMessage.type === 'progress' && isEphemeralToolProgress(newMessage.data.type)) {
@@ -377,7 +384,18 @@ export function handleQueryEvent(
       } else {
         ctx.replStore.setMessages((oldMessages) => [...oldMessages, newMessage])
       }
-      if (feature('PROACTIVE') || feature('KAIROS')) {
+      if (feature('PROACTIVE')) {
+        if (
+          newMessage.type === 'assistant' &&
+          'isApiErrorMessage' in newMessage &&
+          newMessage.isApiErrorMessage
+        ) {
+          proactiveModule?.setContextBlocked(true)
+        } else if (newMessage.type === 'assistant') {
+          proactiveModule?.setContextBlocked(false)
+        }
+      }
+      if (feature('KAIROS')) {
         if (
           newMessage.type === 'assistant' &&
           'isApiErrorMessage' in newMessage &&
@@ -498,7 +516,10 @@ export async function runQueryImpl(
   if (!shouldQuery) {
     if (newMessages.some(isCompactBoundaryMessage)) {
       ctx.replStore.regenerateConversationId()
-      if (feature('PROACTIVE') || feature('KAIROS')) {
+      if (feature('PROACTIVE')) {
+        proactiveModule?.setContextBlocked(false)
+      }
+      if (feature('KAIROS')) {
         proactiveModule?.setContextBlocked(false)
       }
     }
@@ -542,12 +563,15 @@ export async function runQueryImpl(
       freshMcpClients,
       isScratchpadEnabled() ? getScratchpadDir() : undefined,
     ) ?? {}),
-    ...((feature('PROACTIVE') || feature('KAIROS')) &&
-    proactiveModule?.isProactiveActive() &&
-    !ctx.terminalFocusRef.current
-      ? {
-          terminalFocus: 'The terminal is unfocused — the user is not actively watching.',
-        }
+    ...(feature('PROACTIVE')
+      ? proactiveModule?.isProactiveActive() && !ctx.terminalFocusRef.current
+        ? { terminalFocus: 'The terminal is unfocused — the user is not actively watching.' }
+        : {}
+      : {}),
+    ...(feature('KAIROS')
+      ? proactiveModule?.isProactiveActive() && !ctx.terminalFocusRef.current
+        ? { terminalFocus: 'The terminal is unfocused — the user is not actively watching.' }
+        : {}
       : {}),
   }
   queryCheckpoint('query_context_loading_end')
@@ -816,7 +840,10 @@ export async function handleSubmit(
   ctx.repinScroll()
 
   // 如果暂停则恢复 loop mode
-  if (feature('PROACTIVE') || feature('KAIROS')) {
+  if (feature('PROACTIVE')) {
+    proactiveModule?.resumeProactive()
+  }
+  if (feature('KAIROS')) {
     proactiveModule?.resumeProactive()
   }
 

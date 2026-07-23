@@ -7,7 +7,7 @@ import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithK
 import { tSync } from '../../i18n/index.js'
 import { Box, Link, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
-import { getMcpConfigsByScope } from '../../services/mcp/config.js'
+import { getMcpConfigsByScope } from '../../services/mcp/configRepository.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 import {
   checkHasTrustDialogAccepted,

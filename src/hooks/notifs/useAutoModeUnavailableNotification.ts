@@ -7,7 +7,7 @@ import type { PermissionMode } from '../../services/permissions/permissionMode.j
 import {
   getAutoModeUnavailableNotification,
   getAutoModeUnavailableReason,
-} from '../../services/permissions/permissionSetup.js'
+} from '../../services/permissions/autoModePolicy.js'
 import { hasAutoModeOptIn } from '../../services/settings/settings.js'
 
 /**

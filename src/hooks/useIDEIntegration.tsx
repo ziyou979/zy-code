@@ -2,12 +2,12 @@ import { useEffect } from 'react'
 import type { ScopedMcpServerConfig } from '../services/mcp/types.js'
 import { getGlobalConfig } from '../services/config/config.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../services/infra/envUtils.js'
+import { isSupportedTerminal } from '../services/ide/ideCatalog.js'
 import {
   type IDEExtensionInstallationStatus,
-  type IdeType,
   initializeIdeIntegration,
-  isSupportedTerminal,
 } from '../services/ide/ide.js'
+import type { IdeType } from '../services/ide/ideTypes.js'
 
 type UseIDEIntegrationProps = {
   autoConnectIdeFlag?: boolean
