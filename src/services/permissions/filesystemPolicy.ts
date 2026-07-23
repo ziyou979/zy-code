@@ -1,35 +1,64 @@
 import { feature } from 'bun:bundle'
-import { randomBytes } from 'node:crypto'
-import { homedir, tmpdir } from 'node:os'
+import { homedir } from 'node:os'
 import { join, normalize, posix, sep } from 'node:path'
-import memoize from 'lodash-es/memoize.js'
 import { hasAutoMemPathOverride, isAutoMemPath } from 'src/memdir/paths.js'
 import { isAgentMemoryPath } from 'src/tools/AgentTool/agentMemory.js'
-import { getOriginalCwd, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
+import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { getCwd } from '../environment/cwd.js'
 import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
-import {
-  getFsImplementation,
-  getPathsForPermissionCheck,
-} from '../../services/infra/fsOperations.js'
-import { containsPathTraversal, expandPath, sanitizePath } from '../../utils/path.js'
+import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { expandPath } from '../../utils/path.js'
 import { getPlanSlug, getPlansDirectory } from '../plans/plans.js'
 import { getToolResultsDir } from '../../services/mcp/toolResultStorage.js'
-import { getPlatform } from '../shell/platform.js'
 import { getProjectDir } from '../sessionStorage.js'
 import { SETTING_SOURCES } from '../settings/constants.js'
-import { getSettingsFilePathForSource, getSettingsRootPathForSource } from '../settings/settings.js'
-import { windowsPathToPosixPath } from '../shell/windowsPaths.js'
-import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { getSettingsFilePathForSource } from '../settings/settings.js'
+import { getPathsForPermissionCheck } from '../../services/infra/fsOperations.js'
 import type { PermissionResult } from './permissionResult.js'
-import type { PermissionRuleSource } from './permissionRule.js'
+import {
+  isScratchpadEnabled,
+  getScratchpadDir,
+  getProjectTempDir,
+  getSessionMemoryDir,
+  getBundledSkillsRoot,
+} from './scratchpadStorage.js'
+import { normalizeCaseForComparison, pathInWorkingPath } from './internalPaths.js'
 
-declare const MACRO: { VERSION: string }
+function getSettingsPaths(): string[] {
+  return SETTING_SOURCES.map((source) => getSettingsFilePathForSource(source)).filter(
+    (path) => path !== undefined,
+  )
+}
 
-const DIR_SEP = posix.sep
+export function isZySettingsPath(filePath: string): boolean {
+  const expandedPath = expandPath(filePath)
+  const normalizedPath = normalizeCaseForComparison(expandedPath)
 
-export function normalizeCaseForComparison(path: string): string {
-  return path.toLowerCase()
+  if (
+    normalizedPath.endsWith(`${sep}.zy${sep}settings.json`) ||
+    normalizedPath.endsWith(`${sep}.zy${sep}settings.local.json`)
+  ) {
+    return true
+  }
+  return getSettingsPaths().some(
+    (settingsPath) => normalizeCaseForComparison(settingsPath) === normalizedPath,
+  )
+}
+
+function isZyConfigFilePath(filePath: string): boolean {
+  if (isZySettingsPath(filePath)) {
+    return true
+  }
+
+  const commandsDir = join(getOriginalCwd(), '.zy', 'commands')
+  const agentsDir = join(getOriginalCwd(), '.zy', 'agents')
+  const skillsDir = join(getOriginalCwd(), '.zy', 'skills')
+
+  return (
+    pathInWorkingPath(filePath, commandsDir) ||
+    pathInWorkingPath(filePath, agentsDir) ||
+    pathInWorkingPath(filePath, skillsDir)
+  )
 }
 
 export function getZySkillScope(filePath: string): { skillName: string; pattern: string } | null {
@@ -73,71 +102,10 @@ export function getZySkillScope(filePath: string): { skillName: string; pattern:
   return null
 }
 
-export function relativePath(from: string, to: string): string {
-  if (getPlatform() === 'windows') {
-    const posixFrom = windowsPathToPosixPath(from)
-    const posixTo = windowsPathToPosixPath(to)
-    return posix.relative(posixFrom, posixTo)
-  }
-  return posix.relative(from, to)
-}
-
-export function toPosixPath(path: string): string {
-  if (getPlatform() === 'windows') {
-    return windowsPathToPosixPath(path)
-  }
-  return path
-}
-
-function getSettingsPaths(): string[] {
-  return SETTING_SOURCES.map((source) => getSettingsFilePathForSource(source)).filter(
-    (path) => path !== undefined,
-  )
-}
-
-export function isZySettingsPath(filePath: string): boolean {
-  const expandedPath = expandPath(filePath)
-  const normalizedPath = normalizeCaseForComparison(expandedPath)
-
-  if (
-    normalizedPath.endsWith(`${sep}.zy${sep}settings.json`) ||
-    normalizedPath.endsWith(`${sep}.zy${sep}settings.local.json`)
-  ) {
-    return true
-  }
-  return getSettingsPaths().some(
-    (settingsPath) => normalizeCaseForComparison(settingsPath) === normalizedPath,
-  )
-}
-
-function isZyConfigFilePath(filePath: string): boolean {
-  if (isZySettingsPath(filePath)) {
-    return true
-  }
-
-  const commandsDir = join(getOriginalCwd(), '.zy', 'commands')
-  const agentsDir = join(getOriginalCwd(), '.zy', 'agents')
-  const skillsDir = join(getOriginalCwd(), '.zy', 'skills')
-
-  return (
-    pathInWorkingPath(filePath, commandsDir) ||
-    pathInWorkingPath(filePath, agentsDir) ||
-    pathInWorkingPath(filePath, skillsDir)
-  )
-}
-
 function isSessionPlanFile(absolutePath: string): boolean {
   const expectedPrefix = join(getPlansDirectory(), getPlanSlug())
   const normalizedPath = normalize(absolutePath)
   return normalizedPath.startsWith(expectedPrefix) && normalizedPath.endsWith('.md')
-}
-
-export function getSessionMemoryDir(): string {
-  return join(getProjectDir(getCwd()), getSessionId(), 'session-memory') + sep
-}
-
-export function getSessionMemoryPath(): string {
-  return join(getSessionMemoryDir(), 'summary.md')
 }
 
 function isSessionMemoryPath(absolutePath: string): boolean {
@@ -150,160 +118,13 @@ function isProjectDirPath(absolutePath: string): boolean {
   return normalizedPath === projectDir || normalizedPath.startsWith(projectDir + sep)
 }
 
-export function isScratchpadEnabled(): boolean {
-  return checkStatsigFeatureGate_CACHED_MAY_BE_STALE('zy_scratch_dir')
-}
-
-export function getZyTempDirName(): string {
-  if (getPlatform() === 'windows') {
-    return 'zy'
-  }
-  const uid = process.getuid?.() ?? 0
-  return `zy-${uid}`
-}
-
-export const getZyTempDir = memoize(function getZyTempDir(): string {
-  const baseTmpDir = process.env.ZY_CODE_TMPDIR || (getPlatform() === 'windows' ? tmpdir() : '/tmp')
-
-  const fs = getFsImplementation()
-  let resolvedBaseTmpDir = baseTmpDir
-  try {
-    resolvedBaseTmpDir = fs.realpathSync(baseTmpDir)
-  } catch {
-    // 如果解析失败，使用原始路径
-  }
-
-  return join(resolvedBaseTmpDir, getZyTempDirName()) + sep
-})
-
-export const getBundledSkillsRoot = memoize(function getBundledSkillsRoot(): string {
-  const nonce = randomBytes(16).toString('hex')
-  return join(getZyTempDir(), 'bundled-skills', MACRO.VERSION, nonce)
-})
-
-export function getProjectTempDir(): string {
-  return join(getZyTempDir(), sanitizePath(getOriginalCwd())) + sep
-}
-
-export function getScratchpadDir(): string {
-  return join(getProjectTempDir(), getSessionId(), 'scratchpad')
-}
-
-export async function ensureScratchpadDir(): Promise<string> {
-  if (!isScratchpadEnabled()) {
-    throw new Error('Scratchpad directory feature is not enabled')
-  }
-
-  const fs = getFsImplementation()
-  const scratchpadDir = getScratchpadDir()
-  await fs.mkdir(scratchpadDir, { mode: 0o700 })
-  return scratchpadDir
-}
-
-function isScratchpadPath(absolutePath: string): boolean {
+function isScratchpadPathInner(absolutePath: string): boolean {
   if (!isScratchpadEnabled()) {
     return false
   }
   const scratchpadDir = getScratchpadDir()
   const normalizedPath = normalize(absolutePath)
   return normalizedPath === scratchpadDir || normalizedPath.startsWith(scratchpadDir + sep)
-}
-
-export function pathInWorkingPath(path: string, workingPath: string): boolean {
-  const absolutePath = expandPath(path)
-  const absoluteWorkingPath = expandPath(workingPath)
-
-  const normalizedPath = absolutePath
-    .replace(/^\/private\/var\//, '/var/')
-    .replace(/^\/private\/tmp(\/|$)/, '/tmp$1')
-  const normalizedWorkingPath = absoluteWorkingPath
-    .replace(/^\/private\/var\//, '/var/')
-    .replace(/^\/private\/tmp(\/|$)/, '/tmp$1')
-
-  const caseNormalizedPath = normalizeCaseForComparison(normalizedPath)
-  const caseNormalizedWorkingPath = normalizeCaseForComparison(normalizedWorkingPath)
-  const relative = relativePath(caseNormalizedWorkingPath, caseNormalizedPath)
-
-  if (relative === '') {
-    return true
-  }
-  if (containsPathTraversal(relative)) {
-    return false
-  }
-  return !posix.isAbsolute(relative)
-}
-
-function rootPathForSource(source: PermissionRuleSource): string {
-  switch (source) {
-    case 'cliArg':
-    case 'command':
-    case 'session':
-      return expandPath(getOriginalCwd())
-    case 'userSettings':
-    case 'policySettings':
-    case 'projectSettings':
-    case 'localSettings':
-    case 'flagSettings':
-      return getSettingsRootPathForSource(source)
-  }
-}
-
-function prependDirSep(path: string): string {
-  return posix.join(DIR_SEP, path)
-}
-
-function normalizePatternToPath({
-  patternRoot,
-  pattern,
-  rootPath,
-}: {
-  patternRoot: string
-  pattern: string
-  rootPath: string
-}): string | null {
-  const fullPattern = posix.join(patternRoot, pattern)
-  if (patternRoot === rootPath) {
-    return prependDirSep(pattern)
-  }
-  if (fullPattern.startsWith(`${rootPath}${DIR_SEP}`)) {
-    const relativePart = fullPattern.slice(rootPath.length)
-    return prependDirSep(relativePart)
-  }
-
-  const relativePatternPath = posix.relative(rootPath, patternRoot)
-  if (
-    !relativePatternPath ||
-    relativePatternPath.startsWith(`..${DIR_SEP}`) ||
-    relativePatternPath === '..'
-  ) {
-    return null
-  }
-  return prependDirSep(posix.join(relativePatternPath, pattern))
-}
-
-export function normalizePatternsToPath(
-  patternsByRoot: Map<string | null, string[]>,
-  root: string,
-): string[] {
-  const result = new Set(patternsByRoot.get(null) ?? [])
-
-  for (const [patternRoot, patterns] of patternsByRoot.entries()) {
-    if (patternRoot === null) {
-      continue
-    }
-
-    for (const pattern of patterns) {
-      const normalizedPattern = normalizePatternToPath({
-        patternRoot,
-        pattern,
-        rootPath: root,
-      })
-      if (normalizedPattern) {
-        result.add(normalizedPattern)
-      }
-    }
-  }
-  return Array.from(result)
 }
 
 export function checkEditableInternalPath(
@@ -323,7 +144,7 @@ export function checkEditableInternalPath(
     }
   }
 
-  if (isScratchpadPath(normalizedPath)) {
+  if (isScratchpadPathInner(normalizedPath)) {
     return {
       behavior: 'allow',
       updatedInput: input,
@@ -340,15 +161,15 @@ export function checkEditableInternalPath(
       const jobsRoot = join(getZyConfigHomeDir(), 'jobs')
       const jobDirForms = getPathsForPermissionCheck(jobDir).map(normalize)
       const jobsRootForms = getPathsForPermissionCheck(jobsRoot).map(normalize)
-      const isUnderJobsRoot = jobDirForms.every((jobDirForm) =>
-        jobsRootForms.some((jobsRootForm) => jobDirForm.startsWith(jobsRootForm + sep)),
+      const isUnderJobsRoot = jobDirForms.every((jobDirForm: string) =>
+        jobsRootForms.some((jobsRootForm: string) => jobDirForm.startsWith(jobsRootForm + sep)),
       )
       if (isUnderJobsRoot) {
         const targetForms = getPathsForPermissionCheck(absolutePath)
-        const allInsideJobDir = targetForms.every((targetPath) => {
+        const allInsideJobDir = targetForms.every((targetPath: string) => {
           const normalizedTargetPath = normalize(targetPath)
           return jobDirForms.some(
-            (jobDirForm) =>
+            (jobDirForm: string) =>
               normalizedTargetPath === jobDirForm ||
               normalizedTargetPath.startsWith(jobDirForm + sep),
           )
@@ -460,7 +281,7 @@ export function checkReadableInternalPath(
     }
   }
 
-  if (isScratchpadPath(normalizedPath)) {
+  if (isScratchpadPathInner(normalizedPath)) {
     return {
       behavior: 'allow',
       updatedInput: input,

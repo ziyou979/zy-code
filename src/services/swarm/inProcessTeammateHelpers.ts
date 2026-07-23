@@ -19,7 +19,7 @@ import {
   isPermissionResponse,
   isSandboxPermissionResponse,
   type PlanApprovalResponseMessage,
-} from '../../services/swarm/teammateMailbox.js'
+} from '../../services/swarm/teammateMailboxMessages.js'
 
 type SetAppState = (updater: (prev: AppState) => AppState) => void
 

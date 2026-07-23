@@ -6,10 +6,8 @@ import {
 import { parseAgentId } from '../../../services/agent/agentId.js'
 import { logForDebugging } from '../../../services/infra/debug.js'
 import { jsonStringify } from '../../../services/infra/slowOperations.js'
-import {
-  createShutdownRequestMessage,
-  writeToMailbox,
-} from '../../../services/swarm/teammateMailbox.js'
+import { createShutdownRequestMessage } from '../../../services/swarm/teammateMailboxMessages.js'
+import { writeToMailbox } from '../../../services/swarm/teammateMailbox.js'
 import { startInProcessTeammate } from '../inProcessRunner.js'
 import { killInProcessTeammate, spawnInProcessTeammate } from '../spawnInProcess.js'
 import type {

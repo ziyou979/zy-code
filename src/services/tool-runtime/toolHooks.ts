@@ -26,7 +26,8 @@ import {
   getPreToolHookBlockingMessage,
 } from '../hooks.js'
 import { isMcpTool } from '../mcp/utils.js'
-import type { McpServerType, MessageUpdateLazy } from './toolExecution.js'
+import type { MessageUpdateLazy } from './toolExecutionLifecycle.js'
+import type { McpServerType } from './toolExecution.js'
 
 export type PostToolUseHooksResult<Output> =
   | MessageUpdateLazy<AttachmentMessage | ProgressMessage<HookProgress>>

@@ -1,11 +1,14 @@
 import { feature } from 'bun:bundle'
 import { homedir } from 'node:os'
-import { join, normalize, posix, sep } from 'node:path'
+import { normalize, posix, sep } from 'node:path'
 import ignore from 'ignore'
 import memoize from 'lodash-es/memoize.js'
 import { hasAutoMemPathOverride, isAutoMemPath } from 'src/memdir/paths.js'
-import { containsVulnerableUncPath } from 'src/shell-eval/shared/readOnlyCommandValidation.js'
 import { isAgentMemoryPath } from 'src/tools/AgentTool/agentMemory.js'
+import {
+  checkPathSafetyForAutoEdit,
+  hasSuspiciousWindowsPathPattern,
+} from './autoEditPathSafety.js'
 import {
   CLAUDE_FOLDER_PERMISSION_PATTERN,
   FILE_EDIT_TOOL_NAME,
@@ -36,64 +39,15 @@ import type { PermissionDecision, PermissionResult } from './permissionResult.js
 import type { PermissionRule, PermissionRuleSource } from './permissionRule.js'
 import { createReadRuleSuggestion } from './permissionUpdate.js'
 import type { PermissionUpdate } from './permissionUpdateSchema.js'
-import { getRuleByContentsForToolName } from './permissions.js'
+import { getRuleByContentsForToolName } from './permissionRuleQueries.js'
 import {
   checkEditableInternalPath,
   checkReadableInternalPath,
-  ensureScratchpadDir,
-  getBundledSkillsRoot,
-  getProjectTempDir,
-  getScratchpadDir,
-  getSessionMemoryDir,
-  getSessionMemoryPath,
   getZySkillScope,
-  getZyTempDir,
-  getZyTempDirName,
-  isScratchpadEnabled,
-  isZySettingsPath,
-  normalizeCaseForComparison,
-  normalizePatternsToPath,
-  pathInWorkingPath,
-  relativePath,
-  toPosixPath,
-} from './filesystemPathSupport.js'
+} from './filesystemPolicy.js'
+import { pathInWorkingPath, relativePath } from './internalPaths.js'
 
 const DIR_SEP = posix.sep
-
-export {
-  ensureScratchpadDir,
-  getBundledSkillsRoot,
-  getProjectTempDir,
-  getScratchpadDir,
-  getSessionMemoryDir,
-  getSessionMemoryPath,
-  getZySkillScope,
-  getZyTempDir,
-  getZyTempDirName,
-  isScratchpadEnabled,
-  isZySettingsPath,
-  normalizeCaseForComparison,
-  normalizePatternsToPath,
-  pathInWorkingPath,
-  relativePath,
-  toPosixPath,
-}
-
-function isZyConfigFilePath(filePath: string): boolean {
-  if (isZySettingsPath(filePath)) {
-    return true
-  }
-
-  const commandsDir = join(getOriginalCwd(), '.zy', 'commands')
-  const agentsDir = join(getOriginalCwd(), '.zy', 'agents')
-  const skillsDir = join(getOriginalCwd(), '.zy', 'skills')
-
-  return (
-    pathInWorkingPath(filePath, commandsDir) ||
-    pathInWorkingPath(filePath, agentsDir) ||
-    pathInWorkingPath(filePath, skillsDir)
-  )
-}
 
 function rootPathForSource(source: PermissionRuleSource): string {
   switch (source) {
@@ -108,199 +62,6 @@ function rootPathForSource(source: PermissionRuleSource): string {
     case 'flagSettings':
       return getSettingsRootPathForSource(source)
   }
-}
-
-/**
- * 不应在 auto 模式下自动编辑的危险文件。
- * 这些文件可用于代码执行或数据泄露。
- */
-export const DANGEROUS_FILES = [
-  '.gitconfig',
-  '.gitmodules',
-  '.bashrc',
-  '.bash_profile',
-  '.zshrc',
-  '.zprofile',
-  '.profile',
-  '.ripgreprc',
-  '.mcp.json',
-  '.zy.json',
-] as const
-
-/**
- * 不应在 auto 模式下自动编辑的危险目录。
- * 这些目录包含敏感配置或可执行文件。
- */
-export const DANGEROUS_DIRECTORIES = ['.git', '.vscode', '.idea', '.zy'] as const
-
-/**
- * 检查文件路径在没有显式权限的情况下对 auto 编辑是否危险。
- * 包括：
- * - .git 目录或 .gitconfig 文件中的文件（防止基于 git 的数据泄露和代码执行）
- * - .vscode 目录中的文件（防止 VS Code 设置操纵和潜在代码执行）
- * - .idea 目录中的文件（防止 JetBrains IDE 设置操纵）
- * - shell 配置文件（防止 shell 启动脚本操纵）
- * - UNC 路径（防止网络文件访问和 WebDAV 攻击）
- */
-function isDangerousFilePathToAutoEdit(path: string): boolean {
-  const absolutePath = expandPath(path)
-  const pathSegments = absolutePath.split(sep)
-  const fileName = pathSegments.at(-1)
-
-  // 检查 UNC 路径（纵深防御，捕获 containsVulnerableUncPath 可能未捕获的模式）
-  // 阻止所有以 \\ 或 // 开头的内容，因为这些可能是访问网络资源的 UNC 路径
-  if (path.startsWith('\\\\') || path.startsWith('//')) {
-    return true
-  }
-
-  // 检查路径是否在危险目录内（不区分大小写以防止绕过）
-  for (let i = 0; i < pathSegments.length; i++) {
-    const segment = pathSegments[i]!
-    const normalizedSegment = normalizeCaseForComparison(segment)
-
-    for (const dir of DANGEROUS_DIRECTORIES) {
-      if (normalizedSegment !== normalizeCaseForComparison(dir)) {
-        continue
-      }
-
-      // 特殊情况：.zy/worktrees/ 是结构性路径（ZY 存储 git worktree 的地方），
-      // 而非用户创建的危险目录。当后面跟着 'worktrees' 时跳过 .zy 段。
-      // worktree 内任何嵌套的 .zy 目录（后面不跟 'worktrees'）仍然被阻止。
-      if (dir === '.zy') {
-        const nextSegment = pathSegments[i + 1]
-        if (nextSegment && normalizeCaseForComparison(nextSegment) === 'worktrees') {
-          break // 跳过此 .zy，继续检查其他段
-        }
-      }
-
-      return true
-    }
-  }
-
-  // 检查危险的配置文件（不区分大小写）
-  if (fileName) {
-    const normalizedFileName = normalizeCaseForComparison(fileName)
-    if (
-      (DANGEROUS_FILES as readonly string[]).some(
-        (dangerousFile) => normalizeCaseForComparison(dangerousFile) === normalizedFileName,
-      )
-    ) {
-      return true
-    }
-  }
-
-  return false
-}
-
-/**
- * 检测可能绕过安全检查的可疑 Windows 路径模式。
- * 这些模式包括：
- * - NTFS 备用数据流（例如 file.txt::$DATA 或 file.txt:stream）
- * - 8.3 短名称（例如 GIT~1、CLAUDE~1、SETTIN~1.JSON）
- * - 长路径前缀（例如 \\?\C:\...、\\.\C:\...、//?/C:/...、//./C:/...）
- * - 尾部点和空格（例如 .git.、.zy 、.bashrc...）
- * - DOS 设备名称（例如 .git.CON、settings.json.PRN、.bashrc.AUX）
- * - 三个或更多连续点（例如 .../file.txt、path/.../file、file...txt）
- *
- * 检测到这些路径时，应始终要求手动审批，以防止
- * 通过路径规范化漏洞绕过安全检查。
- *
- * ## 为什么在所有平台上检查？
- *
- * 虽然这些模式主要是 Windows 特有的，但 NTFS 文件系统可以挂载到
- * Linux 和 macOS 上（例如使用 ntfs-3g）。在这些系统上，相同的
- * 绕过技术也会生效 — 攻击者可以使用短名称或长路径前缀来绕过安全检查。
- * 因此，我们在所有平台上检查这些模式以确保全面保护。
- * （注意：ADS 冒号检查仅限 Windows/WSL，因为冒号语法仅由 Windows
- * 内核解释；在 Linux/macOS 上，NTFS ADS 通过 xattrs 访问，而非冒号语法。）
- *
- * ## 为什么选择检测而非规范化？
- *
- * 另一种方法是使用 Windows API（例如 GetLongPathNameW）规范化这些路径。
- * 但这种方法面临重大挑战：
- *
- * 1. **文件系统依赖**：短路径规范化相对于文件系统中当前存在的文件。
- *    这在写入新文件时会产生问题，因为它们尚不存在且无法规范化。
- *
- * 2. **竞态条件**：规范化与实际文件访问之间的文件系统状态可能发生变化，
- *    产生 TOCTOU（检查时-使用时）漏洞。
- *
- * 3. **复杂性**：正确的规范化需要 Windows 特定的 API，处理多种边缘情况，
- *    并处理各种路径格式（UNC、设备路径等）。
- *
- * 4. **可靠性**：模式检测更可预测，不依赖于外部系统状态。
- *
- * 如果你正在考虑为这些路径添加规范化，请先联系 AppSec
- * 讨论安全影响和实现方法。
- *
- * @param path 要检查可疑模式的路径
- * @returns 如果检测到可疑 Windows 路径模式则返回 true
- */
-function hasSuspiciousWindowsPathPattern(path: string): boolean {
-  // 检查 NTFS 备用数据流
-  // 查找位置 2 之后的 ':' 以跳过盘符（例如 C:\）
-  // 示例：file.txt::$DATA、.bashrc:hidden、settings.json:stream
-  // 注意：ADS 冒号语法仅由 Windows 内核解释。在 WSL 上，
-  // DrvFs 挂载将文件操作路由通过 Windows 内核，因此冒号
-  // 语法仍被解释为 ADS 分隔符。在 Linux/macOS（非 WSL）上，
-  // 即使挂载了 NTFS，ADS 也通过 xattrs（ntfs-3g）访问，而非冒号
-  // 语法，冒号是有效的文件名字符。
-  if (getPlatform() === 'windows' || getPlatform() === 'wsl') {
-    const colonIndex = path.indexOf(':', 2)
-    if (colonIndex !== -1) {
-      return true
-    }
-  }
-
-  // 检查 8.3 短名称
-  // 查找 '~' 后跟数字
-  // 示例：GIT~1、CLAUDE~1、SETTIN~1.JSON、BASHRC~1
-  if (/~\d/.test(path)) {
-    return true
-  }
-
-  // 检查长路径前缀（反斜杠和正斜杠变体）
-  // 示例：\\?\C:\Users\...、\\.\C:\...、//?/C:/...、//./C:/...
-  if (
-    path.startsWith('\\\\?\\') ||
-    path.startsWith('\\\\.\\') ||
-    path.startsWith('//?/') ||
-    path.startsWith('//./')
-  ) {
-    return true
-  }
-
-  // 检查 Windows 在路径解析时去除的尾部点和空格
-  // 示例：.git.、.zy 、.bashrc...、settings.json.
-  // 如果 ".git" 被阻止但使用 ".git."，则可以绕过字符串匹配
-  if (/[.\s]+$/.test(path)) {
-    return true
-  }
-
-  // 检查 Windows 视为特殊设备的 DOS 设备名称
-  // 示例：.git.CON、settings.json.PRN、.bashrc.AUX
-  // 设备名称：CON、PRN、AUX、NUL、COM1-9、LPT1-9
-  if (/\.(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i.test(path)) {
-    return true
-  }
-
-  // 检查三个或更多连续点（...）用作路径组件时
-  // 此模式可用于绕过安全检查或造成混淆
-  // 示例：.../file.txt、path/.../file
-  // 仅当点前后都有路径分隔符（/ 或 \）时才阻止
-  // 这允许 Next.js 捕获所有路由 [...]name] 等合法用途
-  if (/(^|\/|\\)\.{3,}(\/|\\|$)/.test(path)) {
-    return true
-  }
-
-  // 检查 UNC 路径（在所有平台上进行纵深防御）
-  // 示例：\\server\share、\\foo.com\file、//server/share、\\192.168.1.1\share
-  // UNC 路径可以访问远程资源、泄露凭据并绕过工作目录限制
-  if (containsVulnerableUncPath(path)) {
-    return true
-  }
-
-  return false
 }
 
 /**
@@ -319,50 +80,6 @@ function hasSuspiciousWindowsPathPattern(path: string): boolean {
  * @param path 要检查安全性的路径
  * @returns 如果不安全则返回 safe=false 和 message，如果所有检查通过则返回 { safe: true }
  */
-export function checkPathSafetyForAutoEdit(
-  path: string,
-  precomputedPathsToCheck?: readonly string[],
-): { safe: true } | { safe: false; message: string; classifierApprovable: boolean } {
-  // 获取所有需要检查的路径（原始路径 + 解析的符号链接路径）
-  const pathsToCheck = precomputedPathsToCheck ?? getPathsForPermissionCheck(path)
-
-  // 在所有路径上检查可疑 Windows 路径模式
-  for (const pathToCheck of pathsToCheck) {
-    if (hasSuspiciousWindowsPathPattern(pathToCheck)) {
-      return {
-        safe: false,
-        message: tSync('permission.requestedWriteSuspiciousWindowsPath', { path }),
-        classifierApprovable: false,
-      }
-    }
-  }
-
-  // 在所有路径上检查 Zy 配置文件
-  for (const pathToCheck of pathsToCheck) {
-    if (isZyConfigFilePath(pathToCheck)) {
-      return {
-        safe: false,
-        message: tSync('permission.requestedWritePathNotGranted', { path }),
-        classifierApprovable: true,
-      }
-    }
-  }
-
-  // 在所有路径上检查危险文件
-  for (const pathToCheck of pathsToCheck) {
-    if (isDangerousFilePathToAutoEdit(pathToCheck)) {
-      return {
-        safe: false,
-        message: tSync('permission.requestedEditSensitiveFile', { path }),
-        classifierApprovable: true,
-      }
-    }
-  }
-
-  // 所有安全检查通过
-  return { safe: true }
-}
-
 export function allWorkingDirectories(context: ToolPermissionContext): Set<string> {
   return new Set([getOriginalCwd(), ...context.additionalWorkingDirectories.keys()])
 }
@@ -964,15 +681,3 @@ export function generateSuggestions(
     ? [{ type: 'setMode', mode: 'acceptEdits', destination: 'session' }]
     : []
 }
-
-/**
- * 检查路径是否为可以无需权限编辑的内部路径。
- * 返回 PermissionResult — 如果匹配则返回 'allow'，否则返回 'passthrough' 以继续检查。
- */
-export { checkEditableInternalPath } from './filesystemPathSupport.js'
-
-/**
- * 检查路径是否为可以无需权限读取的内部路径。
- * 返回 PermissionResult — 如果匹配则返回 'allow'，否则返回 'passthrough' 以继续检查。
- */
-export { checkReadableInternalPath } from './filesystemPathSupport.js'

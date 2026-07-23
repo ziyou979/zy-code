@@ -3,7 +3,8 @@ import { findToolByName, type ToolUseContext } from '../../tools/tool.js'
 import type { ToolCallBlock } from '../../types/llm.js'
 import type { AssistantMessage, Message } from '../../types/message.js'
 import { all } from '../../utils/generators.js'
-import { type MessageUpdateLazy, runToolUse } from './toolExecution.js'
+import type { MessageUpdateLazy } from './toolExecutionLifecycle.js'
+import { runToolUse } from './toolExecution.js'
 
 function getMaxToolUseConcurrency(): number {
   return parseInt(process.env.ZY_CODE_MAX_TOOL_USE_CONCURRENCY || '', 10) || 10

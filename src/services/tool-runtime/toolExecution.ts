@@ -86,10 +86,8 @@ import {
   type MessageUpdateLazy,
   executeToolCallWithResultHandling,
   getNextImagePasteId,
-} from './toolExecutionResultSupport.js'
+} from './toolExecutionLifecycle.js'
 import { resolveHookPermissionDecision, runPreToolUseHooks } from './toolHooks.js'
-
-export type { MessageUpdateLazy } from './toolExecutionResultSupport.js'
 
 const toolLog = createDebugLog('tools')
 

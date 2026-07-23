@@ -1,7 +1,5 @@
 import { chmod, open, rename, stat, unlink } from 'node:fs/promises'
 import { dirname, join, parse } from 'node:path'
-import mapValues from 'lodash-es/mapValues.js'
-import { getPlatform } from 'src/services/shell/platform.js'
 import { getCurrentProjectConfig, getGlobalConfig } from '../config/config.js'
 import { getCwd } from '../environment/cwd.js'
 import { createDebugLog } from '../../services/infra/debug.js'
@@ -12,39 +10,21 @@ import { isSettingSourceEnabled } from '../settings/constants.js'
 import { getManagedFilePath } from '../settings/managedPath.js'
 import type { ValidationError } from '../settings/validation.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
-import { expandEnvVarsInString } from './envExpansion.js'
-import {
-  type ConfigScope,
-  type McpHTTPServerConfig,
-  type McpJsonConfig,
-  McpJsonConfigSchema,
-  type McpServerConfig,
-  type McpSSEServerConfig,
-  type McpStdioServerConfig,
-  type McpWebSocketServerConfig,
-  type ScopedMcpServerConfig,
-} from './types.js'
+import type { ConfigScope, McpJsonConfig, ScopedMcpServerConfig } from './types.js'
+import { parseMcpConfig, addScopeToServers } from './configParsing.js'
 
 const mcpLog = createDebugLog('mcp')
 
+/**
+ * 获取托管 MCP 配置文件的路径
+ */
 export function getEnterpriseMcpFilePath(): string {
   return join(getManagedFilePath(), 'managed-mcp.json')
 }
 
-function addScopeToServers(
-  servers: Record<string, McpServerConfig> | undefined,
-  scope: ConfigScope,
-): Record<string, ScopedMcpServerConfig> {
-  if (!servers) {
-    return {}
-  }
-  const scopedServers: Record<string, ScopedMcpServerConfig> = {}
-  for (const [name, config] of Object.entries(servers)) {
-    scopedServers[name] = { ...config, scope }
-  }
-  return scopedServers
-}
-
+/**
+ * 原子写入 .mcp.json 文件
+ */
 export async function writeMcpjsonFile(config: McpJsonConfig): Promise<void> {
   const mcpJsonPath = join(getCwd(), '.mcp.json')
 
@@ -85,145 +65,9 @@ export async function writeMcpjsonFile(config: McpJsonConfig): Promise<void> {
   }
 }
 
-function expandEnvVars(config: McpServerConfig): {
-  expanded: McpServerConfig
-  missingVars: string[]
-} {
-  const missingVars: string[] = []
-
-  function expandString(str: string): string {
-    const { expanded, missingVars: vars } = expandEnvVarsInString(str)
-    missingVars.push(...vars)
-    return expanded
-  }
-
-  let expanded: McpServerConfig
-
-  switch (config.type) {
-    case undefined:
-    case 'stdio': {
-      const stdioConfig = config as McpStdioServerConfig
-      expanded = {
-        ...stdioConfig,
-        command: expandString(stdioConfig.command),
-        args: stdioConfig.args.map(expandString),
-        env: stdioConfig.env ? mapValues(stdioConfig.env, expandString) : undefined,
-      }
-      break
-    }
-    case 'sse':
-    case 'http':
-    case 'ws': {
-      const remoteConfig = config as
-        | McpSSEServerConfig
-        | McpHTTPServerConfig
-        | McpWebSocketServerConfig
-      expanded = {
-        ...remoteConfig,
-        url: expandString(remoteConfig.url),
-        headers: remoteConfig.headers ? mapValues(remoteConfig.headers, expandString) : undefined,
-      }
-      break
-    }
-    case 'sse-ide':
-    case 'ws-ide':
-    case 'sdk':
-    case 'zyai-proxy':
-      expanded = config
-      break
-  }
-
-  return {
-    expanded,
-    missingVars: [...new Set(missingVars)],
-  }
-}
-
-export function parseMcpConfig(params: {
-  configObject: unknown
-  expandVars: boolean
-  scope: ConfigScope
-  filePath?: string
-}): {
-  config: McpJsonConfig | null
-  errors: ValidationError[]
-} {
-  const { configObject, expandVars, scope, filePath } = params
-  const schemaResult = McpJsonConfigSchema().safeParse(configObject)
-  if (!schemaResult.success) {
-    return {
-      config: null,
-      errors: schemaResult.error.issues.map((issue) => ({
-        ...(filePath && { file: filePath }),
-        path: issue.path.join('.'),
-        message: 'Does not adhere to MCP server configuration schema',
-        mcpErrorMetadata: {
-          scope,
-          severity: 'fatal',
-        },
-      })),
-    }
-  }
-
-  const errors: ValidationError[] = []
-  const validatedServers: Record<string, McpServerConfig> = {}
-
-  for (const [name, config] of Object.entries(schemaResult.data.mcpServers)) {
-    let configToCheck = config
-
-    if (expandVars) {
-      const { expanded, missingVars } = expandEnvVars(config)
-
-      if (missingVars.length > 0) {
-        errors.push({
-          ...(filePath && { file: filePath }),
-          path: `mcpServers.${name}`,
-          message: `Missing environment variables: ${missingVars.join(', ')}`,
-          suggestion: `Set the following environment variables: ${missingVars.join(', ')}`,
-          mcpErrorMetadata: {
-            scope,
-            serverName: name,
-            severity: 'warning',
-          },
-        })
-      }
-
-      configToCheck = expanded
-    }
-
-    if (
-      getPlatform() === 'windows' &&
-      (!configToCheck.type || configToCheck.type === 'stdio') &&
-      (() => {
-        const stdioConfig = configToCheck as McpStdioServerConfig
-        return (
-          stdioConfig.command === 'npx' ||
-          stdioConfig.command.endsWith('\\npx') ||
-          stdioConfig.command.endsWith('/npx')
-        )
-      })()
-    ) {
-      errors.push({
-        ...(filePath && { file: filePath }),
-        path: `mcpServers.${name}`,
-        message: `Windows requires 'cmd /c' wrapper to execute npx`,
-        suggestion: `Change command to "cmd" with args ["/c", "npx", ...]. See: https://code.zy.com/docs/en/mcp#configure-mcp-servers`,
-        mcpErrorMetadata: {
-          scope,
-          serverName: name,
-          severity: 'warning',
-        },
-      })
-    }
-
-    validatedServers[name] = configToCheck
-  }
-  return {
-    config: { mcpServers: validatedServers },
-    errors,
-  }
-}
-
+/**
+ * 从文件路径读取并解析 MCP 配置
+ */
 export function parseMcpConfigFromFilePath(params: {
   filePath: string
   expandVars: boolean
@@ -308,6 +152,9 @@ export function parseMcpConfigFromFilePath(params: {
   })
 }
 
+/**
+ * 获取当前目录的 .mcp.json 配置（无父目录遍历）
+ */
 export function getProjectMcpConfigsFromCwd(): {
   servers: Record<string, ScopedMcpServerConfig>
   errors: ValidationError[]
@@ -343,6 +190,9 @@ export function getProjectMcpConfigsFromCwd(): {
   }
 }
 
+/**
+ * 按作用域获取 MCP 配置（递归查找 .mcp.json、读 user/local/enterprise 配置）
+ */
 export function getMcpConfigsByScope(scope: 'project' | 'user' | 'local' | 'enterprise'): {
   servers: Record<string, ScopedMcpServerConfig>
   errors: ValidationError[]

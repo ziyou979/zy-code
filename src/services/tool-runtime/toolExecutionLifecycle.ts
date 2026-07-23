@@ -74,10 +74,17 @@ import { getMcpServerScopeFromToolName, isMcpTool } from '../mcp/utils.js'
 import { createStopHookSummaryMessage, createUserMessage } from '../messages/constructors.js'
 import type { McpServerType } from './toolExecution.js'
 
+import {
+  HOOK_TIMING_DISPLAY_THRESHOLD_MS,
+  recordToolContentEvent,
+  getFileExtensionForToolResult,
+  maybeEnrichGitCommitId,
+} from './toolTelemetry.js'
+import { classifyToolError } from './toolResult.js'
+
 const toolLog = createDebugLog('tools')
 
-/** hook 总耗时达到此阈值（毫秒）才在行内展示计时汇总 */
-export const HOOK_TIMING_DISPLAY_THRESHOLD_MS = 500
+export { HOOK_TIMING_DISPLAY_THRESHOLD_MS }
 
 export type MessageUpdateLazy<M extends Message = Message> = {
   message: M
@@ -85,23 +92,6 @@ export type MessageUpdateLazy<M extends Message = Message> = {
     toolUseID: string
     modifyContext: (context: ToolUseContext) => ToolUseContext
   }
-}
-
-function classifyToolError(error: unknown): string {
-  if (error instanceof TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS) {
-    return error.telemetryMessage.slice(0, 200)
-  }
-  if (error instanceof Error) {
-    const errnoCode = getErrnoCode(error)
-    if (typeof errnoCode === 'string') {
-      return `Error:${errnoCode}`
-    }
-    if (error.name && error.name !== 'Error' && error.name.length > 3) {
-      return error.name.slice(0, 60)
-    }
-    return 'Error'
-  }
-  return 'UnknownError'
 }
 
 export function getNextImagePasteId(messages: Message[]): number {
@@ -146,77 +136,6 @@ type ExecuteToolCallWithResultHandlingArgs = {
   toolUseID: string
 }
 
-function recordToolContentEvent(
-  tool: Tool,
-  processedInput: { [key: string]: unknown },
-  result: ToolResult<unknown>,
-): void {
-  if (!result.data || typeof result.data !== 'object') {
-    return
-  }
-
-  const contentAttributes: Record<string, string | number | boolean> = {}
-
-  if (tool.name === FILE_READ_TOOL_NAME && 'content' in result.data) {
-    if ('file_path' in processedInput) {
-      contentAttributes.file_path = String(processedInput.file_path)
-    }
-    contentAttributes.content = String(result.data.content)
-  }
-
-  if (
-    (tool.name === FILE_EDIT_TOOL_NAME || tool.name === FILE_WRITE_TOOL_NAME) &&
-    'file_path' in processedInput
-  ) {
-    contentAttributes.file_path = String(processedInput.file_path)
-
-    if (tool.name === FILE_EDIT_TOOL_NAME && 'diff' in result.data) {
-      contentAttributes.diff = String(result.data.diff)
-    }
-    if (tool.name === FILE_WRITE_TOOL_NAME && 'content' in processedInput) {
-      contentAttributes.content = String(processedInput.content)
-    }
-  }
-
-  if (tool.name === BASH_TOOL_NAME && 'command' in processedInput) {
-    const bashInput = processedInput as BashToolInput
-    contentAttributes.bash_command = bashInput.command
-    if ('output' in result.data) {
-      contentAttributes.output = String(result.data.output)
-    }
-  }
-
-  if (Object.keys(contentAttributes).length > 0) {
-    addToolContentEvent('tool.output', contentAttributes)
-  }
-}
-
-function getFileExtensionForToolResult(
-  tool: Tool,
-  processedInput: { [key: string]: unknown },
-): ReturnType<typeof getFileExtensionForAnalytics> {
-  if (tool.name === FILE_READ_TOOL_NAME && 'file_path' in processedInput) {
-    return getFileExtensionForAnalytics(String(processedInput.file_path))
-  }
-  if (
-    (tool.name === FILE_EDIT_TOOL_NAME || tool.name === FILE_WRITE_TOOL_NAME) &&
-    'file_path' in processedInput
-  ) {
-    return getFileExtensionForAnalytics(String(processedInput.file_path))
-  }
-  if (tool.name === NOTEBOOK_EDIT_TOOL_NAME && 'notebook_path' in processedInput) {
-    return getFileExtensionForAnalytics(String(processedInput.notebook_path))
-  }
-  if (tool.name === BASH_TOOL_NAME && 'command' in processedInput) {
-    const bashInput = processedInput as BashToolInput
-    return getFileExtensionsFromBashCommand(
-      bashInput.command,
-      bashInput._simulatedSedEdit?.filePath,
-    )
-  }
-  return undefined
-}
-
 function collectHookStopInfo(message: MessageUpdateLazy['message']): StopHookInfo | null {
   if (message.type !== 'attachment') {
     return null
@@ -258,30 +177,6 @@ function applyUpdatedToolOutputOverride(
   const block = content.find((item) => item?.type === 'tool_result')
   if (block) {
     block.content = updatedToolOutputOverride
-  }
-}
-
-function maybeEnrichGitCommitId(
-  tool: Tool,
-  processedInput: { [key: string]: unknown },
-  result: ToolResult<unknown>,
-  toolParameters: Record<string, unknown>,
-): void {
-  if (
-    !isToolDetailsLoggingEnabled() ||
-    (tool.name !== BASH_TOOL_NAME && tool.name !== POWERSHELL_TOOL_NAME) ||
-    !('command' in processedInput) ||
-    typeof processedInput.command !== 'string' ||
-    !processedInput.command.match(/\bgit\s+commit\b/) ||
-    !result.data ||
-    typeof result.data !== 'object' ||
-    !('stdout' in result.data)
-  ) {
-    return
-  }
-  const gitCommitId = parseGitCommitId(String(result.data.stdout))
-  if (gitCommitId) {
-    toolParameters.git_commit_id = gitCommitId
   }
 }
 

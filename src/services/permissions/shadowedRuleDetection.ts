@@ -6,7 +6,7 @@ import {
   getAskRules,
   getDenyRules,
   permissionRuleSourceDisplayString,
-} from './permissions.js'
+} from './permissionRuleQueries.js'
 
 /**
  * Type of shadowing that makes a rule unreachable

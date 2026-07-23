@@ -31,13 +31,13 @@ import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 
 import { parsePromptTooLongTokenCounts } from '../api/errors.js'
 import { getDefaultMaxRetries } from '../api/withRetry.js'
 import { extractToolCallInlineBlock, parseClassifierResponse } from './classifierShared.js'
-import { getZyTempDir } from './filesystem.js'
+import { getZyTempDir } from './scratchpadStorage.js'
 import {
   buildAgentsMdMessage,
   buildDefaultSystemPrompt,
   buildYoloSystemPrompt,
   getDefaultAutoModeRules,
-} from './yoloClassifierPromptSupport.js'
+} from './classifierPrompt.js'
 import {
   buildToolLookup,
   buildTranscriptEntries,
@@ -51,7 +51,7 @@ import {
   toCompactBlock,
   type TwoStageMode,
   type TranscriptEntry,
-} from './yoloClassifierTranscriptSupport.js'
+} from './classifierTranscript.js'
 
 const permLog = createDebugLog('permissions:classifier')
 
@@ -941,15 +941,3 @@ function detectPromptTooLong(
   }
   return parsePromptTooLongTokenCounts(error.message)
 }
-
-export {
-  buildDefaultSystemPrompt,
-  buildTranscriptEntries,
-  buildTranscriptForClassifier,
-  buildYoloSystemPrompt,
-  formatActionForClassifier,
-  getDefaultAutoModeRules,
-}
-
-export type { AutoModeRules } from './yoloClassifierPromptSupport.js'
-export type { TranscriptEntry } from './yoloClassifierTranscriptSupport.js'

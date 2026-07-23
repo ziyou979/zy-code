@@ -1,46 +1,16 @@
 import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { z } from 'zod/v4'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { getErrnoCode } from '../../utils/errors.js'
-import { lazySchema } from '../../utils/lazySchema.js'
 import * as lockfile from '../file-persistence/lockfile.js'
 import { logError } from '../../services/infra/log.js'
 import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import { getTeamDir } from './teamHelpers.js'
-import type { PermissionUpdate } from '../permissions/permissionUpdateSchema.js'
-
-export const SwarmPermissionRequestSchema = lazySchema(() =>
-  z.object({
-    id: z.string(),
-    workerId: z.string(),
-    workerName: z.string(),
-    workerColor: z.string().optional(),
-    teamName: z.string(),
-    toolName: z.string(),
-    toolUseId: z.string(),
-    description: z.string(),
-    input: z.record(z.string(), z.unknown()),
-    permissionSuggestions: z.array(z.unknown()),
-    status: z.enum(['pending', 'approved', 'rejected']),
-    resolvedBy: z.enum(['worker', 'leader']).optional(),
-    resolvedAt: z.number().optional(),
-    feedback: z.string().optional(),
-    updatedInput: z.record(z.string(), z.unknown()).optional(),
-    permissionUpdates: z.array(z.unknown()).optional(),
-    createdAt: z.number(),
-  }),
-)
-
-export type SwarmPermissionRequest = z.infer<ReturnType<typeof SwarmPermissionRequestSchema>>
-
-type PermissionResolutionRecord = {
-  decision: 'approved' | 'rejected'
-  resolvedBy: 'worker' | 'leader'
-  feedback?: string
-  updatedInput?: Record<string, unknown>
-  permissionUpdates?: PermissionUpdate[]
-}
+import {
+  SwarmPermissionRequestSchema,
+  type SwarmPermissionRequest,
+} from './swarmPermissionProtocol.js'
+import type { PermissionResolutionRecord } from './swarmPermissionProtocol.js'
 
 export function getPermissionDir(teamName: string): string {
   return join(getTeamDir(teamName), 'permissions')

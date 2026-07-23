@@ -29,8 +29,8 @@ import { permissionRuleValueToString } from './permissionRuleParser.js'
 import {
   applyPermissionRulesToPermissionContext,
   syncPermissionRulesFromDisk,
-} from './permissionContextSyncSupport.js'
-import { deletePermissionRule } from './permissionEditingSupport.js'
+} from './permissionRuleSync.js'
+import { deletePermissionRule } from './permissionRuleRepository.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const autoModeStateModule = true
@@ -87,31 +87,11 @@ import {
   getRuleByContentsForToolName,
   permissionRuleSourceDisplayString,
   toolAlwaysAllowedRule,
-} from './permissionRuleSupport.js'
-import { classifyYoloAction, formatActionForClassifier } from './yoloClassifier.js'
+} from './permissionRuleQueries.js'
+import { formatActionForClassifier } from './classifierTranscript.js'
+import { classifyYoloAction } from './yoloClassifier.js'
 
 const permLog = createDebugLog('permissions')
-
-export {
-  createPermissionRequestMessage,
-  filterDeniedAgents,
-  getAllowRules,
-  getAskRuleForTool,
-  getAskRules,
-  getDenyRuleForAgent,
-  getDenyRuleForTool,
-  getDenyRules,
-  getRuleByContentsForTool,
-  getRuleByContentsForToolName,
-  permissionRuleSourceDisplayString,
-  toolAlwaysAllowedRule,
-} from './permissionRuleSupport.js'
-
-export {
-  applyPermissionRulesToPermissionContext,
-  deletePermissionRule,
-  syncPermissionRulesFromDisk,
-}
 
 /**
  * 为无法显示权限提示的 headless/异步 agent 运行 PermissionRequest hook。

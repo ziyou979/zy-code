@@ -9,7 +9,7 @@ const permLog = createDebugLog('permissions')
 import type { EditableSettingSource } from '../settings/constants.js'
 import { getSettingsForSource, updateSettingsForSource } from '../settings/settings.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
-import { toPosixPath } from './filesystem.js'
+import { toPosixPath } from './internalPaths.js'
 import type { PermissionRuleValue } from './permissionRule.js'
 import type { PermissionUpdate, PermissionUpdateDestination } from './permissionUpdateSchema.js'
 import {

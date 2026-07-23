@@ -101,9 +101,11 @@ import type { TeammateContext } from './teammateContext.js'
 import { runWithTeammateContext } from './teammateContext.js'
 import {
   createIdleNotification,
-  getLastPeerDmSummary,
   isPermissionResponse,
   isShutdownRequest,
+} from '../../services/swarm/teammateMailboxMessages.js'
+import {
+  getLastPeerDmSummary,
   markMessageAsReadByIndex,
   readMailbox,
   writeToMailbox,

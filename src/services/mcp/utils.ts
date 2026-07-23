@@ -1,16 +1,14 @@
 import { createHash } from 'node:crypto'
 import { join } from 'node:path'
-import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../../commands/index.js'
 import type { AgentMcpServerInfo } from './viewTypes.js'
 import type { Tool } from '../../tools/tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { getCwd } from '../environment/cwd.js'
 import { getGlobalZyFile } from '../environment/env.js'
-import { isSettingSourceEnabled } from '../settings/constants.js'
-import { getInitialSettings, hasSkipDangerousModePermissionPrompt } from '../settings/settings.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
-import { getEnterpriseMcpFilePath, getMcpConfigByName } from './config.js'
+import { getMcpConfigByName } from './configLookup.js'
+import { getEnterpriseMcpFilePath } from './configRepository.js'
 import { mcpInfoFromString } from './mcpStringUtils.js'
 import { normalizeNameForMCP } from './normalization.js'
 import {
@@ -326,51 +324,6 @@ export function parseHeaders(headerArray: string[]): Record<string, string> {
   }
 
   return headers
-}
-
-export function getProjectMcpServerStatus(serverName: string): 'approved' | 'rejected' | 'pending' {
-  const settings = getInitialSettings()
-  const normalizedName = normalizeNameForMCP(serverName)
-
-  // TODO: This fails an e2e test if the ?. is not present. This is likely a bug in the e2e test.
-  // Will fix this in a follow-up PR.
-  if (
-    settings?.disabledMcpjsonServers?.some((name) => normalizeNameForMCP(name) === normalizedName)
-  ) {
-    return 'rejected'
-  }
-
-  if (
-    settings?.enabledMcpjsonServers?.some((name) => normalizeNameForMCP(name) === normalizedName) ||
-    settings?.enableAllProjectMcpServers
-  ) {
-    return 'approved'
-  }
-
-  // In bypass permissions mode (--dangerously-skip-permissions), there's no way
-  // to show an approval popup. Auto-approve if projectSettings is enabled since
-  // the user has explicitly chosen to bypass all permission checks.
-  // SECURITY: We intentionally only check skipDangerousModePermissionPrompt via
-  // hasSkipDangerousModePermissionPrompt(), which reads from userSettings/localSettings/
-  // flagSettings/policySettings but NOT projectSettings (repo-level .zy/settings.json).
-  // This is intentional: a repo should not be able to accept the bypass dialog on behalf of
-  // users. We also do NOT check getSessionBypassPermissionsMode() here because
-  // sessionBypassPermissionsMode can be set from project settings before the dialog is shown,
-  // which would allow RCE attacks via malicious project settings.
-  if (hasSkipDangerousModePermissionPrompt() && isSettingSourceEnabled('projectSettings')) {
-    return 'approved'
-  }
-
-  // In non-interactive mode (SDK, zy -p, piped input), there's no way to
-  // show an approval popup. Auto-approve if projectSettings is enabled since:
-  // 1. The user/developer explicitly chose to run in this mode
-  // 2. For SDK, projectSettings is off by default - they must explicitly enable it
-  // 3. For -p mode, the help text warns to only use in trusted directories
-  if (getIsNonInteractiveSession() && isSettingSourceEnabled('projectSettings')) {
-    return 'approved'
-  }
-
-  return 'pending'
 }
 
 /**

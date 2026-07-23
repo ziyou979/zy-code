@@ -1,10 +1,4 @@
 import { jsonStringify } from '../../services/infra/slowOperations.js'
-import type { SettingsJson } from '../settings/types.js'
-import {
-  isMcpServerCommandEntry,
-  isMcpServerNameEntry,
-  isMcpServerUrlEntry,
-} from '../settings/types.js'
 import type { McpServerConfig, McpStdioServerConfig, ScopedMcpServerConfig } from './types.js'
 
 function getServerCommandArray(config: McpServerConfig): string[] | null {
@@ -28,6 +22,10 @@ function getServerUrl(config: McpServerConfig): string | null {
 
 const CCR_PROXY_PATH_MARKERS = ['/v2/session_ingress/shttp/mcp/', '/v2/ccr-sessions/']
 
+/**
+ * If the URL is a CCR proxy URL, extract the original vendor URL from the
+ * mcp_url query parameter. Otherwise return the URL unchanged.
+ */
 export function unwrapCcrProxyUrl(url: string): string {
   if (!CCR_PROXY_PATH_MARKERS.some((marker) => url.includes(marker))) {
     return url
@@ -41,6 +39,13 @@ export function unwrapCcrProxyUrl(url: string): string {
   }
 }
 
+/**
+ * Compute a dedup signature for an MCP server config.
+ * Two configs with the same signature are considered "the same server" for
+ * plugin deduplication. Ignores env (plugins always inject CLAUDE_PLUGIN_ROOT)
+ * and headers (same URL = same server regardless of auth).
+ * Returns null only for configs with neither command nor url (sdk type).
+ */
 export function getMcpServerSignature(config: McpServerConfig): string | null {
   const command = getServerCommandArray(config)
   if (command) {
@@ -53,6 +58,15 @@ export function getMcpServerSignature(config: McpServerConfig): string | null {
   return null
 }
 
+/**
+ * Filter plugin MCP servers, dropping any whose signature matches a
+ * manually-configured server or an earlier-loaded plugin server.
+ * Manual wins over plugin; between plugins, first-loaded wins.
+ *
+ * Plugin servers are namespaced `plugin:name:server` so they never key-collide
+ * with manual servers in the merge — this content-based check catches the case
+ * where both actually launch the same underlying process/connection.
+ */
 export function dedupPluginMcpServers(
   pluginServers: Record<string, ScopedMcpServerConfig>,
   manualServers: Record<string, ScopedMcpServerConfig>,
@@ -100,6 +114,70 @@ export function dedupPluginMcpServers(
   return { servers, suppressed }
 }
 
+/**
+ * 按 scope 优先级合并 MCP 配置：plugin < user < project < local。
+ * 同名 server 时较高优先级完全覆盖较低优先级（Object.assign 语义）。
+ */
+export function mergeMcpConfigsByPriority(
+  pluginServers: Record<string, ScopedMcpServerConfig>,
+  userServers: Record<string, ScopedMcpServerConfig>,
+  projectServers: Record<string, ScopedMcpServerConfig>,
+  localServers: Record<string, ScopedMcpServerConfig>,
+): Record<string, ScopedMcpServerConfig> {
+  return Object.assign({}, pluginServers, userServers, projectServers, localServers)
+}
+
+/**
+ * 合并 zy.ai 连接器与本地配置，zy.ai 具有最低优先级。
+ * 调用前需先通过 dedupZyAIMcpServers 去重。
+ */
+export function mergeZyAIMcpConfigs(
+  zyAiServers: Record<string, ScopedMcpServerConfig>,
+  localServers: Record<string, ScopedMcpServerConfig>,
+): Record<string, ScopedMcpServerConfig> {
+  return Object.assign({}, zyAiServers, localServers)
+}
+
+/**
+ * 企业 MCP 独占选择器。
+ * 当企业配置文件存在时，只返回经过策略过滤的企业服务器，跳过所有其他来源。
+ *
+ * @param enterpriseServers  企业配置中解析出的服务器
+ * @param isEnterprisePresent 企业配置文件是否存在
+ * @param isAllowedByPolicy   allow/deny 策略判定函数
+ * @returns 企业过滤后的服务器，或 null（企业不存在时）
+ */
+export function selectEnterpriseMcpServers(
+  enterpriseServers: Record<string, ScopedMcpServerConfig>,
+  isEnterprisePresent: boolean,
+  isAllowedByPolicy: (name: string, config: McpServerConfig) => boolean,
+): { servers: Record<string, ScopedMcpServerConfig> } | null {
+  if (!isEnterprisePresent) {
+    return null
+  }
+  const filtered: Record<string, ScopedMcpServerConfig> = {}
+  for (const [name, serverConfig] of Object.entries(enterpriseServers)) {
+    if (!isAllowedByPolicy(name, serverConfig)) {
+      continue
+    }
+    filtered[name] = serverConfig
+  }
+  return { servers: filtered }
+}
+
+/**
+ * Filter zy.ai connectors, dropping any whose signature matches an enabled
+ * manually-configured server. Manual wins: a user who wrote .mcp.json or ran
+ * `zy mcp add` expressed higher intent than a connector toggled in the web UI.
+ *
+ * Connector keys are `zy.ai <DisplayName>` so they never key-collide with
+ * manual servers in the merge — this content-based check catches the case where
+ * both point at the same underlying URL (e.g. `mcp__slack__*` and
+ * `mcp__Zy_ai_Slack__*` both hitting mcp.slack.com, ~600 chars/turn wasted).
+ *
+ * Only enabled manual servers count as dedup targets — a disabled manual server
+ * mustn't suppress its connector twin, or neither runs.
+ */
 export function dedupZyAIMcpServers(
   zyAiServers: Record<string, ScopedMcpServerConfig>,
   manualServers: Record<string, ScopedMcpServerConfig>,
@@ -135,131 +213,4 @@ export function dedupZyAIMcpServers(
     servers[name] = config
   }
   return { servers, suppressed }
-}
-
-function urlPatternToRegex(pattern: string): RegExp {
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&')
-  const regexString = escaped.replace(/\*/g, '.*')
-  return new RegExp(`^${regexString}$`)
-}
-
-function urlMatchesPattern(url: string, pattern: string): boolean {
-  return urlPatternToRegex(pattern).test(url)
-}
-
-export function isMcpServerDenied(
-  serverName: string,
-  getDenylistSettings: () => SettingsJson,
-  config?: McpServerConfig,
-): boolean {
-  const settings = getDenylistSettings()
-  if (!settings.deniedMcpServers) {
-    return false
-  }
-
-  for (const entry of settings.deniedMcpServers) {
-    if (isMcpServerNameEntry(entry) && entry.serverName === serverName) {
-      return true
-    }
-  }
-
-  if (config) {
-    const serverCommand = getServerCommandArray(config)
-    if (serverCommand) {
-      for (const entry of settings.deniedMcpServers) {
-        if (
-          isMcpServerCommandEntry(entry) &&
-          commandArraysMatch(entry.serverCommand, serverCommand)
-        ) {
-          return true
-        }
-      }
-    }
-
-    const serverUrl = getServerUrl(config)
-    if (serverUrl) {
-      for (const entry of settings.deniedMcpServers) {
-        if (isMcpServerUrlEntry(entry) && urlMatchesPattern(serverUrl, entry.serverUrl)) {
-          return true
-        }
-      }
-    }
-  }
-
-  return false
-}
-
-export function isMcpServerAllowedByPolicy(
-  serverName: string,
-  getAllowlistSettings: () => SettingsJson,
-  getDenylistSettings: () => SettingsJson,
-  config?: McpServerConfig,
-): boolean {
-  if (isMcpServerDenied(serverName, getDenylistSettings, config)) {
-    return false
-  }
-
-  const settings = getAllowlistSettings()
-  if (!settings.allowedMcpServers) {
-    return true
-  }
-  if (settings.allowedMcpServers.length === 0) {
-    return false
-  }
-
-  const hasCommandEntries = settings.allowedMcpServers.some(isMcpServerCommandEntry)
-  const hasUrlEntries = settings.allowedMcpServers.some(isMcpServerUrlEntry)
-
-  if (config) {
-    const serverCommand = getServerCommandArray(config)
-    const serverUrl = getServerUrl(config)
-
-    if (serverCommand) {
-      if (hasCommandEntries) {
-        return settings.allowedMcpServers.some(
-          (entry) =>
-            isMcpServerCommandEntry(entry) &&
-            commandArraysMatch(entry.serverCommand, serverCommand),
-        )
-      }
-      return settings.allowedMcpServers.some(
-        (entry) => isMcpServerNameEntry(entry) && entry.serverName === serverName,
-      )
-    }
-
-    if (serverUrl) {
-      if (hasUrlEntries) {
-        return settings.allowedMcpServers.some(
-          (entry) => isMcpServerUrlEntry(entry) && urlMatchesPattern(serverUrl, entry.serverUrl),
-        )
-      }
-      return settings.allowedMcpServers.some(
-        (entry) => isMcpServerNameEntry(entry) && entry.serverName === serverName,
-      )
-    }
-  }
-
-  return settings.allowedMcpServers.some(
-    (entry) => isMcpServerNameEntry(entry) && entry.serverName === serverName,
-  )
-}
-
-export function filterMcpServersByPolicy<T>(
-  configs: Record<string, T>,
-  isAllowedByPolicy: (name: string, config?: McpServerConfig) => boolean,
-): {
-  allowed: Record<string, T>
-  blocked: string[]
-} {
-  const allowed: Record<string, T> = {}
-  const blocked: string[] = []
-  for (const [name, config] of Object.entries(configs)) {
-    const candidate = config as McpServerConfig
-    if (candidate.type === 'sdk' || isAllowedByPolicy(name, candidate)) {
-      allowed[name] = config
-    } else {
-      blocked.push(name)
-    }
-  }
-  return { allowed, blocked }
 }

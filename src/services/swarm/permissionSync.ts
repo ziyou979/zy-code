@@ -28,19 +28,21 @@ import {
   createPermissionResponseMessage,
   createSandboxPermissionRequestMessage,
   createSandboxPermissionResponseMessage,
-  writeToMailbox,
-} from '../../services/swarm/teammateMailbox.js'
+} from '../../services/swarm/teammateMailboxMessages.js'
+import { writeToMailbox } from '../../services/swarm/teammateMailbox.js'
 import {
-  cleanupOldResolutionsForTeam,
-  deleteResolvedPermissionForTeam,
   getPermissionDir,
+  writePermissionRequestFile,
   readPendingPermissionsForTeam,
   readResolvedPermissionForTeam,
   resolvePermissionForTeam,
+  deleteResolvedPermissionForTeam,
+  cleanupOldResolutionsForTeam,
+} from './swarmPermissionRepository.js'
+import {
   SwarmPermissionRequestSchema,
   type SwarmPermissionRequest,
-  writePermissionRequestFile,
-} from './permissionSyncSupport.js'
+} from './swarmPermissionProtocol.js'
 import { readTeamFileAsync } from './teamHelpers.js'
 
 export { getPermissionDir, SwarmPermissionRequestSchema }

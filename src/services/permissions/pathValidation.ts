@@ -11,14 +11,10 @@ import {
 } from '../../services/infra/fsOperations.js'
 import { containsPathTraversal } from '../../utils/path.js'
 import { getPlatform } from '../shell/platform.js'
-import {
-  checkEditableInternalPath,
-  checkPathSafetyForAutoEdit,
-  checkReadableInternalPath,
-  matchingRuleForInput,
-  pathInAllowedWorkingPath,
-  pathInWorkingPath,
-} from './filesystem.js'
+import { checkPathSafetyForAutoEdit } from './autoEditPathSafety.js'
+import { matchingRuleForInput, pathInAllowedWorkingPath } from './filesystem.js'
+import { checkEditableInternalPath, checkReadableInternalPath } from './filesystemPolicy.js'
+import { pathInWorkingPath } from './internalPaths.js'
 import type { PermissionDecisionReason } from './permissionResult.js'
 
 const MAX_DIRS_TO_LIST = 5

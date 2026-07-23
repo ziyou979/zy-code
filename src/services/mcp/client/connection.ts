@@ -30,7 +30,8 @@ import { normalizeNameForMCP } from '../normalization.js'
 import { clearKeychainCache } from '../../secure-storage/macOsKeychainHelpers.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { hasMcpDiscoveryButNoToken } from '../auth.js'
-import { getAllMcpConfigs, isMcpServerDisabled } from '../config.js'
+import { getAllMcpConfigs } from '../configResolution.js'
+import { isMcpServerDisabled } from '../serverEnablement.js'
 import type {
   ConnectedMCPServer,
   MCPServerConnection,

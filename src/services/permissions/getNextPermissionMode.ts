@@ -4,11 +4,8 @@ import { createDebugLog } from '../../services/infra/debug.js'
 const permLog = createDebugLog('permissions')
 
 import type { PermissionMode } from './permissionMode.js'
-import {
-  getAutoModeUnavailableReason,
-  isAutoModeGateEnabled,
-  transitionPermissionMode,
-} from './permissionSetup.js'
+import { getAutoModeUnavailableReason, isAutoModeGateEnabled } from './autoModePolicy.js'
+import { transitionPermissionMode } from './permissionModeTransitions.js'
 
 // Checks both the cached isAutoModeAvailable (set at startup by
 // verifyAutoModeGateAccess) and the live isAutoModeGateEnabled() — these can

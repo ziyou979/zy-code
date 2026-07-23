@@ -25,6 +25,19 @@ export async function deletePermissionRule({
     throw new Error('Cannot delete permission rules from read-only settings')
   }
 
+  // Step 1: 先持久化（仅对可编辑来源），持久化失败时保持内存不变
+  if (
+    rule.source === 'localSettings' ||
+    rule.source === 'userSettings' ||
+    rule.source === 'projectSettings'
+  ) {
+    const success = deletePermissionRuleFromSettings(rule as PermissionRuleFromEditableSettings)
+    if (!success) {
+      return // 持久化失败，不更新内存
+    }
+  }
+
+  // Step 2: 持久化成功后更新内存
   const updatedContext = applyPermissionUpdate(initialContext, {
     type: 'removeRules',
     rules: [rule.ruleValue],
@@ -32,17 +45,6 @@ export async function deletePermissionRule({
     destination: rule.source as PermissionUpdateDestination,
   })
 
-  switch (rule.source) {
-    case 'localSettings':
-    case 'userSettings':
-    case 'projectSettings':
-      // 即使经过 source 分支，TypeScript 仍不会自动缩窄到可编辑设置规则类型。
-      deletePermissionRuleFromSettings(rule as PermissionRuleFromEditableSettings)
-      break
-    case 'cliArg':
-    case 'session':
-      break
-  }
-
+  // Step 3: 同步外部状态
   setToolPermissionContext(updatedContext)
 }

@@ -7,8 +7,8 @@ import { getIsRemoteMode } from '../../bootstrap/runtime/runtimeContext.js'
 import {
   createDisabledBypassPermissionsContext,
   shouldDisableBypassPermissions,
-  verifyAutoModeGateAccess,
-} from './permissionSetup.js'
+} from './bypassPermissionPolicy.js'
+import { verifyAutoModeGateAccess } from './autoModePolicy.js'
 
 let bypassPermissionsCheckRan = false
 

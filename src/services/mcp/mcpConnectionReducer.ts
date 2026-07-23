@@ -99,15 +99,3 @@ export function applyPendingMcpUpdates(prevState: AppState, updates: PendingMcpU
 
   return { ...prevState, mcp }
 }
-
-export function getTransportDisplayName(type: string): string {
-  switch (type) {
-    case 'http':
-      return 'HTTP'
-    case 'ws':
-    case 'ws-ide':
-      return 'WebSocket'
-    default:
-      return 'SSE'
-  }
-}

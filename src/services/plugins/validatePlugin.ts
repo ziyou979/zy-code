@@ -9,7 +9,6 @@ import {
   PluginMarketplaceEntrySchema,
   PluginMarketplaceSchema,
 } from './schemas.js'
-export { validateManifest, validatePluginContents } from './validatePluginSupport.js'
 
 /**
  * Fields that belong in marketplace.json entries (PluginMarketplaceEntrySchema)
