@@ -162,12 +162,7 @@ const DEFAULT_PROJECT_CONFIG: ProjectConfig = {
 
 export type InstallMethod = 'local' | 'native' | 'global' | 'unknown'
 
-export {
-  EDITOR_MODES,
-  NOTIFICATION_CHANNELS,
-} from '../environment/configConstants.js'
-
-import type { EDITOR_MODES, NOTIFICATION_CHANNELS } from '../environment/configConstants.js'
+import { EDITOR_MODES, NOTIFICATION_CHANNELS } from '../environment/configConstants.js'
 
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number]
 

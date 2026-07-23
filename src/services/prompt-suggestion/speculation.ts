@@ -10,7 +10,7 @@ import {
   type SpeculationResult,
   type SpeculationState,
 } from '../../state/speculationState.js'
-import { commandHasAnyCd } from '../../tools/BashTool/bashPermissions.js'
+import { commandHasAnyCd } from '../../tools/BashTool/bashCommandDetection.js'
 import { checkReadOnlyConstraints } from '../../tools/BashTool/readOnlyValidation.js'
 import type { SpeculationAcceptMessage } from '../../types/logs.js'
 import type { Message } from '../../types/message.js'
@@ -36,7 +36,7 @@ import { logError } from '../../services/infra/log.js'
 import type { SetAppState } from '../../services/input/messageQueueManager.js'
 import { createSystemMessage, createUserMessage } from '../messages/constructors.js'
 import { INTERRUPT_MESSAGE, INTERRUPT_MESSAGE_FOR_TOOL_USE } from '../messages/constants.js'
-import { getZyTempDir } from '../permissions/filesystem.js'
+import { getZyTempDir } from '../permissions/scratchpadStorage.js'
 import { extractReadFilesFromMessages } from '../query/queryHelpers.js'
 import { getTranscriptPath } from '../sessionStorage.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'

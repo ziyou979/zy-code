@@ -12,7 +12,7 @@ import type { PermissionResult } from '../permissions/permissionResult.js'
 import { execCommandHook } from './commandRunner.js'
 import { emitHookResponse, emitHookStarted } from './hookEvents.js'
 import { getHookDisplayText } from './hooksSettings.js'
-import { parseHookOutput, parseHttpHookOutput, processHookJSONOutput } from './hookOutputSupport.js'
+import { parseHookOutput, parseHttpHookOutput, processHookJSONOutput } from './hookOutputParser.js'
 
 /**
  * 私有 helper：将 matched hooks 转换为 OTel/telemetry 用的简化 schema。

@@ -1,6 +1,6 @@
 import { getCommands } from '../../commands/index.js'
 import { toolRegistry } from '../../tools/registry.js'
-import { getAllMcpConfigs } from '../mcp/config.js'
+import { getAllMcpConfigs } from '../mcp/configResolution.js'
 import { loadAllPluginsCacheOnly } from '../plugins/pluginLoader.js'
 
 export type ExtensionEntry = {

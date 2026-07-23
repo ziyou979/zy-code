@@ -15,7 +15,7 @@ import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { execCommandHook } from './commandRunner.js'
 import { shouldSkipHookDueToTrust, TOOL_HOOK_EXECUTION_TIMEOUT_MS } from './config.js'
 import { execHttpHook } from './execHttpHook.js'
-import { parseHookOutput, parseHttpHookOutput } from './hookOutputSupport.js'
+import { parseHookOutput, parseHttpHookOutput } from './hookOutputParser.js'
 import { shouldDisableAllHooksIncludingManaged } from './hooksConfigSnapshot.js'
 import {
   getHookTypeCounts,

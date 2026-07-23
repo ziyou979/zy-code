@@ -79,7 +79,7 @@ import {
   toSDKCompactMetadata,
 } from '../services/messages/mappers.js'
 import { buildSystemInitMessage, sdkCompatToolName } from '../services/messages/systemInit.js'
-import { getScratchpadDir, isScratchpadEnabled } from '../services/permissions/filesystem.js'
+import { getScratchpadDir, isScratchpadEnabled } from '../services/permissions/scratchpadStorage.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
   handleOrphanedPermission,

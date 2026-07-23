@@ -50,9 +50,9 @@ import { stripToolReferenceBlocksFromUserMessage } from './prune.js'
 import { wrapInSystemReminder } from './systemReminder.js'
 
 // 延迟导入以避免循环依赖（teammateMailbox -> teammate -> ... -> messages）
-export function getTeammateMailbox(): typeof import('../../services/swarm/teammateMailbox.js') {
+export function getTeammateMailbox(): typeof import('../../services/swarm/teammateMailboxMessages.js') {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require('../../services/swarm/teammateMailbox.js')
+  return require('../../services/swarm/teammateMailboxMessages.js')
 }
 
 /** 将字符串包装为 UserContentBlock[] 文本块数组 */

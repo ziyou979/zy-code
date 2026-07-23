@@ -6,7 +6,7 @@ import type { HookResultMessage, Message } from '../../types/message.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'
 import { createCombinedAbortSignal } from '../../utils/abortController.js'
 import { logError } from '../../services/infra/log.js'
-import { processHookJSONOutput } from './hookOutputSupport.js'
+import { processHookJSONOutput } from './hookOutputParser.js'
 import type { FunctionHook } from './sessionHooks.js'
 import type { HookResult } from './types.js'
 

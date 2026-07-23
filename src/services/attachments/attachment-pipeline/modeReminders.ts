@@ -36,7 +36,7 @@ import {
   formatAgentLine,
   shouldInjectAgentListInMessages,
 } from '../../../tools/AgentTool/prompt.js'
-import { filterDeniedAgents } from '../../permissions/permissions.js'
+import { filterDeniedAgents } from '../../permissions/permissionRuleQueries.js'
 import { mcpInfoFromString } from '../../mcp/mcpStringUtils.js'
 import { pathInAllowedWorkingPath } from '../../permissions/filesystem.js'
 import { getOriginalCwd } from '../../../bootstrap/runtime/runtimeContext.js'

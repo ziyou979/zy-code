@@ -32,7 +32,7 @@ import { getCachedPowerShellPath } from '../../shell-eval/shared/powershellDetec
 import { createPowerShellProvider } from '../../shell-eval/shared/powershellProvider.js'
 import type { ShellProvider, ShellType } from '../../shell-eval/shared/shellProvider.js'
 import { onCwdChangedForHooks } from '../hooks/fileChangedWatcher.js'
-import { getZyTempDirName } from '../permissions/filesystem.js'
+import { getZyTempDirName } from '../permissions/scratchpadStorage.js'
 import { getPlatform } from './platform.js'
 import { invalidateSessionEnvCache } from '../environment/sessionEnvironment.js'
 import { subprocessEnv } from '../environment/subprocessEnv.js'

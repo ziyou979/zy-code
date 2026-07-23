@@ -37,7 +37,7 @@ import {
   parseHookOutput,
   parseHttpHookOutput,
   processHookJSONOutput,
-} from './hookOutputSupport.js'
+} from './hookOutputParser.js'
 
 const hookLog = createDebugLog('hooks')
 const { promptRequestSchema, isAsyncHookJSONOutput } = createHookPromptDetection()

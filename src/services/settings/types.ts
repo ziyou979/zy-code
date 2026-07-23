@@ -10,19 +10,6 @@ import {
 } from './settingsModelSchemas.js'
 import { ZY_CODE_SETTINGS_SCHEMA_URL } from './constants.js'
 import { MarketplaceSourceSchema } from '../plugins/schemas.js'
-export {
-  AllowedMcpServerEntrySchema,
-  CUSTOMIZATION_SURFACES,
-  DeniedMcpServerEntrySchema,
-  EnvironmentVariablesSchema,
-  ExtraKnownMarketplaceSchema,
-  isMcpServerCommandEntry,
-  isMcpServerNameEntry,
-  isMcpServerUrlEntry,
-  PermissionsSchema,
-  type AllowedMcpServerEntry,
-  type DeniedMcpServerEntry,
-} from './settingsSchemaSupport.js'
 import {
   AllowedMcpServerEntrySchema,
   CUSTOMIZATION_SURFACES,
@@ -35,7 +22,20 @@ import {
   PermissionsSchema,
   type AllowedMcpServerEntry,
   type DeniedMcpServerEntry,
-} from './settingsSchemaSupport.js'
+} from './settingsSchema.js'
+export {
+  AllowedMcpServerEntrySchema,
+  CUSTOMIZATION_SURFACES,
+  DeniedMcpServerEntrySchema,
+  EnvironmentVariablesSchema,
+  ExtraKnownMarketplaceSchema,
+  isMcpServerCommandEntry,
+  isMcpServerNameEntry,
+  isMcpServerUrlEntry,
+  PermissionsSchema,
+  type AllowedMcpServerEntry,
+  type DeniedMcpServerEntry,
+}
 export type {
   PluginConfig,
   PluginHookMatcher,

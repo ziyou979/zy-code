@@ -31,7 +31,7 @@ import type { REPLHookContext } from '../hooks/postSamplingHooks.js'
 import { createUserMessage } from '../messages/constructors.js'
 import { extractTextContent, getLastAssistantMessage } from '../messages/predicates.js'
 import { createDenialTrackingState } from '../permissions/denialTracking.js'
-import { parseToolListFromCLI } from '../permissions/permissionSetup.js'
+import { parseToolListFromCLI } from '../permissions/permissionCli.js'
 import { recordSidechainTranscript } from '../sessionStorage.js'
 import type { SystemPrompt } from '../api/systemPromptType.js'
 import {

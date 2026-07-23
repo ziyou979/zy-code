@@ -79,8 +79,8 @@ import { probeThinkingFromError } from '../modelCapabilityProbe.js'
 import { checkResponseForCacheBreak } from '../promptCacheBreakDetection.js'
 import { updateUsage } from '../usageTracker.js'
 import { CannotRetryError, FallbackTriggeredError, is529Error, withRetry } from '../withRetry.js'
+import type { Options } from './queryOptions.js'
 import {
-  Options,
   apiLog,
   buildNonStreamingAssistantMessage,
   executeNonStreamingRequest,

@@ -4,12 +4,14 @@ import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { updateHooksConfigSnapshot } from '../hooks/hooksConfigSnapshot.js'
 import {
   createDisabledBypassPermissionsContext,
-  findOverlyBroadBashPermissions,
   isBypassPermissionsModeDisabled,
+} from '../permissions/bypassPermissionPolicy.js'
+import {
+  findOverlyBroadBashPermissions,
   removeDangerousPermissions,
-  transitionPlanAutoMode,
-} from '../permissions/permissionSetup.js'
-import { syncPermissionRulesFromDisk } from '../permissions/permissions.js'
+} from '../permissions/dangerousPermissionRules.js'
+import { transitionPlanAutoMode } from '../permissions/permissionModeTransitions.js'
+import { syncPermissionRulesFromDisk } from '../permissions/permissionRuleSync.js'
 import { loadAllPermissionRulesFromDisk } from '../permissions/permissionsLoader.js'
 import type { SettingSource } from './constants.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'

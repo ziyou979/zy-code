@@ -1,6 +1,7 @@
 import { basename, dirname, isAbsolute, join, sep } from 'node:path'
 import type { ToolPermissionContext } from '../../tools/tool.js'
-import { getFileReadIgnorePatterns, normalizePatternsToPath } from '../permissions/filesystem.js'
+import { getFileReadIgnorePatterns } from '../permissions/filesystem.js'
+import { normalizePatternsToPath } from '../permissions/internalPaths.js'
 import { getGlobExclusionsForPluginCache } from '../plugins/orphanedPluginFilter.js'
 import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { getPlatform } from '../shell/platform.js'

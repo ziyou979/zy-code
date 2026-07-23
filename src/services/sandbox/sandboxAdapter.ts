@@ -53,7 +53,7 @@ import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'
 import { FILE_READ_TOOL_NAME } from 'src/tools/FileReadTool/prompt.js'
 import { WEB_FETCH_TOOL_NAME } from 'src/tools/WebFetchTool/prompt.js'
 import { errorMessage } from '../../utils/errors.js'
-import { getZyTempDir } from '../permissions/filesystem.js'
+import { getZyTempDir } from '../permissions/scratchpadStorage.js'
 import type { PermissionRuleValue } from '../permissions/permissionRule.js'
 import { ripgrepCommand } from '../file-search/ripgrep.js'
 

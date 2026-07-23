@@ -64,7 +64,7 @@ import {
   isSystemLocalCommandMessage,
 } from '../messages/predicates.js'
 import { normalizeMessages } from '../messages/normalize.js'
-import { parseToolListFromCLI } from '../permissions/permissionSetup.js'
+import { parseToolListFromCLI } from '../permissions/permissionCli.js'
 import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { isOfficialMarketplaceName, parsePluginIdentifier } from '../plugins/pluginIdentifier.js'
 import { isRestrictedToPluginOnly, isSourceAdminTrusted } from '../settings/pluginOnlyPolicy.js'

@@ -60,7 +60,7 @@ import {
   type InstructionsMemoryType,
 } from '../hooks.js'
 import { expandPath } from '../../utils/path.js'
-import { pathInWorkingPath } from '../permissions/filesystem.js'
+import { pathInWorkingPath } from '../permissions/internalPaths.js'
 import { isSettingSourceEnabled } from '../settings/constants.js'
 import { getInitialSettings } from '../settings/settings.js'
 

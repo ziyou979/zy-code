@@ -21,11 +21,13 @@ import { getEffectiveContextWindowSize, isAutoCompactEnabled } from '../../compa
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../analytics/growthbook.js'
 import { isAgentSwarmsEnabled } from '../../swarm/agentSwarmsEnabled.js'
 import {
-  readUnreadMessages,
-  markMessagesAsReadByPredicate,
   isShutdownApproved,
   isStructuredProtocolMessage,
   isIdleNotification,
+} from '../../../services/swarm/teammateMailboxMessages.js'
+import {
+  readUnreadMessages,
+  markMessagesAsReadByPredicate,
 } from '../../../services/swarm/teammateMailbox.js'
 import {
   getAgentName,

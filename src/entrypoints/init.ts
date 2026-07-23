@@ -39,7 +39,10 @@ import {
   applySafeConfigEnvironmentVariables,
 } from '../services/environment/managedEnv.js'
 import { configureGlobalMTLS } from '../services/http/mtls.js'
-import { ensureScratchpadDir, isScratchpadEnabled } from '../services/permissions/filesystem.js'
+import {
+  ensureScratchpadDir,
+  isScratchpadEnabled,
+} from '../services/permissions/scratchpadStorage.js'
 // initializeTelemetry 通过 setMeterState() 中的 import('../services/analytics/zyEventLogger.js') 延迟加载，以推迟
 // ~400KB 的 OpenTelemetry + protobuf 模块，直到真正初始化遥测时才加载。
 // gRPC 导出器（通过 @grpc/grpc-js 约 ~700KB）在 instrumentation.ts 中进一步延迟加载。

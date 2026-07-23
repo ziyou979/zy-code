@@ -25,7 +25,7 @@ import {
   EXPLORE_AGENT_MIN_QUERIES,
 } from 'src/tools/AgentTool/built-in/exploreAgent.js'
 
-import { isScratchpadEnabled, getScratchpadDir } from '../services/permissions/filesystem.js'
+import { isScratchpadEnabled, getScratchpadDir } from '../services/permissions/scratchpadStorage.js'
 import { isEnvTruthy, isInternalBuild } from '../services/infra/envUtils.js'
 
 import { feature } from 'bun:bundle'
