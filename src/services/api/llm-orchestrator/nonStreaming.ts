@@ -26,7 +26,6 @@ import { isEnvTruthy, isInternalBuild } from '../../../services/infra/envUtils.j
 import { normalizeContentFromAPI } from '../../messages/normalize.js'
 import { type SystemPrompt } from '../systemPromptType.js'
 import { getLLMAdapter } from '../client.js'
-import type { ClientOptions } from '@anthropic-ai/sdk'
 import type { QuerySource } from 'src/constants/querySource.js'
 import type { Notification } from 'src/context/notifications.js'
 import type { AgentId } from 'src/types/ids.js'
@@ -50,7 +49,6 @@ import {
 } from '../assistantCompletionValidator.js'
 import { getAnthropicClient } from '../client.js'
 import { type RetryContext, withRetry } from '../withRetry.js'
-import { queryModel } from './streamingSupport.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 export const apiLog = createDebugLog('api')
 
@@ -60,96 +58,8 @@ export const autoModeStateModule = true
   ? (require('../../permissions/autoModeState.js') as typeof import('../../permissions/autoModeState.js'))
   : null
 
-export type Options = {
-  getToolPermissionContext: () => Promise<ToolPermissionContext>
-  model: string
-  toolChoice?: ToolChoice | undefined
-  isNonInteractiveSession: boolean
-  extraToolSchemas?: ToolDefinition[]
-  maxOutputTokensOverride?: number
-  fallbackModel?: string
-  onStreamingFallback?: () => void
-  querySource: QuerySource
-  agents: AgentDefinition[]
-  allowedAgentTypes?: string[]
-  hasAppendSystemPrompt: boolean
-  fetchOverride?: ClientOptions['fetch']
-  enablePromptCaching?: boolean
-  skipCacheWrite?: boolean
-  temperatureOverride?: number
-  effortValue?: EffortLevel
-  mcpTools: Tools
-  hasPendingMcpServers?: boolean
-  queryTracking?: QueryChainTracking
-  agentId?: AgentId // 仅子代理设置
-  outputFormat?: JSONOutputFormat
-  addNotification?: (notif: Notification) => void
-  /** Provider 专属扩展参数，用于传递非标准参数（如百炼的 enable_search） */
-  providerExtras?: ProviderExtras
-  // API 端任务预算（output_config.task_budget）。区别于
-  // tokenBudget.ts 的 +500k 自动续传功能 — 这个会发送给 API，
-  // 让模型自行控制节奏。`remaining` 由调用方计算
-  //（query.ts 在代理循环中递减）。
-  taskBudget?: { total: number; remaining?: number }
-}
-
-export async function queryModelWithoutStreaming({
-  messages,
-  systemPrompt,
-  thinkingConfig,
-  tools,
-  signal,
-  options,
-}: {
-  messages: Message[]
-  systemPrompt: SystemPrompt
-  thinkingConfig: ThinkingConfig
-  tools: Tools
-  signal: AbortSignal
-  options: Options
-}): Promise<AssistantMessage> {
-  // 存储助手消息但继续消费生成器以确保
-  // logAPISuccessAndDuration 被调用（在所有 yield 之后发生）
-  let assistantMessage: AssistantMessage | undefined
-  for await (const message of withStreamingVCR(messages, async function* () {
-    yield* queryModel(messages, systemPrompt, thinkingConfig, tools, signal, options)
-  })) {
-    if (message.type === 'assistant') {
-      assistantMessage = message
-    }
-  }
-  if (!assistantMessage) {
-    // 如果信号被中止，抛出中止错误而非通用错误
-    // 这允许调用方优雅地处理中止场景
-    if (signal.aborted) {
-      const abortErr = new Error('Request aborted')
-      abortErr.name = 'AbortError'
-      throw abortErr
-    }
-    throw new Error('No assistant message found')
-  }
-  return assistantMessage
-}
-
-export async function* queryModelWithStreaming({
-  messages,
-  systemPrompt,
-  thinkingConfig,
-  tools,
-  signal,
-  options,
-}: {
-  messages: Message[]
-  systemPrompt: SystemPrompt
-  thinkingConfig: ThinkingConfig
-  tools: Tools
-  signal: AbortSignal
-  options: Options
-}): AsyncGenerator<StreamEvent | AssistantMessage | SystemAPIErrorMessage, void> {
-  return yield* withStreamingVCR(messages, async function* () {
-    yield* queryModel(messages, systemPrompt, thinkingConfig, tools, signal, options)
-  })
-}
+import type { Options } from './queryOptions.js'
+export type { Options }
 
 /**
  * 判断是否应延迟 LSP 工具（工具以 defer_loading: true 出现），
