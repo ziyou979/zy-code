@@ -141,10 +141,7 @@ describe('lint-architecture', () => {
   })
 
   test('超长 utils 文件会触发长度门禁', () => {
-    const longLines = Array.from(
-      { length: 801 },
-      (_, index) => `export const value${index} = ${index}`,
-    )
+    const longLines = Array.from({ length: 801 }, (_, index) => `const v${index}=${index}`)
     const fixture = createFixtureProject({
       'src/utils/tooLong.ts': `${longLines.join('\n')}\n`,
     })
@@ -153,6 +150,26 @@ describe('lint-architecture', () => {
 
     expect(result.exitCode).toBe(0)
     expect(result.stderr).toContain('utils 文件超过 800 行上限（当前 801 行）')
+  })
+
+  test('file-length 基线 ID 稳定：历史超长文件增删几行不产生新债务', () => {
+    const longLines = Array.from({ length: 805 }, (_, index) => `const v${index}=${index}`)
+    const fixture = createFixtureProject({
+      'src/utils/longUtil.ts': `${longLines.join('\n')}\n`,
+    })
+
+    // Phase 1: 建立基线（805 行，超 800 上限）
+    const baselineResult = runLint(fixture.root, fixture.baselinePath, ['--write-baseline'])
+    expect(baselineResult.exitCode).toBe(0)
+
+    // Phase 2: 增加 3 行（ID 基于路径+阈值，行数增减不应产生新债务）
+    writeFileSync(
+      join(fixture.root, 'src', 'utils', 'longUtil.ts'),
+      `${longLines.join('\n')}\nconst e1=1\nconst e2=2\nconst e3=3\n`,
+    )
+
+    const compareResult = runLint(fixture.root, fixture.baselinePath)
+    expect(compareResult.exitCode).toBe(0)
   })
 
   test('UI 中硬编码用户文本会被拦下，但 i18n key 不会误报', () => {
@@ -180,5 +197,31 @@ describe('lint-architecture', () => {
     expect(result.stderr).toContain('JSX 属性 title 存在硬编码用户文本: Hello there')
     expect(result.stderr).toContain('JSX 文本 存在硬编码用户文本: Welcome back')
     expect(result.stderr).not.toContain('greeting.title')
+  })
+
+  test('.tsx Support 文件会被门禁识别，新增文件在比较模式中拦截', () => {
+    const fixture = createFixtureProject({
+      'src/utils/LegacySupport.ts': 'export function legacy() { return 1 }\n',
+    })
+
+    // Phase 1: 建立基线（包含一个存量 .ts Support 文件）
+    const baselineResult = runLint(fixture.root, fixture.baselinePath, ['--write-baseline'])
+    expect(baselineResult.exitCode).toBe(0)
+    expect(baselineResult.stderr).toContain('Support 文件（存量 utils/LegacySupport.ts')
+
+    // Phase 2: 新增 .tsx Support 文件后比较基线
+    mkdirSync(join(fixture.root, 'src', 'components'), { recursive: true })
+    writeFileSync(
+      join(fixture.root, 'src', 'components', 'NewSupport.tsx'),
+      'export function New() { return null }\n',
+    )
+
+    const compareResult = runLint(fixture.root, fixture.baselinePath)
+
+    expect(compareResult.exitCode).toBe(1)
+    expect(compareResult.stderr).toContain('新增违规')
+    expect(compareResult.stderr).toContain('NewSupport.tsx')
+    // 分类汇总显示总共 2 条 supportFile（基线 1，+1）
+    expect(compareResult.stderr).toContain('supportFile: 2（基线 1，+1）')
   })
 })

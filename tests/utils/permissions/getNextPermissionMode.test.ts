@@ -13,9 +13,11 @@ import { describe, expect, mock, test } from 'bun:test'
 
 let autoModeGateEnabled = false
 
-mock.module('../../../src/services/permissions/permissionSetup.js', () => ({
+mock.module('../../../src/services/permissions/autoModePolicy.js', () => ({
   isAutoModeGateEnabled: () => autoModeGateEnabled,
   getAutoModeUnavailableReason: () => (autoModeGateEnabled ? undefined : 'disabled'),
+}))
+mock.module('../../../src/services/permissions/permissionModeTransitions.js', () => ({
   transitionPermissionMode: (_from: string, _to: string, ctx: Record<string, unknown>) => ({
     ...ctx,
     mode: _to,

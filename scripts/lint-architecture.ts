@@ -8,6 +8,11 @@
  *   D. 导入后缀 — 相对导入必须带 .js/.json/.node/.wasm
  *   E. feature() 宏 — 禁止非法的非直接条件用法
  *   F. as any 统计 — 统计各文件使用量，与基线比较
+ *   G. 文件长度 — 超出阈值的文件（仅报告，不自动要求拆分）
+ *   H. 硬编码用户文本 — JSX/组件属性/对象字段等
+ *   I. 命名规则 — 目录 kebab-case、模块 camelCase、组件 PascalCase
+ *   J. Tool 结构 — 主文件/UI/prompt 完整性
+ *   K. Support 文件 — 存量 *Support.ts/.tsx 纳入 baseline，新增报违规
  *
  * 用法：
  *   bun scripts/lint-architecture.ts              # 与基线比较（默认）
@@ -625,7 +630,7 @@ function checkFileLengths() {
     const lineCount = countFileLines(content)
     if (lineCount <= rule.maxLines) continue
 
-    const detail = `${relPath}|${rule.scope}|${rule.maxLines}|${lineCount}`
+    const detail = `${relPath}|${rule.scope}|${rule.maxLines}`
     addV(
       file,
       1,
@@ -1052,6 +1057,22 @@ function checkToolProfiles() {
   }
 }
 
+// --------------- K. Support 文件检查 ---------------
+
+/**
+ * 存量 *Support.ts/.tsx 文件纳入 baseline，只允许下降。
+ * 新增 *Support.ts/.tsx 文件会被标记为违规，需架构评审。
+ */
+function checkSupportFiles() {
+  const files = walkDir(SRC)
+  for (const file of files) {
+    const relPath = getRelativePath(file)
+    if (!relPath.endsWith('Support.ts') && !relPath.endsWith('Support.tsx')) continue
+
+    addV(file, 1, `Support 文件（存量 ${relPath}，应逐步消除）`, 'supportFile', relPath)
+  }
+}
+
 // --------------- 基线管理 ---------------
 
 interface BaselineData {
@@ -1256,6 +1277,7 @@ function main() {
   checkHardcodedUserText()
   checkNamingConventions()
   checkToolProfiles()
+  checkSupportFiles()
   const asAnyStats = checkAsAny()
 
   // 生成违规条目（用于精确基线匹配）
