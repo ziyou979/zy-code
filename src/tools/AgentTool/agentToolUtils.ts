@@ -44,10 +44,8 @@ import {
 } from '../../services/messages/./predicates.js'
 import type { PermissionMode } from '../../services/permissions/permissionMode.js'
 import { permissionRuleValueFromString } from '../../services/permissions/permissionRuleParser.js'
-import {
-  buildTranscriptForClassifier,
-  classifyYoloAction,
-} from '../../services/permissions/yoloClassifier.js'
+import { buildTranscriptForClassifier } from '../../services/permissions/classifierTranscript.js'
+import { classifyYoloAction } from '../../services/permissions/yoloClassifier.js'
 import { isInProcessTeammate } from '../../services/swarm/teammateContext.js'
 import { getTokenCountFromUsage } from '../../services/api/tokens.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from '../ExitPlanModeTool/constants.js'

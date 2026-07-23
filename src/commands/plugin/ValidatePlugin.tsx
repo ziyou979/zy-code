@@ -3,7 +3,7 @@ import { CROSS, POINTER, TICK, WARNING } from '../../constants/figures.js'
 import { Box, Text } from '../../ink/index.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../services/infra/log.js'
-import { validateManifest } from '../../services/plugins/validatePlugin.js'
+import { validateManifest } from '../../services/plugins/pluginValidation.js'
 import { plural } from '../../utils/stringUtils.js'
 
 type Props = {

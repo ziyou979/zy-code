@@ -27,7 +27,7 @@ import type {
 } from 'src/types/message.js'
 import { logForDebugging } from 'src/services/infra/debug.js'
 import type { PermissionDecision } from 'src/services/permissions/permissionResult.js'
-import { getRuleByContentsForTool } from 'src/services/permissions/permissions.js'
+import { getRuleByContentsForTool } from 'src/services/permissions/permissionRuleQueries.js'
 import {
   isOfficialMarketplaceName,
   parsePluginIdentifier,

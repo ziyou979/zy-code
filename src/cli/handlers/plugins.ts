@@ -41,17 +41,14 @@ import {
   scopeToSettingSource,
 } from '../../services/plugins/pluginIdentifier.js'
 import { loadAllPlugins } from '../../services/plugins/pluginLoader.js'
+import type { ValidationResult } from '../../services/plugins/validatePlugin.js'
 import {
-  type ValidationResult,
   validateManifest,
   validatePluginContents,
-} from '../../services/plugins/validatePlugin.js'
+} from '../../services/plugins/pluginValidation.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
-import {
-  buildAvailablePluginListEntries,
-  buildPluginListJsonEntries,
-  printPluginListReport,
-} from './pluginListSupport.js'
+import { buildAvailablePluginListEntries, buildPluginListJsonEntries } from './pluginListModel.js'
+import { printPluginListReport } from './pluginList.js'
 import { cliError, cliOk } from '../exit.js'
 
 // 重新导出，供 main.tsx 在选项定义中引用
@@ -73,7 +70,7 @@ function printValidationResult(result: ValidationResult): void {
     console.log(
       `${CROSS} ${tSync('plugins.validate.foundErrors', { count: result.errors.length })}:\n`,
     )
-    result.errors.forEach((error) => {
+    result.errors.forEach((error: { path: string; message: string }) => {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`  ${POINTER} ${error.path}: ${error.message}`)
     })
@@ -85,7 +82,7 @@ function printValidationResult(result: ValidationResult): void {
     console.log(
       `${WARNING} ${tSync('plugins.validate.foundWarnings', { count: result.warnings.length })}:\n`,
     )
-    result.warnings.forEach((warning) => {
+    result.warnings.forEach((warning: { path: string; message: string }) => {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
       console.log(`  ${POINTER} ${warning.path}: ${warning.message}`)
     })

@@ -55,7 +55,10 @@ import { isSyntheticMessage } from '../../services/messages/./constants.js'
 import { normalizeMessages } from '../../services/messages/./normalize.js'
 import { permissionModeSchema } from '../../services/permissions/permissionMode.js'
 import type { PermissionResult } from '../../services/permissions/permissionResult.js'
-import { filterDeniedAgents, getDenyRuleForAgent } from '../../services/permissions/permissions.js'
+import {
+  filterDeniedAgents,
+  getDenyRuleForAgent,
+} from '../../services/permissions/permissionRuleQueries.js'
 import { writeAgentMetadata } from '../../services/sessionStorage.js'
 import { sleep } from '../../utils/sleep.js'
 import { buildEffectiveSystemPrompt } from '../../services/messages/systemPrompt.js'

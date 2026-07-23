@@ -10,7 +10,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { readClientSecret, saveMcpClientSecret } from '../../services/mcp/auth.js'
-import { addMcpConfig } from '../../services/mcp/config.js'
+import { addMcpConfig } from '../../services/mcp/configMutations.js'
 import {
   describeMcpConfigFilePath,
   ensureConfigScope,

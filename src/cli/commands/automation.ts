@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import type { Command } from '@commander-js/extra-typings'
-import { getAutoModeEnabledStateIfCached } from '../../services/permissions/permissionSetup.js'
+import { getAutoModeEnabledStateIfCached } from '../../services/permissions/autoModePolicy.js'
 
 /**
  * 注册自动化/桥接相关命令：

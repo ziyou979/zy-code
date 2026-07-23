@@ -49,8 +49,8 @@ import {
   BackoffConfig,
   DEFAULT_BACKOFF,
   pollSleepDetectionThresholdMs,
-  safeSpawn,
-} from './wireLoopSupport.js'
+} from './wirePollingPolicy.js'
+import { safeSpawn } from './sessionSpawner.js'
 import {
   addJitter,
   deriveSessionTitle,

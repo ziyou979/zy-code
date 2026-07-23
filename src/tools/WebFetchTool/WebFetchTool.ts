@@ -4,7 +4,7 @@ import type { PermissionUpdate } from '../../types/permissions.js'
 import { formatFileSize } from '../../utils/format.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
-import { getRuleByContentsForTool } from '../../services/permissions/permissions.js'
+import { getRuleByContentsForTool } from '../../services/permissions/permissionRuleQueries.js'
 import { isPreapprovedHost } from './preapproved.js'
 import { DESCRIPTION, WEB_FETCH_TOOL_NAME } from './prompt.js'
 import {

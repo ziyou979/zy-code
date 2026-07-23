@@ -56,12 +56,11 @@ import { permissionRuleValueToString } from '../../services/permissions/permissi
 import {
   createPermissionRequestMessage,
   getRuleByContentsForTool,
-} from '../../services/permissions/permissions.js'
+} from '../../services/permissions/permissionRuleQueries.js'
 import {
+  matchWildcardPattern,
   parsePermissionRule,
   type ShellPermissionRule,
-  matchWildcardPattern as sharedMatchWildcardPattern,
-  permissionRuleExtractPrefix as sharedPermissionRuleExtractPrefix,
   suggestionForExactCommand as sharedSuggestionForExactCommand,
   suggestionForPrefix as sharedSuggestionForPrefix,
 } from '../../services/permissions/shellRuleMatching.js'
@@ -75,6 +74,11 @@ import { checkPermissionMode } from './modeValidation.js'
 import { checkCatastrophicInsideSubstitutions, checkPathConstraints } from './pathValidation.js'
 import { checkSedConstraints } from './sedValidation.js'
 import { shouldUseSandbox } from './shouldUseSandbox.js'
+import {
+  commandHasAnyCd,
+  isNormalizedCdCommand,
+  isNormalizedGitCommand,
+} from './bashCommandDetection.js'
 
 // DCE cliff: Bun's feature() evaluator has a per-function complexity budget.
 // bashToolHasPermission is right at the limit. `import { X as Y }` aliases
@@ -352,27 +356,6 @@ function extractPrefixBeforeHeredoc(command: string): string | null {
 function suggestionForPrefix(prefix: string): PermissionUpdate[] {
   return sharedSuggestionForPrefix(BashTool.name, prefix)
 }
-
-/**
- * Extract prefix from legacy :* syntax (e.g., "npm:*" -> "npm")
- * Delegates to shared implementation.
- */
-export const permissionRuleExtractPrefix = sharedPermissionRuleExtractPrefix
-
-/**
- * Match a command against a wildcard pattern (case-sensitive for Bash).
- * Delegates to shared implementation.
- */
-export function matchWildcardPattern(pattern: string, command: string): boolean {
-  return sharedMatchWildcardPattern(pattern, command)
-}
-
-/**
- * Parse a permission rule into a structured rule object.
- * Delegates to shared implementation.
- */
-export const bashPermissionRule: (permissionRule: string) => ShellPermissionRule =
-  parsePermissionRule
 
 /**
  * Whitelist of environment variables that are safe to strip from commands.
@@ -878,7 +861,7 @@ function filterRulesByContentsMatchingInput(
       const strippedContent = ruleContent.startsWith('command:')
         ? ruleContent.slice('command:'.length)
         : ruleContent
-      const bashRule = bashPermissionRule(strippedContent)
+      const bashRule = parsePermissionRule(strippedContent)
 
       return commandsToTry.some((cmdToMatch) => {
         switch (bashRule.type) {
@@ -2481,66 +2464,4 @@ export async function bashToolHasPermission(
         }
       : {}),
   }
-}
-
-/**
- * Checks if a subcommand is a git command after normalizing away safe wrappers
- * (env vars, timeout, etc.) and shell quotes.
- *
- * SECURITY: Must normalize before matching to prevent bypasses like:
- *   'git' status    — shell quotes hide the command from a naive regex
- *   NO_COLOR=1 git status — env var prefix hides the command
- */
-export function isNormalizedGitCommand(command: string): boolean {
-  // Fast path: catch the most common case before any parsing
-  if (command.startsWith('git ') || command === 'git') {
-    return true
-  }
-  const stripped = stripSafeWrappers(command)
-  const parsed = tryParseShellCommand(stripped)
-  if (parsed.success && parsed.tokens.length > 0) {
-    // Direct git command
-    if (parsed.tokens[0] === 'git') {
-      return true
-    }
-    // "xargs git ..." — xargs runs git in the current directory,
-    // so it must be treated as a git command for cd+git security checks.
-    // This matches the xargs prefix handling in filterRulesByContentsMatchingInput.
-    if (parsed.tokens[0] === 'xargs' && parsed.tokens.includes('git')) {
-      return true
-    }
-    return false
-  }
-  return /^git(?:\s|$)/.test(stripped)
-}
-
-/**
- * Checks if a subcommand is a cd command after normalizing away safe wrappers
- * (env vars, timeout, etc.) and shell quotes.
- *
- * SECURITY: Must normalize before matching to prevent bypasses like:
- *   FORCE_COLOR=1 cd sub — env var prefix hides the cd from a naive /^cd / regex
- *   This mirrors isNormalizedGitCommand to ensure symmetric normalization.
- *
- * Also matches pushd/popd — they change cwd just like cd, so
- *   pushd /tmp/bare-repo && git status
- * must trigger the same cd+git guard. Mirrors PowerShell's
- * DIRECTORY_CHANGE_ALIASES (src/shell-eval/powershell/parser.ts).
- */
-export function isNormalizedCdCommand(command: string): boolean {
-  const stripped = stripSafeWrappers(command)
-  const parsed = tryParseShellCommand(stripped)
-  if (parsed.success && parsed.tokens.length > 0) {
-    const cmd = parsed.tokens[0]
-    return cmd === 'cd' || cmd === 'pushd' || cmd === 'popd'
-  }
-  return /^(?:cd|pushd|popd)(?:\s|$)/.test(stripped)
-}
-
-/**
- * Checks if a compound command contains any cd command,
- * using normalized detection that handles env var prefixes and shell quotes.
- */
-export function commandHasAnyCd(command: string): boolean {
-  return splitCommand(command).some((subcmd) => isNormalizedCdCommand(subcmd.trim()))
 }

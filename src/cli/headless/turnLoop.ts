@@ -58,11 +58,8 @@ import {
   hasWorkingInProcessTeammates,
   waitForTeammatesToBecomeIdle,
 } from '../../services/swarm/teammate.js'
-import {
-  readUnreadMessages,
-  markMessagesAsRead,
-  isShutdownApproved,
-} from '../../services/swarm/teammateMailbox.js'
+import { isShutdownApproved } from '../../services/swarm/teammateMailboxMessages.js'
+import { readUnreadMessages, markMessagesAsRead } from '../../services/swarm/teammateMailbox.js'
 import { removeTeammateFromTeamFile } from '../../services/swarm/teamHelpers.js'
 import { unassignTeammateTasks } from '../../services/tasks-service/tasks.js'
 import { getRunningTasks } from '../../services/task-runtime/framework.js'

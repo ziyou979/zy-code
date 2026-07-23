@@ -1,14 +1,3 @@
-import { CROSS, POINTER, TICK } from '../../constants/figures.js'
-import { tSync } from '../../i18n/index.js'
-import { getInstallCounts } from '../../services/plugins/installCounts.js'
-import { isPluginInstalled } from '../../services/plugins/installedPluginsManager.js'
-import {
-  createPluginId,
-  loadMarketplacesWithGracefulDegradation,
-} from '../../services/plugins/marketplaceHelpers.js'
-import { loadKnownMarketplacesConfig } from '../../services/plugins/marketplaceManager.js'
-import { loadPluginMcpServers } from '../../services/plugins/mcpPluginIntegration.js'
-import { parsePluginIdentifier } from '../../services/plugins/pluginIdentifier.js'
 import type { PluginSource } from '../../services/plugins/schemas.js'
 import type { InstalledPluginsFileV2 } from '../../services/plugins/schemas.js'
 import {
@@ -16,8 +5,17 @@ import {
   type LoadedPlugin,
   type PluginError,
 } from '../../services/plugins/types.js'
+import { parsePluginIdentifier } from '../../services/plugins/pluginIdentifier.js'
+import { loadPluginMcpServers } from '../../services/plugins/mcpPluginIntegration.js'
+import { loadKnownMarketplacesConfig } from '../../services/plugins/marketplaceManager.js'
+import {
+  createPluginId,
+  loadMarketplacesWithGracefulDegradation,
+} from '../../services/plugins/marketplaceHelpers.js'
+import { getInstallCounts } from '../../services/plugins/installCounts.js'
+import { isPluginInstalled } from '../../services/plugins/installedPluginsManager.js'
 
-type PluginListJsonEntry = {
+export type PluginListJsonEntry = {
   id: string
   version: string
   scope: string
@@ -30,7 +28,7 @@ type PluginListJsonEntry = {
   errors?: string[]
 }
 
-type AvailablePluginListJsonEntry = {
+export type AvailablePluginListJsonEntry = {
   pluginId: string
   name: string
   description?: string
@@ -40,7 +38,7 @@ type AvailablePluginListJsonEntry = {
   installCount?: number
 }
 
-type PluginListRenderData = {
+export type PluginListRenderData = {
   enabledPlugins: ReadonlyMap<string, unknown>
   inlineLoadErrors: PluginError[]
   inlinePlugins: LoadedPlugin[]
@@ -49,14 +47,14 @@ type PluginListRenderData = {
   pluginIds: string[]
 }
 
-function getPluginErrors(loadErrors: PluginError[], pluginId: string): PluginError[] {
+export function getPluginErrors(loadErrors: PluginError[], pluginId: string): PluginError[] {
   const pluginName = parsePluginIdentifier(pluginId).name
   return loadErrors.filter(
     (error) => error.source === pluginId || ('plugin' in error && error.plugin === pluginName),
   )
 }
 
-function getInlinePluginErrors(
+export function getInlinePluginErrors(
   inlineLoadErrors: PluginError[],
   plugin: LoadedPlugin,
 ): PluginError[] {
@@ -180,87 +178,4 @@ export async function buildAvailablePluginListEntries(): Promise<AvailablePlugin
   }
 
   return available
-}
-
-export function printPluginListReport(params: PluginListRenderData): void {
-  if (params.pluginIds.length > 0) {
-    // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`${tSync('plugins.list.installedHeader')}\n`)
-  }
-
-  for (const pluginId of params.pluginIds.sort()) {
-    const installations = params.installedData.plugins[pluginId]
-    if (!installations || installations.length === 0) {
-      continue
-    }
-
-    const pluginErrors = getPluginErrors(params.loadErrors, pluginId)
-
-    for (const installation of installations) {
-      const status =
-        pluginErrors.length > 0
-          ? `${CROSS} ${tSync('plugins.list.statusLoadFailed')}`
-          : params.enabledPlugins.has(pluginId)
-            ? `${TICK} ${tSync('plugins.list.statusEnabled')}`
-            : `${CROSS} ${tSync('plugins.list.statusDisabled')}`
-
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`  ${POINTER} ${pluginId}`)
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(
-        `    ${tSync('plugins.list.version', { version: installation.version || 'unknown' })}`,
-      )
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    ${tSync('plugins.list.scope', { scope: installation.scope })}`)
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(`    ${tSync('plugins.list.statusLabel', { status })}`)
-      for (const error of pluginErrors) {
-        // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.log(
-          `    ${tSync('plugins.list.errorLabel', { error: getPluginErrorMessage(error) })}`,
-        )
-      }
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log('')
-    }
-  }
-
-  if (params.inlinePlugins.length === 0 && params.inlineLoadErrors.length === 0) {
-    return
-  }
-
-  // biome-ignore lint/suspicious/noConsole:: intentional console output
-  console.log(`${tSync('plugins.list.sessionOnly')}\n`)
-
-  for (const plugin of params.inlinePlugins) {
-    const pluginErrors = getInlinePluginErrors(params.inlineLoadErrors, plugin)
-    const status =
-      pluginErrors.length > 0
-        ? `${CROSS} ${tSync('plugins.list.statusLoadedWithErrors')}`
-        : `${TICK} ${tSync('plugins.list.statusLoaded')}`
-
-    // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`  ${POINTER} ${plugin.source}`)
-    // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(
-      `    ${tSync('plugins.list.version', { version: plugin.manifest.version ?? 'unknown' })}`,
-    )
-    // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`    ${tSync('plugins.list.pathLabel', { path: plugin.path })}`)
-    // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`    ${tSync('plugins.list.statusLabel', { status })}`)
-    for (const error of pluginErrors) {
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.log(
-        `    ${tSync('plugins.list.errorLabel', { error: getPluginErrorMessage(error) })}`,
-      )
-    }
-    // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log('')
-  }
-
-  for (const error of params.inlineLoadErrors.filter((item) => item.source.startsWith('inline['))) {
-    // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log(`  ${POINTER} ${error.source}: ${CROSS} ${getPluginErrorMessage(error)}\n`)
-  }
 }

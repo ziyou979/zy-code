@@ -47,8 +47,11 @@ import {
 const autoModeStateModule = true
   ? (require('../../services/permissions/autoModeState.js') as typeof import('../../services/permissions/autoModeState.js'))
   : null
-const permissionSetupModule = true
-  ? (require('../../services/permissions/permissionSetup.js') as typeof import('../../services/permissions/permissionSetup.js'))
+const autoModePolicy = true
+  ? (require('../../services/permissions/autoModePolicy.js') as typeof import('../../services/permissions/autoModePolicy.js'))
+  : null
+const dangerousPermissionRules = true
+  ? (require('../../services/permissions/dangerousPermissionRules.js') as typeof import('../../services/permissions/dangerousPermissionRules.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -303,10 +306,10 @@ export const ExitPlanModeTool: Tool<InputSchema, Output> = buildTool({
     // breaker by calling setAutoModeActive(true) directly.
     let gateFallbackNotification: string | null = null
     const prePlanRaw = appState.toolPermissionContext.prePlanMode ?? 'default'
-    if (prePlanRaw === 'auto' && !(permissionSetupModule?.isAutoModeGateEnabled() ?? false)) {
-      const reason = permissionSetupModule?.getAutoModeUnavailableReason() ?? 'circuit-breaker'
+    if (prePlanRaw === 'auto' && !(autoModePolicy?.isAutoModeGateEnabled() ?? false)) {
+      const reason = autoModePolicy?.getAutoModeUnavailableReason() ?? 'circuit-breaker'
       gateFallbackNotification =
-        permissionSetupModule?.getAutoModeUnavailableNotification(reason) ?? 'auto mode unavailable'
+        autoModePolicy?.getAutoModeUnavailableNotification(reason) ?? 'auto mode unavailable'
       logForDebugging(
         `[auto-mode gate @ ExitPlanModeTool] prePlanMode=${prePlanRaw} ` +
           `but gate is off (reason=${reason}) — falling back to default on plan exit`,
@@ -330,7 +333,7 @@ export const ExitPlanModeTool: Tool<InputSchema, Output> = buildTool({
       setHasExitedPlanMode(true)
       setNeedsPlanModeExitAttachment(true)
       let restoreMode = prev.toolPermissionContext.prePlanMode ?? 'default'
-      if (restoreMode === 'auto' && !(permissionSetupModule?.isAutoModeGateEnabled() ?? false)) {
+      if (restoreMode === 'auto' && !(autoModePolicy?.isAutoModeGateEnabled() ?? false)) {
         restoreMode = 'default'
       }
       const finalRestoringAuto = restoreMode === 'auto'
@@ -349,9 +352,10 @@ export const ExitPlanModeTool: Tool<InputSchema, Output> = buildTool({
       let baseContext = prev.toolPermissionContext
       if (restoringToAuto) {
         baseContext =
-          permissionSetupModule?.stripDangerousPermissionsForAutoMode(baseContext) ?? baseContext
+          dangerousPermissionRules?.stripDangerousPermissionsForAutoMode(baseContext) ?? baseContext
       } else if (prev.toolPermissionContext.strippedDangerousRules) {
-        baseContext = permissionSetupModule?.restoreDangerousPermissions(baseContext) ?? baseContext
+        baseContext =
+          dangerousPermissionRules?.restoreDangerousPermissions(baseContext) ?? baseContext
       }
       return {
         ...prev,

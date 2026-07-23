@@ -14,7 +14,7 @@ import {
   type WireApiClient,
   type WireLogger,
 } from '../types.js'
-import { SPAWN_SESSIONS_DEFAULT, isMultiSessionSpawnEnabled } from './wireLoopSupport.js'
+import { SPAWN_SESSIONS_DEFAULT, isMultiSessionSpawnEnabled } from './wirePollingPolicy.js'
 export const CONNECTION_ERROR_CODES = new Set([
   'ECONNREFUSED',
   'ECONNRESET',

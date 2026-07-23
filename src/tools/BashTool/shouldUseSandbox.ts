@@ -4,12 +4,12 @@ import { splitCommand_DEPRECATED } from '../../shell-eval/bash/commands.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
 import {
-  BINARY_HIJACK_VARS,
-  bashPermissionRule,
+  parsePermissionRule,
   matchWildcardPattern,
-  stripAllLeadingEnvVars,
-  stripSafeWrappers,
-} from './bashPermissions.js'
+} from '../../services/permissions/shellRuleMatching.js'
+import { BINARY_HIJACK_VARS, stripAllLeadingEnvVars, stripSafeWrappers } from './bashPermissions.js'
+
+const bashPermissionRule = parsePermissionRule
 
 type SandboxInput = {
   command?: string

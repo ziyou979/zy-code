@@ -9,7 +9,7 @@ import {
   type AutoModeRules,
   buildDefaultSystemPrompt,
   getDefaultAutoModeRules,
-} from '../../services/permissions/yoloClassifier.js'
+} from '../../services/permissions/classifierPrompt.js'
 import { getAutoModeConfig } from '../../services/settings/settings.js'
 import { sideQuery } from '../../services/query/sideQuery.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'

@@ -43,10 +43,8 @@ import { checkHasTrustDialogAccepted, getGlobalConfig } from '../../services/con
 import { seedEarlyInput } from '../../services/input/earlyInput.js'
 import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { safeParseJSON } from '../../utils/json.js'
-import {
-  initialPermissionModeFromCLI,
-  isDefaultPermissionModeAuto,
-} from '../../services/permissions/permissionSetup.js'
+import { initialPermissionModeFromCLI } from '../../services/permissions/permissionBootstrap.js'
+import { isDefaultPermissionModeAuto } from '../../services/permissions/autoModePolicy.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import { getSessionIngressAuthToken } from '../../services/auth/sessionIngressAuth.js'
 import { sessionIdExists } from '../../services/sessionStorage.js'
@@ -62,11 +60,9 @@ import {
   CLAUDE_IN_CHROME_MCP_SERVER_NAME,
   isClaudeInChromeMCPServer,
 } from 'src/services/claude-in-chrome/common.js'
-import {
-  filterMcpServersByPolicy,
-  parseMcpConfig,
-  parseMcpConfigFromFilePath,
-} from 'src/services/mcp/config.js'
+import { filterMcpServersByPolicy } from 'src/services/mcp/configResolution.js'
+import { parseMcpConfig } from 'src/services/mcp/configParsing.js'
+import { parseMcpConfigFromFilePath } from 'src/services/mcp/configRepository.js'
 import { logForDebugging } from 'src/services/infra/debug.js'
 import { errorMessage, getErrnoCode } from 'src/utils/errors.js'
 import { setAllHookEventsEnabled } from 'src/services/hooks/hookEvents.js'

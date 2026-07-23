@@ -22,11 +22,8 @@ import { toInfraSessionId } from '../sessionIdCompat.js'
 import { createSessionSpawner } from '../sessionRunner.js'
 import { getTrustedDeviceToken } from '../trustedDevice.js'
 import { BRIDGE_LOGIN_ERROR, type SpawnMode, type WireConfig, type WireLogger } from '../types.js'
-import {
-  SPAWN_SESSIONS_DEFAULT,
-  isMultiSessionSpawnEnabled,
-  spawnScriptArgs,
-} from './wireLoopSupport.js'
+import { SPAWN_SESSIONS_DEFAULT, isMultiSessionSpawnEnabled } from './wirePollingPolicy.js'
+import { spawnScriptArgs } from './sessionSpawner.js'
 import { runWireLoop } from './wireLoop.js'
 import { parseArgs, printHelp } from './cli.js'
 export async function bridgeMain(args: string[]): Promise<void> {

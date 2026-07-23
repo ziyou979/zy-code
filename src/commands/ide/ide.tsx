@@ -18,15 +18,13 @@ import { useAppState, useSetAppState } from '../../state/AppState.js'
 import { getCwd } from '../../services/environment/cwd.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
 import {
-  type DetectedIDEInfo,
-  detectIDEs,
-  detectRunningIDEs,
-  type IdeType,
   isJetBrainsIde,
   isSupportedJetBrainsTerminal,
   isSupportedTerminal,
   toIDEDisplayName,
-} from '../../services/ide/ide.js'
+} from '../../services/ide/ideCatalog.js'
+import { type DetectedIDEInfo, detectIDEs, detectRunningIDEs } from '../../services/ide/ide.js'
+import type { IdeType } from '../../services/ide/ideTypes.js'
 import { getCurrentWorktreeSession } from '../../services/worktree/worktree.js'
 
 type IDEScreenProps = {

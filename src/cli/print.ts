@@ -118,9 +118,9 @@ import {
   isAutoModeGateEnabled,
   getAutoModeUnavailableNotification,
   getAutoModeUnavailableReason,
-  isBypassPermissionsModeDisabled,
-  transitionPermissionMode,
-} from 'src/services/permissions/permissionSetup.js'
+} from 'src/services/permissions/autoModePolicy.js'
+import { isBypassPermissionsModeDisabled } from 'src/services/permissions/bypassPermissionPolicy.js'
+import { transitionPermissionMode } from 'src/services/permissions/permissionModeTransitions.js'
 import { type PromptVariant } from 'src/services/prompt-suggestion/promptSuggestion.js'
 import { getAccountInformation } from 'src/services/auth/auth.js'
 import { getAPIProvider } from 'src/services/model/providers.js'
@@ -149,7 +149,7 @@ import {
   fetchToolsForClient,
   areMcpConfigsEqual,
 } from 'src/services/mcp/client.js'
-import { filterMcpServersByPolicy } from 'src/services/mcp/config.js'
+import { filterMcpServersByPolicy } from 'src/services/mcp/configResolution.js'
 import { toSDKRateLimitInfo } from 'src/services/messages/mappers.js'
 import { createModelSwitchBreadcrumbs } from 'src/services/messages/constructors.js'
 import { LOCAL_COMMAND_STDOUT_TAG } from 'src/constants/xml.js'

@@ -10,7 +10,7 @@ export {
   getLoadGeneration,
 } from '../tools/externalToolLoader.js'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { getDenyRuleForTool } from '../services/permissions/permissions.js'
+import { getDenyRuleForTool } from '../services/permissions/permissionRuleQueries.js'
 import { REPL_TOOL_NAME, REPL_ONLY_TOOLS, isReplModeEnabled } from '../tools/REPLTool/constants.js'
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from '../tools/SyntheticOutputTool/SyntheticOutputTool.js'
 export { REPL_ONLY_TOOLS }

@@ -72,12 +72,12 @@ import {
 import { extractZyCodeHints } from '../../services/hints/zyCodeHints.js'
 import { userFacingName as fileEditUserFacingName } from '../FileEditTool/UI.js'
 import { trackGitOperations } from '../shared/gitOperationTracking.js'
+import { commandHasAnyCd } from './bashCommandDetection.js'
 import {
-  bashToolHasPermission,
-  commandHasAnyCd,
   matchWildcardPattern,
   permissionRuleExtractPrefix,
-} from './bashPermissions.js'
+} from '../../services/permissions/shellRuleMatching.js'
+import { bashToolHasPermission } from './bashPermissions.js'
 import { interpretCommandResult } from './commandSemantics.js'
 import { getDefaultTimeoutMs, getMaxTimeoutMs, getSimplePrompt } from './prompt.js'
 import { checkReadOnlyConstraints } from './readOnlyValidation.js'

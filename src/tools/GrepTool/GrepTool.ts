@@ -10,8 +10,8 @@ import { expandPath, toRelativePath } from '../../utils/path.js'
 import {
   checkReadPermissionForTool,
   getFileReadIgnorePatterns,
-  normalizePatternsToPath,
 } from '../../services/permissions/filesystem.js'
+import { normalizePatternsToPath } from '../../services/permissions/internalPaths.js'
 import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
 import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
 import { getGlobExclusionsForPluginCache } from '../../services/plugins/orphanedPluginFilter.js'

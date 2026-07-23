@@ -21,14 +21,16 @@ import type { PermissionRule } from '../../types/permissions.js'
 import { getCwd } from '../../services/environment/cwd.js'
 import { getFsImplementation, safeResolvePath } from '../../services/infra/fsOperations.js'
 import { containsPathTraversal, getDirectoryForPath } from '../../utils/path.js'
+import { checkPathSafetyForAutoEdit } from '../../services/permissions/autoEditPathSafety.js'
 import {
   allWorkingDirectories,
-  checkEditableInternalPath,
-  checkPathSafetyForAutoEdit,
-  checkReadableInternalPath,
   matchingRuleForInput,
   pathInAllowedWorkingPath,
 } from '../../services/permissions/filesystem.js'
+import {
+  checkEditableInternalPath,
+  checkReadableInternalPath,
+} from '../../services/permissions/filesystemPolicy.js'
 import type { PermissionResult } from '../../services/permissions/permissionResult.js'
 import { createReadRuleSuggestion } from '../../services/permissions/permissionUpdate.js'
 import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'

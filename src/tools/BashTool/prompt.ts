@@ -5,7 +5,7 @@ import { getAttributionTexts } from '../../services/attribution/attribution.js'
 import { hasEmbeddedSearchTools } from '../../services/tool-runtime/embeddedTools.js'
 import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { shouldIncludeGitInstructions } from '../../services/git/settingsBehavior.js'
-import { getZyTempDir } from '../../services/permissions/filesystem.js'
+import { getZyTempDir } from '../../services/permissions/scratchpadStorage.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   getDefaultBashTimeoutMs,

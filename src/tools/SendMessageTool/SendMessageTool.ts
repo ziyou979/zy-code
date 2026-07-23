@@ -36,8 +36,8 @@ import {
   createShutdownApprovedMessage,
   createShutdownRejectedMessage,
   createShutdownRequestMessage,
-  writeToMailbox,
-} from '../../services/swarm/teammateMailbox.js'
+} from '../../services/swarm/teammateMailboxMessages.js'
+import { writeToMailbox } from '../../services/swarm/teammateMailbox.js'
 import { resumeAgentBackground } from '../AgentTool/resumeAgent.js'
 import { SEND_MESSAGE_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, getPrompt } from './prompt.js'

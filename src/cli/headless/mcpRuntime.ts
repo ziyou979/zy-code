@@ -27,7 +27,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { isChannelAllowlisted, isChannelsEnabled } from 'src/services/mcp/channelAllowlist.js'
 import { setupSdkMcpClients } from 'src/services/mcp/client.js'
-import { getAllMcpConfigs } from 'src/services/mcp/config.js'
+import { getAllMcpConfigs } from 'src/services/mcp/configResolution.js'
 import {
   runElicitationHooks,
   runElicitationResultHooks,

@@ -13,7 +13,8 @@ import { startDeferredPrefetches } from '../bootstrap/prefetch.js'
 import { logSessionTelemetry } from '../bootstrap/telemetry.js'
 import { initializeTelemetryAfterTrust } from '../../entrypoints/init.js'
 import { clearServerCache, getMcpToolsCommandsAndResources } from '../../services/mcp/client.js'
-import { dedupZyAIMcpServers, getMcpServerSignature } from '../../services/mcp/config.js'
+import { dedupZyAIMcpServers } from '../../services/mcp/configResolution.js'
+import { getMcpServerSignature } from '../../services/mcp/configMerge.js'
 import type { McpSdkServerConfig, ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import { excludeCommandsByServer, excludeResourcesByServer } from '../../services/mcp/utils.js'
 import { type AppState, getDefaultAppState } from '../../state/AppStateStore.js'
@@ -28,10 +29,8 @@ import { logForDebugging, setHasFormattedOutput } from '../../services/infra/deb
 import { resolveInitialEffortSetting } from '../../services/effort/effort.js'
 import { isBareMode } from '../../services/infra/envUtils.js'
 import { applyConfigEnvironmentVariables } from '../../services/environment/managedEnv.js'
-import {
-  checkAndDisableBypassPermissions,
-  verifyAutoModeGateAccess,
-} from '../../services/permissions/permissionSetup.js'
+import { checkAndDisableBypassPermissions } from '../../services/permissions/bypassPermissionPolicy.js'
+import { verifyAutoModeGateAccess } from '../../services/permissions/autoModePolicy.js'
 import { processSessionStartHooks } from '../../services/session-storage/sessionStart.js'
 import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
 import type { ThinkingConfig } from '../../services/messages/thinking.js'

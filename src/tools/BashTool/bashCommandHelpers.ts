@@ -12,7 +12,7 @@ import {
 import { type Node, PARSE_ABORTED } from '../../shell-eval/bash/parser.js'
 import type { PermissionResult } from '../../services/permissions/permissionResult.js'
 import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
-import { createPermissionRequestMessage } from '../../services/permissions/permissions.js'
+import { createPermissionRequestMessage } from '../../services/permissions/permissionRuleQueries.js'
 import { BashTool } from './BashTool.js'
 import { bashCommandIsSafeAsync_DEPRECATED } from './bashSecurity.js'
 

@@ -25,7 +25,7 @@ import type { PermissionUpdate } from '../../services/permissions/permissionUpda
 import {
   createPermissionRequestMessage,
   getRuleByContentsForToolName,
-} from '../../services/permissions/permissions.js'
+} from '../../services/permissions/permissionRuleQueries.js'
 import {
   matchWildcardPattern,
   parsePermissionRule,

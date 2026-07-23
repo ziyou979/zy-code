@@ -14,7 +14,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/gr
 import { getDumpPromptsPath } from '../../services/api/dumpPrompts.js'
 import { cleanupAgentTracking } from '../../services/api/promptCacheBreakDetection.js'
 import { connectToServer, fetchToolsForClient } from '../../services/mcp/client.js'
-import { getMcpConfigByName } from '../../services/mcp/config.js'
+import { getMcpConfigByName } from '../../services/mcp/configLookup.js'
 import type { MCPServerConnection, ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import { getAgentModel } from '../../services/model/agent.js'
 import type { ModelAlias } from '../../services/model/aliases.js'

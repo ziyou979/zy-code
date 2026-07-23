@@ -12,7 +12,7 @@ import { WireFatalError } from '../bridgeApi.js'
 import { formatDuration } from '../bridgeStatusUtil.js'
 import { createTokenRefreshScheduler } from '../jwtUtils.js'
 import type { SessionHandle, WireApiClient, WireConfig, WireLogger } from '../types.js'
-import { STATUS_UPDATE_INTERVAL_MS } from './wireLoopSupport.js'
+import { STATUS_UPDATE_INTERVAL_MS } from './wirePollingPolicy.js'
 
 export type HeartbeatResult = 'ok' | 'auth_failed' | 'fatal' | 'failed'
 

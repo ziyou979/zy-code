@@ -17,19 +17,20 @@ import {
   isSafeHeredoc,
   stripSafeHeredocSubstitutions,
   stripSafeRedirections,
-} from './bashSecurityStringSupport.js'
+} from './shellTextScanner.js'
+import type { ValidationContext } from './securityTypes.js'
 import {
-  type ValidationContext,
-  validateBackslashEscapedOperators,
-  validateBackslashEscapedWhitespace,
-  validateBraceExpansion,
-  validateCommentQuoteDesync,
-  validateMidWordHash,
   validateObfuscatedFlags,
-  validateQuotedNewline,
+  validateBackslashEscapedWhitespace,
   validateUnicodeWhitespace,
-  validateZshDangerousCommands,
-} from './bashSecuritySyntaxValidatorSupport.js'
+  validateMidWordHash,
+} from './obfuscationRules.js'
+import { validateBraceExpansion, validateZshDangerousCommands } from './expansionRules.js'
+import {
+  validateBackslashEscapedOperators,
+  validateCommentQuoteDesync,
+  validateQuotedNewline,
+} from './destructiveRules.js'
 
 // Note: Backtick pattern is handled separately in validateDangerousPatterns
 // to distinguish between escaped and unescaped backticks

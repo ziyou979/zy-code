@@ -54,11 +54,8 @@ import {
 } from 'src/services/sessionStorage.js'
 import { incrementPromptCount } from 'src/services/git/commitAttribution.js'
 import { clearServerCache, reconnectMcpServerImpl } from 'src/services/mcp/client.js'
-import {
-  getMcpConfigByName,
-  isMcpServerDisabled,
-  setMcpServerEnabled,
-} from 'src/services/mcp/config.js'
+import { getMcpConfigByName } from 'src/services/mcp/configLookup.js'
+import { isMcpServerDisabled, setMcpServerEnabled } from 'src/services/mcp/serverEnablement.js'
 import { performMCPOAuthFlow, revokeServerTokens } from 'src/services/mcp/auth.js'
 import { getMcpPrefix } from 'src/services/mcp/mcpStringUtils.js'
 import { commandBelongsToServer } from 'src/services/mcp/utils.js'
@@ -521,15 +518,14 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
     },
     reload_plugins: async (message) => {
       try {
-        if (
-          feature('DOWNLOAD_USER_SETTINGS') &&
-          (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode())
-        ) {
-          // Re-pull user settings so enabledPlugins pushed from the
-          // user's local CLI take effect before the cache sweep.
-          const applied = await redownloadUserSettings()
-          if (applied) {
-            settingsChangeDetector.notifyChange('userSettings')
+        if (feature('DOWNLOAD_USER_SETTINGS')) {
+          if (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode()) {
+            // Re-pull user settings so enabledPlugins pushed from the
+            // user's local CLI take effect before the cache sweep.
+            const applied = await redownloadUserSettings()
+            if (applied) {
+              settingsChangeDetector.notifyChange('userSettings')
+            }
           }
         }
 
@@ -1260,7 +1256,23 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
     },
     // set_proactive 仅在 PROACTIVE/KAIROS feature 开启时注册;feature 关时此 key 不
     // 存在,落到下方「未知 subtype」错误响应,与迁移前的内联 else-if 行为一致。
-    ...(feature('PROACTIVE') || feature('KAIROS')
+    ...(feature('PROACTIVE')
+      ? {
+          set_proactive: (message: WireControlRequest): void => {
+            const req = message.request as unknown as { subtype: string; enabled: boolean }
+            if (req.enabled) {
+              if (!proactiveModule?.isProactiveActive()) {
+                proactiveModule!.activateProactive('command')
+                scheduleProactiveTick!()
+              }
+            } else {
+              proactiveModule!.deactivateProactive()
+            }
+            sendControlResponseSuccess(message)
+          },
+        }
+      : {}),
+    ...(feature('KAIROS')
       ? {
           set_proactive: (message: WireControlRequest): void => {
             const req = message.request as unknown as { subtype: string; enabled: boolean }
