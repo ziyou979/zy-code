@@ -6,7 +6,7 @@ import { logForDebugging } from '../services/infra/debug.js'
 import {
   createDisabledBypassPermissionsContext,
   isBypassPermissionsModeDisabled,
-} from '../services/permissions/permissionSetup.js'
+} from '../services/permissions/bypassPermissionPolicy.js'
 import { applySettingsChange } from '../services/settings/applySettingsChange.js'
 import { createStore } from './store.js'
 

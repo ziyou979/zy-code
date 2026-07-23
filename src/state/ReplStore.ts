@@ -240,6 +240,11 @@ export function createReplStore(params: CreateReplStoreParams): ReplStoreInstanc
     },
     setStreamMode(mode) {
       const prev = store.getState().streamMode
+      if (mode === 'requesting' && prev !== 'requesting') {
+        // 新请求开始时清除上一轮暂存的思考时长，避免尚未收到首个消息时复用旧值。
+        mutable.lastThinkingDurationMs = 0
+        mutable.thinkingStartMs = 0
+      }
       if (mode === 'thinking' && prev !== 'thinking') {
         mutable.thinkingStartMs = Date.now()
       } else if (mode !== 'thinking' && prev === 'thinking' && mutable.thinkingStartMs > 0) {

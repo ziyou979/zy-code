@@ -5,7 +5,7 @@ import type { ToolUseContext } from '../tools/tool.js'
 import type { Command } from '../commands/types.js'
 import type { ContentBlock } from '../types/llm.js'
 import { logForDebugging } from '../services/infra/debug.js'
-import { getBundledSkillsRoot } from '../services/permissions/filesystem.js'
+import { getBundledSkillsRoot } from '../services/permissions/scratchpadStorage.js'
 import type { HooksSettings } from '../services/settings/types.js'
 
 /**

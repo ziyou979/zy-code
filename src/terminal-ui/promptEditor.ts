@@ -8,7 +8,7 @@ import type { PastedContent } from '../services/config/config.js'
 import { classifyGuiEditor, getExternalEditor } from './editor.js'
 import { execSync_DEPRECATED } from '../services/shell/execSyncWrapper.js'
 import { getFsImplementation } from '../services/infra/fsOperations.js'
-import { toIDEDisplayName } from '../services/ide/ide.js'
+import { toIDEDisplayName } from '../services/ide/ideCatalog.js'
 import { writeFileSync_DEPRECATED } from '../services/infra/slowOperations.js'
 import { generateTempFilePath } from '../services/file-persistence/tempfile.js'
 
