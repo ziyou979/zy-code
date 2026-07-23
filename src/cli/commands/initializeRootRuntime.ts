@@ -52,12 +52,12 @@ import { isBareMode, isEnvTruthy, isInternalBuild } from '../../services/infra/e
 import { safeParseJSON } from '../../utils/json.js'
 import { logError } from '../../services/infra/log.js'
 import { applyConfigEnvironmentVariables } from '../../services/environment/managedEnv.js'
+import { initializeToolPermissionContext } from '../../services/permissions/permissionBootstrap.js'
+import { parseToolListFromCLI } from '../../services/permissions/permissionCli.js'
 import {
-  initializeToolPermissionContext,
-  parseToolListFromCLI,
   removeDangerousPermissions,
   stripDangerousPermissionsForAutoMode,
-} from '../../services/permissions/permissionSetup.js'
+} from '../../services/permissions/dangerousPermissionRules.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import { cacheSessionTitle } from '../../services/sessionStorage.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
@@ -67,9 +67,8 @@ import { validateUuid } from '../../utils/uuid.js'
 import {
   areMcpConfigsAllowedWithEnterpriseMcpConfig,
   doesEnterpriseMcpConfigExist,
-  filterMcpServersByPolicy,
-  getZyCodeMcpConfigs,
-} from 'src/services/mcp/config.js'
+} from 'src/services/mcp/configLookup.js'
+import { filterMcpServersByPolicy, getZyCodeMcpConfigs } from 'src/services/mcp/configResolution.js'
 import { fetchZyAIMcpConfigsIfEligible } from 'src/services/mcp/zyai.js'
 import { getCwd } from 'src/services/environment/cwd.js'
 import { logForDebugging } from 'src/services/infra/debug.js'

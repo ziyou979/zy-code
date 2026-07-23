@@ -18,14 +18,12 @@ import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { cacheKeys } from '../../services/file-persistence/fileStateCache.js'
 import { getWorktreeCount } from '../../services/infra/git.js'
 import {
-  detectRunningIDEsCached,
-  getSortedIdeLockfiles,
   isCursorInstalled,
-  isSupportedTerminal,
-  isSupportedVSCodeTerminal,
   isVSCodeInstalled,
   isWindsurfInstalled,
-} from '../../services/ide/ide.js'
+} from '../../services/ide/editorDiscovery.js'
+import { detectRunningIDEsCached, getSortedIdeLockfiles } from '../../services/ide/ide.js'
+import { isSupportedTerminal, isSupportedVSCodeTerminal } from '../../services/ide/ideCatalog.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import { isPluginInstalled } from '../../services/plugins/installedPluginsManager.js'
 import { loadKnownMarketplacesConfigSafe } from '../../services/plugins/marketplaceManager.js'

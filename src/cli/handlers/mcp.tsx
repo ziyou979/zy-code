@@ -22,13 +22,10 @@ import {
   saveMcpClientSecret,
 } from '../../services/mcp/auth.js'
 import { connectToServer, getMcpServerConnectionBatchSize } from '../../services/mcp/client.js'
-import {
-  addMcpConfig,
-  getAllMcpConfigs,
-  getMcpConfigByName,
-  getMcpConfigsByScope,
-  removeMcpConfig,
-} from '../../services/mcp/config.js'
+import { getAllMcpConfigs } from '../../services/mcp/configResolution.js'
+import { getMcpConfigByName } from '../../services/mcp/configLookup.js'
+import { addMcpConfig, removeMcpConfig } from '../../services/mcp/configMutations.js'
+import { getMcpConfigsByScope } from '../../services/mcp/configRepository.js'
 import type { ConfigScope, ScopedMcpServerConfig } from '../../services/mcp/types.js'
 import {
   describeMcpConfigFilePath,

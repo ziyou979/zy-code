@@ -36,12 +36,11 @@ import {
 } from 'src/services/analytics/index.js'
 import {
   dedupZyAIMcpServers,
-  doesEnterpriseMcpConfigExist,
   filterMcpServersByPolicy,
   getZyCodeMcpConfigs,
-  isMcpServerDisabled,
-  setMcpServerEnabled,
-} from 'src/services/mcp/config.js'
+} from 'src/services/mcp/configResolution.js'
+import { doesEnterpriseMcpConfigExist } from 'src/services/mcp/configLookup.js'
+import { isMcpServerDisabled, setMcpServerEnabled } from 'src/services/mcp/serverEnablement.js'
 import type { AppState } from 'src/state/AppStateStore.js'
 import type { PluginError } from 'src/services/plugins/types.js'
 import { createDebugLog } from 'src/services/infra/debug.js'
@@ -72,9 +71,9 @@ import { registerElicitationHandler } from './elicitationHandler.js'
 import {
   addErrorsToAppState,
   applyPendingMcpUpdates,
-  getTransportDisplayName,
   type PendingMcpUpdate,
-} from './mcpConnectionStateSupport.js'
+} from './mcpConnectionReducer.js'
+import { getTransportDisplayName } from './transportPresentation.js'
 import { excludeStalePluginClients } from './utils.js'
 import { clearZyAIMcpConfigsCache, fetchZyAIMcpConfigsIfEligible } from './zyai.js'
 
@@ -847,7 +846,7 @@ export function useManageMCPConnections(
       // don't connect alongside the connector in Phase 2.
       const { servers: ZyCodeConfigs, errors: mcpErrors } = isStrictMcpConfig
         ? { servers: {}, errors: [] }
-        : await getZyCodeMcpConfigs(dynamicMcpConfig, zyaiPromise)
+        : await getZyCodeMcpConfigs(dynamicMcpConfig)
       if (cancelled) {
         return
       }
