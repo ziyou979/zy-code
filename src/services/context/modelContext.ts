@@ -19,7 +19,6 @@ const MAX_OUTPUT_TOKENS_UPPER_LIMIT = 64_000
 
 // 默认 max output token 计算公式中的默认参数
 const DEFAULT_MAX_OUTPUT_TOKEN_RATIO = 0.75
-const DEFAULT_MIN_DEFAULT_MAX_OUTPUT_TOKENS = 8_000
 
 // 保留给 query.ts 截断重试机制使用
 export const ESCALATED_MAX_TOKENS = 64_000
@@ -77,9 +76,8 @@ export function calculateContextPercentages(
  *
  * 计算公式：
  * - upperLimit = maxOutputTokens（模型配置值或 API 缓存值）
- * - default = min(upperLimit * ratio, cap)
- *   - ratio: settings.json 中 defaultMaxOutputTokenRatio（默认 0.75）
- *   - cap: settings.json 中 minDefaultMaxOutputTokens（默认 8000）
+ * - default = upperLimit * ratio（settings.json 中 defaultMaxOutputTokenRatio，默认 0.75）
+ * - 仅当 settings.json 显式配置了 minDefaultMaxOutputTokens 时，default 受其上限约束
  */
 export function getModelMaxOutputTokens(model: string): {
   default: number
@@ -104,10 +102,14 @@ export function getModelMaxOutputTokens(model: string): {
   // 2. 读取 settings.json 中的全局配置
   const settings = getInitialSettings()
   const ratio = settings.defaultMaxOutputTokenRatio ?? DEFAULT_MAX_OUTPUT_TOKEN_RATIO
-  const cap = settings.minDefaultMaxOutputTokens ?? DEFAULT_MIN_DEFAULT_MAX_OUTPUT_TOKENS
 
   // 3. 计算 default
-  const calculatedDefault = Math.min(Math.round(upperLimit * ratio), cap)
+  //    minDefaultMaxOutputTokens 仅当显式配置时作为上限；未配置时不硬限制，
+  //    直接使用模型自身能力（upperLimit * ratio）。
+  const calculatedDefault =
+    settings.minDefaultMaxOutputTokens != null
+      ? Math.min(Math.round(upperLimit * ratio), settings.minDefaultMaxOutputTokens)
+      : Math.round(upperLimit * ratio)
 
   return {
     default: calculatedDefault,

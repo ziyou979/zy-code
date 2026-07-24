@@ -151,7 +151,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 | `alwaysThinkingEnabled` | boolean | `true` | false 禁用 thinking |
 | `effortLevel` | `minimal\|low\|medium\|high`(内部含 `max`) | — | 持久 effort 档 |
 | `defaultMaxOutputTokenRatio` | number(0-1) | `0.75` | 默认最大输出 token 比率 |
-| `minDefaultMaxOutputTokens` | int | `8000` | 默认最大输出 token 上限 |
+| `minDefaultMaxOutputTokens` | int | — | 默认最大输出 token 上限（未配置时不限制，直接使用模型能力） |
 | `promptCacheTTL` | `5m\|1h` | `5m` | prompt cache TTL |
 
 ### 2.9 Git / 归属

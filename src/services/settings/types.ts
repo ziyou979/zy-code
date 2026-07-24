@@ -621,8 +621,8 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'Upper bound (cap) for the default max output tokens per request. ' +
-            'The effective default is min(maxOutputTokens * defaultMaxOutputTokenRatio, minDefaultMaxOutputTokens). ' +
-            'Defaults to 8000.',
+            'When set, the effective default is min(maxOutputTokens * defaultMaxOutputTokenRatio, minDefaultMaxOutputTokens). ' +
+            'When not set, the effective default is maxOutputTokens * defaultMaxOutputTokenRatio (no cap).',
         ),
       effortLevel: z
         .enum(
