@@ -43,6 +43,28 @@ export type SessionSidecarMetadata = {
   agentSetting?: string
   prLink?: SessionSidecarPrLink
   mode?: 'coordinator' | 'normal'
+  permissionMode?: string
+  sessionCosts?: {
+    totalCost: number
+    totalAPIDuration: number
+    totalAPIDurationWithoutRetries: number
+    totalToolDuration: number
+    totalLinesAdded: number
+    totalLinesRemoved: number
+    lastDuration: number | undefined
+    modelUsage?: Record<
+      string,
+      {
+        inputTokens: number
+        outputTokens: number
+        cacheReadInputTokens: number
+        cacheCreationInputTokens: number
+        webSearchRequests: number
+        cost: number
+      }
+    >
+    totalCostByCurrency?: Record<string, number>
+  }
   // undefined = 从未进入 worktree;null = 已显式退出(保留三态语义)
   worktreeState?: PersistedWorktreeSession | null
 }

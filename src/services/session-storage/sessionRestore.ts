@@ -299,6 +299,7 @@ type ResumeLoadResult = {
   customTitle?: string
   tag?: string
   mode?: 'coordinator' | 'normal'
+  permissionMode?: string
   worktreeSession?: PersistedWorktreeSession | null
   prNumber?: number
   prUrl?: string
@@ -514,6 +515,12 @@ export async function processResumedConversation(
       ...(resumedAgentType && { agent: resumedAgentType }),
       ...(restoredAttribution && { attribution: restoredAttribution }),
       ...(standaloneAgentContext && { standaloneAgentContext }),
+      ...(result.permissionMode && {
+        toolPermissionContext: {
+          ...context.initialState.toolPermissionContext,
+          mode: result.permissionMode as AppState['toolPermissionContext']['mode'],
+        },
+      }),
       agentDefinitions: refreshedAgentDefs,
     },
   }

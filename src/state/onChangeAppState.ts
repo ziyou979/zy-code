@@ -16,6 +16,7 @@ import {
   type SessionExternalMetadata,
 } from '../services/session-state/sessionState.js'
 import { getInitialSettings, updateSettingsForSource } from '../services/settings/settings.js'
+import { savePermissionMode } from '../services/session-storage/sessionMetadata.js'
 import type { AppState } from './AppStateStore.js'
 
 // Inverse of the push below — restore on worker restart.
@@ -85,6 +86,9 @@ export function onChangeAppState({
       })
     }
     notifyPermissionModeChanged(newMode)
+
+    // 持久化到 session sidecar，确保 /resume 后保留当前模式
+    savePermissionMode(newMode)
   }
 
   // mainLoopModel: persist to settings

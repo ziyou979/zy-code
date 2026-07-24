@@ -143,6 +143,7 @@ export function restoreSessionMetadata(meta: {
   agentColor?: string
   agentSetting?: string
   mode?: 'coordinator' | 'normal'
+  permissionMode?: string
   worktreeSession?: PersistedWorktreeSession | null
   prNumber?: number
   prUrl?: string
@@ -168,6 +169,9 @@ export function restoreSessionMetadata(meta: {
   }
   if (meta.mode) {
     project.currentSessionMode = meta.mode
+  }
+  if (meta.permissionMode !== undefined) {
+    project.currentSessionPermissionMode = meta.permissionMode
   }
   if (meta.worktreeSession !== undefined) {
     project.currentSessionWorktree = meta.worktreeSession
@@ -197,6 +201,7 @@ export function clearSessionMetadata(): void {
   project.currentSessionLastPrompt = undefined
   project.currentSessionAgentSetting = undefined
   project.currentSessionMode = undefined
+  project.currentSessionPermissionMode = undefined
   project.currentSessionWorktree = undefined
   project.currentSessionPrNumber = undefined
   project.currentSessionPrUrl = undefined
@@ -276,6 +281,14 @@ export function saveMode(mode: 'coordinator' | 'normal'): void {
   project.currentSessionMode = mode
   if (project.sessionFile) {
     updateSessionSidecar(project.sessionFile, { mode })
+  }
+}
+
+export function savePermissionMode(mode: string): void {
+  const project = getProject()
+  project.currentSessionPermissionMode = mode
+  if (project.sessionFile) {
+    updateSessionSidecar(project.sessionFile, { permissionMode: mode })
   }
 }
 

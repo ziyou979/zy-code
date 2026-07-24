@@ -19,6 +19,7 @@ import {
   copyFileHistoryForResume,
   type FileHistorySnapshot,
 } from '../file-persistence/fileHistory.js'
+import { readSessionSidecar } from '../../services/session-storage/sessionSidecar.js'
 import { logError } from '../../services/infra/log.js'
 import { createAssistantMessage, createUserMessage } from '../messages/./constructors.js'
 import {
@@ -446,6 +447,7 @@ export async function loadConversationForResume(
   customTitle?: string
   tag?: string
   mode?: 'coordinator' | 'normal'
+  permissionMode?: string
   worktreeSession?: PersistedWorktreeSession | null
   prNumber?: number
   prUrl?: string
@@ -562,6 +564,8 @@ export async function loadConversationForResume(
       prNumber: log?.prNumber,
       prUrl: log?.prUrl,
       prRepository: log?.prRepository,
+      // 从 sidecar 读取持久化的权限模式
+      permissionMode: readSessionSidecar(log?.fullPath ?? sourceJsonlFile ?? '')?.permissionMode,
       // 包含完整路径以支持跨目录 resume
       fullPath: log?.fullPath,
     }

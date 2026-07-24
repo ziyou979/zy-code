@@ -167,6 +167,7 @@ class Project {
   currentSessionLastPrompt: string | undefined
   currentSessionAgentSetting: string | undefined
   currentSessionMode: 'coordinator' | 'normal' | undefined
+  currentSessionPermissionMode: string | undefined
   // 三态：undefined = 从未触碰（不写入），null = 已退出 worktree，
   // object = 当前在 worktree 中。reAppendSessionMetadata 写入 null 以便
   // --resume 知道 session 已退出（而非在内部崩溃）。
@@ -407,6 +408,7 @@ class Project {
       agentColor: this.currentSessionAgentColor,
       agentSetting: this.currentSessionAgentSetting,
       mode: this.currentSessionMode,
+      permissionMode: this.currentSessionPermissionMode,
       worktreeState: this.currentSessionWorktree,
       prLink,
     })

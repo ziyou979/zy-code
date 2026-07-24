@@ -8,7 +8,7 @@ export class QueryGuard {
   private _onChange = createSignal()
 
   get isActive(): boolean {
-    return this._state === 'running'
+    return this._state !== 'idle'
   }
 
   getState(): GuardState {

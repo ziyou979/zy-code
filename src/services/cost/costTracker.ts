@@ -47,6 +47,8 @@ import { formatDuration, formatNumber } from '../../utils/format.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
 import { SYNTHETIC_MODEL } from '../messages/constants.js'
 import { calculateCost, getCurrencySymbol, getModelCurrency } from '../model/modelCost.js'
+import { getTranscriptPathForSession } from '../session-storage/paths.js'
+import { updateSessionSidecar, readSessionSidecar } from '../session-storage/sessionSidecar.js'
 
 export {
   addToTotalLinesChanged,
@@ -175,6 +177,17 @@ export function getRestorableSessionCosts(
   sessionId: string,
   messages?: readonly Message[],
 ): StoredCostState | undefined {
+  // 优先从 sidecar 读取（最可靠，不受压缩影响）
+  try {
+    const transcriptPath = getTranscriptPathForSession(sessionId)
+    const sidecar = readSessionSidecar(transcriptPath)
+    if (sidecar?.sessionCosts) {
+      return sidecar.sessionCosts as StoredCostState
+    }
+  } catch {
+    // sidecar 读取失败不阻塞
+  }
+
   return (
     getStoredSessionCosts(sessionId) ??
     (messages ? reconstructCostStateFromMessages(messages) : undefined)
@@ -327,6 +340,27 @@ export function saveCurrentSessionCosts(fpsMetrics?: FpsMetrics): void {
       sessionCosts,
     }
   })
+
+  // 同步写入 sidecar，确保压缩 + 崩溃后 resume 仍可恢复完整 cost。
+  // sidecar 是 session 级别的原子覆写，不受压缩影响。
+  try {
+    const transcriptPath = getTranscriptPathForSession(sessionId)
+    updateSessionSidecar(transcriptPath, {
+      sessionCosts: {
+        totalCost: getTotalCost(),
+        totalAPIDuration: getTotalAPIDuration(),
+        totalAPIDurationWithoutRetries: getTotalAPIDurationWithoutRetries(),
+        totalToolDuration: getTotalToolDuration(),
+        totalLinesAdded: getTotalLinesAdded(),
+        totalLinesRemoved: getTotalLinesRemoved(),
+        lastDuration: getTotalDuration(),
+        modelUsage: modelUsageData,
+        totalCostByCurrency: getTotalCostByCurrency(),
+      },
+    })
+  } catch {
+    // sidecar 写入失败不应阻塞调用方
+  }
 }
 
 function formatCost(cost: number, maxDecimalPlaces: number = 4): string {
