@@ -110,7 +110,13 @@
       "Bash(cp \"E:/ProjectCollection/TSProjects/zy-code/src/utils/debug.ts\" \"E:/ProjectCollection/TSProjects/zy-code/src/services/infra/debug.ts\")",
       "Bash(cp \"E:/ProjectCollection/TSProjects/zy-code/src/utils/log.ts\" \"E:/ProjectCollection/TSProjects/zy-code/src/services/infra/log.ts\")",
       "Bash(cp \"E:/ProjectCollection/TSProjects/zy-code/src/utils/slowOperations.ts\" \"E:/ProjectCollection/TSProjects/zy-code/src/services/infra/slowOperations.ts\")",
-      "Bash(cp \"E:/ProjectCollection/TSProjects/zy-code/src/utils/envUtils.ts\" \"E:/ProjectCollection/TSProjects/zy-code/src/services/infra/envUtils.ts\")"
+      "Bash(cp \"E:/ProjectCollection/TSProjects/zy-code/src/utils/envUtils.ts\" \"E:/ProjectCollection/TSProjects/zy-code/src/services/infra/envUtils.ts\")",
+      "Bash(git -C \"E:/ProjectCollection/TSProjects/zy-code\" mv \"tests/services/mcp/wirePollingPolicy.test.ts\" \"tests/bridge/bridge-main/wirePollingPolicy.test.ts\")",
+      "Bash(git -C \"E:/ProjectCollection/TSProjects/zy-code\" mv \"tests/bridge/sessionSpawner.test.ts\" \"tests/bridge/bridge-main/sessionSpawner.test.ts\")",
+      "Bash(cp src/services/permissions/permissionCLI.ts src/services/permissions/permissionCLI.tmp)",
+      "Bash(mv src/services/permissions/permissionCLI.tmp src/services/permissions/permissionCli.ts)",
+      "Bash(rm src/services/permissions/permissionCLI.ts)",
+      "Bash(ls src/services/permissions/permission*CLI* src/services/permissions/permissionCli*)"
     ]
   }
 }
