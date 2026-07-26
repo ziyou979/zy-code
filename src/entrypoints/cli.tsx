@@ -11,8 +11,8 @@ if (process.env.ZY_CODE_REMOTE === 'true') {
   const existing = process.env.NODE_OPTIONS || ''
   // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level
   process.env.NODE_OPTIONS = existing
-    ? `${existing} --max-old-space-size=8192`
-    : '--max-old-space-size=8192'
+    ? `${existing} --max-old-space-size=4096`
+    : '--max-old-space-size=4096'
 }
 
 // 对照实验基线。内联在此处（而非 init.ts），因为

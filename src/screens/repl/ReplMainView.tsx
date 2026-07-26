@@ -577,13 +577,16 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
       const bounds = ink ? selectionBounds(ink.selection) : null
       const scroll = scrollRef.current
 
-      // 选区中点在 ScrollBox 视口内 → 对话历史，不删消息、不碰输入
+      // 只有整个选区都在 ScrollBox 视口内，才确定它属于对话历史。
+      // 输入框过长时会发生软换行，选区可能跨越多个屏幕行；用中点判断
+      // 会把这类输入框选区误判成历史选区，导致删除逻辑尚未匹配输入内容
+      // 就提前返回。
       if (bounds && scroll) {
         const vpTop = scroll.getViewportTop()
         const vpH = scroll.getViewportHeight()
         const vpBottom = vpTop + Math.max(0, vpH - 1)
-        const midRow = Math.floor((bounds.start.row + bounds.end.row) / 2)
-        if (midRow >= vpTop && midRow <= vpBottom) {
+        const entirelyInHistory = bounds.start.row >= vpTop && bounds.end.row <= vpBottom
+        if (entirelyInHistory) {
           return false
         }
       }

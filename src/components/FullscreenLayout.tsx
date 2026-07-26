@@ -433,7 +433,13 @@ export function FullscreenLayout({
           </Box>
         }
         {
-          <Box flexDirection="column" flexShrink={0} width="100%" maxHeight="50%">
+          <Box
+            flexDirection="column"
+            flexShrink={0}
+            width="100%"
+            minHeight={4}
+            maxHeight={Math.max(4, terminalRows - 2)}
+          >
             {<SuggestionsOverlay />}
             {<DialogOverlay />}
             <Box flexDirection="column" width="100%" flexGrow={1} overflowY="hidden">

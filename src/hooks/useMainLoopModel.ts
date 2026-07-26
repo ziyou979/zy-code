@@ -25,12 +25,12 @@ export function useMainLoopModel(): ModelName {
   const [, forceRerender] = useReducer((x) => x + 1, 0)
   useEffect(() => onGrowthBookRefresh(forceRerender), [])
 
-  const model = parseUserSpecifiedModel(
-    mainLoopModelForSession ??
-      mainLoopModel ??
-      getDefaultMainLoopModelSetting() ??
-      // TODO 什么情况，干掉
-      ('claude-sonnet-4-20250514' as ModelName),
-  )
+  const resolvedModel = mainLoopModelForSession ?? mainLoopModel ?? getDefaultMainLoopModelSetting()
+  if (!resolvedModel) {
+    throw new Error(
+      '未配置默认模型。请在 settings.json 中设置 "models.standard" 或通过 /model 命令指定模型。',
+    )
+  }
+  const model = parseUserSpecifiedModel(resolvedModel)
   return model
 }
