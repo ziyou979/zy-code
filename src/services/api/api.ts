@@ -293,8 +293,7 @@ export function logAPIPrefix(systemPrompt: SystemPrompt): void {
  * 通用设计：基于边界标记将系统提示拆分为静态和动态部分。
  * 静态内容（边界前）适合缓存，动态内容（边界后）每次请求都变化。
  *
- * 返回最多 4 个块：
- * - 归属标头（shouldCache: false）- 每次请求可能不同
+ * 返回最多 3 个块：
  * - 系统提示前缀（shouldCache: false）- 内容太小，缓存收益低
  * - 边界前的静态内容（shouldCache: true）- 大块稳定内容，保底缓存
  * - 边界后的动态内容（shouldCache: true）- 同一会话内基本不变，缓存整个系统提示
@@ -304,7 +303,6 @@ export function logAPIPrefix(systemPrompt: SystemPrompt): void {
 export function splitSysPromptPrefix(systemPrompt: SystemPrompt): SystemPromptBlock[] {
   const boundaryIndex = systemPrompt.indexOf(SYSTEM_PROMPT_DYNAMIC_BOUNDARY)
 
-  let attributionHeader: string | undefined
   let systemPromptPrefix: string | undefined
   const staticBlocks: string[] = []
   const dynamicBlocks: string[] = []
@@ -315,9 +313,7 @@ export function splitSysPromptPrefix(systemPrompt: SystemPrompt): SystemPromptBl
       continue
     }
 
-    if (block.startsWith('x-anthropic-billing-header')) {
-      attributionHeader = block
-    } else if (CLI_SYSPROMPT_PREFIXES.has(block)) {
+    if (CLI_SYSPROMPT_PREFIXES.has(block)) {
       systemPromptPrefix = block
     } else if (boundaryIndex === -1 || i < boundaryIndex) {
       staticBlocks.push(block)
@@ -327,9 +323,6 @@ export function splitSysPromptPrefix(systemPrompt: SystemPrompt): SystemPromptBl
   }
 
   const result: SystemPromptBlock[] = []
-  if (attributionHeader) {
-    result.push({ text: attributionHeader, shouldCache: false })
-  }
   if (systemPromptPrefix) {
     result.push({ text: systemPromptPrefix, shouldCache: false })
   }

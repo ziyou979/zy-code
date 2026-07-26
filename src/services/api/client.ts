@@ -73,16 +73,16 @@ export async function getAnthropicClient({
   } = {
     'x-app': 'cli',
     'User-Agent': getUserAgent(),
-    'X-Claude-Code-Session-Id': getSessionId(),
+    'X-Zy-Code-Session-Id': getSessionId(),
     ...customHeaders,
     ...(containerId
       ? {
-          'x-claude-remote-container-id': containerId,
+          'x-zy-remote-container-id': containerId,
         }
       : {}),
     ...(remoteSessionId
       ? {
-          'x-claude-remote-session-id': remoteSessionId,
+          'x-zy-remote-session-id': remoteSessionId,
         }
       : {}),
     // SDK 消费者可以通过此标识在 SDK 请求上设置他们的 app/library，用于后端分析
@@ -269,7 +269,7 @@ export async function getAnthropicClient({
  * 创建 OpenAI SDK 客户端实例。
  *
  * 与 getAnthropicClient 共享相同的基础设施：
- * - 共享 headers（X-Claude-Code-Session-Id、User-Agent、ZY_CODE_CUSTOM_HEADERS 等）
+ * - 共享 headers（X-Zy-Code-Session-Id、User-Agent、ZY_CODE_CUSTOM_HEADERS 等）
  * - baseUrl 优先级：传入值 → provider-specific env → OPENAI_BASE_URL → LLM_BASE_URL
  *   → settings.json baseUrl → (provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls.openai → api.openai.com/v1
  * - proxy 配置（getProxyFetchOptions）
@@ -294,7 +294,7 @@ export async function getOpenAIClient(options?: {
   const defaultHeaders: Record<string, string> = {
     'x-app': 'cli',
     'User-Agent': getUserAgent(),
-    'X-Claude-Code-Session-Id': getSessionId(),
+    'X-Zy-Code-Session-Id': getSessionId(),
     ...customHeaders,
     ...(containerId ? { 'x-zy-remote-container-id': containerId } : {}),
     ...(remoteSessionId ? { 'x-zy-remote-session-id': remoteSessionId } : {}),
@@ -381,7 +381,7 @@ export async function getOpenAIClient(options?: {
  * 创建 Google Generative AI SDK 客户端实例。
  *
  * 与 getOpenAIClient / getAnthropicClient 共享相同的基础设施：
- * - 共享 headers（X-Claude-Code-Session-Id、User-Agent 等）
+ * - 共享 headers（X-Zy-Code-Session-Id、User-Agent 等）
  * - baseUrl 优先级：传入值 → provider-specific env → GOOGLE_BASE_URL → LLM_BASE_URL
  *   → settings.json baseUrl → (provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls.google → generativelanguage.googleapis.com
  */
