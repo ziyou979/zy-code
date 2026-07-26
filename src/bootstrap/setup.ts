@@ -287,6 +287,16 @@ export async function setup(
     }
   }
   void lockCurrentVersion() // 锁定当前版本，防止被其他进程删除
+
+  // 启动运行时内存监控（后台采样，不阻塞启动）
+  if (typeof Bun !== 'undefined' && !getIsNonInteractiveSession()) {
+    // 交互模式下每秒强制 GC 防止堆无限增长
+    const gcTimer = setInterval(Bun.gc, 1000)
+    gcTimer.unref()
+  }
+  void import('../services/diagnostics/memoryMonitor.js').then(({ initMemoryMonitor }) => {
+    initMemoryMonitor()
+  })
   logForDiagnosticsNoPII('info', 'setup_background_jobs_launched')
 
   profileCheckpoint('setup_before_prefetch')

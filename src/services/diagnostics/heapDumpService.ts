@@ -13,6 +13,7 @@ import {
   getHeapStatistics,
   type HeapSpaceInfo,
 } from 'node:v8'
+import type { HeapStats as BunHeapStats } from 'bun:jsc'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logEvent } from '../analytics/index.js'
 import { logForDebugging } from '../../services/infra/debug.js'
@@ -24,8 +25,40 @@ import { jsonStringify } from '../../services/infra/slowOperations.js'
 export type HeapDumpResult = {
   success: boolean
   heapPath?: string
+  heapAfterGcPath?: string
   diagPath?: string
   error?: string
+}
+
+type MimallocValue = {
+  total: number
+  peak: number
+  current: number
+}
+
+type BunMimallocStats = {
+  reserved?: MimallocValue
+  committed?: MimallocValue
+  pageCommitted?: MimallocValue
+  pages?: MimallocValue
+  segments?: MimallocValue
+  segmentsCache?: MimallocValue
+  heaps?: MimallocValue
+  purged?: number
+  reset?: number
+}
+
+export type BunJscHeapStats = {
+  heapSize: number
+  heapCapacity: number
+  extraMemorySize: number
+  objectCount: number
+  protectedObjectCount: number
+  globalObjectCount: number
+  protectedGlobalObjectCount: number
+  objectTypeCounts: Record<string, number>
+  protectedObjectTypeCounts: Record<string, number>
+  mimalloc?: BunMimallocStats
 }
 
 /**
@@ -45,9 +78,9 @@ export type MemoryDiagnostics = {
     arrayBuffers: number
     rss: number
   }
-  memoryGrowthRate: {
-    bytesPerSecond: number
-    mbPerHour: number
+  bunJscHeapStats?: {
+    beforeGc: BunJscHeapStats
+    afterGc?: BunJscHeapStats
   }
   v8HeapStats: {
     heapSizeLimit: number // Max heap size allowed
@@ -77,7 +110,66 @@ export type MemoryDiagnostics = {
   smapsRollup?: string // Linux only - detailed memory breakdown
   platform: string
   nodeVersion: string
-  ccVersion: string
+  zyVersion: string
+}
+
+type RawBunMimallocStats = {
+  reserved?: MimallocValue
+  committed?: MimallocValue
+  page_committed?: MimallocValue
+  pages?: MimallocValue
+  segments?: MimallocValue
+  segments_cache?: MimallocValue
+  heaps?: MimallocValue
+  purged?: number
+  reset?: number
+}
+
+type RawBunHeapStats = BunHeapStats & {
+  mimalloc?: RawBunMimallocStats
+}
+
+/**
+ * 读取 Bun/JSC 与 mimalloc 的关键指标。
+ * 只保留内存归因需要的摘要，避免把体积很大的 allocator bins 写入 sidecar。
+ */
+async function captureBunJscHeapStats(): Promise<BunJscHeapStats | undefined> {
+  if (typeof Bun === 'undefined') {
+    return undefined
+  }
+
+  try {
+    const { heapStats } = await import('bun:jsc')
+    const raw = heapStats() as RawBunHeapStats
+    const mimalloc = raw.mimalloc
+    return {
+      heapSize: raw.heapSize,
+      heapCapacity: raw.heapCapacity,
+      extraMemorySize: raw.extraMemorySize,
+      objectCount: raw.objectCount,
+      protectedObjectCount: raw.protectedObjectCount,
+      globalObjectCount: raw.globalObjectCount,
+      protectedGlobalObjectCount: raw.protectedGlobalObjectCount,
+      objectTypeCounts: raw.objectTypeCounts,
+      protectedObjectTypeCounts: raw.protectedObjectTypeCounts,
+      mimalloc: mimalloc
+        ? {
+            reserved: mimalloc.reserved,
+            committed: mimalloc.committed,
+            pageCommitted: mimalloc.page_committed,
+            pages: mimalloc.pages,
+            segments: mimalloc.segments,
+            segmentsCache: mimalloc.segments_cache,
+            heaps: mimalloc.heaps,
+            purged: mimalloc.purged,
+            reset: mimalloc.reset,
+          }
+        : undefined,
+    }
+  } catch (error) {
+    logForDebugging(`[HeapDump] Failed to capture Bun/JSC heap stats: ${toError(error).message}`)
+    return undefined
+  }
 }
 
 /**
@@ -92,6 +184,7 @@ export async function captureMemoryDiagnostics(
   const heapStats = getHeapStatistics()
   const resourceUsage = process.resourceUsage()
   const uptimeSeconds = process.uptime()
+  const bunJscHeapStats = await captureBunJscHeapStats()
 
   // getHeapSpaceStatistics() is not available in Bun
   let heapSpaceStats: HeapSpaceInfo[] | undefined
@@ -125,10 +218,8 @@ export async function captureMemoryDiagnostics(
     // Not on Linux or no access - this is fine
   }
 
-  // Calculate native memory (RSS - heap) and growth rate
+  // 该差值用于区分 JS heap 与 runtime/native allocator 占用。
   const nativeMemory = usage.rss - usage.heapUsed
-  const bytesPerSecond = uptimeSeconds > 0 ? usage.rss / uptimeSeconds : 0
-  const mbPerHour = (bytesPerSecond * 3600) / (1024 * 1024)
 
   // Identify potential leaks
   const potentialLeaks: string[] = []
@@ -144,9 +235,6 @@ export async function captureMemoryDiagnostics(
     potentialLeaks.push(
       'Native memory > heap - leak may be in native addons (node-pty, sharp, etc.)',
     )
-  }
-  if (mbPerHour > 100) {
-    potentialLeaks.push(`High memory growth rate: ${mbPerHour.toFixed(1)} MB/hour`)
   }
   if (openFileDescriptors && openFileDescriptors > 500) {
     potentialLeaks.push(`${openFileDescriptors} open file descriptors - possible file/socket leak`)
@@ -165,10 +253,7 @@ export async function captureMemoryDiagnostics(
       arrayBuffers: usage.arrayBuffers,
       rss: usage.rss,
     },
-    memoryGrowthRate: {
-      bytesPerSecond,
-      mbPerHour,
-    },
+    bunJscHeapStats: bunJscHeapStats ? { beforeGc: bunJscHeapStats } : undefined,
     v8HeapStats: {
       heapSizeLimit: heapStats.heap_size_limit,
       mallocedMemory: heapStats.malloced_memory,
@@ -200,7 +285,7 @@ export async function captureMemoryDiagnostics(
     smapsRollup,
     platform: process.platform,
     nodeVersion: process.version,
-    ccVersion: MACRO.VERSION,
+    zyVersion: MACRO.VERSION,
   }
 }
 
@@ -234,8 +319,10 @@ export async function performHeapDump(
 
     const suffix = dumpNumber > 0 ? `-dump${dumpNumber}` : ''
     const heapFilename = `${sessionId}${suffix}.heapsnapshot`
+    const heapAfterGcFilename = `${sessionId}${suffix}-after-gc.heapsnapshot`
     const diagFilename = `${sessionId}${suffix}-diagnostics.json`
     const heapPath = join(dumpDir, heapFilename)
+    const heapAfterGcPath = join(dumpDir, heapAfterGcFilename)
     const diagPath = join(dumpDir, diagFilename)
 
     // Write diagnostics first (cheap, unlikely to fail)
@@ -244,9 +331,30 @@ export async function performHeapDump(
     })
     logForDebugging(`[HeapDump] Diagnostics written to ${diagPath}`)
 
-    // Write heap snapshot (this can crash for very large heaps)
+    // 第一份保留 GC 前现场，用于识别分配抖动和待回收对象。
     await writeHeapSnapshot(heapPath)
-    logForDebugging(`[HeapDump] Heap dump written to ${heapPath}`)
+    logForDebugging(`[HeapDump] Pre-GC heap dump written to ${heapPath}`)
+
+    let createdHeapAfterGcPath: string | undefined
+    if (typeof Bun !== 'undefined') {
+      Bun.gc(true)
+
+      const afterGcStats = await captureBunJscHeapStats()
+      if (afterGcStats && diagnostics.bunJscHeapStats) {
+        diagnostics.bunJscHeapStats.afterGc = afterGcStats
+        // 第二份快照失败时，sidecar 仍保留 GC 前后的 allocator 差异。
+        await writeFile(diagPath, jsonStringify(diagnostics, null, 2), {
+          mode: 0o600,
+        })
+      }
+
+      await writeHeapSnapshot(heapAfterGcPath)
+      createdHeapAfterGcPath = heapAfterGcPath
+      logForDebugging(`[HeapDump] Post-GC heap dump written to ${heapAfterGcPath}`)
+
+      // 第二次快照也会产生临时 ArrayBuffer，完成后主动释放。
+      Bun.gc(true)
+    }
 
     logEvent('zy_heap_dump', {
       triggerManual: trigger === 'manual',
@@ -255,7 +363,12 @@ export async function performHeapDump(
       success: true,
     })
 
-    return { success: true, heapPath, diagPath }
+    return {
+      success: true,
+      heapPath,
+      heapAfterGcPath: createdHeapAfterGcPath,
+      diagPath,
+    }
   } catch (err) {
     const error = toError(err)
     logError(error)
@@ -285,8 +398,6 @@ async function writeHeapSnapshot(filepath: string): Promise<void> {
     })
     /* eslint-enable custom-rules/no-sync-fs */
 
-    // Force GC to try to free that heap snapshot sooner.
-    Bun.gc(true)
     return
   }
   const writeStream = createWriteStream(filepath, { mode: 0o600 })

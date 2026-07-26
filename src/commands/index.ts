@@ -74,6 +74,7 @@ import reloadSkills from '../commands/reload-skills/index.js'
 import reloadTools from '../commands/reload-tools/index.js'
 import rewind from '../commands/rewind/index.js'
 import heapDump from '../commands/heapdump/index.js'
+import mem from '../commands/mem/index.js'
 import mockLimits from '../commands/mock-limits/index.js'
 import bridgeKick from '../commands/bridgeKick.js'
 import version from '../commands/version.js'
@@ -261,6 +262,7 @@ const COMMANDS = memoize((): Command[] => [
   installGitHubApp,
   installSlackApp,
   mcp,
+  mem,
   memory,
   mobile,
   model,

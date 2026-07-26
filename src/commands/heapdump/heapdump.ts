@@ -12,6 +12,6 @@ export async function call(): Promise<{ type: 'text'; value: string }> {
 
   return {
     type: 'text',
-    value: `${result.heapPath}\n${result.diagPath}`,
+    value: [result.heapPath, result.heapAfterGcPath, result.diagPath].filter(Boolean).join('\n'),
   }
 }
