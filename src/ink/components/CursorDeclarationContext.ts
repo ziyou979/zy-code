@@ -8,6 +8,8 @@ export type CursorDeclaration = {
   readonly relativeY: number
   /** ink-box DOMElement，其 yoga 布局提供绝对原点 */
   readonly node: DOMElement
+  /** 是否显示终端原生光标；false 时仅声明 IME 停靠位置 */
+  readonly visible: boolean
 }
 
 /**

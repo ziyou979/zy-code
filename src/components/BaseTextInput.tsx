@@ -14,6 +14,8 @@ type BaseTextInputComponentProps = BaseTextInputProps & {
   highlights?: TextHighlight[]
   invert?: (text: string) => string
   hidePlaceholderText?: boolean
+  nativeCursorEnabled?: boolean
+  cursorCellPainted?: boolean
 }
 
 /**
@@ -25,14 +27,17 @@ export function BaseTextInput({
   terminalFocus,
   invert,
   hidePlaceholderText,
+  nativeCursorEnabled = false,
+  cursorCellPainted = false,
   ...props
 }: BaseTextInputComponentProps) {
   const { onInput, renderedValue, cursorLine, cursorColumn } = inputState
-  const hasActiveCursor = Boolean(props.focus && props.showCursor && terminalFocus)
+  const hasActiveCursor = Boolean(props.focus && props.showCursor)
   const cursorRef = useDeclaredCursor({
     line: cursorLine,
     column: cursorColumn,
     active: hasActiveCursor,
+    visible: nativeCursorEnabled && !cursorCellPainted,
   })
   const { wrappedOnInput, isPasting } = usePasteHandler({
     onPaste: props.onPaste,
@@ -53,7 +58,7 @@ export function BaseTextInput({
   const { showPlaceholder, renderedPlaceholder } = renderPlaceholder({
     placeholder: props.placeholder,
     value: props.value,
-    showCursor: props.showCursor,
+    showCursor: props.showCursor && !nativeCursorEnabled,
     focus: props.focus,
     terminalFocus,
     invert,

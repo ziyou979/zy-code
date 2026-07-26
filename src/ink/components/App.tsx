@@ -106,6 +106,9 @@ type Props = {
   // 精确单元格；单词/行模式吸附到单词/行边界。需要
   // 访问屏幕缓冲区（单词边界）因此位于 Ink 上，而不是这里。
   readonly onSelectionDrag: (col: number, row: number) => void
+  // 将终端返回的鼠标列转换为屏幕缓冲区列。JetBrains 的 CJK 宽度模型
+  // 与内部缓冲区不同，因此单击锚点也必须使用转换后的列。
+  readonly correctSelectionCol?: (col: number, row: number) => number
   // stdin 数据到达后调用（在超过 STDIN_RESUME_GAP_MS 间隔之后）。
   // Ink 重新声明终端模式：扩展键报告，以及（全屏时）
   // 重新进入备用屏幕+鼠标跟踪。在终端侧是幂等的。
@@ -116,6 +119,7 @@ type Props = {
   // 在输入光标处启用 IME 组合，并让屏幕阅读器/
   // 放大镜跟踪输入。可选的，因此 testing.tsx 不模拟它。
   readonly onCursorDeclaration?: CursorDeclarationSetter
+  readonly nativeCursor?: boolean
   // 通过 DOM 树分发键盘事件。每个解析后的键都会调用，
   // 与传统的 EventEmitter 路径并行。
   readonly dispatchKeyboardEvent: (parsedKey: ParsedKey) => void
@@ -232,7 +236,11 @@ export default class App extends PureComponent<Props, State> {
   }
   override componentDidMount() {
     // 在辅助功能模式下，保持原生光标可见，供屏幕放大镜等工具使用
-    if (this.props.stdout.isTTY && !isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)) {
+    if (
+      this.props.stdout.isTTY &&
+      !this.props.nativeCursor &&
+      !isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)
+    ) {
       this.props.stdout.write(HIDE_CURSOR)
     }
   }
@@ -484,7 +492,7 @@ export default class App extends PureComponent<Props, State> {
 
       // 显示光标（除非处于辅助功能模式）并在恢复后重新启用焦点报告
       if (this.props.stdout.isTTY) {
-        if (!isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)) {
+        if (!this.props.nativeCursor && !isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)) {
           this.props.stdout.write(HIDE_CURSOR)
         }
         // 重新启用焦点报告以恢复终端状态
@@ -691,7 +699,8 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
       app.props.onMultiClick(col, row, count)
       return
     }
-    startSelection(sel, col, row)
+    const selectionCol = app.props.correctSelectionCol?.(col, row) ?? col
+    startSelection(sel, selectionCol, row)
     // SGR 位 0x08 = alt（xterm.js 在这里连接 altKey，而不是 metaKey——见
     // 下方超链接打开守卫处的注释）。在 macOS xterm.js 上，
     // 收到 alt 意味着 macOptionClickForcesSelection 已关闭（否则

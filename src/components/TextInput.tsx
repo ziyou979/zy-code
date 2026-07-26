@@ -6,6 +6,7 @@ import { useClipboardImageHint } from '../hooks/useClipboardImageHint.js'
 import { useSettings } from '../hooks/useSettings.js'
 import { useTextInput } from '../hooks/useTextInput.js'
 import { Box, color, useAnimationFrame, useTerminalFocus, useTheme } from '../ink/index.js'
+import { shouldUseNativeCursor } from '../ink/nativeCursor.js'
 import type { BaseTextInputProps } from '../types/textInputTypes.js'
 import { isEnvTruthy } from '../services/infra/envUtils.js'
 import type { TextHighlight } from '../terminal-ui/textHighlighting.js'
@@ -39,6 +40,7 @@ export default function TextInput(props: Props): React.ReactNode {
   const isTerminalFocused = useTerminalFocus()
   // 提升到挂载时——此组件在每次按键时都重新渲染。
   const accessibilityEnabled = useMemo(() => isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY), [])
+  const nativeCursorEnabled = useMemo(shouldUseNativeCursor, [])
   const settings = useSettings()
   const reducedMotion = settings.prefersReducedMotion ?? false
   const voiceState = feature('VOICE_MODE')
@@ -66,6 +68,7 @@ export default function TextInput(props: Props): React.ReactNode {
   // 在预热期间以 50ms 驱动 TextInput 重新渲染（同时空格
   // 每 30-80ms 到达）会导致可见的卡顿。
   const canShowCursor = isTerminalFocused && !accessibilityEnabled
+  const cursorCellPainted = isVoiceRecording && !reducedMotion
   let invert: (text: string) => string
   if (!canShowCursor) {
     invert = (text: string) => text
@@ -90,6 +93,8 @@ export default function TextInput(props: Props): React.ReactNode {
         }
       : hueToRgb(hue)
     invert = () => chalk.rgb(r, g, b)(BARS[barIndex]!)
+  } else if (nativeCursorEnabled) {
+    invert = (text: string) => text
   } else {
     invert = chalk.inverse
   }
@@ -129,6 +134,8 @@ export default function TextInput(props: Props): React.ReactNode {
         highlights={props.highlights}
         invert={invert}
         hidePlaceholderText={isVoiceRecording}
+        nativeCursorEnabled={nativeCursorEnabled}
+        cursorCellPainted={cursorCellPainted}
         {...props}
       />
     </Box>

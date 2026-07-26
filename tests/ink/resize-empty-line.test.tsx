@@ -55,9 +55,7 @@ describe('全屏 resize 空行回归', () => {
     })
 
     const frames: Frame[] = []
-    // 手动启用 alt-screen 逻辑状态，使 frameSink 被调用
-    ink.setAltScreenActive(true, false)
-
+    // frameSink 只在主屏幕路径接管；备用屏幕由 Ink 原生 diff 处理。
     ink.frameSink = (frame) => {
       frames.push(frame)
       return true
@@ -137,7 +135,6 @@ describe('全屏 resize 空行回归', () => {
     })
 
     const frames: Frame[] = []
-    ink.setAltScreenActive(true, false)
     ink.frameSink = (frame) => {
       frames.push(frame)
       return true

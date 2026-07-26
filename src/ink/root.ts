@@ -4,6 +4,7 @@ import { logForDebugging } from 'src/services/infra/debug.js'
 import type { FrameEvent } from './frame.js'
 import Ink, { type Options as InkOptions } from './ink.js'
 import instances from './instances.js'
+import { shouldUseNativeCursor } from './nativeCursor.js'
 
 export type RenderOptions = {
   /**
@@ -43,6 +44,9 @@ export type RenderOptions = {
    * 每次帧渲染后调用，带有时间和闪烁信息。
    */
   onFrame?: (event: FrameEvent) => void
+
+  /** 使用终端原生光标；默认在 Windows JetBrains 终端启用。 */
+  nativeCursor?: boolean
 }
 
 export type Instance = {
@@ -86,6 +90,7 @@ export const renderSync = (
     stderr: process.stderr,
     exitOnCtrlC: true,
     patchConsole: true,
+    nativeCursor: shouldUseNativeCursor(),
     ...opts,
   }
 
@@ -132,6 +137,7 @@ export async function createRoot({
   exitOnCtrlC = true,
   patchConsole = true,
   onFrame,
+  nativeCursor = shouldUseNativeCursor(),
 }: RenderOptions = {}): Promise<Root> {
   // 见 wrappedRender — 保留旧的 WASM await 的微任务边界。
   await Promise.resolve()
@@ -142,6 +148,7 @@ export async function createRoot({
     exitOnCtrlC,
     patchConsole,
     onFrame,
+    nativeCursor,
   })
 
   // 注册到实例映射中，这样通过 stdout 查找 Ink

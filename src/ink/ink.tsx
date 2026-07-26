@@ -142,6 +142,7 @@ export type Options = {
   patchConsole: boolean
   waitUntilExit?: () => Promise<void>
   onFrame?: (event: FrameEvent) => void
+  nativeCursor?: boolean
 }
 export default class Ink {
   private readonly log: LogUpdate
@@ -255,8 +256,12 @@ export default class Ink {
     x: number
     y: number
   } | null = null
+  // 原生光标的已知终端状态。仅在状态变化时发序列，避免 JediTerm
+  // 在每帧重复显示/隐藏光标时重启 IME 预编辑绘制。
+  private nativeCursorVisible: boolean
   constructor(private readonly options: Options) {
     autoBind(this)
+    this.nativeCursorVisible = isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)
     if (this.options.patchConsole) {
       this.restoreConsole = this.patchConsole()
       this.restoreStderr = this.patchStderr()
@@ -727,8 +732,9 @@ export default class Ink {
         cursor: ALT_SCREEN_ANCHOR_CURSOR,
       }
     }
-    // VtPlusPlus frameSink：alt-screen 模式下优先交给 frameSink 处理。
-    if (this.frameSink && this.altScreenActive) {
+    // 与 Claude Code 对齐：备用屏幕继续走 Ink 的普通 diff 和光标声明
+    // 路径。VtPlusPlus 的整帧行级 diff 会放大 JediTerm 的 IME 重绘问题。
+    if (this.frameSink && !this.altScreenActive) {
       const handled = this.frameSink(frame, this.stylePool)
       if (handled) {
         this.backFrame = this.frontFrame
@@ -739,22 +745,7 @@ export default class Ink {
             this.scheduleRender()
           }, FRAME_INTERVAL_MS)
         }
-        // 光标定位：将终端光标停泊在输入框位置，使 IME 预编辑文本
-        // 和屏幕阅读器能跟随输入。frameSink 跳过 writeDiffToTerminal，
-        // 但光标定位逻辑必须执行，否则输入文字出现在错误位置。
-        const decl = this.cursorDeclaration
-        const rect = decl !== null ? nodeCache.get(decl.node) : undefined
-        if (decl !== null && rect !== undefined) {
-          const row = Math.min(Math.max(rect.y + decl.relativeY + 1, 1), terminalRows)
-          const col = Math.min(Math.max(rect.x + decl.relativeX + 1, 1), terminalWidth)
-          this.options.stdout.write(cursorPosition(row, col))
-          this.displayCursor = {
-            x: rect.x + decl.relativeX,
-            y: rect.y + decl.relativeY,
-          }
-        } else {
-          this.displayCursor = null
-        }
+        this.displayCursor = null
         this.options.onFrame?.({ durationMs: performance.now() - renderStart, flickers: [] })
         return
       }
@@ -859,7 +850,12 @@ export default class Ink {
     // when nothing rendered AND the park target is unchanged.
     const targetMoved =
       target !== null && (parked === null || parked.x !== target.x || parked.y !== target.y)
-    if (hasDiff || targetMoved || (target === null && parked !== null)) {
+    const nativeCursorChanged =
+      this.options.nativeCursor === true &&
+      target !== null &&
+      decl !== null &&
+      (decl.visible || isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)) !== this.nativeCursorVisible
+    if (hasDiff || targetMoved || nativeCursorChanged || (target === null && parked !== null)) {
       // Main-screen preamble: log-update's relative moves assume the
       // physical cursor is at prevFrame.cursor. If last frame parked it
       // elsewhere, move back before the diff runs. Alt-screen's CSI H
@@ -905,6 +901,19 @@ export default class Ink {
           }
         }
         this.displayCursor = target
+        if (this.options.nativeCursor === true) {
+          const shouldShow =
+            decl?.visible === true || isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)
+          // 与 Claude Code 一致：先隐藏旧位置的原生光标，再在新的停靠
+          // 位置显示，避免移动过程中留下 JediTerm 的组合装饰。
+          if (this.nativeCursorVisible) {
+            optimized.unshift({ type: 'cursorHide' })
+          }
+          if (shouldShow) {
+            optimized.push({ type: 'cursorShow' })
+          }
+          this.nativeCursorVisible = shouldShow
+        }
       } else {
         // Declaration cleared (input blur, unmount). Restore physical cursor
         // to frame.cursor before forgetting the park position — otherwise
@@ -924,6 +933,14 @@ export default class Ink {
           }
         }
         this.displayCursor = null
+        if (
+          this.options.nativeCursor === true &&
+          this.nativeCursorVisible &&
+          !isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)
+        ) {
+          optimized.unshift({ type: 'cursorHide' })
+        }
+        this.nativeCursorVisible = false
       }
     }
     const tWrite = performance.now()
@@ -1844,8 +1861,10 @@ export default class Ink {
         onOpenHyperlink={this.openHyperlink}
         onMultiClick={this.handleMultiClick}
         onSelectionDrag={this.handleSelectionDrag}
+        correctSelectionCol={(col, row) => this.correctCol(col, row)}
         onStdinResume={this.reassertTerminalModes}
         onCursorDeclaration={this.setCursorDeclaration}
+        nativeCursor={this.options.nativeCursor === true}
         dispatchKeyboardEvent={this.dispatchKeyboardEvent}
       >
         <TerminalWriteProvider value={this.writeRaw}>{node}</TerminalWriteProvider>
