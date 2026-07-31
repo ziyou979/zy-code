@@ -33,12 +33,6 @@ export function BaseTextInput({
 }: BaseTextInputComponentProps) {
   const { onInput, renderedValue, cursorLine, cursorColumn } = inputState
   const hasActiveCursor = Boolean(props.focus && props.showCursor)
-  const cursorRef = useDeclaredCursor({
-    line: cursorLine,
-    column: cursorColumn,
-    active: hasActiveCursor,
-    visible: nativeCursorEnabled && !cursorCellPainted,
-  })
   const { wrappedOnInput, isPasting } = usePasteHandler({
     onPaste: props.onPaste,
     onInput: (input, key) => {
@@ -72,6 +66,18 @@ export function BaseTextInput({
   const showArgumentHint = Boolean(
     props.argumentHint && props.value && commandWithoutArgs && props.value.startsWith('/'),
   )
+  const cursorRef = useDeclaredCursor({
+    line: cursorLine,
+    column: cursorColumn,
+    active: hasActiveCursor,
+    visible: nativeCursorEnabled && !cursorCellPainted,
+    eraseToEnd:
+      nativeCursorEnabled &&
+      !cursorCellPainted &&
+      inputState.offset >= (props.value?.length ?? 0) &&
+      !props.inlineGhostText &&
+      !showArgumentHint,
+  })
   const cursorFiltered =
     props.showCursor && props.highlights
       ? props.highlights.filter(
@@ -95,8 +101,10 @@ export function BaseTextInput({
   const hasHighlights = filteredHighlights && filteredHighlights.length > 0
   if (hasHighlights) {
     return (
-      <Box ref={cursorRef}>
-        <HighlightedInput text={renderedValue} highlights={filteredHighlights} />
+      <Box ref={cursorRef} minHeight={1}>
+        <Box flexShrink={0} aria-preserve-whitespace={true}>
+          <HighlightedInput text={renderedValue} highlights={filteredHighlights} />
+        </Box>
         {showArgumentHint && (
           <Text dimColor={true}>
             {props.value?.endsWith(' ') ? '' : ' '}
@@ -110,7 +118,7 @@ export function BaseTextInput({
   const ContainerBox = Box
   const ContentText = Text
   return (
-    <ContainerBox ref={cursorRef}>
+    <ContainerBox ref={cursorRef} minHeight={1}>
       {
         <ContentText wrap={'truncate-end'} dimColor={props.dimColor}>
           {showPlaceholder && props.placeholderElement ? (
@@ -118,7 +126,9 @@ export function BaseTextInput({
           ) : showPlaceholder && renderedPlaceholder ? (
             <Ansi>{renderedPlaceholder}</Ansi>
           ) : (
-            <Ansi>{renderedValue}</Ansi>
+            <Text aria-preserve-whitespace={true}>
+              <Ansi>{renderedValue}</Ansi>
+            </Text>
           )}
           {showArgumentHint && (
             <Text dimColor={true}>

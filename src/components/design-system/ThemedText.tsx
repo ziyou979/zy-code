@@ -56,6 +56,7 @@ export type Props = {
    * If `truncate-*` is passed, Ink will truncate text instead, which will result in one line of text with the rest cut off.
    */
   readonly wrap?: Styles['textWrap']
+  readonly 'aria-preserve-whitespace'?: boolean
   readonly children?: ReactNode
 }
 
@@ -93,6 +94,7 @@ export default function ThemedText({
   strikethrough = false,
   inverse = false,
   wrap = 'wrap',
+  'aria-preserve-whitespace': preserveWhitespace,
   children,
 }: Props) {
   const [themeName] = useTheme()
@@ -115,6 +117,7 @@ export default function ThemedText({
       strikethrough={strikethrough}
       inverse={inverse}
       wrap={wrap}
+      aria-preserve-whitespace={preserveWhitespace}
     >
       {children}
     </Text>

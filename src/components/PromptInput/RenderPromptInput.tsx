@@ -233,8 +233,10 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
     columns,
     rows,
     textInputColumns,
+    textWrapColumns,
     maxVisibleLines,
     handleInputClick,
+    inputElementRef,
     handleOpenTasksDialog,
     placeholder,
     isInputWrapped,
@@ -289,7 +291,7 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
         key,
       }),
     onImagePaste,
-    columns: textInputColumns,
+    columns: textWrapColumns,
     maxVisibleLines,
     disableCursorMovementForUpDownKeys: suggestions.length > 0 || !!footerItemSelected,
     disableEscapeDoublePress: suggestions.length > 0,
@@ -397,7 +399,15 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
               viewingAgentName={viewingAgentName}
               viewingAgentColor={viewingAgentColor}
             />
-            <Box flexGrow={1} flexShrink={0} minHeight={1} onClick={handleInputClick}>
+            {/* 模式前缀固定占 2 列，输入区宽度必须与 Cursor 的预换行宽度保持一致。
+                不能让长文本的固有宽度参与 flex 收缩，否则会产生二次换行。 */}
+            <Box
+              ref={inputElementRef}
+              width={Math.max(1, textInputColumns + 1)}
+              flexShrink={0}
+              minHeight={1}
+              onClick={handleInputClick}
+            >
               {textInputElement}
             </Box>
           </Box>
@@ -422,7 +432,15 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
             viewingAgentName={viewingAgentName}
             viewingAgentColor={viewingAgentColor}
           />
-          <Box flexGrow={1} flexShrink={0} minHeight={1} onClick={handleInputClick}>
+          {/* Cursor.fromText 会再预留 1 列光标空间，因此容器应为
+              textInputColumns + 1，最终恰好扣除 2 列模式前缀。 */}
+          <Box
+            ref={inputElementRef}
+            width={Math.max(1, textInputColumns + 1)}
+            flexShrink={0}
+            minHeight={1}
+            onClick={handleInputClick}
+          >
             {textInputElement}
           </Box>
         </Box>

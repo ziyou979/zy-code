@@ -1,8 +1,9 @@
 import chalk from 'chalk'
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useClipboardImageHint } from '../hooks/useClipboardImageHint.js'
 import { useVimInput } from '../hooks/useVimInput.js'
 import { Box, color, useTerminalFocus, useTheme } from '../ink/index.js'
+import { shouldUseNativeCursor } from '../ink/nativeCursor.js'
 import type { VimTextInputProps } from '../types/textInputTypes.js'
 import type { TextHighlight } from '../terminal-ui/textHighlighting.js'
 import { BaseTextInput } from './BaseTextInput.js'
@@ -12,6 +13,7 @@ export type Props = VimTextInputProps & {
 export default function VimTextInput(props: Props) {
   const [theme] = useTheme()
   const isTerminalFocused = useTerminalFocus()
+  const nativeCursorEnabled = useMemo(shouldUseNativeCursor, [])
   useClipboardImageHint(isTerminalFocused, !!props.onImagePaste)
   const themeText = color('text', theme)
   const vimInputState = useVimInput({
@@ -27,9 +29,9 @@ export default function VimTextInput(props: Props) {
     focus: props.focus,
     mask: props.mask,
     multiline: props.multiline,
-    cursorChar: props.showCursor ? ' ' : '',
+    cursorChar: props.showCursor && !nativeCursorEnabled ? ' ' : '',
     highlightPastedText: props.highlightPastedText,
-    invert: isTerminalFocused ? chalk.inverse : (text) => text,
+    invert: isTerminalFocused && !nativeCursorEnabled ? chalk.inverse : (text: string) => text,
     themeText: themeText,
     columns: props.columns,
     maxVisibleLines: props.maxVisibleLines,
@@ -54,6 +56,7 @@ export default function VimTextInput(props: Props) {
         inputState={vimInputState}
         terminalFocus={isTerminalFocused}
         highlights={props.highlights}
+        nativeCursorEnabled={nativeCursorEnabled}
         {...props}
       />
     </Box>

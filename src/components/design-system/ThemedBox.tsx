@@ -33,6 +33,7 @@ export type Props = BaseStylesWithoutColors &
   ThemedColorProps & {
     children?: React.ReactNode
     ref?: Ref<DOMElement>
+    'aria-preserve-whitespace'?: boolean
     tabIndex?: number
     autoFocus?: boolean
     onClick?: (event: ClickEvent) => void

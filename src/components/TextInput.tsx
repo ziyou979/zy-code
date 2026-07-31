@@ -111,7 +111,11 @@ export default function TextInput(props: Props): React.ReactNode {
     focus: props.focus,
     mask: props.mask,
     multiline: props.multiline,
-    cursorChar: props.showCursor ? ' ' : '',
+    // JediTerm 会把 IME 预编辑串作为 inline inlay 插入物理光标所在行。
+    // 原生光标模式下若仍绘制软件光标空格，该空格会参与行宽计算；
+    // 较长拼音可能触发软换行并把输入框顶高。高度由 BaseTextInput 的
+    // minHeight 保持，这里不再向终端缓冲区写入尾随空格。
+    cursorChar: props.showCursor && !nativeCursorEnabled ? ' ' : '',
     highlightPastedText: props.highlightPastedText,
     invert,
     themeText: color('text', theme),

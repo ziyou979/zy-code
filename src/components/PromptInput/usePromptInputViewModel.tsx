@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -8,6 +8,10 @@ import { isQueuedCommandEditable } from 'src/services/input/messageQueueManager.
 import { getNativeCSIuTerminalDisplayName } from '../../commands/terminal-setup/TerminalSetup.js'
 import { useSetPromptOverlayDialog } from '../../context/PromptOverlayContext.js'
 import { Box, type ClickEvent, Text, useInput } from '../../ink/index.js'
+import { getImeSafeTextColumns } from '../../ink/nativeCursor.js'
+import { nodeCache } from '../../ink/nodeCache.js'
+import type { DOMElement } from '../../ink/dom.js'
+import type { SelectionBounds } from '../../ink/selection.js'
 import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import { modelDisplayString } from '../../services/model/model.js'
 import { abortSpeculation } from '../../services/prompt-suggestion/speculation.js'
@@ -40,6 +44,7 @@ import { getModeFromInput, getValueFromInput } from './inputModes.js'
 import { useSwarmBanner } from './useSwarmBanner.js'
 import { usePromptInputKeybindings } from './usePromptInputKeybindings.js'
 import { MIN_INPUT_VIEWPORT_LINES, PROMPT_FOOTER_LINES } from './promptInputConstants.js'
+import { getInputSelectionOffsets } from './inputSelection.js'
 export function usePromptInputViewModel(context: ReturnType<typeof usePromptInputKeybindings>) {
   const {
     debug,
@@ -512,6 +517,9 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
   }, [effortNotificationText, addNotification, removeNotification])
 
   const textInputColumns = columns - 3
+  const textWrapColumns = isFullscreenEnvEnabled()
+    ? getImeSafeTextColumns(textInputColumns)
+    : textInputColumns
 
   // POC: click-to-position-cursor. Mouse tracking is only enabled inside
   // <AlternateScreen>, so this is dormant in the normal main-screen REPL.
@@ -522,6 +530,37 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
   const maxVisibleLines = isFullscreenEnvEnabled()
     ? Math.max(MIN_INPUT_VIEWPORT_LINES, Math.floor(rows / 2) - PROMPT_FOOTER_LINES)
     : undefined
+  const inputElementRef = useRef<DOMElement | null>(null)
+  const deleteScreenSelection = useCallback(
+    (bounds: SelectionBounds): boolean => {
+      const element = inputElementRef.current
+      const rect = element ? nodeCache.get(element) : undefined
+      const helpers = insertTextRef?.current
+      if (!rect || !helpers) {
+        return false
+      }
+
+      const offsets = getInputSelectionOffsets({
+        input,
+        columns: textWrapColumns,
+        cursorOffset,
+        maxVisibleLines,
+        inputRect: rect,
+        bounds,
+      })
+      if (!offsets) {
+        return false
+      }
+
+      const nextValue = input.slice(0, offsets.start) + input.slice(offsets.end)
+      helpers.setInputWithCursor(nextValue, offsets.start)
+      return true
+    },
+    [cursorOffset, input, insertTextRef, maxVisibleLines, textWrapColumns],
+  )
+  if (insertTextRef?.current) {
+    insertTextRef.current.deleteScreenSelection = deleteScreenSelection
+  }
 
   const handleInputClick = useCallback(
     (e: ClickEvent) => {
@@ -531,7 +570,7 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
       if (!input || isSearchingHistory) {
         return
       }
-      const c = Cursor.fromText(input, textInputColumns, cursorOffset)
+      const c = Cursor.fromText(input, textWrapColumns, cursorOffset)
       const viewportStart = c.getViewportStartLine(maxVisibleLines)
       const offset = c.measuredText.getOffsetFromPosition({
         line: e.localRow + viewportStart,
@@ -539,7 +578,7 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
       })
       setCursorOffset(offset)
     },
-    [input, textInputColumns, isSearchingHistory, cursorOffset, maxVisibleLines, setCursorOffset],
+    [input, textWrapColumns, isSearchingHistory, cursorOffset, maxVisibleLines, setCursorOffset],
   )
 
   const handleOpenTasksDialog = useCallback(
@@ -740,8 +779,10 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
     columns,
     rows,
     textInputColumns,
+    textWrapColumns,
     maxVisibleLines,
     handleInputClick,
+    inputElementRef,
     handleOpenTasksDialog,
     placeholder,
     isInputWrapped,

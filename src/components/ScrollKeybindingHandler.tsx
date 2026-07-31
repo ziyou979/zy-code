@@ -3,7 +3,12 @@ import { useNotifications } from '../context/notifications.js'
 import { useCopyOnSelect, useSelectionBgColor } from '../hooks/useCopyOnSelect.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import { useSelection } from '../ink/hooks/useSelection.js'
-import type { FocusMove, SelectionState } from '../ink/selection.js'
+import {
+  type FocusMove,
+  type SelectionBounds,
+  type SelectionState,
+  selectionBounds,
+} from '../ink/selection.js'
 import { isXtermJs } from '../ink/terminal.js'
 import { getClipboardPath } from '../ink/termio/osc.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- Esc needs conditional propagation based on selection state
@@ -28,7 +33,7 @@ type Props = {
    * 有文本选区时按 Delete/Backspace：从输入框删除选中文本（对话历史不删）。
    * 返回 true 表示已改动输入；调用方无论成败都会 clear + stop。
    */
-  onDeleteSelection?: (selectedText: string) => boolean
+  onDeleteSelection?: (bounds: SelectionBounds) => boolean
 }
 
 // Terminals send one SGR wheel event per intended row (verified in Ghostty
@@ -699,8 +704,11 @@ export function ScrollKeybindingHandler({
       // 拖选后 Delete/Backspace：仅尝试删输入框选区；历史区只清选区。
       // 无论成败都 stop：否则会落到 PromptInput 单字符 backspace。
       if ((key.delete || key.backspace) && onDeleteSelectionRef.current) {
-        const text = selection.getSelectedText()
-        onDeleteSelectionRef.current(text)
+        const state = selection.getState()
+        const bounds = state ? selectionBounds(state) : null
+        if (bounds) {
+          onDeleteSelectionRef.current(bounds)
+        }
         selection.clearSelection()
         event.stopImmediatePropagation()
         return

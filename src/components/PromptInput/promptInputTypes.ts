@@ -1,5 +1,6 @@
 import * as React from 'react'
 import type { AppState } from 'src/state/AppStateStore.js'
+import type { SelectionBounds } from '../../ink/selection.js'
 import { type Command } from '../../commands/index.js'
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
@@ -95,6 +96,7 @@ export type Props = {
   insertTextRef?: React.MutableRefObject<{
     insert: (text: string) => void
     setInputWithCursor: (value: string, cursor: number) => void
+    deleteScreenSelection?: (bounds: SelectionBounds) => boolean
     cursorOffset: number
   } | null>
   voiceInterimRange?: {
