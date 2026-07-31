@@ -68,6 +68,7 @@ export type Operation =
   | ClearOperation
   | NoSelectOperation
   | ShiftOperation
+  | FillOperation
 
 type WriteOperation = {
   type: 'write'
@@ -172,6 +173,16 @@ type NoSelectOperation = {
   region: Rectangle
 }
 
+type FillOperation = {
+  type: 'fill'
+  x: number
+  y: number
+  width: number
+  height: number
+  /** 每行填充文本（单行，不含换行符）。通过 charCache 跨行复用。 */
+  fillLine: string
+}
+
 export default class Output {
   width: number
   height: number
@@ -207,7 +218,14 @@ export default class Output {
     this.operations.length = 0
     resetScreen(screen, width, height)
     if (this.charCache.size > 16384) {
-      this.charCache.clear()
+      // 淘汰最旧 1/4 而非全清：全清会让下一帧的
+      // tokenize + grapheme 聚类全部重新执行（冷启动尖峰）
+      const keys = this.charCache.keys()
+      for (let i = 0; i < 4096; i++) {
+        const next = keys.next()
+        if (next.done) break
+        this.charCache.delete(next.value)
+      }
     }
   }
 
@@ -243,6 +261,19 @@ export default class Output {
    */
   noSelect(region: Rectangle): void {
     this.operations.push({ type: 'noSelect', region })
+  }
+
+  /**
+   * 用单行文本填充矩形区域。每行通过 charCache 复用相同的
+   * tokenize+grapheme 结果，避免重复计算。比
+   * 用大字符串（`'\n'.repeat(h)`）调用 write() 更高效，
+   * 因为省去了先拼后拆的字符串分配。
+   */
+  fillRegion(x: number, y: number, width: number, height: number, fillLine: string): void {
+    if (!fillLine || height <= 0 || width <= 0) {
+      return
+    }
+    this.operations.push({ type: 'fill', x, y, width, height, fillLine })
   }
 
   write(x: number, y: number, text: string, softWrap?: boolean[]): void {
@@ -404,6 +435,46 @@ export default class Output {
             n: number
           }
           shiftRows(screen, top, bottom, n)
+          continue
+        }
+
+        case 'fill': {
+          const { fillLine, x: fx, y: fy, width: fw, height: fh } = operation
+          const clip = clips.at(-1)
+
+          let row0 = fy
+          let row1 = fy + fh
+          // Vertical clip
+          if (clip && typeof clip.y1 === 'number' && row0 < clip.y1) row0 = clip.y1
+          if (clip && typeof clip.y2 === 'number' && row1 > clip.y2) row1 = clip.y2
+          if (row0 >= row1 || row0 >= screenHeight) continue
+          const rowLimit = Math.min(row1, screenHeight)
+
+          // Horizontal clip — slice fillLine once before the loop
+          let displayLine = fillLine
+          if (clip && typeof clip.x1 === 'number' && fx < clip.x1) {
+            const skip = clip.x1 - fx
+            if (skip >= fw) continue
+            displayLine = skip > 0 ? sliceAnsi(fillLine, skip, fw) : fillLine
+          }
+          if (clip && typeof clip.x2 === 'number' && fx + fw > clip.x2) {
+            const keep = clip.x2 - fx
+            if (keep <= 0) continue
+            displayLine = sliceAnsi(displayLine, 0, keep)
+          }
+
+          for (let row = row0; row < rowLimit; row++) {
+            writeLineToScreen(
+              screen,
+              displayLine,
+              fx,
+              row,
+              screenWidth,
+              this.stylePool,
+              this.charCache,
+            )
+          }
+          writeCells += (rowLimit - row0) * stringWidth(displayLine)
           continue
         }
 

@@ -71,10 +71,11 @@ export function isSynchronizedOutputSupported(): boolean {
     return false
   }
 
-  // JetBrains IDE 内置终端（JediTerm）不支持 DEC 2026 和 DECSTBM。
-  // TERM_PROGRAM 可能从父进程（如 iTerm2）继承，导致误判。
-  if (process.env.TERMINAL_EMULATOR?.includes('JetBrains')) {
-    return false
+  // 对齐 Claude Code：JediTerm 支持 DEC 2026，但不支持 DECSTBM。
+  // 两项能力必须分开判断；把 DECSTBM 的限制误用于同步输出会让
+  // 全屏帧失去原子性，IME 可能看到“内容更新后、光标归位前”的中间态。
+  if (process.env.TERMINAL_EMULATOR === 'JetBrains-JediTerm') {
+    return true
   }
 
   const termProgram = process.env.TERM_PROGRAM
@@ -133,6 +134,21 @@ export function isSynchronizedOutputSupported(): boolean {
   }
 
   return false
+}
+
+/**
+ * 检查是否可以启用 DECSTBM 区域滚动快速路径。
+ *
+ * 该路径不仅要求终端理解滚动区域，还要求区域滚动与后续差异补绘
+ * 能作为同一原子帧提交。不能直接复用 DEC 2026 能力：JediTerm 支持
+ * 同步输出，但不正确实现这里使用的 DECSTBM + SU/SD 组合。
+ */
+export function isDecstbmFastPathSupported(): boolean {
+  if (process.env.TERMINAL_EMULATOR?.includes('JetBrains')) {
+    return false
+  }
+
+  return isSynchronizedOutputSupported()
 }
 
 // -- 通过 XTVERSION 检测终端名称（启动时异步获取） --
@@ -201,6 +217,7 @@ export function hasCursorUpViewportYankBug(): boolean {
 // 模块加载时计算一次——终端能力在会话期间不会改变。
 // 导出以便调用方传递同步跳过提示，仅限特定模式。
 export const SYNC_OUTPUT_SUPPORTED = isSynchronizedOutputSupported()
+export const DECSTBM_FAST_PATH_SUPPORTED = isDecstbmFastPathSupported()
 
 export type Terminal = {
   stdout: Writable

@@ -54,8 +54,7 @@ import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useSkillImprovementSurvey } from '../../hooks/useSkillImprovementSurvey.js'
 import { useTasksWithCollapseEffect } from '../../hooks/useTasks.js'
 import type { ScrollBoxHandle } from '../../ink/components/ScrollBox.js'
-import instances from '../../ink/instances.js'
-import { selectionBounds } from '../../ink/selection.js'
+import type { SelectionBounds } from '../../ink/selection.js'
 import { Box } from '../../ink/index.js'
 import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js'
 import { MCPConnectionManager } from '../../services/mcp/MCPConnectionManager.js'
@@ -158,6 +157,7 @@ export interface ReplMainViewProps {
   insertTextRef: React.RefObject<{
     insert: (text: string) => void
     setInputWithCursor: (value: string, cursor: number) => void
+    deleteScreenSelection?: (bounds: SelectionBounds) => boolean
     cursorOffset: number
   } | null>
   // Scroll / divider
@@ -568,20 +568,14 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
    * 返回值表示是否改动了 input；调用方总会 stop 按键传播。
    */
   const handleDeleteSelection = useCallback(
-    (selectedText: string): boolean => {
-      if (!selectedText) {
-        return false
-      }
-
-      const ink = instances.get(process.stdout)
-      const bounds = ink ? selectionBounds(ink.selection) : null
+    (bounds: SelectionBounds): boolean => {
       const scroll = scrollRef.current
 
       // 只有整个选区都在 ScrollBox 视口内，才确定它属于对话历史。
       // 输入框过长时会发生软换行，选区可能跨越多个屏幕行；用中点判断
       // 会把这类输入框选区误判成历史选区，导致删除逻辑尚未匹配输入内容
       // 就提前返回。
-      if (bounds && scroll) {
+      if (scroll) {
         const vpTop = scroll.getViewportTop()
         const vpH = scroll.getViewportHeight()
         const vpBottom = vpTop + Math.max(0, vpH - 1)
@@ -591,39 +585,10 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
         }
       }
 
-      // 屏幕选区可能带软换行拼回的 \n，或带上 ❯/! 提示符装饰
-      const candidates = [
-        selectedText,
-        selectedText.replace(/\n/g, ''),
-        selectedText.replace(/^[❯›>!]\u00a0?\s*/, '').replace(/\n/g, ''),
-        selectedText.trim(),
-      ].filter((t, i, arr) => t.length > 0 && arr.indexOf(t) === i)
-
       const helpers = insertTextRef?.current
-      const currentInput = inputValue
-      const cursor = helpers?.cursorOffset ?? currentInput.length
-
-      for (const cand of candidates) {
-        let at = currentInput.lastIndexOf(cand, Math.max(0, cursor))
-        if (at < 0) {
-          at = currentInput.indexOf(cand)
-        }
-        if (at < 0) {
-          continue
-        }
-        const nextValue = currentInput.slice(0, at) + currentInput.slice(at + cand.length)
-        if (helpers?.setInputWithCursor) {
-          helpers.setInputWithCursor(nextValue, at)
-        } else {
-          setInputValue(nextValue)
-        }
-        return true
-      }
-
-      // 匹配失败（例如只选中了提示符装饰）——已由调用方 stop，避免单字符删除
-      return false
+      return helpers?.deleteScreenSelection?.(bounds) ?? false
     },
-    [inputValue, setInputValue, insertTextRef, scrollRef],
+    [insertTextRef, scrollRef],
   )
 
   // ── onAgentSubmit ──

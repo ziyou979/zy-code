@@ -76,6 +76,11 @@ export function clampRect(rect: Rectangle, size: Size): Rectangle {
   }
 }
 
+/** 检查两个矩形是否相交（边界重叠也算）。 */
+export function rectsOverlap(a: Rectangle, b: Rectangle): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+}
+
 export function withinBounds(size: Size, point: Point): boolean {
   return point.x >= 0 && point.y >= 0 && point.x < size.width && point.y < size.height
 }

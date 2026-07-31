@@ -1,5 +1,10 @@
 import { isEnvTruthy } from '../services/infra/envUtils.js'
 
+// JediTerm 的 IME 预编辑串会作为 inline inlay 追加到终端逻辑行。
+// 提前换行以预留常见多音节拼音的空间，避免光标靠近右边界时由
+// 预编辑文本触发终端软换行。该余量只影响 Windows JediTerm。
+const JETBRAINS_IME_PREEDIT_COLUMNS = 12
+
 /**
  * 是否使用终端原生光标。
  *
@@ -19,4 +24,20 @@ export function shouldUseNativeCursor(): boolean {
   return (
     process.platform === 'win32' && process.env.TERMINAL_EMULATOR?.includes('JetBrains') === true
   )
+}
+
+/**
+ * 返回为 JediTerm IME 预编辑文本预留空间后的输入换行宽度。
+ * 容器仍使用完整宽度，仅文本提前换行。
+ */
+export function getImeSafeTextColumns(columns: number): number {
+  if (
+    process.platform !== 'win32' ||
+    process.env.TERMINAL_EMULATOR !== 'JetBrains-JediTerm' ||
+    !shouldUseNativeCursor()
+  ) {
+    return columns
+  }
+
+  return Math.max(2, columns - JETBRAINS_IME_PREEDIT_COLUMNS)
 }

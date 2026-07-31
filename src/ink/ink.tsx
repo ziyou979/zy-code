@@ -20,6 +20,7 @@ import type {
   CursorDeclarationSetter,
 } from './components/CursorDeclarationContext.js'
 import { FRAME_INTERVAL_MS } from './constants.js'
+import type { Rectangle } from './layout/geometry.js'
 import * as dom from './dom.js'
 import { KeyboardEvent } from './events/keyboardEvent.js'
 import { FocusManager } from './focus.js'
@@ -52,6 +53,7 @@ import {
   HyperlinkPool,
   isEmptyCellAt,
   migrateScreenPools,
+  shrinkScreenIfOversized,
   StylePool,
 } from './screen.js'
 import { applySearchHighlight } from './searchHighlight.js'
@@ -61,6 +63,7 @@ import {
   clearSelection,
   createSelectionState,
   extendSelection,
+  selectionBounds,
   type FocusMove,
   findPlainTextUrlAt,
   getSelectedText,
@@ -76,6 +79,7 @@ import {
   updateSelection,
 } from './selection.js'
 import {
+  DECSTBM_FAST_PATH_SUPPORTED,
   SYNC_OUTPUT_SUPPORTED,
   supportsExtendedKeys,
   type Terminal,
@@ -90,6 +94,7 @@ import {
   ENABLE_KITTY_KEYBOARD,
   ENABLE_MODIFY_OTHER_KEYS,
   ERASE_SCREEN,
+  eraseToEndOfLine,
 } from './termio/csi.js'
 import {
   DBP,
@@ -125,6 +130,26 @@ const ERASE_THEN_HOME_PATCH = Object.freeze({
   type: 'stdout' as const,
   content: ERASE_SCREEN + CURSOR_HOME,
 })
+const MAX_TERMINAL_COLUMNS = 8192
+const MAX_TERMINAL_ROWS = 2048
+
+function normalizeTerminalDimension(
+  value: number | undefined,
+  fallback: number,
+  maximum: number,
+  clampOversized = false,
+): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) {
+    return fallback
+  }
+
+  const dimension = Math.floor(value)
+  if (dimension > maximum) {
+    return clampOversized ? maximum : fallback
+  }
+
+  return dimension
+}
 
 // 按 Ink 实例缓存，resize 时失效。alt-screen 的 frame.cursor.y
 // 始终为 terminalRows - 1（见 renderer.ts）。
@@ -236,6 +261,10 @@ export default class Ink {
   // one full-render frame; steady-state frames after clear it and regain
   // the blit + narrow-damage fast path.
   private prevFrameContaminated = false
+  /** 上帧的 overlay 矩形（选区反色 / 搜索高亮）。传递到 renderNodeToOutput
+   *  的 blit 条件中：不与 prevOverlayRect 相交的节点可以安全地从 prevScreen
+   *  blit，相交的节点跳过后重新渲染。在每帧 overlay 写入后更新。 */
+  private prevOverlayRect: Rectangle | null = null
   // Set by handleResize: prepend ERASE_SCREEN to the next onRender's patches
   // INSIDE the BSU/ESU block so clear+paint is atomic. Writing ERASE_SCREEN
   // synchronously in handleResize would leave the screen blank for the ~80ms
@@ -270,8 +299,13 @@ export default class Ink {
       stdout: options.stdout,
       stderr: options.stderr,
     }
-    this.terminalColumns = options.stdout.columns || 80
-    this.terminalRows = options.stdout.rows || 24
+    this.terminalColumns = normalizeTerminalDimension(
+      options.stdout.columns,
+      80,
+      MAX_TERMINAL_COLUMNS,
+      true,
+    )
+    this.terminalRows = normalizeTerminalDimension(options.stdout.rows, 24, MAX_TERMINAL_ROWS, true)
     this.altScreenParkPatch = makeAltScreenParkPatch(this.terminalRows)
     this.stylePool = new StylePool()
     this.charPool = new CharPool()
@@ -339,6 +373,20 @@ export default class Ink {
       // Guard against accessing freed Yoga nodes after unmount
       if (this.isUnmounted) {
         return
+      }
+      // 对齐 Claude Code：JediTerm 在 IME/窗口状态切换期间偶尔会短暂
+      // 暴露 0 或过大的 winsize。resize 事件也可能晚于 React 提交；
+      // 布局前主动同步，并让无效值沿用上一份有效尺寸，避免全屏高度
+      // 瞬间回退到 24 行后又恢复。
+      if (this.options.stdout.isTTY && this.syncTerminalSize()) {
+        const currentNode = this.currentNode
+        if (currentNode !== null) {
+          queueMicrotask(() => {
+            if (!this.isUnmounted) {
+              this.render(currentNode)
+            }
+          })
+        }
       }
       if (this.rootNode.yogaNode) {
         const layoutStart = performance.now()
@@ -415,6 +463,47 @@ export default class Ink {
     this.displayCursor = null
   }
 
+  private stdoutSize(): { columns: number; rows: number } {
+    return {
+      columns: normalizeTerminalDimension(
+        this.options.stdout.columns,
+        this.terminalColumns,
+        MAX_TERMINAL_COLUMNS,
+      ),
+      rows: normalizeTerminalDimension(
+        this.options.stdout.rows,
+        this.terminalRows,
+        MAX_TERMINAL_ROWS,
+      ),
+    }
+  }
+
+  private hasStaleTerminalSize(): boolean {
+    const { columns, rows } = this.stdoutSize()
+    return columns !== this.terminalColumns || rows !== this.terminalRows
+  }
+
+  private syncTerminalSize(): boolean {
+    if (!this.hasStaleTerminalSize()) {
+      return false
+    }
+
+    const { columns, rows } = this.stdoutSize()
+    this.terminalColumns = columns
+    this.terminalRows = rows
+    this.altScreenParkPatch = makeAltScreenParkPatch(rows)
+
+    if (this.altScreenActive && !this.isPaused && this.options.stdout.isTTY) {
+      if (this.altScreenMouseTracking) {
+        this.options.stdout.write(ENABLE_MOUSE_TRACKING)
+      }
+      this.resetFramesForAltScreen()
+      this.needsEraseBeforePaint = true
+    }
+
+    return true
+  }
+
   // NOT debounced. A debounce opens a window where stdout.columns is NEW
   // but this.terminalColumns/Yoga are OLD — any scheduleRender during that
   // window (spinner, clock) makes log-update detect a width change and
@@ -422,34 +511,10 @@ export default class Ink {
   // blank→paint flicker). useVirtualScroll's height scaling already bounds
   // the per-resize cost; synchronous handling keeps dimensions consistent.
   private handleResize = () => {
-    const cols = this.options.stdout.columns || 80
-    const rows = this.options.stdout.rows || 24
     // Terminals often emit 2+ resize events for one user action (window
-    // settling). Same-dimension events are no-ops; skip to avoid redundant
-    // frame resets and renders.
-    if (cols === this.terminalColumns && rows === this.terminalRows) {
+    // settling). Same-dimension and transient invalid events are no-ops.
+    if (!this.syncTerminalSize()) {
       return
-    }
-    this.terminalColumns = cols
-    this.terminalRows = rows
-    this.altScreenParkPatch = makeAltScreenParkPatch(this.terminalRows)
-
-    // Alt screen: reset frame buffers so the next render repaints from
-    // scratch (prevFrameContaminated → every cell written, wrapped in
-    // BSU/ESU — old content stays visible until the new frame swaps
-    // atomically). Re-assert mouse tracking (some emulators reset it on
-    // resize). Do NOT write ENTER_ALT_SCREEN: iTerm2 treats ?1049h as a
-    // buffer clear even when already in alt — that's the blank flicker.
-    // Self-healing re-entry (if something kicked us out of alt) is handled
-    // by handleResume (SIGCONT) and the sleep-wake detector; resize itself
-    // doesn't exit alt-screen. Do NOT write ERASE_SCREEN: render() below
-    // can take ~80ms; erasing first leaves the screen blank that whole time.
-    if (this.altScreenActive && !this.isPaused && this.options.stdout.isTTY) {
-      if (this.altScreenMouseTracking) {
-        this.options.stdout.write(ENABLE_MOUSE_TRACKING)
-      }
-      this.resetFramesForAltScreen()
-      this.needsEraseBeforePaint = true
     }
 
     // Re-render the React tree with updated props so the context value changes.
@@ -561,8 +626,7 @@ export default class Ink {
     // an extra React re-render cycle.
     flushInteractionTime()
     const renderStart = performance.now()
-    const terminalWidth = this.options.stdout.columns || 80
-    const terminalRows = this.options.stdout.rows || 24
+    const { columns: terminalWidth, rows: terminalRows } = this.stdoutSize()
     const frame = this.renderer({
       frontFrame: this.frontFrame,
       backFrame: this.backFrame,
@@ -571,6 +635,7 @@ export default class Ink {
       terminalRows,
       altScreen: this.altScreenActive,
       prevFrameContaminated: this.prevFrameContaminated,
+      prevOverlayRect: this.prevOverlayRect,
     })
     const rendererMs = performance.now() - renderStart
 
@@ -677,36 +742,58 @@ export default class Ink {
     // the frame-after-selection-clears case.
     let selActive = false
     let hlActive = false
+    // 计算本帧 overlay 的行区间（用于 prevOverlayRect 和 damage 限定）
+    let overlayMinRow = Infinity
+    let overlayMaxRow = -1
     if (this.altScreenActive) {
       selActive = hasSelection(this.selection)
       if (selActive) {
         applySelectionOverlay(frame.screen, this.selection, this.stylePool)
+        const b = selectionBounds(this.selection)
+        if (b) {
+          overlayMinRow = Math.min(overlayMinRow, b.start.row)
+          overlayMaxRow = Math.max(overlayMaxRow, b.end.row)
+        }
       }
       // Scan-highlight: inverse on ALL visible matches (less/vim style).
       // Position-highlight (below) overlays CURRENT (yellow) on top.
-      hlActive = applySearchHighlight(frame.screen, this.searchHighlightQuery, this.stylePool)
+      const searchResult = applySearchHighlight(
+        frame.screen,
+        this.searchHighlightQuery,
+        this.stylePool,
+      )
+      hlActive = searchResult !== null
+      if (searchResult) {
+        overlayMinRow = Math.min(overlayMinRow, searchResult.minRow)
+        overlayMaxRow = Math.max(overlayMaxRow, searchResult.maxRow)
+      }
       // Position-based CURRENT: write yellow at positions[currentIdx] +
       // rowOffset. No scanning — positions came from a prior scan when
       // the message first mounted. Message-relative + rowOffset = screen.
       if (this.searchPositions) {
         const sp = this.searchPositions
-        const posApplied = applyPositionedHighlight(
+        const posBounds = applyPositionedHighlight(
           frame.screen,
           this.stylePool,
           sp.positions,
           sp.rowOffset,
           sp.currentIdx,
         )
-        hlActive = hlActive || posApplied
+        if (posBounds) {
+          hlActive = true
+          overlayMinRow = Math.min(overlayMinRow, posBounds.minRow)
+          overlayMaxRow = Math.max(overlayMaxRow, posBounds.maxRow)
+        }
       }
     }
 
     // Full-damage backstop: applies on BOTH alt-screen and main-screen.
     // Layout shifts (spinner appears, status line resizes) can leave stale
     // cells at sibling boundaries that per-node damage tracking misses.
-    // Selection/highlight overlays write via setCellStyleId which doesn't
-    // track damage. prevFrameContaminated covers the cleanup frame.
-    if (didLayoutShift() || selActive || hlActive || this.prevFrameContaminated) {
+    // prevFrameContaminated covers the cleanup frame for external pollution
+    // (stderr, resize). Selection/highlight overlays use setCellStyleId
+    // which already tracks damage via unionRect — no full-screen override needed.
+    if (didLayoutShift() || this.prevFrameContaminated) {
       frame.screen.damage = {
         x: 0,
         y: 0,
@@ -725,14 +812,8 @@ export default class Ink {
     // can't do this — cursor.y tracks scrollback rows CSI H can't reach.
     // The CSI H write is deferred until after the diff is computed so we
     // can skip it for empty diffs (no writes → physical cursor unused).
-    let prevFrame = this.frontFrame
-    if (this.altScreenActive) {
-      prevFrame = {
-        ...this.frontFrame,
-        cursor: ALT_SCREEN_ANCHOR_CURSOR,
-      }
-    }
-    // 与 Claude Code 对齐：备用屏幕继续走 Ink 的普通 diff 和光标声明
+    // cursor 覆盖由 log.render 的 cursorOverride 参数直接传递，
+    // 不再需要每帧构造 prevFrame 浅拷贝。后面 VtPlusPlus 走 main-screen 跳过此处。
     // 路径。VtPlusPlus 的整帧行级 diff 会放大 JediTerm 的 IME 重绘问题。
     if (this.frameSink && !this.altScreenActive) {
       const handled = this.frameSink(frame, this.stylePool)
@@ -751,19 +832,22 @@ export default class Ink {
       }
     }
     const tDiff = performance.now()
+    // diff 与原生光标恢复都必须以同一份旧帧为基准。帧交换后
+    // this.frontFrame 已指向新帧，不能再用它计算停靠光标的回退距离。
+    const previousFrame = this.frontFrame
     const diff = this.log.render(
-      prevFrame,
+      previousFrame,
       frame,
       this.altScreenActive,
-      // DECSTBM needs BSU/ESU atomicity — without it the outer terminal
-      // renders the scrolled-but-not-yet-repainted intermediate state.
-      // tmux is the main case (re-emits DECSTBM with its own timing and
-      // doesn't implement DEC 2026, so SYNC_OUTPUT_SUPPORTED is false).
-      SYNC_OUTPUT_SUPPORTED,
+      // 同步输出与区域滚动是独立能力。JediTerm 支持 DEC 2026，
+      // 但不支持此处的 DECSTBM + SU/SD；误启用会让物理画面与
+      // 内存帧发生行偏移，最终表现为正文和状态栏重叠。
+      DECSTBM_FAST_PATH_SUPPORTED,
+      this.altScreenActive ? ALT_SCREEN_ANCHOR_CURSOR : undefined,
     )
     const diffMs = performance.now() - tDiff
     // Swap buffers
-    this.backFrame = this.frontFrame
+    this.backFrame = previousFrame
     this.frontFrame = frame
 
     // Periodically reset char/hyperlink pools to prevent unbounded growth
@@ -861,8 +945,8 @@ export default class Ink {
       // elsewhere, move back before the diff runs. Alt-screen's CSI H
       // already resets to (0,0) so no preamble needed.
       if (parked !== null && !this.altScreenActive && hasDiff) {
-        const pdx = prevFrame.cursor.x - parked.x
-        const pdy = prevFrame.cursor.y - parked.y
+        const pdx = previousFrame.cursor.x - parked.x
+        const pdy = previousFrame.cursor.y - parked.y
         if (pdx !== 0 || pdy !== 0) {
           optimized.unshift({
             type: 'stdout',
@@ -899,6 +983,15 @@ export default class Ink {
               content: cursorMove(dx, dy),
             })
           }
+        }
+        if (decl?.eraseToEnd === true) {
+          // JediTerm 用空格覆盖旧文本后仍会保留该逻辑行的最大宽度。
+          // 在原生光标停靠到文本末尾后用 EL 真正截断行尾，避免后续
+          // IME inline inlay 与不可见的旧列相加后触发软换行。
+          optimized.push({
+            type: 'stdout',
+            content: eraseToEndOfLine(),
+          })
         }
         this.displayCursor = target
         if (this.options.nativeCursor === true) {
@@ -948,10 +1041,22 @@ export default class Ink {
     const writeMs = performance.now() - tWrite
 
     // Update blit safety for the NEXT frame. The frame just rendered
-    // becomes frontFrame (= next frame's prevScreen). If we applied the
-    // selection overlay, that buffer has inverted cells. selActive/hlActive
-    // are only ever true in alt-screen; in main-screen this is false→false.
-    this.prevFrameContaminated = selActive || hlActive
+    // becomes frontFrame (= next frame's prevScreen).
+    // prevFrameContaminated is set by external events (stderr, resize, etc)
+    // and NOT by overlay — overlay uses prevOverlayRect for per-node blit
+    // exclusion instead, so non-overlay nodes can safely blit from prevScreen.
+    this.prevFrameContaminated = false
+    // Track overlay rect for per-node blit exclusion in next frame.
+    // Only matters when overlay spans < full screen; null = no overlay.
+    this.prevOverlayRect =
+      (selActive || hlActive) && overlayMinRow <= overlayMaxRow
+        ? {
+            x: 0,
+            y: overlayMinRow,
+            width: frame.screen.width,
+            height: overlayMaxRow - overlayMinRow + 1,
+          }
+        : null
 
     // A ScrollBox has pendingScrollDelta left to drain — schedule the next
     // frame. MUST NOT call this.scheduleRender() here: we're inside a
@@ -1990,9 +2095,13 @@ export default class Ink {
     this.charPool = new CharPool()
     this.hyperlinkPool = new HyperlinkPool()
     migrateScreenPools(this.frontFrame.screen, this.charPool, this.hyperlinkPool)
-    // Back frame's data is zeroed by resetScreen before reads, but its pool
-    // references are used by the renderer to intern new characters. Point
-    // them at the new pools so the next frame's IDs are comparable.
+    // 只对 backFrame 缩容（frontFrame 内容是有效的前帧渲染结果，
+    // 重建空 TypedArray 会丢失内容导致下一帧 blit 复制空单元格）。
+    // backFrame 的 TypedArray 在下一帧会被 resetScreen 整缓冲归零，
+    // 缩容安全且不丢失数据。
+    shrinkScreenIfOversized(this.backFrame.screen)
+    // Back frame pool refs must point to new pools so the renderer interns
+    // characters/hyperlinks into the same pools as front frame.
     this.backFrame.screen.charPool = this.charPool
     this.backFrame.screen.hyperlinkPool = this.hyperlinkPool
 

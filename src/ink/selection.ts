@@ -711,10 +711,12 @@ export function hasSelection(s: SelectionState): boolean {
  * 归一化选择边界：start 在阅读顺序中始终在 end 之前。
  * 如果没有活动选择则返回 null。
  */
-export function selectionBounds(s: SelectionState): {
+export type SelectionBounds = {
   start: { col: number; row: number }
   end: { col: number; row: number }
-} | null {
+}
+
+export function selectionBounds(s: SelectionState): SelectionBounds | null {
   if (!s.anchor || !s.focus) {
     return null
   }

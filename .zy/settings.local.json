@@ -116,7 +116,8 @@
       "Bash(cp src/services/permissions/permissionCLI.ts src/services/permissions/permissionCLI.tmp)",
       "Bash(mv src/services/permissions/permissionCLI.tmp src/services/permissions/permissionCli.ts)",
       "Bash(rm src/services/permissions/permissionCLI.ts)",
-      "Bash(ls src/services/permissions/permission*CLI* src/services/permissions/permissionCli*)"
+      "Bash(ls src/services/permissions/permission*CLI* src/services/permissions/permissionCli*)",
+      "Bash(ls src/ink/frameSink*)"
     ]
   }
 }

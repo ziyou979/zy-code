@@ -209,14 +209,14 @@ export function applyPositionedHighlight(
   positions: MatchPosition[],
   rowOffset: number,
   currentIdx: number,
-): boolean {
+): { minRow: number; maxRow: number } | null {
   if (currentIdx < 0 || currentIdx >= positions.length) {
-    return false
+    return null
   }
   const p = positions[currentIdx]!
   const row = p.row + rowOffset
   if (row < 0 || row >= screen.height) {
-    return false
+    return null
   }
   const transform = (id: number) => stylePool.withCurrentMatch(id)
   const rowOff = row * screen.width
@@ -227,5 +227,5 @@ export function applyPositionedHighlight(
     const cell = cellAtIndex(screen, rowOff + col)
     setCellStyleId(screen, col, row, transform(cell.styleId))
   }
-  return true
+  return { minRow: row, maxRow: row }
 }

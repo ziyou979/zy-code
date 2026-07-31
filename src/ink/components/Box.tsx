@@ -12,6 +12,11 @@ export type Props = Except<Styles, 'textWrap'> & {
   children?: React.ReactNode
   ref?: Ref<DOMElement>
   /**
+   * 保留仅由空白组成的内容节点。输入框用它维持原生光标占位单元格，
+   * 避免空输入和有内容输入之间发生布局高度切换。
+   */
+  'aria-preserve-whitespace'?: boolean
+  /**
    * Tab 顺序索引。`tabIndex >= 0` 的节点参与 Tab/Shift+Tab 循环；
    * `-1` 表示仅可编程聚焦。
    */
@@ -53,6 +58,7 @@ function Box({
   flexGrow = 0,
   flexShrink = 1,
   ref,
+  'aria-preserve-whitespace': preserveWhitespace,
   tabIndex,
   autoFocus,
   onClick,
@@ -87,6 +93,7 @@ function Box({
   return (
     <InkBox
       ref={ref}
+      aria-preserve-whitespace={preserveWhitespace}
       tabIndex={tabIndex}
       autoFocus={autoFocus}
       onClick={onClick}

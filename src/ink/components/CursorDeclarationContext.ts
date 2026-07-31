@@ -10,6 +10,8 @@ export type CursorDeclaration = {
   readonly node: DOMElement
   /** 是否显示终端原生光标；false 时仅声明 IME 停靠位置 */
   readonly visible: boolean
+  /** 光标位于文本末尾时擦除终端逻辑行尾，清除 JediTerm 保留的旧行宽 */
+  readonly eraseToEnd?: boolean
 }
 
 /**

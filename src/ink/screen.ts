@@ -115,6 +115,10 @@ const YELLOW_FG_CODE: AnsiCode = {
 }
 
 export class StylePool {
+  // 过渡缓存条目上限（约 2MB 字符串）。超过时淘汰最旧 1/4。
+  // 两次 clearCaches（5 分钟）之间防止无限制增长。
+  static readonly TRANSITION_CACHE_MAX = 65536
+
   private ids = new Map<string, number>()
   private styles: AnsiCode[][] = []
   private transitionCache = new Map<number, string>()
@@ -151,7 +155,8 @@ export class StylePool {
   /**
    * 返回从一个样式过渡到另一个样式的预序列化 ANSI 字符串。
    * 按 (fromId, toId) 缓存——对给定键值对的首次调用之后
-   * 零分配。
+   * 零分配。缓存达到上限时淘汰最旧 1/4，避免两次
+   * clearCaches 之间无限制增长。
    */
   transition(fromId: number, toId: number): string {
     if (fromId === toId) {
@@ -161,6 +166,15 @@ export class StylePool {
     let str = this.transitionCache.get(key)
     if (str === undefined) {
       str = ansiCodesToString(diffAnsiCodes(this.get(fromId), this.get(toId)))
+      if (this.transitionCache.size >= StylePool.TRANSITION_CACHE_MAX) {
+        // 淘汰最旧 1/4 以平滑内存使用
+        const keys = this.transitionCache.keys()
+        for (let i = 0; i < StylePool.TRANSITION_CACHE_MAX >> 2; i++) {
+          const next = keys.next()
+          if (next.done) break
+          this.transitionCache.delete(next.value)
+        }
+      }
       this.transitionCache.set(key, str)
     }
     return str
@@ -582,6 +596,27 @@ export function resetScreen(screen: Screen, width: number, height: number): void
 
   // 清除 damage 追踪
   screen.damage = undefined
+}
+
+/**
+ * 如果屏幕缓冲区的容量远超当前需要，则缩容底层
+ * TypedArray，归还峰值内存。仅在世代池重置周期（5 分钟）
+ * 中调用。阈值 4× 避免正常尺寸波动引发反复分配。
+ * 调用后屏幕内容无效——调用方需随后 resetScreen。
+ */
+export function shrinkScreenIfOversized(screen: Screen): void {
+  const needed = screen.width * screen.height
+  const capacity = screen.cells64.length
+  // 仅当缓冲容量超过所需 4× 且 > 64K 条目（512KB）时缩容
+  if (capacity > needed * 4 && capacity > 65536) {
+    const buf = new ArrayBuffer(needed << 3)
+    screen.cells = new Int32Array(buf)
+    screen.cells64 = new BigInt64Array(buf)
+    screen.noSelect = new Uint8Array(needed)
+  }
+  if (screen.softWrap.length > screen.height) {
+    screen.softWrap = new Int32Array(screen.height)
+  }
 }
 
 /**

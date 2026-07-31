@@ -116,7 +116,13 @@ export class LogUpdate {
     return []
   }
 
-  render(prev: Frame, next: Frame, altScreen = false, decstbmSafe = true): Diff {
+  render(
+    prev: Frame,
+    next: Frame,
+    altScreen = false,
+    decstbmSafe = true,
+    cursorOverride?: Point,
+  ): Diff {
     if (!this.options.isTTY) {
       return this.renderFullFrame(next)
     }
@@ -228,7 +234,7 @@ export class LogUpdate {
       }
     }
 
-    const screen = new VirtualScreen(prev.cursor, next.viewport.width)
+    const screen = new VirtualScreen(cursorOverride ?? prev.cursor, next.viewport.width)
 
     // 将空屏幕视为高度 1，避免首次渲染时出现误调整
     const heightDelta = Math.max(next.screen.height, 1) - Math.max(prev.screen.height, 1)

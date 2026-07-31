@@ -15,10 +15,15 @@ export function lineWidth(line: string): number {
 
   const width = stringWidth(line)
 
-  // 当缓存过大时淘汰（例如多次不同响应后）。
-  // 直接全量清空即可——缓存会在一帧内重新填充。
+  // 当缓存过大时淘汰最旧 1/4 而非全清。
+  // 全清会导致一帧内 4096 次 stringWidth 重算尖峰。
   if (cache.size >= MAX_CACHE_SIZE) {
-    cache.clear()
+    const keys = cache.keys()
+    for (let i = 0; i < MAX_CACHE_SIZE >> 2; i++) {
+      const next = keys.next()
+      if (next.done) break
+      cache.delete(next.value)
+    }
   }
 
   cache.set(line, width)

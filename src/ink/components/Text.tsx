@@ -39,6 +39,10 @@ type BaseProps = {
    * 如果传入 `truncate-*`，Ink 将截断文本，结果为单行文本，其余部分被裁剪。
    */
   readonly wrap?: Styles['textWrap']
+  /**
+   * 保留仅由空白组成的文本。用于原生光标占用的尾随单元格。
+   */
+  readonly 'aria-preserve-whitespace'?: boolean
   readonly children?: ReactNode
 }
 
@@ -124,6 +128,7 @@ export default function Text({
   strikethrough = false,
   inverse = false,
   wrap = 'wrap',
+  'aria-preserve-whitespace': preserveWhitespace,
   children,
 }: Props) {
   if (children === undefined || children === null) {
@@ -160,6 +165,7 @@ export default function Text({
     {
       style: memoizedStylesForWrap[wrap],
       textStyles,
+      'aria-preserve-whitespace': preserveWhitespace,
     },
     children,
   )

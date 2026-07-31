@@ -1,6 +1,7 @@
 import { logForDebugging } from 'src/services/infra/debug.js'
 import { type DOMElement, markDirty } from './dom.js'
 import type { Frame } from './frame.js'
+import type { Rectangle } from './layout/geometry.js'
 import { consumeAbsoluteRemovedFlag } from './nodeCache.js'
 import Output from './output.js'
 import renderNodeToOutput, {
@@ -24,6 +25,11 @@ export type RenderOptions = {
   // 或被重置为 0×0（forceRedraw）。从这样的 prevScreen 进行 blit 会
   // 复制过时的反色单元格、空白或无内容。当为 false 时，blit 是安全的。
   prevFrameContaminated: boolean
+  /** 上一帧的选区/搜索高亮 overlay 矩形。该区域中的单元格在上帧被
+   *  setCellStyleId 反色，因此从 prevScreen 直接 blit 会复制错误的
+   *  styleId。不与 prevOverlayRect 相交的节点可以安全地从 prevScreen
+   *  blit（它们不包含 overlay 反色单元格）。 */
+  prevOverlayRect?: Rectangle | null
 }
 
 export type Renderer = (options: RenderOptions) => Frame
@@ -108,6 +114,7 @@ export default function createRenderer(node: DOMElement, stylePool: StylePool): 
     const absoluteRemoved = consumeAbsoluteRemovedFlag()
     renderNodeToOutput(node, output, {
       prevScreen: absoluteRemoved || options.prevFrameContaminated ? undefined : prevScreen,
+      prevOverlayRect: options.prevOverlayRect ?? undefined,
     })
 
     const renderedScreen = output.get()

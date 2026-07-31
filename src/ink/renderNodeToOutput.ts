@@ -2,7 +2,7 @@ import indentString from 'indent-string'
 import { applyTextStyles } from './colorize.js'
 import type { DOMElement } from './dom.js'
 import getMaxWidth from './getMaxWidth.js'
-import type { Rectangle } from './layout/geometry.js'
+import { type Rectangle, rectsOverlap } from './layout/geometry.js'
 import { LayoutDisplay, LayoutEdge, type LayoutNode } from './layout/node.js'
 import { nodeCache, pendingClears } from './nodeCache.js'
 import type Output from './output.js'
@@ -12,7 +12,7 @@ import { computeScrollFollow } from './scrollFollow.js'
 import { type StyledSegment, squashTextNodesToSegments } from './squashTextNodes.js'
 import type { Color } from './styles.js'
 import { isXtermJs } from './terminal.js'
-import { widestLine } from './widestLine.js'
+import { exceedsWidth, widestLine } from './widestLine.js'
 import wrapText from './wrapText.js'
 
 // 匹配 ScrollKeybindingHandler.tsx 中的 detectXtermJsWheel() — 曲线
@@ -369,6 +369,7 @@ function renderNodeToOutput(
     prevScreen,
     skipSelfBlit = false,
     inheritedBackgroundColor,
+    prevOverlayRect,
   }: {
     offsetX?: number
     offsetY?: number
@@ -380,6 +381,9 @@ function renderNodeToOutput(
     // 不透明后代的较窄矩形可以安全 blit。
     skipSelfBlit?: boolean
     inheritedBackgroundColor?: Color
+    /** 上一帧的 overlay 矩形（选区反色/搜索高亮）。此区域中的单元格
+     *  styleId 被 setCellStyleId 修改过，不应从 prevScreen blit。 */
+    prevOverlayRect?: Rectangle
   },
 ): void {
   const { yogaNode } = node
@@ -428,6 +432,15 @@ function renderNodeToOutput(
     // 检查是否可以跳过此子树（干净节点且布局未变）。
     // 从上一屏 blit 单元格而非重新渲染。
     const cached = nodeCache.get(node)
+    const fx = Math.floor(x)
+    const fy = Math.floor(y)
+    const fw = Math.floor(width)
+    const fh = Math.floor(height)
+    // 当上帧有 overlay（选区/搜索高亮）时，overlay 区域中的单元格
+    // 被 setCellStyleId 反色。从 prevScreen 直接 blit 会复制错误的
+    // styleId。检查节点矩形与 overlay 区域是否相交，相交则跳过 blit。
+    const inOverlay =
+      prevOverlayRect && rectsOverlap({ x: fx, y: fy, width: fw, height: fh }, prevOverlayRect)
     if (
       !node.dirty &&
       !skipSelfBlit &&
@@ -437,12 +450,9 @@ function renderNodeToOutput(
       cached.y === y &&
       cached.width === width &&
       cached.height === height &&
-      prevScreen
+      prevScreen &&
+      !inOverlay
     ) {
-      const fx = Math.floor(x)
-      const fy = Math.floor(y)
-      const fw = Math.floor(width)
-      const fh = Math.floor(height)
       output.blit(prevScreen, fx, fy, fw, fh)
       if (node.style.position === 'absolute') {
         absoluteRectsCur.push(cached)
@@ -539,8 +549,8 @@ function renderNodeToOutput(
         const maxWidth = Math.min(getMaxWidth(yogaNode), output.width - x)
         const textWrap = node.style.textWrap ?? 'wrap'
 
-        // 检查是否需要换行
-        const needsWrapping = widestLine(plainText) > maxWidth
+        // 检查是否需要换行（短路式，纯 ASCII 行零分配）
+        const needsWrapping = exceedsWidth(plainText, maxWidth)
 
         let text: string
         let softWrap: boolean[] | undefined
@@ -878,7 +888,23 @@ function renderNodeToOutput(
           if (!safeForFastPath) {
             scrollHint = null
           }
-          if (hint && prevScreen && safeForFastPath) {
+          if (
+            hint &&
+            prevScreen &&
+            safeForFastPath &&
+            !(
+              prevOverlayRect &&
+              rectsOverlap(
+                {
+                  x: Math.floor(x),
+                  y: hint.top,
+                  width: Math.floor(width),
+                  height: hint.bottom - hint.top + 1,
+                },
+                prevOverlayRect,
+              )
+            )
+          ) {
             const { top, bottom, delta } = hint
             const w = Math.floor(width)
             output.blit(prevScreen, Math.floor(x), top, w, bottom - top + 1)
@@ -1150,8 +1176,7 @@ function renderNodeToOutput(
             const fillLine = ownBackgroundColor
               ? applyTextStyles(spaces, { backgroundColor: ownBackgroundColor })
               : spaces
-            const fill = Array(innerHeight).fill(fillLine).join('\n')
-            output.write(x + borderLeft, y + borderTop, fill)
+            output.fillRegion(x + borderLeft, y + borderTop, innerWidth, innerHeight, fillLine)
           }
         }
 

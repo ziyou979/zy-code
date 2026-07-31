@@ -25,11 +25,13 @@ export function useDeclaredCursor({
   column,
   active,
   visible = false,
+  eraseToEnd = false,
 }: {
   line: number
   column: number
   active: boolean
   visible?: boolean
+  eraseToEnd?: boolean
 }): (element: DOMElement | null) => void {
   const setCursorDeclaration = useContext(CursorDeclarationContext)
   const nodeRef = useRef<DOMElement | null>(null)
@@ -50,7 +52,7 @@ export function useDeclaredCursor({
   useLayoutEffect(() => {
     const node = nodeRef.current
     if (active && node) {
-      setCursorDeclaration({ relativeX: column, relativeY: line, node, visible })
+      setCursorDeclaration({ relativeX: column, relativeY: line, node, visible, eraseToEnd })
     } else {
       setCursorDeclaration(null, node)
     }

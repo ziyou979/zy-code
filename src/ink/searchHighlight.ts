@@ -14,12 +14,16 @@ import { CellWidth, cellAtIndex, type Screen, type StylePool, setCellStyleId } f
  * 覆盖层由 applyPositionedHighlight（render-to-screen.ts）
  * 单独处理，它使用从目标消息 DOM 子树扫描的位置写入上层。
  *
- * 返回 true 表示有任何匹配被高亮（损伤门控——调用者在为 true 时
- * 强制全屏损伤）。
+ * 返回 {minRow, maxRow} 表示匹配的行区间，null 表示无匹配。
+ * 调用者用这个区间加上全宽构建 overlay rect，用于 blit 跳过和 damage 限定。
  */
-export function applySearchHighlight(screen: Screen, query: string, stylePool: StylePool): boolean {
+export function applySearchHighlight(
+  screen: Screen,
+  query: string,
+  stylePool: StylePool,
+): { minRow: number; maxRow: number } | null {
   if (!query) {
-    return false
+    return null
   }
   const lq = query.toLowerCase()
   const qlen = lq.length
@@ -28,6 +32,8 @@ export function applySearchHighlight(screen: Screen, query: string, stylePool: S
   const height = screen.height
 
   let applied = false
+  let minRow = Infinity
+  let maxRow = -1
   for (let row = 0; row < height; row++) {
     const rowOff = row * w
     // 构建行文本（已转小写）+ code-unit 到 cell 索引的映射。
@@ -67,6 +73,8 @@ export function applySearchHighlight(screen: Screen, query: string, stylePool: S
     let pos = text.indexOf(lq)
     while (pos >= 0) {
       applied = true
+      if (row < minRow) minRow = row
+      if (row > maxRow) maxRow = row
       const startCi = codeUnitToCell[pos]!
       const endCi = codeUnitToCell[pos + qlen - 1]!
       for (let ci = startCi; ci <= endCi; ci++) {
@@ -80,5 +88,5 @@ export function applySearchHighlight(screen: Screen, query: string, stylePool: S
     }
   }
 
-  return applied
+  return applied ? { minRow, maxRow } : null
 }
