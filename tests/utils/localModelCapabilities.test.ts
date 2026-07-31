@@ -68,6 +68,30 @@ describe('localModelCapabilities', () => {
             tokens: { contextWindow: '2m' },
             costs: { currency: 'USD', inputTokens: 0.5, outputTokens: 1.5 },
           },
+          {
+            pattern: 'grok-4.1-fast-reasoning',
+            capabilities: {
+              thinking: { preserve: 'always', effort: ['off', 'on'] },
+              structured_outputs: true,
+            },
+            tokens: { contextWindow: '2m' },
+            costs: {
+              currency: 'USD',
+              inputTokens: 0.2,
+              outputTokens: 0.5,
+              promptCacheReadTokens: 0.05,
+            },
+            providerOverrides: {
+              'opencode-go': {
+                costs: {
+                  currency: 'USD',
+                  inputTokens: 0.1,
+                  outputTokens: 0.3,
+                  promptCacheReadTokens: 0.025,
+                },
+              },
+            },
+          },
         ],
       }),
     )
@@ -122,6 +146,22 @@ describe('localModelCapabilities', () => {
         apiFormat: 'openai',
       })?.inputTokens,
     ).toBe(3)
+  })
+
+  test('Grok 模型在 opencode-go 下覆盖价格并保留上下文窗口', () => {
+    expect(getLocalContextWindow('xai/grok-4.1-fast-reasoning')).toBe(2_000_000)
+    expect(
+      getLocalModelCosts('xai/grok-4.1-fast-reasoning', 1000, {
+        provider: 'xai',
+        apiFormat: 'openai',
+      }),
+    ).toMatchObject({ inputTokens: 0.2, outputTokens: 0.5 })
+    expect(
+      getLocalModelCosts('xai/grok-4.1-fast-reasoning', 1000, {
+        provider: 'opencode-go',
+        apiFormat: 'openai',
+      }),
+    ).toMatchObject({ inputTokens: 0.1, outputTokens: 0.3, promptCacheReadTokens: 0.025 })
   })
 
   test('模型级 apiFormat 可在不知道当前 apiFormat 时按 provider 读取', () => {

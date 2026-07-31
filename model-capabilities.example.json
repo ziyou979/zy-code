@@ -115,6 +115,149 @@
       }
     },
     {
+      "pattern": "grok-4.5",
+      "capabilities": {
+        "thinking": {
+          "preserve": "always",
+          "effort": ["off", "on"]
+        },
+        "structured_outputs": true,
+        "auto_mode": true,
+        "prompt_caching": "implicit"
+      },
+      "tokens": {
+        "contextWindow": "500k"
+      },
+      "costs": {
+        "currency": "USD",
+        "tiers": [
+          {
+            "upTo": "200k",
+            "inputTokens": 2,
+            "outputTokens": 6,
+            "promptCacheReadTokens": 0.3
+          },
+          {
+            "upTo": "500k",
+            "inputTokens": 4,
+            "outputTokens": 12,
+            "promptCacheReadTokens": 0.6
+          }
+        ]
+      },
+      "providerOverrides": {
+        "opencode-go": {
+          "costs": {
+            "currency": "USD",
+            "inputTokens": 2,
+            "outputTokens": 6,
+            "promptCacheReadTokens": 0.3
+          }
+        }
+      }
+    },
+    {
+      "pattern": "grok-4.3",
+      "capabilities": {
+        "thinking": {
+          "preserve": "always",
+          "effort": ["off", "on"]
+        },
+        "structured_outputs": true,
+        "auto_mode": true,
+        "prompt_caching": "implicit"
+      },
+      "tokens": {
+        "contextWindow": "1m"
+      },
+      "costs": {
+        "currency": "USD",
+        "tiers": [
+          {
+            "upTo": "200k",
+            "inputTokens": 1.25,
+            "outputTokens": 2.5,
+            "promptCacheReadTokens": 0.2
+          },
+          {
+            "upTo": "1m",
+            "inputTokens": 2.5,
+            "outputTokens": 5,
+            "promptCacheReadTokens": 0.4
+          }
+        ]
+      },
+      "providerOverrides": {
+        "opencode-go": {
+          "costs": {
+            "currency": "USD",
+            "inputTokens": 1.25,
+            "outputTokens": 2.5,
+            "promptCacheReadTokens": 0.2
+          }
+        }
+      }
+    },
+    {
+      "pattern": "grok-4.1-fast-reasoning",
+      "capabilities": {
+        "thinking": {
+          "preserve": "always",
+          "effort": ["off", "on"]
+        },
+        "structured_outputs": true,
+        "auto_mode": true,
+        "prompt_caching": "implicit"
+      },
+      "tokens": {
+        "contextWindow": "2m"
+      },
+      "costs": {
+        "currency": "USD",
+        "inputTokens": 0.2,
+        "outputTokens": 0.5,
+        "promptCacheReadTokens": 0.05
+      },
+      "providerOverrides": {
+        "opencode-go": {
+          "costs": {
+            "currency": "USD",
+            "inputTokens": 0.2,
+            "outputTokens": 0.5,
+            "promptCacheReadTokens": 0.05
+          }
+        }
+      }
+    },
+    {
+      "pattern": "grok-4.1-fast-non-reasoning",
+      "capabilities": {
+        "thinking": { "effort": ["off"] },
+        "structured_outputs": true,
+        "auto_mode": true,
+        "prompt_caching": "implicit"
+      },
+      "tokens": {
+        "contextWindow": "2m"
+      },
+      "costs": {
+        "currency": "USD",
+        "inputTokens": 0.2,
+        "outputTokens": 0.5,
+        "promptCacheReadTokens": 0.05
+      },
+      "providerOverrides": {
+        "opencode-go": {
+          "costs": {
+            "currency": "USD",
+            "inputTokens": 0.2,
+            "outputTokens": 0.5,
+            "promptCacheReadTokens": 0.05
+          }
+        }
+      }
+    },
+    {
       "pattern": "gpt-4o",
       "capabilities": {
         "thinking": { "effort": ["off"] },
