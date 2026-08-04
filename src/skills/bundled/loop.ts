@@ -4,25 +4,31 @@ import {
   DEFAULT_MAX_AGE_DAYS,
   isKairosCronEnabled,
 } from '../../tools/ScheduleCronTool/prompt.js'
+import { SCHEDULE_WAKEUP_TOOL_NAME } from '../../tools/ScheduleWakeupTool/prompt.js'
 import { registerBundledSkill } from '../bundledSkills.js'
-
-const DEFAULT_INTERVAL = '10m'
 
 const USAGE_MESSAGE = `Usage: /loop [interval] <prompt>
 
 Run a prompt or slash command on a recurring interval.
 
 Intervals: Ns, Nm, Nh, Nd (e.g. 5m, 30m, 2h, 1d). Minimum granularity is 1 minute.
-If no interval is specified, defaults to ${DEFAULT_INTERVAL}.
+If no interval is specified, the loop self-paces each next wakeup.
 
 Examples:
   /loop 5m /babysit-prs
   /loop 30m check the deploy
   /loop 1h /standup 1
-  /loop check the deploy          (defaults to ${DEFAULT_INTERVAL})
+  /loop check the deploy          (dynamic, self-paced)
   /loop check the deploy every 20m`
 
-function buildPrompt(args: string): string {
+function hasExplicitInterval(args: string): boolean {
+  return (
+    /^\d+[smhd](?:\s|$)/i.test(args) ||
+    /\bevery\s+\d+\s*(?:s|m|h|d|seconds?|minutes?|hours?|days?)\s*$/i.test(args)
+  )
+}
+
+function buildFixedPrompt(args: string): string {
   return `# /loop — schedule a recurring prompt
 
 Parse the input below into \`[interval] <prompt…>\` and schedule it with ${CRON_CREATE_TOOL_NAME}.
@@ -31,16 +37,12 @@ Parse the input below into \`[interval] <prompt…>\` and schedule it with ${CRO
 
 1. **Leading token**: if the first whitespace-delimited token matches \`^\\d+[smhd]$\` (e.g. \`5m\`, \`2h\`), that's the interval; the rest is the prompt.
 2. **Trailing "every" clause**: otherwise, if the input ends with \`every <N><unit>\` or \`every <N> <unit-word>\` (e.g. \`every 20m\`, \`every 5 minutes\`, \`every 2 hours\`), extract that as the interval and strip it from the prompt. Only match when what follows "every" is a time expression — \`check every PR\` has no interval.
-3. **Default**: otherwise, interval is \`${DEFAULT_INTERVAL}\` and the entire input is the prompt.
-
 If the resulting prompt is empty, show usage \`/loop [interval] <prompt>\` and stop — do not call ${CRON_CREATE_TOOL_NAME}.
 
 Examples:
 - \`5m /babysit-prs\` → interval \`5m\`, prompt \`/babysit-prs\` (rule 1)
 - \`check the deploy every 20m\` → interval \`20m\`, prompt \`check the deploy\` (rule 2)
 - \`run tests every 5 minutes\` → interval \`5m\`, prompt \`run tests\` (rule 2)
-- \`check the deploy\` → interval \`${DEFAULT_INTERVAL}\`, prompt \`check the deploy\` (rule 3)
-- \`check every PR\` → interval \`${DEFAULT_INTERVAL}\`, prompt \`check every PR\` (rule 3 — "every" not followed by time)
 - \`5m\` → empty prompt → show usage
 
 ## Interval → cron
@@ -71,22 +73,44 @@ Supported suffixes: \`s\` (seconds, rounded up to nearest minute, min 1), \`m\` 
 ${args}`
 }
 
+function buildDynamicPrompt(args: string): string {
+  return `# /loop — dynamic self-paced loop
+
+The user invoked /loop without an interval. Work on the objective now, then decide when another observation would be useful.
+
+At the end of every iteration:
+
+1. If the objective is complete, permanently blocked, or the user asked to stop, call ${SCHEDULE_WAKEUP_TOOL_NAME} with \`stop: true\`.
+2. Otherwise call ${SCHEDULE_WAKEUP_TOOL_NAME} with a delay from 60 to 3600 seconds, a concise reason, and this stable prompt:
+
+<<autonomous-loop-dynamic>>
+Continue this self-paced loop objective: ${args}
+Inspect current state, make meaningful progress, and either stop when complete or call ${SCHEDULE_WAKEUP_TOOL_NAME} again for the next useful observation.
+
+Do not use ${CRON_CREATE_TOOL_NAME} for this dynamic loop. Only one wakeup may be pending, and every ${SCHEDULE_WAKEUP_TOOL_NAME} call replaces it.
+
+Begin the first iteration now.`
+}
+
+export function buildLoopPrompt(args: string): string {
+  const trimmed = args.trim()
+  if (!trimmed) {
+    return USAGE_MESSAGE
+  }
+  return hasExplicitInterval(trimmed) ? buildFixedPrompt(trimmed) : buildDynamicPrompt(trimmed)
+}
+
 export function registerLoopSkill(): void {
   registerBundledSkill({
     name: 'loop',
-    description:
-      'Run a prompt or slash command on a recurring interval (e.g. /loop 5m /foo, defaults to 10m)',
+    description: 'Run a prompt repeatedly on a fixed interval or a self-paced dynamic cadence.',
     whenToUse:
       'When the user wants to set up a recurring task, poll for status, or run something repeatedly on an interval (e.g. "check the deploy every 5 minutes", "keep running /babysit-prs"). Do NOT invoke for one-off tasks.',
     argumentHint: '[interval] <prompt>',
     userInvocable: true,
     isEnabled: isKairosCronEnabled,
     async getPromptForCommand(args) {
-      const trimmed = args.trim()
-      if (!trimmed) {
-        return [{ type: 'text', text: USAGE_MESSAGE }]
-      }
-      return [{ type: 'text', text: buildPrompt(trimmed) }]
+      return [{ type: 'text', text: buildLoopPrompt(args) }]
     },
   })
 }

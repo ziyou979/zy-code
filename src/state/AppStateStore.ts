@@ -102,6 +102,12 @@ export type AppState = DeepImmutable<{
 }> & {
   // 统一 task 状态 - 从 DeepImmutable 中排除，因为 TaskState 包含函数类型
   tasks: { [taskId: string]: TaskState }
+  /** 当前动态 /loop 的唯一待唤醒项；新安排会原子替换旧项。 */
+  dynamicLoopWakeup?: {
+    id: string
+    prompt: string
+    scheduledFor: number
+  }
   // 名称 → AgentId 注册表，由 Agent tool 在提供 `name` 时填充。
   // 冲突时以最新的为准。SendMessage 通过名称路由时使用。
   agentNameRegistry: Map<string, AgentId>
@@ -408,6 +414,7 @@ export function getDefaultAppState(): AppState {
   return {
     settings: getInitialSettings(),
     ...createTaskSlice(),
+    dynamicLoopWakeup: undefined,
     verbose: false,
     mainLoopModel: null, // 别名、全名（如 --model 或环境变量），或 null（默认）
     mainLoopModelForSession: null,
