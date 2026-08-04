@@ -2286,3 +2286,375 @@ agent stop 后 heapUsed 可观察到回落
 总 RSS 保持在配置预算内
 无 completed task 残留 active runner
 ```
+
+## 22. Windows Private Bytes 对照与 working-set trim 回升曲线
+
+### 22.1 为什么必须补 Private Bytes
+
+仅看任务管理器“内存”或 `process.memoryUsage().rss` 无法区分以下两种情况：
+
+1. JS、native allocator 或映射仍然持有私有提交页；
+2. 对象已经释放，但 Windows 仍将可回收页面保留在进程 Working Set 中。
+
+因此后续验证固定同时记录：
+
+| 指标 | Windows 采样来源 | 用途 |
+|---|---|---|
+| Working Set | `Process.WorkingSet64` | 当前驻留在物理内存中的页面；会被 `EmptyWorkingSet` 直接影响 |
+| Private Bytes | `Process.PrivateMemorySize64` | 进程私有提交量；判断工具结果外置是否真正减少长期占用的主指标 |
+| Virtual Bytes | `Process.VirtualMemorySize64` | 观察地址空间保留，不能单独当作泄漏证据 |
+| heapUsed/heapTotal/external | zy-code `/mem` | 区分 JSC 堆、external buffer 与 native/allocator 占用 |
+| allocator committed | zy-code `/heapdump` | 判断 mimalloc 是否仍提交大量未归还页面 |
+
+`EmptyWorkingSet` 只应显著降低 Working Set。它不会释放仍被引用的对象，也不保证 Private Bytes
+同步下降。因此“trim 后 RSS 从 3513 MB 降至 187 MB”证明其中大部分页面当时不必驻留，不能单独
+证明全过程没有泄漏。工具结果外置是否有效，必须看相同工作负载下 Private Bytes、heapUsed 和
+allocator committed 的前后差异。
+
+### 22.2 外置能力前后对照实验
+
+使用同一 Windows 机器、同一 Bun 版本、同一模型和固定终端尺寸分别运行：
+
+- `baseline`：未启用本方案的提交；
+- `externalized`：聚合预算默认启用，且外置结果不再保留 `message.toolUseResult` 原始对象；
+- 每组运行三次，报告中位数和最大值；
+- 每次使用新的 zy-code 进程和新的 session，避免提示缓存、磁盘 cache 与旧 replacement state 干扰；
+- 自动 trim 不得发生在负载阶段；如果发生，应丢弃该轮并重测。
+
+固定负载分两组：
+
+1. 主线程连续 30 轮，每轮产生一个大于 512 KB 的文本工具结果；
+2. 启动 4 个 in-process teammates，每个执行 10 轮并产生相同规模的工具结果，等待所有 task
+   进入终态后继续空闲 120 秒。
+
+记录以下检查点：
+
+| 版本 | 场景 | 启动稳定值 PB/WS | 负载峰值 PB/WS | 完成后 120s PB/WS | `/mem` heapUsed | `/heapdump` committed |
+|---|---|---:|---:|---:|---:|---:|
+| baseline | 主线程 30 轮 | 待测 | 待测 | 待测 | 待测 | 待测 |
+| externalized | 主线程 30 轮 | 待测 | 待测 | 待测 | 待测 | 待测 |
+| baseline | 4 agents × 10 轮 | 待测 | 待测 | 待测 | 待测 | 待测 |
+| externalized | 4 agents × 10 轮 | 待测 | 待测 | 待测 | 待测 | 待测 |
+
+主要验收量不是“峰值绝对不增长”，而是完成后的 retained delta：
+
+```text
+retained_private_bytes = private_bytes_at_idle_120s - private_bytes_at_start
+retained_working_set   = working_set_at_idle_120s - working_set_at_start
+externalization_gain   = 1 - externalized_retained_pb / baseline_retained_pb
+```
+
+目标：
+
+- 主线程 `retained_private_bytes` 至少降低 50%；
+- 4-agent 场景至少降低 70%，且完成后不再按工具结果原始字节数线性增长；
+- transcript 中存在 `<persisted-output>` 文件引用，引用文件可读；
+- 消息对象中的 `toolUseResult` 不再持有已外置的原始对象；
+- 图片、普通小结果和失败持久化路径无行为回归。
+
+### 22.3 采样命令
+
+仓库提供 [sampleWindowsProcessMemory.ps1](../../../scripts/diagnostics/sampleWindowsProcessMemory.ps1)，
+以一秒间隔输出 CSV，并可在指定时间点调用一次 `EmptyWorkingSet`：
+
+```powershell
+$target = Get-Process bun | Sort-Object StartTime -Descending | Select-Object -First 1
+
+./scripts/diagnostics/sampleWindowsProcessMemory.ps1 `
+  -TargetProcessId $target.Id `
+  -Label externalized-main `
+  -DurationSeconds 600 `
+  -IntervalSeconds 1 `
+  -TrimAtSeconds 360 `
+  -OutputPath .tmp/memory/externalized-main.csv
+```
+
+前 240 秒执行固定负载，随后空闲 120 秒；第 360 秒执行 trim；余下 240 秒保持 TUI 空闲，只观察
+页面重新驻留。运行期间在启动、负载完成、trim 前和曲线结束四个点分别执行 `/mem`，负载完成时
+额外执行一次 `/heapdump`。
+
+### 22.4 trim 后回升曲线
+
+CSV 中会生成相邻的 `pre_trim` 和 `post_trim` 点。以 `post_trim` 为零点计算：
+
+```text
+ws_drop_mb       = pre_trim.working_set_mb - post_trim.working_set_mb
+pb_drop_mb       = pre_trim.private_bytes_mb - post_trim.private_bytes_mb
+rebound_30s_mb   = ws(t+30s)  - post_trim.working_set_mb
+rebound_120s_mb  = ws(t+120s) - post_trim.working_set_mb
+rebound_slope    = (ws(t+120s) - ws(t+30s)) / 90
+pb_slope_120s    = (pb(t+120s) - pb(post_trim)) / 120
+```
+
+判读规则：
+
+- `ws_drop_mb` 很大、`pb_drop_mb` 接近 0：主要是 Working Set 驻留问题，符合 trim 语义；
+- 空闲状态 Working Set 快速回升但 Private Bytes 平坦：活跃代码/数据页按需重新驻留，不是新的对象泄漏；
+- Working Set 与 Private Bytes 同时持续线性回升：仍有真实分配，需要结合 `/heapdump` 查持有者；
+- Private Bytes 平坦但 `external` 上升：重点检查 Buffer、FFI、网络流和终端帧；
+- heapUsed 平坦但 Private Bytes 上升：重点检查 Bun/JSC native、mimalloc、PTY、FFI 或映射文件。
+
+曲线报告必须同时画 Working Set 和 Private Bytes，纵轴统一为 MB；trim 时刻画垂直线。不能只展示
+RSS 单线，因为那会掩盖“驻留回升”和“私有提交增长”之间的差异。
+
+### 22.5 本轮验证结果记录模板
+
+```text
+commit/build:
+Bun version:
+Windows version:
+workload:
+CSV path:
+
+start:       WS=      MB, PB=      MB, heapUsed=      MB
+peak:        WS=      MB, PB=      MB, heapUsed=      MB
+idle 120s:   WS=      MB, PB=      MB, heapUsed=      MB
+pre trim:    WS=      MB, PB=      MB
+post trim:   WS=      MB, PB=      MB
+trim +30s:   WS=      MB, PB=      MB
+trim +120s:  WS=      MB, PB=      MB
+
+retained PB:
+WS trim drop:
+PB trim drop:
+WS rebound 30s/120s:
+PB slope after trim:
+verdict:
+```
+
+### 22.6 采样链路冒烟结果（2026-08-03）
+
+先对一个 PowerShell 测试进程执行真实 `EmptyWorkingSet`，确认 CSV 字段和 P/Invoke 行为正确：
+
+| 时间 | 阶段 | Working Set | Private Bytes | 说明 |
+|---:|---|---:|---:|---|
+| 1.053s | pre_trim | 147.930 MB | 69.461 MB | trim 前相邻采样 |
+| 1.178s | post_trim | 8.539 MB | 69.469 MB | `EmptyWorkingSet=true` |
+| 1.694s | sample | 28.398 MB | 70.543 MB | trim 后约 0.5 秒 |
+| 2.728s | sample | 31.508 MB | 71.227 MB | trim 后约 1.55 秒 |
+
+由此得到：
+
+```text
+Working Set 瞬时下降 = 139.391 MB（94.22%）
+Private Bytes 瞬时变化 = +0.008 MB（可视为不变）
+Working Set 约 0.5 秒回升 = 19.859 MB
+Working Set 约 1.55 秒回升 = 22.969 MB
+```
+
+该结果只验证采样器和 Windows trim 语义，不代表 zy-code 外置前后的最终数据。完整结论仍需执行
+22.2 的固定主线程与 4-agent 对照负载。
+
+当前构建的非交互诊断命令也已验证：
+
+```powershell
+bun --smol --preload ./src/entrypoints/devPreload.ts src/entrypoints/cli.tsx -p "/mem"
+```
+
+本次冷启动输出为 RSS 278.4 MB、heapUsed 46.5 MB、heapTotal 54.5 MB、external 15.5 MB。
+由于进程运行不足一分钟，输出中的“MB/小时”是用冷启动值除以极短 uptime 得到的外推值，不能作为
+泄漏证据。
+
+原生 ConPTY 冒烟中 zy-code 正常启动和退出，未出现 React/Ink 崩溃；但自动键入的 `/mem` 被提交为
+普通模型提示，没有进入本地命令分发。因此该次 TUI 输出不能用作 `/mem` 成功证据。正式长跑采样应
+人工在已稳定的目标 TUI 中执行 `/mem`，或先修复/复核自动化输入时序后再纳入自动验收。
+
+### 22.7 工具结果外置自动实测（2026-08-03）
+
+随后使用独立 ConPTY 会话完成了一轮真实 zy-code 负载：模型执行 10 次独立 Bash 调用，每次输出
+1,048,576 字节文本。会话目录实际生成 10 个 1 MB `.txt` 文件，证明工具结果外置路径已触发。
+
+本轮不是 baseline/externalized A/B：采样启动时首批工具调用已经开始，因此不能从该 CSV 计算严格的
+`externalization_gain`。它可以回答两个较窄的问题：外置后是否仍按 10 MB 原文保留 JS heap，以及
+trim 后 Private Bytes 是否同步变化。
+
+负载与空闲阶段：
+
+| 指标 | 首个样本 | 峰值 | 结束样本 |
+|---|---:|---:|---:|
+| Working Set | 442.559 MB | 460.887 MB | 419.773 MB |
+| Private Bytes | 923.875 MB | 954.730 MB | 886.605 MB |
+
+结束 Private Bytes 比首样本低 37.270 MB，没有观察到随 10 MB 工具原文继续线性累积。严格的节省比例
+仍需未修复版本的同负载 baseline。
+
+真实 zy-code trim 曲线：
+
+| 时间 | 阶段 | Working Set | Private Bytes |
+|---:|---|---:|---:|
+| 10.165s | pre_trim | 420.008 MB | 886.848 MB |
+| 10.321s | post_trim | 1.000 MB | 886.848 MB |
+| 20.455s | trim +10s | 196.934 MB | 897.168 MB |
+| 40.670s | trim +30s | 255.098 MB | 887.754 MB |
+| 结束 | trim 后约 32s | 250.879 MB | 883.363 MB |
+
+结果：Working Set 瞬时下降 419.008 MB，Private Bytes 瞬时变化为 0；30 秒后 Working Set 回升
+254.098 MB，但 Private Bytes 只比 trim 前高 0.906 MB，结束时反而低 3.485 MB。这是典型的页面
+重新驻留曲线，不是 trim 后重新分配同等规模对象。
+
+同一会话 `/mem`：
+
+```text
+RSS        212.6 MB
+heapUsed    75.3 MB
+heapTotal   70.4 MB
+external    32.3 MB
+ArrayBuffer  3.1 MB
+maxRSS     496.5 MB
+```
+
+手工 heap dump 诊断：
+
+```text
+JSC heap before GC       87.36 MB
+JSC heap after GC        61.31 MB
+objects before/after GC  775,810 / 584,475
+mimalloc committed       366.22 MB before GC / 370.41 MB after GC
+mimalloc purged          409.47 MB
+active handles/requests  0 / 0
+detached contexts        0
+```
+
+heap dump 期间采样到 Private Bytes 1,232.816 MB 的瞬时峰值，快照完成后回到约 883 MB，因此该峰值
+属于诊断操作自身的成本，不能计入普通负载峰值。
+
+阶段性结论：10 MB 原始工具输出没有进入长期 JS heap；Working Set 的大幅下降和快速回升与 Windows
+驻留页机制一致。不过 Private Bytes 的稳定平台仍约 887 MB，明显高于约 61 MB 的 GC 后 JSC heap 和
+约 370 MB 的 mimalloc committed。它不是本轮工具输出造成的线性泄漏，但剩余约 450 MB 需要在后续
+baseline/空闲长跑中继续拆分 Bun/JSC runtime、模块代码、线程栈、映射与其他 native 提交。
+
+## 23. 分层治理实施结果
+
+### 23.1 执行顺序
+
+本轮按以下顺序实施，避免以 Working Set trim 掩盖真正的长期引用：
+
+1. 修复生产构建并完成源码入口/生产入口同负载 A/B；
+2. 将工具结果 replacement 同步提交到主 ReplStore；
+3. 同步更新 in-process runner 的 `allMessages`、iteration 和 task 镜像；
+4. 审计 agent 终态清理；
+5. 将 Windows trim 降级为空闲期、高 RSS 下的末级兜底；
+6. 重新构建并运行类型、单元和生命周期回归测试。
+
+### 23.2 生产构建阻塞与修复
+
+首次执行 `bun run build` 暴露 5 个相对路径错误：
+
+- `conversationRecovery.ts` 从 `services/session-storage` 错误引用 `../tools/...`；
+- `sessionRestore.ts` 错误引用 `../services/compact/...`，形成 `services/services` 路径。
+
+修正为正式路径后生产 bundle 构建成功：
+
+```text
+dist/cli.js 约 19.2 MB
+```
+
+这也意味着此前建议用户改用生产别名在当时不可直接执行；现在该阻塞已经解除。
+
+### 23.3 源码入口与生产入口 A/B
+
+两组都使用 Windows、Bun 1.3.14、`--smol`、相同模型和 10 次独立 1 MB Bash 输出。
+
+| 指标 | 源码入口 `devPreload.ts + cli.tsx` | 生产入口 `dist/cli.js` | 变化 |
+|---|---:|---:|---:|
+| 冷启动 RSS（`/mem`） | 278.4 MB | 228.2 MB | -50.2 MB（-18.0%） |
+| 负载采样首个 PB | 923.875 MB | 639.375 MB | -284.500 MB（-30.8%） |
+| 负载采样结束 PB | 886.605 MB | 648.215 MB | -238.390 MB（-26.9%） |
+| 负载峰值 PB | 954.730 MB | 913.867 MB | -40.863 MB |
+| 结束 Working Set | 419.773 MB | 336.434 MB | -83.339 MB |
+
+峰值差异较小是因为 heap dump 会制造临时分配，不能代表普通请求峰值；稳定 PB 和冷启动 RSS 更适合
+衡量入口差异。
+
+heap dump 对照：
+
+| 指标 | 源码入口 | 生产入口 |
+|---|---:|---:|
+| GC 后 JSC heap | 61.31 MB | 61.36 MB |
+| GC 后对象数 | 584,475 | 587,550 |
+| GC 后 Function | 175,034 | 186,313 |
+| GC 后 ModuleRecord | 3,101 | 39 |
+| mimalloc committed | 370.41 MB | 137.09 MB |
+| mimalloc purged | 409.47 MB | 51.50 MB |
+| active handles/requests | 0/0 | 0/0 |
+
+JSC 活跃 heap 基本相同，但生产入口把 ModuleRecord 从 3,101 降到 39，并使 mimalloc committed 少约
+233 MB。这与 Private Bytes 稳定值少约 238 MB 高度吻合。结论：开发别名不是泄漏，但确实让长期
+进程承担显著的模块加载和 allocator committed 基线。
+
+推荐正式别名：
+
+```powershell
+function global:zycode {
+  bun --smol "E:\ProjectCollection\TSProjects\zy-code\dist\cli.js" @args
+}
+```
+
+源码入口保留为单独的 `zycode-dev`，只用于开发调试。
+
+### 23.4 常驻 replacement 同步
+
+聚合预算过去只返回 `messagesForQuery` 投影视图。现在持久化成功后会：
+
+- 通过 ToolUseContext 的 `onContentReplacements` 回调提交到主 ReplStore；
+- immutable clone 命中的 user message 和 tool_result block；
+- 将 `tool_result.content` 替换为稳定的 `<persisted-output>` 引用；
+- 同时清除 `message.toolUseResult`，释放原生返回对象的第二条引用；
+- 未命中 replacement 时保持原数组引用，避免无意义 React 更新；
+- in-process runner 在每轮结束时同步替换 `allMessages`、`iterationMessages` 和 `task.messages`。
+
+replacement 仍先成功落盘再清理内存；持久化失败不会删除原文。
+
+### 23.5 agent 终态审计
+
+现有实现已经覆盖计划要求，因此没有新增第二套 finalize：
+
+- completed/failed task 将消息收缩为最后一条；
+- 清空 pending messages、in-progress IDs、AbortController、cleanup callback 和 idle callbacks；
+- 调用 `evictTaskOutput`；
+- 调用 `evictTerminalTask`，立即从 AppState 清除已消费任务；
+- hibernate 只保留最后一条消息和 snapshot path；
+- unregister Perfetto agent。
+
+本轮额外补齐的是 runner 在进入这些终态之前对 replacement 的同步，防止 task 镜像在 finalize 前继续
+保留聚合工具原文。
+
+### 23.6 Windows trim 的最终定位
+
+`winWorkingSetTrim` 保留，但不再只依据 RSS 立即执行：
+
+- Windows only；
+- `ZY_CODE_DISABLE_WORKING_SET_TRIM=1` 可完全禁用；
+- RSS 默认超过 1.5 GB；
+- activity manager 报告无 CLI/用户活动；
+- 连续空闲至少 30 秒；
+- 两次 trim 冷却至少 5 分钟；
+- 先运行 `Bun.gc(true)` 回收已断引用 JSC 对象；
+- 再执行 `SetProcessWorkingSetSize(-1, -1)` 驱逐 Working Set。
+
+它仍然只是物理驻留兜底。Private Bytes、heap 或 allocator committed 持续增长时必须继续告警，不能
+因为任务管理器数字被压低而判定问题解决。
+
+### 23.7 验收状态
+
+```text
+bun run build                                      PASS
+bun tsc --noEmit                                   PASS
+toolResultStorage / winWorkingSetTrim / swarm      PASS（相关测试 51 项）
+生产 ConPTY 10×1MB 真实工具负载                    PASS
+10 个 1MB tool-results 文件                        PASS
+/mem 与 /heapdump                                  PASS
+```
+
+完整 `bun test` 结果为 1,539 pass、1 skip、2 fail。两项失败均为既有 Ink render 测试：
+
+```text
+StreamingMarkdown 渲染：frames.length 为 0
+Message thinking 渲染：frames.length 为 0
+```
+
+两项单独重跑仍失败，调用链不经过本轮修改的 tool result、query preprocess、swarm 或 diagnostics 模块；
+因此作为当前工作区已有测试基线问题记录，不通过扩大本次内存改造范围修复。
+
+尚未完成的长期数据：生产入口 30 轮主线程和 4-agent 长跑。当前短测已证明入口基线和外置链路的方向，
+但不能替代数小时 retained Private Bytes 斜率验证。

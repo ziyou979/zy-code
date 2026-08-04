@@ -297,6 +297,19 @@ export async function setup(
   void import('../services/diagnostics/memoryMonitor.js').then(({ initMemoryMonitor }) => {
     initMemoryMonitor()
   })
+  // Windows 专用：在持续空闲且高 RSS 时驱逐可重载的驻留页。
+  // 这只治理 Working Set，不代表 Private Bytes 或对象引用已经释放。
+  void Promise.all([
+    import('../services/diagnostics/winWorkingSetTrim.js'),
+    import('../services/input/activityManager.js'),
+  ]).then(([{ initWinWorkingSetTrim }, { activityManager }]) => {
+    initWinWorkingSetTrim({
+      isActive: () => {
+        const activity = activityManager.getActivityStates()
+        return activity.isCLIActive || activity.isUserActive
+      },
+    })
+  })
   logForDiagnosticsNoPII('info', 'setup_background_jobs_launched')
 
   profileCheckpoint('setup_before_prefetch')
