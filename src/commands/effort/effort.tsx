@@ -18,7 +18,7 @@ import {
   toPersistableEffort,
 } from '../../services/effort/effort.js'
 import { updateSettingsForSource } from '../../services/settings/settings.js'
-import { EffortPicker } from './EffortPicker.js'
+import { EffortPicker } from './effortPicker.js'
 
 const COMMON_HELP_ARGS = ['help', '-h', '--help']
 type EffortCommandResult = {

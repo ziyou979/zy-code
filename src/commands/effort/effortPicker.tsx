@@ -17,6 +17,7 @@ import { useMemo, useState } from 'react'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
+import { stringWidth } from '../../ink/stringWidth.js'
 import type { KeyboardEvent } from '../../ink/events/keyboardEvent.js'
 import { Box, Text } from '../../ink/index.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
@@ -36,9 +37,11 @@ import {
 
 /**
  * 居中对齐文本。
+ * 用 stringWidth 计算宽度：CJK 字符在终端中占 2 列，length 会低估
+ * 导致文本整体偏右、与轨道/标签行错位。
  */
 function centerText(text: string, width: number): string {
-  const pad = Math.max(0, width - text.length)
+  const pad = Math.max(0, width - stringWidth(text))
   const left = Math.floor(pad / 2)
   return ' '.repeat(left) + text + ' '.repeat(pad - left)
 }
@@ -47,7 +50,7 @@ function centerText(text: string, width: number): string {
  * 左右放置两个标签，中间用空格填充。
  */
 function polarRow(leftLabel: string, rightLabel: string, width: number): string {
-  const pad = Math.max(0, width - leftLabel.length - rightLabel.length)
+  const pad = Math.max(0, width - stringWidth(leftLabel) - stringWidth(rightLabel))
   return leftLabel + ' '.repeat(pad) + rightLabel
 }
 
@@ -213,7 +216,9 @@ export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
       selected: i === selectedIndex,
       isContent: true,
     })
-    curCol = start + lbl.label.length
+    // 用 stringWidth 累计实际列宽，中文标签（2 列/字符）不会让后续
+    // 标签的 padding 计算产生累积偏移。
+    curCol = start + stringWidth(lbl.label)
   }
   if (curCol < W) {
     labelSegs.push({

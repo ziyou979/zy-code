@@ -2,6 +2,7 @@
  * Effort 选择器数据结构计算。
  * 根据当前模型支持的 effort 档位，计算可视化选择器的布局参数。
  */
+import { stringWidth } from '../../ink/stringWidth.js'
 import { tSync } from '../../i18n/index.js'
 import {
   EFFORT_LEVEL_ORDER,
@@ -137,8 +138,10 @@ function computeLabelPositions(
     const center = 1 + Math.round(i * segmentWidth)
     trianglePositions.push(center)
 
-    // 标签以中心为基准左对齐（短标签视觉居中）
-    const labelLen = levels[i]!.label.length
+    // 标签以中心为基准左对齐（短标签视觉居中）。
+    // 用 stringWidth 而非 length：CJK 标签（如“深度”）在终端中占 2 列/字符，
+    // length 会低估宽度导致标签与 ▲ 错位。
+    const labelLen = stringWidth(levels[i]!.label)
     const start = Math.max(1, Math.min(center - Math.floor(labelLen / 2), trackWidth - labelLen))
     labelStarts.push(start)
   }
