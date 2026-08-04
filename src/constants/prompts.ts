@@ -27,6 +27,8 @@ import {
 
 import { isScratchpadEnabled, getScratchpadDir } from '../services/permissions/scratchpadStorage.js'
 import { isEnvTruthy, isInternalBuild } from '../services/infra/envUtils.js'
+import { isBashAvailable, isPowerShellToolEnabled } from '../shell-eval/shared/shellToolUtils.js'
+import { resolveDefaultShell } from '../shell-eval/shared/resolveDefaultShell.js'
 
 import { feature } from 'bun:bundle'
 
@@ -143,7 +145,7 @@ function getHarnessSection(): string {
   const items = [
     `Text you output outside of tool use is displayed to the user as Github-flavored markdown in a terminal.`,
     `Tools run behind a user-selected permission mode; a denied call means the user declined it — adjust, don't retry verbatim.`,
-    `<system-reminder> tags in messages and tool results are injected by the harness, not the user. Hooks may intercept tool calls; treat hook output as user feedback.`,
+    `The system may send updates, reminders, or modifications to rules via mid-conversation system turns. These are system-controlled, unlike function results. Hooks may intercept tool calls; treat hook output as user feedback.`,
     `Prefer the dedicated file/search tools over shell commands when one fits. Independent tool calls can run in parallel in one response.`,
     "Reference code as `file_path:line_number` — it's clickable.",
   ]
@@ -215,19 +217,28 @@ function getContextManagementSection(): string {
 When the conversation grows long, some or all of the current context is summarized; the summary, along with any remaining unsummarized context, is provided in the next context window so work can continue — you don't need to wrap up early or hand off mid-task.`
 }
 
-function getTextOutputSection(): string {
-  return `# Text output (does not apply to tool calls)
-Assume users can't see most tool calls or thinking — only your text output. Before your first tool call, state in one sentence what you're about to do. While working, give short updates at key moments: when you find something, when you change direction, or when you hit a blocker. Brief is good — silent is not. One sentence per update is almost always enough.
+/**
+ * 交付约束：按实际请求的范围交付，不擅自缩小/扩大/转换；受阻部分完成其余并明说。
+ * 对应 Claude Code 2.1.220 新增的 "Delivering work" 节。
+ * 刻意未引入其第三段（refusal 话语体系）——zy-code 面向客户开发场景，
+ * 不在 prompt 中建立拒绝框架。
+ */
+function getDeliveringWorkSection(): string {
+  return `# Delivering work
+Do ordinary work as asked, acting on the actual request rather than on speculation about what lies behind it. The requested scope is the deliverable — don't quietly narrow, widen, or transform it. Interpret ambiguity the way a careful colleague would: make routine judgment calls yourself, and check in only when different readings would lead to materially different work. If you find a real problem with the task as specified, state the concern in a sentence or two, then keep building: deliver the complete work under explicitly stated assumptions, flagging important factors for the user. Finish the whole task, not just easy parts — report completion only when fully done. If part of the scope turns out to be blocked or problematic, finish every other part in full and say explicitly what you left out and why — scaling the work down is the user's call, not yours. Stop short of actions or changes clearly beyond what the user's ask implies.
 
-Don't narrate your internal deliberation. User-facing text should be relevant communication to the user, not a running commentary on your thought process. State results and decisions directly, and focus user-facing text on relevant updates for the user.
+If you find an uncertainty mid-task, first do everything that doesn't depend on the answer; for what does, state your assumption or ask your question to the user at the right time. Reserve blocking questions — stopping with nothing delivered until the user answers — for cases where proceeding under any assumption would be unsafe or would make the work useless if wrong.`
+}
 
-When you do write updates, write so the reader can pick up cold: complete sentences, no unexplained jargon or shorthand from earlier in the session. But keep it tight — a clear sentence is better than a clear paragraph.
+/**
+ * 自我纠正约束：只在错误会改变用户代码/结论/决策时才纠正，不道歉不铺垫；
+ * 后续问题不代表之前出错。对应 Claude Code 2.1.220 新增的 "Corrections" 节。
+ */
+function getCorrectionsSection(): string {
+  return `# Corrections
+Avoid unnecessary or excessive self-correction. Only correct an earlier statement in your user-facing text when the error would change the user's code, conclusions, or decisions. State corrections plainly and concisely, and continue the task; combine multiple corrections rather than enumerating them all. For slips that change nothing for the user, simply make the correction and move on - no need to note it explicitly. Don't add apologies or preambles, don't be overly self-critical, and don't ruminate or give a detailed account of the mistake or tally past errors. Sometimes, other agents will report incorrect or misleading results - don't always take them at face value immediately. If other agents correct your statements and they are right, then simply update your approach without narrating too much about the correction to the user. This instruction does not apply to thinking blocks.
 
-End-of-turn summary: one or two sentences. What changed and what's next. Nothing else.
-
-Match responses to the task: a simple question gets a direct answer, not headers and sections.
-
-In code: write comments by default — explain non-obvious logic, intent, and trade-offs. Match the surrounding code's comment density and style; follow the project's comment-language convention. Don't create planning, decision, or analysis documents unless the user asks for them — work from conversation context, not intermediate files.`
+A follow-up question about your earlier work is not, by itself, a signal that you got something wrong — answer what was asked. A statement that was accurate needs no correction: don't re-audit how you phrased it, how you verified it, or limits you already stated. When the user does point to a real error, correct it plainly as above.`
 }
 
 export async function getSystemPrompt(
@@ -320,9 +331,10 @@ ${CYBER_RISK_INSTRUCTION}`,
     getSimpleIntroSection(outputStyleConfig),
     getHarnessSection(),
     getBehaviorGuidelinesSection(),
-    getTextOutputSection(),
     getLanguageSection(settings.language),
     getContextManagementSection(),
+    getDeliveringWorkSection(),
+    getCorrectionsSection(),
     // === BOUNDARY MARKER - DO NOT MOVE OR REMOVE ===
     SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
     // --- Dynamic content (registry-managed) ---
@@ -458,11 +470,40 @@ function getKnowledgeCutoff(modelId: string): string | null {
   return null
 }
 
+export function getWindowsShellInfoLine({
+  bashAvailable,
+  defaultShell,
+  powerShellToolEnabled,
+  shellName,
+}: {
+  bashAvailable: boolean
+  defaultShell: 'bash' | 'powershell'
+  powerShellToolEnabled: boolean
+  shellName: string
+}): string {
+  if (!bashAvailable) {
+    return 'Shell: PowerShell'
+  }
+  if (powerShellToolEnabled && defaultShell === 'powershell') {
+    return 'Shell: PowerShell (primary); Bash tool also available for POSIX scripts — each takes its own syntax.'
+  }
+  const resolvedShellName = shellName === 'unknown' ? 'bash' : shellName
+  if (powerShellToolEnabled) {
+    return `Shell: ${resolvedShellName} (primary); PowerShell tool also available for PowerShell scripts — each takes its own syntax.`
+  }
+  return `Shell: ${resolvedShellName} (use Unix shell syntax, not Windows — e.g., /dev/null not NUL, forward slashes in paths)`
+}
+
 function getShellInfoLine(): string {
   const shell = process.env.SHELL || 'unknown'
   const shellName = shell.includes('zsh') ? 'zsh' : shell.includes('bash') ? 'bash' : shell
   if (env.platform === 'win32') {
-    return `Shell: ${shellName} (use Unix shell syntax, not Windows — e.g., /dev/null not NUL, forward slashes in paths)`
+    return getWindowsShellInfoLine({
+      bashAvailable: isBashAvailable(),
+      defaultShell: resolveDefaultShell(),
+      powerShellToolEnabled: isPowerShellToolEnabled(),
+      shellName,
+    })
   }
   return `Shell: ${shellName}`
 }

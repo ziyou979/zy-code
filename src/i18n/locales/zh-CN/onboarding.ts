@@ -159,7 +159,8 @@ export const zhOnboarding: TranslationResource = {
   'tip.pasteImagesMac': '使用 Ctrl+V（不是 Cmd+V！）将图片粘贴到 ZY Code',
   'tip.permissions': '使用 /permissions 预批准和预拒绝 bash、编辑和 MCP 工具',
   'tip.planModeForComplexTasks': '在复杂请求前使用计划模式做准备。按 {shortcut} 两次启用。',
-  'tip.powershellToolEnv': '设置 ZY_CODE_USE_POWERSHELL_TOOL=1 启用 PowerShell 工具（预览）',
+  'tip.powershellToolEnv':
+    'Windows 缺少 Bash 时会自动选择 PowerShell；可设置 ZY_CODE_USE_POWERSHELL_TOOL=1 或 0 覆盖。',
   'tip.promptQueue': 'ZY Code 工作时按 Enter 可以排队更多消息。',
   'tip.renameConversation': '用 /rename 给对话命名，方便后续用 /resume 快速找到',
   'tip.shiftEnterApple': '按 Option+Enter 发送多行消息',

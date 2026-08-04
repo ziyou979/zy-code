@@ -77,6 +77,8 @@ export async function getPrompt(): Promise<string> {
 
   return `Executes a given PowerShell command with optional timeout. Working directory persists between commands; shell state (variables, functions) does not.
 
+Command output is displayed to you, not reliably to the user.
+
 IMPORTANT: This tool is for terminal operations via PowerShell: git, npm, docker, and PS cmdlets. DO NOT use it for file operations (reading, writing, editing, searching, finding files) - use the specialized tools for this instead.
 
 ${getEditionSection(edition)}

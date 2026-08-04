@@ -173,7 +173,7 @@ export const enOnboarding: TranslationResource = {
   'tip.planModeForComplexTasks':
     'Use Plan Mode to prepare for a complex request before making changes. Press {shortcut} twice to enable.',
   'tip.powershellToolEnv':
-    'Set ZY_CODE_USE_POWERSHELL_TOOL=1 to enable the PowerShell tool (preview)',
+    'PowerShell is selected automatically on Windows without Bash; set ZY_CODE_USE_POWERSHELL_TOOL=1 or 0 to override.',
   'tip.promptQueue': 'Hit Enter to queue up additional messages while ZY Code is working.',
   'tip.renameConversation':
     'Name your conversations with /rename to find them easily in /resume later',

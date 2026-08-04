@@ -350,6 +350,7 @@ export function getSimplePrompt(): string {
     'Executes a given bash command and returns its output.',
     '',
     "The working directory persists between commands, but shell state does not. The shell environment is initialized from the user's profile (bash or zsh).",
+    'Command output is displayed to you, not reliably to the user.',
     '',
     `IMPORTANT: Avoid using this tool to run ${avoidCommands} commands, unless explicitly instructed or after you have verified that a dedicated tool cannot accomplish your task. Instead, use the appropriate dedicated tool as this will provide a much better experience for the user:`,
     '',
