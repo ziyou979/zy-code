@@ -56,7 +56,7 @@ export async function scanMemoryFiles(
           filePath,
           mtimeMs,
           description: frontmatter.description || null,
-          type: parseMemoryType(frontmatter.type),
+          type: parseMemoryType(frontmatter.metadata?.type),
         }
       }),
     )
