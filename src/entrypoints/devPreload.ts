@@ -16,6 +16,8 @@ if (typeof Bun !== 'undefined') {
     'TOKEN_BUDGET',
     'CONTEXT_COLLAPSE',
     'KAIROS',
+    'AGENT_TRIGGERS',
+    'MONITOR_TOOL',
   ]
 }
 

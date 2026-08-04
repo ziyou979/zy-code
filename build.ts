@@ -40,6 +40,8 @@ const result = await Bun.build({
     'TOKEN_BUDGET',
     'CONTEXT_COLLAPSE',
     'KAIROS',
+    'AGENT_TRIGGERS',
+    'MONITOR_TOOL',
     'BUILTIN_EXPLORE_PLAN_AGENTS',
     'VERIFICATION_AGENT',
     'WORKFLOW_SCRIPTS',
