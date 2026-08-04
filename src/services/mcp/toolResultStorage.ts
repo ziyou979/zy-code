@@ -431,7 +431,7 @@ export function provisionContentReplacementState(
   initialMessages?: Message[],
   initialContentReplacements?: ContentReplacementRecord[],
 ): ContentReplacementState | undefined {
-  const enabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_hawthorn_steeple', false)
+  const enabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_hawthorn_steeple', true)
   if (!enabled) {
     return undefined
   }
@@ -470,6 +470,17 @@ function isContentAlreadyCompacted(content: ToolResultBlock['content']): boolean
   // `.startsWith()` 避免标签出现在内容其他位置时的误报
   // （例如，读取这个源文件）。
   return typeof content === 'string' && content.startsWith(PERSISTED_OUTPUT_TAG)
+}
+
+/**
+ * 判断工具结果是否已经被外置为磁盘引用。
+ *
+ * 消息除了发送给模型的 `tool_result.content`，还可能在 `toolUseResult`
+ * 元数据中保留工具的原生返回值，供 TUI 富展示使用。对于已经外置的
+ * 大结果，继续保留该原生值会让完整对象常驻内存，抵消外置收益。
+ */
+export function isPersistedToolResultContent(content: ToolResultBlock['content']): boolean {
+  return isContentAlreadyCompacted(content)
 }
 
 function hasImageBlock(content: NonNullable<ToolResultBlock['content']>): boolean {
@@ -667,35 +678,71 @@ function selectFreshToReplace(
  * replacementMap 中的内容已被替换。没有替换的消息和块
  * 通过引用传递。
  */
-function replaceToolResultContents(
+export function replaceToolResultContents(
   messages: Message[],
-  replacementMap: Map<string, string>,
+  replacementMap: ReadonlyMap<string, string>,
 ): Message[] {
-  return messages.map((message) => {
+  let changed = false
+  const replaced = messages.map((message) => {
     if (message.type !== 'user' || !Array.isArray(message.message.content)) {
       return message
     }
     const content = message.message.content
-    const needsReplace = content.some(
-      (b) => b.type === 'tool_result' && replacementMap.has(b.toolCallId),
+    const hasMatchingResult = content.some(
+      (block) => block.type === 'tool_result' && replacementMap.has(block.toolCallId),
     )
-    if (!needsReplace) {
+    if (!hasMatchingResult) {
       return message
     }
+    const contentNeedsReplace = content.some((block) => {
+      if (block.type !== 'tool_result') {
+        return false
+      }
+      const replacement = replacementMap.get(block.toolCallId)
+      return replacement !== undefined && block.content !== replacement
+    })
+    // 同一批记录可能被恢复、转录同步等多个路径重复应用。
+    // 内容与原生结果引用都已释放时保留原对象，避免无意义地复制整段历史。
+    if (!contentNeedsReplace && message.toolUseResult === undefined) {
+      return message
+    }
+    changed = true
     return {
       ...message,
+      // 原生工具返回仅用于富展示。聚合预算已经把完整结果持久化后，
+      // 必须同时释放该字段，否则 ReplStore 仍持有第二份大对象。
+      toolUseResult: undefined,
       message: {
         ...message.message,
-        content: content.map((block) => {
-          if (block.type !== 'tool_result') {
-            return block
-          }
-          const replacement = replacementMap.get(block.toolCallId)
-          return replacement === undefined ? block : { ...block, content: replacement }
-        }),
+        content: contentNeedsReplace
+          ? content.map((block) => {
+              if (block.type !== 'tool_result') {
+                return block
+              }
+              const replacement = replacementMap.get(block.toolCallId)
+              return replacement === undefined || block.content === replacement
+                ? block
+                : { ...block, content: replacement }
+            })
+          : content,
       },
     }
   })
+  return changed ? replaced : messages
+}
+
+/** 将可序列化 replacement 记录应用到常驻消息历史。 */
+export function applyContentReplacementRecords(
+  messages: Message[],
+  records: readonly ContentReplacementRecord[],
+): Message[] {
+  if (records.length === 0) {
+    return messages
+  }
+  return replaceToolResultContents(
+    messages,
+    new Map(records.map((record) => [record.toolUseId, record.replacement])),
+  )
 }
 
 async function buildReplacement(

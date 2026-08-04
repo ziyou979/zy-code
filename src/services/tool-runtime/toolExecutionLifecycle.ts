@@ -55,6 +55,7 @@ import {
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { formatError } from '../tool-runtime/toolErrors.js'
 import {
+  isPersistedToolResultContent,
   processPreMappedToolResultBlock,
   processToolResultBlock,
 } from '../../services/mcp/toolResultStorage.js'
@@ -385,10 +386,14 @@ export async function executeToolCallWithResultHandling({
         message: createUserMessage({
           content: contentBlocks,
           imagePasteIds: allowImageIds,
+          // 外置后的完整结果已经在磁盘中。无论主线程还是子 agent，
+          // 都不能再通过 UI 元数据持有原始对象，否则同一份大结果仍会
+          // 常驻消息历史，外置只减少 API 请求而不会降低进程内存。
           toolUseResult:
-            toolUseContext.agentId &&
-            !toolUseContext.preserveToolUseResults &&
-            !tool.briefStandalone
+            isPersistedToolResultContent(toolResultBlock.content) ||
+            (toolUseContext.agentId &&
+              !toolUseContext.preserveToolUseResults &&
+              !tool.briefStandalone)
               ? undefined
               : toolUseResult,
           mcpMeta: toolUseContext.agentId ? undefined : mcpMeta,

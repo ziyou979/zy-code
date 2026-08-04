@@ -111,7 +111,10 @@ import {
   writeToMailbox,
 } from '../../services/swarm/teammateMailbox.js'
 import { tokenCountWithEstimation } from '../../services/api/tokens.js'
-import { createContentReplacementState } from '../../services/mcp/toolResultStorage.js'
+import {
+  applyContentReplacementRecords,
+  createContentReplacementState,
+} from '../../services/mcp/toolResultStorage.js'
 import { TEAM_LEAD_NAME } from './constants.js'
 import { deleteHibernateSnapshot, saveHibernateSnapshot } from './hibernateSnapshot.js'
 import {
@@ -1290,6 +1293,29 @@ export async function runInProcessTeammate(
             availableTools: toolUseContext.options.tools,
             allowedTools,
             contentReplacementState: teammateReplacementState,
+            onContentReplacements: (records) => {
+              const residentHistory = applyContentReplacementRecords(allMessages, records)
+              if (residentHistory !== allMessages) {
+                allMessages.length = 0
+                allMessages.push(...residentHistory)
+              }
+              const residentIteration = applyContentReplacementRecords(iterationMessages, records)
+              if (residentIteration !== iterationMessages) {
+                iterationMessages.length = 0
+                iterationMessages.push(...residentIteration)
+              }
+              updateTaskState(
+                taskId,
+                (task) => {
+                  if (!task.messages) {
+                    return task
+                  }
+                  const messages = applyContentReplacementRecords(task.messages, records)
+                  return messages === task.messages ? task : { ...task, messages }
+                },
+                setAppState,
+              )
+            },
           })) {
             // 首先检查生命周期中止（杀死整个队友）
             if (abortController.signal.aborted) {

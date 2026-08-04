@@ -298,6 +298,8 @@ export type SubagentContextOverrides = {
    * 从恢复的 sidechain 重建的状态，以便相同的结果
    * 被重新替换（提示词缓存稳定性）。 */
   contentReplacementState?: ContentReplacementState
+  /** 新工具结果完成外置后，同步调用方持有的常驻消息容器。 */
+  onContentReplacements?: ToolUseContext['onContentReplacements']
 }
 
 /**
@@ -396,6 +398,7 @@ export function createSubagentContext(
       (parentContext.contentReplacementState
         ? cloneContentReplacementState(parentContext.contentReplacementState)
         : undefined),
+    onContentReplacements: overrides?.onContentReplacements,
 
     // 中止控制器
     abortController,

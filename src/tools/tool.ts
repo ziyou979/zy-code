@@ -38,7 +38,10 @@ import type { ToolProgressData } from '../types/tools.js'
 import type { FileStateCache } from '../services/file-persistence/fileStateCache.js'
 import type { DenialTrackingState } from '../services/permissions/denialTracking.js'
 import type { SystemPrompt } from '../services/api/systemPromptType.js'
-import type { ContentReplacementState } from '../services/mcp/toolResultStorage.js'
+import type {
+  ContentReplacementRecord,
+  ContentReplacementState,
+} from '../services/mcp/toolResultStorage.js'
 
 import type { HookProgress, PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type { WireStatus } from 'src/types/index.js'
@@ -245,6 +248,8 @@ export type ToolUseContext = {
    * resumeAgentBackground 传递从 sidechain 记录重建的状态。
    */
   contentReplacementState?: ContentReplacementState
+  /** 聚合预算成功持久化后，同步替换长期驻留的消息容器。 */
+  onContentReplacements?: (records: readonly ContentReplacementRecord[]) => void
   /**
    * 父级渲染的系统提示字节，在 turn 开始时冻结。
    * fork 子 agent 用它来共享父级的提示缓存 — 在 fork 生成时

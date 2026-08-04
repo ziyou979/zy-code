@@ -64,7 +64,10 @@ import {
   isSourceAdminTrusted,
 } from '../../services/settings/pluginOnlyPolicy.js'
 import { asSystemPrompt, type SystemPrompt } from '../../services/api/systemPromptType.js'
-import type { ContentReplacementState } from '../../services/mcp/toolResultStorage.js'
+import type {
+  ContentReplacementRecord,
+  ContentReplacementState,
+} from '../../services/mcp/toolResultStorage.js'
 import { createAgentId } from '../../utils/uuid.js'
 import { resolveAgentTools } from './agentToolUtils.js'
 import { type AgentDefinition, isBuiltInAgent } from './loadAgentsDir.js'
@@ -247,6 +250,7 @@ export async function* runAgent({
   description,
   transcriptSubdir,
   onQueryProgress,
+  onContentReplacements,
 }: {
   agentDefinition: AgentDefinition
   promptMessages: Message[]
@@ -306,6 +310,8 @@ export async function* runAgent({
    * during long single-block streams (e.g. thinking) where no assistant
    * message is yielded for >60s. */
   onQueryProgress?: () => void
+  /** 新工具结果完成外置后，同步调用方持有的常驻消息容器。 */
+  onContentReplacements?: (records: readonly ContentReplacementRecord[]) => void
 }): AsyncGenerator<Message, void> {
   // Track subagent usage for feature discovery
 
@@ -660,6 +666,7 @@ export async function* runAgent({
     shareSetResponseLength: true, // Both sync and async contribute to response metrics
     criticalSystemReminder_EXPERIMENTAL: agentDefinition.criticalSystemReminder_EXPERIMENTAL,
     contentReplacementState,
+    onContentReplacements,
   })
 
   // Preserve tool use results for subagents with viewable transcripts (in-process teammates)

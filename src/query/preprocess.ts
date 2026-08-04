@@ -68,8 +68,10 @@ export async function preprocessMessages(
     messagesForQuery,
     updatedToolUseContext.contentReplacementState,
     persistReplacements
-      ? (records) =>
+      ? (records) => {
+          updatedToolUseContext.onContentReplacements?.(records)
           void recordContentReplacement(records, updatedToolUseContext.agentId).catch(logError)
+        }
       : undefined,
     new Set(
       updatedToolUseContext.options.tools

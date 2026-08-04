@@ -52,6 +52,7 @@ import {
 } from '../../services/analytics/index.js'
 import { diagnosticTracker } from '../../services/diagnosticTracking.js'
 import type { MCPServerConnection, ScopedMcpServerConfig } from '../../services/mcp/types.js'
+import { applyContentReplacementRecords } from '../../services/mcp/toolResultStorage.js'
 import { sendNotification } from '../../services/notifier.js'
 import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import type { ActiveSpeculationState } from '../../services/prompt-suggestion/speculation.js'
@@ -329,6 +330,9 @@ export function buildToolUseContext(
     setConversationId: ctx.replStore.setConversationId,
     requestPrompt: feature('HOOK_PROMPTS') ? ctx.requestPrompt : undefined,
     contentReplacementState: ctx.replStore.mutable.contentReplacementState ?? undefined,
+    onContentReplacements: (records) => {
+      ctx.replStore.setMessages((current) => applyContentReplacementRecords(current, records))
+    },
   }
 }
 
