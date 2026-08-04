@@ -17,6 +17,7 @@ import {
 } from './screen.js'
 import {
   CURSOR_HOME,
+  cursorPosition,
   scrollDown as csiScrollDown,
   scrollUp as csiScrollUp,
   RESET_SCROLL_REGION,
@@ -31,6 +32,13 @@ type State = {
 type Options = {
   isTTY: boolean
   stylePool: StylePool
+}
+
+type RenderQuirks = {
+  /** 宽字符写入后，下一次差量写入使用绝对坐标重新锚定物理光标。 */
+  anchorAfterWideCell?: boolean
+  /** 忽略旧帧差量，先清屏再绘制完整帧。仅用于终端状态自愈。 */
+  forceFullRepaint?: boolean
 }
 
 const CARRIAGE_RETURN = { type: 'carriageReturn' } as const
@@ -122,6 +130,7 @@ export class LogUpdate {
     altScreen = false,
     decstbmSafe = true,
     cursorOverride?: Point,
+    quirks?: RenderQuirks,
   ): Diff {
     if (!this.options.isTTY) {
       return this.renderFullFrame(next)
@@ -129,6 +138,17 @@ export class LogUpdate {
 
     const startTime = performance.now()
     const stylePool = this.options.stylePool
+
+    if (quirks?.forceFullRepaint) {
+      return fullResetSequence_CAUSES_FLICKER(
+        next,
+        'clear',
+        stylePool,
+        undefined,
+        quirks.anchorAfterWideCell,
+        true,
+      )
+    }
 
     // 由于我们假设光标位于屏幕底部，因此仅在视口变矮（即光标位置偏移）
     // 或变窄（导致文本换行）时才需要清屏。我们本可以想办法避免在此重置，
@@ -234,7 +254,11 @@ export class LogUpdate {
       }
     }
 
-    const screen = new VirtualScreen(cursorOverride ?? prev.cursor, next.viewport.width)
+    const screen = new VirtualScreen(
+      cursorOverride ?? prev.cursor,
+      next.viewport.width,
+      quirks?.anchorAfterWideCell === true,
+    )
 
     // 将空屏幕视为高度 1，避免首次渲染时出现误调整
     const heightDelta = Math.max(next.screen.height, 1) - Math.max(prev.screen.height, 1)
@@ -317,7 +341,8 @@ export class LogUpdate {
       if (
         removed &&
         (removed.width === CellWidth.SpacerTail || removed.width === CellWidth.SpacerHead) &&
-        !added
+        !added &&
+        !screen.anchorAfterWideCell
       ) {
         return
       }
@@ -467,15 +492,22 @@ function fullResetSequence_CAUSES_FLICKER(
   reason: FlickerReason,
   stylePool: StylePool,
   debug?: { triggerY: number; prevLine: string; nextLine: string },
+  anchorAfterWideCell = false,
+  omitFinalNewline = false,
 ): Diff {
   // clearTerminal 之后，光标位于 (0, 0)
-  const screen = new VirtualScreen({ x: 0, y: 0 }, frame.viewport.width)
-  renderFrame(screen, frame, stylePool)
+  const screen = new VirtualScreen({ x: 0, y: 0 }, frame.viewport.width, anchorAfterWideCell)
+  renderFrame(screen, frame, stylePool, omitFinalNewline)
   return [{ type: 'clearTerminal', reason, debug }, ...screen.diff]
 }
 
-function renderFrame(screen: VirtualScreen, frame: Frame, stylePool: StylePool): void {
-  renderFrameSlice(screen, frame, 0, frame.screen.height, stylePool)
+function renderFrame(
+  screen: VirtualScreen,
+  frame: Frame,
+  stylePool: StylePool,
+  omitFinalNewline = false,
+): void {
+  renderFrameSlice(screen, frame, 0, frame.screen.height, stylePool, omitFinalNewline)
 }
 
 /**
@@ -488,6 +520,7 @@ function renderFrameSlice(
   startY: number,
   endY: number,
   stylePool: StylePool,
+  omitFinalNewline = false,
 ): VirtualScreen {
   let currentStyleId = stylePool.none
   let currentHyperlink: Hyperlink
@@ -549,7 +582,10 @@ function renderFrameSlice(
     // 行尾 CR+LF —— \r 回到第 0 列，\n 移动到下一行。
     // 不加 \r 时，终端光标会停留在内容结束处的列（由于我们跳过了
     // 尾部空格，可能停在行中位置）。
-    screen.txn((prev) => [[CARRIAGE_RETURN, NEWLINE], { dx: -prev.x, dy: 1 }])
+    if (!omitFinalNewline || y + 1 < endY) {
+      screen.txn((prev) => [[CARRIAGE_RETURN, NEWLINE], { dx: -prev.x, dy: 1 }])
+      screen.needsAbsoluteAnchor = false
+    }
   }
 
   // 在切片末尾重置所有打开的样式和超链接
@@ -610,6 +646,13 @@ function writeCellWithStyleStr(screen: VirtualScreen, cell: Cell, styleStr: stri
     diff.push({ type: 'cursorTo', col: px + cellWidth + 1 })
   }
 
+  // JediTerm 的物理光标列与内部 wcwidth 模型可能在 CJK/emoji 后分歧。
+  // 不立即额外写 CUP；仅在本帧确实还有下一处写入时再锚定，避免给
+  // 行尾宽字符和静止帧增加控制序列。
+  if (screen.anchorAfterWideCell && cellWidth === 2) {
+    screen.needsAbsoluteAnchor = true
+  }
+
   // 更新光标 —— 原地修改以避免 Point 分配
   if (px >= vw) {
     screen.cursor.x = cellWidth
@@ -621,6 +664,17 @@ function writeCellWithStyleStr(screen: VirtualScreen, cell: Cell, styleStr: stri
 }
 
 function moveCursorTo(screen: VirtualScreen, targetX: number, targetY: number) {
+  if (screen.needsAbsoluteAnchor) {
+    screen.diff.push({
+      type: 'stdout',
+      content: cursorPosition(targetY + 1, targetX + 1),
+    })
+    screen.cursor.x = targetX
+    screen.cursor.y = targetY
+    screen.needsAbsoluteAnchor = false
+    return
+  }
+
   screen.txn((prev) => {
     const dx = targetX - prev.x
     const dy = targetY - prev.y
@@ -680,10 +734,12 @@ class VirtualScreen {
   // 文件私有类 —— 不暴露到 log-update.ts 外部。
   cursor: Point
   diff: Diff = []
+  needsAbsoluteAnchor = false
 
   constructor(
     origin: Point,
     readonly viewportWidth: number,
+    readonly anchorAfterWideCell = false,
   ) {
     this.cursor = { ...origin }
   }

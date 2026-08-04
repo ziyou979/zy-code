@@ -98,6 +98,16 @@ export type Clip = {
 }
 
 /**
+ * 高写入比例诊断的限流状态。blit 失效时（如 JediTerm 的
+ * forceFullRepaint quirk）每一帧都满足 write > blit，直接记录会刷屏。
+ * 状态机只在首次进入、比率显著变化（≥20pp）或间隔 ≥5s 时输出，
+ * 退出高状态时补一条恢复日志（含总持续时长）。
+ * 模块级而非实例级：renderer 复用 Output 实例，但 scanElementSubtree
+ * 等路径会新建实例，全局限流语义一致且足够。
+ */
+let lastWriteRatioLog: { pct: number; ts: number; startTs: number } | null = null
+
+/**
  * 交叉两个 clip。轴上的 `undefined` 表示无界；另一个
  * clip 的边界获胜。如果两者都有界，取更紧的约束
  *（最大最小值，最小最大值）。如果结果区域为空
@@ -603,12 +613,31 @@ export default class Output {
       }
     }
 
-    // 记录 blit/写入比例用于调试 - 高写入比例表明 blitting 未正常工作
+    // 记录 blit/写入比例用于调试 - 高写入比例表明 blitting 未正常工作。
+    // 限流见 lastWriteRatioLog 注释：持续高写入时不再每帧重复记录，
+    // 只在状态跃迁（进入/恢复）和比率显著变化时输出。
     const totalCells = blitCells + writeCells
-    if (totalCells > 1000 && writeCells > blitCells) {
-      logForDebugging(
-        `High write ratio: blit=${blitCells}, write=${writeCells} (${((writeCells / totalCells) * 100).toFixed(1)}% writes), screen=${screenHeight}x${screenWidth}`,
-      )
+    if (totalCells > 1000) {
+      const now = Date.now()
+      const pct = (writeCells / totalCells) * 100
+      if (writeCells > blitCells) {
+        const last = lastWriteRatioLog
+        if (last === null || now - last.ts > 5000 || Math.abs(pct - last.pct) > 20) {
+          logForDebugging(
+            `High write ratio: blit=${blitCells}, write=${writeCells} (${pct.toFixed(1)}% writes), screen=${screenHeight}x${screenWidth}`,
+          )
+          lastWriteRatioLog = {
+            pct,
+            ts: now,
+            startTs: last?.startTs ?? now,
+          }
+        }
+      } else if (lastWriteRatioLog !== null) {
+        logForDebugging(
+          `Write ratio recovered: blit=${blitCells}, write=${writeCells} (${pct.toFixed(1)}% writes), after ${Math.round((now - lastWriteRatioLog.startTs) / 1000)}s`,
+        )
+        lastWriteRatioLog = null
+      }
     }
 
     return screen

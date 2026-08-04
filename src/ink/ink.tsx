@@ -130,6 +130,13 @@ const ERASE_THEN_HOME_PATCH = Object.freeze({
   type: 'stdout' as const,
   content: ERASE_SCREEN + CURSOR_HOME,
 })
+const JEDITERM_WIDE_CELL_QUIRKS = Object.freeze({
+  anchorAfterWideCell: true,
+})
+const JEDITERM_LAYOUT_SHIFT_QUIRKS = Object.freeze({
+  anchorAfterWideCell: true,
+  forceFullRepaint: true,
+})
 const MAX_TERMINAL_COLUMNS = 8192
 const MAX_TERMINAL_ROWS = 2048
 
@@ -255,6 +262,9 @@ export default class Ink {
   // 导致鼠标列坐标系统性偏小。缓存检测结果以避免每次事件查询环境变量。
   private isJetBrainsTerminal: boolean =
     process.env.TERMINAL_EMULATOR?.includes('JetBrains') === true
+  // Windows JediTerm 的宽字符写入和局部重绘存在额外偏差；其他平台
+  // 不启用关键帧回退，避免扩大终端特例的影响范围。
+  private usesJediTermRenderQuirks = process.platform === 'win32' && this.isJetBrainsTerminal
   // True when the previous frame's screen buffer cannot be trusted for
   // blit — selection overlay mutated it, resetFramesForAltScreen()
   // replaced it with blanks, or forceRedraw() reset it to 0×0. Forces
@@ -290,6 +300,14 @@ export default class Ink {
   private nativeCursorVisible: boolean
   constructor(private readonly options: Options) {
     autoBind(this)
+    // 启动时记录 quirk 决策：JediTerm 上的渲染路径与普通终端不同
+    //（宽字符列补偿、全量重绘），没有这条日志时很难确认渲染问题
+    // 是否来自终端特例分支。
+    if (this.usesJediTermRenderQuirks) {
+      logForDebugging(
+        `ink: JediTerm wide-cell/layout-shift render quirks enabled (${process.platform})`,
+      )
+    }
     this.nativeCursorVisible = isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)
     if (this.options.patchConsole) {
       this.restoreConsole = this.patchConsole()
@@ -793,7 +811,8 @@ export default class Ink {
     // prevFrameContaminated covers the cleanup frame for external pollution
     // (stderr, resize). Selection/highlight overlays use setCellStyleId
     // which already tracks damage via unionRect — no full-screen override needed.
-    if (didLayoutShift() || this.prevFrameContaminated) {
+    const layoutShifted = didLayoutShift()
+    if (layoutShifted || this.prevFrameContaminated) {
       frame.screen.damage = {
         x: 0,
         y: 0,
@@ -844,6 +863,11 @@ export default class Ink {
       // 内存帧发生行偏移，最终表现为正文和状态栏重叠。
       DECSTBM_FAST_PATH_SUPPORTED,
       this.altScreenActive ? ALT_SCREEN_ANCHOR_CURSOR : undefined,
+      this.usesJediTermRenderQuirks && this.altScreenActive
+        ? layoutShifted
+          ? JEDITERM_LAYOUT_SHIFT_QUIRKS
+          : JEDITERM_WIDE_CELL_QUIRKS
+        : undefined,
     )
     const diffMs = performance.now() - tDiff
     // Swap buffers
@@ -2123,7 +2147,11 @@ export default class Ink {
     // biome-ignore lint/suspicious/noConsole: intentionally patching global console
     const con = console
     const originals: Partial<Record<keyof Console, Console[keyof Console]>> = {}
-    const toDebug = (...args: unknown[]) => logForDebugging(`console.log: ${format(...args)}`)
+    // 降级为 verbose：console.log 只说明"有代码打了一行日志"，没有调用点
+    // 信息，默认 debug 级别下只会淹没有用输出（第三方库的 console.log 也会
+    // 被捕获）。需要排查时用 ZY_CODE_DEBUG_LOG_LEVEL=verbose 恢复。
+    const toDebug = (...args: unknown[]) =>
+      logForDebugging(`console.log: ${format(...args)}`, { level: 'verbose' })
     const toError = (...args: unknown[]) => logError(new Error(`console.error: ${format(...args)}`))
     for (const m of CONSOLE_STDOUT_METHODS) {
       originals[m] = con[m]
