@@ -1,4 +1,5 @@
 import { z } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import { buildTool } from '../../tools/tool.js'
 import { spawnShellTask } from '../../tasks/local-shell-task/LocalShellTask.js'
@@ -26,6 +27,8 @@ const DEFAULT_TIMEOUT_MS = 300_000
 const MAX_TIMEOUT_MS = 3_600_000
 /** 最小超时（毫秒） */
 const MIN_TIMEOUT_MS = 1_000
+/** Node 定时器允许的最大单次延迟，等价于会话级长期监控。 */
+const SESSION_TIMEOUT_MS = 2_147_483_647
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
@@ -120,20 +123,26 @@ export const MonitorTool = buildTool({
   },
 
   userFacingName() {
-    return 'Monitor'
+    return tSync('monitorTool.name')
   },
 
   isEnabled() {
     return true
   },
 
-  async checkPermissions(input) {
-    // Monitor 使用与 Bash 相同的权限模型：用户需授权命令执行
-    return {
-      behavior: 'ask' as const,
-      message: `Run monitor: ${input.command}`,
-      updatedInput: input,
-    }
+  async checkPermissions(input, context) {
+    // 动态导入避免 Monitor 注册时与 BashTool 的自注册形成模块环。
+    const { BashTool } = await import('../BashTool/BashTool.js')
+    const decision = await BashTool.checkPermissions(
+      {
+        command: input.command,
+        description: input.description,
+      },
+      context,
+    )
+    return decision.behavior === 'allow' || decision.behavior === 'ask'
+      ? { ...decision, updatedInput: input }
+      : decision
   },
 
   renderToolUseMessage() {
@@ -158,11 +167,11 @@ export const MonitorTool = buildTool({
   ): Promise<{ data: Output }> {
     const { command, description, persistent } = input
     const timeoutMs = persistent
-      ? MAX_TIMEOUT_MS * 24 // persistent 模式下设置极大超时（24 小时）
+      ? SESSION_TIMEOUT_MS
       : Math.max(MIN_TIMEOUT_MS, Math.min(input.timeout_ms, MAX_TIMEOUT_MS))
 
     const abortController = new AbortController()
-    const { setAppState } = context
+    const setAppState = context.setAppStateForTasks ?? context.setAppState
 
     // --- 合批 + 速率限制 stdout 投递 ---
     const bucket = new TokenBucket(TOKEN_BUCKET_CAPACITY, TOKEN_REFILL_INTERVAL_MS)
@@ -171,6 +180,7 @@ export const MonitorTool = buildTool({
     let rateLimitedSince: number | null = null
     let suppressedCount = 0
     let stopped = false
+    let partialLine = ''
     let shellCommand: Awaited<ReturnType<typeof exec>> | null = null
 
     const stopMonitor = (): void => {
@@ -200,6 +210,7 @@ export const MonitorTool = buildTool({
         enqueuePendingNotification({
           value: `[Monitor: ${description}] ${lines}`,
           mode: 'task-notification',
+          agentId: context.agentId,
         })
       } else {
         // 令牌桶耗尽：抑制通知
@@ -212,6 +223,7 @@ export const MonitorTool = buildTool({
           enqueuePendingNotification({
             value: `[Monitor: ${description}] Monitor stopped — too many events (${suppressedCount} suppressed in last 30s). Restart with a tighter filter.`,
             mode: 'task-notification',
+            agentId: context.agentId,
           })
           stopMonitor()
         }
@@ -223,7 +235,9 @@ export const MonitorTool = buildTool({
       if (stopped) {
         return
       }
-      const lines = data.split('\n').filter((line) => line.length > 0)
+      const chunks = `${partialLine}${data}`.split(/\r?\n/)
+      partialLine = chunks.pop() ?? ''
+      const lines = chunks.filter((line) => line.length > 0)
       for (const rawLine of lines) {
         // 单行截断
         const line =
@@ -275,6 +289,14 @@ export const MonitorTool = buildTool({
         clearTimeout(batchTimer)
         batchTimer = null
       }
+      if (partialLine.length > 0) {
+        batchBuffer.push(
+          partialLine.length > MAX_LINE_LENGTH
+            ? `${partialLine.slice(0, MAX_LINE_LENGTH)}...(truncated)`
+            : partialLine,
+        )
+        partialLine = ''
+      }
       // 最后一次 flush
       if (batchBuffer.length > 0) {
         const remaining = batchBuffer.join('\n')
@@ -282,6 +304,7 @@ export const MonitorTool = buildTool({
         enqueuePendingNotification({
           value: `[Monitor: ${description}] ${remaining}`,
           mode: 'task-notification',
+          agentId: context.agentId,
         })
       }
     })

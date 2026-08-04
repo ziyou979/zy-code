@@ -3,6 +3,7 @@
 
 import type { SetAppState, Task, TaskStateBase } from '../../tasks/task.js'
 import type { AgentId } from '../../types/ids.js'
+import type { AppState } from '../../state/AppStateStore.js'
 
 export type MonitorMcpTaskState = TaskStateBase & {
   type: 'monitor_mcp'
@@ -17,9 +18,8 @@ export type MonitorMcpTaskState = TaskStateBase & {
 export const MonitorMcpTask: Task = {
   name: 'MonitorMcpTask',
   type: 'monitor_mcp',
-  async kill(_taskId: string, _setAppState: SetAppState): Promise<void> {
-    // Stub implementation - update task status to killed
-    // In real implementation, this would terminate the monitor process
+  async kill(taskId: string, setAppState: SetAppState): Promise<void> {
+    await killMonitorMcp(taskId, setAppState)
   },
 }
 
@@ -28,8 +28,20 @@ export const MonitorMcpTask: Task = {
  * @param taskId - The task ID to kill
  * @param setAppState - State setter function
  */
-export async function killMonitorMcp(_taskId: string, _setAppState: SetAppState): Promise<void> {
-  // Stub implementation
+export async function killMonitorMcp(taskId: string, setAppState: SetAppState): Promise<void> {
+  setAppState((state) => {
+    const task = state.tasks[taskId]
+    if (!task || task.type !== 'monitor_mcp' || task.status !== 'running') {
+      return state
+    }
+    return {
+      ...state,
+      tasks: {
+        ...state.tasks,
+        [taskId]: { ...task, status: 'killed', notified: true, endTime: Date.now() },
+      },
+    }
+  })
 }
 
 /**
@@ -39,9 +51,13 @@ export async function killMonitorMcp(_taskId: string, _setAppState: SetAppState)
  * @param setAppState - State setter function
  */
 export function killMonitorMcpTasksForAgent(
-  _agentId: AgentId,
-  _getAppState: () => unknown,
-  _setAppState: SetAppState,
+  agentId: AgentId,
+  getAppState: () => AppState,
+  setAppState: SetAppState,
 ): void {
-  // Stub implementation
+  for (const [taskId, task] of Object.entries(getAppState().tasks)) {
+    if (task.type === 'monitor_mcp' && task.agentId === agentId && task.status === 'running') {
+      void killMonitorMcp(taskId, setAppState)
+    }
+  }
 }

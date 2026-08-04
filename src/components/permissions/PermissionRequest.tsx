@@ -55,10 +55,6 @@ const MonitorTool = feature('MONITOR_TOOL')
       require('../../tools/MonitorTool/MonitorTool.js') as typeof import('../../tools/MonitorTool/MonitorTool.js')
     ).MonitorTool
   : null
-const MonitorPermissionRequest = feature('MONITOR_TOOL')
-  ? require('./MonitorPermissionRequest/MonitorPermissionRequest.js')
-  : null
-
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { WorkerBadgeProps } from './WorkerBadge.js'
 
@@ -91,7 +87,7 @@ function permissionComponentForTool(tool: Tool): React.ComponentType<PermissionR
     case WorkflowTool:
       return WorkflowPermissionRequest ?? FallbackPermissionRequest
     case MonitorTool:
-      return MonitorPermissionRequest ?? FallbackPermissionRequest
+      return FallbackPermissionRequest
     case GlobTool:
     case GrepTool:
     case FileReadTool:

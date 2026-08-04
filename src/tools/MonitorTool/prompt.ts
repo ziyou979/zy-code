@@ -32,10 +32,11 @@ done
 
 **Script quality:**
 - Always use \`grep --line-buffered\` in pipes — without it, pipe buffering delays events by minutes.
+- Every stage in a pipeline must flush incrementally. Prefer line-buffered \`grep\` and \`awk\`; avoid \`head\` in an otherwise unbounded pipeline because upstream processes may stay alive after the match.
 - In poll loops, handle transient failures (\`curl ... || true\`) — one failed request shouldn't kill the monitor.
 - Poll intervals: 30s+ for remote APIs (rate limits), 0.5–1s for local checks.
 - Write a specific \`description\` — it appears in every notification ("errors in deploy.log" not "watching logs").
-- Only stdout is the event stream. Stderr goes to the output file (readable via Read) but does not trigger notifications.
+- Only stdout is the event stream. Stderr goes to the output file but does not trigger notifications. Add \`2>&1\` only when stderr is intentionally part of the event stream.
 
 **Coverage — silence is not success.** When watching a job or process for an outcome, your filter must match every terminal state, not just the happy path. A monitor that greps only for the success marker stays silent through a crashloop, a hung process, or an unexpected exit — and silence looks identical to "still running." Before arming, ask: *if this process crashed right now, would my filter emit anything?* If not, widen it.
 
