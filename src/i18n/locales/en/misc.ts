@@ -714,6 +714,8 @@ export const enMisc: TranslationResource = {
   'promptInput.selectionMacOption': 'set macOptionClickForcesSelection in VS Code settings',
   'promptInput.voiceHint': 'hold {shortcut} to speak',
   'codeReview.title': 'Code Review',
+  'reportFindings.name': 'Code review',
+  'monitorTool.name': 'Monitor',
   'codeReview.effort': 'Effort: {level}',
   'codeReview.levelLow': 'Low — quick scan',
   'codeReview.levelMedium': 'Medium — thorough',

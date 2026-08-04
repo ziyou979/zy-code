@@ -53,6 +53,7 @@ import './TaskGetTool/TaskGetTool.js'
 import './TaskUpdateTool/TaskUpdateTool.js'
 import './TaskListTool/TaskListTool.js'
 import './PowerShellTool/PowerShellTool.js'
+import './ReportFindingsTool/ReportFindingsTool.js'
 import './testing/TestingPermissionTool.js'
 
 // ─── DCE 条件加载: 仅触发模块加载（自注册），不提取值 ─────────────
@@ -70,6 +71,7 @@ if (feature('AGENT_TRIGGERS')) {
   require('../tools/ScheduleCronTool/cronCreateTool.js')
   require('../tools/ScheduleCronTool/cronDeleteTool.js')
   require('../tools/ScheduleCronTool/cronListTool.js')
+  require('../tools/ScheduleWakeupTool/ScheduleWakeupTool.js')
 }
 if (feature('AGENT_TRIGGERS_REMOTE')) {
   require('../tools/RemoteTriggerTool/RemoteTriggerTool.js')

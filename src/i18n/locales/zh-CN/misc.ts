@@ -697,6 +697,8 @@ export const zhMisc: TranslationResource = {
   'promptInput.selectionMacOption': '在 VS Code 设置中设置 macOptionClickForcesSelection',
   'promptInput.voiceHint': '按住 {shortcut} 说话',
   'codeReview.title': '代码审查',
+  'reportFindings.name': '代码审查',
+  'monitorTool.name': '监控器',
   'codeReview.effort': '审查深度：{level}',
   'codeReview.levelLow': '低 — 快速扫描',
   'codeReview.levelMedium': '中 — 全面检查',
