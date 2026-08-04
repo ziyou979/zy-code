@@ -12,6 +12,7 @@ import {
 } from '../../tasks/local-workflow-task/localWorkflowTask.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { getProjectDir } from '../../services/sessionStorage.js'
+import { getInitialSettings } from '../../services/settings/settings.js'
 import { WORKFLOW_WIRE_NAME } from './constants.js'
 import { resolveWorkflow } from './loader.js'
 import { getWorkflowPrompt } from './prompt.js'
@@ -202,6 +203,10 @@ export const WorkflowTool = buildTool({
     const journal = new WorkflowJournal(runId)
 
     // 异步执行（fire-and-forget），完成后通过 task-notification 通知 LLM
+    const configuredSize = getInitialSettings().workflowSizeGuideline
+    const runtimeSize =
+      input.workflowSize ?? (configuredSize === 'unrestricted' ? null : configuredSize)
+
     void executeWorkflowAsync(
       source,
       args,
@@ -211,7 +216,7 @@ export const WorkflowTool = buildTool({
       setAppState,
       meta,
       journal,
-      input.workflowSize,
+      runtimeSize,
     )
 
     return {
@@ -246,7 +251,8 @@ export const WorkflowTool = buildTool({
   },
 
   async prompt() {
-    return getWorkflowPrompt(true)
+    const configuredSize = getInitialSettings().workflowSizeGuideline
+    return getWorkflowPrompt(true, configuredSize ?? 'medium', configuredSize === undefined)
   },
 
   userFacingName() {

@@ -1,7 +1,20 @@
 import { describe, expect, test } from 'bun:test'
+import { cpus } from 'node:os'
 import { WorkflowSemaphore } from '../../../src/tools/WorkflowTool/runtime/concurrency.js'
 
 describe('WorkflowSemaphore', () => {
+  test('按 2.1.220 上限约束默认和显式规模的并发数', () => {
+    const hardCapacity = Math.min(16, Math.max(1, cpus().length - 2))
+
+    expect(new WorkflowSemaphore().getCapacity()).toBe(Math.min(hardCapacity, 14))
+    expect(new WorkflowSemaphore(undefined, 'small').getCapacity()).toBe(Math.min(hardCapacity, 4))
+    expect(new WorkflowSemaphore(undefined, 'medium').getCapacity()).toBe(
+      Math.min(hardCapacity, 14),
+    )
+    expect(new WorkflowSemaphore(undefined, 'large').getCapacity()).toBe(hardCapacity)
+    expect(new WorkflowSemaphore(undefined, null).getCapacity()).toBe(hardCapacity)
+  })
+
   test('allows concurrent acquisitions up to capacity', async () => {
     const sem = new WorkflowSemaphore()
     const capacity = sem.getCapacity()

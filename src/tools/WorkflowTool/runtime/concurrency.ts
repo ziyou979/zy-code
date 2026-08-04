@@ -1,26 +1,30 @@
 import { cpus } from 'node:os'
 
 const MAX_AGENT_COUNT = 1000
+const MAX_CONCURRENT_AGENTS = 16
+
+const WORKFLOW_SIZE_CONCURRENCY_LIMITS = {
+  small: 4,
+  medium: 14,
+  large: MAX_CONCURRENT_AGENTS,
+} as const
 
 /**
- * 根据 workflowSize 建议计算合适的并行度。
- * CC dynamicWorkflowSize 映射：
- * - small:   2×CPU（保守，适合文件操作/审查）
- * - medium:  4×CPU（默认，适合一般编排）
- * - large:   8×CPU（激进，适合大规模迁移/审计）
- * 默认行为同 medium。
+ * 根据 CPU 与 workflowSize 建议计算并行度。
+ *
+ * Claude Code 2.1.220 的硬上限是 min(16, CPU - 2)；size 只进一步收紧
+ * 小/中型 workflow，避免提示建议少于 5/15 个 agent，但运行时却同时启动更多。
+ * large 仍受 16 的硬上限约束，防止高核数机器在一次 fan-out 中放大内存峰值。
  */
 function getCapacityForSize(size?: 'small' | 'medium' | 'large' | null): number {
-  const cpuCount = Math.max(1, cpus().length - 2)
-  switch (size) {
-    case 'small':
-      return Math.max(2, cpuCount * 2)
-    case 'large':
-      return Math.max(2, cpuCount * 8)
-    case 'medium':
-    default:
-      return Math.max(2, cpuCount * 4)
+  const cpuCapacity = Math.max(1, cpus().length - 2)
+  const hardCapacity = Math.min(MAX_CONCURRENT_AGENTS, cpuCapacity)
+  // null 对应配置中的 unrestricted；undefined 才采用默认 medium。
+  if (size === null) {
+    return hardCapacity
   }
+  const effectiveSize = size ?? 'medium'
+  return Math.min(hardCapacity, WORKFLOW_SIZE_CONCURRENCY_LIMITS[effectiveSize])
 }
 
 export class WorkflowSemaphore {

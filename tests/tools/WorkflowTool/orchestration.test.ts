@@ -45,6 +45,14 @@ describe('orchestration', () => {
       const result = await pipeline([], sem, (x) => x)
       expect(result).toEqual([])
     })
+
+    test('超过 4096 项时显式拒绝', async () => {
+      const sem = new WorkflowSemaphore()
+
+      await expect(pipeline(new Array(4097).fill(0), sem, (x) => x)).rejects.toThrow(
+        'pipeline accepts at most 4096 items',
+      )
+    })
   })
 
   describe('parallel', () => {
@@ -74,6 +82,13 @@ describe('orchestration', () => {
       const sem = new WorkflowSemaphore()
       const result = await parallel([], sem)
       expect(result).toEqual([])
+    })
+
+    test('超过 4096 个 thunk 时显式拒绝', async () => {
+      const sem = new WorkflowSemaphore()
+      const thunks = new Array(4097).fill(null).map(() => () => Promise.resolve(null))
+
+      await expect(parallel(thunks, sem)).rejects.toThrow('parallel accepts at most 4096 items')
     })
   })
 })

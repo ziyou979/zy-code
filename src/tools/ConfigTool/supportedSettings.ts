@@ -158,6 +158,12 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
       'How to spawn teammates: "tmux" for traditional tmux, "in-process" for same process, "auto" to choose automatically',
     options: TEAMMATE_MODES,
   },
+  workflowSizeGuideline: {
+    source: 'settings',
+    type: 'string',
+    description: 'Advisory workflow size: unrestricted, small, medium, or large',
+    options: ['unrestricted', 'small', 'medium', 'large'],
+  },
   ...(isInternalBuild()
     ? {
         classifierPermissionsEnabled: {

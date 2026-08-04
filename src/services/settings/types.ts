@@ -662,6 +662,12 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .catch(undefined)
         .describe('Persisted effort level for supported models.'),
+      workflowSizeGuideline: z
+        .enum(['unrestricted', 'small', 'medium', 'large'])
+        .optional()
+        .describe(
+          'Advisory size guideline for workflows: small aims for fewer than 5 agents, medium (default) fewer than 15, large fewer than 50, and unrestricted omits the guideline.',
+        ),
       promptSuggestionEnabled: z
         .boolean()
         .optional()

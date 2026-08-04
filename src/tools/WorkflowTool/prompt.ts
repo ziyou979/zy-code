@@ -1,7 +1,41 @@
-export async function getWorkflowPrompt(isUltracodeActive: boolean): Promise<string> {
+export type WorkflowSizeGuideline = 'unrestricted' | 'small' | 'medium' | 'large'
+
+const WORKFLOW_SIZE_AGENT_LIMITS = {
+  small: 5,
+  medium: 15,
+  large: 50,
+} as const
+
+export function getWorkflowSizeGuidelinePrompt(
+  size: WorkflowSizeGuideline = 'medium',
+  isDefault = true,
+): string | null {
+  if (size === 'unrestricted') {
+    return null
+  }
+
+  const prefix = isDefault
+    ? 'This session has the default workflow size guideline:'
+    : 'A workflow size guideline is configured for this session:'
+  const configHint = isDefault
+    ? ' The user can raise or remove it with `workflowSizeGuideline` in settings or /config.'
+    : ''
+
+  return `${prefix} ${size} — keep workflows under ${WORKFLOW_SIZE_AGENT_LIMITS[size]} agents. This is a guideline, not a hard limit — follow it unless the user's prompt calls for a different scale.${configHint}`
+}
+
+export async function getWorkflowPrompt(
+  isUltracodeActive: boolean,
+  workflowSizeGuideline: WorkflowSizeGuideline = 'medium',
+  isDefaultGuideline = true,
+): Promise<string> {
   const sections: string[] = [CORE_PROMPT]
   if (isUltracodeActive) {
     sections.push(ULTRACODE_SECTION)
+  }
+  const guideline = getWorkflowSizeGuidelinePrompt(workflowSizeGuideline, isDefaultGuideline)
+  if (guideline) {
+    sections.push(guideline)
   }
   return sections.join('\n\n')
 }
@@ -80,7 +114,7 @@ Smell test: if you wrote
   const c = await parallel(b.map(...))
 that middle transform doesn't need the barrier. Rewrite as a pipeline with the transform inside a stage. When in doubt: pipeline.
 
-Concurrent agent() calls are capped at min(16, cpu cores - 2) per workflow — excess calls queue and run as slots free up. You can still pass 100 items to parallel()/pipeline() and they all complete; only ~10 run at any moment. Total agent count across a workflow's lifetime is capped at 1000 — a runaway-loop backstop set far above any real workflow.
+Concurrent agent() calls are capped at min(16, cpu cores - 2) per workflow — excess calls queue and run as slots free up. You can still pass 100 items to parallel()/pipeline() and they all complete; only ~10 run at any moment. Total agent count across a workflow's lifetime is capped at 1000 — a runaway-loop backstop set far above any real workflow. A single parallel()/pipeline() call accepts at most 4096 items; passing more is an explicit error, not a silent truncation.
 
 The canonical multi-stage pattern — pipeline by default, each dimension verifies as soon as its review completes:
   export const meta = {
@@ -142,7 +176,7 @@ Use this tool for multi-step orchestration where control flow should be determin
 
 ## Resume
 
-The tool result includes a runId. To resume after a pause, kill, or script edit, relaunch with Workflow({scriptPath, resumeFromRunId}) — the longest unchanged prefix of agent() calls returns cached results instantly; the first edited/new call and everything after it runs live. Same script + same args → 100% cache hit. Date.now()/Math.random()/new Date() are unavailable in scripts (they would break this) — stamp results after the workflow returns, or pass timestamps via args. Fallback when no journal is available: Read agent-<id>.jsonl files in the transcript directory and hand-author a continuation script.`
+The tool result includes a runId. To resume after a pause, kill, or script edit, relaunch with Workflow({scriptPath, resumeFromRunId}) — the longest unchanged prefix of agent() calls returns cached results instantly; the first edited/new call and everything after it runs live. Same script + same args → 100% cache hit. Before diagnosing why a completed workflow returned an empty or unexpected result, Read <transcriptDir>/journal.jsonl — it records each agent's actual return value; do not assume cached results are non-empty. Date.now()/Math.random()/new Date() are unavailable in scripts (they would break this) — stamp results after the workflow returns, or pass timestamps via args. Fallback when no journal is available: Read agent-<id>.jsonl files in the transcript directory and hand-author a continuation script.`
 
 const ULTRACODE_SECTION = `## Ultracode
 

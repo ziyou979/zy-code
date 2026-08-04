@@ -1,5 +1,15 @@
 import type { WorkflowSemaphore } from './concurrency.js'
 
+const MAX_ITEMS_PER_CALL = 4096
+
+function assertItemLimit(kind: 'pipeline' | 'parallel', count: number): void {
+  if (count > MAX_ITEMS_PER_CALL) {
+    throw new Error(
+      `${kind} accepts at most ${MAX_ITEMS_PER_CALL} items per call; received ${count}.`,
+    )
+  }
+}
+
 /**
  * pipeline — 阶段间无 barrier，每项独立流过所有阶段。
  * 总耗时 = 最慢单项的阶段链之和。
@@ -9,6 +19,7 @@ export async function pipeline<T>(
   _semaphore: WorkflowSemaphore,
   ...stages: Array<(prevResult: unknown, originalItem: T, index: number) => unknown>
 ): Promise<unknown[]> {
+  assertItemLimit('pipeline', items.length)
   return Promise.all(
     items.map(async (item, index) => {
       let result: unknown = item
@@ -35,6 +46,7 @@ export async function parallel(
   thunks: Array<() => Promise<unknown>>,
   _semaphore: WorkflowSemaphore,
 ): Promise<unknown[]> {
+  assertItemLimit('parallel', thunks.length)
   const results = await Promise.allSettled(thunks.map((fn) => fn()))
   return results.map((r) => (r.status === 'fulfilled' ? r.value : null))
 }
