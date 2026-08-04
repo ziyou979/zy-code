@@ -4,7 +4,10 @@ import { feature } from 'bun:bundle'
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 process.env.COREPACK_ENABLE_AUTO_PIN = '0'
 
-// 为 CCR 环境的子进程设置最大堆大小（容器有 16GB 内存）
+// 为 CCR 环境的子进程设置最大堆大小（容器有 16GB 内存）。
+// NODE_OPTIONS --max-old-space-size 是 V8 参数，Bun(JSC) 会忽略，仅对 Node 子进程
+// （如 node 实现的 MCP server）有效。进程启动时读取，此处设置仅通过 env 继承
+// 影响之后派生的子进程，对已在运行的主进程无效。
 // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level, custom-rules/safe-env-boolean-check
 if (process.env.ZY_CODE_REMOTE === 'true') {
   // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level

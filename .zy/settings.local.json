@@ -117,7 +117,15 @@
       "Bash(mv src/services/permissions/permissionCLI.tmp src/services/permissions/permissionCli.ts)",
       "Bash(rm src/services/permissions/permissionCLI.ts)",
       "Bash(ls src/services/permissions/permission*CLI* src/services/permissions/permissionCli*)",
-      "Bash(ls src/ink/frameSink*)"
+      "Bash(ls src/ink/frameSink*)",
+      "Bash(wc -l src/services/compact/prompt.ts src/services/mode-instructions/planMode.ts src/tools/AgentTool/built-in/*.ts src/coordinator/coordinatorMode.ts src/services/ultraplan/prompt.txt src/services/permissions/yolo-classifier-prompts/auto_mode_system_prompt.txt)",
+      "Bash(cygpath -w /tmp/cc-2.1.220-prompt.md)",
+      "Bash(bun:*)",
+      "Bash(git:*)",
+      "Bash(find tests:*)",
+      "Bash(BUN_JSC_forceRAMSize=4294967296 bun --version 2>&1)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" bun --version)",
+      "Bash(echo \"exit=$?\")"
     ]
   }
 }
