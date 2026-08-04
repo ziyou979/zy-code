@@ -11,7 +11,7 @@ Run \`git diff\` (or \`git diff HEAD\` if there are staged changes) to see what 
 
 ## Phase 2: Launch Three Review Agents in Parallel
 
-Use the ${AGENT_TOOL_NAME} tool to launch all three agents concurrently in a single message. Pass each agent the full diff so it has the complete context.
+Use the ${AGENT_TOOL_NAME} tool to launch all three agents concurrently in a single message. Give every agent the review target and changed-file list, then have it read the shared working tree and obtain the diff itself. Do not paste the full diff into three agent prompts: that duplicates a potentially large payload in every sidechain.
 
 ### Agent 1: Code Reuse Review
 
@@ -47,7 +47,7 @@ Review the same changes for efficiency:
 
 ## Phase 3: Fix Issues
 
-Wait for all three agents to complete. Aggregate their findings and fix each issue directly. If a finding is a false positive or not worth addressing, note it and move on — do not argue with the finding, just skip it.
+Wait for all three agents to complete. Deduplicate overlapping findings, verify each against the current working tree, and fix each valid issue directly. If a finding is a false positive or not worth addressing, note it and move on — do not argue with the finding, just skip it. Run focused formatting, type checks, and tests appropriate to the files you changed.
 
 When done, briefly summarize what was fixed (or confirm the code was already clean).
 `

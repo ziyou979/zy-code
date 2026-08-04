@@ -1,4 +1,5 @@
 import { tSync } from '../../i18n/index.js'
+import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import { executeShellCommandsInPrompt } from '../../services/shell/promptShellExecution.js'
 import { registerBundledSkill } from '../bundledSkills.js'
@@ -188,7 +189,7 @@ export function registerSecurityReviewSkill(): void {
     description: tSync('commands.securityReview'),
     whenToUse:
       'When the user wants a security review of their code changes, asks to check for vulnerabilities in a PR or branch, or says things like "security review", "check for vulnerabilities", "audit this branch".',
-    allowedTools: ['Bash', 'Read', 'Glob', 'Grep', 'LS', 'AgentTool'],
+    allowedTools: ['Bash', 'PowerShell', 'Read', 'Glob', 'Grep', 'LS', AGENT_TOOL_NAME],
     userInvocable: true,
     async getPromptForCommand(_args: string, context: ToolUseContext) {
       // 预执行 prompt 中的 !`command` 内联 shell 命令（git status/diff/log）
