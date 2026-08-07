@@ -32,7 +32,7 @@ import {
   checkReadableInternalPath,
 } from '../../services/permissions/filesystemPolicy.js'
 import type { PermissionResult } from '../../services/permissions/permissionResult.js'
-import { createReadRuleSuggestion } from '../../services/permissions/permissionUpdate.js'
+import { createReadRuleSuggestion } from '../../services/permissions/permissionUpdate.ts'
 import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import {
   isDangerousRemovalPath,

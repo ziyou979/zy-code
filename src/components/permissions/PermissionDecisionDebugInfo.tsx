@@ -11,7 +11,7 @@ import type {
   PermissionDecision,
   PermissionDecisionReason,
 } from '../../services/permissions/permissionResult.js'
-import { extractRules } from '../../services/permissions/permissionUpdate.js'
+import { extractRules } from '../../services/permissions/permissionUpdate.ts'
 import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import { permissionRuleValueToString } from '../../services/permissions/permissionRuleParser.js'
 import { detectUnreachableRules } from '../../services/permissions/shadowedRuleDetection.js'

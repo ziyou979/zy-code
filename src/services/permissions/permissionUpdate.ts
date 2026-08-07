@@ -333,8 +333,9 @@ export function createReadRuleSuggestion(
   dirPath: string,
   destination: PermissionUpdateDestination = 'session',
 ): PermissionUpdate | undefined {
-  // Convert to POSIX format for pattern matching (handles Windows internally)
-  const pathForPattern = toPosixPath(dirPath)
+  // 统一移除目录末尾的分隔符，避免同一路径生成 `/**` 与 `//**` 两种规则。
+  const convertedPath = toPosixPath(dirPath)
+  const pathForPattern = convertedPath.replace(/\/+$/, '') || '/'
 
   // Root directory is too broad to be a reasonable permission target
   if (pathForPattern === '/') {

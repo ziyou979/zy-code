@@ -21,7 +21,7 @@ import {
   getFeatureValue_CACHED_MAY_BE_STALE,
 } from 'src/services/analytics/growthbook.js'
 import { createDebugLog } from '../../services/infra/debug.js'
-import { applyPermissionUpdate } from './permissionUpdate.js'
+import { applyPermissionUpdate } from './permissionUpdate.ts'
 import { restoreDangerousPermissions } from './dangerousPermissionRules.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */

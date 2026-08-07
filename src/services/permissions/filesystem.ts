@@ -37,7 +37,7 @@ import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../analytics/growth
 import { getSettingsRootPathForSource } from '../settings/settings.js'
 import type { PermissionDecision, PermissionResult } from './permissionResult.js'
 import type { PermissionRule, PermissionRuleSource } from './permissionRule.js'
-import { createReadRuleSuggestion } from './permissionUpdate.js'
+import { createReadRuleSuggestion } from './permissionUpdate.ts'
 import type { PermissionUpdate } from './permissionUpdateSchema.js'
 import { getRuleByContentsForToolName } from './permissionRuleQueries.js'
 import {

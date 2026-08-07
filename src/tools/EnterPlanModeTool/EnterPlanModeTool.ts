@@ -5,7 +5,7 @@ import { handlePlanModeTransition } from 'src/bootstrap/runtime/runtimeContext.j
 import type { Tool } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { applyPermissionUpdate } from '../../services/permissions/permissionUpdate.js'
+import { applyPermissionUpdate } from '../../services/permissions/permissionUpdate.ts'
 import { prepareContextForPlanMode } from '../../services/permissions/permissionModeTransitions.js'
 import { isPlanModeInterviewPhaseEnabled } from '../../services/mode-instructions/planModeConfig.js'
 import { ENTER_PLAN_MODE_TOOL_NAME } from './constants.js'

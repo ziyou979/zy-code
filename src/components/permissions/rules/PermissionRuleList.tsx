@@ -5,7 +5,7 @@ import { useAppState, useSetAppState } from 'src/state/AppState.js'
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,
-} from 'src/services/permissions/permissionUpdate.js'
+} from 'src/services/permissions/permissionUpdate.ts'
 import type { CommandResultDisplay } from '../../../commands/index.js'
 import { Select } from '../../CustomSelect/select.js'
 import { WARNING } from '../../../constants/figures.js'

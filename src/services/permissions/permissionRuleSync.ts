@@ -1,6 +1,6 @@
 import type { ToolPermissionContext } from '../../tools/tool.js'
 import type { PermissionBehavior, PermissionRule, PermissionRuleValue } from './permissionRule.js'
-import { applyPermissionUpdate, applyPermissionUpdates } from './permissionUpdate.js'
+import { applyPermissionUpdate, applyPermissionUpdates } from './permissionUpdate.ts'
 import type { PermissionUpdate, PermissionUpdateDestination } from './permissionUpdateSchema.js'
 import { shouldAllowManagedPermissionRulesOnly } from './permissionsLoader.js'
 

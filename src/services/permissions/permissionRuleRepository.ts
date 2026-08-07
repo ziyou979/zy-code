@@ -1,6 +1,6 @@
 import type { ToolPermissionContext } from '../../tools/tool.js'
 import type { PermissionRule } from './permissionRule.js'
-import { applyPermissionUpdate } from './permissionUpdate.js'
+import { applyPermissionUpdate } from './permissionUpdate.ts'
 import type { PermissionUpdateDestination } from './permissionUpdateSchema.js'
 import {
   deletePermissionRuleFromSettings,

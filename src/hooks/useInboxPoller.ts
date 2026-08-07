@@ -28,7 +28,7 @@ import {
   permissionModeFromString,
   toExternalPermissionMode,
 } from '../services/permissions/permissionMode.js'
-import { applyPermissionUpdate } from '../services/permissions/permissionUpdate.js'
+import { applyPermissionUpdate } from '../services/permissions/permissionUpdate.ts'
 import { jsonStringify } from '../services/infra/slowOperations.js'
 import { unassignTeammateTasks } from '../services/tasks-service/tasks.js'
 import {

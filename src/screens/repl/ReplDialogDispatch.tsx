@@ -49,7 +49,7 @@ import {
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,
-} from '../../services/permissions/permissionUpdate.js'
+} from '../../services/permissions/permissionUpdate.ts'
 import { escapeXml } from '../../utils/xml.js'
 import { tSync } from '../../i18n/index.js'
 import type { ReplNotificationsCluster } from './useReplNotificationsCluster.js'

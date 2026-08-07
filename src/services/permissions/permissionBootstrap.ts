@@ -37,7 +37,7 @@ import {
   findOverlyBroadPowerShellPermissions,
 } from './dangerousPermissionRules.js'
 import type { PermissionRule } from './permissionRule.js'
-import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './permissionUpdate.js'
+import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './permissionUpdate.ts'
 import {
   normalizeLegacyToolName,
   permissionRuleValueFromString,

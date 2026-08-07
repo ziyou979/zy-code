@@ -20,7 +20,7 @@ import {
   fileHistoryMakeSnapshot,
 } from '../../services/file-persistence/fileHistory.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
-import { applyPermissionUpdates } from '../../services/permissions/permissionUpdate.js'
+import { applyPermissionUpdates } from '../../services/permissions/permissionUpdate.ts'
 import { stripDangerousPermissionsForAutoMode } from '../../services/permissions/dangerousPermissionRules.js'
 import { getPlanSlug, setPlanSlug } from '../../services/plans/plans.js'
 

@@ -12,7 +12,7 @@ import {
 } from 'src/services/analytics/growthbook.js'
 import { getInitialSettings } from '../settings/settings.js'
 import { createDebugLog } from '../../services/infra/debug.js'
-import { applyPermissionUpdate } from './permissionUpdate.js'
+import { applyPermissionUpdate } from './permissionUpdate.ts'
 
 const permLog = createDebugLog('bypass-permissions')
 

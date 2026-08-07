@@ -50,7 +50,7 @@ import type {
   PermissionRule,
   PermissionRuleValue,
 } from '../../services/permissions/permissionRule.js'
-import { extractRules } from '../../services/permissions/permissionUpdate.js'
+import { extractRules } from '../../services/permissions/permissionUpdate.ts'
 import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import { permissionRuleValueToString } from '../../services/permissions/permissionRuleParser.js'
 import {
@@ -1673,6 +1673,7 @@ export async function bashToolHasPermission(
   let astRedirects: Redirect[] | undefined
   let astCommands: SimpleCommand[] | undefined
   let shadowLegacySubs: string[] | undefined
+  let shadowParserAvailable: boolean | undefined
 
   // Shadow-test tree-sitter: record its verdict, then force parse-unavailable
   // so the legacy path stays authoritative. parseCommand stays gated on
@@ -1682,6 +1683,7 @@ export async function bashToolHasPermission(
   // session-scoped zy_tree_sitter_load event.
   if (feature('TREE_SITTER_BASH_SHADOW')) {
     const available = astResult.kind !== 'parse-unavailable'
+    shadowParserAvailable = available
     let tooComplex = false
     let semanticFail = false
     let subsDiffer = false
@@ -1792,7 +1794,34 @@ export async function bashToolHasPermission(
   // (tree-sitter not loaded OR TREE_SITTER_BASH feature gated off). Falls
   // through to the full legacy path below.
   if (astResult.kind === 'parse-unavailable') {
-    logForDebugging('bashToolHasPermission: tree-sitter unavailable, using legacy shell-quote path')
+    // 区分主动关闭、灰度未开启和真正的解析失败，避免把预期降级误报为运行时故障。
+    if (injectionCheckDisabled) {
+      logForDebugging(
+        'bashToolHasPermission: AST security parsing disabled by ZY_CODE_DISABLE_COMMAND_INJECTION_CHECK, using legacy shell-quote path',
+      )
+    } else if (feature('TREE_SITTER_BASH')) {
+      logForDebugging(
+        'bashToolHasPermission: Bash AST parser unavailable, using legacy shell-quote path',
+      )
+    } else if (feature('TREE_SITTER_BASH_SHADOW')) {
+      if (!shadowEnabled) {
+        logForDebugging(
+          'bashToolHasPermission: Bash AST shadow rollout disabled, using legacy shell-quote path',
+        )
+      } else if (shadowParserAvailable) {
+        logForDebugging(
+          'bashToolHasPermission: Bash AST shadow mode is observational, using legacy shell-quote path',
+        )
+      } else {
+        logForDebugging(
+          'bashToolHasPermission: Bash AST parser unavailable in shadow mode, using legacy shell-quote path',
+        )
+      }
+    } else {
+      logForDebugging(
+        'bashToolHasPermission: Bash AST parser feature disabled, using legacy shell-quote path',
+      )
+    }
     const parseResult = tryParseShellCommand(input.command)
     if (!parseResult.success) {
       const decisionReason = {

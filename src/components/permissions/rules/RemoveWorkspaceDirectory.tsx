@@ -2,7 +2,7 @@ import { tSync } from 'src/i18n/index.js'
 import { Select } from '../../CustomSelect/select.js'
 import { Box, Text } from '../../../ink/index.js'
 import type { ToolPermissionContext } from '../../../tools/tool.js'
-import { applyPermissionUpdate } from '../../../services/permissions/permissionUpdate.js'
+import { applyPermissionUpdate } from '../../../services/permissions/permissionUpdate.ts'
 import { Dialog } from '../../design-system/Dialog.js'
 
 type Props = {

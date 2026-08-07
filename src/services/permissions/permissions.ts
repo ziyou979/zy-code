@@ -23,7 +23,7 @@ import type {
   PermissionResult,
 } from './permissionResult.js'
 import type { PermissionRule, PermissionRuleSource } from './permissionRule.js'
-import { applyPermissionUpdates, persistPermissionUpdates } from './permissionUpdate.js'
+import { applyPermissionUpdates, persistPermissionUpdates } from './permissionUpdate.ts'
 import type { PermissionUpdate } from './permissionUpdateSchema.js'
 import { permissionRuleValueToString } from './permissionRuleParser.js'
 import {

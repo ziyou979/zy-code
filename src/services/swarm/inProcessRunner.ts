@@ -84,7 +84,7 @@ import {
 import {
   applyPermissionUpdates,
   persistPermissionUpdates,
-} from '../permissions/permissionUpdate.js'
+} from '../permissions/permissionUpdate.ts'
 import type { PermissionUpdate } from '../permissions/permissionUpdateSchema.js'
 import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { sleep } from '../../utils/sleep.js'
