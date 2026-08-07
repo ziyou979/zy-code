@@ -12,7 +12,7 @@ import { SETTING_SOURCES } from '../settings/constants.js'
 import { getSettingsFilePathForSource } from '../settings/settings.js'
 import { CROSS_PLATFORM_CODE_EXEC, DANGEROUS_BASH_PATTERNS } from './dangerousPatterns.js'
 import type { PermissionRule, PermissionRuleSource, PermissionRuleValue } from './permissionRule.js'
-import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './permissionUpdate.ts'
+import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './permissionUpdate.js'
 import type { PermissionUpdateDestination } from './permissionUpdateSchema.js'
 import {
   normalizeLegacyToolName,

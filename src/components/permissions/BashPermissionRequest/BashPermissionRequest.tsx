@@ -27,7 +27,7 @@ import {
   getBashPromptAllowDescriptions,
   isClassifierPermissionsEnabled,
 } from '../../../services/permissions/bashClassifier.js'
-import { extractRules } from '../../../services/permissions/permissionUpdate.ts'
+import { extractRules } from '../../../services/permissions/permissionUpdate.js'
 import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
 import { Select } from '../../CustomSelect/select.js'
 import { ShimmerChar } from '../../Spinner/ShimmerChar.js'

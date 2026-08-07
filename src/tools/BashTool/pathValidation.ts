@@ -12,7 +12,7 @@ import type { ToolPermissionContext } from '../../tools/tool.js'
 import { getDirectoryForPath } from '../../utils/path.js'
 import { allWorkingDirectories } from '../../services/permissions/filesystem.js'
 import type { PermissionResult } from '../../services/permissions/permissionResult.js'
-import { createReadRuleSuggestion } from '../../services/permissions/permissionUpdate.ts'
+import { createReadRuleSuggestion } from '../../services/permissions/permissionUpdate.js'
 import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import {
   expandTilde,

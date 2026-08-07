@@ -31,7 +31,7 @@ import {
   applyPermissionUpdates,
   persistPermissionUpdates,
   supportsPersistence,
-} from '../../services/permissions/permissionUpdate.ts'
+} from '../../services/permissions/permissionUpdate.js'
 import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import { logPermissionDecision, type PermissionDecisionArgs } from './permissionLogging.js'
 

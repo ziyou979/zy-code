@@ -8,7 +8,7 @@
 import type { AppState } from '../../state/AppStateStore.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { addFunctionHook } from '../hooks/sessionHooks.js'
-import { applyPermissionUpdate } from '../permissions/permissionUpdate.ts'
+import { applyPermissionUpdate } from '../permissions/permissionUpdate.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { getTeammateColor } from './teammate.js'
 import { createIdleNotification } from '../../services/swarm/teammateMailboxMessages.js'

@@ -11,7 +11,7 @@ import type {
   PermissionDecisionReason,
   PermissionResult,
 } from 'src/services/permissions/permissionResult.js'
-import { extractRules, hasRules } from 'src/services/permissions/permissionUpdate.ts'
+import { extractRules, hasRules } from 'src/services/permissions/permissionUpdate.js'
 import { permissionRuleValueToString } from 'src/services/permissions/permissionRuleParser.js'
 import type { ToolUseConfirm } from './PermissionRequest.js'
 import { useSetAppState } from '../../state/AppState.js'

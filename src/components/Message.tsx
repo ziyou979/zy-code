@@ -5,7 +5,7 @@ import type {
   TextBlock,
   ToolCallBlock,
   UserContentBlock,
-} from 'src/types/llm.ts'
+} from 'src/types/llm.js'
 import type { Attachment } from 'src/services/attachments/attachments.js'
 import type { Command } from '../commands/index.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'

@@ -4,7 +4,7 @@ import { executePermissionRequestHooks } from '../services/hooks.js'
 import {
   applyPermissionUpdates,
   persistPermissionUpdates,
-} from '../services/permissions/permissionUpdate.ts'
+} from '../services/permissions/permissionUpdate.js'
 import type { PermissionDecision } from '../services/permissions/permissionResult.js'
 
 /**

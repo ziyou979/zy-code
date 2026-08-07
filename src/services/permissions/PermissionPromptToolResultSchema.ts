@@ -6,7 +6,7 @@ const permLog = createDebugLog('permissions')
 
 import { lazySchema } from '../../utils/lazySchema.js'
 import type { PermissionDecision, PermissionDecisionReason } from './permissionResult.js'
-import { applyPermissionUpdates, persistPermissionUpdates } from './permissionUpdate.ts'
+import { applyPermissionUpdates, persistPermissionUpdates } from './permissionUpdate.js'
 import { permissionUpdateSchema } from './permissionUpdateSchema.js'
 
 export const inputSchema = lazySchema(() =>

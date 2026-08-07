@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { createReadRuleSuggestion } from 'src/services/permissions/permissionUpdate.ts'
+import { createReadRuleSuggestion } from 'src/services/permissions/permissionUpdate.js'
 
 describe('createReadRuleSuggestion', () => {
   test('应规范化目录末尾的分隔符', () => {

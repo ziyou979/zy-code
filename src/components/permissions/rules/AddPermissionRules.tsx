@@ -11,7 +11,7 @@ import type {
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,
-} from '../../../services/permissions/permissionUpdate.ts'
+} from '../../../services/permissions/permissionUpdate.js'
 import { permissionRuleValueToString } from '../../../services/permissions/permissionRuleParser.js'
 import {
   detectUnreachableRules,

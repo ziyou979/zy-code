@@ -50,7 +50,7 @@ import type {
   PermissionRule,
   PermissionRuleValue,
 } from '../../services/permissions/permissionRule.js'
-import { extractRules } from '../../services/permissions/permissionUpdate.ts'
+import { extractRules } from '../../services/permissions/permissionUpdate.js'
 import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import { permissionRuleValueToString } from '../../services/permissions/permissionRuleParser.js'
 import {
