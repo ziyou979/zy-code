@@ -42,7 +42,7 @@ import {
   createWhatsNewFeed,
 } from './FeedConfigs.js'
 import { VoiceModeNotice } from './VoiceModeNotice.js'
-import { Zy } from './Zy.js'
+import { AnimatedZy } from './AnimatedZy.js'
 
 // Type declarations for missing components
 // biome-ignore lint/suspicious/noExplicitAny: 占位组件，永远不会被渲染（dead code）
@@ -203,7 +203,7 @@ export function Logo() {
             <Text bold={true}>{welcomeMessage}</Text>
             {
               <Box marginY={1}>
-                <Zy />
+                <AnimatedZy size="compact" />
               </Box>
             }
             {<Text dimColor={true}>{modelDisplayName}</Text>}
@@ -284,7 +284,7 @@ export function Logo() {
                           <Text bold={true}>{welcomeMessage}</Text>
                         </Box>
                       }
-                      {<Zy />}
+                      {<AnimatedZy />}
                       {
                         <Box flexDirection="column" alignItems="center">
                           {<Text dimColor={true}>{modelLine}</Text>}

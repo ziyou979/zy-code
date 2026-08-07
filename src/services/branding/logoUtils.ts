@@ -14,6 +14,7 @@ import { getInitialSettings } from '../settings/settings.js'
 
 // 布局常量
 const MAX_LEFT_WIDTH = 50
+const LARGE_LOGO_WIDTH = 32
 const MAX_USERNAME_LENGTH = 20
 const BORDER_PADDING = 4
 const DIVIDER_WIDTH = 1
@@ -85,7 +86,7 @@ export function calculateOptimalLeftWidth(
     stringWidth(welcomeMessage),
     stringWidth(truncatedCwd),
     stringWidth(modelLine),
-    20, // 给 clawd 图案留出的最小宽度
+    LARGE_LOGO_WIDTH, // 给高分辨率凤凰 Logo 留出的最小宽度
   )
   return Math.min(contentWidth + 4, MAX_LEFT_WIDTH) // +4 for padding
 }
