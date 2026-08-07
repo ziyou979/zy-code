@@ -125,7 +125,18 @@
       "Bash(find tests:*)",
       "Bash(BUN_JSC_forceRAMSize=4294967296 bun --version 2>&1)",
       "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" bun --version)",
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "Bash(CLAUDE_BIN=\"D:\\\\nvm\\\\nvm4w\\\\nodejs\\\\node_global\\\\node_modules\\\\@anthropic-ai\\\\claude-code\\\\bin\\\\claude.exe\")",
+      "Bash(LC_ALL=C dd if=$CLAUDE_BIN bs=1 skip=249256400 count=700)",
+      "Bash(head -12 ~/.claude/plugins/marketplaces/claude-plugins-official/plugins/code-simplifier/commands/*.md)",
+      "Bash(echo \"tsc exit: $?\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(''''language:'''', d.get\\(''''language''''\\)\\)\")",
+      "Bash(grep -o \"\"language\"\"[^,]* .zy/settings.json)",
+      "Bash(cp src/i18n/languageStore.ts /tmp/languageStore.ts.bak)",
+      "Bash(sed -i 's|  current = next|  current = next\\\\n  if \\(process.env.TRACE_LANG\\) console.error\\(\"\"\"\"[LANG] setLanguage\"\"\"\", next, new Error\\(\\).stack?.split\\(\"\"\"\"\\\\\\\\n\"\"\"\"\\).slice\\(2, 8\\).join\\(\"\"\"\" | \"\"\"\"\\)\\)|' src/i18n/languageStore.ts)",
+      "Bash(TRACE_LANG=1 bun test)",
+      "Bash(TRACE_LANG=1 bun test tests/utils/format.test.ts tests/utils/modelCost.test.ts)",
+      "Bash(echo \"NODE_ENV=$NODE_ENV\")"
     ]
   }
 }
