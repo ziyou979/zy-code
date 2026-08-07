@@ -1,7 +1,9 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import type { ClickEvent } from '../../ink/events/clickEvent.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- UP arrow exit not in Attachments bindings
 import { Box, Text, useInput } from '../../ink/index.js'
+import { TerminalSizeContext } from '../../ink/components/TerminalSizeContext.js'
+import { stringWidth } from '../../ink/stringWidth.js'
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js'
 import type { PastedContent } from '../../services/config/config.js'
 import { getImageFromClipboard } from '../../services/attachments/imagePaste.js'
@@ -131,6 +133,7 @@ Props<any>) {
   const imageAttachments = pastedContents
     ? Object.values(pastedContents).filter((c) => c.type === 'image')
     : []
+  const terminalSize = useContext(TerminalSizeContext)
   const showLabel = showLabelProp || option.showLabelWithValue === true
   const [cursorOffset, setCursorOffset] = useState(inputValue.length)
   const isUserEditing = useRef(false)
@@ -238,6 +241,59 @@ Props<any>) {
   }, [isFocused, imagesSelected, onImagesSelectedChange])
   const descriptionPaddingLeft = layout === 'expanded' ? maxIndexWidth + 3 : maxIndexWidth + 4
   const indexLabel = `${index}.`.padEnd(maxIndexWidth + 2)
+  const labelValueSeparator = option.labelValueSeparator ?? ', '
+  const labelWidth =
+    typeof option.label === 'string'
+      ? stringWidth(option.label) + stringWidth(labelValueSeparator)
+      : 0
+  // 标签与长输入值同处一行时，输入框内部换行会继承标签后的横向偏移。
+  // 超出当前行后改用悬挂布局，让输入值及其所有续行从选项正文列开始。
+  const optionContentColumns = Math.max(
+    2,
+    (terminalSize?.columns ?? 80) - 2 - stringWidth(indexLabel),
+  )
+  const shouldStackLabeledInput =
+    isFocused &&
+    showLabel &&
+    labelWidth > 0 &&
+    labelWidth + stringWidth(inputValue) >= optionContentColumns
+  const inputColumns = Math.max(
+    2,
+    shouldStackLabeledInput ? optionContentColumns : optionContentColumns - labelWidth,
+  )
+  const inputElement = isFocused ? (
+    <TextInput
+      value={inputValue}
+      onChange={(value) => {
+        isUserEditing.current = true
+        onInputChange(value)
+        option.onChange(value)
+      }}
+      onSubmit={onSubmit}
+      onExit={onExit}
+      placeholder={
+        showLabel
+          ? option.placeholder
+          : option.placeholder || (typeof option.label === 'string' ? option.label : undefined)
+      }
+      focus={!imagesSelected}
+      showCursor={true}
+      multiline={true}
+      cursorOffset={cursorOffset}
+      onChangeCursorOffset={setCursorOffset}
+      columns={inputColumns}
+      onImagePaste={onImagePaste}
+      onPaste={(pastedText) => {
+        isUserEditing.current = true
+        const before = inputValue.slice(0, cursorOffset)
+        const after = inputValue.slice(cursorOffset)
+        const newValue = before + pastedText + after
+        onInputChange(newValue)
+        option.onChange(newValue)
+        setCursorOffset(before.length + pastedText.length)
+      }}
+    />
+  ) : null
   return (
     <Box flexDirection="column" flexShrink={0}>
       {
@@ -253,87 +309,49 @@ Props<any>) {
           onMouseLeave={onMouseLeave}
         >
           {
-            <Box flexDirection="row" flexShrink={layout === 'compact' ? 0 : undefined}>
-              {<Text dimColor={true}>{indexLabel}</Text>}
-              {children}
-              {showLabel ? (
+            <Box
+              flexDirection={shouldStackLabeledInput ? 'column' : 'row'}
+              flexShrink={layout === 'compact' ? 0 : undefined}
+            >
+              {shouldStackLabeledInput ? (
                 <>
-                  <Text color={isFocused ? 'suggestion' : undefined}>{option.label}</Text>
-                  {isFocused ? (
-                    <>
-                      <Text color="suggestion">{option.labelValueSeparator ?? ', '}</Text>
-                      <TextInput
-                        value={inputValue}
-                        onChange={(value) => {
-                          isUserEditing.current = true
-                          onInputChange(value)
-                          option.onChange(value)
-                        }}
-                        onSubmit={onSubmit}
-                        onExit={onExit}
-                        placeholder={option.placeholder}
-                        focus={!imagesSelected}
-                        showCursor={true}
-                        multiline={true}
-                        cursorOffset={cursorOffset}
-                        onChangeCursorOffset={setCursorOffset}
-                        columns={80}
-                        onImagePaste={onImagePaste}
-                        onPaste={(pastedText) => {
-                          isUserEditing.current = true
-                          const before = inputValue.slice(0, cursorOffset)
-                          const after = inputValue.slice(cursorOffset)
-                          const newValue = before + pastedText + after
-                          onInputChange(newValue)
-                          option.onChange(newValue)
-                          setCursorOffset(before.length + pastedText.length)
-                        }}
-                      />
-                    </>
-                  ) : (
-                    inputValue && (
-                      <Text>
-                        {option.labelValueSeparator ?? ', '}
-                        {inputValue}
+                  <Box flexDirection="row">
+                    <Text dimColor={true}>{indexLabel}</Text>
+                    {children}
+                    <Text color="suggestion">
+                      {option.label}
+                      {labelValueSeparator}
+                    </Text>
+                  </Box>
+                  <Box paddingLeft={stringWidth(indexLabel)}>{inputElement}</Box>
+                </>
+              ) : (
+                <>
+                  <Text dimColor={true}>{indexLabel}</Text>
+                  {children}
+                  {showLabel ? (
+                    isFocused ? (
+                      <>
+                        <Text color="suggestion">
+                          {option.label}
+                          {labelValueSeparator}
+                        </Text>
+                        {inputElement}
+                      </>
+                    ) : (
+                      <Text color={inputValue ? undefined : 'inactive'}>
+                        {option.label}
+                        {inputValue ? `${labelValueSeparator}${inputValue}` : ''}
                       </Text>
                     )
+                  ) : isFocused ? (
+                    inputElement
+                  ) : (
+                    <Text color={inputValue ? undefined : 'inactive'}>
+                      {inputValue || option.placeholder || option.label}
+                    </Text>
                   )}
                 </>
-              ) : isFocused ? (
-                <TextInput
-                  value={inputValue}
-                  onChange={(value_0) => {
-                    isUserEditing.current = true
-                    onInputChange(value_0)
-                    option.onChange(value_0)
-                  }}
-                  onSubmit={onSubmit}
-                  onExit={onExit}
-                  placeholder={
-                    option.placeholder ||
-                    (typeof option.label === 'string' ? option.label : undefined)
-                  }
-                  focus={!imagesSelected}
-                  showCursor={true}
-                  multiline={true}
-                  cursorOffset={cursorOffset}
-                  onChangeCursorOffset={setCursorOffset}
-                  columns={80}
-                  onImagePaste={onImagePaste}
-                  onPaste={(pastedText_0) => {
-                    isUserEditing.current = true
-                    const before_0 = inputValue.slice(0, cursorOffset)
-                    const after_0 = inputValue.slice(cursorOffset)
-                    const newValue_0 = before_0 + pastedText_0 + after_0
-                    onInputChange(newValue_0)
-                    option.onChange(newValue_0)
-                    setCursorOffset(before_0.length + pastedText_0.length)
-                  }}
-                />
-              ) : (
-                <Text color={inputValue ? undefined : 'inactive'}>
-                  {inputValue || option.placeholder || option.label}
-                </Text>
               )}
             </Box>
           }
