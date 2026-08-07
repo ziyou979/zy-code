@@ -136,7 +136,12 @@
       "Bash(sed -i 's|  current = next|  current = next\\\\n  if \\(process.env.TRACE_LANG\\) console.error\\(\"\"\"\"[LANG] setLanguage\"\"\"\", next, new Error\\(\\).stack?.split\\(\"\"\"\"\\\\\\\\n\"\"\"\"\\).slice\\(2, 8\\).join\\(\"\"\"\" | \"\"\"\"\\)\\)|' src/i18n/languageStore.ts)",
       "Bash(TRACE_LANG=1 bun test)",
       "Bash(TRACE_LANG=1 bun test tests/utils/format.test.ts tests/utils/modelCost.test.ts)",
-      "Bash(echo \"NODE_ENV=$NODE_ENV\")"
+      "Bash(echo \"NODE_ENV=$NODE_ENV\")",
+      "Bash(files=\"src/cli/sdkPermissionBridge.ts src/hooks/tool-permission/permissionContext.ts src/screens/repl/useReplInitialMessage.ts src/screens/repl/ReplDialogDispatch.tsx src/hooks/useInboxPoller.ts src/commands/add-dir/add-dir.tsx src/tools/EnterPlanModeTool/EnterPlanModeTool.ts src/commands/plan/plan.tsx src/tools/BashTool/pathValidation.ts src/tools/BashTool/bashPermissions.ts src/components/permissions/PermissionDecisionDebugInfo.tsx src/components/permissions/hooks.ts src/components/permissions/BashPermissionRequest/BashPermissionRequest.tsx src/components/permissions/rules/AddPermissionRules.tsx src/components/permissions/rules/RemoveWorkspaceDirectory.tsx src/components/permissions/rules/PermissionRuleList.tsx src/tools/PowerShellTool/pathValidation.ts src/services/permissions/bypassPermissionPolicy.ts src/services/permissions/autoModePolicy.ts src/services/permissions/filesystem.ts src/services/permissions/dangerousPermissionRules.ts src/services/permissions/permissionBootstrap.ts src/services/permissions/permissionPromptToolResultSchema.ts src/services/permissions/permissionRuleRepository.ts src/services/permissions/permissionRuleSync.ts src/services/permissions/permissions.ts src/services/swarm/inProcessRunner.ts src/services/swarm/teammateInit.ts tests/services/permissions/permissionUpdate.test.ts\")",
+      "Bash(for f:*)",
+      "Bash(do sed:*)",
+      "Bash(sed -i \"s|src/services/environment/theme\\\\.ts|src/services/environment/theme.js|\" src/components/tasks/ShellProgress.tsx)",
+      "Bash(sed -i \"s|src/types/llm\\\\.ts|src/types/llm.js|\" src/components/Message.tsx)"
     ]
   }
 }
