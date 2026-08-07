@@ -1,9 +1,11 @@
 export const REPORT_FINDINGS_TOOL_NAME = 'ReportFindings'
 
-export const DESCRIPTION = 'Report the verified findings produced by an active code-review workflow'
+// 描述与用法对齐 Claude Code 2.1.220 的 ReportFindings 工具
+export const DESCRIPTION =
+  'Report code-review findings as a typed list so the host UI can render them'
 
-export const PROMPT = `Use this tool only when the active code-review instructions explicitly tell you to report findings.
+export const PROMPT = `Use this tool only when the active code-review instructions tell you to report findings with this tool; otherwise follow whatever output format those instructions specify.
 
-Call it exactly once after verification, with the most severe findings first. Pass an empty findings array when the review found no actionable issue. Do not repeat the same findings in prose after calling this tool.
+When reporting a review's results, call it once with the verified findings ranked most-severe first (empty array if nothing survived verification) and do not also print the findings as text.
 
-When a review also asks you to apply fixes, call this tool before editing. After attempting the fixes, you may call it once more with the same findings and an outcome for each item.`
+When re-reporting after applying fixes (only if the apply instructions ask for it), set \`outcome\` on each finding to what actually happened.`

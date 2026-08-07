@@ -17,7 +17,7 @@ export const zhCommands: TranslationResource = {
   'commands.bridgeKick': '注入桥接失败状态用于调试',
   'commands.btw': '快速提问，不会打断当前工作',
   'commands.chrome': 'Claude in Chrome（Beta）设置',
-  'commands.codeReview': '以可配置深度审查代码（--fix, --comment）',
+  'commands.codeReview': '审查拉取请求',
   'commands.claudeInChrome': '自动化 Chrome 浏览器与网页交互——点击元素、填写表单、截图等。',
   'commands.claudeInChrome.whenToUse':
     '当用户想要与网页交互、自动化浏览器任务或执行基于浏览器的操作时使用。',
@@ -318,7 +318,7 @@ export const zhCommands: TranslationResource = {
   'commands.resume': '恢复之前的对话',
   'commands.resume.argumentHint': '[会话 ID 或搜索词]',
   'commands.resume.cancelled': '恢复已取消',
-  'commands.review': '评审拉取请求',
+  'commands.review': '评审拉取请求；审查工作区改动请使用 /code-review',
   'commands.rewind': '将代码和/或对话恢复到之前的时间点',
   'commands.securityReview': '对当前分支的待提交改动进行安全评审',
   'commands.sandbox': '配置代码执行沙箱',
@@ -334,7 +334,8 @@ export const zhCommands: TranslationResource = {
   'commands.schedule.whenToUse':
     '当用户想要设置定期运行的远程 agent、创建自动化任务或管理计划 agent 时使用。',
   'commands.session': '显示远程会话 URL 和二维码',
-  'commands.simplify': '审查变更代码的复用性、质量和效率，并修复发现的问题。',
+  'commands.simplify':
+    '审查变更代码的复用、简化、效率和深度问题并直接修复；只做质量清理，不猎 bug（请使用 /code-review）。',
   'commands.skills': '列出可用技能',
   'commands.source.bundled': '内置',
   'commands.source.flag': '命令行参数',
@@ -366,7 +367,8 @@ export const zhCommands: TranslationResource = {
   'commands.ultraplan.usageDescFree': '终端保持空闲，远程进行计划。',
   'commands.ultraplan.usageRequiresLogin': '需要 /login。',
   'commands.ultraplan.usageTerms': '条款：{termsUrl}',
-  'commands.ultrareview': '在分支中查找并验证 Bug，在 ZY Code Web 版中运行',
+  'commands.ultrareview':
+    '启动云 agent 在分支中查找并验证 Bug（约 10–20 分钟），在 ZY Code Web 版中运行',
   'commands.updateConfig':
     '通过 settings.json 配置 ZY Code。使用钩子设置自动化行为，管理权限、环境变量、插件和 MCP 服务器。',
   'commands.upgrade': '升级到 Max 以获得更高的用量限额和更多 Opus',

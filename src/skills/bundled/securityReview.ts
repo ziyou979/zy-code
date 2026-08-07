@@ -1,8 +1,13 @@
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import { tSync } from '../../i18n/index.js'
 import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
+import { getCwdState } from '../../bootstrap/state/session.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import { executeShellCommandsInPrompt } from '../../services/shell/promptShellExecution.js'
-import { registerBundledSkill } from '../bundledSkills.js'
+import type { BundledSkillDefinition } from '../bundledSkills.js'
+
+const execFileAsync = promisify(execFile)
 
 /**
  * /security-review skill — 对当前分支的待提交改动进行安全评审。
@@ -183,22 +188,46 @@ Begin your analysis now. Do this in 3 steps:
 
 Your final reply must contain the markdown report and nothing else.`
 
-export function registerSecurityReviewSkill(): void {
-  registerBundledSkill({
-    name: 'security-review',
-    description: tSync('commands.securityReview'),
-    whenToUse:
-      'When the user wants a security review of their code changes, asks to check for vulnerabilities in a PR or branch, or says things like "security review", "check for vulnerabilities", "audit this branch".',
-    allowedTools: ['Bash', 'PowerShell', 'Read', 'Glob', 'Grep', 'LS', AGENT_TOOL_NAME],
-    userInvocable: true,
-    async getPromptForCommand(_args: string, context: ToolUseContext) {
-      // 预执行 prompt 中的 !`command` 内联 shell 命令（git status/diff/log）
-      const processedPrompt = await executeShellCommandsInPrompt(
-        PROMPT_TEMPLATE,
-        context,
-        'security-review',
-      )
-      return [{ type: 'text', text: processedPrompt }]
-    },
-  })
+/** 非 git 仓库时的提示（对齐 CC security-review 插件的仓库预检查）。 */
+function buildNotGitRepoMessage(cwd: string): string {
+  return `Tell the user: /security-review needs to run inside a git repository, but the current working directory (\`${cwd}\`) is not one.
+If the repository is in a subdirectory, \`cd\` into it first and then re-run /security-review.
+If this is a remote session created without a \`git_repository\` source, either add one at session creation so the runner clones it and sets the working directory, or \`cd\` into the cloned repo before running the review.`
+}
+
+/** 当前目录是否位于 git 工作树内（只读探测，不经过 shell 权限系统）。 */
+async function isGitRepository(): Promise<boolean> {
+  try {
+    const cwd = getCwdState()
+    const { stdout } = await execFileAsync('git', ['rev-parse', '--is-inside-work-tree'], { cwd })
+    return stdout.trim() === 'true'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * /security-review 技能定义（内置插件 security-review@builtin 提供）。
+ */
+export const securityReviewSkill: BundledSkillDefinition = {
+  name: 'security-review',
+  description: tSync('commands.securityReview'),
+  whenToUse:
+    'When the user wants a security review of their code changes, asks to check for vulnerabilities in a PR or branch, or says things like "security review", "check for vulnerabilities", "audit this branch".',
+  allowedTools: ['Bash', 'PowerShell', 'Read', 'Glob', 'Grep', 'LS', AGENT_TOOL_NAME],
+  progressMessage: 'analyzing code changes for security risks',
+  userInvocable: true,
+  async getPromptForCommand(_args: string, context: ToolUseContext) {
+    // 对齐 CC：非 git 仓库时先给出可操作的提示，不继续执行
+    if (!(await isGitRepository())) {
+      return [{ type: 'text', text: buildNotGitRepoMessage(getCwdState()) }]
+    }
+    // 预执行 prompt 中的 !`command` 内联 shell 命令（git status/diff/log）
+    const processedPrompt = await executeShellCommandsInPrompt(
+      PROMPT_TEMPLATE,
+      context,
+      'security-review',
+    )
+    return [{ type: 'text', text: processedPrompt }]
+  },
 }

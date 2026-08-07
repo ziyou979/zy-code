@@ -17,7 +17,7 @@ export const enCommands: TranslationResource = {
   'commands.bridgeKick': 'Inject bridge failure states for debugging',
   'commands.btw': 'Ask a quick side question without interrupting the main conversation',
   'commands.chrome': 'Claude in Chrome (Beta) settings',
-  'commands.codeReview': 'Review code with configurable depth (--fix, --comment)',
+  'commands.codeReview': 'Code review a pull request',
   'commands.claudeInChrome':
     'Automates your Chrome browser to interact with web pages — clicking, filling forms, screenshots, and more.',
   'commands.claudeInChrome.whenToUse':
@@ -344,7 +344,7 @@ export const enCommands: TranslationResource = {
   'commands.resume': 'Resume a previous conversation',
   'commands.resume.argumentHint': '[conversation id or search term]',
   'commands.resume.cancelled': 'Resume cancelled',
-  'commands.review': 'Review a pull request',
+  'commands.review': 'Review a GitHub pull request; for your working diff use /code-review',
   'commands.rewind': 'Restore the code and/or conversation to a previous point',
   'commands.securityReview':
     'Complete a security review of the pending changes on the current branch',
@@ -363,7 +363,7 @@ export const enCommands: TranslationResource = {
     'When the user wants to schedule a recurring remote agent, set up automated tasks, or manage scheduled agents.',
   'commands.session': 'Show remote session URL and QR code',
   'commands.simplify':
-    'Review changed code for reuse, quality, and efficiency, then fix any issues found.',
+    'Review the changed code for reuse, simplification, efficiency, and altitude cleanups, then apply the fixes. Quality only - it does not hunt for bugs; use /code-review for that.',
   'commands.skills': 'List available skills',
   'commands.source.bundled': 'bundled',
   'commands.source.flag': 'cli flag',
@@ -398,7 +398,8 @@ export const enCommands: TranslationResource = {
   'commands.ultraplan.usageDescFree': 'Terminal stays free while the remote plans.',
   'commands.ultraplan.usageRequiresLogin': 'Requires /login.',
   'commands.ultraplan.usageTerms': 'Terms: {termsUrl}',
-  'commands.ultrareview': 'Finds and verifies bugs in your branch. Runs in ZY Code on the web.',
+  'commands.ultrareview':
+    'Start a cloud agent that finds and verifies bugs in your branch (~10–20 min) · Runs in ZY Code on the web.',
   'commands.updateConfig':
     'Configure the ZY Code harness via settings.json. Set up automated behaviors with hooks, manage permissions, env vars, plugins, and MCP servers.',
   'commands.upgrade': 'Upgrade to Max for higher rate limits and more Opus',
