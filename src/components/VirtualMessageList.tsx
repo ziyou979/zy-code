@@ -126,6 +126,51 @@ type Props = {
   ) => void
 }
 
+type KeyedMessage = Pick<RenderableMessage, 'uuid'>
+
+/**
+ * 同步虚拟列表的 key 缓存。
+ *
+ * 常见路径是纯追加：复用原数组并只 push 新 key，避免长会话每次流式更新都
+ * 重建数万个字符串。折叠组完成、并行工具返回或 hook 重排会改写列表尾部；
+ * 此时即使首项和总长度看起来仍像追加，旧索引也已经失效，必须完整重建。
+ * UUID 前缀比较不分配字符串，并且足以判断 itemKey 的输入是否仍位于原索引。
+ */
+export function syncVirtualMessageKeys<T extends KeyedMessage>(
+  cachedKeys: string[],
+  previousMessages: readonly T[],
+  messages: readonly T[],
+  itemKey: (message: T) => string,
+): string[] {
+  if (cachedKeys.length !== previousMessages.length) {
+    return messages.map(itemKey)
+  }
+  if (messages === previousMessages) {
+    return cachedKeys
+  }
+
+  const overlap = Math.min(previousMessages.length, messages.length)
+  let stablePrefixLength = 0
+  while (
+    stablePrefixLength < overlap &&
+    previousMessages[stablePrefixLength]!.uuid === messages[stablePrefixLength]!.uuid
+  ) {
+    stablePrefixLength++
+  }
+
+  if (
+    stablePrefixLength === previousMessages.length &&
+    messages.length >= previousMessages.length
+  ) {
+    for (let index = previousMessages.length; index < messages.length; index++) {
+      cachedKeys.push(itemKey(messages[index]!))
+    }
+    return cachedKeys
+  }
+
+  return messages.map(itemKey)
+}
+
 /**
  * 返回真实用户提示的文本，其他情况返回 null。
  * "Real" = 人类输入的内容：不是工具结果，不是 XML 包装的负载
@@ -288,22 +333,20 @@ export function VirtualMessageList({
   scanElement,
   setPositions,
 }: Props): React.ReactNode {
-  // 增量 key 数组。流式追加每次一条消息；每次提交重建
-  // 完整字符串数组会为每条消息分配 O(n)（27k 消息时约 1MB  churn）。
-  // 前缀匹配时仅追加增量 push；在压缩、/clear 或 itemKey 更改时回退到完整重建。
+  // 增量 key 数组。纯追加只 push 新 key；折叠组重组、压缩或 /clear
+  // 会由 UUID 前缀检查识别并重建，避免旧索引产生重复 React key。
   const keysRef = useRef<string[]>([])
   const prevMessagesRef = useRef<typeof messages>(messages)
   const prevItemKeyRef = useRef(itemKey)
-  if (
-    prevItemKeyRef.current !== itemKey ||
-    messages.length < keysRef.current.length ||
-    messages[0] !== prevMessagesRef.current[0]
-  ) {
+  if (prevItemKeyRef.current !== itemKey) {
     keysRef.current = messages.map((m) => itemKey(m))
   } else {
-    for (let i = keysRef.current.length; i < messages.length; i++) {
-      keysRef.current.push(itemKey(messages[i]!))
-    }
+    keysRef.current = syncVirtualMessageKeys(
+      keysRef.current,
+      prevMessagesRef.current,
+      messages,
+      itemKey,
+    )
   }
   prevMessagesRef.current = messages
   prevItemKeyRef.current = itemKey
