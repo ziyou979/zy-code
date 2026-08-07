@@ -262,6 +262,9 @@ export function formatRelativeTime(
   // 使用 Math.trunc 对正值和负值均向零截断
   const diffInSeconds = Math.trunc(diffInMs / 1000)
 
+  // 按 UI 语言选择 Intl locale；英文保持下方自定义窄格式（紧凑，避免行宽变化）
+  const locale = getUiLanguage() === 'zh-CN' ? 'zh-CN' : 'en'
+
   // 定义带自定义短单位的时间区间
   const intervals = [
     { unit: 'year', seconds: 31536000, shortUnit: 'y' },
@@ -277,20 +280,26 @@ export function formatRelativeTime(
   for (const { unit, seconds: intervalSeconds, shortUnit } of intervals) {
     if (Math.abs(diffInSeconds) >= intervalSeconds) {
       const value = Math.trunc(diffInSeconds / intervalSeconds)
-      // 对 narrow 风格使用自定义格式
+      // 对 narrow 风格使用自定义格式；非英文（如中文 "18分钟前"）交给 Intl 本地化
       if (style === 'narrow') {
+        if (locale !== 'en') {
+          return getRelativeTimeFormat('narrow', numeric, locale).format(value, unit)
+        }
         return diffInSeconds < 0 ? `${Math.abs(value)}${shortUnit} ago` : `in ${value}${shortUnit}`
       }
       // 对天及更长的单位，无论 style 参数如何都使用 long 风格
-      return getRelativeTimeFormat('long', numeric).format(value, unit)
+      return getRelativeTimeFormat('long', numeric, locale).format(value, unit)
     }
   }
 
-  // 不足 1 秒的情况
+  // 不足 1 秒的情况（zh-CN 的 Intl 对 0 秒会输出 "0秒后"，方向与过去时刻不符，故手写）
   if (style === 'narrow') {
+    if (locale !== 'en') {
+      return diffInSeconds <= 0 ? '0秒前' : '0秒后'
+    }
     return diffInSeconds <= 0 ? '0s ago' : 'in 0s'
   }
-  return getRelativeTimeFormat(style, numeric).format(0, 'second')
+  return getRelativeTimeFormat(style, numeric, locale).format(0, 'second')
 }
 
 export function formatRelativeTimeAgo(

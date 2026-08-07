@@ -8,7 +8,8 @@
  * - formatNumber / formatTokens 紧凑格式
  * - formatRelativeTime 正/负差值
  */
-import { describe, expect, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { setLanguage } from '../../src/i18n/languageStore.js'
 import {
   formatDuration,
   formatDurationZh,
@@ -21,6 +22,13 @@ import {
 } from '../../src/utils/format.js'
 
 describe('format', () => {
+  // bun test worker 池复用会使 settings 加载（~/.zy/settings.json 的 language）跨文件
+  // 污染本文件的全局语言状态（如 calculateCost 链路 setLanguage('zh-CN')），
+  // 故每个测试前强制恢复 en，确保相对时间等英文断言不依赖外部状态。
+  beforeEach(() => {
+    setLanguage('en')
+  })
+
   describe('formatDuration（英文）', () => {
     test('0ms → "0s"', () => {
       expect(formatDuration(0)).toBe('0s')
@@ -245,6 +253,44 @@ describe('format', () => {
     test('未来时间 → 不带 ago', () => {
       const d = new Date(now.getTime() + 60000)
       expect(formatRelativeTimeAgo(d, { now })).toBe('in 1m')
+    })
+  })
+
+  describe('formatRelativeTime（中文）', () => {
+    const now = new Date('2025-01-15T12:00:00Z')
+
+    // 切换语言后必须恢复，避免影响其他测试（默认 en）
+    afterEach(() => {
+      setLanguage('en')
+    })
+
+    test('zh-CN：18 分钟前 → "18分钟前"', () => {
+      setLanguage('zh-CN')
+      const d = new Date(now.getTime() - 18 * 60 * 1000)
+      expect(formatRelativeTime(d, { now })).toBe('18分钟前')
+    })
+
+    test('zh-CN：3 小时前 → "3小时前"', () => {
+      setLanguage('zh-CN')
+      const d = new Date(now.getTime() - 3 * 3600 * 1000)
+      expect(formatRelativeTime(d, { now })).toBe('3小时前')
+    })
+
+    test('zh-CN：2 小时后 → "2小时后"', () => {
+      setLanguage('zh-CN')
+      const d = new Date(now.getTime() + 2 * 3600 * 1000)
+      expect(formatRelativeTime(d, { now })).toBe('2小时后')
+    })
+
+    test('zh-CN：不足 1 秒 → "0秒前"', () => {
+      setLanguage('zh-CN')
+      expect(formatRelativeTime(now, { now })).toBe('0秒前')
+    })
+
+    test('zh-CN：formatRelativeTimeAgo 过去时间 → "1分钟前"', () => {
+      setLanguage('zh-CN')
+      const d = new Date(now.getTime() - 60000)
+      expect(formatRelativeTimeAgo(d, { now })).toBe('1分钟前')
     })
   })
 

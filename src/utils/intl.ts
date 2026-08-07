@@ -53,17 +53,18 @@ export function getWordSegmenter(): Intl.Segmenter {
   return wordSegmenter
 }
 
-// RelativeTimeFormat 缓存（键为 style:numeric）
+// RelativeTimeFormat 缓存（键为 locale:style:numeric）
 const rtfCache = new Map<string, Intl.RelativeTimeFormat>()
 
 export function getRelativeTimeFormat(
   style: 'long' | 'short' | 'narrow',
   numeric: 'always' | 'auto',
+  locale: string = 'en',
 ): Intl.RelativeTimeFormat {
-  const key = `${style}:${numeric}`
+  const key = `${locale}:${style}:${numeric}`
   let rtf = rtfCache.get(key)
   if (!rtf) {
-    rtf = new Intl.RelativeTimeFormat('en', { style, numeric })
+    rtf = new Intl.RelativeTimeFormat(locale, { style, numeric })
     rtfCache.set(key, rtf)
   }
   return rtf
