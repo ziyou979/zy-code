@@ -2,7 +2,7 @@ import { tSync } from '../../i18n/index.js'
 import Text from '../../ink/components/Text.js'
 
 /** 将快捷键动作标识映射到 i18n key。 */
-const actionKeyMap = {
+export const actionKeyMap = {
   expand: 'common.expand',
   collapse: 'common.collapse',
   select: 'common.select',
@@ -82,6 +82,16 @@ const actionKeyMap = {
   'logSelector:rename': 'logSelector.rename',
   // 引导输入动作
   'elicitation:unset': 'elicitation.unset',
+  // 常见动作补充（供 ConfigurableShortcutHint 中未带前缀的英文描述查表翻译）
+  back: 'common.goBack',
+  details: 'common.details',
+  exit: 'common.exit',
+  install: 'common.install',
+  next: 'common.next',
+  prev: 'common.previous',
+  resolve: 'common.resolve',
+  'search history': 'common.searchHistory',
+  stash: 'chat.stash',
 } as const
 
 export type KeyboardShortcutAction = keyof typeof actionKeyMap
@@ -89,8 +99,10 @@ export type KeyboardShortcutAction = keyof typeof actionKeyMap
 type Props = {
   /** 要展示的按键或组合键，例如 "ctrl+o"、"Enter"、"↑/↓"。 */
   shortcut: string
-  /** 按键执行的动作，必须已在 actionKeyMap 注册。 */
-  action: KeyboardShortcutAction
+  /** 按键执行的动作，必须已在 actionKeyMap 注册；与 actionText 二选一。 */
+  action?: KeyboardShortcutAction
+  /** 已翻译好的动作文本（动作未注册或为动态文本时提供；优先于 action）。 */
+  actionText?: string
   /** 是否使用括号包裹提示，默认为 false。 */
   parens?: boolean
   /** 是否以粗体展示快捷键，默认为 false。 */
@@ -100,20 +112,26 @@ type Props = {
 /**
  * 渲染类似 "ctrl+o to expand" 或 "(tab to toggle)" 的快捷键提示。
  */
-export function KeyboardShortcutHint({ shortcut, action, parens = false, bold = false }: Props) {
-  const actionKey = actionKeyMap[action]
-  const actionText = tSync(actionKey)
+export function KeyboardShortcutHint({
+  shortcut,
+  action,
+  actionText,
+  parens = false,
+  bold = false,
+}: Props) {
+  const actionKey = action !== undefined ? actionKeyMap[action] : undefined
+  const resolvedAction = actionText ?? (actionKey ? tSync(actionKey) : '')
   const shortcutValue = bold
     ? ((<Text bold={true}>{shortcut}</Text>) as unknown as string)
     : shortcut
   const template = parens
     ? tSync('shortcut.hintParens', {
         shortcut: shortcutValue,
-        action: actionText,
+        action: resolvedAction,
       })
     : tSync('shortcut.hint', {
         shortcut: shortcutValue,
-        action: actionText,
+        action: resolvedAction,
       })
   return <Text>{template}</Text>
 }
