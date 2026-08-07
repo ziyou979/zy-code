@@ -34,6 +34,9 @@ const result = await Bun.build({
   splitting: false,
   features: [
     // ZY Code 启用以下 Claude Code 功能
+    // TREE_SITTER_BASH：Bash 命令 AST 安全解析（纯 TS 实现，与 CC 2.1.220 一致，
+    // 已过黄金语料验证；超时/节点预算 fail-closed，无回退风险）
+    'TREE_SITTER_BASH',
     'DAEMON',
     'FORK_SUBAGENT',
     'REACTIVE_COMPACT',
