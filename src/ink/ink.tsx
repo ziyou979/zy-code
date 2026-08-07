@@ -1652,6 +1652,12 @@ export default class Ink {
     return () => this.selectionListeners.delete(cb)
   }
   private notifySelectionChange(): void {
+    // 清除既有选区时，上一帧仍保存着 overlay 改写后的 styleId。
+    // 局部 blit 防护无法覆盖所有终端 diff/滚动路径，因此只在这个
+    // 状态转换上禁用一次 prevScreen 复用；拖拽期间仍保留增量渲染。
+    if (this.prevOverlayRect && !hasSelection(this.selection)) {
+      this.prevFrameContaminated = true
+    }
     this.onRender()
     for (const cb of this.selectionListeners) {
       cb()

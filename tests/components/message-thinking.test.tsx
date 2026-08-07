@@ -46,7 +46,8 @@ describe('Message thinking 渲染', () => {
     })
 
     const frames: Frame[] = []
-    ink.setAltScreenActive(true, false)
+    // frameSink 是 main-screen 帧拦截器（a1140319 起 alt-screen 不再走 frameSink），
+    // 本测试只关心渲染内容，无需激活 alt-screen。
     ink.frameSink = (frame) => {
       frames.push(frame)
       return true

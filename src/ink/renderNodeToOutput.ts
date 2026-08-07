@@ -1195,6 +1195,7 @@ function renderNodeToOutput(
           // 在重新渲染时 → /permissions 主体在 Down 箭头时空白，#25436）。
           ownBackgroundColor || node.style.opaque ? undefined : prevScreen,
           boxBackgroundColor,
+          prevOverlayRect,
         )
       }
 
@@ -1207,7 +1208,16 @@ function renderNodeToOutput(
       // 可能与父节点边框现在所在的位置重叠。
       renderBorder(x, y, node, output)
     } else if (node.nodeName === 'ink-root') {
-      renderChildren(node, output, x, y, hasRemovedChild, prevScreen, inheritedBackgroundColor)
+      renderChildren(
+        node,
+        output,
+        x,
+        y,
+        hasRemovedChild,
+        prevScreen,
+        inheritedBackgroundColor,
+        prevOverlayRect,
+      )
     }
 
     // 缓存布局边界用于脏检测
@@ -1256,6 +1266,7 @@ function renderChildren(
   hasRemovedChild: boolean,
   prevScreen: Screen | undefined,
   inheritedBackgroundColor: Color | undefined,
+  prevOverlayRect: Rectangle | undefined,
 ): void {
   let seenDirtyChild = false
   let seenDirtyClipped = false
@@ -1276,6 +1287,9 @@ function renderChildren(
         !childElem.style.opaque &&
         childElem.style.backgroundColor === undefined,
       inheritedBackgroundColor,
+      // 选区/搜索高亮在上帧直接修改了 screen buffer。必须沿渲染树
+      // 传递污染区域，避免嵌套的干净节点从 prevScreen 复制旧高亮。
+      prevOverlayRect,
     })
     if (wasDirty && !seenDirtyChild) {
       if (!clipsBothAxes(childElem) || isAbsolute) {
