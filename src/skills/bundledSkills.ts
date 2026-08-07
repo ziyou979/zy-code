@@ -18,6 +18,8 @@ export type BundledSkillDefinition = {
   aliases?: string[]
   whenToUse?: string
   argumentHint?: string
+  /** 命令执行时的进度提示文案（如 "reviewing pull request"）；缺省 'running'。 */
+  progressMessage?: string
   allowedTools?: string[]
   model?: string
   disableModelInvocation?: boolean
@@ -92,7 +94,7 @@ export function registerBundledSkill(definition: BundledSkillDefinition): void {
     agent: definition.agent,
     isEnabled: definition.isEnabled,
     isHidden: !(definition.userInvocable ?? true),
-    progressMessage: 'running',
+    progressMessage: definition.progressMessage ?? 'running',
     getPromptForCommand,
   }
   bundledSkills.push(command)

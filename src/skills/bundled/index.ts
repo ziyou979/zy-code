@@ -2,16 +2,12 @@ import { feature } from 'bun:bundle'
 import { shouldAutoEnableClaudeInChrome } from 'src/services/claude-in-chrome/setup.js'
 import { registerBatchSkill } from './batch.js'
 import { registerClaudeInChromeSkill } from './claudeInChrome.js'
-import { registerCodeReviewSkill } from './codeReview.js'
 import { registerDatavizSkill } from './dataviz.js'
 import { registerDebugSkill } from './debug.js'
 import { registerFewerPermissionPromptsSkill } from './fewerPermissionPrompts.js'
 import { registerKeybindingsSkill } from './keybindings.js'
 import { registerLoremIpsumSkill } from './loremIpsum.js'
 import { registerRememberSkill } from './remember.js'
-import { registerReviewSkill } from './review.js'
-import { registerSecurityReviewSkill } from './securityReview.js'
-import { registerSimplifySkill } from './simplify.js'
 import { registerSkillifySkill } from './skillify.js'
 import { registerStuckSkill } from './stuck.js'
 import { registerUpdateConfigSkill } from './updateConfig.js'
@@ -34,13 +30,9 @@ export function initBundledSkills(): void {
   registerLoremIpsumSkill()
   registerSkillifySkill()
   registerRememberSkill()
-  registerCodeReviewSkill()
-  registerSimplifySkill()
   registerBatchSkill()
   registerStuckSkill()
   registerFewerPermissionPromptsSkill()
-  registerReviewSkill()
-  registerSecurityReviewSkill()
   registerDatavizSkill()
   if (feature('KAIROS') || feature('KAIROS_DREAM')) {
     /* eslint-disable @typescript-eslint/no-require-imports */

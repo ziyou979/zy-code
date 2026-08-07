@@ -80,6 +80,9 @@ export async function mcpServeHandler({
   try {
     const { setup } = await import('../../bootstrap/setup.js')
     await setup(providedCwd, 'default', false, false, undefined, false)
+    // mcp serve 不走 initializeRootRuntime，需显式初始化内置插件（review 命令等）
+    const { initBuiltinPlugins } = await import('../../services/plugins/builtinInitialization.js')
+    initBuiltinPlugins()
     const { startMCPServer } = await import('../../entrypoints/mcp.js')
     await startMCPServer(providedCwd, debug ?? false, verbose ?? false)
   } catch (error) {

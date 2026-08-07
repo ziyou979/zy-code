@@ -10,7 +10,7 @@ import {
 import { getDefaultAppState } from 'src/state/AppStateStore.js'
 import type { Command } from '../commands/index.js'
 import { getMainLoopModel } from '../services/model/model.js'
-import { reviewCommand } from '../skills/bundled/review.js'
+import { getBuiltinPluginSkillCommands } from '../services/plugins/builtinRegistry.js'
 import {
   findToolByName,
   getEmptyToolPermissionContext,
@@ -30,7 +30,15 @@ import { zodToJsonSchema } from '../services/api/zodToJsonSchema.js'
 type ToolInput = Tool['inputSchema']
 type ToolOutput = Tool['outputSchema']
 
-const MCP_COMMANDS: Command[] = [reviewCommand!]
+/**
+ * MCP 暴露的 slash 命令（当前仅 /review）。
+ * 惰性获取：/review 现由内置插件 review@builtin 提供，
+ * 需在 initBuiltinPlugins() 之后调用才能拿到命令。
+ */
+function getMCPCommands(): Command[] {
+  const review = getBuiltinPluginSkillCommands().find((c) => c.name === 'review')
+  return review ? [review] : []
+}
 
 export async function startMCPServer(cwd: string, debug: boolean, verbose: boolean): Promise<void> {
   // 使用有限大小的 LRU 缓存 readFileState，防止内存无限增长
@@ -102,7 +110,7 @@ export async function startMCPServer(cwd: string, debug: boolean, verbose: boole
       const toolUseContext: ToolUseContext = {
         abortController: createAbortController(),
         options: {
-          commands: MCP_COMMANDS,
+          commands: getMCPCommands(),
           tools,
           mainLoopModel: getMainLoopModel()!,
           thinkingConfig: { type: 'disabled' },

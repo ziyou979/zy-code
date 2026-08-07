@@ -149,7 +149,7 @@ function skillDefinitionToCommand(definition: BundledSkillDefinition): Command {
     agent: definition.agent,
     isEnabled: definition.isEnabled ?? (() => true),
     isHidden: !(definition.userInvocable ?? true),
-    progressMessage: 'running',
+    progressMessage: definition.progressMessage ?? 'running',
     getPromptForCommand: definition.getPromptForCommand,
   }
 }
