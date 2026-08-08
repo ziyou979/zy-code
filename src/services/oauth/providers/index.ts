@@ -29,6 +29,22 @@ export {
   refreshOpenAICodexToken,
 } from './openaiCodex.js'
 
+// xAI Grok OAuth（SuperGrok / X Premium+）
+export {
+  DEFAULT_XAI_API_BASE_URL,
+  discoverXaiOAuth,
+  loginXaiOAuth,
+  refreshXaiOAuthToken,
+  validateXaiOAuthEndpoint,
+  XAI_OAUTH_CLIENT_ID,
+  XAI_OAUTH_DEVICE_CODE_URL,
+  XAI_OAUTH_DISCOVERY_URL,
+  XAI_OAUTH_ISSUER,
+  XAI_OAUTH_SCOPE,
+  xaiOAuthProvider,
+  type XaiOAuthCredentials,
+} from './xai.js'
+
 // PKCE
 export { generatePKCE } from './pkce.js'
 

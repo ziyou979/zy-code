@@ -9,12 +9,14 @@ import { anthropicOAuthProvider } from './anthropic.js'
 import { githubCopilotOAuthProvider } from './githubCopilot.js'
 import { openaiCodexOAuthProvider } from './openaiCodex.js'
 import type { OAuthCredentials, OAuthProviderId, OAuthProviderInterface } from './types.js'
+import { xaiOAuthProvider } from './xai.js'
 
 /** 内置 OAuth Provider 列表 */
 const BUILT_IN_OAUTH_PROVIDERS: OAuthProviderInterface[] = [
   anthropicOAuthProvider,
   githubCopilotOAuthProvider,
   openaiCodexOAuthProvider,
+  xaiOAuthProvider,
 ]
 
 /** Provider 注册表 Map */

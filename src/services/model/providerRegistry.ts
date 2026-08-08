@@ -77,9 +77,9 @@ export interface ProviderEntry {
   /**
    * 默认 base URL。
    * - env-or-default 类型：环境变量未设置时使用
-   * - preconfigured 类型：onboarding 时保存到 configuredBaseUrl
    * - 多格式 provider：按 'openai-chat'、'anthropic'、'google' 分别配置；
    *   'openai-responses' 与 'openai-chat' 共用端点（无独立 key 时回落 openai-chat）
+   * - onboarding 将 baseUrl 写入 settings.json（不再写全局 configuredBaseUrl）
    */
   defaultBaseUrls?: {
     'openai-chat'?: string
@@ -150,12 +150,37 @@ export const DEFAULT_OPENAI_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> =
     if (model && localModelHasAdaptiveThinking(model, context)) {
       return { thinking: { type: 'adaptive' } }
     }
-    // OpenAI 标准参数 reasoning_effort（如 o1/o3 系列的 low/medium/high）
-    return effort
-      ? { thinking: { type: 'enabled' }, reasoning_effort: effort }
-      : { thinking: { type: 'enabled' } }
+    // OpenAI 标准参数 reasoning_effort（如 o1/o3 系列的 low/medium/high）。
+    // "on" 是内部 toggle 档，不是合法 API 值——只开启思考、不传 reasoning_effort。
+    if (!effort || effort === 'on') {
+      return { thinking: { type: 'enabled' } }
+    }
+    return { thinking: { type: 'enabled' }, reasoning_effort: effort }
   },
   disable: { thinking: { type: 'disabled' } },
+}
+
+/**
+ * xAI Grok：chat 用 reasoning_effort，合法值为 low/medium/high（部分模型另支持 none）。
+ * 内部 "on" 或缺省按 API 默认 high 处理。
+ */
+const XAI_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> = {
+  enable: (effort) => {
+    if (!effort || effort === 'on') {
+      // 省略则 xAI 默认 high；显式 high 行为更可预测
+      return { reasoning_effort: 'high' }
+    }
+    if (effort === 'off' || effort === 'none') {
+      return { reasoning_effort: 'none' }
+    }
+    const e = effort.toLowerCase()
+    if (e === 'low' || e === 'medium' || e === 'high' || e === 'xhigh') {
+      return { reasoning_effort: e }
+    }
+    // thorough/balanced 等未映射时回落 high，避免再传非法字符串
+    return { reasoning_effort: 'high' }
+  },
+  disable: { reasoning_effort: 'none' },
 }
 
 // ---------------------------------------------------------------------------
@@ -334,6 +359,34 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
         tier: 'standard',
       },
       { label: 'llama-3.1-8b-instant', value: 'llama-3.1-8b-instant', tier: 'compact' },
+    ],
+  },
+  {
+    // SuperGrok / X Premium+ 订阅走 OAuth（xai-oauth）；也可在 auth.json 配 API Key
+    id: 'xai',
+    supportedFormats: ['openai-responses', 'openai-chat'],
+    // Grok 订阅路径与 Hermes 一致，默认 Responses API
+    modelApiFormats: [{ pattern: 'grok', apiFormat: 'openai-responses' }],
+    endpointType: ['env', 'default', 'custom'],
+    capabilities: STANDARD_CAPABILITIES,
+    defaultBaseUrls: {
+      'openai-chat': 'https://api.x.ai/v1',
+      'openai-responses': 'https://api.x.ai/v1',
+    },
+    baseUrlEnvVar: 'XAI_BASE_URL',
+    apiKeyLabel: 'xAI API Key',
+    baseUrlHint: 'https://api.x.ai/v1',
+    openaiAttr: {
+      thinking: XAI_THINKING_ATTR,
+    },
+    suggestedModels: [
+      { label: 'grok-4.3', value: 'grok-4.3', tier: 'advanced' },
+      { label: 'grok-build-0.1', value: 'grok-build-0.1', tier: 'standard' },
+      {
+        label: 'grok-4.1-fast-non-reasoning',
+        value: 'grok-4.1-fast-non-reasoning',
+        tier: 'compact',
+      },
     ],
   },
   {

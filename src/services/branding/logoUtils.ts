@@ -240,6 +240,7 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   fireworks: 'Fireworks',
   generic: '自定义',
   groq: 'Groq',
+  xai: 'xAI Grok',
   kimi: '月之暗面',
   lmstudio: 'LM Studio',
   llamacpp: 'llama.cpp',

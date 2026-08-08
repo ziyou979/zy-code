@@ -16,7 +16,7 @@ export function registerAuthCommands(program: Command<any, any, any>): void {
     .description('Sign in with an OAuth provider')
     .option(
       '--provider <provider>',
-      'Login with a specific OAuth provider (anthropic, openai-codex, github-copilot)',
+      'Login with a specific OAuth provider (anthropic, openai-codex, github-copilot, xai-oauth)',
     )
     .action(async ({ provider }: { provider?: string }) => {
       const { authLogin } = await import('../handlers/auth.js')
