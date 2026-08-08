@@ -248,7 +248,10 @@ export function createReplStore(params: CreateReplStoreParams): ReplStoreInstanc
       if (mode === 'thinking' && prev !== 'thinking') {
         mutable.thinkingStartMs = Date.now()
       } else if (mode !== 'thinking' && prev === 'thinking' && mutable.thinkingStartMs > 0) {
-        mutable.lastThinkingDurationMs = Date.now() - mutable.thinkingStartMs
+        // 累加而非覆盖：一轮请求内多段思考（thinking → tool → thinking）时，
+        // 后续段的展示基准必须包含前面已完成的段，否则秒数会跳回
+        //（"正在思考 14 秒" 跳到 "正在思考 2 秒"）。
+        mutable.lastThinkingDurationMs += Date.now() - mutable.thinkingStartMs
         mutable.thinkingStartMs = 0
       }
       instance.update({ streamMode: mode })

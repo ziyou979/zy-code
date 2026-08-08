@@ -349,14 +349,28 @@ export function handleQueryEvent(
     (newMessage) => {
       if (
         newMessage.type === 'assistant' &&
-        ctx.replStore.mutable.lastThinkingDurationMs > 0 &&
         Array.isArray(newMessage.message.content) &&
         newMessage.message.content.some(
           (b) => b.type === 'thinking' || b.type === 'redacted_thinking',
         )
       ) {
-        newMessage.thinkingDurationMs = ctx.replStore.mutable.lastThinkingDurationMs
-        ctx.replStore.mutable.lastThinkingDurationMs = 0
+        const mutable = ctx.replStore.mutable
+        // 消息落盘时，当前思考段可能还没被 setStreamMode 结算（块的
+        // chunk_stop 早于下一个块的 chunk_start）。先结算进行中的段，
+        // 保证写入消息的时长完整，否则最后一段的思考时长会丢失。
+        if (mutable.thinkingStartMs > 0) {
+          mutable.lastThinkingDurationMs += Date.now() - mutable.thinkingStartMs
+          mutable.thinkingStartMs = 0
+        }
+        if (mutable.lastThinkingDurationMs > 0) {
+          newMessage.thinkingDurationMs = mutable.lastThinkingDurationMs
+          mutable.lastThinkingDurationMs = 0
+        }
+        // 流式思考还在继续（消息落盘后模型未切走）时重新开始当前段计时，
+        // 否则后续块的 live 会因 start=0 而卡住不读秒。
+        if (ctx.replStore.getState().streamMode === 'thinking') {
+          mutable.thinkingStartMs = Date.now()
+        }
       }
       if (isCompactBoundaryMessage(newMessage)) {
         if (isFullscreenEnvEnabled()) {
@@ -681,6 +695,15 @@ export async function runQuery(
     return
   }
 
+  // 新请求确定开始时重置思考计时状态。清零不能只依赖 adapter 的
+  // stream_request_start 事件：某些 adapter 不发该事件，上一轮残留的
+  // thinkingStartMs 会被下一个 thinking 消息落盘时的结算逻辑无条件
+  // 计入，把跨请求的间隙（中断恢复等，可达数分钟）误算成思考时长，
+  // 出现"思考了 x分x秒"但实际并未思考那么久。
+  ctx.replStore.mutable.lastThinkingDurationMs = 0
+  ctx.replStore.mutable.thinkingStartMs = 0
+  ctx.replStore.setStreamMode('requesting')
+
   try {
     ctx.resetTimingRefs()
     ctx.replStore.setMessages((oldMessages) => [...oldMessages, ...newMessages])
@@ -714,6 +737,14 @@ export async function runQuery(
     )
   } finally {
     if (queryGuard.end(thisGeneration)) {
+      // turn 结束时清理思考计时残留。折叠组的"思考了 X"已固化在消息的
+      // thinkingDurationMs 里，此后渲染不再读 mutable；不清零的话，残留的
+      // start/last 会在下一请求（无 stream_request_start 事件时）被误计入
+      // 新一段思考时长。start 清零后，若此 turn 还以 thinking 状态结束
+      // （如中断），streamMode 会停在 'thinking'，由下一请求开头的
+      // setStreamMode('requesting') 兜底复位。
+      ctx.replStore.mutable.lastThinkingDurationMs = 0
+      ctx.replStore.mutable.thinkingStartMs = 0
       ctx.replStore.setLastQueryCompletionTime(Date.now())
       ctx.replStore.mutable.skipIdleCheck = false
       ctx.resetLoadingState()

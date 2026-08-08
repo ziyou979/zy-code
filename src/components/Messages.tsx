@@ -430,6 +430,26 @@ const MessagesImpl = ({
     [messages],
   )
 
+  // 已落盘消息中记录的思考时长累计（与折叠组聚合逻辑一致）。
+  // 流式思考的展示基准必须包含已确认部分：消息落盘消费会把
+  // lastThinkingDurationMs 清零，若流式 group 直接读它，"正在思考"会跳回 0。
+  // 只累计当前 turn（最后一个 user 消息之后）的消息：历史 turn 的时长已
+  // 固化在折叠组/历史消息中，若一并计入，新 turn 的流式思考组会从旧的
+  // 累计时长起步（如直接显示"思考了 3 分钟"），而不是从 0 开始计时。
+  const consumedThinkingMs = useMemo(() => {
+    let total = 0
+    for (let i = normalizedMessages.length - 1; i >= 0; i--) {
+      const m = normalizedMessages[i]
+      if (m.type === 'user') {
+        break
+      }
+      if (m.type === 'assistant' && m.thinkingDurationMs) {
+        total += Math.min(m.thinkingDurationMs, 600_000)
+      }
+    }
+    return total
+  }, [normalizedMessages])
+
   // Check if streaming thinking should be visible (streaming or within 30s timeout)
   const isStreamingThinkingVisible = useMemo(() => {
     if (!streamingThinking) {
@@ -723,10 +743,12 @@ const MessagesImpl = ({
       latestThinkingSummary: streamingThinking.thinking.trim(),
       latestDisplayKind: 'thinking',
       // 流式阶段也保留之前已完成的 thinking 时长，避免从“思考了 N 秒”
-      // 跳回“正在思考 1 秒”。当前阶段的实时增量由 ThinkingDurationTick 叠加。
-      thinkingDurationMs: replStore.mutable.lastThinkingDurationMs,
+      // 跳回“正在思考 1 秒”。基准 = 已落盘确认的累计 + 尚未结算的段，
+      // 两者之和单调递增，当前阶段的实时增量由 ThinkingDurationTick 叠加。
+      thinkingDurationMs: consumedThinkingMs + replStore.mutable.lastThinkingDurationMs,
     }
   }, [
+    consumedThinkingMs,
     conversationId,
     hasCurrentTurnCollapsedGroup,
     isBriefOnly,
