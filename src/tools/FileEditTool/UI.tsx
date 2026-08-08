@@ -32,20 +32,21 @@ export function userFacingName(
       }>
     | undefined,
 ): string {
+  // 工具名固定为英文标识，不走 i18n（与命令名一致，如 Bash/Read）
   if (!input) {
-    return tSync('fileEdit.update')
+    return 'Update'
   }
   if (input.file_path?.startsWith(getPlansDirectory())) {
-    return tSync('fileWrite.updatedPlan')
+    return 'Updated plan'
   }
   // Hashline edits always modify an existing file (line-ref based)
   if (input.edits != null) {
-    return tSync('fileEdit.update')
+    return 'Update'
   }
   if (input.old_string === '') {
-    return tSync('fileEdit.create')
+    return 'Create'
   }
-  return tSync('fileEdit.update')
+  return 'Update'
 }
 export function getToolUseSummary(
   input:

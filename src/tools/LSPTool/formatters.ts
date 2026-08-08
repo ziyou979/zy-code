@@ -15,7 +15,6 @@ import type {
 import { tSync } from '../../i18n/index.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
-import { plural } from '../../utils/stringUtils.js'
 
 /**
  * Formats a URI by converting it to a relative path if possible.
@@ -316,7 +315,7 @@ function formatDocumentSymbolNode(symbol: DocumentSymbol, indent: number = 0): s
   }
 
   const symbolLine = symbol.range.start.line + 1
-  line += ` - Line ${symbolLine}`
+  line += ` - ${tSync('lspTool.line', { line: String(symbolLine) })}`
 
   lines.push(line)
 
@@ -392,7 +391,7 @@ export function formatWorkspaceSymbolResult(
   const lines: string[] = [
     tSync('lspTool.foundSymbolsInWorkspace', {
       count: String(validSymbols.length),
-      symbolWord: plural(validSymbols.length, 'symbol'),
+      symbolWord: tSync(validSymbols.length === 1 ? 'lspTool.symbol_one' : 'lspTool.symbol_other'),
     }),
   ]
 
@@ -404,7 +403,7 @@ export function formatWorkspaceSymbolResult(
     for (const symbol of symbols) {
       const kind = symbolKindToString(symbol.kind)
       const line = symbol.location.range.start.line + 1
-      let symbolLine = `  ${symbol.name} (${kind}) - Line ${line}`
+      let symbolLine = `  ${symbol.name} (${kind}) - ${tSync('lspTool.line', { line: String(line) })}`
 
       // Add container name if available
       if (symbol.containerName) {
@@ -479,7 +478,7 @@ export function formatIncomingCallsResult(
   const lines = [
     tSync('lspTool.foundIncomingCalls', {
       count: String(result.length),
-      callWord: plural(result.length, 'call'),
+      callWord: tSync(result.length === 1 ? 'lspTool.call_one' : 'lspTool.call_other'),
     }),
   ]
 
@@ -510,7 +509,7 @@ export function formatIncomingCallsResult(
       }
       const kind = symbolKindToString(call.from.kind)
       const line = call.from.range.start.line + 1
-      let callLine = `  ${call.from.name} (${kind}) - Line ${line}`
+      let callLine = `  ${call.from.name} (${kind}) - ${tSync('lspTool.line', { line: String(line) })}`
 
       // Show call sites within the caller
       if (call.fromRanges && call.fromRanges.length > 0) {
@@ -542,7 +541,7 @@ export function formatOutgoingCallsResult(
   const lines = [
     tSync('lspTool.foundOutgoingCalls', {
       count: String(result.length),
-      callWord: plural(result.length, 'call'),
+      callWord: tSync(result.length === 1 ? 'lspTool.call_one' : 'lspTool.call_other'),
     }),
   ]
 
@@ -573,7 +572,7 @@ export function formatOutgoingCallsResult(
       }
       const kind = symbolKindToString(call.to.kind)
       const line = call.to.range.start.line + 1
-      let callLine = `  ${call.to.name} (${kind}) - Line ${line}`
+      let callLine = `  ${call.to.name} (${kind}) - ${tSync('lspTool.line', { line: String(line) })}`
 
       // Show call sites within the current function
       if (call.fromRanges && call.fromRanges.length > 0) {

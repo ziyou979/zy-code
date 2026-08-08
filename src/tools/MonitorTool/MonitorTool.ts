@@ -1,5 +1,4 @@
 import { z } from 'zod/v4'
-import { tSync } from '../../i18n/index.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import { buildTool } from '../../tools/tool.js'
 import { spawnShellTask } from '../../tasks/local-shell-task/LocalShellTask.js'
@@ -123,7 +122,8 @@ export const MonitorTool = buildTool({
   },
 
   userFacingName() {
-    return tSync('monitorTool.name')
+    // 工具名固定为英文标识，不走 i18n（与命令名一致，如 Bash/Read）
+    return 'Monitor'
   },
 
   isEnabled() {

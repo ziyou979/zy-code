@@ -94,10 +94,11 @@ export function userFacingName(
       }>
     | undefined,
 ): string {
+  // 工具名固定为英文标识，不走 i18n（与命令名一致，如 Bash/Read）
   if (input?.file_path?.startsWith(getPlansDirectory())) {
-    return tSync('fileWrite.updatedPlan')
+    return 'Updated plan'
   }
-  return tSync('fileWrite.write')
+  return 'Write'
 }
 
 /** 控制全屏点击展开。只有 `create` 会截断（至 MAX_LINES_TO_RENDER）；`update` 无论 verbose 如何都渲染完整 diff。在悬停/滚动时对每个可见消息调用，因此找到第 (MAX+1) 行后即提前退出，而不是拆分整个（可能很大的）内容。 */

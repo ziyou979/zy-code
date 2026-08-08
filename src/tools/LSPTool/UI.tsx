@@ -126,7 +126,8 @@ function LSPResultSummary({
   )
 }
 export function userFacingName(): string {
-  return tSync('lsp.search')
+  // 工具名固定为英文标识，不走 i18n（与命令名一致，如 Bash/Read）
+  return 'LSP'
 }
 export function renderToolUseMessage(
   input: Partial<Input>,

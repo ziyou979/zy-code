@@ -112,7 +112,7 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
       return (
         <MessageResponse height={1}>
           <Text>
-            {tSync('fileRead.read')} <Text bold>{output.file.count}</Text>{' '}
+            {tSync('fileRead.readResult')} <Text bold>{output.file.count}</Text>{' '}
             {tSync(output.file.count === 1 ? 'fileRead.readPages_one' : 'fileRead.readPages_other')}{' '}
             ({formatFileSize(output.file.originalSize)})
           </Text>
@@ -124,7 +124,7 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
       return (
         <MessageResponse height={1}>
           <Text>
-            {tSync('fileRead.read')} <Text bold>{numLines}</Text>{' '}
+            {tSync('fileRead.readResult')} <Text bold>{numLines}</Text>{' '}
             {tSync(numLines === 1 ? 'fileRead.readLines_one' : 'fileRead.readLines_other')}
           </Text>
         </MessageResponse>
@@ -167,13 +167,14 @@ export function renderToolUseErrorMessage(
   return <FallbackToolUseErrorMessage result={result} verbose={verbose} />
 }
 export function userFacingName(input: Partial<Input> | undefined): string {
+  // 工具名固定为英文标识，不走 i18n（与命令名一致，如 Bash/Read）
   if (input?.file_path?.startsWith(getPlansDirectory())) {
-    return tSync('fileRead.readingPlan')
+    return 'Reading Plan'
   }
   if (input?.file_path && getAgentOutputTaskId(input.file_path)) {
-    return tSync('fileRead.readAgentOutput')
+    return 'Read agent output'
   }
-  return tSync('fileRead.read')
+  return 'Read'
 }
 export function getToolUseSummary(input: Partial<Input> | undefined): string | null {
   if (!input?.file_path) {

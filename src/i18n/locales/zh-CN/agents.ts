@@ -9,7 +9,6 @@ export const zhAgents: TranslationResource = {
   'agent.notificationFailed': 'Agent "{description}" 失败：{error}',
   'agent.notificationStopped': 'Agent "{description}" 已停止',
   'agent.backgrounded': '后台 agent',
-  'agent.defaultName': 'Agent',
   'agent.done': '完成',
   'agent.initializing': '初始化中…',
   'agent.inProgress': '进行中…',

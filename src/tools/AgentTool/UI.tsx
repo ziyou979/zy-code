@@ -1010,9 +1010,7 @@ export function renderGroupedAgentToolUse(
         ? (getAgentColor(subagentType) as keyof Theme | undefined)
         : undefined
     } else {
-      agentType = parsedInput.success
-        ? userFacingName(parsedInput.data)
-        : tSync('agent.defaultName')
+      agentType = parsedInput.success ? userFacingName(parsedInput.data) : 'Agent'
       description = parsedInput.success ? parsedInput.data.description : undefined
       color = parsedInput.success ? userFacingNameBackgroundColor(parsedInput.data) : undefined
       taskDescription = undefined
@@ -1143,15 +1141,16 @@ export function userFacingName(
       }>
     | undefined,
 ): string {
+  // 工具名固定为英文标识，不走 i18n（与命令名一致，如 Bash/Read）
   if (input?.subagent_type && input.subagent_type !== GENERAL_PURPOSE_AGENT.agentType) {
     // 将 "worker" 代理显示为 "Agent"，使 UI 更简洁
     if (input.subagent_type === 'worker') {
-      return tSync('agent.defaultName')
+      return 'Agent'
     }
     // 内置 agent 类型和 Bash、Read、Edit 一样都是专有名词，直接显示
     return input.subagent_type
   }
-  return tSync('agent.defaultName')
+  return 'Agent'
 }
 
 export function userFacingNameBackgroundColor(

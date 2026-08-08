@@ -9,7 +9,6 @@ export const enAgents: TranslationResource = {
   'agent.notificationFailed': 'Agent "{description}" failed: {error}',
   'agent.notificationStopped': 'Agent "{description}" was stopped',
   'agent.backgrounded': 'Backgrounded agent',
-  'agent.defaultName': 'Agent',
   'agent.done': 'Done',
   'agent.initializing': 'Initializing…',
   'agent.inProgress': 'In progress…',
