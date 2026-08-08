@@ -29,6 +29,7 @@ import {
   logEvent,
 } from '../analytics/index.js'
 import { getDumpPromptsPath } from '../api/dumpPrompts.js'
+import { saveCurrentSessionCosts } from '../cost/costTracker.js'
 import { buildPostCompactMessages } from '../compact/compact.js'
 import { resetMicrocompactState } from '../compact/microCompact.js'
 import type { Progress as AgentProgress } from '../../tools/AgentTool/AgentTool.js'
@@ -895,6 +896,11 @@ async function getMessagesForSlashCommand(
             // (on toolUseContext) needs no reset: stale entries are inert
             // (UUIDs never repeat, so they're never looked up).
             resetMicrocompactState()
+            // 压缩会替换掉 transcript 中所有带 usage 的旧 assistant 消息，
+            // resume 时的兜底恢复（reconstructCostStateFromMessages）将无源
+            // 可重建 → 会话 cost 归零。压缩成功即持久化当前累计值
+            //（sidecar + sessionCosts），使恢复优先读取持久化值。
+            saveCurrentSessionCosts()
             return {
               // biome-ignore lint/suspicious/noExplicitAny: 服务层类型适配
               messages: buildPostCompactMessages(

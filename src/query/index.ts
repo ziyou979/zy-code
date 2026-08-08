@@ -8,6 +8,7 @@ import {
   isAutoCompactEnabled,
   type AutoCompactTrackingState,
 } from '../services/compact/autoCompact.js'
+import { saveCurrentSessionCosts } from '../services/cost/costTracker.js'
 import { buildPostCompactMessages } from '../services/compact/compact.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const reactiveCompact = feature('REACTIVE_COMPACT')
@@ -891,6 +892,12 @@ async function* queryLoop(
               (taskBudgetRemaining ?? params.taskBudget.total) - preCompactContext,
             )
           }
+
+          // 压缩会替换掉 transcript 中所有带 usage 的旧 assistant 消息，
+          // resume 时的兜底恢复（reconstructCostStateFromMessages）将无源
+          // 可重建 → 会话 cost 归零。压缩成功即持久化当前累计值
+          //（sidecar + sessionCosts），使恢复优先读取持久化值。
+          saveCurrentSessionCosts()
 
           const postCompactMessages = buildPostCompactMessages(compacted)
           for (const msg of postCompactMessages) {
