@@ -5,7 +5,9 @@ import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import {
   CustomModelSchema,
+  ModelFailoverSchema,
   ModelReferenceSchema,
+  ModelTierValueSchema,
   ProviderScopedSettingsSchema,
 } from './settingsModelSchemas.js'
 import { ZY_CODE_SETTINGS_SCHEMA_URL } from './constants.js'
@@ -104,6 +106,7 @@ export const SettingsSchema = lazySchema(() =>
           'openrouter',
           'together',
           'groq',
+          'xai',
           'fireworks',
           'perplexity',
           'ollama',
@@ -154,15 +157,22 @@ export const SettingsSchema = lazySchema(() =>
             '"standard" for everyday tasks, "compact" for fast/lightweight tasks. ' +
             'Defaults to "standard". The actual model is resolved from the "models" configuration.',
         ),
-      /** 基于层级的模型配置（advanced > standard > compact） */
+      /** 基于层级的模型配置（advanced > standard > compact）；值可为单引用或有序候选数组 */
       models: z
-        .record(z.string(), ModelReferenceSchema())
+        .record(z.string(), ModelTierValueSchema())
         .optional()
         .describe(
           'Model configuration by capability tier. Keys: ' +
             '"advanced" (complex reasoning), "standard" (everyday tasks), "compact" (fast/cheap). ' +
             'At least the tier referenced by "mainLoopModel" must be configured. ' +
-            'Values may be a model id or { provider, model } to route different tiers to different providers.',
+            'Values may be a model id, { provider, model }, or an ordered array of candidates for multi-auth failover.',
+        ),
+      /** 多 auth 候选列表的失效切换策略 */
+      modelFailover: ModelFailoverSchema()
+        .optional()
+        .describe(
+          'Controls automatic failover across ordered model candidates in `models`. ' +
+            'Switchable failures: auth (after refresh) and rate-limit/quota exhaustion. Sticky across sessions until /model or config change.',
         ),
       awsCredentialExport: z
         .string()

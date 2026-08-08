@@ -3,6 +3,12 @@ import { getInitialSettings } from '../settings/settings.js'
 import type { SettingsJson } from '../settings/types.js'
 import type { ModelAlias } from './aliases.js'
 import { isModelAllowed } from './modelAllowlist.js'
+import {
+  getModelFailoverConfig,
+  getStickyForTier,
+  setStickyForTier,
+  type ModelChainFailoverReason,
+} from './modelChainState.js'
 import { getProviderEntry } from './providerRegistry.js'
 import { type APIProvider, getAPIProvider } from './providers.js'
 
@@ -11,12 +17,18 @@ export type ModelSetting = ModelName | ModelAlias | null
 export type ModelReference = {
   provider?: string
   model: string
+  label?: string
 }
 export type ModelReferenceInput = ModelName | ModelReference
+/** 档位配置值：单引用或有序候选列表 */
+export type ModelTierValue = ModelReferenceInput | ModelReference[]
 
-type ResolvedModelReference = {
+export type ResolvedModelReference = {
   model: ModelName
   provider?: APIProvider
+  /** 在候选列表中的下标；单通道时为 0 */
+  candidateIndex?: number
+  label?: string
 }
 
 type CustomModelConfig = {
@@ -66,21 +78,188 @@ function getProviderSettings(
 function resolveModelReference(
   value: ModelReferenceInput | undefined,
   implicitProvider?: string,
+  candidateIndex = 0,
 ): ResolvedModelReference | undefined {
   if (typeof value === 'string') {
-    return { model: value, provider: toAPIProvider(implicitProvider) }
+    return { model: value, provider: toAPIProvider(implicitProvider), candidateIndex }
   }
   if (isModelReference(value)) {
     return {
       model: value.model,
       provider: toAPIProvider(value.provider) ?? toAPIProvider(implicitProvider),
+      candidateIndex,
+      label: value.label,
     }
   }
   return undefined
 }
 
+/**
+ * 将档位值（单引用或数组）规范为有序候选列表。
+ * 数组下标越小优先级越高。
+ */
+export function normalizeModelTierValue(
+  value: unknown,
+  implicitProvider?: string,
+): ResolvedModelReference[] {
+  if (value === undefined || value === null) {
+    return []
+  }
+  if (Array.isArray(value)) {
+    const list: ResolvedModelReference[] = []
+    for (let i = 0; i < value.length; i++) {
+      const resolved = resolveModelReference(value[i] as ModelReferenceInput, implicitProvider, i)
+      if (resolved) {
+        list.push(resolved)
+      }
+    }
+    return list
+  }
+  const single = resolveModelReference(value as ModelReferenceInput, implicitProvider, 0)
+  return single ? [single] : []
+}
+
 function getModelReferenceModel(value: ModelReferenceInput | undefined): ModelName | undefined {
   return resolveModelReference(value)?.model
+}
+
+/**
+ * 收集某档位的有序候选（含 sticky 解析前的完整列表）。
+ */
+export function getModelCandidatesForTier(
+  tier: ModelTier | string,
+  settings: InitialSettings | undefined = getOptionalSettings(),
+  activeProvider: APIProvider = getAPIProvider(),
+): ResolvedModelReference[] {
+  const modelTier = tier as ModelTier
+  const activeProviderSettings = getProviderSettings(settings, activeProvider)
+
+  const fromActive = normalizeModelTierValue(
+    activeProviderSettings?.models?.[modelTier],
+    activeProvider,
+  )
+  if (fromActive.length > 0) {
+    return fromActive
+  }
+
+  const fromTop = normalizeModelTierValue(settings?.models?.[modelTier], activeProvider)
+  if (fromTop.length > 0) {
+    return fromTop
+  }
+
+  for (const provider of getAllProviderIds(settings, activeProvider)) {
+    if (provider === activeProvider) {
+      continue
+    }
+    const scoped = normalizeModelTierValue(
+      settings?.providers?.[provider]?.models?.[modelTier],
+      provider,
+    )
+    if (scoped.length > 0) {
+      return scoped
+    }
+  }
+
+  if (modelTier !== 'standard') {
+    return getModelCandidatesForTier('standard', settings, activeProvider)
+  }
+
+  return []
+}
+
+/**
+ * 按 sticky（或默认 index 0）选取档位当前生效候选。
+ */
+export function selectActiveCandidate(
+  candidates: ResolvedModelReference[],
+  tier: string,
+  settings: InitialSettings | undefined,
+): ResolvedModelReference | undefined {
+  if (candidates.length === 0) {
+    return undefined
+  }
+  const sticky = getStickyForTier(tier, settings)
+  if (sticky) {
+    // 优先按 index；若 index 越界或 model/provider 已变，尝试匹配 model+provider
+    if (sticky.index >= 0 && sticky.index < candidates.length) {
+      const byIndex = candidates[sticky.index]
+      if (
+        byIndex &&
+        byIndex.model === sticky.model &&
+        (byIndex.provider ?? '') === (sticky.provider || byIndex.provider || '')
+      ) {
+        return { ...byIndex, candidateIndex: sticky.index }
+      }
+    }
+    const matched = candidates.findIndex(
+      (c) =>
+        c.model === sticky.model && (c.provider ?? '') === (sticky.provider || c.provider || ''),
+    )
+    if (matched >= 0) {
+      return { ...candidates[matched]!, candidateIndex: matched }
+    }
+  }
+  return { ...candidates[0]!, candidateIndex: 0 }
+}
+
+/**
+ * 推进到下一候选并持久化 sticky。
+ * @returns 下一候选，若无更多候选则 null
+ */
+export function advanceModelCandidate(
+  tier: string,
+  currentIndex: number,
+  reason: ModelChainFailoverReason,
+  settings: InitialSettings | undefined = getOptionalSettings(),
+  activeProvider: APIProvider = getAPIProvider(),
+): ResolvedModelReference | null {
+  const candidates = getModelCandidatesForTier(tier, settings, activeProvider)
+  const nextIndex = currentIndex + 1
+  if (nextIndex >= candidates.length) {
+    return null
+  }
+  const next = candidates[nextIndex]!
+  const providerId = next.provider ?? activeProvider
+  setStickyForTier(
+    tier,
+    {
+      index: nextIndex,
+      provider: providerId,
+      model: next.model,
+      reason,
+    },
+    settings,
+  )
+  return {
+    ...next,
+    candidateIndex: nextIndex,
+    provider: toAPIProvider(providerId) ?? next.provider,
+  }
+}
+
+/** 手动将 sticky 设为指定候选（如 /model 选择） */
+export function pinModelCandidate(
+  tier: string,
+  candidate: ResolvedModelReference,
+  settings: InitialSettings | undefined = getOptionalSettings(),
+): void {
+  const providerId = candidate.provider ?? getAPIProvider()
+  setStickyForTier(
+    tier,
+    {
+      index: candidate.candidateIndex ?? 0,
+      provider: providerId,
+      model: candidate.model,
+      reason: 'user_model',
+    },
+    settings,
+  )
+}
+
+export function isModelFailoverEnabled(
+  settings: InitialSettings | undefined = getOptionalSettings(),
+): boolean {
+  return getModelFailoverConfig(settings).enabled
 }
 
 function getAllProviderIds(
@@ -138,40 +317,8 @@ function getModelByTierReferenceForSettings(
   tier: ModelTier,
   activeProvider: APIProvider,
 ): ResolvedModelReference | undefined {
-  const activeProviderSettings = getProviderSettings(settings, activeProvider)
-
-  const providerTierModel = resolveModelReference(
-    activeProviderSettings?.models?.[tier],
-    activeProvider,
-  )
-  if (providerTierModel) {
-    return providerTierModel
-  }
-
-  const topLevelTierModel = resolveModelReference(settings?.models?.[tier], activeProvider)
-  if (topLevelTierModel) {
-    return topLevelTierModel
-  }
-
-  for (const provider of getAllProviderIds(settings, activeProvider)) {
-    if (provider === activeProvider) {
-      continue
-    }
-    const scopedTierModel = resolveModelReference(
-      settings?.providers?.[provider]?.models?.[tier],
-      provider,
-    )
-    if (scopedTierModel) {
-      return scopedTierModel
-    }
-  }
-
-  // 其他层级未配置时使用 standard
-  if (tier !== 'standard') {
-    return getModelByTierReferenceForSettings(settings, 'standard', activeProvider)
-  }
-
-  return undefined
+  const candidates = getModelCandidatesForTier(tier, settings, activeProvider)
+  return selectActiveCandidate(candidates, tier, settings)
 }
 
 function getModelByTierReference(tier: ModelTier): ResolvedModelReference | undefined {
@@ -388,20 +535,29 @@ function findConfiguredModelReferenceForSettings(
   model: string,
   activeProvider: APIProvider,
 ): ResolvedModelReference | undefined {
-  const matches = (value: ModelReferenceInput | undefined, implicitProvider?: string) => {
+  const matchesTierValue = (value: unknown, implicitProvider?: string) => {
+    for (const candidate of normalizeModelTierValue(value, implicitProvider)) {
+      if (candidate.model === model) {
+        return candidate
+      }
+    }
+    return undefined
+  }
+
+  const matchesSingle = (value: ModelReferenceInput | undefined, implicitProvider?: string) => {
     const resolved = resolveModelReference(value, implicitProvider)
     return resolved?.model === model ? resolved : undefined
   }
 
   for (const tier of ['advanced', 'standard', 'compact'] as const) {
-    const activeMatch = matches(
+    const activeMatch = matchesTierValue(
       settings?.providers?.[activeProvider]?.models?.[tier],
       activeProvider,
     )
     if (activeMatch) {
       return activeMatch
     }
-    const topLevelMatch = matches(settings?.models?.[tier], activeProvider)
+    const topLevelMatch = matchesTierValue(settings?.models?.[tier], activeProvider)
     if (topLevelMatch) {
       return topLevelMatch
     }
@@ -418,20 +574,23 @@ function findConfiguredModelReferenceForSettings(
       continue
     }
     for (const tier of ['advanced', 'standard', 'compact'] as const) {
-      const scopedMatch = matches(settings?.providers?.[provider]?.models?.[tier], provider)
+      const scopedMatch = matchesTierValue(
+        settings?.providers?.[provider]?.models?.[tier],
+        provider,
+      )
       if (scopedMatch) {
         return scopedMatch
       }
     }
   }
 
-  const topLevelModel = matches(settings?.model, activeProvider)
+  const topLevelModel = matchesSingle(settings?.model, activeProvider)
   if (topLevelModel) {
     return topLevelModel
   }
 
   for (const provider of getAllProviderIds(settings, activeProvider)) {
-    const providerModel = matches(settings?.providers?.[provider]?.model, provider)
+    const providerModel = matchesSingle(settings?.providers?.[provider]?.model, provider)
     if (providerModel) {
       return providerModel
     }

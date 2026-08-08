@@ -6,12 +6,13 @@ import { getInitialSettings } from '../settings/settings.js'
 import {
   getDefaultMainLoopModelSetting,
   getMarketingNameForModel,
+  getModelCandidatesForTier,
   getProviderForModel,
   getUserSpecifiedModelSetting,
-  type ModelReferenceInput,
   type ModelSetting,
   parseUserSpecifiedModel,
   renderDefaultModelSetting,
+  selectActiveCandidate,
 } from './model.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import { getAPIProvider } from './providers.js'
@@ -40,29 +41,26 @@ export function getDefaultOptionForUser(): ModelOption {
  */
 function getTierOption(tier: string): ModelOption | undefined {
   const settings = getInitialSettings()
-  const providerSettings = settings.providers?.[getAPIProvider()]
-  const tierModel = providerSettings?.models?.[tier] ?? settings?.models?.[tier]
-  if (!tierModel) {
-    return undefined
-  }
-  const resolvedModel = resolveModelReferenceModel(tierModel)
-  if (!resolvedModel) {
+  const candidates = getModelCandidatesForTier(tier, settings, getAPIProvider())
+  const active = selectActiveCandidate(candidates, tier, settings)
+  if (!active) {
     return undefined
   }
 
+  const resolvedModel = active.model
   const cap = getLocalModelCapability(resolvedModel)
-  const provider = getProviderForModel(resolvedModel)
+  const provider = active.provider ?? getProviderForModel(resolvedModel)
+  const chainHint =
+    candidates.length > 1
+      ? ` · failover ${(active.candidateIndex ?? 0) + 1}/${candidates.length}`
+      : ''
 
   return {
     value: tier,
     label: cap?.pattern ?? resolvedModel,
-    description: `${provider} · ${resolvedModel}`,
-    descriptionForModel: `${provider} · ${resolvedModel}`,
+    description: `${provider} · ${resolvedModel}${chainHint}`,
+    descriptionForModel: `${provider} · ${resolvedModel}${chainHint}`,
   }
-}
-
-function resolveModelReferenceModel(value: ModelReferenceInput): string | undefined {
-  return typeof value === 'string' ? value : value.model
 }
 
 function getStandardOption(): ModelOption {

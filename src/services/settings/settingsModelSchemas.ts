@@ -28,19 +28,61 @@ export const CustomModelSchema = lazySchema(() =>
   }),
 )
 
+/** 单条模型引用对象（含可选 provider） */
+export const ModelReferenceObjectSchema = lazySchema(() =>
+  z
+    .object({
+      provider: z
+        .string()
+        .optional()
+        .describe('Provider id used for this model entry. Defaults to active provider.'),
+      model: z.string().describe('Actual model ID sent to the API.'),
+      label: z.string().optional().describe('Optional display label for this candidate.'),
+    })
+    .passthrough(),
+)
+
 export const ModelReferenceSchema = lazySchema(() =>
+  z.union([z.string(), ModelReferenceObjectSchema()]),
+)
+
+/**
+ * 档位值：单通道（兼容）或有序候选列表（多 auth 混用）。
+ * 数组下标越小优先级越高；失效后按序切换。
+ */
+export const ModelTierValueSchema = lazySchema(() =>
   z.union([
-    z.string(),
+    ModelReferenceSchema(),
     z
-      .object({
-        provider: z
-          .string()
-          .optional()
-          .describe('Provider id used for this model entry. Defaults to active provider.'),
-        model: z.string().describe('Actual model ID sent to the API.'),
-      })
-      .passthrough(),
+      .array(ModelReferenceObjectSchema())
+      .min(1)
+      .describe(
+        'Ordered failover candidates for this tier. First entry is preferred; later entries are used after repeated auth/quota failures.',
+      ),
   ]),
+)
+
+/** 多 auth 失效切换策略 */
+export const ModelFailoverSchema = lazySchema(() =>
+  z
+    .object({
+      enabled: z
+        .boolean()
+        .optional()
+        .describe(
+          'Enable automatic auth/model failover when a tier has multiple candidates. Defaults to true when a candidate list is configured.',
+        ),
+      maxConsecutiveFailures: z
+        .number()
+        .int()
+        .min(1)
+        .max(10)
+        .optional()
+        .describe(
+          'Consecutive switchable failures (auth / rate-limit exhausted) before advancing to the next candidate. Default: 2.',
+        ),
+    })
+    .passthrough(),
 )
 
 export const ProviderScopedSettingsSchema = lazySchema(() =>
@@ -66,10 +108,10 @@ export const ProviderScopedSettingsSchema = lazySchema(() =>
         .optional()
         .describe('Capability tier for this provider. Overrides the top-level mainLoopModel.'),
       models: z
-        .record(z.string(), ModelReferenceSchema())
+        .record(z.string(), ModelTierValueSchema())
         .optional()
         .describe(
-          'Model configuration by capability tier for this provider. Values may be a model id or { provider, model }.',
+          'Model configuration by capability tier for this provider. Values may be a model id, { provider, model }, or an ordered candidate array for multi-auth failover.',
         ),
       customModels: z
         .array(CustomModelSchema())

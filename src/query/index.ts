@@ -4,6 +4,11 @@ import type { ToolResultBlock, ToolCallBlock, AssistantContentBlock } from '../t
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import { FallbackTriggeredError } from '../services/api/withRetry.js'
 import {
+  noteAuthChainSuccess,
+  tryAdvanceAuthChainOnError,
+} from '../services/model/modelChainFailover.js'
+import { tSync } from '../i18n/index.js'
+import {
   calculateTokenWarningState,
   isAutoCompactEnabled,
   type AutoCompactTrackingState,
@@ -626,6 +631,8 @@ async function* queryLoop(
             }
           }
           queryCheckpoint('query_api_streaming_end')
+          // 本轮 API 成功：清零该候选的连续失效计数
+          noteAuthChainSuccess(currentModel)
 
           // 使用实际 API 报告的 token 删除计数（而非客户端估算）
           // 产生延迟的 microcompact 边界消息。
@@ -707,6 +714,65 @@ async function* queryLoop(
 
             continue
           }
+
+          // 多 auth 候选链：同候选 withRetry 耗尽后，推进 sticky 并换通道
+          const previousModel = currentModel
+          const authFailover = tryAdvanceAuthChainOnError(previousModel, innerError)
+          if (authFailover) {
+            const nextModel = authFailover.next.model
+            currentModel = nextModel
+            attemptWithFallback = true
+
+            yield* yieldMissingToolResultBlocks(assistantMessages, 'Auth chain failover triggered')
+            assistantMessages.length = 0
+            toolResults.length = 0
+            toolUseBlocks.length = 0
+            needsFollowUp = false
+
+            if (streamingToolExecutor) {
+              streamingToolExecutor.discard()
+              streamingToolExecutor = new StreamingToolExecutor(
+                toolUseContext.options.tools,
+                canUseTool,
+                toolUseContext,
+              )
+            }
+
+            toolUseContext.options.mainLoopModel = nextModel
+            if (isInternalBuild()) {
+              messagesForQuery = stripSignatureBlocks(messagesForQuery)
+            }
+
+            logEvent('zy_model_auth_failover', {
+              original_model:
+                previousModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              next_model: nextModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              reason:
+                authFailover.reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              from_index: authFailover.fromIndex,
+              to_index: authFailover.toIndex,
+              tier: authFailover.tier as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+              queryChainId: queryChainIdForAnalytics,
+              queryDepth: queryTracking.depth,
+            })
+
+            const reasonLabel = tSync(`modelFailover.reason.${authFailover.reason}`)
+            const toLabel = authFailover.next.provider
+              ? `${renderModelName(nextModel)} (${authFailover.next.provider})`
+              : renderModelName(nextModel)
+            yield createSystemMessage(
+              tSync('modelFailover.switched', {
+                from: renderModelName(previousModel),
+                to: toLabel,
+                provider: authFailover.next.provider ?? '',
+                reason: reasonLabel,
+              }),
+              'warn',
+            )
+
+            continue
+          }
+
           throw innerError
         }
       }

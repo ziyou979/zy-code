@@ -134,8 +134,15 @@ export class FallbackTriggeredError extends Error {
   constructor(
     public readonly originalModel: string,
     public readonly fallbackModel: string,
+    /** overloaded = 529 CLI fallback；其余为多 auth 候选链 */
+    public readonly reason:
+      | 'overloaded'
+      | 'auth_failed'
+      | 'rate_limit_exhausted'
+      | 'quota_exhausted' = 'overloaded',
+    public readonly nextProvider?: string,
   ) {
-    super(`Model fallback triggered: ${originalModel} -> ${fallbackModel}`)
+    super(`Model fallback triggered: ${originalModel} -> ${fallbackModel} (${reason})`)
     this.name = 'FallbackTriggeredError'
   }
 }
