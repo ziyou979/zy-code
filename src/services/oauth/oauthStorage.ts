@@ -1,42 +1,48 @@
 /**
  * 多 Provider OAuth 凭证存储层
  *
- * 使用现有 SecureStorage（keychain）存储多个 OAuth provider 的凭证。
- * 存储结构：
+ * 仅存 `~/.zy/auth.json` 的 `oauth` 块（与 API Key 同文件）：
  * {
+ *   "dashscope": { "apiKey": "..." },
  *   "oauth": {
- *     "anthropic": { refresh, access, expires },
- *     "openai-codex": { refresh, access, expires, accountId }
- *   },
- *   "activeOAuthProvider": "anthropic"
+ *     "activeProvider": "xai-oauth",
+ *     "credentials": {
+ *       "xai-oauth": { refresh, access, expires, ... }
+ *     }
+ *   }
  * }
  */
 
 import memoize from 'lodash-es/memoize.js'
+import {
+  getAuthOAuthStore,
+  saveAuthOAuthStore,
+  type AuthOAuthCredentials,
+  type AuthOAuthStore,
+} from '../auth/authConfig.js'
 import { logError } from '../../services/infra/log.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { getSecureStorage } from '../secure-storage/index.js'
-import { clearKeychainCache } from '../secure-storage/macOsKeychainHelpers.js'
 import { getOAuthApiKey, getOAuthProvider } from './providers/index.js'
 import type { OAuthCredentials, OAuthProviderInterface } from './providers/types.js'
 
-// biome-ignore lint/suspicious/noExplicitAny: SecureStorage 运行时有扩展方法
-type SecureStorageWithMethods = any
+function loadOAuthStore(): AuthOAuthStore {
+  return getAuthOAuthStore()
+}
 
-/** 获取 SecureStorage 实例（带类型断言以访问 read/update 方法） */
-function getStorage(): SecureStorageWithMethods {
-  return getSecureStorage() as SecureStorageWithMethods
+function persistOAuthStore(store: AuthOAuthStore): { success: boolean; warning?: string } {
+  const result = saveAuthOAuthStore(store)
+  clearOAuthCredentialsCache()
+  return result
 }
 
 /** 同步读取 OAuth 凭证（带 memoize 缓存） */
 export const getOAuthCredentials = memoize((providerId: string): OAuthCredentials | null => {
   try {
-    const storage = getStorage()
-    const storageData = storage.read()
-    const oauthData = storageData?.oauth?.[providerId]
+    const store = loadOAuthStore()
+    const oauthData = store.credentials[providerId]
     if (!oauthData?.access) {
       return null
     }
@@ -47,30 +53,18 @@ export const getOAuthCredentials = memoize((providerId: string): OAuthCredential
   }
 })
 
-/** 异步读取 OAuth 凭证 */
+/** 异步读取 OAuth 凭证（与同步路径一致；保留 API 兼容） */
 export async function getOAuthCredentialsAsync(
   providerId: string,
 ): Promise<OAuthCredentials | null> {
-  try {
-    const storage = getStorage()
-    const storageData = await storage.readAsync()
-    const oauthData = storageData?.oauth?.[providerId]
-    if (!oauthData?.access) {
-      return null
-    }
-    return oauthData as OAuthCredentials
-  } catch (error) {
-    logError(error)
-    return null
-  }
+  return getOAuthCredentials(providerId)
 }
 
 /** 获取活跃 OAuth Provider ID */
 export function getActiveOAuthProvider(): string | null {
   try {
-    const storage = getStorage()
-    const storageData = storage.read()
-    return storageData?.activeOAuthProvider ?? null
+    const store = loadOAuthStore()
+    return store.activeProvider ?? null
   } catch (error) {
     logError(error)
     return null
@@ -80,11 +74,9 @@ export function getActiveOAuthProvider(): string | null {
 /** 设置活跃 OAuth Provider */
 export function setActiveOAuthProvider(providerId: string): void {
   try {
-    const storage = getStorage()
-    const storageData = storage.read() || {}
-    storageData.activeOAuthProvider = providerId
-    storage.update(storageData)
-    clearOAuthCredentialsCache()
+    const store = loadOAuthStore()
+    store.activeProvider = providerId
+    persistOAuthStore(store)
   } catch (error) {
     logError(error)
   }
@@ -96,17 +88,11 @@ export function saveOAuthCredentials(
   credentials: OAuthCredentials,
 ): { success: boolean; warning?: string } {
   try {
-    const storage = getStorage()
-    const storageData = storage.read() || {}
+    const store = loadOAuthStore()
+    store.credentials[providerId] = credentials as AuthOAuthCredentials
+    store.activeProvider = providerId
 
-    if (!storageData.oauth) {
-      storageData.oauth = {}
-    }
-    storageData.oauth[providerId] = credentials
-    storageData.activeOAuthProvider = providerId
-
-    const result = storage.update(storageData)
-    clearOAuthCredentialsCache()
+    const result = persistOAuthStore(store)
 
     if (result.success) {
       logEvent('zy_oauth_credentials_saved', {
@@ -131,22 +117,15 @@ export function saveOAuthCredentials(
 /** 删除指定 provider 的 OAuth 凭证 */
 export function removeOAuthCredentials(providerId: string): void {
   try {
-    const storage = getStorage()
-    const storageData = storage.read() || {}
+    const store = loadOAuthStore()
+    delete store.credentials[providerId]
 
-    if (storageData.oauth) {
-      delete storageData.oauth[providerId]
+    if (store.activeProvider === providerId) {
+      const remaining = Object.keys(store.credentials)
+      store.activeProvider = remaining.length > 0 ? remaining[0] : null
     }
 
-    // 如果删除的是活跃 provider，清除活跃标记
-    if (storageData.activeOAuthProvider === providerId) {
-      // 如果还有其他 provider，选择第一个作为活跃
-      const remainingProviders = Object.keys(storageData.oauth || {})
-      storageData.activeOAuthProvider = remainingProviders.length > 0 ? remainingProviders[0] : null
-    }
-
-    storage.update(storageData)
-    clearOAuthCredentialsCache()
+    persistOAuthStore(store)
   } catch (error) {
     logError(error)
   }
@@ -155,14 +134,7 @@ export function removeOAuthCredentials(providerId: string): void {
 /** 清除所有 OAuth 凭证 */
 export function clearAllOAuthCredentials(): void {
   try {
-    const storage = getStorage()
-    const storageData = storage.read() || {}
-
-    delete storageData.oauth
-    delete storageData.activeOAuthProvider
-
-    storage.update(storageData)
-    clearOAuthCredentialsCache()
+    persistOAuthStore({ activeProvider: null, credentials: {} })
   } catch (error) {
     logError(error)
   }
@@ -171,13 +143,10 @@ export function clearAllOAuthCredentials(): void {
 /** 清除凭证缓存 */
 export function clearOAuthCredentialsCache(): void {
   getOAuthCredentials.cache?.clear?.()
-  clearKeychainCache()
 }
 
 /**
  * 获取活跃 provider 的 API key（自动刷新过期 token）。
- *
- * 异步操作：读取 keychain → 检查过期 → 必要时刷新 → 返回 API key。
  */
 export async function getActiveOAuthApiKey(): Promise<{
   key: string
@@ -196,7 +165,6 @@ export async function getActiveOAuthApiKey(): Promise<{
   try {
     const { newCredentials, apiKey } = await getOAuthApiKey(providerId, credentials)
 
-    // 如果凭证被刷新了，保存新凭证
     if (newCredentials !== credentials) {
       saveOAuthCredentials(providerId, newCredentials)
     }
@@ -210,9 +178,6 @@ export async function getActiveOAuthApiKey(): Promise<{
 
 /**
  * 同步获取活跃 provider 的 API key（从缓存读取，不过期检查）。
- *
- * 用于需要同步获取 API key 的场景（如 getApiKeyWithSource）。
- * 过期检查和刷新在后台异步进行。
  */
 export function getActiveOAuthApiKeySync(): string | null {
   const providerId = getActiveOAuthProvider()
@@ -235,8 +200,6 @@ export function getActiveOAuthApiKeySync(): string | null {
 
 /**
  * 获取活跃 provider 的信息。
- *
- * 返回 provider 接口实例，可用于查询 apiProvider、apiFormat 等属性。
  */
 export function getActiveOAuthProviderInfo(): OAuthProviderInterface | null {
   const providerId = getActiveOAuthProvider()
@@ -261,15 +224,12 @@ export function isActiveOAuthTokenExpired(): boolean {
     return false
   }
 
-  // 5 分钟缓冲
   const bufferTime = 5 * 60 * 1000
   return Date.now() + bufferTime >= credentials.expires
 }
 
 /**
  * 刷新活跃 provider 的 OAuth token。
- *
- * 用于 401 错误后的强制刷新。
  */
 export async function refreshActiveOAuthToken(): Promise<boolean> {
   const providerId = getActiveOAuthProvider()

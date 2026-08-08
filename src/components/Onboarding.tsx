@@ -10,6 +10,7 @@ import type { UiLanguage } from '../i18n/types.js'
 import { Box, Link, Newline, Text, useTheme } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
+import { setAuthConfigApiKey } from '../services/auth/authConfig.js'
 import { normalizeApiKeyForConfig } from '../services/auth/authPortable.js'
 import { saveGlobalConfig } from '../services/config/config.js'
 import { type EffortLevel, toPersistableEffort } from '../services/effort/effort.js'
@@ -212,6 +213,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         platform.defaultBaseUrls.anthropic
     }
 
+    // 仅记录 key 指纹审批（不落全局 configuredApiKey）
     saveGlobalConfig((current) => ({
       ...current,
       apiKeyResponses: {
@@ -219,10 +221,10 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         approved: [...(current.apiKeyResponses?.approved ?? []), normalizedKey],
       },
     }))
-    // provider/apiKey/baseUrl 写入 settings.json（per-provider 配置，避免跨 provider 干扰）
+    // 密钥进 auth.json；provider / baseUrl 进 settings.json（不再写 ~/.zy.json 的 configured*）
+    setAuthConfigApiKey(provider, apiKey)
     updateSettingsForSource('userSettings', {
       provider: provider as SettingsJson['provider'],
-      apiKey,
       ...(baseUrl && { baseUrl }),
     })
     setSelectedProvider(provider)

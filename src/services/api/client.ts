@@ -150,21 +150,7 @@ export async function getAnthropicClient({
     if (!resolvedBaseURL) {
       resolvedBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
     }
-    // 4. Onboarding config (configuredBaseUrl) — 向后兼容
-    // 仅当 configuredProvider 与当前 apiProvider 匹配时使用，
-    // 避免跨 provider 残留的旧 URL（如 llama.cpp 的 localhost）覆盖当前 provider 的默认 URL
-    if (!resolvedBaseURL) {
-      try {
-        const { getGlobalConfig } = await import('../config/config.js')
-        const cfg = getGlobalConfig()
-        if (cfg.configuredProvider === apiProvider) {
-          resolvedBaseURL = cfg.configuredBaseUrl
-        }
-      } catch {
-        // config not ready
-      }
-    }
-    // 5. Registry defaults（根据当前格式选择对应端点）
+    // 4. Registry defaults（根据当前格式选择对应端点）
     if (!resolvedBaseURL && registryEntry.defaultBaseUrls) {
       const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai-chat'
       resolvedBaseURL =
@@ -197,26 +183,13 @@ export async function getAnthropicClient({
 
   // 本地推理引擎（ollama、lmstudio、llamacpp、nim 等）
   if (isCustomEndpointProvider(apiProvider) && registryEntry) {
-    // 优先级：环境变量 > settings.json > onboarding 配置 > registry 默认值
+    // 优先级：环境变量 > settings.json > registry 默认值
     let customBaseURL: string | undefined
     if (process.env.LLM_BASE_URL) {
       customBaseURL = process.env.LLM_BASE_URL
     }
     if (!customBaseURL) {
       customBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
-    }
-    if (!customBaseURL) {
-      try {
-        const { getGlobalConfig } = await import('../config/config.js')
-        const cfg = getGlobalConfig()
-        // 仅当 configuredBaseUrl 属于当前 provider 时才使用，
-        // 避免之前配置的其他 provider（如 llama.cpp）的 URL 残留覆盖
-        if (cfg.configuredProvider === apiProvider) {
-          customBaseURL = cfg.configuredBaseUrl
-        }
-      } catch {
-        // config not ready
-      }
     }
     if (!customBaseURL && registryEntry.defaultBaseUrls) {
       const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai-chat'
@@ -274,7 +247,7 @@ export async function getAnthropicClient({
  * 与 getAnthropicClient 共享相同的基础设施：
  * - 共享 headers（X-Zy-Code-Session-Id、User-Agent、ZY_CODE_CUSTOM_HEADERS 等）
  * - baseUrl 优先级：传入值 → provider-specific env → OPENAI_BASE_URL → LLM_BASE_URL
- *   → settings.json baseUrl → (provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls['openai-chat'] → api.openai.com/v1
+ *   → settings.json baseUrl → registry.defaultBaseUrls['openai-chat'] → api.openai.com/v1
  * - proxy 配置（getProxyFetchOptions）
  * - debug logger（isDebugToStdErr）
  * - timeout 配置（API_TIMEOUT_MS）
@@ -333,25 +306,13 @@ export async function getOpenAIClient(options?: {
     if (!resolvedBaseURL) {
       resolvedBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
     }
-    // 4. Onboarding config (configuredBaseUrl) — 向后兼容
-    // 仅当 configuredProvider 与当前 apiProvider 匹配时使用，
-    // 避免跨 provider 残留的旧 URL 覆盖当前 provider 的默认 URL
-    if (!resolvedBaseURL) {
-      try {
-        const { getGlobalConfig } = await import('../config/config.js')
-        const cfg = getGlobalConfig()
-        if (cfg.configuredProvider === apiProvider) {
-          resolvedBaseURL = cfg.configuredBaseUrl
-        }
-      } catch {
-        // config not ready
-      }
-    }
-    // 5. Registry defaults
+    // 4. Registry defaults（Responses 与 Chat 共用端点时可能只配其一）
     if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
-      resolvedBaseURL = registryEntry.defaultBaseUrls['openai-chat']
+      resolvedBaseURL =
+        registryEntry.defaultBaseUrls['openai-chat'] ??
+        registryEntry.defaultBaseUrls['openai-responses']
     }
-    // 6. Fallback
+    // 5. Fallback
     if (!resolvedBaseURL) {
       resolvedBaseURL = 'https://api.openai.com/v1'
     }
@@ -386,7 +347,7 @@ export async function getOpenAIClient(options?: {
  * 与 getOpenAIClient / getAnthropicClient 共享相同的基础设施：
  * - 共享 headers（X-Zy-Code-Session-Id、User-Agent 等）
  * - baseUrl 优先级：传入值 → provider-specific env → GOOGLE_BASE_URL → LLM_BASE_URL
- *   → settings.json baseUrl → (provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls.google → generativelanguage.googleapis.com
+ *   → settings.json baseUrl → registry.defaultBaseUrls.google → generativelanguage.googleapis.com
  */
 export async function getGoogleClient(options?: {
   apiKey?: string
@@ -427,25 +388,11 @@ export async function getGoogleClient(options?: {
     if (!resolvedBaseURL) {
       resolvedBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
     }
-    // 4. Onboarding config (configuredBaseUrl) — 向后兼容
-    // 仅当 configuredProvider 与当前 apiProvider 匹配时使用，
-    // 避免跨 provider 残留的旧 URL 覆盖当前 provider 的默认 URL
-    if (!resolvedBaseURL) {
-      try {
-        const { getGlobalConfig } = await import('../config/config.js')
-        const cfg = getGlobalConfig()
-        if (cfg.configuredProvider === apiProvider) {
-          resolvedBaseURL = cfg.configuredBaseUrl
-        }
-      } catch {
-        // config not ready
-      }
-    }
-    // 5. Registry defaults
+    // 4. Registry defaults
     if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
       resolvedBaseURL = registryEntry.defaultBaseUrls.google
     }
-    // 6. Fallback
+    // 5. Fallback
     if (!resolvedBaseURL) {
       resolvedBaseURL = 'https://generativelanguage.googleapis.com/v1beta'
     }

@@ -36,41 +36,36 @@ function getSettingsProvider(): APIProvider | null {
   }
 }
 
-/**
- * 从 onboarding 配置中获取已配置的 API provider。
- * 如果配置尚未就绪（启动早期）或未配置，则返回 null。
- */
-function getConfiguredProvider(): APIProvider | null {
-  try {
-    const { getGlobalConfig } =
-      require('../config/config.js') as typeof import('../config/config.js')
-    return getGlobalConfig().configuredProvider ?? null
-  } catch {
-    // 配置尚未就绪 —— 返回 null 以继续检测环境变量
-    return null
-  }
-}
-
 export function getAPIProvider(): APIProvider {
-  // 0. 优先检查多 Provider OAuth 登录的活跃 provider
+  // 0. 多 auth 候选链 sticky：跨会话粘住的当前通道（优先于 OAuth，避免串 provider）
+  try {
+    const { getInitialSettings } =
+      require('../settings/settings.js') as typeof import('../settings/settings.js')
+    const { getStickyForTier } =
+      require('./modelChainState.js') as typeof import('./modelChainState.js')
+    const settings = getInitialSettings()
+    const tier = settings?.mainLoopModel ?? 'standard'
+    const sticky = getStickyForTier(tier, settings)
+    if (sticky?.provider && getProviderEntry(sticky.provider)) {
+      return sticky.provider as APIProvider
+    }
+  } catch {
+    // settings / sticky 未就绪
+  }
+
+  // 1. 多 Provider OAuth 登录的活跃 provider
   const oauthProvider = getActiveOAuthProviderInfo()
   if (oauthProvider?.apiProvider) {
     return oauthProvider.apiProvider as APIProvider
   }
 
-  // 1. 检查 settings.json (zy.json) 中配置的平台
+  // 2. settings.json 中配置的平台
   const settingsProvider = getSettingsProvider()
   if (settingsProvider) {
     return settingsProvider
   }
 
-  // 2. 检查 onboarding 时配置的平台
-  const configured = getConfiguredProvider()
-  if (configured) {
-    return configured
-  }
-
-  // 3. 默认使用 anthropic
+  // 3. 默认 anthropic
   return 'anthropic'
 }
 

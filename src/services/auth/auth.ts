@@ -108,12 +108,6 @@ export function isAuthEnabled(): boolean {
     return true
   }
 
-  // 检查 onboarding 时配置的 API key 和其他来源
-  const config = getGlobalConfig()
-  if (config.configuredApiKey) {
-    return true
-  }
-
   const { hasToken } = getAuthTokenSource()
   if (hasToken) {
     return true
@@ -137,12 +131,6 @@ export function getAuthTokenSource() {
     return { source: 'settingsApiKey' as const, hasToken: true }
   }
 
-  // 检查 onboarding 时配置的 API key
-  const config = getGlobalConfig()
-  if (config.configuredApiKey) {
-    return { source: 'configuredApiKey' as const, hasToken: true }
-  }
-
   // --bare：仅 API key 模式。auth.json 中的 apiKeyHelper 是唯一允许的
   // bearer token 格式来源。OAuth 环境变量、FD token 和 keychain 均被忽略。
   if (isBareMode()) {
@@ -150,6 +138,11 @@ export function getAuthTokenSource() {
       return { source: 'apiKeyHelper' as const, hasToken: true }
     }
     return { source: 'none' as const, hasToken: false }
+  }
+
+  // 多 Provider OAuth（有 active 即视为有 token）
+  if (getActiveOAuthProvider()) {
+    return { source: 'oauth' as const, hasToken: true }
   }
 
   // 检查文件描述符中的 OAuth token（或其 CCR 磁盘回退）
@@ -167,12 +160,6 @@ export function getAuthTokenSource() {
   const apiKeyHelper = getConfiguredApiKeyHelper(provider)
   if (apiKeyHelper && !isManagedOAuthContext()) {
     return { source: 'apiKeyHelper' as const, hasToken: true }
-  }
-
-  // 检查多 Provider OAuth
-  const activeOAuthProvider = getActiveOAuthProvider()
-  if (activeOAuthProvider) {
-    return { source: 'oauth' as const, hasToken: true }
   }
 
   return { source: 'none' as const, hasToken: false }
@@ -208,12 +195,6 @@ export function getApiKeyWithSource(
   const authConfigApiKey = getAuthConfigApiKey(provider)
   if (authConfigApiKey) {
     return { key: authConfigApiKey, source: 'settingsApiKey' }
-  }
-
-  // 检查 onboarding 时配置的 API key
-  const config = getGlobalConfig()
-  if (config.configuredApiKey) {
-    return { key: config.configuredApiKey, source: 'settingsApiKey' }
   }
 
   // --bare：密封认证。仅使用来自用户级 auth.json 的 apiKeyHelper。
@@ -258,10 +239,17 @@ export function getApiKeyWithSource(
     }
   }
 
-  // 检查多 Provider OAuth（新增）
-  const oauthApiKey = getActiveOAuthApiKeySync()
-  if (oauthApiKey) {
-    return { key: oauthApiKey, source: 'oauth' as const }
+  // 多 Provider OAuth：仅当 OAuth 绑定的 apiProvider 与当前请求 provider 一致时使用。
+  const activeOAuthInfo = getActiveOAuthProviderInfo()
+  if (activeOAuthInfo) {
+    const oauthApiProvider = activeOAuthInfo.apiProvider
+    const providerMatches = !oauthApiProvider || !provider || oauthApiProvider === provider
+    if (providerMatches) {
+      const oauthApiKey = getActiveOAuthApiKeySync()
+      if (oauthApiKey) {
+        return { key: oauthApiKey, source: 'oauth' as const }
+      }
+    }
   }
 
   const apiKeyFromConfigOrMacOSKeychain = getApiKeyFromConfigOrMacOSKeychain()

@@ -226,13 +226,16 @@ export type GlobalConfig = {
     rejected?: string[]
   }
   primaryApiKey?: string // 未设置环境变量时的主 API key，通过 oauth 设置（TODO: 重命名）
-  /** onboarding 期间配置的 API 提供商 — 值来自 PROVIDER_REGISTRY 的 id */
+  /**
+   * @deprecated 已废弃：onboarding 改为写 settings.json + auth.json。
+   * 类型保留仅为兼容旧 ~/.zy.json 磁盘字段，运行时不再读取。
+   */
   configuredProvider?: string
-  /** onboarding 期间配置的 API 基地址（预设平台自动填充，generic 平台由用户手动设置） */
+  /** @deprecated 见 configuredProvider */
   configuredBaseUrl?: string
-  /** onboarding 期间配置的 API key */
+  /** @deprecated 见 configuredProvider */
   configuredApiKey?: string
-  /** 对话默认模型，onboarding 期间配置 */
+  /** @deprecated 见 configuredProvider */
   configuredModel?: string
   hasSeenUndercoverAutoNotice?: boolean // ant-only: 一次性自动 undercover 说明是否已展示
   hasSeenUltraplanTerms?: boolean // ant-only: 是否在 ultraplan 启动弹窗中展示过一次 CCR 条款
