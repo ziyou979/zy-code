@@ -53,10 +53,11 @@ export function getBuiltInAgents(): AgentDefinition[] {
     agents.push(ZY_CODE_GUIDE_AGENT)
   }
 
-  // 始终启用 verification agent，绕过 feature('VERIFICATION_AGENT')。
-  // 原因：dev 模式下 `zycode` 直接 bun 运行源码，未传 --feature 标记，
-  // feature() 在运行期恒为 false，必须显式去掉 wrapper 才能生效。
-  agents.push(VERIFICATION_AGENT)
+  // dev 启动已通过 --feature=VERIFICATION_AGENT 对齐生产构建（见 package.json），
+  // 恢复标准 feature 包裹，不再需要显式绕过。
+  if (feature('VERIFICATION_AGENT')) {
+    agents.push(VERIFICATION_AGENT)
+  }
 
   return agents
 }

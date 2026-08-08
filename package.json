@@ -10,7 +10,7 @@
     "build": "bun run build.ts",
     "build:cli": "bun run build.ts",
     "start": "bun dist/cli.js",
-    "dev": "bun --preload ./src/entrypoints/devPreload.ts src/entrypoints/cli.tsx",
+    "dev": "bun --preload ./src/entrypoints/devPreload.ts --feature=TREE_SITTER_BASH --feature=DAEMON --feature=FORK_SUBAGENT --feature=REACTIVE_COMPACT --feature=TOKEN_BUDGET --feature=CONTEXT_COLLAPSE --feature=KAIROS --feature=AGENT_TRIGGERS --feature=MONITOR_TOOL --feature=BUILTIN_EXPLORE_PLAN_AGENTS --feature=VERIFICATION_AGENT --feature=WORKFLOW_SCRIPTS src/entrypoints/cli.tsx",
     "test": "bun test",
     "format": "biome format --write src scripts tests build.ts",
     "format:check": "biome format src scripts tests build.ts",

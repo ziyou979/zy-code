@@ -1,25 +1,9 @@
 // Dev-mode preload: defines build-time macros that Bun.build() normally injects.
 // Loaded via `bun --preload` before cli.tsx — never shipped in production builds.
+// 注意：feature() 是 bun:bundle 的编译期宏，dev 下只能通过 `bun --feature=NAME`
+// 命令行标志注入（见 package.json 的 dev 脚本），设置 Bun.features 无效。
 
 process.env.USER_TYPE = 'external'
-
-// 注入 build features，使 true 等在 dev 下为 true
-if (typeof Bun !== 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Bun type may not have features
-  interface BunWithFeatures {
-    features: string[]
-  }
-  ;(Bun as unknown as BunWithFeatures).features = [
-    ...((Bun as unknown as BunWithFeatures).features || []),
-    'FORK_SUBAGENT',
-    'REACTIVE_COMPACT',
-    'TOKEN_BUDGET',
-    'CONTEXT_COLLAPSE',
-    'KAIROS',
-    'AGENT_TRIGGERS',
-    'MONITOR_TOOL',
-  ]
-}
 
 Object.assign(globalThis, {
   MACRO: {
