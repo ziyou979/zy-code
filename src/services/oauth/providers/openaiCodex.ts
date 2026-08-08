@@ -568,7 +568,7 @@ export const openaiCodexOAuthProvider: OAuthProviderInterface = {
   name: 'ChatGPT Plus/Pro (Codex Subscription)',
   usesCallbackServer: true,
   apiProvider: 'openai',
-  apiFormat: 'openai',
+  apiFormat: 'openai-chat',
 
   async login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
     const loginMethod = await callbacks.onSelect({

@@ -23,11 +23,11 @@ describe('opencode-go provider', () => {
     rmSync(configDir, { recursive: true, force: true })
   })
 
-  test('Go 的 OpenAI-compatible 模型走 openai 格式', () => {
-    expect(getEffectiveApiFormat('opencode-go', 'opencode-go/kimi-k2.7-code')).toBe('openai')
-    expect(getEffectiveApiFormat('opencode-go', 'glm-5.2')).toBe('openai')
-    expect(getEffectiveApiFormat('opencode-go', 'deepseek-v4-flash')).toBe('openai')
-    expect(getEffectiveApiFormat('opencode-go', 'mimo-v2.5-pro')).toBe('openai')
+  test('Go 的 OpenAI-compatible 模型走 openai-chat 格式', () => {
+    expect(getEffectiveApiFormat('opencode-go', 'opencode-go/kimi-k2.7-code')).toBe('openai-chat')
+    expect(getEffectiveApiFormat('opencode-go', 'glm-5.2')).toBe('openai-chat')
+    expect(getEffectiveApiFormat('opencode-go', 'deepseek-v4-flash')).toBe('openai-chat')
+    expect(getEffectiveApiFormat('opencode-go', 'mimo-v2.5-pro')).toBe('openai-chat')
   })
 
   test('Go 的 Messages 模型走 anthropic 格式', () => {

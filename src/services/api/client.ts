@@ -12,6 +12,7 @@ import {
   isEnvEndpointProvider,
   isGoogleProvider,
   isOpenAIProvider,
+  isOpenAIResponsesProvider,
 } from 'src/services/model/providers.js'
 import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/services/auth/auth.js'
 import { getUserAgent } from 'src/services/http/http.js'
@@ -24,6 +25,7 @@ import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../services/inf
 import { anthropicProviderAdapter } from './anthropicProviderAdapter.js'
 import { googleProviderAdapter } from './googleProviderAdapter.js'
 import { OpenAIProviderAdapter } from './openAIProviderAdapter.js'
+import { OpenAIResponsesProviderAdapter } from './openAIResponsesProviderAdapter.js'
 
 /**
  * 不同客户端类型的环境变量：
@@ -164,9 +166,9 @@ export async function getAnthropicClient({
     }
     // 5. Registry defaults（根据当前格式选择对应端点）
     if (!resolvedBaseURL && registryEntry.defaultBaseUrls) {
-      const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai'
+      const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai-chat'
       resolvedBaseURL =
-        registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls.openai
+        registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls['openai-chat']
     }
 
     if (resolvedBaseURL) {
@@ -217,8 +219,9 @@ export async function getAnthropicClient({
       }
     }
     if (!customBaseURL && registryEntry.defaultBaseUrls) {
-      const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai'
-      customBaseURL = registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls.openai
+      const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai-chat'
+      customBaseURL =
+        registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls['openai-chat']
     }
 
     const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey(apiProvider)
@@ -271,7 +274,7 @@ export async function getAnthropicClient({
  * 与 getAnthropicClient 共享相同的基础设施：
  * - 共享 headers（X-Zy-Code-Session-Id、User-Agent、ZY_CODE_CUSTOM_HEADERS 等）
  * - baseUrl 优先级：传入值 → provider-specific env → OPENAI_BASE_URL → LLM_BASE_URL
- *   → settings.json baseUrl → (provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls.openai → api.openai.com/v1
+ *   → settings.json baseUrl → (provider 匹配时) configuredBaseUrl → registry.defaultBaseUrls['openai-chat'] → api.openai.com/v1
  * - proxy 配置（getProxyFetchOptions）
  * - debug logger（isDebugToStdErr）
  * - timeout 配置（API_TIMEOUT_MS）
@@ -346,7 +349,7 @@ export async function getOpenAIClient(options?: {
     }
     // 5. Registry defaults
     if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
-      resolvedBaseURL = registryEntry.defaultBaseUrls.openai
+      resolvedBaseURL = registryEntry.defaultBaseUrls['openai-chat']
     }
     // 6. Fallback
     if (!resolvedBaseURL) {
@@ -576,6 +579,11 @@ export function getLLMAdapter(options?: {
   // Google 原生格式优先检查（最具体）
   if (isGoogleProvider(apiProvider, model)) {
     return new googleProviderAdapter()
+  }
+
+  // OpenAI Responses API 比 isOpenAIProvider 更具体，必须在其之前分派
+  if (isOpenAIResponsesProvider(apiProvider, model)) {
+    return new OpenAIResponsesProviderAdapter()
   }
 
   if (isOpenAIProvider(apiProvider, model)) {

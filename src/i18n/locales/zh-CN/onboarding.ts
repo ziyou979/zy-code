@@ -4,9 +4,12 @@ export const zhOnboarding: TranslationResource = {
   'onboarding.apiFormat.anthropic': 'Anthropic 格式',
   'onboarding.apiFormat.anthropicDesc':
     '使用 Anthropic Messages API 格式（支持 thinking、cache_control 等）',
-  'onboarding.apiFormat.openai': 'OpenAI 格式',
-  'onboarding.apiFormat.openaiDesc':
+  'onboarding.apiFormat.openai-chat': 'OpenAI Chat 格式',
+  'onboarding.apiFormat.openai-chatDesc':
     '使用 OpenAI Chat Completions API 格式（适用于 vLLM、LiteLLM 等）',
+  'onboarding.apiFormat.openai-responses': 'OpenAI Responses 格式',
+  'onboarding.apiFormat.openai-responsesDesc':
+    '使用 OpenAI Responses API 格式（gpt-5 / o 系列等新模型推荐）',
   'onboarding.apiFormat.google': 'Google 格式',
   'onboarding.apiFormat.googleDesc':
     '使用 Google Generative AI 原生 API 格式（适用于 Gemini 模型）',

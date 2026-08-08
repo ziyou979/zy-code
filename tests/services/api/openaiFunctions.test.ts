@@ -291,7 +291,7 @@ describe('convertThinkingForOpenAI', () => {
             {
               pattern: 'MiniMax-M2.1',
               provider: 'dashscope',
-              apiFormat: 'openai',
+              apiFormat: 'openai-chat',
               capabilities: {
                 thinking: { adaptive: true },
               },

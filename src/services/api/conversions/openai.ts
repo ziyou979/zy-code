@@ -495,7 +495,7 @@ export function convertThinkingForOpenAI(
   const effort = reasoningEffort
 
   // 使用默认映射；provider 若声明 openaiAttr.thinking，则仅覆盖差异部分。
-  const params = thinkingAttr.enable(effort, model, { provider, apiFormat: 'openai' })
+  const params = thinkingAttr.enable(effort, model, { provider, apiFormat: 'openai-chat' })
 
   // 从模型级别配置获取思考块回传模式
   const preserveThinking = getLocalModelPreserveThinking(model, {

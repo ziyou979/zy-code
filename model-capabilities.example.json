@@ -31,7 +31,7 @@
     {
       "pattern": "qwen3.6-max-preview",
       "provider": "openrouter",
-      "apiFormat": "openai",
+      "apiFormat": "openai-chat",
       "capabilities": {
         "thinking": {
           "effort": {

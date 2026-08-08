@@ -4,9 +4,12 @@ export const enOnboarding: TranslationResource = {
   'onboarding.apiFormat.anthropic': 'Anthropic format',
   'onboarding.apiFormat.anthropicDesc':
     'Uses Anthropic Messages API format (supports thinking, cache_control, etc.)',
-  'onboarding.apiFormat.openai': 'OpenAI format',
-  'onboarding.apiFormat.openaiDesc':
+  'onboarding.apiFormat.openai-chat': 'OpenAI Chat format',
+  'onboarding.apiFormat.openai-chatDesc':
     'Uses OpenAI Chat Completions API format (for vLLM, LiteLLM, etc.)',
+  'onboarding.apiFormat.openai-responses': 'OpenAI Responses format',
+  'onboarding.apiFormat.openai-responsesDesc':
+    'Uses OpenAI Responses API format (recommended for gpt-5 / o-series models)',
   'onboarding.apiFormat.google': 'Google format',
   'onboarding.apiFormat.googleDesc':
     'Uses Google Generative AI native API format (for Gemini models)',

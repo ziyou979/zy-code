@@ -249,11 +249,22 @@ export function getEffectiveApiFormat(provider: APIProvider, model?: string): Ap
 }
 
 /**
- * 判断是否为使用 OpenAI SDK 直连的 provider。
- * 双格式 provider（如 dashscope）通过 settings.apiFormat 切换。
+ * 判断是否为 OpenAI SDK 直连的 provider（Chat Completions 或 Responses）。
+ * 语义是「走 OpenAI SDK / Bearer 鉴权体系」，供 auth、http header、错误处理
+ * 等不区分子协议的调用点使用；adapter 分派请用更精确的
+ * isOpenAIResponsesProvider / isAnthropicProvider。
  */
 export function isOpenAIProvider(provider: APIProvider, model?: string): boolean {
-  return getEffectiveApiFormat(provider, model) === 'openai'
+  const format = getEffectiveApiFormat(provider, model)
+  return format === 'openai-chat' || format === 'openai-responses'
+}
+
+/**
+ * 判断是否为 OpenAI Responses API（/responses）格式的 provider。
+ * 最具体的判定，用于 getLLMAdapter 分派时优先于 isOpenAIProvider。
+ */
+export function isOpenAIResponsesProvider(provider: APIProvider, model?: string): boolean {
+  return getEffectiveApiFormat(provider, model) === 'openai-responses'
 }
 
 /**
@@ -335,7 +346,7 @@ export function getProviderAttr(provider?: string, model?: string): OpenAiAttr |
   }
 
   // OpenAI 格式统一具备默认 thinking 映射；provider 可按需覆盖。
-  if (getEffectiveApiFormat(providerId as APIProvider, model) === 'openai') {
+  if (getEffectiveApiFormat(providerId as APIProvider, model) === 'openai-chat') {
     return {
       ...entry.openaiAttr,
       thinking: {

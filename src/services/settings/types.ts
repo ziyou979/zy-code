@@ -127,14 +127,15 @@ export const SettingsSchema = lazySchema(() =>
           'Provider-scoped configuration. Keys are provider ids; values override baseUrl, apiFormat and model settings only for that provider.',
         ),
       apiFormat: z
-        .enum(['anthropic', 'openai', 'google'])
+        .enum(['anthropic', 'openai-chat', 'openai-responses', 'google'])
         .optional()
         .describe(
           'API protocol format for providers supporting multiple formats. ' +
             '"anthropic" uses independent system field + tool_result inside user messages (better caching). ' +
-            '"openai" uses chat/completions format. ' +
+            '"openai-chat" uses chat/completions format. ' +
             '"google" uses Google Generative AI native format (for Gemini models). ' +
-            'Default: depends on provider (google for Gemini, openai for others).',
+            '"openai-responses" uses OpenAI Responses API (/responses, recommended for gpt-5 / o-series models). ' +
+            'Default: depends on provider (google for Gemini, openai-chat for others).',
         ),
       /** API 基地址：与 provider 配合使用，覆盖 registry 默认值 */
       baseUrl: z

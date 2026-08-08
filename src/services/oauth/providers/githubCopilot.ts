@@ -396,7 +396,7 @@ export const githubCopilotOAuthProvider: OAuthProviderInterface = {
   id: 'github-copilot',
   name: 'GitHub Copilot',
   apiProvider: 'github-copilot',
-  apiFormat: 'openai',
+  apiFormat: 'openai-chat',
 
   async login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
     return loginGitHubCopilot({

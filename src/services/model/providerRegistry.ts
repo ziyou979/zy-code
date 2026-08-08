@@ -25,7 +25,7 @@ export type ModelTier = 'advanced' | 'standard' | 'compact'
 /**
  * 支持的 API 消息格式：
  * - `'anthropic'` — Anthropic Messages API 格式
- * - `'openai'`    — 直接使用 OpenAI SDK（不走 Anthropic SDK）
+ * - `'openai-chat'`    — 直接使用 OpenAI SDK（不走 Anthropic SDK）
  * - `'google'`    — Google Generative AI 原生 API 格式（Gemini）
  */
 /**
@@ -53,9 +53,9 @@ export interface ProviderEntry {
   /**
    * 该 provider 支持的 API 消息格式列表。
    * - `['anthropic']`        — 仅 Anthropic 格式
-   * - `['openai']`           — 使用 OpenAI SDK 直连
+   * - `['openai-chat']`           — 使用 OpenAI SDK 直连
    * - `['google']`           — 使用 Google Generative AI 原生格式
-   * - `['anthropic', 'openai']` — 双格式，用户在 onboarding 时选择
+   * - `['anthropic', 'openai-chat']` — 双格式，用户在 onboarding 时选择
    */
   supportedFormats: ApiFormat[]
 
@@ -78,10 +78,12 @@ export interface ProviderEntry {
    * 默认 base URL。
    * - env-or-default 类型：环境变量未设置时使用
    * - preconfigured 类型：onboarding 时保存到 configuredBaseUrl
-   * - 多格式 provider：按 'openai'、'anthropic'、'google' 分别配置
+   * - 多格式 provider：按 'openai-chat'、'anthropic'、'google' 分别配置；
+   *   'openai-responses' 与 'openai-chat' 共用端点（无独立 key 时回落 openai-chat）
    */
   defaultBaseUrls?: {
-    openai?: string
+    'openai-chat'?: string
+    'openai-responses'?: string
     anthropic?: string
     google?: string
   }
@@ -185,10 +187,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'qianfan',
-    supportedFormats: ['openai'],
+    supportedFormats: ['openai-chat'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
-    defaultBaseUrls: { openai: 'https://aistudio.baidu.com/llm/lmapi/v3' },
+    defaultBaseUrls: { 'openai-chat': 'https://aistudio.baidu.com/llm/lmapi/v3' },
     apiKeyLabel: 'Baidu API Key',
     suggestedModels: [
       { label: 'deepseek-r1', value: 'deepseek-r1', tier: 'advanced' },
@@ -213,11 +215,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'dashscope',
-    supportedFormats: ['openai', 'anthropic'],
+    supportedFormats: ['openai-chat', 'anthropic'],
     endpointType: ['env', 'default'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      'openai-chat': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
       anthropic: 'https://dashscope.aliyuncs.com/apps/anthropic/',
     },
     baseUrlEnvVar: 'DASHSCOPE_BASE_URL',
@@ -233,10 +235,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'deepseek',
-    supportedFormats: ['openai', 'anthropic'],
+    supportedFormats: ['openai-chat', 'anthropic'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
-    defaultBaseUrls: { openai: 'https://api.deepseek.com' },
+    defaultBaseUrls: { 'openai-chat': 'https://api.deepseek.com' },
     apiKeyLabel: 'DeepSeek API Key',
     suggestedModels: [
       { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro', tier: 'advanced' },
@@ -246,11 +248,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'fireworks',
-    supportedFormats: ['anthropic', 'openai'],
+    supportedFormats: ['anthropic', 'openai-chat'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://api.fireworks.ai/inference/v1',
+      'openai-chat': 'https://api.fireworks.ai/inference/v1',
       anthropic: 'https://api.fireworks.ai/inference/v1',
     },
     apiKeyLabel: 'Fireworks API Key',
@@ -274,12 +276,12 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'azure',
-    supportedFormats: ['anthropic', 'openai'],
+    supportedFormats: ['anthropic', 'openai-chat'],
     endpointType: ['env', 'default'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
       anthropic: 'https://models.inference.ai.azure.com',
-      openai: 'https://models.inference.ai.azure.com',
+      'openai-chat': 'https://models.inference.ai.azure.com',
     },
     baseUrlEnvVar: 'AZURE_BASE_URL',
     apiKeyLabel: 'Microsoft Azure API Key',
@@ -292,13 +294,13 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'gemini',
-    supportedFormats: ['google', 'openai'],
+    supportedFormats: ['google', 'openai-chat'],
     endpointType: ['env', 'default'],
     capabilities: ['context_management'],
     apiKeyLabel: 'Google AI API Key',
     defaultBaseUrls: {
       google: 'https://generativelanguage.googleapis.com/v1beta',
-      openai: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+      'openai-chat': 'https://generativelanguage.googleapis.com/v1beta/openai/',
     },
     suggestedModels: [
       { label: 'gemini-2.5-pro', value: 'gemini-2.5-pro', tier: 'advanced' },
@@ -308,17 +310,17 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'generic',
-    supportedFormats: ['anthropic', 'openai'],
+    supportedFormats: ['anthropic', 'openai-chat'],
     endpointType: ['custom'],
     capabilities: FULL_CAPABILITIES,
     apiKeyLabel: 'API Key',
   },
   {
     id: 'groq',
-    supportedFormats: ['openai'],
+    supportedFormats: ['openai-chat'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
-    defaultBaseUrls: { openai: 'https://api.groq.com/openai/v1' },
+    defaultBaseUrls: { 'openai-chat': 'https://api.groq.com/openai/v1' },
     apiKeyLabel: 'Groq API Key',
     suggestedModels: [
       {
@@ -336,10 +338,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'pangu',
-    supportedFormats: ['openai'],
+    supportedFormats: ['openai-chat'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
-    defaultBaseUrls: { openai: 'https://api.modelarts-maas.com/openai/v1' },
+    defaultBaseUrls: { 'openai-chat': 'https://api.modelarts-maas.com/openai/v1' },
     apiKeyLabel: '华为盘古 API Key',
     suggestedModels: [
       { label: 'DeepSeek-R1', value: 'DeepSeek-R1', tier: 'advanced' },
@@ -348,11 +350,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'kimi',
-    supportedFormats: ['anthropic', 'openai'],
+    supportedFormats: ['anthropic', 'openai-chat'],
     endpointType: ['env', 'default'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://api.moonshot.cn/v1',
+      'openai-chat': 'https://api.moonshot.cn/v1',
       anthropic: 'https://api.moonshot.cn/anthropic',
     },
     baseUrlEnvVar: 'KIMI_BASE_URL',
@@ -375,29 +377,29 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'lmstudio',
-    supportedFormats: ['openai'],
+    supportedFormats: ['openai-chat'],
     endpointType: ['custom'],
     capabilities: STANDARD_CAPABILITIES,
-    defaultBaseUrls: { openai: 'http://localhost:1234/v1' },
+    defaultBaseUrls: { 'openai-chat': 'http://localhost:1234/v1' },
     apiKeyLabel: 'API Key',
     baseUrlHint: 'http://localhost:1234/v1',
   },
   {
     id: 'llamacpp',
-    supportedFormats: ['openai'],
+    supportedFormats: ['openai-chat'],
     endpointType: ['custom'],
     capabilities: STANDARD_CAPABILITIES,
-    defaultBaseUrls: { openai: 'http://localhost:8080/v1' },
+    defaultBaseUrls: { 'openai-chat': 'http://localhost:8080/v1' },
     apiKeyLabel: 'API Key',
     baseUrlHint: 'http://localhost:8080/v1',
   },
   {
     id: 'minimax',
-    supportedFormats: ['anthropic', 'openai'],
+    supportedFormats: ['anthropic', 'openai-chat'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://api.minimaxi.com/v1',
+      'openai-chat': 'https://api.minimaxi.com/v1',
       anthropic: 'https://api.minimaxi.com/anthropic',
     },
     apiKeyLabel: 'MiniMax API Key',
@@ -408,11 +410,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'mimo',
-    supportedFormats: ['anthropic', 'openai'],
+    supportedFormats: ['anthropic', 'openai-chat'],
     endpointType: ['env', 'default'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://api.xiaomimimo.com/v1',
+      'openai-chat': 'https://api.xiaomimimo.com/v1',
       anthropic: 'https://api.xiaomimimo.com/anthropic',
     },
     baseUrlEnvVar: 'MIMO_BASE_URL',
@@ -425,19 +427,19 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'nim',
-    supportedFormats: ['openai'],
+    supportedFormats: ['openai-chat'],
     endpointType: ['custom'],
     capabilities: STANDARD_CAPABILITIES,
-    defaultBaseUrls: { openai: 'https://integrate.api.nvidia.com/v1' },
+    defaultBaseUrls: { 'openai-chat': 'https://integrate.api.nvidia.com/v1' },
     apiKeyLabel: 'NVIDIA API Key',
     baseUrlHint: 'https://integrate.api.nvidia.com/v1',
   },
   {
     id: 'ollama',
-    supportedFormats: ['openai'],
+    supportedFormats: ['openai-chat'],
     endpointType: ['custom'],
     capabilities: STANDARD_CAPABILITIES,
-    defaultBaseUrls: { openai: 'http://localhost:11434/v1' },
+    defaultBaseUrls: { 'openai-chat': 'http://localhost:11434/v1' },
     apiKeyLabel: 'API Key',
     baseUrlHint: 'http://localhost:11434/v1',
     suggestedModels: [
@@ -448,27 +450,32 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'openai',
-    supportedFormats: ['openai'],
+    supportedFormats: ['openai-chat', 'openai-responses'],
+    // gpt-5 系列默认走 Responses API（新模型已不再支持 chat/completions 的
+    // 推理参数；gpt-4o 等旧模型仍走 chat）。想强制 chat 需在
+    // model-capabilities.json 声明模型级 apiFormat（优先级高于此处）。
+    modelApiFormats: [{ pattern: 'gpt-5', apiFormat: 'openai-responses' }],
     endpointType: ['default'],
     capabilities: ['context_management'],
     apiKeyLabel: 'OpenAI API Key',
     suggestedModels: [
-      { label: 'gpt-4o', value: 'gpt-4o', tier: 'standard' },
+      { label: 'gpt-5', value: 'gpt-5', tier: 'advanced' },
+      { label: 'gpt-5-mini', value: 'gpt-5-mini', tier: 'standard' },
       { label: 'gpt-4o-mini', value: 'gpt-4o-mini', tier: 'compact' },
     ],
   },
   {
     id: 'opencode-go',
-    supportedFormats: ['openai', 'anthropic'],
+    supportedFormats: ['openai-chat', 'anthropic'],
     modelApiFormats: [
-      { pattern: 'glm-5.2', apiFormat: 'openai' },
-      { pattern: 'glm-5.1', apiFormat: 'openai' },
-      { pattern: 'kimi-k2.7-code', apiFormat: 'openai' },
-      { pattern: 'kimi-k2.6', apiFormat: 'openai' },
-      { pattern: 'deepseek-v4-pro', apiFormat: 'openai' },
-      { pattern: 'deepseek-v4-flash', apiFormat: 'openai' },
-      { pattern: 'mimo-v2.5-pro', apiFormat: 'openai' },
-      { pattern: 'mimo-v2.5', apiFormat: 'openai' },
+      { pattern: 'glm-5.2', apiFormat: 'openai-chat' },
+      { pattern: 'glm-5.1', apiFormat: 'openai-chat' },
+      { pattern: 'kimi-k2.7-code', apiFormat: 'openai-chat' },
+      { pattern: 'kimi-k2.6', apiFormat: 'openai-chat' },
+      { pattern: 'deepseek-v4-pro', apiFormat: 'openai-chat' },
+      { pattern: 'deepseek-v4-flash', apiFormat: 'openai-chat' },
+      { pattern: 'mimo-v2.5-pro', apiFormat: 'openai-chat' },
+      { pattern: 'mimo-v2.5', apiFormat: 'openai-chat' },
       { pattern: 'minimax-m3', apiFormat: 'anthropic' },
       { pattern: 'minimax-m2.7', apiFormat: 'anthropic' },
       { pattern: 'minimax-m2.5', apiFormat: 'anthropic' },
@@ -479,7 +486,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://opencode.ai/zen/go/v1',
+      'openai-chat': 'https://opencode.ai/zen/go/v1',
       anthropic: 'https://opencode.ai/zen/go',
     },
     apiKeyLabel: 'OpenCode Go API Key',
@@ -497,7 +504,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     // OpenRouter reasoning.effort 支持 low/medium/high（映射由 mapEffortToProvider 处理）。
     apiKeyLabel: 'OpenRouter API Key',
     defaultBaseUrls: {
-      openai: 'https://openrouter.ai/api/v1',
+      'openai-chat': 'https://openrouter.ai/api/v1',
       anthropic: 'https://openrouter.ai/api',
     },
     suggestedModels: [
@@ -523,10 +530,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'perplexity',
-    supportedFormats: ['openai'],
+    supportedFormats: ['openai-chat'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
-    defaultBaseUrls: { openai: 'https://api.perplexity.ai' },
+    defaultBaseUrls: { 'openai-chat': 'https://api.perplexity.ai' },
     apiKeyLabel: 'Perplexity API Key',
     suggestedModels: [
       { label: 'sonar-pro', value: 'sonar-pro', tier: 'advanced' },
@@ -536,11 +543,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'siliconflow',
-    supportedFormats: ['anthropic', 'openai'],
+    supportedFormats: ['anthropic', 'openai-chat'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://api.siliconflow.cn/v1',
+      'openai-chat': 'https://api.siliconflow.cn/v1',
       anthropic: 'https://api.siliconflow.cn/',
     },
     apiKeyLabel: 'SiliconFlow API Key',
@@ -556,11 +563,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'tencent',
-    supportedFormats: ['anthropic', 'openai'],
+    supportedFormats: ['anthropic', 'openai-chat'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://api.lkeap.cloud.tencent.com/v1',
+      'openai-chat': 'https://api.lkeap.cloud.tencent.com/v1',
       anthropic: 'https://api.lkeap.cloud.tencent.com/coding/anthropic',
     },
     apiKeyLabel: 'Tencent Cloud API Key',
@@ -572,10 +579,10 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'together',
-    supportedFormats: ['openai'],
+    supportedFormats: ['openai-chat'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
-    defaultBaseUrls: { openai: 'https://api.together.xyz/v1' },
+    defaultBaseUrls: { 'openai-chat': 'https://api.together.xyz/v1' },
     apiKeyLabel: 'Together AI API Key',
     suggestedModels: [
       { label: 'Qwen/Qwen3-235B-A22B', value: 'Qwen/Qwen3-235B-A22B', tier: 'advanced' },
@@ -604,11 +611,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'ark',
-    supportedFormats: ['anthropic', 'openai'],
+    supportedFormats: ['anthropic', 'openai-chat'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://ark.cn-beijing.volces.com/api/v3',
+      'openai-chat': 'https://ark.cn-beijing.volces.com/api/v3',
       anthropic: 'https://ark.cn-beijing.volces.com/api/coding',
     },
     apiKeyLabel: 'ARK API Key',
@@ -624,11 +631,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'zhipu',
-    supportedFormats: ['anthropic', 'openai'],
+    supportedFormats: ['anthropic', 'openai-chat'],
     endpointType: ['env', 'default'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {
-      openai: 'https://open.bigmodel.cn/api/paas/v4/',
+      'openai-chat': 'https://open.bigmodel.cn/api/paas/v4/',
       anthropic: 'https://open.bigmodel.cn/api/anthropic',
     },
     baseUrlEnvVar: 'ZHIPU_BASE_URL',

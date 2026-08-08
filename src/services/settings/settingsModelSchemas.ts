@@ -53,7 +53,7 @@ export const ProviderScopedSettingsSchema = lazySchema(() =>
           'Base URL for this provider. Overrides the top-level baseUrl for this provider only.',
         ),
       apiFormat: z
-        .enum(['anthropic', 'openai', 'google'])
+        .enum(['anthropic', 'openai-chat', 'openai-responses', 'google'])
         .optional()
         .describe('API protocol format for this provider. Overrides the top-level apiFormat.'),
       model: ModelReferenceSchema()

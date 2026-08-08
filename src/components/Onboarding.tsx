@@ -56,7 +56,8 @@ interface PlatformConfig {
   baseUrlHint?: string
   suggestedModels?: Array<{ label: string; value: string; description: string }>
   defaultBaseUrls?: {
-    openai?: string
+    'openai-chat'?: string
+    'openai-responses'?: string
     anthropic?: string
     google?: string
   }
@@ -206,7 +207,7 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
       const primaryFormat = formats[0]
       baseUrl =
         (primaryFormat ? platform.defaultBaseUrls[primaryFormat] : undefined) ??
-        platform.defaultBaseUrls.openai ??
+        platform.defaultBaseUrls['openai-chat'] ??
         platform.defaultBaseUrls.google ??
         platform.defaultBaseUrls.anthropic
     }
