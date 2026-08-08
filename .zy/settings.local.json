@@ -141,7 +141,12 @@
       "Bash(for f:*)",
       "Bash(do sed:*)",
       "Bash(sed -i \"s|src/services/environment/theme\\\\.ts|src/services/environment/theme.js|\" src/components/tasks/ShellProgress.tsx)",
-      "Bash(sed -i \"s|src/types/llm\\\\.ts|src/types/llm.js|\" src/components/Message.tsx)"
+      "Bash(sed -i \"s|src/types/llm\\\\.ts|src/types/llm.js|\" src/components/Message.tsx)",
+      "Bash(bun -e \":*)",
+      "Read(//c/Users/soleil/.zy/model-capabilities/**)",
+      "Read(//c/Users/soleil/.zy/backups/**)",
+      "Bash(grep:*)",
+      "Bash(模式匹配\"而非\"正在根据\"。通过收集组内 in-progress 工具块的类别:*)"
     ]
   }
 }
