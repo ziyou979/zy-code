@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { basename } from 'node:path'
-import React, { useRef } from 'react'
+import React, { useMemo, useRef } from 'react'
 import { useMinDisplayTime } from '../../hooks/useMinDisplayTime.js'
 import { tSync } from '../../i18n/index.js'
 import { Ansi, Box, Text, useAnimationFrame, useTheme } from '../../ink/index.js'
@@ -10,7 +10,10 @@ import { findToolByName, type Tools } from '../../tools/tool.js'
 import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js'
 import type { AssistantMessage, CollapsedReadSearchGroup } from '../../types/message.js'
 import { uniq } from '../../utils/array.js'
-import { getToolUseIdsFromCollapsedGroup } from '../../services/compact/collapseReadSearch.js'
+import {
+  getSearchOrReadFromContent,
+  getToolUseIdsFromCollapsedGroup,
+} from '../../services/compact/collapseReadSearch.js'
 import { getDisplayPath } from '../../services/infra/file.js'
 import {
   formatDuration,
@@ -40,6 +43,36 @@ const MAX_THINKING_SUMMARY_CHARS = 300
 
 function truncateThinkingSummary(summary: string, maxChars: number): string {
   return summary.length > maxChars ? `${summary.slice(0, maxChars - 1)}…` : summary
+}
+
+/**
+ * 收集折叠组内所有 tool_call 块（id + name + input），用于判断当前正在
+ * 执行的工具类别。组消息可能是 assistant（单块）或 grouped_tool_use
+ * （多块，见 collapseReadSearchGroups 的聚合）；CollapsedReadSearchGroup
+ * 的类型声明只写了 AssistantMessage，这里按运行时结构展开。
+ */
+function collectToolCallBlocks(
+  message: CollapsedReadSearchGroup,
+): Array<{ id: string; name: string; input: unknown }> {
+  const blocks: Array<{ id: string; name: string; input: unknown }> = []
+  for (const msg of (message.messages ?? []) as Array<
+    AssistantMessage | { type: 'grouped_tool_use'; messages: AssistantMessage[] }
+  >) {
+    if (msg.type === 'assistant') {
+      const content = msg.message.content[0]
+      if (content?.type === 'tool_call') {
+        blocks.push({ id: content.id, name: content.name, input: content.input })
+      }
+    } else if (msg.type === 'grouped_tool_use') {
+      for (const m of msg.messages) {
+        const content = m.message.content[0]
+        if (content?.type === 'tool_call') {
+          blocks.push({ id: content.id, name: content.name, input: content.input })
+        }
+      }
+    }
+  }
+  return blocks
 }
 
 type Props = {
@@ -167,6 +200,31 @@ export function CollapsedReadSearchContent({
   const [theme] = useTheme()
   const toolUseIds = getToolUseIdsFromCollapsedGroup(message)
   const anyError = toolUseIds.some((id) => lookups.erroredToolUseIDs.has(id))
+  // 组内当前正在执行的工具调用类别。每个计数部分的时态由"该类别的
+  // 工具是否仍在执行"决定，而非"组是否活跃"——组活跃时搜索可能已完成
+  //（正在读取/思考），此时应显示"已根据 N 个模式匹配"而非"正在根据"。
+  const inProgressKinds = useMemo(() => {
+    const kinds = new Set<string>()
+    for (const block of collectToolCallBlocks(message)) {
+      if (!inProgressToolUseIDs.has(block.id)) {
+        continue
+      }
+      const info = getSearchOrReadFromContent(
+        { type: 'tool_call', name: block.name, input: block.input },
+        tools,
+      )
+      if (!info) {
+        continue
+      }
+      if (info.isSearch) kinds.add('search')
+      if (info.isRead) kinds.add('read')
+      if (info.isList) kinds.add('list')
+      if (info.isBash) kinds.add('bash')
+      if (info.isREPL) kinds.add('repl')
+      if (info.mcpServerName) kinds.add('mcp')
+    }
+    return kinds
+  }, [message, inProgressToolUseIDs, tools])
   const hasMemoryOps =
     (memorySearchCount ?? 0) > 0 || (memoryReadCount ?? 0) > 0 || (memoryWriteCount ?? 0) > 0
   const hasTeamMemoryOps = feature('TEAMMEM')
@@ -468,7 +526,9 @@ export function CollapsedReadSearchContent({
   }
   if (searchCount > 0) {
     const isFirst_0 = nonMemParts.length === 0
-    const phase = isActiveGroup ? 'active' : 'done'
+    // 搜索类工具是否仍在执行决定时态：执行中"正在根据 N 个模式匹配"，
+    // 完成后即使组还活跃（如正在读取）也显示"已根据 N 个模式匹配"。
+    const phase = inProgressKinds.has('search') ? 'active' : 'done'
     const position = isFirst_0 ? 'first' : 'sub'
     const searchKey = `summary.search.${phase}.${position}`
     const searchUnit = tSync(
@@ -491,7 +551,7 @@ export function CollapsedReadSearchContent({
   }
   if (readCount > 0) {
     const isFirst_1 = nonMemParts.length === 0
-    const phase = isActiveGroup ? 'active' : 'done'
+    const phase = inProgressKinds.has('read') ? 'active' : 'done'
     const position = isFirst_1 ? 'first' : 'sub'
     const readKey = `summary.read.${phase}.${position}`
     const readUnit = tSync(readCount === 1 ? 'summary.read.file_one' : 'summary.read.file_other', {
@@ -511,7 +571,7 @@ export function CollapsedReadSearchContent({
   }
   if (listCount > 0) {
     const isFirst_2 = nonMemParts.length === 0
-    const phase = isActiveGroup ? 'active' : 'done'
+    const phase = inProgressKinds.has('list') ? 'active' : 'done'
     const position = isFirst_2 ? 'first' : 'sub'
     const listKey = `summary.list.${phase}.${position}`
     const listUnit = tSync(
@@ -533,7 +593,7 @@ export function CollapsedReadSearchContent({
     )
   }
   if ((replCount ?? 0) > 0) {
-    const replKey = isActiveGroup ? 'summary.repl.active' : 'summary.repl.done'
+    const replKey = inProgressKinds.has('repl') ? 'summary.repl.active' : 'summary.repl.done'
     const replUnit = tSync(replCount === 1 ? 'summary.repl.time_one' : 'summary.repl.time_other', {
       count: replCount ?? 0,
     })
@@ -554,7 +614,7 @@ export function CollapsedReadSearchContent({
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       message.mcpServerNames?.map((n) => n.replace(/^zy\.ai /, '')).join(', ') || 'MCP'
     const isFirst_3 = nonMemParts.length === 0
-    const phase = isActiveGroup ? 'active' : 'done'
+    const phase = inProgressKinds.has('mcp') ? 'active' : 'done'
     const position = isFirst_3 ? 'first' : 'sub'
     const mcpKey = `summary.mcp.${phase}.${position}`
     if (!isFirst_3) {
@@ -579,7 +639,7 @@ export function CollapsedReadSearchContent({
   }
   if (isFullscreenEnvEnabled() && bashCount > 0) {
     const isFirst_4 = nonMemParts.length === 0
-    const phase = isActiveGroup ? 'active' : 'done'
+    const phase = inProgressKinds.has('bash') ? 'active' : 'done'
     const position = isFirst_4 ? 'first' : 'sub'
     const bashKey = `summary.bash.${phase}.${position}`
     const bashUnit = tSync(
@@ -606,7 +666,8 @@ export function CollapsedReadSearchContent({
   const memParts: React.ReactNode[] = []
   if ((memoryReadCount ?? 0) > 0) {
     const isFirst_5 = !hasPrecedingNonMem && memParts.length === 0
-    const phase = isActiveGroup ? 'active' : 'done'
+    // memory Read 的底层工具是 Read（目标为 memory 文件），复用 read 类别
+    const phase = inProgressKinds.has('read') ? 'active' : 'done'
     const position = isFirst_5 ? 'first' : 'sub'
     const mrKey = `summary.memoryRead.${phase}.${position}`
     const mrUnit = tSync(memoryReadCount === 1 ? 'summary.memory_one' : 'summary.memory_other', {
@@ -626,7 +687,8 @@ export function CollapsedReadSearchContent({
   }
   if ((memorySearchCount ?? 0) > 0) {
     const isFirst_6 = !hasPrecedingNonMem && memParts.length === 0
-    const phase = isActiveGroup ? 'active' : 'done'
+    // memory Search 的底层工具是 Glob/Grep（目标为 memory 路径），复用 search 类别
+    const phase = inProgressKinds.has('search') ? 'active' : 'done'
     const position = isFirst_6 ? 'first' : 'sub'
     const msKey = `summary.memorySearch.${phase}.${position}`
     if (!isFirst_6) {
@@ -636,6 +698,8 @@ export function CollapsedReadSearchContent({
   }
   if ((memoryWriteCount ?? 0) > 0) {
     const isFirst_7 = !hasPrecedingNonMem && memParts.length === 0
+    // memory Write 的底层工具是 FileWrite/FileEdit（目标为 memory 文件），
+    // 没有可归类的执行类别，保持按组活跃判断（与旧行为一致）
     const phase = isActiveGroup ? 'active' : 'done'
     const position = isFirst_7 ? 'first' : 'sub'
     const mwKey = `summary.memoryWrite.${phase}.${position}`
