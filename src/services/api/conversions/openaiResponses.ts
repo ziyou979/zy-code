@@ -302,9 +302,20 @@ export function convertThinkingForResponses(
  */
 function normalizeResponsesReasoningEffort(effort?: string): 'low' | 'medium' | 'high' {
   const e = effort?.toLowerCase()
-  if (e === 'low' || e === 'high') {
-    return e
+  if (e === 'low') return 'low'
+  if (e === 'medium' || e === 'balanced') return 'medium'
+  // "on" 是内部 toggle；extreme/thorough 等映射为 high
+  if (
+    e === 'high' ||
+    e === 'on' ||
+    e === 'extreme' ||
+    e === 'ultra' ||
+    e === 'thorough' ||
+    e === 'xhigh'
+  ) {
+    return 'high'
   }
+  if (e === 'light' || e === 'quick') return 'low'
   return 'medium'
 }
 

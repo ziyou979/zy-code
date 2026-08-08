@@ -119,7 +119,14 @@
       "capabilities": {
         "thinking": {
           "preserve": "always",
-          "effort": ["off", "on"]
+          "effort": {
+            "levels": ["off", "light", "balanced", "thorough"],
+            "map": {
+              "light": "low",
+              "balanced": "medium",
+              "thorough": "high"
+            }
+          }
         },
         "structured_outputs": true,
         "auto_mode": true,
@@ -161,7 +168,14 @@
       "capabilities": {
         "thinking": {
           "preserve": "always",
-          "effort": ["off", "on"]
+          "effort": {
+            "levels": ["off", "light", "balanced", "thorough"],
+            "map": {
+              "light": "low",
+              "balanced": "medium",
+              "thorough": "high"
+            }
+          }
         },
         "structured_outputs": true,
         "auto_mode": true,

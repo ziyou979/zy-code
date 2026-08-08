@@ -41,7 +41,7 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 
 | 路径 | 用途 |
 |---|---|
-| `~/.zy.json` 或 `~/.zy/.config.json` | 全局配置(onboarding 结果:provider / apiKey / baseUrl / model、user 级 mcpServers) |
+| `~/.zy.json` 或 `~/.zy/.config.json` | 全局 CLI 状态（主题、通知、一次性 flag 等）；**不含** API key / provider（见 settings + auth） |
 | `~/.zy/auth.json` | 用户级认证配置(API key / apiKeyHelper,见 §3) |
 | `~/.zy/model-capabilities.json` + `~/.zy/model-capabilities/*.json(.c)` | 本地模型能力声明,支持单文件或目录分片(见 §4) |
 | `~/.zy/keybindings.json` | 自定义快捷键(目前受 feature gate 控制,外部默认用内置键位) |
@@ -62,24 +62,39 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 
 | Key | 类型 | 默认 | 用途 |
 |---|---|---|---|
-| `provider` | `'anthropic'\|'dashscope'\|'opencode-go'\|'openrouter'\|'generic'\|'local'\|'zhipu'\|'kimi'` | — | API 提供商(覆盖 onboarding 与 env) |
-| `baseUrl` | string | — | API 基地址(覆盖 registry 默认值和 onboarding configuredBaseUrl) |
+| `provider` | `'anthropic'\|'dashscope'\|'xai'\|'opencode-go'\|'openrouter'\|'generic'\|'local'\|…` | — | API 提供商(完整枚见 providerRegistry) |
+| `baseUrl` | string | — | API 基地址(覆盖 registry 默认值) |
 | `model` | `string \| {provider?,model}` | — | 覆盖默认模型；对象格式可指定该模型使用的 provider |
 | `mainLoopModel` | `'advanced'\|'standard'\|'compact'` | `standard` | 主循环能力层级 |
-| `models` | `Record<层级, 模型ID \| {provider?,model}>` | — | 按 advanced/standard/compact 指定具体模型；对象格式可逐层绑定 provider |
+| `models` | `Record<层级, 模型ID \| {provider?,model} \| 候选数组>` | — | 按 advanced/standard/compact 指定模型；可为有序候选列表实现多 auth 混用 |
+| `modelFailover` | `{enabled?, maxConsecutiveFailures?}` | 见下 | 候选列表失效切换策略 |
 | `modelOverrides` | `Record<anthropicId, providerId>` | — | 模型 ID 映射(如 Bedrock ARN) |
 | `customModels` | `{alias,model,provider?,label?,description?}[]` | — | 自定义模型列表；`provider` 可为该别名绑定 provider |
 | `advisorModel` | string | — | advisor 工具用的模型 |
 
-模型引用支持两种写法：字符串模型 ID 会使用当前作用域的 provider；对象写法会显式绑定 provider。这样可以在同一个 `settings.json` 中把不同层级或别名路由到不同 provider。
+模型引用支持：
+
+1. **字符串**模型 ID → 当前作用域 provider  
+2. **对象** `{ provider, model }` → 显式绑定 provider  
+3. **有序数组**（多 auth）：`[{ provider, model }, ...]`，下标越小优先级越高  
 
 ```jsonc
 {
-  "provider": "generic",
+  "provider": "xai",
+  "mainLoopModel": "standard",
   "models": {
-    "standard": { "provider": "dashscope", "model": "qwen3.6-plus" },
-    "advanced": { "provider": "opencode-go", "model": "opencode-go/kimi-k2.7-code" },
+    // 多 auth：先 xAI 订阅，失败后切百炼，再切 OpenCode Go
+    "standard": [
+      { "provider": "xai", "model": "grok-4.3" },
+      { "provider": "dashscope", "model": "qwen3.6-plus" },
+      { "provider": "opencode-go", "model": "opencode-go/kimi-k2.7-code" }
+    ],
+    "advanced": { "provider": "xai", "model": "grok-4.3" },
     "compact": "local-fast-model"
+  },
+  "modelFailover": {
+    "enabled": true,
+    "maxConsecutiveFailures": 2
   },
   "customModels": [
     {
@@ -87,16 +102,17 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
       "provider": "opencode-go",
       "model": "opencode-go/kimi-k2.7-code"
     }
-  ],
-  "providers": {
-    "nim": {
-      "models": {
-        "standard": "nvidia/llama-3.3-nemotron-super-49b-v1"
-      }
-    }
-  }
+  ]
 }
 ```
+
+**多 auth 失效切换（`modelFailover`）**
+
+- 同候选内仍走 `withRetry`（401 刷新、429 退避）。  
+- 当认证失败（刷新后仍 401/403）或 **限流/额度耗尽** 连续达到 `maxConsecutiveFailures`（默认 2）时，自动切到数组下一项。  
+- 切换后写入 `~/.zy/model-chain-state.json` **跨会话粘住**，直到 `/model` 或修改 `models` / `modelFailover`。  
+- 第一期 **不**因 529/5xx 自动粘走（CLI `--fallback-model` 仍处理过载）。  
+- 凭证：各 `provider` 对应 `auth.json` 条目或匹配的 OAuth；OAuth token 仅用于其 `apiProvider` 匹配的通道。
 
 运行时会先解析当前模型对应的 provider，再读取该 provider 的 `auth.json` 认证、`settings.providers.<id>` 覆盖项、provider 注册表默认值以及 `model-capabilities.json` 中的 `providerOverrides`。
 
@@ -186,7 +202,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 
 ## 3. auth.json
 
-路径 `~/.zy/auth.json`。该文件只保存用户级认证材料,与可提交的项目级 `settings.json` 分离。
+路径 `~/.zy/auth.json`。该文件只保存用户级认证材料,与可提交的项目级 `settings.json` 分离。权限建议 `0600`。
 
 ```jsonc
 {
@@ -195,14 +211,28 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
   },
   "dashscope": {
     "apiKeyHelper": "C:\\Users\\you\\.zy\\get-dashscope-key.ps1"
+  },
+  // /login 多 Provider OAuth 订阅（xai-oauth / anthropic / openai-codex 等）
+  "oauth": {
+    "activeProvider": "xai-oauth",
+    "credentials": {
+      "xai-oauth": {
+        "access": "...",
+        "refresh": "...",
+        "expires": 1710000000000,
+        "tokenEndpoint": "https://auth.x.ai/oauth2/token"
+      }
+    }
   }
 }
 ```
 
-- **扁平 provider map**:顶层 key 就是 provider id,值为该 provider 的认证配置。
+- **扁平 provider map**:顶层 key 就是 provider id,值为该 provider 的认证配置（`apiKey` / `apiKeyHelper`）。
+- **`oauth` 保留键**:`/login` 与 `zy auth login` 的订阅 OAuth 凭证写在这里（`activeProvider` + `credentials`），与 API Key 共用同一文件。
 - **settings 分离**:`settings.json` 不再承载 `apiKey` / `apiKeyHelper`;这两个字段只放在 `auth.json`。
 - **模型路由**:`settings.json` 中通过 `{provider,model}` 或 `customModels[].provider` 绑定到的 provider,若需要 key,也应在这里有同名条目。
 - **apiKeyHelper**:ZY 会执行该命令并读取 stdout 作为 key。provider 级 helper 按命令独立缓存,避免多个 provider 串用同一个缓存值。
+- **OAuth 与 API Key 同文件**:`/login` 订阅凭证只写 `auth.json` 的 `oauth` 块。MCP OAuth 等仍可能使用 `~/.zy/.credentials.json` / Keychain（SecureStorage），与 `/login` 无关。
 
 ---
 
@@ -269,7 +299,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 | `ZY_CODE_MODEL` / `ZY_CODE_SUBAGENT_MODEL` / `ZY_CODE_AUTO_MODE_MODEL` | 主循环 / 子 agent / 自动模式分类器 模型 |
 | `ANTHROPIC_SMALL_FAST_MODEL` | 小快模型 ID 覆盖 |
 
-provider 解析优先级:`settings.provider` > onboarding configuredProvider > 激活 env var > 默认 `anthropic`。
+provider 解析优先级: sticky 多 auth 候选 > OAuth active > `settings.provider` > 默认 `anthropic`。
 
 ### 5.2 API / 认证 / 网络
 
@@ -383,10 +413,18 @@ SDK 把 betas 摘出 body → HTTP 头: anthropic-beta: a,b,c
 | openrouter | `ZY_CODE_USE_OPENROUTER` | hardcoded | anthropic | ✓ |
 | generic | `ZY_CODE_USE_GENERIC` | custom | anthropic+openai | ✓ |
 | deepseek / siliconflow / volcark / tencentlke / minimax / baiduqianfan / huaweicloud / together / groq / fireworks / perplexity | onboarding | preconfigured | 见注册表 | ✓ |
+| xai | onboarding / `settings.provider` / OAuth `xai-oauth` | env-or-default（`XAI_BASE_URL`） | openai-responses（Grok）+ openai-chat | ✓ |
 | ollama / lmstudio / llamacpp / nvidia-nim | onboarding(自填 base URL) | custom | openai | ✓ |
 | anthropic | 默认 | hardcoded | anthropic | ✓ |
 | bedrock / vertex / foundry | 基础设施 | hardcoded | anthropic | ✗ |
 
-**端点类型**:`hardcoded`(URL 写死)、`env-or-default`(读 env 否则默认)、`preconfigured`(onboarding 存 configuredBaseUrl)、`custom`(用户自填)。
+**xAI Grok 订阅（SuperGrok / X Premium+）**：`zy auth login --provider xai-oauth` 走 Device Code OAuth，无需 `XAI_API_KEY`；凭据存 secure storage，推理端点 `https://api.x.ai/v1`。也可用 API Key 配 `provider: xai`。
 
-onboarding 完成后写入全局配置(`~/.zy.json`):`configuredProvider` / `configuredApiKey` / `configuredBaseUrl` / `configuredModel`。
+**端点类型**:`hardcoded`(URL 写死)、`env-or-default`(读 env 否则默认)、`custom`(用户自填) 等，见注册表 `endpointType`。
+
+onboarding 完成后只写：
+
+- `~/.zy/settings.json`：`provider` / `baseUrl` / `models` / `mainLoopModel` 等  
+- `~/.zy/auth.json`：对应 provider 的 `apiKey`（或 `/login` 的 `oauth`）  
+
+**不再**写入 `~/.zy.json` 的 `configuredProvider` / `configuredApiKey` / `configuredBaseUrl` / `configuredModel`（旧字段若存在会被忽略）。
