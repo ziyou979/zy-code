@@ -50,6 +50,16 @@ export const COMPACT_PROGRESS_BAR_WIDTH = 20
 export const COMPACT_API_STREAM_CHARS_FOR_FULL = 4_000
 
 /**
+ * 阶段切换保底帧间隔。
+ *
+ * 附件/hooks 为空时，68→78→88→94→compact_end 的锚点事件在几毫秒内
+ * 连续到达，React 批处理会合并进同一渲染帧——UI 只绘制最终状态，
+ * 中间阶段不可见（进度条停在 api_soft_cap 后直接消失）。
+ * 业务层在阶段锚点间等待一帧（宏任务边界），让每阶段独立提交渲染。
+ */
+export const COMPACT_STAGE_FRAME_HOLD_MS = 40
+
+/**
  * 根据流式输出字符数计算 api 阶段 pct（api_start … api_soft_cap）。
  */
 export function compactApiStreamPercent(charsStreamed: number): number {

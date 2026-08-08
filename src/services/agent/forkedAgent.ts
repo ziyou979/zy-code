@@ -102,6 +102,8 @@ export type ForkedAgentParams = {
   maxTurns?: number
   /** 每条消息到达时调用的可选回调（用于流式 UI） */
   onMessage?: (message: Message) => void
+  /** 流式输出文本累计字符数的回调（用于进度条等 UI 反馈） */
+  onStreamedText?: (totalChars: number) => void
   /** 跳过 sidechain 转录记录（如用于 speculation 等临时工作） */
   skipTranscript?: boolean
   /** 跳过在最后一条消息上写入新的提示词缓存条目。用于
@@ -487,12 +489,14 @@ export async function runForkedAgent({
   maxOutputTokens,
   maxTurns,
   onMessage,
+  onStreamedText,
   skipTranscript,
   skipCacheWrite,
 }: ForkedAgentParams): Promise<ForkedAgentResult> {
   const startTime = Date.now()
   const outputMessages: Message[] = []
   let totalUsage: NonNullableUsage = { ...EMPTY_USAGE }
+  let streamedChars = 0
 
   const { systemPrompt, userContext, systemContext, toolUseContext, forkContextMessages } =
     cacheSafeParams
@@ -535,11 +539,37 @@ export async function runForkedAgent({
       maxTurns,
       skipCacheWrite,
     })) {
-      // 从 message_delta 流事件中提取真实用量（每次 API 调用的最终用量）
+      // 从流事件中提取真实用量与流式输出进度。
+      // 标准流事件是 chunk_delta（文本增量）与 response_delta（最终用量，
+      // 驼峰字段）——早期按 SDK 命名（content_block_delta / message_delta）
+      // 匹配的写法对统一后的标准事件流永不命中，导致用量恒为 0、
+      // 压缩进度条卡在起始百分比。
       if (message.type === 'stream_event') {
-        if ('event' in message && message.event?.type === 'message_delta' && message.event.usage) {
-          const turnUsage = updateUsage({ ...EMPTY_USAGE }, message.event.usage)
-          totalUsage = accumulateUsage(totalUsage, turnUsage)
+        if ('event' in message) {
+          const ev = message.event as {
+            type?: string
+            delta?: { type?: string; text?: string }
+            usage?: {
+              inputTokens?: number
+              outputTokens?: number
+              cacheCreationInputTokens?: number
+              cacheReadInputTokens?: number
+            }
+          }
+          if (ev.type === 'chunk_delta' && ev.delta?.type === 'text_delta') {
+            streamedChars += ev.delta.text?.length ?? 0
+            onStreamedText?.(streamedChars)
+          }
+          if (ev.type === 'response_delta' && ev.usage) {
+            // updateUsage 期望 snake_case（output_tokens），标准事件是驼峰，需转换
+            const turnUsage = updateUsage({ ...EMPTY_USAGE }, {
+              output_tokens: ev.usage.outputTokens ?? 0,
+              input_tokens: ev.usage.inputTokens,
+              cache_creation_input_tokens: ev.usage.cacheCreationInputTokens,
+              cache_read_input_tokens: ev.usage.cacheReadInputTokens,
+            } as Partial<NonNullableUsage>)
+            totalUsage = accumulateUsage(totalUsage, turnUsage)
+          }
         }
         continue
       }

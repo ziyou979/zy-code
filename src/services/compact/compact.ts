@@ -90,7 +90,12 @@ import {
   roughTokenCountEstimation,
   roughTokenCountEstimationForMessages,
 } from '../tokenEstimation.js'
-import { COMPACT_STAGE_PCT, compactApiStreamPercent, emitCompactStage } from './compactProgress.js'
+import {
+  COMPACT_STAGE_PCT,
+  COMPACT_STAGE_FRAME_HOLD_MS,
+  compactApiStreamPercent,
+  emitCompactStage,
+} from './compactProgress.js'
 import { groupMessagesByApiRound } from './grouping.js'
 import {
   getCompactPrompt,
@@ -515,6 +520,12 @@ export async function compactConversation(
     // 摘要 API 完成 → attachments 阶段
     emitCompactStage(context.onCompactProgress, 'api', COMPACT_STAGE_PCT.api_soft_cap)
     emitCompactStage(context.onCompactProgress, 'attachments', COMPACT_STAGE_PCT.attachments)
+    // 保底一帧：无附件可恢复时该阶段毫秒级完成，78→88→94→end 的事件会
+    // 合并进同一渲染帧，UI 看不到阶段递进（进度条停在 68% 后直接消失）。
+    // 等待一帧让 attachments（78%）被独立渲染。
+    await sleep(COMPACT_STAGE_FRAME_HOLD_MS, context.abortController.signal, {
+      abortError: () => createAbortError(),
+    })
 
     // 清除前保存当前文件状态
     const preCompactReadFileState = cacheToObject(context.readFileState)
@@ -588,6 +599,11 @@ export async function compactConversation(
       hookType: 'session_start',
     })
     emitCompactStage(context.onCompactProgress, 'session_start', COMPACT_STAGE_PCT.session_start)
+    // 保底一帧：SessionStart hooks 未配置时毫秒级返回，88 与 post_hooks
+    // 的 94 合并进同一渲染帧。等待一帧渲染 session_start（88%）阶段。
+    await sleep(COMPACT_STAGE_FRAME_HOLD_MS, context.abortController.signal, {
+      abortError: () => createAbortError(),
+    })
     // 压缩成功后执行 SessionStart hooks
     const hookMessages = await processSessionStartHooks('compact', {
       model: context.options.mainLoopModel,
@@ -718,6 +734,11 @@ export async function compactConversation(
       hookType: 'post_compact',
     })
     emitCompactStage(context.onCompactProgress, 'hooks', COMPACT_STAGE_PCT.post_hooks)
+    // 保底一帧：PostCompact hooks 未配置时毫秒级返回，94 与 finally 中的
+    // compact_end 合并，进度条直接从 68% 消失。等待一帧渲染 94% 阶段。
+    await sleep(COMPACT_STAGE_FRAME_HOLD_MS, context.abortController.signal, {
+      abortError: () => createAbortError(),
+    })
     const postCompactHookResult = await executePostCompactHooks(
       {
         trigger: isAutoCompact ? 'auto' : 'manual',
@@ -920,6 +941,11 @@ export async function partialCompactConversation(
 
     emitCompactStage(context.onCompactProgress, 'api', COMPACT_STAGE_PCT.api_soft_cap)
     emitCompactStage(context.onCompactProgress, 'attachments', COMPACT_STAGE_PCT.attachments)
+    // 保底一帧：与 compactConversation 相同，无附件时阶段毫秒级完成，
+    // 事件合并进同一渲染帧。等待一帧让 attachments（78%）被独立渲染。
+    await sleep(COMPACT_STAGE_FRAME_HOLD_MS, context.abortController.signal, {
+      abortError: () => createAbortError(),
+    })
 
     // 清除前保存当前文件状态
     const preCompactReadFileState = cacheToObject(context.readFileState)
@@ -984,6 +1010,11 @@ export async function partialCompactConversation(
       hookType: 'session_start',
     })
     emitCompactStage(context.onCompactProgress, 'session_start', COMPACT_STAGE_PCT.session_start)
+    // 保底一帧：与 compactConversation 相同，hooks 未配置时毫秒级返回。
+    // 等待一帧渲染 session_start（88%）阶段。
+    await sleep(COMPACT_STAGE_FRAME_HOLD_MS, context.abortController.signal, {
+      abortError: () => createAbortError(),
+    })
     const hookMessages = await processSessionStartHooks('compact', {
       model: context.options.mainLoopModel,
     })
@@ -1065,6 +1096,12 @@ export async function partialCompactConversation(
       hookType: 'post_compact',
     })
     emitCompactStage(context.onCompactProgress, 'hooks', COMPACT_STAGE_PCT.post_hooks)
+    // 保底一帧：与 compactConversation 相同，hooks 未配置时 94 与
+    // compact_end 合并，进度条直接从 api_soft_cap 消失。
+    // 等待一帧渲染 post_hooks（94%）阶段。
+    await sleep(COMPACT_STAGE_FRAME_HOLD_MS, context.abortController.signal, {
+      abortError: () => createAbortError(),
+    })
     const postCompactHookResult = await executePostCompactHooks(
       {
         trigger: 'manual',
@@ -1208,6 +1245,11 @@ async function streamCompactSummary({
           // 传入压缩上下文的 abortController，这样用户按 Esc 可以中止
           // fork — 与下面流式回退路径在 `signal: context.abortController.signal` 使用相同的信号。
           overrides: { abortController: context.abortController },
+          // fork 路径与流式回退路径一样，按已输出字符在 api 阶段推进进度条；
+          // 否则整个摘要期间进度条停留在 api_start（15%），完成时直接跳 soft_cap。
+          onStreamedText: (totalChars) => {
+            emitCompactStage(context.onCompactProgress, 'api', compactApiStreamPercent(totalChars))
+          },
         })
         // 对齐 CC zQn/KQn：优先含 <summary> 的 assistant，避免最后一条思考草稿污染摘要
         const assistantText = getCompactSummaryText(result.messages)
@@ -1335,15 +1377,15 @@ async function streamCompactSummary({
           type: string
           event?: {
             type: string
-            content_block?: { type: string }
+            chunk?: { type: string }
             delta?: { type: string; text?: string }
           }
         }
         if (
           !hasStartedStreaming &&
           ev.type === 'stream_event' &&
-          ev.event?.type === 'content_block_start' &&
-          ev.event.content_block?.type === 'text'
+          ev.event?.type === 'chunk_start' &&
+          ev.event.chunk?.type === 'text'
         ) {
           hasStartedStreaming = true
           context.setStreamMode?.('responding')
@@ -1351,7 +1393,7 @@ async function streamCompactSummary({
 
         if (
           ev.type === 'stream_event' &&
-          ev.event?.type === 'content_block_delta' &&
+          ev.event?.type === 'chunk_delta' &&
           ev.event.delta?.type === 'text_delta'
         ) {
           const charactersStreamed = (ev.event.delta.text ?? '').length
