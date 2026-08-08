@@ -1,9 +1,20 @@
 /**
  * 本地模型能力配置文件加载器。
  *
- * 配置文件路径：~/.zy/model-capabilities.json
+ * 配置文件支持两种形态（可共存）：
+ * - 主文件：~/.zy/model-capabilities.json（历史单文件路径，作为主配置）
+ * - 目录分片：~/.zy/model-capabilities/*.json 与 *.jsonc（按名称字典序加载）
  *
- * 用户每接入一个新模型，在此文件中添加一条配置即可。
+ * 所有文件的 models 条目平铺合并为一个数组，匹配时按现有「特异性优先」
+ * 规则选择（特异性 = provider/apiFormat 选择器 + pattern 长度）；
+ * 特异性完全相同时先加载者优先（与单文件内数组顺序语义一致），
+ * 因此主文件的条目优先于目录分片，目录内文件名靠前的优先。
+ * 想用分片覆盖主文件条目时，把覆盖条目放进文件名更靠前的分片
+ * （如 0-overrides.json）或直接调整主文件数组顺序。
+ *
+ * 解析支持 JSONC（行注释与块注释、尾逗号），便于在配置内就地说明
+ * 「为什么这样配」。单个分片解析失败只跳过该文件并记日志，不影响其他文件。
+ *
  * pattern 为大小写不敏感的 substring match。
  *
  * capabilities 为结构化对象，支持 bool、string、array、object 等值类型。
@@ -13,7 +24,7 @@
  * TODO: 后续由自建能力平台替代此本地配置，改为运行时查询。
  */
 
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
 import type { ApiFormat } from '../model/apiFormat.js'
@@ -22,7 +33,7 @@ import { CURRENCIES } from '../../types/currency.js'
 import type { EffortLevel } from '../effort/effortTypes.js'
 import { PERSISTABLE_EFFORT_LEVELS } from '../effort/effortTypes.js'
 import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
-import { safeParseJSON } from '../../utils/json.js'
+import { safeParseJSONC } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
 // ---------------------------------------------------------------------------
@@ -321,8 +332,37 @@ export type ModelCapabilitiesFile = z.infer<ReturnType<typeof ModelCapabilitiesF
 // 配置加载与迁移
 // ---------------------------------------------------------------------------
 
-function getConfigPath(): string {
-  return join(getZyConfigHomeDir(), 'model-capabilities.json')
+/**
+ * 配置文件发现顺序（先加载者优先）：
+ * 1. 主文件 ~/.zy/model-capabilities.json（历史单文件路径）
+ * 2. 目录分片 ~/.zy/model-capabilities/ 下 *.json / *.jsonc，按名称字典序
+ */
+function getConfigFilePaths(): string[] {
+  const dir = getZyConfigHomeDir()
+  const paths: string[] = []
+
+  const mainPath = join(dir, 'model-capabilities.json')
+  try {
+    if (statSync(mainPath).isFile()) {
+      paths.push(mainPath)
+    }
+  } catch {
+    // 主文件不存在，仅用目录分片
+  }
+
+  const dirPath = join(dir, 'model-capabilities')
+  try {
+    const files = readdirSync(dirPath)
+      .filter((f) => f.endsWith('.json') || f.endsWith('.jsonc'))
+      .sort()
+    for (const file of files) {
+      paths.push(join(dirPath, file))
+    }
+  } catch {
+    // 分片目录不存在，仅用主文件
+  }
+
+  return paths
 }
 
 /**
@@ -460,19 +500,41 @@ function migrateCapabilitiesFormat(parsed: unknown): void {
 }
 
 /**
- * 加载本地模型能力配置文件。
- * 返回 null 表示文件不存在或解析失败。
+ * 加载本地模型能力配置（主文件 + 目录分片合并）。
+ * 返回 null 表示没有任何文件成功加载。
+ *
+ * 与旧行为的差异：单个文件解析失败只跳过该文件并记日志，
+ * 不再让整个能力系统失效。
  */
 export function loadLocalModelCapabilities(): ModelCapabilitiesFile | null {
-  try {
-    const raw = readFileSync(getConfigPath(), 'utf-8')
-    const parsed = safeParseJSON(raw, false)
-    migrateCapabilitiesFormat(parsed)
-    const result = ModelCapabilitiesFileSchema().safeParse(parsed)
-    return result.success ? result.data : null
-  } catch {
+  const files = getConfigFilePaths()
+  if (files.length === 0) {
     return null
   }
+
+  const allModels: ModelCapabilityEntry[] = []
+  let anyLoaded = false
+  for (const file of files) {
+    try {
+      const raw = readFileSync(file, 'utf-8')
+      // safeParseJSONC：容忍注释与尾逗号（JSONC），解析失败时记日志并返回 null
+      const parsed = safeParseJSONC(raw)
+      if (parsed === null) {
+        continue
+      }
+      migrateCapabilitiesFormat(parsed)
+      const result = ModelCapabilitiesFileSchema().safeParse(parsed)
+      if (!result.success) {
+        continue
+      }
+      allModels.push(...result.data.models)
+      anyLoaded = true
+    } catch {
+      // 单个文件读取失败不影响其他文件
+    }
+  }
+
+  return anyLoaded ? { models: allModels } : null
 }
 
 /**

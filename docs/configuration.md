@@ -43,7 +43,7 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 |---|---|
 | `~/.zy.json` 或 `~/.zy/.config.json` | 全局配置(onboarding 结果:provider / apiKey / baseUrl / model、user 级 mcpServers) |
 | `~/.zy/auth.json` | 用户级认证配置(API key / apiKeyHelper,见 §3) |
-| `~/.zy/model-capabilities.json` | 本地模型能力声明(见 §4) |
+| `~/.zy/model-capabilities.json` + `~/.zy/model-capabilities/*.json(.c)` | 本地模型能力声明,支持单文件或目录分片(见 §4) |
 | `~/.zy/keybindings.json` | 自定义快捷键(目前受 feature gate 控制,外部默认用内置键位) |
 | `~/.zy/AGENTS.md`、`~/.zy/rules/` | 用户级 memory / 指令 / 规则 |
 | `~/.zy/memory/`、`~/.zy/agent-memory/` | 自动记忆 / agent 持久记忆 |
@@ -209,6 +209,13 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 ## 4. model-capabilities.json
 
 路径 `~/.zy/model-capabilities.json`(示例见仓库根 `model-capabilities.example.json`)。按 `pattern` 子串匹配 model id,声明该模型的能力、token 上限、定价、以及附加 beta。
+
+配置支持**两种形态,可共存**:
+
+- 主文件:`~/.zy/model-capabilities.json`(历史单文件路径)
+- 目录分片:`~/.zy/model-capabilities/` 下所有 `*.json` / `*.jsonc`,按名称字典序加载
+
+所有文件的 `models` 条目平铺合并,匹配时按「特异性优先」(provider/apiFormat 选择器 + pattern 长度)选择;特异性完全相同时**先加载者优先**(主文件 → 目录分片按文件名)。解析支持 JSONC(注释、尾逗号),便于就地说明配置意图;单个分片损坏只跳过该文件,不影响其他分片。
 
 ```jsonc
 {
