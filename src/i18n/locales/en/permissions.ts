@@ -204,8 +204,14 @@ export const enPermissions: TranslationResource = {
   'permission.permissionRequestSentToTeam': 'Permission request sent to team "{teamName}" leader',
   'permission.planApprovalNeeded': 'ZY Code needs your approval for the plan',
   'permission.powershellCommand': 'PowerShell command',
-  'permission.powershellInteractiveApprovalRequired':
-    'PowerShell tool requires interactive approval',
+  'permission.powershellCdRedirectApproval':
+    'Commands that change directories and write via output redirection require explicit approval to ensure paths are evaluated correctly.',
+  'permission.powershellCdRedirectReason':
+    'Compound command contains cd with output redirection - manual approval required to prevent path resolution bypass',
+  'permission.powershellCdPathApproval':
+    'Commands that change directories and then read or write paths require explicit approval to ensure paths are evaluated against the real working directory.',
+  'permission.powershellCdPathReason':
+    'Compound command contains cd with path operation - manual approval required to prevent path resolution bypass',
   'permission.powershellPrefixPlaceholder': 'command prefix (e.g., Get-Process:*)',
   'permission.read': 'Read',
   'permission.readPermissionDenied': 'Permission to read {path} has been denied.',

@@ -25,7 +25,7 @@ import type { Message } from '../../types/message.js'
 import { hasExactErrorMessage } from '../../utils/errors.js'
 import { executePreCompactHooks } from '../../services/hooks.js'
 import { logError } from '../../services/infra/log.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
+import { getHotContextMessages } from '../../services/messages/projections.js'
 import {
   buildEffectiveSystemPrompt,
   type SystemPrompt,
@@ -41,7 +41,7 @@ export const call: LocalCommandCall = async (args, context) => {
   const { abortController } = context
   let { messages } = context
 
-  messages = getMessagesAfterCompactBoundary(messages)
+  messages = getHotContextMessages(messages)
 
   if (messages.length === 0) {
     throw new Error('No messages to compact')

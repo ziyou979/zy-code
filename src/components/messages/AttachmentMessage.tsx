@@ -173,19 +173,26 @@ export function AttachmentMessage({
       if (attachment.content.type === 'file_unchanged') {
         return (
           <Line>
-            Read <Text bold>{attachment.displayPath}</Text> (unchanged)
+            {tSync('attachment.readUnchangedBefore')} <Text bold>{attachment.displayPath}</Text>
+            {tSync('attachment.readUnchangedAfter')}
           </Line>
         )
       }
-      return (
-        <Line>
-          Read <Text bold>{attachment.displayPath}</Text> (
-          {attachment.content.type === 'text'
-            ? `${attachment.content.file.numLines}${attachment.truncated ? '+' : ''} lines`
-            : formatFileSize(attachment.content.file.originalSize)}
-          )
-        </Line>
-      )
+      {
+        const detail =
+          attachment.content.type === 'text'
+            ? tSync(
+                attachment.truncated ? 'attachment.readLinesTruncated' : 'attachment.readLines',
+                { count: attachment.content.file.numLines },
+              )
+            : formatFileSize(attachment.content.file.originalSize)
+        return (
+          <Line>
+            {tSync('attachment.readBefore')} <Text bold>{attachment.displayPath}</Text>{' '}
+            {tSync('attachment.readAfter', { detail })}
+          </Line>
+        )
+      }
     case 'compact_file_reference':
       return (
         <Line>
@@ -201,8 +208,10 @@ export function AttachmentMessage({
     case 'selected_lines_in_ide':
       return (
         <Line>
-          ⧉ Selected <Text bold>{attachment.lineEnd - attachment.lineStart + 1}</Text> lines from{' '}
-          <Text bold>{attachment.displayPath}</Text> in {attachment.ideName}
+          {tSync('attachment.selectedLinesBefore')}{' '}
+          <Text bold>{attachment.lineEnd - attachment.lineStart + 1}</Text>{' '}
+          {tSync('attachment.selectedLinesMid')} <Text bold>{attachment.displayPath}</Text>{' '}
+          {tSync('attachment.selectedLinesAfter', { ideName: attachment.ideName })}
         </Line>
       )
     case 'nested_memory':

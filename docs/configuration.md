@@ -343,6 +343,8 @@ provider 解析优先级: sticky 多 auth 候选 > OAuth active > `settings.prov
 | `BASH_MAX_OUTPUT_LENGTH` / `TASK_MAX_OUTPUT_LENGTH` | 输出长度上限 |
 | `DISABLE_TELEMETRY` / `ZY_CODE_DISABLE_NONESSENTIAL_TRAFFIC` / `DISABLE_ERROR_REPORTING` | 隐私 / 遥测 |
 | `CLAUDE_DEBUG` / `ZY_CODE_DEBUG_LOG_LEVEL` / `ZY_CODE_DEBUG_LOGS_DIR` | 调试 |
+| `ZY_CODE_PROFILE_STARTUP` | `1` 时输出启动时间线（含 `tti_ready` / `first_query_start` / `first_token`）到 `~/.zy/startup-perf/` |
+| `ZY_CODE_DISABLE_WORKING_SET_TRIM` | `1` 时禁用 Windows 空闲高 RSS Working Set 驱逐（任务管理器 RSS 虚高的主治理路径） |
 
 ### 5.6 Bridge / CCR / 会话
 

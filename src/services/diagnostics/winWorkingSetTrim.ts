@@ -125,9 +125,8 @@ export function initWinWorkingSetTrim(opts?: {
         return
       }
       if (now - idleSince >= minIdleMs && process.memoryUsage().rss > threshold) {
-        // 先让 JSC 回收已断引用对象，再驱逐仍留在 Working Set 的可重载页面。
-        // 两者都只在高 RSS 且持续空闲时运行，避免把每轮 GC/trim 变成常规路径。
-        Bun.gc(true)
+        // 只 EmptyWorkingSet：把可重载页踢回 standby。
+        // 不在此处 Bun.gc——堆 GC 不降低任务管理器 RSS，且可能引入空闲抖动。
         trimWorkingSetNow(Date.now(), cooldownMs)
       }
     } catch {

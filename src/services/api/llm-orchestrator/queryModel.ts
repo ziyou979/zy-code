@@ -44,6 +44,7 @@ import { logForDiagnosticsNoPII } from 'src/services/telemetry/diagLogs.js'
 import { headlessProfilerCheckpoint } from 'src/services/analytics/headlessProfiler.js'
 import { calculateCost, getModelCurrency } from 'src/services/model/modelCost.js'
 import { endQueryProfile, queryCheckpoint } from 'src/services/query/queryProfiler.js'
+import { profileCheckpoint } from 'src/services/telemetry/startupProfiler.js'
 import { type ThinkingConfig } from 'src/services/messages/thinking.js'
 // LLMConnectionError 用于流式超时回退时创建错误实例
 import { LLMConnectionError } from '../../../types/llm.js'
@@ -69,12 +70,7 @@ import {
   getAssistantMessageFromError,
   getErrorMessageIfRefusal,
 } from '../errors.js'
-import {
-  EMPTY_USAGE,
-  logAPIError,
-  logAPISuccessAndDuration,
-  type NonNullableUsage,
-} from '../logging.js'
+import { EMPTY_USAGE, logAPIError, logAPISuccessAndDuration } from '../logging.js'
 import { probeThinkingFromError } from '../modelCapabilityProbe.js'
 import { checkResponseForCacheBreak } from '../promptCacheBreakDetection.js'
 import { updateUsage } from '../usageTracker.js'
@@ -276,6 +272,8 @@ export async function* queryModel(
           queryCheckpoint('query_first_chunk_received')
           if (!options.agentId) {
             headlessProfilerCheckpoint('first_chunk')
+            // 启动剖析 TTFT 终点（与 first_query_start 成对）
+            profileCheckpoint('first_token')
           }
           endQueryProfile()
           isFirstChunk = false
@@ -511,18 +509,8 @@ export async function* queryModel(
             const responseDelta = part as unknown as ResponseDeltaEvent
             const stopReasonV2 = responseDelta.stopReason
             const streamExtras = responseDelta.extras
-            // 标准 usage 是驼峰(outputTokens)，updateUsage 期望 snake_case(output_tokens)
-            const rawUsage = responseDelta.usage
-            const usageForUpdate = rawUsage
-              ? {
-                  output_tokens: rawUsage.outputTokens ?? 0,
-                  input_tokens: rawUsage.inputTokens,
-                  cache_creation_input_tokens: rawUsage.cacheCreationInputTokens,
-                  cache_read_input_tokens: rawUsage.cacheReadInputTokens,
-                }
-              : undefined
-
-            usage = updateUsage(usage, usageForUpdate as Partial<NonNullableUsage> | undefined)
+            // 标准 usage 已是 camelCase，直接交给 updateUsage
+            usage = updateUsage(usage, responseDelta.usage)
             // 从 response_delta 捕获 research（仅限内部使用）。
             // 始终用最新值覆盖。同时回写到已产出的消息，
             // 因为 message_delta 在 content_block_stop 之后到达。

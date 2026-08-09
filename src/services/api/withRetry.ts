@@ -27,6 +27,7 @@ import {
   logEvent,
 } from '../analytics/index.js'
 import { checkMockRateLimitError, isMockRateLimitError } from '../rateLimitMocking.js'
+import { MalformedAssistantCompletionError } from './assistantCompletionValidator.js'
 import { REPEATED_529_ERROR_MESSAGE } from './errors.js'
 import { extractConnectionErrorDetails } from './errorUtils.js'
 
@@ -181,12 +182,18 @@ export async function* withRetry<T, TClient = unknown>(
       // - Bedrock 特定认证错误（403 或 CredentialsProviderError）
       // - Vertex 特定认证错误（凭证刷新失败、401）
       // - ECONNRESET/EPIPE：陈旧的 keep-alive socket；禁用连接池并重新连接
+      // 默认开启：半开连接等满 idle 无益，直接换连接更快。关：ZY_CODE_KEEP_ALIVE_ON_ECONNRESET=1
       const isStaleConnection = isStaleConnectionError(lastError)
       if (
         isStaleConnection &&
-        getFeatureValue_CACHED_MAY_BE_STALE('zy_disable_keepalive_on_econnreset', false)
+        !isEnvTruthy(process.env.ZY_CODE_KEEP_ALIVE_ON_ECONNRESET) &&
+        getFeatureValue_CACHED_MAY_BE_STALE('zy_disable_keepalive_on_econnreset', true)
       ) {
         retryLog('Stale connection (ECONNRESET/EPIPE) — disabling keep-alive for retry')
+        logEvent('zy_streaming_stale_connection_retry', {
+          query_source: (options.querySource ??
+            'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        })
         disableKeepAlive()
       }
 
@@ -260,6 +267,18 @@ export async function* withRetry<T, TClient = unknown>(
       const persistent = isPersistentRetryEnabled() && isTransientCapacityError(error)
       if (attempt > maxRetries && !persistent) {
         throw new CannotRetryError(error, retryContext)
+      }
+
+      // malformed 完成（空可见/仅 thinking）：清洗由上层完成；此处允许有限重试
+      if (error instanceof MalformedAssistantCompletionError) {
+        logEvent('zy_malformed_tool_use_retry', {
+          reason: error.reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          attempt,
+        })
+        // 走统一退避后重试，不经 shouldRetry(APIError)
+        const delayMs = Math.min(BASE_DELAY_MS * 2 ** (attempt - 1), 8_000)
+        await sleep(delayMs, options.signal, { abortError })
+        continue
       }
 
       if (!isAPIError(error) || !shouldRetry(error)) {

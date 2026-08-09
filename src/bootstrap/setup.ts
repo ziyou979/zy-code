@@ -288,17 +288,14 @@ export async function setup(
   }
   void lockCurrentVersion() // 锁定当前版本，防止被其他进程删除
 
-  // 启动运行时内存监控（后台采样，不阻塞启动）
-  if (typeof Bun !== 'undefined' && !getIsNonInteractiveSession()) {
-    // 交互模式下每秒强制 GC 防止堆无限增长
-    const gcTimer = setInterval(Bun.gc, 1000)
-    gcTimer.unref()
-  }
+  // 运行时内存治理（均后台、不阻塞启动）：
+  // - MemoryMonitor：RSS/heap 采样与告警
+  // - Win Working Set trim：空闲高 RSS 时驱逐可重载驻留页
+  // 不做周期性/阈值 Bun.gc：实测堆 GC 对任务管理器 RSS 几乎无效，
+  // Windows 虚高主因是 Working Set 不主动归还，由 trim 专门处理。
   void import('../services/diagnostics/memoryMonitor.js').then(({ initMemoryMonitor }) => {
     initMemoryMonitor()
   })
-  // Windows 专用：在持续空闲且高 RSS 时驱逐可重载的驻留页。
-  // 这只治理 Working Set，不代表 Private Bytes 或对象引用已经释放。
   void Promise.all([
     import('../services/diagnostics/winWorkingSetTrim.js'),
     import('../services/input/activityManager.js'),
@@ -381,14 +378,21 @@ export async function setup(
   void prefetchApiKeyFromApiKeyHelperIfSafe(getIsNonInteractiveSession()) // 预热用户级 auth.json helper 缓存
   profileCheckpoint('setup_after_prefetch')
 
-  // 预获取 Logo v2 数据 - await 确保在 logo 渲染前就绪。
-  // --bare / SIMPLE：跳过 — 发布说明是交互式 UI 显示数据，
-  // 且 getRecentActivity() 会读取最多 10 个会话 JSONL 文件。
+  // Logo v2 附属数据：不阻塞 TTI。
+  // checkForReleaseNotes / getRecentActivity 会读 changelog 与最多 10 个会话 JSONL，
+  // 先前 await 会把首屏可输入时间拖到 IO 完成之后。Logo 可用 getRecentActivitySync()
+  // 读缓存；数据稍后到位时组件可在下次渲染补齐。
+  // --bare / SIMPLE：跳过（非交互 UI 不需要）。
   if (!isBareMode()) {
-    const { hasReleaseNotes } = await checkForReleaseNotes(getGlobalConfig().lastReleaseNotesSeen)
-    if (hasReleaseNotes) {
-      await getRecentActivity()
-    }
+    void checkForReleaseNotes(getGlobalConfig().lastReleaseNotesSeen)
+      .then(({ hasReleaseNotes }) => {
+        if (hasReleaseNotes) {
+          return getRecentActivity()
+        }
+      })
+      .catch(() => {
+        // Logo 附属数据失败不影响会话
+      })
   }
 
   // 如果权限模式设置为绕过，验证是否在安全环境中

@@ -52,6 +52,8 @@ export async function runInteractiveMode({
   const pendingHookMessages = hooksPromise && hookMessages.length === 0 ? hooksPromise : undefined
 
   profileCheckpoint('action_after_hooks')
+  // TTI：钩子同步阶段结束、即将 launch REPL —— 用户理论上可开始输入
+  profileCheckpoint('tti_ready')
   maybeActivateProactive(options)
   maybeActivateBrief(options)
   // 为新会话持久化当前模式，以便未来的恢复知道使用了什么模式

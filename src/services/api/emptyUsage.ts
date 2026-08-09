@@ -1,12 +1,26 @@
+/**
+ * 运行时用量累计类型：内存侧一律 camelCase。
+ * Anthropic wire 的 snake 字段只在 conversions/* 边界转换。
+ */
 export type NonNullableUsage = {
   inputTokens: number
   outputTokens: number
   cacheCreationInputTokens: number
   cacheReadInputTokens: number
-  server_tool_use: {
-    web_search_requests: number
-    web_fetch_requests: number
+  serverToolUse: {
+    webSearchRequests: number
+    webFetchRequests: number
   }
+  serviceTier: string
+  cacheCreation: {
+    ephemeral1hInputTokens: number
+    ephemeral5mInputTokens: number
+  }
+  /** CACHED_MICROCOMPACT：API 累计删除的 cache token（内存 camel） */
+  cacheDeletedInputTokens: number
+  inferenceGeo: string
+  iterations: unknown[]
+  speed: string
 }
 
 /**
@@ -19,17 +33,17 @@ export const EMPTY_USAGE: Readonly<NonNullableUsage> = {
   cacheCreationInputTokens: 0,
   cacheReadInputTokens: 0,
   outputTokens: 0,
-  server_tool_use: {
-    web_search_requests: 0,
-    web_fetch_requests: 0,
+  serverToolUse: {
+    webSearchRequests: 0,
+    webFetchRequests: 0,
   },
-  // @ts-expect-error
-  service_tier: 'standard',
-  cache_creation: {
-    ephemeral_1h_input_tokens: 0,
-    ephemeral_5m_input_tokens: 0,
+  serviceTier: 'standard',
+  cacheCreation: {
+    ephemeral1hInputTokens: 0,
+    ephemeral5mInputTokens: 0,
   },
-  inference_geo: '',
+  cacheDeletedInputTokens: 0,
+  inferenceGeo: '',
   iterations: [],
   speed: 'standard',
 }

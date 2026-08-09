@@ -225,7 +225,12 @@ export type GlobalConfig = {
     approved?: string[]
     rejected?: string[]
   }
-  primaryApiKey?: string // 未设置环境变量时的主 API key，通过 oauth 设置（TODO: 重命名）
+  /**
+   * @deprecated 已迁移至 auth.json（`setAuthConfigApiKey`）。
+   * 类型保留仅为兼容旧 ~/.zy.json 磁盘字段；读取时一次性迁入 auth.json 后清除。
+   * 删除计划：2026-09-01 后可从类型与磁盘读写中移除。
+   */
+  primaryApiKey?: string
   /**
    * @deprecated 已废弃：onboarding 改为写 settings.json + auth.json。
    * 类型保留仅为兼容旧 ~/.zy.json 磁盘字段，运行时不再读取。

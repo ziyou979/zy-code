@@ -1,6 +1,6 @@
 import type { Message } from '../../types/message.js'
 import { getContextWindowForModel } from '../../services/context/modelContext.js'
-import { tokenCountFromLastAPIResponse } from '../../services/api/tokens.js'
+import { tokenCountWithEstimation } from '../../services/api/tokens.js'
 
 export type ResumeReturnPrompt = {
   sessionAgeMinutes: number
@@ -59,7 +59,9 @@ export function getResumeReturnPrompt(
     return null
   }
 
-  const estimatedTokens = tokenCountFromLastAPIResponse([...messages])
+  // 必须 boundary 感知：压缩后若仍用 tokenCountFromLastAPIResponse 扫全量
+  //（含 keep 上压缩前 usage 或未剥离的 snake_case），会报 900k+ 并误提示再压缩。
+  const estimatedTokens = tokenCountWithEstimation(messages)
   const contextWindow = getContextWindowForModel(model)
   const minimumPercent = percentageFromEnv(
     process.env.ZY_CODE_RESUME_CONTEXT_PERCENT,

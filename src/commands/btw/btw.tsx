@@ -19,7 +19,7 @@ import { createAbortController } from '../../utils/abortController.js'
 import { saveGlobalConfig } from '../../services/config/config.js'
 import { errorMessage } from '../../utils/errors.js'
 import { type CacheSafeParams, getLastCacheSafeParams } from '../../services/agent/forkedAgent.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
+import { getHotContextMessages } from '../../services/messages/projections.js'
 import { runSideQuestion } from '../../services/assistant/sideQuestion.js'
 import { asSystemPrompt } from '../../services/api/systemPromptType.js'
 
@@ -165,7 +165,7 @@ function stripInProgressAssistantMessage(messages: Message[]): Message[] {
   return messages
 }
 async function buildCacheSafeParams(context: ProcessUserInputContext): Promise<CacheSafeParams> {
-  const forkContextMessages = getMessagesAfterCompactBoundary(
+  const forkContextMessages = getHotContextMessages(
     stripInProgressAssistantMessage(context.messages),
   )
   const saved = getLastCacheSafeParams()

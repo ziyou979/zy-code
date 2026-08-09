@@ -775,8 +775,12 @@ function renderNodeToOutput(
         // 启动）探测已解析 — 与 wheel-accel 曲线依赖的时序保证相同。
         let cur = node.scrollTop ?? 0
         const pending = node.pendingScrollDelta
-        const cMin = node.scrollClampMin
-        const cMax = node.scrollClampMax
+        // sticky 钉底期间忽略虚拟列表的旧 clamp。
+        // scrollToBottom 会 clear + forceRender，但在 React 提交尾部 range 之前
+        // 若仍应用上半区 clamp，视口会被钳到 spacer/空内容，出现「跳底空白」。
+        const stickyNow = node.stickyScroll ?? Boolean(node.attributes.stickyScroll)
+        const cMin = stickyNow ? undefined : node.scrollClampMin
+        const cMax = stickyNow ? undefined : node.scrollClampMax
         const haveClamp = cMin !== undefined && cMax !== undefined
         if (pending !== undefined && pending !== 0) {
           // 即使超过 clamp 也继续 drain — 下面的 render-clamp

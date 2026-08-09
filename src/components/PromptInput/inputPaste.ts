@@ -91,6 +91,7 @@ export function maybeTruncateMessageForInput(text: string, nextPasteId: number):
 }
 
 function formatTruncatedTextRef(id: number, numLines: number): string {
+  // 机器解析占位符（history/cursor 正则固定英文形态），不可 i18n
   return `[...Truncated text #${id} +${numLines} lines...]`
 }
 

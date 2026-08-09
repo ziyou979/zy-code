@@ -269,14 +269,30 @@ export function anthropicStopReasonToStandard(reason: string | null | undefined)
 export function anthropicUsageToStandard(usage: any): TokenUsage {
   const inputTokens = usage?.input_tokens ?? 0
   const outputTokens = usage?.output_tokens ?? 0
+  const cacheCreation = usage?.cache_creation
   return {
     inputTokens,
     outputTokens,
     cacheReadInputTokens: usage?.cache_read_input_tokens ?? 0,
     cacheCreationInputTokens: usage?.cache_creation_input_tokens ?? 0,
+    cacheDeletedInputTokens: usage?.cache_deleted_input_tokens ?? 0,
+    cacheCreation: cacheCreation
+      ? {
+          ephemeral1hInputTokens: cacheCreation.ephemeral_1h_input_tokens ?? 0,
+          ephemeral5mInputTokens: cacheCreation.ephemeral_5m_input_tokens ?? 0,
+        }
+      : undefined,
+    serviceTier: usage?.service_tier,
+    inferenceGeo: usage?.inference_geo,
     extras: {
       ...(usage?.server_tool_use_input_tokens != null && {
         serverToolUseInputTokens: usage.server_tool_use_input_tokens,
+      }),
+      ...(usage?.server_tool_use?.web_search_requests != null && {
+        webSearchRequests: usage.server_tool_use.web_search_requests,
+      }),
+      ...(usage?.server_tool_use?.web_fetch_requests != null && {
+        webFetchRequests: usage.server_tool_use.web_fetch_requests,
       }),
     },
   }
@@ -284,10 +300,20 @@ export function anthropicUsageToStandard(usage: any): TokenUsage {
 
 // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
 export function anthropicDeltaUsageToStandard(usage: any): DeltaUsage {
+  const cacheCreation = usage?.cache_creation
   return {
     outputTokens: usage?.output_tokens ?? 0,
     cacheReadInputTokens: usage?.cache_read_input_tokens ?? 0,
     cacheCreationInputTokens: usage?.cache_creation_input_tokens ?? 0,
+    cacheDeletedInputTokens: usage?.cache_deleted_input_tokens,
+    cacheCreation: cacheCreation
+      ? {
+          ephemeral1hInputTokens: cacheCreation.ephemeral_1h_input_tokens,
+          ephemeral5mInputTokens: cacheCreation.ephemeral_5m_input_tokens,
+        }
+      : undefined,
+    serviceTier: usage?.service_tier,
+    inferenceGeo: usage?.inference_geo,
   }
 }
 

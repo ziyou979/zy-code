@@ -269,7 +269,7 @@ export type StopReason =
 // Token 用量
 // ============================================================================
 
-/** 完整的 token 用量 */
+/** 完整的 token 用量（内存侧 camelCase；wire snake 仅在 conversions） */
 export interface TokenUsage {
   inputTokens: number
   outputTokens: number
@@ -277,6 +277,15 @@ export interface TokenUsage {
   cacheReadInputTokens?: number
   /** 缓存写入的输入 token 数 */
   cacheCreationInputTokens?: number
+  /** KV cache 编辑删除的累计 token（CACHED_MICROCOMPACT） */
+  cacheDeletedInputTokens?: number
+  /** 分 TTL 的 cache creation 明细 */
+  cacheCreation?: {
+    ephemeral1hInputTokens?: number
+    ephemeral5mInputTokens?: number
+  }
+  serviceTier?: string
+  inferenceGeo?: string
   /** provider 特定计量（如 serverToolUseInputTokens 等不常用字段） */
   extras?: Record<string, number>
 }
@@ -290,6 +299,13 @@ export interface DeltaUsage {
   cacheReadInputTokens?: number
   /** 缓存写入的输入 token 数 */
   cacheCreationInputTokens?: number
+  cacheDeletedInputTokens?: number
+  cacheCreation?: {
+    ephemeral1hInputTokens?: number
+    ephemeral5mInputTokens?: number
+  }
+  serviceTier?: string
+  inferenceGeo?: string
   /** provider 特定增量计量 */
   extras?: Record<string, number>
 }

@@ -8,6 +8,8 @@ import type { ToolUseContext } from '../tools/tool.js'
 import type { Message } from '../types/message.js'
 import { appendSystemContext } from '../services/api/api.js'
 import { createDebugLog } from '../services/infra/debug.js'
+import { tSync } from '../i18n/index.js'
+import { createAssistantAPIErrorMessage } from '../services/messages/constructors.js'
 import { queryCheckpoint } from '../services/query/queryProfiler.js'
 import { asSystemPrompt, type SystemPrompt } from '../services/api/systemPromptType.js'
 import { finalContextTokensFromLastResponse } from '../services/api/tokens.js'
@@ -49,7 +51,12 @@ export async function* runCompaction(
   )
 
   queryCheckpoint('query_autocompact_start')
-  const { compactionResult, consecutiveFailures } = await deps.autocompact(
+  const {
+    compactionResult,
+    consecutiveFailures,
+    consecutiveRapidRefills,
+    rapidRefillBreakerTripped,
+  } = await deps.autocompact(
     messagesForQuery,
     toolUseContext,
     {
@@ -113,6 +120,10 @@ export async function* runCompaction(
       turnId: deps.uuid(),
       turnCounter: 0,
       consecutiveFailures: 0,
+      // 非 rapid 成功时清零；rapid 成功则累加（由 autoCompact 计算）
+      consecutiveRapidRefills: consecutiveRapidRefills ?? 0,
+      rapidRefillBreakerTripped: false,
+      rapidRefillBreakerNotified: false,
     }
 
     // 压缩会替换掉 transcript 中所有带 usage 的旧 assistant 消息，
@@ -129,6 +140,20 @@ export async function* runCompaction(
 
     updatedMessages = postCompactMessages
     compacted = true
+  } else if (rapidRefillBreakerTripped) {
+    // 熔断：停止空转 compact；文案仅首轮 yield 一次（意图对齐 CC「跳过 compact」非每轮刷屏）
+    const alreadyNotified = tracking?.rapidRefillBreakerNotified === true
+    updatedTracking = {
+      ...(tracking ?? { compacted: true, turnId: '', turnCounter: 0 }),
+      consecutiveRapidRefills: consecutiveRapidRefills ?? tracking?.consecutiveRapidRefills,
+      rapidRefillBreakerTripped: true,
+      rapidRefillBreakerNotified: true,
+    }
+    if (!alreadyNotified) {
+      yield createAssistantAPIErrorMessage({
+        content: tSync('compact.rapidRefillBreaker'),
+      })
+    }
   } else if (consecutiveFailures !== undefined) {
     updatedTracking = {
       ...(tracking ?? { compacted: false, turnId: '', turnCounter: 0 }),

@@ -169,7 +169,13 @@ export const zhPermissions: TranslationResource = {
   'permission.permissionRequestSentToTeam': '权限请求已发送给团队 "{teamName}" 负责人',
   'permission.planApprovalNeeded': 'ZY Code 需要你批准此计划',
   'permission.powershellCommand': 'PowerShell 命令',
-  'permission.powershellInteractiveApprovalRequired': 'PowerShell 工具需要交互式批准。',
+  'permission.powershellCdRedirectApproval':
+    '更改目录并通过输出重定向写入的命令需要明确批准，以确保路径得到正确解析。',
+  'permission.powershellCdRedirectReason':
+    '复合命令包含 cd 和输出重定向——需要手动批准以防止绕过路径解析',
+  'permission.powershellCdPathApproval':
+    '更改目录后继续读/写路径的命令需要明确批准，以确保相对真实工作目录解析路径。',
+  'permission.powershellCdPathReason': '复合命令包含 cd 与路径操作——需要手动批准以防止绕过路径解析',
   'permission.powershellPrefixPlaceholder': '命令前缀（例如：Get-Process:*）',
   'permission.read': '读取',
   'permission.readPermissionDenied': '对 {path} 的读取权限已被拒绝。',

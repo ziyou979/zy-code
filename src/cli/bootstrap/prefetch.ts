@@ -71,10 +71,45 @@ export function startDeferredPrefetches(): void {
   void warmI18n()
   void countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), [])
 
+  // 首 token 关键路径：auth 解析 + 主模型字符串稳定（不 await，失败不阻断）
+  void Promise.all([
+    import('../../services/auth/auth.js').then((m) => {
+      try {
+        // 同步热身：token 来源 + API key 解析（跳过 helper 命令执行，避免启动侧效应）
+        m.getAuthTokenSource()
+        m.getApiKeyWithSource({ skipRetrievingKeyFromApiKeyHelper: true })
+        // 异步 OAuth 刷新检查（内部有短路），不阻塞 TTI
+        void m.checkAndRefreshOAuthTokenIfNeeded()
+      } catch {
+        // ignore
+      }
+    }),
+    import('../../services/model/model.js').then((m) => {
+      try {
+        m.getMainLoopModel()
+      } catch {
+        // ignore
+      }
+    }),
+  ]).then(async () => {
+    const { profileCheckpoint } = await import('../../services/telemetry/startupProfiler.js')
+    profileCheckpoint('auth_ready')
+  })
+
   // 分析数据和功能标志初始化
   void initializeAnalyticsGates()
   void prefetchOfficialMcpUrls()
   void refreshModelCapabilities()
+
+  // 预热 bash 历史缓存，避免用户切入 !/bash 模式首键卡在 history JSONL 扫描
+  void import('../../services/suggestions/shellHistoryCompletion.js').then((m) => {
+    m.warmShellHistoryCache()
+  })
+
+  // HTTP/TLS preconnect（幂等）；init 已可能调用过，此处兜底 deferred 路径
+  void import('../../services/api/apiPreconnect.js').then((m) => {
+    m.preconnectAnthropicApi()
+  })
 
   // 文件变更检测器从 init() 延迟以不阻塞首次渲染
   void settingsChangeDetector.initialize()

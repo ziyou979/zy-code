@@ -83,6 +83,7 @@ import type { QuerySource } from '../constants/querySource.js'
 import { createDumpPromptsFetch } from '../services/api/dumpPrompts.js'
 import { StreamingToolExecutor } from '../services/tool-runtime/streamingToolExecutor.js'
 import { queryCheckpoint } from '../services/query/queryProfiler.js'
+import { profileCheckpoint } from '../services/telemetry/startupProfiler.js'
 import { handleStopHooks } from '../query/stopHooks.js'
 import { buildQueryConfig } from '../query/config.js'
 import { preprocessMessages } from '../query/preprocess.js'
@@ -315,6 +316,8 @@ async function* queryLoop(
     // 记录查询开始用于无头延迟跟踪（子 agent 跳过）
     if (!toolUseContext.agentId) {
       headlessProfilerCheckpoint('query_started')
+      // 启动剖析：主会话首次 query 本地准备起点（与 TTFT 终点 first_token 成对）
+      profileCheckpoint('first_query_start')
     }
 
     // 阶段 2: 消息预处理（query tracking → toolResultBudget → microcompact → contextCollapse）
@@ -642,8 +645,9 @@ async function* queryLoop(
             // API 字段跨请求是累积/粘性的，所以我们
             // 减去此请求之前捕获的基线来获取增量。
             const usage = lastAssistant?.message.usage
+            // 内存侧 camel：cacheDeletedInputTokens（wire 转换层已规范化）
             const cumulativeDeleted = usage
-              ? ((usage as unknown as Record<string, number>).cache_deleted_input_tokens ?? 0)
+              ? ((usage as { cacheDeletedInputTokens?: number }).cacheDeletedInputTokens ?? 0)
               : 0
             const deletedTokens = Math.max(
               0,

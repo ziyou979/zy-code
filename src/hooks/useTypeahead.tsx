@@ -31,7 +31,10 @@ import {
   getPathCompletions,
   isPathLikeToken,
 } from '../services/suggestions/directoryCompletion.js'
-import { getShellHistoryCompletion } from '../services/suggestions/shellHistoryCompletion.js'
+import {
+  getShellHistoryCompletion,
+  getShellHistoryCompletionSync,
+} from '../services/suggestions/shellHistoryCompletion.js'
 import {
   getSlackChannelSuggestions,
   hasSlackMcpServer,
@@ -293,6 +296,32 @@ export function useTypeahead({
   // instead of stuttering on each repeated key. The search itself is ~8–15ms
   // on a 270k-file index.
   const debouncedFetchFileSuggestions = useDebounceCallback(fetchFileSuggestions, 50)
+
+  // Bash 模式历史 ghost text：冷缓存时会扫 history JSONL；每键 await 会让输入掉帧。
+  // 与文件建议同档 50ms 合并连打；有缓存后 lookup 本身很轻。
+  const debouncedBashHistoryGhost = useDebounceCallback(async (value: string) => {
+    latestBashInputRef.current = value
+    const historyMatch = await getShellHistoryCompletion(value)
+    if (latestBashInputRef.current !== value) {
+      return
+    }
+    if (historyMatch) {
+      setInlineGhostText({
+        text: historyMatch.suffix,
+        fullCommand: historyMatch.fullCommand,
+        insertPosition: value.length,
+      })
+      setSuggestionsState(() => ({
+        commandArgumentHint: undefined,
+        suggestions: [],
+        selectedSuggestion: -1,
+      }))
+      setSuggestionType('none')
+      setMaxColumnWidth(undefined)
+    } else {
+      setInlineGhostText(undefined)
+    }
+  }, 50)
   const fetchSlackChannels = useCallback(
     async (partial: string): Promise<void> => {
       latestSlackTokenRef.current = partial
@@ -328,6 +357,7 @@ export function useTypeahead({
       const effectiveCursorOffset = inputCursorOffset ?? cursorOffsetRef.current
       if (suppressSuggestions) {
         debouncedFetchFileSuggestions.cancel()
+        debouncedBashHistoryGhost.cancel()
         clearSuggestions()
         return
       }
@@ -354,21 +384,20 @@ export function useTypeahead({
         }
       }
 
-      // Bash mode: check for history-based ghost text completion
+      // Bash 模式历史 ghost text：
+      // - 缓存已热 → 同步命中，与改前语义一致（命中则独占 ghost 并 return）
+      // - 缓存未热 → 防抖异步加载，避免每键 await 扫 JSONL；未 return，后续仍可路径补全
       if (mode === 'bash' && value.trim()) {
-        latestBashInputRef.current = value
-        const historyMatch = await getShellHistoryCompletion(value)
-        // Discard stale results if input changed while waiting
-        if (latestBashInputRef.current !== value) {
-          return
-        }
-        if (historyMatch) {
+        const syncMatch = getShellHistoryCompletionSync(value)
+        if (syncMatch === undefined) {
+          void debouncedBashHistoryGhost(value)
+        } else if (syncMatch) {
+          debouncedBashHistoryGhost.cancel()
           setInlineGhostText({
-            text: historyMatch.suffix,
-            fullCommand: historyMatch.fullCommand,
+            text: syncMatch.suffix,
+            fullCommand: syncMatch.fullCommand,
             insertPosition: value.length,
           })
-          // Clear dropdown suggestions when showing ghost text
           setSuggestionsState(() => ({
             commandArgumentHint: undefined,
             suggestions: [],
@@ -378,9 +407,11 @@ export function useTypeahead({
           setMaxColumnWidth(undefined)
           return
         } else {
-          // No history match, clear ghost text
+          debouncedBashHistoryGhost.cancel()
           setInlineGhostText(undefined)
         }
+      } else if (mode !== 'bash') {
+        debouncedBashHistoryGhost.cancel()
       }
 
       // Check for @ to trigger team member / named subagent suggestions
@@ -734,6 +765,7 @@ export function useTypeahead({
       clearSuggestions,
       debouncedFetchFileSuggestions,
       debouncedFetchSlackChannels,
+      debouncedBashHistoryGhost,
       mode,
       suppressSuggestions,
       // Note: using suggestionsRef instead of suggestions to avoid recreating

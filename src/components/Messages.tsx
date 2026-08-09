@@ -33,7 +33,6 @@ import { collapseReadSearchGroups } from '../services/compact/collapseReadSearch
 import { collapseTeammateShutdowns } from '../services/swarm/collapseTeammateShutdowns.js'
 import { getGlobalConfig } from '../services/config/config.js'
 import { isEnvTruthy } from '../services/infra/envUtils.js'
-import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
 import { applyGrouping } from '../services/tool-runtime/groupToolUses.js'
 import {
   buildMessageLookups,
@@ -43,11 +42,11 @@ import {
 import { createAssistantMessage } from '../services/messages/./constructors.js'
 import {
   deriveUUID,
-  getMessagesAfterCompactBoundary,
   getToolUseID,
   isNotEmptyMessage,
   shouldShowUserMessage,
 } from '../services/messages/./predicates.js'
+import { getDisplayMessages } from '../services/messages/projections.js'
 import { normalizeMessages } from '../services/messages/./normalize.js'
 import { reorderMessagesInUI } from '../services/messages/./api.js'
 import type { StreamingThinking, StreamingToolUse } from '../services/messages/./streaming.js'
@@ -575,16 +574,13 @@ const MessagesImpl = ({
   // 4 次过滤/map 传递 = 每次滚动约 50ms 分配 → GC 压力 →
   // 在 1GB 堆上出现 100-173ms 的 stop-the-world 暂停。
   const { collapsed, lookups, hasTruncatedMessages, hiddenMessageCount } = useMemo(() => {
-    // 在 fullscreen 模式下，alt buffer 没有原生 scrollback，所以
-    // compact-boundary 过滤器只是隐藏了 ScrollBox 可以滚动到的历史。
-    // 主屏幕模式保留过滤器——pre-compact 行存在于原生 scrollback 中的
-    // 视口上方，重新渲染它们会触发完全重置。
-    const compactAwareMessages =
-      verbose || isFullscreenEnvEnabled()
-        ? normalizedMessages
-        : getMessagesAfterCompactBoundary(normalizedMessages)
+    // 冷热分离：UI 用 display 投影（完整 transcript）。
+    // resume / 非 fullscreen 均无可靠的原生 scrollback 可补全冷段；
+    // 切勿在此 getHotContextMessages。API/token 统计走 hot / liveApiUsage。
+    // 非虚拟化路径靠 MAX_MESSAGES_WITHOUT_VIRTUALIZATION 切片控内存。
+    const displayMessages = getDisplayMessages(normalizedMessages)
     const messagesToShowNotTruncated = reorderMessagesInUI(
-      compactAwareMessages
+      displayMessages
         .filter(
           (msg): msg is UserMessage | AssistantMessage | AttachmentMessage | SystemMessage =>
             msg.type !== 'progress',

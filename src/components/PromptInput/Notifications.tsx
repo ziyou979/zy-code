@@ -27,7 +27,6 @@ import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { formatDuration } from '../../utils/format.js'
 import { setEnvHookNotifier } from '../../services/hooks/fileChangedWatcher.js'
 import { toIDEDisplayName } from '../../services/ide/ideCatalog.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
 import { tokenCountFromLastAPIResponse } from '../../services/api/tokens.js'
 import { AutoUpdaterWrapper } from '../AutoUpdaterWrapper.js'
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
@@ -72,8 +71,8 @@ export function Notifications({
   isInputWrapped = false,
   isNarrow = false,
 }: Props) {
-  const messagesForTokenCount = getMessagesAfterCompactBoundary(messages)
-  const tokenUsage = tokenCountFromLastAPIResponse(messagesForTokenCount)
+  // tokenCountFromLastAPIResponse 已 boundary/live 感知，直接传全量 messages
+  const tokenUsage = tokenCountFromLastAPIResponse(messages)
   const mainLoopModel = useMainLoopModel()
   const tokenWarningState = calculateTokenWarningState(tokenUsage, mainLoopModel)
   const isShowingCompactMessage = tokenWarningState.isAboveWarningThreshold

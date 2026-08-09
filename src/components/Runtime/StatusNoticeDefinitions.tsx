@@ -10,12 +10,8 @@ import {
 import { getCwd } from '../../services/environment/cwd.js'
 import { relative } from 'node:path'
 import { formatNumber } from '../../utils/format.js'
-import type { getGlobalConfig } from '../../services/config/config.js'
-import {
-  getApiKeyWithSource,
-  getApiKeyFromConfigOrMacOSKeychain,
-  getAuthTokenSource,
-} from '../../services/auth/auth.js'
+import { getApiKeyWithSource, getAuthTokenSource } from '../../services/auth/auth.js'
+import { getGlobalConfig } from '../../services/config/config.js'
 import {
   getAPIProvider,
   isAnthropicProvider,
@@ -99,11 +95,13 @@ const apiKeyConflictNotice: StatusNoticeDefinition = {
       return false
     }
 
+    // legacy primaryApiKey 磁盘残留 + 当前已用 settings/auth.json key → 提示清理
+    // （keychain 迁移后由 getApiKeyWithSource 一次性并入 auth.json）
     const { source: apiKeySource } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })
     return (
-      !!getApiKeyFromConfigOrMacOSKeychain() &&
+      !!getGlobalConfig().primaryApiKey &&
       (apiKeySource === 'settingsApiKey' || apiKeySource === 'apiKeyHelper')
     )
   },

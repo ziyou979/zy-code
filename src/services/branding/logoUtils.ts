@@ -179,6 +179,18 @@ export function truncatePath(path: string, maxLength: number): string {
 // 预加载会话记录的简单缓存
 let cachedActivity: LogOption[] = []
 let cachePromise: Promise<LogOption[]> | null = null
+/** Logo 等在 setup 改为 fire-and-forget 后订阅缓存就绪 */
+const activityListeners = new Set<() => void>()
+
+function notifyRecentActivityListeners(): void {
+  for (const listener of activityListeners) {
+    try {
+      listener()
+    } catch {
+      // 订阅方异常不影响其他 listener
+    }
+  }
+}
 
 /**
  * 预加载最近会话记录，供 Logo v2 展示
@@ -210,10 +222,12 @@ export async function getRecentActivity(): Promise<LogOption[]> {
           return hasSummary || hasFirstPrompt
         })
         .slice(0, 3)
+      notifyRecentActivityListeners()
       return cachedActivity
     })
     .catch(() => {
       cachedActivity = []
+      notifyRecentActivityListeners()
       return cachedActivity
     })
 
@@ -225,6 +239,17 @@ export async function getRecentActivity(): Promise<LogOption[]> {
  */
 export function getRecentActivitySync(): LogOption[] {
   return cachedActivity
+}
+
+/**
+ * 订阅最近会话缓存更新（setup 异步预取完成后触发）。
+ * 返回取消订阅函数。
+ */
+export function subscribeRecentActivity(listener: () => void): () => void {
+  activityListeners.add(listener)
+  return () => {
+    activityListeners.delete(listener)
+  }
 }
 
 /**

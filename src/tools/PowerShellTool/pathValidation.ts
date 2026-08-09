@@ -8,6 +8,7 @@
 
 import { homedir } from 'node:os'
 import { isAbsolute, resolve } from 'node:path'
+import { tSync } from '../../i18n/index.js'
 import type {
   ParsedCommandElement,
   ParsedPowerShellCommand,
@@ -49,6 +50,32 @@ const MAX_DIRS_TO_LIST = 5
 const GLOB_PATTERN_REGEX = /[*?[\]]/
 
 type FileOperationType = 'read' | 'write' | 'create'
+
+/**
+ * 复合命令含 cd 时：路径相对 Node cwd 解析会 stale，读/写均需人工审批。
+ * （原先只提升 write；相对路径读也可借 cd 绕过 allowedDirs。）
+ */
+function compoundCdPathAsk(): PermissionResult {
+  return {
+    behavior: 'ask',
+    message: tSync('permission.powershellCdPathApproval'),
+    decisionReason: {
+      type: 'other',
+      reason: tSync('permission.powershellCdPathReason'),
+    },
+  }
+}
+
+function compoundCdRedirectionAsk(): PermissionResult {
+  return {
+    behavior: 'ask',
+    message: tSync('permission.powershellCdRedirectApproval'),
+    decisionReason: {
+      type: 'other',
+      reason: tSync('permission.powershellCdRedirectReason'),
+    },
+  }
+}
 
 type PathCheckResult = {
   allowed: boolean
@@ -1351,12 +1378,9 @@ function extractPathsFromCommand(cmd: ParsedCommandElement): {
  * within allowed directories.
  *
  * @param compoundCommandHasCd - Whether the full compound command contains a
- *   cwd-changing cmdlet (Set-Location/Push-Location/Pop-Location/New-PSDrive,
- *   excluding no-op Set-Location-to-CWD). When true, relative paths in ANY
- *   statement cannot be trusted — PowerShell executes statements sequentially
- *   and a cd in statement N changes the cwd for statement N+1, but this
- *   validator resolves all paths against the stale Node process cwd.
- *   BashTool parity (BashTool/pathValidation.ts:630-655).
+ *   cwd-changing cmdlet (Set-Location/Push-Location/Pop-Location/New-PSDrive).
+ *   When true, path ops (read and write) and output redirections require approval
+ *   because this validator resolves them against the stale Node process cwd.
  *
  * @returns
  * - 'ask' if any path command tries to access outside allowed directories
@@ -1412,48 +1436,6 @@ function checkPathConstraintsForStatement(
   const cwd = getCwd()
   let firstAsk: PermissionResult | undefined
 
-  // SECURITY: BashTool parity — block path operations in compound commands
-  // containing a cwd-changing cmdlet (BashTool/pathValidation.ts:630-655).
-  //
-  // When the compound contains Set-Location/Push-Location/Pop-Location/
-  // New-PSDrive, relative paths in later statements resolve against the
-  // CHANGED cwd at runtime, but this validator resolves them against the
-  // STALE getCwd() snapshot. Example attack (finding #3):
-  //   Set-Location ./.zy; Set-Content ./settings.json '...'
-  // Validator sees ./settings.json → /project/settings.json (not a config file).
-  // Runtime writes /project/.zy/settings.json (Zy's permission config).
-  //
-  // ALTERNATIVE APPROACH (rejected): simulate cwd through the statement chain
-  // — after `Set-Location ./.zy`, validate subsequent statements with
-  // cwd='./.zy'. This would be more permissive but requires careful
-  // handling of:
-  //   - Push-Location/Pop-Location stack semantics
-  //   - Set-Location with no args (→ home on some platforms)
-  //   - New-PSDrive root mapping (arbitrary filesystem root)
-  //   - Conditional/loop statements where cd may or may not execute
-  //   - Error cases where the cd target can't be statically determined
-  // For now we take the conservative approach of requiring manual approval.
-  //
-  // Unlike BashTool which gates on `operationType !== 'read'`, we also block
-  // READS (finding #27): `Set-Location ~; Get-Content ./.ssh/id_rsa` bypasses
-  // Read(~/.ssh/**) deny rules because the validator matched the deny against
-  // /project/.ssh/id_rsa. Reads from mis-resolved paths leak data just as
-  // writes destroy it. We still run deny-rule matching below (via firstAsk,
-  // not early return) so explicit deny rules on the stale-resolved path are
-  // honored — deny > ask in the caller's reduce.
-  if (compoundCommandHasCd) {
-    firstAsk = {
-      behavior: 'ask',
-      message:
-        'Compound command changes working directory (Set-Location/Push-Location/Pop-Location/New-PSDrive) — relative paths cannot be validated against the original cwd and require manual approval',
-      decisionReason: {
-        type: 'other',
-        reason:
-          'Compound command contains cd with path operation — manual approval required to prevent path resolution bypass',
-      },
-    }
-  }
-
   // SECURITY: Track whether this statement contains a non-CommandAst pipeline
   // element (string literal, variable, array expression). PowerShell pipes
   // these values to downstream cmdlets, often binding to -Path. Example:
@@ -1480,6 +1462,13 @@ function checkPathConstraintsForStatement(
 
     const { paths, operationType, hasUnvalidatablePathArg, optionalWrite } =
       extractPathsFromCommand(cmd)
+
+    // SECURITY: 含 cd 的复合命令——Node cwd 与 PS 实际 cwd 可能不一致，
+    // 路径 cmdlet 的相对路径读/写均可能误判 allowedDirs。强制 ask；
+    // 非路径 cmdlet 不在此升级（重定向另有 compoundCd 检查）。后续仍扫 deny。
+    if (compoundCommandHasCd && CMDLET_PATH_CONFIG[resolveToCanonical(cmd.name)] !== undefined) {
+      firstAsk ??= compoundCdPathAsk()
+    }
 
     // SECURITY: Cmdlet receiving piped path from expression source.
     // `'/etc/shadow' | Get-Content` — Get-Content extracts zero paths
@@ -1649,6 +1638,10 @@ function checkPathConstraintsForStatement(
       const { paths, operationType, hasUnvalidatablePathArg, optionalWrite } =
         extractPathsFromCommand(cmd)
 
+      if (compoundCommandHasCd && CMDLET_PATH_CONFIG[resolveToCanonical(cmd.name)] !== undefined) {
+        firstAsk ??= compoundCdPathAsk()
+      }
+
       if (hasUnvalidatablePathArg) {
         const canonical = resolveToCanonical(cmd.name)
         firstAsk ??= {
@@ -1781,6 +1774,10 @@ function checkPathConstraintsForStatement(
             continue
           }
 
+          if (compoundCommandHasCd) {
+            firstAsk ??= compoundCdRedirectionAsk()
+          }
+
           const { allowed, resolvedPath, decisionReason } = validatePath(
             redir.target,
             cwd,
@@ -1835,6 +1832,10 @@ function checkPathConstraintsForStatement(
       }
       if (isNullRedirectionTarget(redir.target)) {
         continue
+      }
+
+      if (compoundCommandHasCd) {
+        firstAsk ??= compoundCdRedirectionAsk()
       }
 
       const { allowed, resolvedPath, decisionReason } = validatePath(

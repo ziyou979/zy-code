@@ -16,7 +16,10 @@ import { getSystemPrompt } from '../../constants/prompts.js'
 import type { Notification } from '../../context/notifications.js'
 import { getSystemContext, getUserContext } from '../../services/context/context.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
-import { partialCompactConversation } from '../../services/compact/compact.js'
+import {
+  partialCompactConversation,
+  stripStaleUsageFromMessages,
+} from '../../services/compact/compact.js'
 import { runPostCompactCleanup } from '../../services/compact/postCompactCleanup.js'
 import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import type {
@@ -25,12 +28,9 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
-import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import { createSystemMessage } from '../../services/messages/./constructors.js'
-import {
-  getMessagesAfterCompactBoundary,
-  textForResubmit,
-} from '../../services/messages/./predicates.js'
+import { textForResubmit } from '../../services/messages/./predicates.js'
+import { getHotContextMessages } from '../../services/messages/projections.js'
 import { buildEffectiveSystemPrompt } from '../../services/messages/systemPrompt.js'
 
 export type HandleSummarizeParams = {
@@ -67,7 +67,7 @@ export async function handleSummarize({
   setInputMode,
   addNotification,
 }: HandleSummarizeParams): Promise<void> {
-  const compactMessages = getMessagesAfterCompactBoundary(messages)
+  const compactMessages = getHotContextMessages(messages)
   const messageIndex = compactMessages.indexOf(message)
   if (messageIndex === -1) {
     setMessages((prev) => [
@@ -112,7 +112,7 @@ export async function handleSummarize({
     direction,
   )
 
-  const kept = result.messagesToKeep ?? []
+  const kept = stripStaleUsageFromMessages(result.messagesToKeep ?? [])
   const ordered =
     direction === 'up_to'
       ? [...result.summaryMessages, ...kept]
@@ -124,13 +124,22 @@ export async function handleSummarize({
     ...result.hookResults,
   ]
 
-  if (isFullscreenEnvEnabled() && direction === 'from') {
+  // 冷热分离：始终保留冷历史供 UI/resume 上翻（与 fullscreen 对齐）。
+  // 非 fullscreen 不再整表替换为仅 hot——resume 时原生 scrollback 为空。
+  if (direction === 'from') {
+    // pivot 之前保留；pivot 起用热上下文替换
     setMessages((old) => {
       const rawIdx = old.findIndex((m) => m.uuid === message.uuid)
-      return [...old.slice(0, rawIdx === -1 ? 0 : rawIdx), ...postCompact]
+      const cold = old.slice(0, rawIdx === -1 ? 0 : rawIdx)
+      const coldDeduped = cold.filter((m) => !postCompact.some((n) => n.uuid === m.uuid))
+      return [...coldDeduped, ...postCompact]
     })
   } else {
-    setMessages(postCompact)
+    // up_to 等：展示层保留未纳入 hot 的更早消息
+    setMessages((old) => {
+      const cold = old.filter((m) => !postCompact.some((n) => n.uuid === m.uuid))
+      return [...cold, ...postCompact]
+    })
   }
 
   if (feature('PROACTIVE') || feature('KAIROS')) {

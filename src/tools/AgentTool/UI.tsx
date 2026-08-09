@@ -580,14 +580,7 @@ export function renderToolResultMessage(
   const completionMessage = `${tSync('agent.done')} (${result.join(' · ')})`
   const finalAssistantMessage = createAssistantMessage({
     content: completionMessage,
-    // biome-ignore lint/suspicious/noExplicitAny: 适配层类型处理 — 需要额外的分析字段
-    usage: {
-      ...usage,
-      inference_geo: null,
-      iterations: null,
-      speed: null,
-      // biome-ignore lint/suspicious/noExplicitAny: 工具层类型适配
-    } as Parameters<typeof createAssistantMessage>[0]['usage'],
+    usage,
   })
   return (
     <Box flexDirection="column">

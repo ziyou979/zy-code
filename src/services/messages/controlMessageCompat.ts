@@ -9,6 +9,9 @@
  *
  * If both `request_id` and `requestId` are present, snake_case wins.
  * Mutates the object in place.
+ *
+ * 删除计划：iOS 客户端普遍带 CodingKeys 后可移除（目标不早于 2026-09-01）。
+ * 移除前确认 bridge + structuredIO 入站样本无 requestId-only。
  */
 export function normalizeControlMessageKeys(obj: unknown): unknown {
   if (obj === null || typeof obj !== 'object') {

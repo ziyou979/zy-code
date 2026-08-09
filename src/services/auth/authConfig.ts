@@ -318,3 +318,31 @@ export function setAuthConfigApiKey(
     }
   })
 }
+
+/**
+ * 清除 auth.json 中所有 provider 的 apiKey 字段（保留 apiKeyHelper / oauth）。
+ * 用于 /logout 与 removeApiKey。
+ */
+export function clearAllAuthConfigApiKeys(): { success: boolean; warning?: string } {
+  return updateAuthConfigRaw((current) => {
+    for (const key of Object.keys(current)) {
+      if (key === AUTH_OAUTH_KEY) {
+        continue
+      }
+      const existing = current[key]
+      if (!existing || typeof existing !== 'object' || Array.isArray(existing)) {
+        continue
+      }
+      const entry = { ...(existing as Record<string, unknown>) }
+      if (!('apiKey' in entry)) {
+        continue
+      }
+      delete entry.apiKey
+      if (Object.keys(entry).length === 0) {
+        delete current[key]
+      } else {
+        current[key] = entry
+      }
+    }
+  })
+}

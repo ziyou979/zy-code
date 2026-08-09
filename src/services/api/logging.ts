@@ -520,15 +520,10 @@ function logAPISuccess({
           connectorTextBlockCount,
         } as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
       : {}),
-    // 记录 cache_deleted_input_tokens 用于缓存编辑分析。需要类型转换，
-    // 因为该字段有意不在 NonNullableUsage 上（外部构建已排除）。
-    // 在缓存编辑激活时由 updateUsage() 设置。
-    ...(feature('CACHED_MICROCOMPACT') &&
-    ((usage as unknown as { cache_deleted_input_tokens?: number }).cache_deleted_input_tokens ??
-      0) > 0
+    // 记录 cacheDeletedInputTokens 用于缓存编辑分析（内存 camel）
+    ...(feature('CACHED_MICROCOMPACT') && (usage.cacheDeletedInputTokens ?? 0) > 0
       ? {
-          cacheDeletedInputTokens: (usage as unknown as { cache_deleted_input_tokens: number })
-            .cache_deleted_input_tokens,
+          cacheDeletedInputTokens: usage.cacheDeletedInputTokens,
         }
       : {}),
     ...(previousRequestId

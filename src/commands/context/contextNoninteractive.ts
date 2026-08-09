@@ -7,7 +7,7 @@ import type { Message } from '../../types/message.js'
 import { analyzeContextUsage, type ContextData } from '../../services/compact/analyzeContext.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { formatTokens } from '../../utils/format.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
+import { getHotContextMessages } from '../../services/messages/projections.js'
 import { getSourceDisplayName } from '../../services/settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
 
@@ -36,7 +36,7 @@ export async function collectContextData(context: CollectContextDataInput): Prom
     options: { mainLoopModel, tools, agentDefinitions, customSystemPrompt, appendSystemPrompt },
   } = context
 
-  let apiView = getMessagesAfterCompactBoundary(messages)
+  let apiView = getHotContextMessages(messages)
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { projectView } =

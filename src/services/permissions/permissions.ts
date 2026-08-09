@@ -1,4 +1,3 @@
-import { feature } from 'bun:bundle'
 import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { tSync } from '../../i18n/index.js'
@@ -6,7 +5,6 @@ import type { Tool, ToolPermissionContext, ToolUseContext } from '../../tools/to
 import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
 import { shouldUseSandbox } from '../../tools/BashTool/shouldUseSandbox.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
-import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
 import { isAbortError } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
@@ -57,7 +55,6 @@ import {
   DONT_ASK_REJECT_MESSAGE,
 } from '../messages/constants.js'
 import { calculateCostFromTokens } from '../model/modelCost.js'
-import { getAutoModeConfig } from '../settings/settings.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
@@ -249,37 +246,6 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
       // 是空操作），否则像之前一样从 appState 读取。
       const denialState =
         context.localDenialTracking ?? appState.denialTracking ?? createDenialTrackingState()
-
-      // PowerShell 在 auto 模式下需要显式用户权限，除非
-      // POWERSHELL_AUTO_MODE（仅内部构建标志）开启。禁用时，此守卫
-      // 将 PS 排除在分类器之外并跳过下面的 acceptEdits 快速路径。
-      // 启用时，PS 像 Bash 一样流入分类器 — 分类器提示会追加
-      // POWERSHELL_DENY_GUIDANCE，使其识别 `iex (iwr ...)` 为下载并执行等。
-      // 注意：这在 behavior === 'ask' 分支内运行，因此更早触发的
-      // 放行规则（步骤 2b toolAlwaysAllowedRule、PS 前缀放行）
-      // 在到达这里之前就已返回。放行规则保护由
-      // permissionSetup.ts 处理：isOverlyBroadPowerShellAllowRule 剥离 PowerShell(*)，
-      // isDangerousPowerShellPermission 为内部用户和 auto 模式入口
-      // 剥离 iex/pwsh/Start-Process 前缀规则。
-      if (tool.name === POWERSHELL_TOOL_NAME && !getAutoModeConfig()?.classifyAllShell) {
-        if (!feature('POWERSHELL_AUTO_MODE')) {
-          if (appState.toolPermissionContext.shouldAvoidPermissionPrompts) {
-            return {
-              behavior: 'deny',
-              message: tSync('permission.powershellInteractiveApprovalRequired'),
-              decisionReason: {
-                type: 'asyncAgent',
-                reason:
-                  'PowerShell tool requires interactive approval and permission prompts are not available in this context',
-              },
-            }
-          }
-          permLog(
-            `Skipping auto mode classifier for ${tool.name}: tool requires explicit user permission`,
-          )
-          return result
-        }
-      }
 
       // 在运行 auto 模式分类器之前，检查 acceptEdits 模式是否允许此操作。
       // 这避免了对安全操作（如工作目录中的文件编辑）进行昂贵的分类器 API 调用。

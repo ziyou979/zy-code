@@ -386,12 +386,6 @@ export async function runHeadless(
     proactiveModule.activateProactive('command')
   }
 
-  // Periodically force a full GC to keep memory usage in check
-  if (typeof Bun !== 'undefined') {
-    const gcTimer = setInterval(Bun.gc, 1000)
-    gcTimer.unref()
-  }
-
   // Start headless profiler for first turn
   headlessProfilerStartTurn()
   headlessProfilerCheckpoint('runHeadless_entry')

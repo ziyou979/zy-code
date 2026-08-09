@@ -17,37 +17,33 @@ describe('EMPTY_USAGE', () => {
     expect(EMPTY_USAGE.cacheReadInputTokens).toBe(0)
   })
 
-  test('server_tool_use 为零', () => {
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
-    const usage = EMPTY_USAGE as any
-    expect(usage.server_tool_use.web_search_requests).toBe(0)
-    expect(usage.server_tool_use.web_fetch_requests).toBe(0)
+  test('serverToolUse 为零', () => {
+    expect(EMPTY_USAGE.serverToolUse.webSearchRequests).toBe(0)
+    expect(EMPTY_USAGE.serverToolUse.webFetchRequests).toBe(0)
   })
 
-  test('cache_creation 为零', () => {
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
-    const usage = EMPTY_USAGE as any
-    expect(usage.cache_creation.ephemeral_1h_input_tokens).toBe(0)
-    expect(usage.cache_creation.ephemeral_5m_input_tokens).toBe(0)
+  test('cacheCreation 为零', () => {
+    expect(EMPTY_USAGE.cacheCreation.ephemeral1hInputTokens).toBe(0)
+    expect(EMPTY_USAGE.cacheCreation.ephemeral5mInputTokens).toBe(0)
   })
 
-  test('service_tier 为 standard', () => {
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
-    expect((EMPTY_USAGE as any).service_tier).toBe('standard')
+  test('serviceTier 为 standard', () => {
+    expect(EMPTY_USAGE.serviceTier).toBe('standard')
   })
 
   test('speed 为 standard', () => {
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
-    expect((EMPTY_USAGE as any).speed).toBe('standard')
+    expect(EMPTY_USAGE.speed).toBe('standard')
   })
 
-  test('inference_geo 为空字符串', () => {
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
-    expect((EMPTY_USAGE as any).inference_geo).toBe('')
+  test('inferenceGeo 为空字符串', () => {
+    expect(EMPTY_USAGE.inferenceGeo).toBe('')
+  })
+
+  test('cacheDeletedInputTokens 为零', () => {
+    expect(EMPTY_USAGE.cacheDeletedInputTokens).toBe(0)
   })
 
   test('iterations 为空数组', () => {
-    // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
-    expect((EMPTY_USAGE as any).iterations).toEqual([])
+    expect(EMPTY_USAGE.iterations).toEqual([])
   })
 })

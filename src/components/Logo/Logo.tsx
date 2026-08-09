@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { getDumpPromptsPath } from 'src/services/api/dumpPrompts.js'
 import { getGlobalConfig, saveGlobalConfig } from 'src/services/config/config.js'
 import { getDebugLogPath, isDebugMode, isDebugToStdErr } from 'src/services/infra/debug.js'
@@ -29,6 +29,7 @@ import {
   getLogoDisplayData,
   getRecentActivitySync,
   getRecentReleaseNotesSync,
+  subscribeRecentActivity,
   truncatePath,
 } from '../../services/branding/logoUtils.js'
 import { checkForReleaseNotesSync } from '../../services/release-notes/releaseNotes.js'
@@ -69,7 +70,12 @@ import { useAppState } from '../../state/AppState.js'
 
 const LEFT_PANEL_MAX_WIDTH = 50
 export function Logo() {
-  const activities = getRecentActivitySync()
+  // setup 异步预取活动后经 subscribe 触发重渲染；首帧可能为空数组
+  const activities = useSyncExternalStore(
+    subscribeRecentActivity,
+    getRecentActivitySync,
+    getRecentActivitySync,
+  )
   const username = getGlobalConfig().oauthAccount?.displayName ?? ''
   const { columns } = useTerminalSize()
   const showOnboarding = shouldShowProjectOnboarding()

@@ -42,11 +42,15 @@ export function ShellProgressMessage({
   const extraLines = totalLines ? Math.max(0, totalLines - 5) : 0
   let lineStatus = ''
   if (!verbose && totalBytes && totalLines) {
-    lineStatus = `~${totalLines} ${tSync('shellProgress.lines')}`
-  } else {
-    if (!verbose && extraLines > 0) {
-      lineStatus = `+${extraLines} ${tSync('shellProgress.lines')}`
-    }
+    lineStatus = tSync('shellProgress.approxLines', {
+      count: totalLines,
+      unit: tSync(totalLines === 1 ? 'shellProgress.line_one' : 'shellProgress.line_other'),
+    })
+  } else if (!verbose && extraLines > 0) {
+    lineStatus = tSync('shellProgress.extraLines', {
+      count: extraLines,
+      unit: tSync(extraLines === 1 ? 'shellProgress.line_one' : 'shellProgress.line_other'),
+    })
   }
   const visibleLineCount = verbose ? undefined : Math.min(5, lines.length)
   return (

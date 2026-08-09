@@ -668,13 +668,22 @@ function pickDepthOneUuidCandidate(buf: Buffer, lineStart: number, candidates: n
   return candidates.at(-1)!
 }
 
-function walkChainBeforeParse(buf: Buffer): Buffer {
+/**
+ * 解析前按 parent 链剔除死 fork，降低大 JSONL 的 parse 成本。
+ * 冷热分离后 compact_boundary 常以 parentUuid=null 截断热链：仅走 parent
+ * 会把 boundary 前冷历史当成死分支删掉，resume 只剩后半段。保留热链上
+ * **最后一条** compact_boundary 之前的非 sidechain 主消息作为冷历史。
+ * 导出供单测锁定该语义。
+ */
+export function walkChainBeforeParse(buf: Buffer): Buffer {
   const NEWLINE = 0x0a
   const OPEN_BRACE = 0x7b
   const QUOTE = 0x22
   const PARENT_PREFIX = Buffer.from('{"parentUuid":')
   const UUID_KEY = Buffer.from('"uuid":"')
   const SIDECHAIN_TRUE = Buffer.from('"isSidechain":true')
+  // 比裸 "compact_boundary" 更贴 subtype 字段；误匹配时最坏只是少做死 fork 剔除
+  const COMPACT_BOUNDARY_SUBTYPE = Buffer.from('"subtype":"compact_boundary"')
   const UUID_LEN = 36
   const TS_SUFFIX = Buffer.from('","timestamp":"')
   const TS_SUFFIX_LEN = TS_SUFFIX.length
@@ -799,6 +808,42 @@ function walkChainBeforeParse(buf: Buffer): Buffer {
     slot = uuidToSlot.get(parent)
   }
 
+  // 冷热会话不能只信 parent 链：
+  // 1) CB 本身 parentUuid=null，链上可能含 CB，也可能因 compact 后首条热消息
+  //    再次 parentUuid=null（流式多段 assistant）而根本碰不到 CB；
+  // 2) 仅并入「链上 CB」之前的 cold 时，真实 12MB 会话会只剩 ~50 条 hot 碎片。
+  // 策略：若文件中存在 compact_boundary 且 leaf 在其后，保留 leaf 及之前全部
+  // 非 sidechain 主消息（cold+热段含断链碎片）；sidechain 与 leaf 之后仍丢弃。
+  // 无 CB 时保持「仅 parent 热链」以剔除死 fork。
+  const leafStart = msgIdx[leafSlot]!
+  let lastCompactBoundaryStart = -1
+  for (let i = 0; i < msgIdx.length; i += 3) {
+    const start = msgIdx[i]!
+    const end = msgIdx[i + 1]!
+    const hit = buf.indexOf(COMPACT_BOUNDARY_SUBTYPE, start)
+    if (hit !== -1 && hit < end) {
+      lastCompactBoundaryStart = start
+    }
+  }
+  if (lastCompactBoundaryStart >= 0 && leafStart >= lastCompactBoundaryStart) {
+    for (let i = 0; i < msgIdx.length; i += 3) {
+      const start = msgIdx[i]!
+      if (start > leafStart) {
+        break
+      }
+      if (chain.has(start)) {
+        continue
+      }
+      const end = msgIdx[i + 1]!
+      const sc = buf.indexOf(SIDECHAIN_TRUE, start)
+      if (sc !== -1 && sc < end) {
+        continue
+      }
+      chain.add(start)
+      chainBytes += end - start
+    }
+  }
+
   // parseJSONL 代价随字节而非 entry 数量增长。session 可能按数量有
   // 数千个死 entry，但如果死分支是短轮次而活跃链持有大量 assistant
   // 响应，则字节只有个位数百分比（实测：107 MB session，69% 死 entry，
@@ -807,6 +852,7 @@ function walkChainBeforeParse(buf: Buffer): Buffer {
   // 因此 len - chainBytes 足够近似死字节。
   // 接近收支平衡时 concat memcpy（将 chainBytes 复制到新分配）
   // 占主导，因此保守的 50% 门控安全地保持在获胜一侧。
+  // 门控已计入 cold+hot；仅剔除 boundary 后/旁路死 fork。
   if (len - chainBytes < len >> 1) {
     return buf
   }
@@ -835,11 +881,12 @@ function walkChainBeforeParse(buf: Buffer): Buffer {
 /**
  * 修复 transcript messages 中损坏的 parentUuid 链。
  * 正常文件零开销：先快速扫描，没有断链则直接返回。
- * 有断链时按 session 分组 + timestamp 排序修复：
- * - parentUuid=null → 修复为前一条消息的 uuid
- * - parentUuid 指向不存在的 UUID → 修复为前一条消息的 uuid
- * - sidechain 消息排除（不参与主链修复）
- * - compact_boundary 的 parentUuid=null 是有意为之，不修复
+ * 有断链时按 **JSONL 插入序**（Map 序）逐 session 修复：
+ * - parentUuid=null / 指向不存在的 UUID → 挂到上一条链参与者
+ * - compact_boundary 保持 parentUuid=null，但可作为下一条的父节点
+ *   （compact 后流式多段 assistant 常再次 parentUuid=null，必须能挂回 CB，
+ *   否则 buildConversationChain 只拿到 hot 碎片）
+ * - sidechain 不参与
  */
 export function repairBrokenParentUuidChains(messages: Map<string, TranscriptMessage>): void {
   // 快速扫描：检查是否有需要修复的消息
@@ -857,26 +904,37 @@ export function repairBrokenParentUuidChains(messages: Map<string, TranscriptMes
     return
   }
 
-  // 按 sessionId 分组（排除 sidechain 和 compact_boundary）
+  // session → JSONL 序消息（含 CB，便于把断链热段挂到 boundary）
   const bySession = new Map<string, TranscriptMessage[]>()
   for (const msg of messages.values()) {
-    if (msg.isSidechain || isCompactBoundaryMessage(msg)) {
+    if (msg.isSidechain) {
       continue
     }
     const sid = (msg.sessionId as string) ?? '__root__'
-    if (!bySession.has(sid)) {
-      bySession.set(sid, [])
+    let group = bySession.get(sid)
+    if (!group) {
+      group = []
+      bySession.set(sid, group)
     }
-    bySession.get(sid)!.push(msg)
+    group.push(msg)
   }
 
-  // 时间顺序即真实顺序，修复损坏的 parentUuid
   for (const group of bySession.values()) {
-    group.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-    for (let i = 1; i < group.length; i++) {
-      const msg = group[i]!
+    let prevUuid: UUID | null = null
+    for (const msg of group) {
+      if (isCompactBoundaryMessage(msg)) {
+        // CB 有意截断链；游标仍推进，供后继 null-parent 热消息挂接
+        prevUuid = msg.uuid as UUID
+        continue
+      }
       if (!msg.parentUuid || !messages.has(msg.parentUuid)) {
-        msg.parentUuid = group[i - 1]!.uuid as UUID
+        if (prevUuid) {
+          msg.parentUuid = prevUuid
+        }
+      }
+      // 与 insertMessageChain 一致：链参与者推进父游标
+      if (msg.type === 'user' || msg.type === 'assistant' || msg.type === 'attachment') {
+        prevUuid = msg.uuid as UUID
       }
     }
   }
@@ -971,9 +1029,7 @@ export async function loadTranscriptFile(
     // 选择用户消息最多的分支而非最新的），boundary 有 preservedSegment
     // （这些消息在磁盘上保持其压缩前 parentUuid -- applyPreservedSegmentRelinks
     // 在解析后在内存中拼接它们，因此解析前的链遍历会将它们作为孤儿丢弃），
-    // 以及设置了 ZY_CODE_DISABLE_PRECOMPACT_SKIP（该 kill switch 意味着
-    // "加载一切，不跳过"；这是另一个解析前跳过优化，且其依赖的
-    // hasPreservedSegment 扫描未运行）。
+    // walkChainBeforeParse 会并入最后 compact_boundary 前冷历史（冷热分离）。
     if (
       !opts?.keepAllLeaves &&
       !hasPreservedSegment &&

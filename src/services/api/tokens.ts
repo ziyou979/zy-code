@@ -5,10 +5,8 @@ import {
 import type { TokenUsage as Usage } from '../../types/llm.js'
 import type { AssistantMessage, Message } from '../../types/message.js'
 import { SYNTHETIC_MESSAGES, SYNTHETIC_MODEL } from '../messages/constants.js'
-import {
-  getMessagesAfterCompactBoundary,
-  isCompactBoundaryMessage,
-} from '../messages/predicates.js'
+import { isCompactBoundaryMessage } from '../messages/predicates.js'
+import { getHotContextMessages, getLiveApiUsageMessages } from '../messages/projections.js'
 import { getInitialSettings } from '../settings/settings.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 
@@ -23,9 +21,47 @@ export function getTokenUsage(message: Message): Usage | undefined {
     ) &&
     message.message.model !== SYNTHETIC_MODEL
   ) {
-    return message.message.usage
+    return normalizeTokenUsage(message.message.usage)
   }
   return undefined
+}
+
+/**
+ * TokenUsage 标准为 camelCase。全零视为无效（压缩后 keep 归零残留）。
+ * 历史 snake JSONL 请用 `bun scripts/migrate-token-usage-camel.ts --apply` 迁移，此处不做兼容。
+ */
+function normalizeTokenUsage(raw: unknown): Usage | undefined {
+  if (!raw || typeof raw !== 'object') {
+    return undefined
+  }
+  const u = raw as Record<string, unknown>
+  const num = (key: string): number => {
+    const v = u[key]
+    return typeof v === 'number' && Number.isFinite(v) ? v : 0
+  }
+  const inputTokens = num('inputTokens')
+  const outputTokens = num('outputTokens')
+  const cacheCreationInputTokens = num('cacheCreationInputTokens')
+  const cacheReadInputTokens = num('cacheReadInputTokens')
+
+  // 全零视为无效（压缩后 keep 消息的归零残留），避免锚定到过时窗口
+  if (
+    inputTokens === 0 &&
+    outputTokens === 0 &&
+    cacheCreationInputTokens === 0 &&
+    cacheReadInputTokens === 0
+  ) {
+    return undefined
+  }
+
+  return {
+    // 保留 iterations 等扩展字段供 finalContextTokens 使用
+    ...(raw as Usage),
+    inputTokens,
+    outputTokens,
+    cacheCreationInputTokens,
+    cacheReadInputTokens,
+  }
 }
 
 /**
@@ -62,16 +98,35 @@ export function getTokenCountFromUsage(usage: Usage): number {
 }
 
 export function tokenCountFromLastAPIResponse(messages: Message[]): number {
-  let i = messages.length - 1
+  // 排除 keep/summary 上的过时 usage
+  const live = getLiveApiUsageMessages(messages)
+  let i = live.length - 1
   while (i >= 0) {
-    const message = messages[i]
+    const message = live[i]
     const usage = message ? getTokenUsage(message) : undefined
     if (usage) {
       return getTokenCountFromUsage(usage)
     }
     i--
   }
-  return 0
+  // 边界后尚无 live usage：用 boundary.postTokens（压缩刚结束 / resume 后）
+  return postTokensFromLastBoundary(messages) ?? 0
+}
+
+/** 最近 compact boundary 上的 postTokens；无则 undefined */
+function postTokensFromLastBoundary(messages: readonly Message[]): number | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i]
+    if (!message || !isCompactBoundaryMessage(message)) {
+      continue
+    }
+    const postTokens = message.compactMetadata?.postTokens
+    if (postTokens !== undefined && postTokens > 0) {
+      return postTokens
+    }
+    break
+  }
+  return undefined
 }
 
 /**
@@ -86,9 +141,10 @@ export function tokenCountFromLastAPIResponse(messages: Message[]): number {
  * 两条路径均排除缓存 token 以匹配 #304930 的公式。
  */
 export function finalContextTokensFromLastResponse(messages: Message[]): number {
-  let i = messages.length - 1
+  const live = getLiveApiUsageMessages(messages)
+  let i = live.length - 1
   while (i >= 0) {
-    const message = messages[i]
+    const message = live[i]
     const usage = message ? getTokenUsage(message) : undefined
     if (usage) {
       // Stainless 类型尚未包含 iterations——进行类型断言
@@ -116,7 +172,7 @@ export function finalContextTokensFromLastResponse(messages: Message[]): number 
     }
     i--
   }
-  return 0
+  return postTokensFromLastBoundary(messages) ?? 0
 }
 
 /**
@@ -129,9 +185,10 @@ export function finalContextTokensFromLastResponse(messages: Message[]): number 
  * 而非上下文窗口的填满程度。
  */
 export function messageTokenCountFromLastAPIResponse(messages: Message[]): number {
-  let i = messages.length - 1
+  const live = getLiveApiUsageMessages(messages)
+  let i = live.length - 1
   while (i >= 0) {
-    const message = messages[i]
+    const message = live[i]
     const usage = message ? getTokenUsage(message) : undefined
     if (usage) {
       return usage.outputTokens
@@ -147,6 +204,7 @@ export function getCurrentUsage(messages: Message[]): {
   cacheCreationInputTokens: number
   cacheReadInputTokens: number
 } | null {
+  // 调用方可传入已切片的 hot 列表；此处不再二次 boundary 切片，避免双重 slice。
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i]
     const usage = message ? getTokenUsage(message) : undefined
@@ -179,32 +237,24 @@ export function getDisplayContextUsage(messages: Message[]): {
   cacheCreationInputTokens: number
   cacheReadInputTokens: number
 } | null {
-  const afterBoundary = getMessagesAfterCompactBoundary(messages)
-  const liveUsage = getCurrentUsage(afterBoundary)
+  // 仅 keep 之后的新 API usage；勿把 messagesToKeep 上压缩前 usage 当 live
+  const liveUsage = getCurrentUsage(getLiveApiUsageMessages(messages))
   if (liveUsage) {
     return liveUsage
   }
 
-  // 无 live usage：从后往前找最近 compact boundary 上的 postTokens
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const message = messages[i]
-    if (!message || !isCompactBoundaryMessage(message)) {
-      continue
+  const postTokens = postTokensFromLastBoundary(messages)
+  if (postTokens !== undefined) {
+    return {
+      inputTokens: postTokens,
+      outputTokens: 0,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
     }
-    const postTokens = message.compactMetadata?.postTokens
-    if (postTokens !== undefined && postTokens > 0) {
-      return {
-        inputTokens: postTokens,
-        outputTokens: 0,
-        cacheCreationInputTokens: 0,
-        cacheReadInputTokens: 0,
-      }
-    }
-    // 找到了边界但没有 postTokens，停止（不要再跨边界取旧 usage）
-    break
   }
 
-  return null
+  // 无 boundary / 无 postTokens：回退到全量热上下文上的 usage（未压缩会话）
+  return getCurrentUsage(getHotContextMessages(messages))
 }
 
 export function doesMostRecentAssistantMessageExceed200k(messages: Message[]): boolean {
@@ -273,41 +323,44 @@ export function getAssistantMessageContentLength(message: AssistantMessage): num
  * 的**第一条**兄弟记录，确保所有插入的 tool_result 都纳入粗略估算。
  */
 export function tokenCountWithEstimation(messages: readonly Message[]): number {
+  // 热上下文（含 summary+keep）用于 rough 估算；live usage 锚点排除 keep。
+  const hot = getHotContextMessages(messages)
+  const liveRegion = getLiveApiUsageMessages(messages)
+
   // 获取语言感知的 token 估算比率
   const settings = getInitialSettings()
   const languageBpt = getBytesPerTokenForLanguage(settings.language)
   const correctionFactor = 4.0 / languageBpt // 默认比率(4) / 语言实际比率
 
-  let i = messages.length - 1
+  // 在 live 区找 usage 锚点；slice 相对 hot 全量（含 keep/summary 之后的 tool_result）
+  let i = liveRegion.length - 1
   while (i >= 0) {
-    const message = messages[i]
+    const message = liveRegion[i]
     const usage = message ? getTokenUsage(message) : undefined
     if (message && usage) {
-      // 向前回溯，跳过来自同一 API 响应（相同 message.id）的早期兄弟记录，
-      // 确保它们之间插入的 tool_result 都包含在估算切片中。
       const responseId = getAssistantMessageId(message)
+      let anchorInLive = i
       if (responseId) {
         let j = i - 1
         while (j >= 0) {
-          const prior = messages[j]
+          const prior = liveRegion[j]
           const priorId = prior ? getAssistantMessageId(prior) : undefined
           if (priorId === responseId) {
-            // 同一 API 响应的早期拆分——改以此为锚点。
-            i = j
+            anchorInLive = j
           } else if (priorId !== undefined) {
-            // 遇到不同的 API 响应——停止回溯。
             break
           }
-          // priorId === undefined：user/tool_result/attachment 消息，
-          // 可能插入在拆分记录之间——继续回溯。
           j--
         }
       }
+      const anchorMsg = liveRegion[anchorInLive]
+      const hotAnchorIdx = anchorMsg ? hot.findIndex((m) => m.uuid === anchorMsg.uuid) : -1
+      const sliceFrom = hotAnchorIdx === -1 ? hot.length : hotAnchorIdx + 1
       return (
         getTokenCountFromUsage(usage) +
         Math.round(
           roughTokenCountEstimationForMessages(
-            messages.slice(i + 1) as ReadonlyArray<{
+            hot.slice(sliceFrom) as ReadonlyArray<{
               type: string
               message?: { content?: unknown }
             }>,
@@ -317,9 +370,21 @@ export function tokenCountWithEstimation(messages: readonly Message[]): number {
     }
     i--
   }
+
+  // 无 live usage：优先 boundary.postTokens，并加上 keep 之后新消息的 rough
+  const postTokens = postTokensFromLastBoundary(messages)
+  if (postTokens !== undefined) {
+    const roughAfterKeep = Math.round(
+      roughTokenCountEstimationForMessages(
+        liveRegion as ReadonlyArray<{ type: string; message?: { content?: unknown } }>,
+      ) * correctionFactor,
+    )
+    return postTokens + roughAfterKeep
+  }
+
   return Math.round(
     roughTokenCountEstimationForMessages(
-      messages as ReadonlyArray<{ type: string; message?: { content?: unknown } }>,
+      hot as ReadonlyArray<{ type: string; message?: { content?: unknown } }>,
     ) * correctionFactor,
   )
 }

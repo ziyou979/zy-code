@@ -208,7 +208,7 @@ export function estimateMessageTokens(messages: Message[]): number {
 export type PendingCacheEdits = {
   trigger: 'auto'
   deletedToolIds: string[]
-  // 上一次 API 响应的累计 cache_deleted_input_tokens 基线，
+  // 上一次 API 响应的累计 cacheDeletedInputTokens 基线，
   // 用于计算每次操作的增量（API 值为粘性/累计值）
   baselineCacheDeletedTokens: number
 }
@@ -391,14 +391,14 @@ async function cachedMicrocompactPath(
 
     // 返回未修改的消息——cache_reference 和 cache_edits 在 API 层添加
     // 边界消息延迟到 API 响应之后，以便使用 API 返回的实际
-    // cache_deleted_input_tokens，而非客户端估算值
-    // 捕获最后一条 assistant 消息的累计 cache_deleted_input_tokens 基线，
+    // cacheDeletedInputTokens，而非客户端估算值
+    // 捕获最后一条 assistant 消息的累计 cacheDeletedInputTokens 基线，
     // 以便在 API 调用后计算每次操作的增量
     const lastAsst = messages.findLast((m) => m.type === 'assistant')
     const baseline =
       lastAsst?.type === 'assistant'
-        ? ((lastAsst.message.usage as unknown as Record<string, number | undefined>)
-            ?.cache_deleted_input_tokens ?? 0)
+        ? ((lastAsst.message.usage as { cacheDeletedInputTokens?: number } | undefined)
+            ?.cacheDeletedInputTokens ?? 0)
         : 0
 
     return {

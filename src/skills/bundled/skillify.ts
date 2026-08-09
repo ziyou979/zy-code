@@ -1,7 +1,7 @@
 import { getSessionMemoryContent } from '../../services/session-memory/sessionMemoryUtils.js'
 import type { Message } from '../../types/message.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
+import { getHotContextMessages } from '../../services/messages/projections.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
 function extractUserMessages(messages: Message[]): string[] {
@@ -171,7 +171,7 @@ export function registerSkillifySkill(): void {
     argumentHint: '[description of the process you want to capture]',
     async getPromptForCommand(args, context) {
       const sessionMemory = (await getSessionMemoryContent()) ?? 'No session memory available.'
-      const userMessages = extractUserMessages(getMessagesAfterCompactBoundary(context.messages))
+      const userMessages = extractUserMessages(getHotContextMessages(context.messages))
 
       const userDescriptionBlock = args ? `The user described this process as: "${args}"` : ''
 

@@ -4,7 +4,7 @@ import { getWireBaseUrlOverride, getWireTokenOverride } from '../../bridge/bridg
 import { tSync } from '../../i18n/index.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import type { LocalJSXCommandContext } from '../types.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
+import { getHotContextMessages } from '../../services/messages/projections.js'
 import { getTranscriptPath, saveAgentName, saveCustomTitle } from '../../services/sessionStorage.js'
 import { isTeammate } from '../../services/swarm/teammate.js'
 import { generateSessionName } from './generateSessionName.js'
@@ -37,7 +37,7 @@ export async function performRename(
   let isGenerated: boolean
   if (!args || args.trim() === '') {
     const generated = await generateSessionName(
-      getMessagesAfterCompactBoundary(context.messages),
+      getHotContextMessages(context.messages),
       context.abortController.signal,
     )
     if (!generated) {

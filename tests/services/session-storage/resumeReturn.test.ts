@@ -71,4 +71,39 @@ describe('session-storage/resumeReturn', () => {
       contextUsagePercent: 40,
     })
   })
+
+  test('已压缩会话：按 postTokens 估算，不因 keep 上旧 usage 误报 900k+', () => {
+    process.env.ZY_CODE_RESUME_THRESHOLD_MINUTES = '5'
+    process.env.ZY_CODE_RESUME_CONTEXT_PERCENT = '50'
+
+    const boundary = {
+      type: 'system' as const,
+      subtype: 'compact_boundary' as const,
+      content: 'Conversation compacted',
+      isMeta: false as const,
+      timestamp: new Date(NOW - 10 * 60_000).toISOString(),
+      uuid: '00000000-0000-4000-8000-000000000099',
+      level: 'info' as const,
+      compactMetadata: {
+        trigger: 'manual' as const,
+        preTokens: 900_000,
+        postTokens: 20_000,
+        preservedSegment: {
+          headUuid: '00000000-0000-4000-8000-000000000001',
+          anchorUuid: '00000000-0000-4000-8000-000000000099',
+          tailUuid: '00000000-0000-4000-8000-000000000001',
+        },
+      },
+    }
+    const keepWithStaleUsage = makeAssistant(120, 900_000)
+
+    // 时间够长、若按 900k 会远超 50%，但真实热上下文只有 ~20k
+    const result = getResumeReturnPrompt(
+      [boundary as never, keepWithStaleUsage],
+      false,
+      'test-model',
+      NOW,
+    )
+    expect(result).toBeNull()
+  })
 })

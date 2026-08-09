@@ -20,7 +20,6 @@ import {
 import {
   clearKeychainCache,
   getMacOsKeychainStorageServiceName,
-  getUsername,
 } from 'src/services/secure-storage/macOsKeychainHelpers.js'
 import {
   getApiKeyFromFileDescriptor,
@@ -63,7 +62,12 @@ import {
 } from '../oauth/oauthStorage.js'
 import { getOAuthProvider } from '../oauth/providers/index.js'
 import type { OAuthTokens, SubscriptionType } from '../oauth/types.js'
-import { getAuthConfigApiKey, getAuthConfigApiKeyHelper } from './authConfig.js'
+import {
+  clearAllAuthConfigApiKeys,
+  getAuthConfigApiKey,
+  getAuthConfigApiKeyHelper,
+  setAuthConfigApiKey,
+} from './authConfig.js'
 
 /** API key helper 缓存的默认 TTL，单位毫秒（5 分钟） */
 const DEFAULT_API_KEY_HELPER_TTL = 5 * 60 * 1000
@@ -460,22 +464,26 @@ export function isGcpAuthRefreshFromProjectSettings(): boolean {
   )
 }
 
-/** @private 请使用 {@link getApiKey} 或 {@link getApiKeyWithSource} */
+/**
+ * 一次性迁移：旧 keychain / ~/.zy.json primaryApiKey → auth.json。
+ * 读到后写入当前 provider 的 auth 条目并清掉 legacy 存储；之后运行时只认 auth.json。
+ * @private 请使用 {@link getApiKey} 或 {@link getApiKeyWithSource}
+ */
 export const getApiKeyFromConfigOrMacOSKeychain = memoize(
   (): { key: string; source: ApiKeySource } | null => {
     if (isBareMode()) {
       return null
     }
-    // TODO: 迁移到 SecureStorage
+
+    let legacyKey: string | null = null
+
     if (process.platform === 'darwin') {
-      // keychainPrefetch.ts 在 main.tsx 顶层与模块导入并行触发此读取。
-      // 如果已完成，使用该结果而非在此处生成同步 `security` 子进程（约 33ms）。
+      // keychainPrefetch 与 main 导入并行；完成后走预取结果，避免同步 security ~33ms
       const prefetch = getLegacyApiKeyPrefetchResult()
       if (prefetch) {
         if (prefetch.stdout) {
-          return { key: prefetch.stdout, source: '/login managed key' }
+          legacyKey = prefetch.stdout
         }
-        // 预取完成但没有 key——回退到 config，而非 keychain。
       } else {
         const storageServiceName = getMacOsKeychainStorageServiceName()
         try {
@@ -483,7 +491,7 @@ export const getApiKeyFromConfigOrMacOSKeychain = memoize(
             `security find-generic-password -a $USER -w -s "${storageServiceName}"`,
           )
           if (result) {
-            return { key: result, source: '/login managed key' }
+            legacyKey = result
           }
         } catch (e) {
           logError(e)
@@ -491,12 +499,42 @@ export const getApiKeyFromConfigOrMacOSKeychain = memoize(
       }
     }
 
-    const config = getGlobalConfig()
-    if (!config.primaryApiKey) {
+    if (!legacyKey) {
+      const config = getGlobalConfig()
+      if (config.primaryApiKey) {
+        legacyKey = config.primaryApiKey
+      }
+    }
+
+    if (!legacyKey) {
       return null
     }
 
-    return { key: config.primaryApiKey, source: '/login managed key' }
+    // 迁入 auth.json（当前 provider）；已有 auth 条目时不覆盖
+    const provider = getAuthProviderId()
+    if (provider && !getAuthConfigApiKey(provider)) {
+      const written = setAuthConfigApiKey(provider, legacyKey)
+      if (written.success) {
+        logEvent('zy_api_key_migrated_to_auth_json', {})
+      } else {
+        logForDebugging(
+          `legacy api key migrate to auth.json failed: ${written.warning ?? 'unknown'}`,
+          { level: 'warn' },
+        )
+      }
+    }
+
+    // 无论是否写成功，清掉 legacy，避免永久双轨
+    void maybeRemoveApiKeyFromMacOSKeychain()
+    saveGlobalConfig((current) => {
+      if (current.primaryApiKey === undefined) {
+        return current
+      }
+      return { ...current, primaryApiKey: undefined }
+    })
+    clearLegacyApiKeyPrefetch()
+
+    return { key: legacyKey, source: '/login managed key' }
   },
 )
 
@@ -505,6 +543,10 @@ function isValidApiKey(apiKey: string): boolean {
   return /^[a-zA-Z0-9-_]+$/.test(apiKey)
 }
 
+/**
+ * 将 API key 写入 auth.json（当前 provider），并记录 approved 指纹。
+ * 不再写入 macOS keychain 或 ~/.zy.json primaryApiKey。
+ */
 export async function saveApiKey(apiKey: string): Promise<void> {
   if (!isValidApiKey(apiKey)) {
     throw new Error(
@@ -512,50 +554,24 @@ export async function saveApiKey(apiKey: string): Promise<void> {
     )
   }
 
-  // 作为主 API key 存储
-  await maybeRemoveApiKeyFromMacOSKeychain()
-  let savedToKeychain = false
-  if (process.platform === 'darwin') {
-    try {
-      // TODO: 迁移到 SecureStorage
-      const storageServiceName = getMacOsKeychainStorageServiceName()
-      const username = getUsername()
-
-      // 转换为十六进制以避免任何转义问题
-      const hexValue = Buffer.from(apiKey, 'utf-8').toString('hex')
-
-      // 使用 security 的交互模式 (-i) 配合 -X（十六进制）选项
-      // 确保凭据不会出现在进程命令行参数中
-      // 进程监控器只能看到 "security -i"，看不到密码
-      const command = `add-generic-password -U -a "${username}" -s "${storageServiceName}" -X "${hexValue}"\n`
-
-      await execa('security', ['-i'], {
-        input: command,
-        reject: false,
-      })
-
-      logEvent('zy_api_key_saved_to_keychain', {})
-      savedToKeychain = true
-    } catch (e) {
-      logError(e)
-      logEvent('zy_api_key_keychain_error', {
-        error: errorMessage(e) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      logEvent('zy_api_key_saved_to_config', {})
-    }
-  } else {
-    logEvent('zy_api_key_saved_to_config', {})
+  const provider = getAuthProviderId()
+  if (!provider) {
+    throw new Error('Cannot save API key: no provider configured')
   }
 
-  const normalizedKey = normalizeApiKeyForConfig(apiKey)
+  const written = setAuthConfigApiKey(provider, apiKey)
+  if (!written.success) {
+    throw new Error(written.warning ?? 'Failed to write auth.json')
+  }
 
-  // 保存配置（包含所有更新）
+  // 清理历史 legacy 存储，保证单源
+  await maybeRemoveApiKeyFromMacOSKeychain()
+  const normalizedKey = normalizeApiKeyForConfig(apiKey)
   saveGlobalConfig((current) => {
     const approved = current.apiKeyResponses?.approved ?? []
     return {
       ...current,
-      // 仅在 keychain 保存失败或不在 darwin 平台时保存到配置
-      primaryApiKey: savedToKeychain ? current.primaryApiKey : apiKey,
+      primaryApiKey: undefined,
       apiKeyResponses: {
         ...current.apiKeyResponses,
         approved: approved.includes(normalizedKey) ? approved : [...approved, normalizedKey],
@@ -564,7 +580,7 @@ export async function saveApiKey(apiKey: string): Promise<void> {
     }
   })
 
-  // 清除 memo 缓存
+  logEvent('zy_api_key_saved_to_auth_json', {})
   getApiKeyFromConfigOrMacOSKeychain.cache.clear?.()
   clearLegacyApiKeyPrefetch()
 }
@@ -575,16 +591,17 @@ export function isApiKeyApproved(apiKey: string): boolean {
   return config.apiKeyResponses?.approved?.includes(normalizedKey) ?? false
 }
 
+/**
+ * 清除 auth.json 中全部 apiKey，并清掉 keychain / primaryApiKey legacy。
+ */
 export async function removeApiKey(): Promise<void> {
+  clearAllAuthConfigApiKeys()
   await maybeRemoveApiKeyFromMacOSKeychain()
-
-  // 同时从配置中移除而非提前返回，以兼容在支持 keychain 之前设置 key 的旧客户端。
   saveGlobalConfig((current) => ({
     ...current,
     primaryApiKey: undefined,
   }))
 
-  // 清除 memo 缓存
   getApiKeyFromConfigOrMacOSKeychain.cache.clear?.()
   clearLegacyApiKeyPrefetch()
 }

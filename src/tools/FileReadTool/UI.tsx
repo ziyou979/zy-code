@@ -49,15 +49,18 @@ export function renderToolUseMessage(
     return (
       <>
         <FilePathLink filePath={file_path}>{displayPath}</FilePathLink>
-        {` · pages ${pages}`}
+        {` · ${tSync('fileRead.pagesRange', { pages })}`}
       </>
     )
   }
   if (verbose && (offset || limit)) {
     const startLine = offset ?? 1
     const lineRange = limit
-      ? `lines ${startLine}-${startLine + limit - 1}`
-      : `from line ${startLine}`
+      ? tSync('fileRead.lineRange', {
+          start: startLine,
+          end: startLine + limit - 1,
+        })
+      : tSync('fileRead.fromLine', { start: startLine })
     return (
       <>
         <FilePathLink filePath={file_path}>{displayPath}</FilePathLink>

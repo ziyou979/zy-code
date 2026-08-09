@@ -346,7 +346,7 @@ export function calculateMessagesToKeepIndex(
   // discontinuity there (att[0]→summary shortcut from dedup-skip), which
   // would let the loader's tail→head walk bypass inner preserved messages
   // and then prune them. Reactive compact already slices at the boundary
-  // via getMessagesAfterCompactBoundary; this is the same invariant.
+  // via getHotContextMessages; this is the same invariant.
   const idx = messages.findLastIndex((m) => isCompactBoundaryMessage(m))
   const floor = idx === -1 ? 0 : idx + 1
   for (let i = startIndex - 1; i >= floor; i--) {

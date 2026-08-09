@@ -37,11 +37,8 @@ import { cacheToObject } from '../file-persistence/fileStateCache.js'
 import { type CacheSafeParams, runForkedAgent } from '../../services/agent/forkedAgent.js'
 import { logError } from '../../services/infra/log.js'
 import { createCompactBoundaryMessage, createUserMessage } from '../messages/constructors.js'
-import {
-  getAssistantMessageText,
-  getMessagesAfterCompactBoundary,
-  isCompactBoundaryMessage,
-} from '../messages/predicates.js'
+import { getAssistantMessageText, isCompactBoundaryMessage } from '../messages/predicates.js'
+import { getHotContextMessages } from '../messages/projections.js'
 import { normalizeMessagesForAPI } from '../messages/api.js'
 import { expandPath } from '../../utils/path.js'
 import { getPlan, getPlanFilePath } from '../plans/plans.js'
@@ -320,15 +317,40 @@ export type RecompactionInfo = {
  * 从 CompactionResult 构建基础的压缩后消息数组。
  * 确保所有压缩路径下的一致性排序。
  * 顺序：boundaryMarker, summaryMessages, messagesToKeep, attachments, hookResults
+ *
+ * messagesToKeep 中的 assistant.usage 反映压缩前窗口（常 100k+）。
+ * 若原样保留，resume / autocompact / statusline 会锚定到过时用量。
+ * 此处归零双拼写 usage，语义与 load 路径 applyPreservedSegmentRelinks 一致。
  */
 export function buildPostCompactMessages(result: CompactionResult): Message[] {
   return [
     result.boundaryMarker,
     ...result.summaryMessages,
-    ...(result.messagesToKeep ?? []),
+    ...stripStaleUsageFromMessages(result.messagesToKeep ?? []),
     ...result.attachments,
     ...result.hookResults,
   ]
+}
+
+/** 压缩后保留段上的过时 API usage 归零（写侧仅 camelCase，去掉历史 snake 残留） */
+export function stripStaleUsageFromMessages<T extends Message>(messages: readonly T[]): T[] {
+  return messages.map((msg) => {
+    if (msg.type !== 'assistant' || !('usage' in msg.message) || !msg.message.usage) {
+      return msg
+    }
+    return {
+      ...msg,
+      message: {
+        ...msg.message,
+        usage: {
+          inputTokens: 0,
+          outputTokens: 0,
+          cacheCreationInputTokens: 0,
+          cacheReadInputTokens: 0,
+        },
+      },
+    } as T
+  })
 }
 
 /**
@@ -1335,10 +1357,7 @@ async function streamCompactSummary({
       const streamingGen = queryModelWithStreaming({
         messages: normalizeMessagesForAPI(
           stripImagesFromMessages(
-            stripReinjectedAttachments([
-              ...getMessagesAfterCompactBoundary(messages),
-              summaryRequest,
-            ]),
+            stripReinjectedAttachments([...getHotContextMessages(messages), summaryRequest]),
           ),
           context.options.tools,
         ),

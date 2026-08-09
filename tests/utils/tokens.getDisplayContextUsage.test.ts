@@ -54,7 +54,7 @@ describe('getDisplayContextUsage', () => {
     // 模拟 REPL：append 导致 [旧消息…, boundary, summary, …]
     const messages = [createTestUserMessage('old'), preCompact, boundary, summary]
 
-    // 旧逻辑：仍看到 180k
+    // getCurrentUsage 仍会从任意列表末尾读到旧 usage；display 必须屏蔽
     expect(getCurrentUsage(messages)?.inputTokens).toBe(180_000)
 
     // 新逻辑：statusline 应显示压缩后估算
@@ -63,6 +63,34 @@ describe('getDisplayContextUsage', () => {
     expect(display!.inputTokens).toBe(12_000)
     expect(display!.cacheReadInputTokens).toBe(0)
     expect(display!.outputTokens).toBe(0)
+
+    // 权威 token 计数同样不得锚定到 180k
+    expect(tokenCountWithEstimation(messages)).toBeLessThan(50_000)
+  })
+
+  test('压缩后 keep 仍带旧 usage 时：不把它当 live，回退 postTokens', () => {
+    const keep = makeAssistantWithUsage(900_000, {
+      uuid: 'keep-old-usage',
+      messageId: 'msg-keep',
+    })
+    const boundary = createCompactBoundaryMessage('auto', 900_000)
+    boundary.compactMetadata.postTokens = 18_000
+    boundary.compactMetadata.preservedSegment = {
+      headUuid: keep.uuid,
+      anchorUuid: boundary.uuid,
+      tailUuid: keep.uuid,
+    }
+    const summary = createTestUserMessage('summary', {
+      uuid: 'summary',
+      isCompactSummary: true,
+      isVisibleInTranscriptOnly: true,
+    })
+
+    // 典型 post-compact 热段：boundary + summary + keep
+    const messages = [boundary, summary, keep]
+    const display = getDisplayContextUsage(messages)
+    expect(display?.inputTokens).toBe(18_000)
+    expect(tokenCountWithEstimation(messages)).toBeLessThan(100_000)
   })
 
   test('压缩后再有新 API 响应：优先用边界后 live usage', () => {
@@ -98,7 +126,7 @@ describe('getDisplayContextUsage', () => {
     expect(getDisplayContextUsage(messages)).toBeNull()
   })
 
-  test('postTokens=0 视为无效，返回 null', () => {
+  test('postTokens=0 视为无效：无 live 时返回 null', () => {
     const preCompact = makeAssistantWithUsage(50_000)
     const boundary = createCompactBoundaryMessage('manual', 50_000)
     boundary.compactMetadata.postTokens = 0

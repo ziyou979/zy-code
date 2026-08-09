@@ -82,13 +82,7 @@ export function prependToShellHistoryCache(command: string): void {
   shellHistoryCache.unshift(command)
 }
 
-/**
- * Find the best matching shell command from history for the given input
- *
- * @param input The current user input (without '!' prefix)
- * @returns The best match, or null if no match found
- */
-export async function getShellHistoryCompletion(input: string): Promise<ShellHistoryMatch | null> {
+function matchShellHistory(input: string, commands: string[]): ShellHistoryMatch | null {
   // Don't suggest for empty or very short input
   if (!input || input.length < 2) {
     return null
@@ -99,8 +93,6 @@ export async function getShellHistoryCompletion(input: string): Promise<ShellHis
   if (!trimmedInput) {
     return null
   }
-
-  const commands = await getShellHistoryCommands()
 
   // Find the first command that starts with the EXACT input (including spaces)
   // This ensures "ls " matches "ls -lah" but "ls  " (2 spaces) does not
@@ -114,4 +106,35 @@ export async function getShellHistoryCompletion(input: string): Promise<ShellHis
   }
 
   return null
+}
+
+/**
+ * 同步命中 bash 历史（仅缓存已热时）。
+ * - `undefined`：缓存未就绪，调用方应走 async/防抖路径
+ * - `null`：已就绪且无匹配
+ * - match：有匹配
+ */
+export function getShellHistoryCompletionSync(input: string): ShellHistoryMatch | null | undefined {
+  if (!shellHistoryCache) {
+    return undefined
+  }
+  return matchShellHistory(input, shellHistoryCache)
+}
+
+/**
+ * 预热 history 缓存（不阻塞 UI）。首进 bash 模式前调用可避免冷启动每键扫盘。
+ */
+export function warmShellHistoryCache(): void {
+  void getShellHistoryCommands().catch(() => {})
+}
+
+/**
+ * Find the best matching shell command from history for the given input
+ *
+ * @param input The current user input (without '!' prefix)
+ * @returns The best match, or null if no match found
+ */
+export async function getShellHistoryCompletion(input: string): Promise<ShellHistoryMatch | null> {
+  const commands = await getShellHistoryCommands()
+  return matchShellHistory(input, commands)
 }

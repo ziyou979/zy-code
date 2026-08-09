@@ -14,7 +14,7 @@
 |---|---|---|---|
 | §4.2 P0 | Cache-Sharing 压缩 | **已做** | `reactiveCompact.ts:171-183` `runForkedAgent({skipCacheWrite:true, querySource:'compact', cacheSafeParams: {...}})`；`compact.ts:1128-1135` 同款 |
 | §4.5 P3 | Circuit Breaker (3 次失败) | **已做** | `autoCompact.ts:62 AUTOCOMPACT_BUFFER_TOKENS=13_000`、`autoCompact.ts:265 MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES`、`autoCompact.ts:340-348` 计数器递增并终止 |
-| §2 整层 | Snip Compact 兜底裁剪 | **已做** | `snipCompact.ts:23 SNIP_THRESHOLD=0.8`、`MIN_KEEP_GROUPS=4`、`snipMessages` |
+| §2 整层 | Snip Compact 兜底裁剪 | **已从源码移除（2026-08 核实）** | 旧路径 `snipCompact.ts` 不存在；勿按本表“已做”再实施。Context Collapse 保留且不对齐 CC 删除 |
 | §2 整层 | Microcompact（工具结果裁剪） | **已做** | `cachedMicrocompact.ts`、`apiMicrocompact.ts`、`microCompact.ts` (499 行) |
 | §2 整层 | Context Collapse | **已做** | `services/contextCollapse/{index,operations,persist}.ts` 共 595 行 |
 | §2 整层 | Session Memory（独立服务） | **已做** | `services/SessionMemory/{sessionMemory,sessionMemoryUtils,prompts}.ts` 共 970 行 |

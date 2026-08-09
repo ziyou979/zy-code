@@ -1,6 +1,7 @@
 import { feature } from 'bun:bundle'
 import React, { useContext, useMemo } from 'react'
 import { getKairosActive, getUserMsgOptIn } from '../../bootstrap/runtime/runtimeContext.js'
+import { tSync } from '../../i18n/index.js'
 import { Box } from '../../ink/index.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { useAppState } from '../../state/AppState.js'
@@ -80,7 +81,7 @@ export function UserPromptMessage({
     const tail = text.slice(-TRUNCATE_TAIL_CHARS)
     const hiddenLines =
       countCharInString(text, '\n', TRUNCATE_HEAD_CHARS) - countCharInString(tail, '\n')
-    return `${head}\n… +${hiddenLines} lines …\n${tail}`
+    return `${head}\n${tSync('userPrompt.truncatedMiddle', { count: hiddenLines })}\n${tail}`
   }, [text])
   const isSelected = useContext(MessageActionsSelectedContext)
   if (!text) {

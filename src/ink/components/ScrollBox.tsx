@@ -185,7 +185,24 @@ function ScrollBox({
         if (!el) {
           return
         }
+        // 与键盘 scroll:bottom 对齐：远距离 jump 时必须同时
+        // 1) 清掉 useVirtualScroll 的旧 clamp（否则首帧仍把绘制钳在上半区挂载边）
+        // 2) 预写 scrollTop=max，让订阅方立刻按目标/sticky 挂载尾部
+        // 3) sticky=true，render-node-to-output 再按真实 maxScroll 钉底
+        // 否则：长会话上滚很久后点「跳转到底部」会落到 topSpacer 空白带，
+        // 需再上滚一下才能看到内容。
         el.pendingScrollDelta = undefined
+        el.scrollAnchor = undefined
+        el.scrollHeightHwm = undefined
+        el.scrollClampMin = undefined
+        el.scrollClampMax = undefined
+        const viewportH = el.scrollViewportHeight ?? 0
+        // 优先 fresh Yoga 高度（content 刚增长过时缓存可能滞后一帧）
+        const content = el.childNodes[0] as DOMElement | undefined
+        const scrollH = content?.yogaNode?.getComputedHeight() ?? el.scrollHeight ?? 0
+        if (viewportH > 0 && scrollH > 0) {
+          el.scrollTop = Math.max(0, Math.floor(scrollH - viewportH))
+        }
         el.stickyScroll = true
         markDirty(el)
         notify()

@@ -561,13 +561,8 @@ export async function runForkedAgent({
             onStreamedText?.(streamedChars)
           }
           if (ev.type === 'response_delta' && ev.usage) {
-            // updateUsage 期望 snake_case（output_tokens），标准事件是驼峰，需转换
-            const turnUsage = updateUsage({ ...EMPTY_USAGE }, {
-              output_tokens: ev.usage.outputTokens ?? 0,
-              input_tokens: ev.usage.inputTokens,
-              cache_creation_input_tokens: ev.usage.cacheCreationInputTokens,
-              cache_read_input_tokens: ev.usage.cacheReadInputTokens,
-            } as Partial<NonNullableUsage>)
+            // 标准事件 usage 已是 camelCase
+            const turnUsage = updateUsage({ ...EMPTY_USAGE }, ev.usage)
             totalUsage = accumulateUsage(totalUsage, turnUsage)
           }
         }
@@ -657,14 +652,10 @@ function logForkAgentQueryEvent({
     outputTokens: totalUsage.outputTokens,
     cacheReadInputTokens: totalUsage.cacheReadInputTokens,
     cacheCreationInputTokens: totalUsage.cacheCreationInputTokens,
-    serviceTier: (totalUsage as unknown as Record<string, unknown>)
-      .service_tier as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    cacheCreationEphemeral1hTokens: (
-      totalUsage as unknown as Record<string, Record<string, number>>
-    ).cache_creation?.ephemeral_1h_input_tokens,
-    cacheCreationEphemeral5mTokens: (
-      totalUsage as unknown as Record<string, Record<string, number>>
-    ).cache_creation?.ephemeral_5m_input_tokens,
+    serviceTier:
+      totalUsage.serviceTier as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    cacheCreationEphemeral1hTokens: totalUsage.cacheCreation.ephemeral1hInputTokens,
+    cacheCreationEphemeral5mTokens: totalUsage.cacheCreation.ephemeral5mInputTokens,
 
     // 派生指标
     cacheHitRate,

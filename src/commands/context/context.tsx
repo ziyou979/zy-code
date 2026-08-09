@@ -6,7 +6,7 @@ import { microcompactMessages } from '../../services/compact/microCompact.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import type { Message } from '../../types/message.js'
 import { analyzeContextUsage } from '../../services/compact/analyzeContext.js'
-import { getMessagesAfterCompactBoundary } from '../../services/messages/./predicates.js'
+import { getHotContextMessages } from '../../services/messages/projections.js'
 import { renderToAnsiString } from '../../components/Runtime/StaticRender.js'
 
 /**
@@ -16,7 +16,7 @@ import { renderToAnsiString } from '../../components/Runtime/StaticRender.js'
  * was collapsed — user sees "180k, 3 spans collapsed" when the API sees 120k.
  */
 function toApiView(messages: Message[]): Message[] {
-  let view = getMessagesAfterCompactBoundary(messages)
+  let view = getHotContextMessages(messages)
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { projectView } =

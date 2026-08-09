@@ -6,7 +6,7 @@ import type { PendingCacheEdits } from '../services/compact/microCompact.js'
 import type { ToolUseContext } from '../tools/tool.js'
 import type { Message } from '../types/message.js'
 import { logError } from '../services/infra/log.js'
-import { getMessagesAfterCompactBoundary } from '../services/messages/./predicates.js'
+import { getHotContextMessages } from '../services/messages/projections.js'
 import { queryCheckpoint } from '../services/query/queryProfiler.js'
 import { recordContentReplacement } from '../services/sessionStorage.js'
 import { applyToolResultBudget } from '../services/mcp/toolResultStorage.js'
@@ -57,7 +57,8 @@ export async function preprocessMessages(
     queryTracking,
   }
 
-  let messagesForQuery = getMessagesAfterCompactBoundary(messages)
+  // API/query 只认热投影（last compact_boundary 起）；UI 仍用完整 display
+  let messagesForQuery = getHotContextMessages(messages)
 
   const tracking = autoCompactTracking
 

@@ -62,18 +62,8 @@ function baseCreateAssistantMessage({
   usage = {
     inputTokens: 0,
     outputTokens: 0,
-    input_tokens: 0,
-    output_tokens: 0,
-    cache_creation_input_tokens: 0,
-    cache_read_input_tokens: 0,
-    service_tier: null,
-    cache_creation: {
-      ephemeral_1h_input_tokens: 0,
-      ephemeral_5m_input_tokens: 0,
-    },
-    inference_geo: null,
-    iterations: null,
-    speed: null,
+    cacheCreationInputTokens: 0,
+    cacheReadInputTokens: 0,
   } as TokenUsage,
 }: {
   content: AssistantContentBlock[]

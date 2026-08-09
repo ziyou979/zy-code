@@ -337,12 +337,18 @@ export function useVirtualScroll(
       // Sticky-scroll fallback. render-node-to-output may have moved scrollTop
       // without notifying us, so trust "at bottom" over the stale snapshot.
       // Walk back from the tail until we've covered viewport + overscan.
+      //
       const budget = viewportH + OVERSCAN_ROWS
       start = n
       while (start > 0 && totalHeight - offsets[start - 1]! < budget) {
         start--
       }
       end = n
+      // 远距离 jump-to-bottom：丢弃上半区 prevRange，并中和 scrollVelocity，
+      // 否则 SLIDE_STEP 仍以上半区为基座滑动，尾部挂不齐 → 视口空白。
+      // clamp 由下方 useLayoutEffect（isSticky 分支）与 scrollToBottom 同步清除。
+      prevRangeRef.current = null
+      lastScrollTopRef.current = scrollTop
     } else {
       // User has scrolled up. Compute start from offsets (estimate-based:
       // may undershoot which is fine — we just start mounting a bit early).

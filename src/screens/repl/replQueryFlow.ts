@@ -97,11 +97,7 @@ import {
   createUserMessage,
   formatCommandInputTags,
 } from '../../services/messages/./constructors.js'
-import {
-  getContentText,
-  getMessagesAfterCompactBoundary,
-  isCompactBoundaryMessage,
-} from '../../services/messages/./predicates.js'
+import { getContentText, isCompactBoundaryMessage } from '../../services/messages/./predicates.js'
 import { handleMessageFromStream } from '../../services/messages/./streaming.js'
 import {
   checkAndDisableAutoModeIfNeeded,
@@ -373,11 +369,16 @@ export function handleQueryEvent(
         }
       }
       if (isCompactBoundaryMessage(newMessage)) {
-        if (isFullscreenEnvEnabled()) {
-          ctx.replStore.setMessages((old) => [...getMessagesAfterCompactBoundary(old), newMessage])
-        } else {
-          ctx.replStore.setMessages(() => [newMessage])
-        }
+        // 冷热分离：始终保留 boundary 前冷历史供 UI/resume 上翻。
+        // 勿 setMessages(() => [boundary])，否则非 fullscreen 丢冷段，
+        // resume 后也只剩半截（API 仍只读 boundary 后热上下文）。
+        ctx.replStore.setMessages((old) => {
+          // 避免重复 boundary（例如已通过 /compact 整段写入）
+          if (old.some((m) => m.uuid === newMessage.uuid)) {
+            return old
+          }
+          return [...old, newMessage]
+        })
         ctx.replStore.regenerateConversationId()
         if (feature('PROACTIVE')) {
           proactiveModule?.setContextBlocked(false)
@@ -400,7 +401,16 @@ export function handleQueryEvent(
           return [...oldMessages, newMessage]
         })
       } else {
-        ctx.replStore.setMessages((oldMessages) => [...oldMessages, newMessage])
+        // compact 流式路径：messagesToKeep 与冷历史同 uuid，必须替换而非再 append
+        ctx.replStore.setMessages((oldMessages) => {
+          const existingIdx = oldMessages.findIndex((m) => m.uuid === newMessage.uuid)
+          if (existingIdx !== -1) {
+            const copy = oldMessages.slice()
+            copy[existingIdx] = newMessage
+            return copy
+          }
+          return [...oldMessages, newMessage]
+        })
       }
       if (feature('PROACTIVE')) {
         if (
@@ -706,7 +716,18 @@ export async function runQuery(
 
   try {
     ctx.resetTimingRefs()
-    ctx.replStore.setMessages((oldMessages) => [...oldMessages, ...newMessages])
+    // 冷热分离：/compact 返回的 postCompact 是热上下文（boundary+summary+keep）。
+    // 始终保留冷历史 + 新热段（uuid dedupe），供 UI/resume 上翻。
+    // 不再非 fullscreen 整表替换为仅 hot——原生 scrollback 在 resume/清屏后不可靠。
+    // API/token 路径一律只看 last compact boundary 之后（getHotContextMessages）。
+    ctx.replStore.setMessages((oldMessages) => {
+      const boundaryIdx = newMessages.findIndex(isCompactBoundaryMessage)
+      if (boundaryIdx === -1) {
+        return [...oldMessages, ...newMessages]
+      }
+      const cold = oldMessages.filter((m) => !newMessages.some((n) => n.uuid === m.uuid))
+      return [...cold, ...newMessages]
+    })
     ctx.replStore.mutable.responseLengthRef = 0
     if (feature('TOKEN_BUDGET')) {
       const parsedBudget = input ? parseTokenBudget(input) : null

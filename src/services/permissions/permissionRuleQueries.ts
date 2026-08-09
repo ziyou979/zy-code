@@ -3,7 +3,10 @@ import type { Tool, ToolPermissionContext } from '../../tools/tool.js'
 import { getSettingSourceDisplayNameLowercase, SETTING_SOURCES } from '../settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
 import { getToolNameForPermissionCheck, mcpInfoFromString } from '../mcp/mcpStringUtils.js'
+import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
+import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { permissionModeTitle } from './permissionMode.js'
+import { getAutoModeConfig } from '../settings/settings.js'
 import type { PermissionDecisionReason } from './permissionResult.js'
 import type { PermissionBehavior, PermissionRule, PermissionRuleSource } from './permissionRule.js'
 import {
@@ -43,7 +46,22 @@ function getRulesByBehavior(
 }
 
 export function getAllowRules(context: ToolPermissionContext): PermissionRule[] {
-  return getRulesByBehavior(context, 'allow')
+  const rules = getRulesByBehavior(context, 'allow')
+  const autoModeActive =
+    context.mode === 'auto' ||
+    (context.mode === 'plan' && context.strippedDangerousRules !== undefined)
+  if (!autoModeActive || getAutoModeConfig()?.classifyAllShell !== true) {
+    return rules
+  }
+
+  // 对齐 Claude Code：classifyAllShell 只暂停 shell allow 规则，
+  // 让 Bash/PowerShell 的待审批命令进入分类器；它不控制 PowerShell
+  // 是否具备自动分类能力。离开 auto 语义后，原规则无需重建即可恢复。
+  return rules.filter(
+    (rule) =>
+      rule.ruleValue.toolName !== BASH_TOOL_NAME &&
+      rule.ruleValue.toolName !== POWERSHELL_TOOL_NAME,
+  )
 }
 
 export function createPermissionRequestMessage(

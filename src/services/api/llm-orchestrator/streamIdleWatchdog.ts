@@ -51,11 +51,19 @@ export function createStreamIdleWatchdog({
         level: 'error',
       })
       logForDiagnosticsNoPII('error', 'cli_streaming_idle_timeout')
+      // 与 stall summary 区分：此路径更接近 half-open/挂死连接，供重试策略采样
       logEvent('zy_streaming_idle_timeout', {
         model: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         request_id: (getRequestId() ??
           'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         timeout_ms: timeoutMs,
+        likely_half_open: true,
+      })
+      logEvent('zy_streaming_stale_connection_retry', {
+        model: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        request_id: (getRequestId() ??
+          'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        source: 'idle_watchdog' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
       releaseStreamResources()
     }, timeoutMs)

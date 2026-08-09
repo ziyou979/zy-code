@@ -273,6 +273,32 @@ describe('convertThinkingForOpenAI', () => {
     })
   })
 
+  // grok-4.5 拒绝 reasoning_effort=none（auto-mode 分类器侧实测 400）
+  test('xai disabled thinking → 省略 reasoning_effort（勿传 none）', () => {
+    expect(fn({ type: 'disabled' }, 'grok-4.5', 'xai')).toEqual({})
+    expect(fn({ type: 'disabled' }, 'grok-4.5', 'xai')).not.toHaveProperty('reasoning_effort')
+  })
+
+  test('xai effort off/none → 省略字段', () => {
+    expect(fn(thinkingEnabled, 'grok-4.5', 'xai', 'none')).toEqual({})
+    expect(fn(thinkingEnabled, 'grok-4.5', 'xai', 'off')).toEqual({})
+  })
+
+  test('xai effort low/medium/high → reasoning_effort', () => {
+    expect(fn(thinkingEnabled, 'grok-4.5', 'xai', 'low')).toEqual({
+      reasoning_effort: 'low',
+    })
+    expect(fn(thinkingEnabled, 'grok-4.5', 'xai', 'high')).toEqual({
+      reasoning_effort: 'high',
+    })
+  })
+
+  test('xai xhigh → 回落 high（非 none）', () => {
+    expect(fn(thinkingEnabled, 'grok-4.5', 'xai', 'xhigh')).toEqual({
+      reasoning_effort: 'high',
+    })
+  })
+
   test('dashscope → { thinking: { type: "enabled" } }', () => {
     expect(fn(thinkingEnabled, 'qwen-max', 'dashscope')).toEqual({
       thinking: { type: 'enabled' },

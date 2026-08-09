@@ -8,7 +8,7 @@
 
 import { open as fsOpen, readdir, readFile, realpath, stat } from 'node:fs/promises'
 import { join } from 'node:path'
-import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
+import { getZyConfigHomeDir, isEnvTruthy } from '../../services/infra/envUtils.js'
 import { getWorktreePathsPortable } from '../worktree/getWorktreePathsPortable.js'
 import { djb2Hash } from '../../utils/hash.js'
 export {
@@ -442,10 +442,18 @@ function processStraddle(s: LoadState, chunk: Buffer, bytesRead: number): number
       if (hit?.hasPreservedSegment) {
         s.hasPreservedSegment = true
       } else if (hit) {
-        s.out.len = 0
-        s.boundaryStartOffset = s.bufFileOff
+        // 冷热分离：默认保留 boundary 前冷历史供 UI/resume 上翻。
+        // 不再 s.out.len=0 截断。token/API 仅使用 boundary 后热上下文。
+        // boundaryStartOffset 仍记录供 metadata 扫描；需要极限省内存时可设
+        // ZY_CODE_STRIP_COLD_TRANSCRIPT=1 恢复截断。
+        if (isEnvTruthy(process.env.ZY_CODE_STRIP_COLD_TRANSCRIPT)) {
+          s.out.len = 0
+          s.boundaryStartOffset = s.bufFileOff
+          s.lastSnapSrc = null
+        } else if (s.boundaryStartOffset === 0) {
+          s.boundaryStartOffset = s.bufFileOff
+        }
         s.hasPreservedSegment = false
-        s.lastSnapSrc = null
       }
     }
     sinkWrite(s.out, cb, 0, s.carryLen)
@@ -486,13 +494,18 @@ function scanChunkLines(
       if (hit?.hasPreservedSegment) {
         s.hasPreservedSegment = true // don't truncate; preserved msgs already in output
       } else if (hit) {
-        s.out.len = 0
-        s.boundaryStartOffset = s.bufFileOff + lineStart
+        // 默认保留冷历史；可选 ZY_CODE_STRIP_COLD_TRANSCRIPT=1 极限截断
+        if (isEnvTruthy(process.env.ZY_CODE_STRIP_COLD_TRANSCRIPT)) {
+          s.out.len = 0
+          s.boundaryStartOffset = s.bufFileOff + lineStart
+          s.lastSnapSrc = null
+          lastSnapStart = -1
+          s.straddleSnapCarryLen = 0
+          runStart = lineStart
+        } else if (s.boundaryStartOffset === 0) {
+          s.boundaryStartOffset = s.bufFileOff + lineStart
+        }
         s.hasPreservedSegment = false
-        s.lastSnapSrc = null
-        lastSnapStart = -1
-        s.straddleSnapCarryLen = 0
-        runStart = lineStart
       }
       boundaryAt = buf.indexOf(boundaryMarker, boundaryAt + boundaryMarker.length)
     }

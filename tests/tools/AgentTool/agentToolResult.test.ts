@@ -13,11 +13,6 @@ describe('agentToolResultSchema', () => {
     usage: {
       inputTokens: 200,
       outputTokens: 300,
-      cacheCreationInputTokens: null,
-      cacheReadInputTokens: null,
-      serverToolUse: null,
-      serviceTier: null,
-      cacheCreation: null,
     },
   }
 

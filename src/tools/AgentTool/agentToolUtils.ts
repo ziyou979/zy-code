@@ -315,11 +315,10 @@ export function finalizeAgentTool(
       inputTokens: lastAssistantMessage.message.usage?.inputTokens ?? 0,
       outputTokens: lastAssistantMessage.message.usage?.outputTokens ?? 0,
       cacheCreationInputTokens:
-        lastAssistantMessage.message.usage?.cacheCreationInputTokens ?? null,
-      cacheReadInputTokens: lastAssistantMessage.message.usage?.cacheReadInputTokens ?? null,
-      serverToolUse: null,
-      serviceTier: null,
-      cacheCreation: null,
+        lastAssistantMessage.message.usage?.cacheCreationInputTokens ?? undefined,
+      cacheReadInputTokens: lastAssistantMessage.message.usage?.cacheReadInputTokens ?? undefined,
+      serviceTier: lastAssistantMessage.message.usage?.serviceTier,
+      cacheCreation: lastAssistantMessage.message.usage?.cacheCreation,
     },
     // 错误语义字段：如果子代理未完成（流式中断/错误截断），
     // 传播 incomplete 标记和错误分类。clean success 则不设置这些字段，

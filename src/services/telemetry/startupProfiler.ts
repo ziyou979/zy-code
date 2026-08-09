@@ -44,11 +44,17 @@ const SHOULD_PROFILE = DETAILED_PROFILING || STATSIG_LOGGING_SAMPLED
 const memorySnapshots: NodeJS.MemoryUsage[] = []
 
 // Phase definitions for Statsig logging: [startCheckpoint, endCheckpoint]
+// 额外检查点（由调用方 profileCheckpoint 写入）用于本地报告，不全部上报 Statsig：
+// tti_ready / auth_ready / client_prewarm / first_query_start / first_token
 const PHASE_DEFINITIONS = {
   import_time: ['cli_entry', 'main_tsx_imports_loaded'],
   init_time: ['init_function_start', 'init_function_end'],
   settings_time: ['eagerLoadSettings_start', 'eagerLoadSettings_end'],
   total_time: ['cli_entry', 'main_after_run'],
+  /** setup 完成到可交互（若调用方打了 tti_ready） */
+  tti_time: ['cli_entry', 'tti_ready'],
+  /** 首次 query 本地准备（prewarm 消费区间，可选） */
+  first_query_prep: ['first_query_start', 'first_token'],
 } as const
 
 // Record initial checkpoint if profiling is enabled

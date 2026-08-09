@@ -13,24 +13,19 @@ export const agentToolResultSchema = lazySchema(() =>
     totalToolUseCount: z.number(),
     totalDurationMs: z.number(),
     totalTokens: z.number(),
+    // 与 TokenUsage（camel + optional）对齐；勿再写 null 哨兵
     usage: z.object({
       inputTokens: z.number(),
       outputTokens: z.number(),
-      cacheCreationInputTokens: z.number().nullable(),
-      cacheReadInputTokens: z.number().nullable(),
-      serverToolUse: z
-        .object({
-          webSearchRequests: z.number(),
-          webFetchRequests: z.number(),
-        })
-        .nullable(),
-      serviceTier: z.enum(['standard', 'priority', 'batch']).nullable(),
+      cacheCreationInputTokens: z.number().optional(),
+      cacheReadInputTokens: z.number().optional(),
+      serviceTier: z.string().optional(),
       cacheCreation: z
         .object({
-          ephemeral1hInputTokens: z.number(),
-          ephemeral5mInputTokens: z.number(),
+          ephemeral1hInputTokens: z.number().optional(),
+          ephemeral5mInputTokens: z.number().optional(),
         })
-        .nullable(),
+        .optional(),
     }),
     incomplete: z.boolean().optional(),
     errorKind: z

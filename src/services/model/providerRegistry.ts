@@ -161,26 +161,33 @@ export const DEFAULT_OPENAI_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> =
 }
 
 /**
- * xAI Grok：chat 用 reasoning_effort，合法值为 low/medium/high（部分模型另支持 none）。
- * 内部 "on" 或缺省按 API 默认 high 处理。
+ * xAI Grok：chat 用 reasoning_effort，常见合法值为 low/medium/high。
+ * 勿传 `none`：grok-4.5 等会 400「does not support reasoning_effort value none」
+ * （auto-mode 分类器 sideQuery 关 thinking 时踩过）。
+ * 关闭思考：省略字段，交给模型默认非推理路径 / API 缺省。
+ * 内部 "on" 或缺省按 high 显式下发，行为更可预测。
  */
 const XAI_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> = {
   enable: (effort) => {
     if (!effort || effort === 'on') {
-      // 省略则 xAI 默认 high；显式 high 行为更可预测
       return { reasoning_effort: 'high' }
     }
+    // off/none：省略，与 disable 一致；勿发 reasoning_effort:none
     if (effort === 'off' || effort === 'none') {
-      return { reasoning_effort: 'none' }
+      return {}
     }
     const e = effort.toLowerCase()
-    if (e === 'low' || e === 'medium' || e === 'high' || e === 'xhigh') {
+    if (e === 'low' || e === 'medium' || e === 'high') {
       return { reasoning_effort: e }
     }
-    // thorough/balanced 等未映射时回落 high，避免再传非法字符串
+    // xhigh / thorough 等未映射：回落 high，避免非法字符串
+    if (e === 'xhigh') {
+      return { reasoning_effort: 'high' }
+    }
     return { reasoning_effort: 'high' }
   },
-  disable: { reasoning_effort: 'none' },
+  // 分类器等关 thinking：不传 reasoning_effort（响应侧 convertThinkingForResponses 同策略）
+  disable: {},
 }
 
 // ---------------------------------------------------------------------------

@@ -23,8 +23,31 @@ import {
   ERROR_MESSAGE_USER_ABORT,
   type RecompactionInfo,
 } from './compact.js'
+import {
+  consumePrecomputed,
+  isPrecomputedCompactEnabled,
+  maybeArmPrecomputedCompact,
+} from './precomputedCompact.js'
 import { runPostCompactCleanup } from './postCompactCleanup.js'
 import { trySessionMemoryCompaction } from './sessionMemoryCompact.js'
+
+/**
+ * 压缩调度优先级（单入口约定，避免双开）
+ *
+ * 1. 全局 DISABLE_COMPACT / consecutiveFailures 断路器 / rapidRefill 熔断 → 直接跳过
+ * 2. 未触顶 auto 阈值：
+ *    - 可选 arm precomputed（ZY_CODE_PRECOMPUTED_COMPACT，默认关）
+ * 3. 已触顶：
+ *    a. consume precomputed（prefix 校验失败则 discard，继续）
+ *    b. trySessionMemoryCompaction（实验 / 功能开关）
+ *    c. compactConversation 同步摘要（主路径）
+ * 4. 其它层（不在本函数内，见 preprocess / query）：
+ *    - microCompact：客户端清 tool result
+ *    - apiMicrocompact：API context_management
+ *    - reactiveCompact：PTL / feature('REACTIVE_COMPACT')
+ *    - context-collapse：feature('CONTEXT_COLLAPSE')
+ * 主会话默认路径：micro →（可选 SM）→ auto compactConversation；precomputed 默认关。
+ */
 
 // 压缩期间为输出保留这么多令牌
 // 基于 p99.99 的压缩摘要输出为 17,387 令牌。
@@ -61,6 +84,10 @@ export type AutoCompactTrackingState = {
   // rapid refill breaker：连续 rapid 重填次数。
   // compact 后 ≤ RAPID_REFILL_TURNS 轮内再次触发 compact 计一次。
   consecutiveRapidRefills?: number
+  /** 本会话已触发 rapid refill 熔断，后续 autoCompact 应跳过 */
+  rapidRefillBreakerTripped?: boolean
+  /** 熔断用户可见文案已下发一次，避免每轮重复注入 */
+  rapidRefillBreakerNotified?: boolean
 }
 
 export const AUTOCOMPACT_BUFFER_TOKENS = 13_000
@@ -75,8 +102,8 @@ const MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES = 3
 
 // P0.3 Rapid Refill Breaker — 与 CC 二进制 v2.x 对齐
 // 阈值：压缩后 ≤ 3 轮内又满 = rapid；连续 3 次 rapid → 熔断
-const RAPID_REFILL_TURNS = 3
-const MAX_RAPID_REFILLS = 3
+export const RAPID_REFILL_TURNS = 3
+export const MAX_RAPID_REFILLS = 3
 
 // maxInputTokens 是 API 硬性输入上限，自动压缩需在此之前触发。
 // 留出安全余量应对：
@@ -257,6 +284,7 @@ export async function autoCompactIfNeeded(
   wasCompacted: boolean
   compactionResult?: CompactionResult
   consecutiveFailures?: number
+  consecutiveRapidRefills?: number
   rapidRefillBreakerTripped?: boolean
 }> {
   if (isEnvTruthy(process.env.DISABLE_COMPACT)) {
@@ -273,10 +301,30 @@ export async function autoCompactIfNeeded(
     return { wasCompacted: false }
   }
 
+  // 已熔断：本会话不再 auto compact（避免每轮空转）
+  if (tracking?.rapidRefillBreakerTripped) {
+    return { wasCompacted: false, rapidRefillBreakerTripped: true }
+  }
+
   const model = toolUseContext.options.mainLoopModel
   const shouldCompact = await shouldAutoCompact(messages, model, querySource)
 
   if (!shouldCompact) {
+    // 未触顶：若接近阈值则后台 arm 预摘要（门控默认关）
+    if (isPrecomputedCompactEnabled() && isAutoCompactEnabled()) {
+      const tokenCount = tokenCountWithEstimation(messages)
+      const threshold = getAutoCompactThreshold(model)
+      maybeArmPrecomputedCompact({
+        sessionKey: toolUseContext.agentId ?? 'main',
+        messages,
+        model,
+        toolUseContext,
+        cacheSafeParams,
+        querySource,
+        tokenCount,
+        autoCompactThreshold: threshold,
+      })
+    }
     return { wasCompacted: false }
   }
 
@@ -300,7 +348,32 @@ export async function autoCompactIfNeeded(
       `autocompact: rapid refill breaker tripped — ${nextRapidCount} rapid compacts within ${RAPID_REFILL_TURNS} turns each`,
       { level: 'warn' },
     )
-    return { wasCompacted: false, rapidRefillBreakerTripped: true }
+    return {
+      wasCompacted: false,
+      rapidRefillBreakerTripped: true,
+      consecutiveRapidRefills: nextRapidCount,
+    }
+  }
+
+  // Precomputed compact：prefix 未变则零 LLM swap（门控默认关）
+  if (isPrecomputedCompactEnabled()) {
+    const sessionKey = toolUseContext.agentId ?? 'main'
+    const precomputed = consumePrecomputed(sessionKey, messages, model)
+    if (precomputed) {
+      setLastSummarizedMessageId(undefined)
+      runPostCompactCleanup(querySource)
+      if (feature('PROMPT_CACHE_BREAK_DETECTION')) {
+        notifyCompaction(querySource ?? 'compact', toolUseContext.agentId)
+      }
+      markPostCompaction()
+      logForDebugging(`autocompact: consumed precomputed compact session=${sessionKey}`)
+      return {
+        wasCompacted: true,
+        compactionResult: precomputed,
+        consecutiveFailures: 0,
+        consecutiveRapidRefills: nextRapidCount,
+      }
+    }
   }
 
   const recompactionInfo: RecompactionInfo = {
@@ -333,6 +406,9 @@ export async function autoCompactIfNeeded(
     return {
       wasCompacted: true,
       compactionResult: sessionMemoryResult,
+      consecutiveFailures: 0,
+      // 成功时带回 rapid 计数，供 runCompaction 写入 tracking
+      consecutiveRapidRefills: nextRapidCount,
     }
   }
 
@@ -357,6 +433,7 @@ export async function autoCompactIfNeeded(
       compactionResult,
       // 成功时重置失败计数
       consecutiveFailures: 0,
+      consecutiveRapidRefills: nextRapidCount,
     }
   } catch (error) {
     if (!hasExactErrorMessage(error, ERROR_MESSAGE_USER_ABORT)) {

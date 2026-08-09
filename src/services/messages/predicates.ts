@@ -296,10 +296,12 @@ export function findLastCompactBoundaryIndex<T extends Message>(messages: T[]): 
 }
 
 /**
- * 返回从最后一个 compact 边界开始（包含边界本身）的消息。
- * 不存在边界时返回所有消息。
+ * @deprecated 使用 `getHotContextMessages`（projections.ts）。
+ * 实现已迁至 projections；保留此名仅供历史测试/外部引用，勿新增调用。
+ * 删除计划：2026-09-01 后若无外部依赖则移除。
  */
 export function getMessagesAfterCompactBoundary<T extends Message>(messages: T[]): T[] {
+  // 避免 projections ↔ predicates 循环：hot 切片逻辑内联一份与 projections 一致
   const boundaryIndex = findLastCompactBoundaryIndex(messages)
   return boundaryIndex === -1 ? messages : messages.slice(boundaryIndex)
 }

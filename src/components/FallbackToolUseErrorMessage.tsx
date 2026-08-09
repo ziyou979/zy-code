@@ -46,27 +46,18 @@ export function FallbackToolUseErrorMessage({ result, verbose }: Props) {
         <ErrorContainer flexDirection={'column'}>
           {<ErrorText color={'error'}>{displayError}</ErrorText>}
           {!verbose && plusLines > 0 && (
-            <Box>
-              <Text dimColor={true}>
-                … +{plusLines}{' '}
-                {plusLines === 1
-                  ? tSync('fallbackToolError.lineSingular')
-                  : tSync('fallbackToolError.linePlural')}{' '}
-                (
-              </Text>
-              <Text dimColor={true} bold={true}>
-                {transcriptShortcut}
-              </Text>
-              <Text> </Text>
-              <Text dimColor={true}>
-                {
-                  tSync('fallbackToolError.moreLines', {
-                    n: plusLines,
-                    shortcut: transcriptShortcut,
-                  }).split(' ')[0]
-                }
-              </Text>
-            </Box>
+            <Text dimColor={true}>
+              {tSync('fallbackToolError.moreLines', {
+                count: plusLines,
+                unit: tSync(
+                  plusLines === 1 ? 'shellProgress.line_one' : 'shellProgress.line_other',
+                ),
+                shortcut: tSync('shortcut.hint', {
+                  shortcut: transcriptShortcut,
+                  action: tSync('fallbackToolError.viewAll'),
+                }),
+              })}
+            </Text>
           )}
         </ErrorContainer>
       }

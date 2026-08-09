@@ -233,7 +233,7 @@ export class QueryEngine {
 
     const initialThinkingConfig: ThinkingConfig = thinkingConfig
       ? thinkingConfig
-      : shouldEnableThinkingByDefault(initialMainLoopModel) !== false
+      : shouldEnableThinkingByDefault(initialMainLoopModel)
         ? { type: 'adaptive' }
         : { type: 'disabled' }
 
@@ -742,15 +742,8 @@ export class QueryEngine {
             streamMsg.event.type === 'response_delta'
           ) {
             const evt = streamMsg.event as unknown as import('../types/llm.js').ResponseDeltaEvent
-            // response_delta 的 usage 是标准格式（camelCase）
-            const deltaUsage: import('../types/llm.js').DeltaUsage | undefined = evt.usage
-              ? {
-                  inputTokens: evt.usage.inputTokens,
-                  outputTokens: evt.usage.outputTokens ?? 0,
-                  extras: evt.usage.extras,
-                }
-              : undefined
-            currentMessageUsage = updateUsage(currentMessageUsage, deltaUsage)
+            // response_delta 的 usage 已是 camelCase，直接合并
+            currentMessageUsage = updateUsage(currentMessageUsage, evt.usage)
             // 从 message_delta/response_delta 捕获 stopReason。assistant 消息在
             // content_block_stop/chunk_stop 时产生，stopReason=null；真实值仅在此处到达
             //（见 zy.ts 的处理器）。没有这一步，
@@ -848,7 +841,7 @@ export class QueryEngine {
           // 按 subtype 进一步判别到具体子类型即可访问对应字段。
           if (message.subtype === 'compact_boundary' && message.compactMetadata) {
             // 释放压缩前的消息以供 GC。边界刚刚被推送，所以它是最后一个元素。
-            // query.ts 内部已使用 getMessagesAfterCompactBoundary()，因此
+            // query.ts 内部已使用 getHotContextMessages()，因此
             // 后续只需要边界之后的消息。
             const mutableBoundaryIdx = this.mutableMessages.length - 1
             if (mutableBoundaryIdx > 0) {

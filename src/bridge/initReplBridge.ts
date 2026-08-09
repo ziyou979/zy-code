@@ -39,10 +39,8 @@ import { isInternalBuild } from '../services/infra/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import { getBranch, getRemoteUrl } from '../services/infra/git.js'
 import { toSDKMessages } from '../services/messages/mappers.js'
-import {
-  getContentText,
-  getMessagesAfterCompactBoundary,
-} from '../services/messages/./predicates.js'
+import { getContentText } from '../services/messages/./predicates.js'
+import { getHotContextMessages } from '../services/messages/projections.js'
 import { isSyntheticMessage } from '../services/messages/./constants.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { getCurrentSessionTitle, saveAiGeneratedTitle } from '../services/sessionStorage.js'
@@ -357,7 +355,7 @@ export async function initReplBridge(options?: InitWireOptions): Promise<ReplWir
       generateAndPatch(text, bridgeSessionId)
     } else if (userMessageCount === 3) {
       const msgs = getMessages?.()
-      const input = msgs ? extractConversationText(getMessagesAfterCompactBoundary(msgs)) : text
+      const input = msgs ? extractConversationText(getHotContextMessages(msgs)) : text
       generateAndPatch(input, bridgeSessionId)
     }
     // Also re-latches if v1 env-lost resets the transport's done flag past 3.

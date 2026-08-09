@@ -20,6 +20,7 @@ import {
 } from '../context/PromptOverlayContext.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
+import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 import ScrollBox, { type ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import type { DOMElement } from '../ink/dom.js'
 import instances from '../ink/instances.js'
@@ -164,11 +165,10 @@ export function useUnseenDivider(messageCount: number): {
     if (!handle_0) {
       return
     }
-    // scrollToBottom（而非 scrollTo(dividerY)）：设置 stickyScroll=true 使
-    // useVirtualScroll 挂载尾部，render-node-to-output 固定 scrollTop=maxScroll。
-    // scrollTo 设置 stickyScroll=false → 钳位（仍在 React 重新渲染前的顶部范围边界）
-    // 会将 scrollTop 拉回，导致滚动不足。分割线保持渲染（dividerIndex 不变），
-    // 因此用户可以看到新消息的起始位置；下次提交/显式滚动到底部时会清理。
+    // 与 ScrollKeybindingHandler 的 scroll:bottom 一致：scrollToBottom 内部已
+    // 清 clamp、预写 max、sticky。勿先 scrollTo(max) 再 sticky——scrollTo 会
+    // sticky=false 并可能在并发帧里用旧 clamp 画一帧空白。
+    // 分割线保持（dividerIndex 不变），用户仍可看见新消息起点；下次提交/onRepin 清理。
     handle_0.scrollToBottom()
   }, [])
 
@@ -327,7 +327,7 @@ export function FullscreenLayout({
   const chromeCtx = {
     setStickyPrompt,
   }
-  const subscribe = (listener: () => void) => scrollRef?.current?.subscribe(listener) ?? _temp
+  const subscribe = (listener: () => void) => scrollRef?.current?.subscribe(listener) ?? (() => {})
   const pillVisible = useSyncExternalStore(subscribe, () => {
     const s = scrollRef?.current
     const dividerY = dividerYRef?.current
@@ -494,9 +494,10 @@ export function FullscreenLayout({
 // count 为 0 时显示 "Jump to bottom"（已离开底部但尚无新消息——
 // 用户之前认为聊天卡死的死区）。
 
-function _temp() {}
 function NewMessagesPill({ count, onClick }: { count: number; onClick?: () => void }) {
   const [hover, setHover] = useState(false)
+  // 与 defaultBindings Scroll 上下文一致；用户自定义后提示同步更新
+  const jumpShortcut = useShortcutDisplay('scroll:bottom', 'Scroll', 'ctrl+end')
   return (
     <Box position="absolute" bottom={0} left={0} right={0} justifyContent="center">
       <Box
@@ -511,15 +512,18 @@ function NewMessagesPill({ count, onClick }: { count: number; onClick?: () => vo
           >
             {' '}
             {count > 0
-              ? tSync('fullscreen.newMessages', {
+              ? tSync('fullscreen.newMessagesWithShortcut', {
                   count,
                   unit: plural(
                     count,
                     tSync('fullscreen.newMessageUnit_one'),
                     tSync('fullscreen.newMessageUnit_other'),
                   ),
+                  shortcut: jumpShortcut,
                 })
-              : tSync('fullscreen.jumpToBottom')}{' '}
+              : tSync('fullscreen.jumpToBottomWithShortcut', {
+                  shortcut: jumpShortcut,
+                })}{' '}
             {ARROW_DOWN}{' '}
           </Text>
         }

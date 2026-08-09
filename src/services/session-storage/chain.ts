@@ -125,8 +125,8 @@ export function removeExtraFields(transcript: TranscriptMessage[]): SerializedMe
  * 后缀保留时是最后一个摘要，在前缀保留时是 boundary 本身。
  *
  * 只有最后一个 seg-boundary 被重新链接 — 更早的 seg 已被
- * 摘要进其中。绝对最后 boundary 之前的所有内容（preservedUuids
- * 除外）都被删除，这处理了所有多 boundary 形状而无需特殊处理。
+ * 摘要进其中。冷热分离后不再删除 boundary 前消息；仅归零
+ * 过时 usage。UI 上翻靠冷历史，API/token 只看 boundary 后。
  *
  * 原地修改 Map。
  */
@@ -152,19 +152,18 @@ export function applyPreservedSegmentRelinks(messages: Map<string, TranscriptMes
     }
     i++
   }
-  // 任何地方都没有 seg → 无操作。findUnresolvedToolUse 等读取完整 map。
-  if (!lastSeg) {
+  // 无 boundary：无操作
+  if (absoluteLastBoundaryIdx === -1) {
     return
   }
 
-  // seg 过时（无 seg 的 boundary 在其后出现）：跳过重新链接，仍在绝对
-  // 位置裁剪 — 否则过时的保留链变成幽灵叶子。
-  const segIsLive = lastSegBoundaryIdx === absoluteLastBoundaryIdx
+  // seg 过时（无 seg 的 boundary 在其后出现）：跳过重新链接。
+  const segIsLive = Boolean(lastSeg) && lastSegBoundaryIdx === absoluteLastBoundaryIdx
 
   // 在修改之前验证 tail→head，使格式错误的 metadata 真正
   // 无操作（遍历在 headUuid 处停止，不需要先运行重新链接）。
   const preservedUuids = new Set<string>()
-  if (segIsLive) {
+  if (segIsLive && lastSeg) {
     const walkSeen = new Set<string>()
     let cur = messages.get(lastSeg.tailUuid)
     let reachedHead = false
@@ -179,9 +178,7 @@ export function applyPreservedSegmentRelinks(messages: Map<string, TranscriptMes
     }
     if (!reachedHead) {
       // tail→head 遍历中断 — 保留段中的某个 UUID 不在 transcript 中。
-      // 此处返回会跳过下面的裁剪，因此恢复会加载完整的压缩前历史。
-      // 已知原因：轮中产生的 attachment 推入 mutableMessages 但从未
-      // recordTranscript（SDK 子进程在下一轮的 qe:420 flush 之前重启）。
+      // 跳过 relink，但仍归零冷段 usage（见下方），保留冷历史上翻。
       logEvent('zy_relink_walk_broken', {
         tailInTranscript: messages.has(lastSeg.tailUuid),
         headInTranscript: messages.has(lastSeg.headUuid),
@@ -189,62 +186,51 @@ export function applyPreservedSegmentRelinks(messages: Map<string, TranscriptMes
         walkSteps: walkSeen.size,
         transcriptSize: messages.size,
       })
-      return
+      preservedUuids.clear()
+    } else {
+      const head = messages.get(lastSeg.headUuid)
+      if (head) {
+        messages.set(lastSeg.headUuid, {
+          ...head,
+          parentUuid: lastSeg.anchorUuid as UUID,
+        })
+      }
+      // 尾部拼接：anchor 的其他子节点 → tail。如果已指向 tail
+      // 则无操作（useLogMessages 竞争情况）。
+      for (const [uuid, msg] of messages) {
+        if (msg.parentUuid === lastSeg.anchorUuid && uuid !== lastSeg.headUuid) {
+          messages.set(uuid, { ...msg, parentUuid: lastSeg.tailUuid as UUID })
+        }
+      }
     }
   }
 
-  if (segIsLive) {
-    const head = messages.get(lastSeg.headUuid)
-    if (head) {
-      messages.set(lastSeg.headUuid, {
-        ...head,
-        parentUuid: lastSeg.anchorUuid as UUID,
-      })
+  // 冷热分离：不再删除 boundary 前消息（UI/resume 上翻仍需冷历史）。
+  // API / token 统计只看 last compact boundary 之后（见 tokens.ts）。
+  // 仍须归零 boundary 前及 keep 段上的过时 usage，否则 camel 路径仍锚到 900k+。
+  for (const [uuid, msg] of messages) {
+    if (msg.type !== 'assistant') {
+      continue
     }
-    // 尾部拼接：anchor 的其他子节点 → tail。如果已指向 tail
-    // 则无操作（useLogMessages 竞争情况）。
-    for (const [uuid, msg] of messages) {
-      if (msg.parentUuid === lastSeg.anchorUuid && uuid !== lastSeg.headUuid) {
-        messages.set(uuid, { ...msg, parentUuid: lastSeg.tailUuid as UUID })
-      }
-    }
-    // 归零过时用量：磁盘上的 input_tokens 反映压缩前上下文
-    // (~190K) — stripStaleUsage 只修补了被去重跳过的内存副本。
-    // 没有这个，恢复 → 立即自动压缩螺旋。
-    for (const uuid of preservedUuids) {
-      const msg = messages.get(uuid)
-      if (msg?.type !== 'assistant') {
-        continue
-      }
-      messages.set(uuid, {
-        ...msg,
-        message: {
-          ...msg.message,
-          // 同时归零 snake_case 与 camelCase 拼写：disk 序列化用 snake，
-          // TokenUsage 接口用 camel — stripStaleUsage 也两种都写。
-          usage: {
-            ...msg.message.usage,
-            input_tokens: 0,
-            output_tokens: 0,
-            cache_creation_input_tokens: 0,
-            cache_read_input_tokens: 0,
-          } as unknown as TokenUsage,
-        },
-      })
-    }
-  }
-
-  // 裁剪绝对最后 boundary 之前所有未保留的内容。
-  // !segIsLive 时 preservedUuids 为空 → 完全裁剪。
-  const toDelete: string[] = []
-  for (const [uuid] of messages) {
     const idx = entryIndex.get(uuid)
-    if (idx !== undefined && idx < absoluteLastBoundaryIdx && !preservedUuids.has(uuid)) {
-      toDelete.push(uuid)
+    const isBeforeBoundary = idx !== undefined && idx < absoluteLastBoundaryIdx
+    const isPreservedKeep = preservedUuids.has(uuid)
+    if (!isBeforeBoundary && !isPreservedKeep) {
+      continue
     }
-  }
-  for (const uuid of toDelete) {
-    messages.delete(uuid)
+    messages.set(uuid, {
+      ...msg,
+      message: {
+        ...msg.message,
+        // 写侧标准 camelCase；不保留旧 snake，避免双写残留
+        usage: {
+          inputTokens: 0,
+          outputTokens: 0,
+          cacheCreationInputTokens: 0,
+          cacheReadInputTokens: 0,
+        } as TokenUsage,
+      },
+    })
   }
 }
 
@@ -300,7 +286,83 @@ export function buildConversationChain(
     currentMsg = currentMsg.parentUuid ? messages.get(currentMsg.parentUuid) : undefined
   }
   transcript.reverse()
-  return recoverOrphanedParallelToolResults(messages, transcript, seen)
+  const withSiblings = recoverOrphanedParallelToolResults(messages, transcript, seen)
+  return prependColdHistoryBeforeCompactBoundary(messages, withSiblings, seen)
+}
+
+/**
+ * 冷热分离 / 断链热段拼接：
+ * - 理想：parent 链含 compact_boundary，只需 prepend boundary 前冷历史。
+ * - 现实：compact 后流式 assistant 可能再次 parentUuid=null，热链从 CB 之后
+ *   某段开始，链上没有 CB。此时按 JSONL 序把「第一条热消息之前」且未进链
+ *   的主消息全部 prepend（含 CB 与更早 cold、以及 CB 后未挂上的碎片）。
+ * API 仍只读 getHotContextMessages。
+ */
+function prependColdHistoryBeforeCompactBoundary(
+  messages: Map<string, TranscriptMessage>,
+  hotChain: TranscriptMessage[],
+  seen: Set<string>,
+): TranscriptMessage[] {
+  if (hotChain.length === 0) {
+    return hotChain
+  }
+
+  let lastBoundaryOnHot: TranscriptMessage | undefined
+  for (let i = hotChain.length - 1; i >= 0; i--) {
+    if (isCompactBoundaryMessage(hotChain[i]!)) {
+      lastBoundaryOnHot = hotChain[i]
+      break
+    }
+  }
+
+  const firstHotUuid = hotChain[0]!.uuid
+  // 热链未含 CB：仅当 JSONL 上、首条热消息之前确实存在 CB 时才补前缀。
+  // 无任何 CB 的会话必须保持「仅 parent 链」，否则会把死 fork 整段落进来。
+  if (!lastBoundaryOnHot) {
+    let sawCbBeforeHot = false
+    for (const msg of messages.values()) {
+      if (msg.uuid === firstHotUuid) {
+        break
+      }
+      if (isCompactBoundaryMessage(msg)) {
+        sawCbBeforeHot = true
+        break
+      }
+    }
+    if (!sawCbBeforeHot) {
+      return hotChain
+    }
+  }
+
+  const sessionId = hotChain[0]!.sessionId
+  const prefix: TranscriptMessage[] = []
+  // Map 为 JSONL 插入序
+  for (const msg of messages.values()) {
+    // 热链已含 CB：只取 CB 前 cold（CB 自身已在 hot 中）
+    if (lastBoundaryOnHot && msg.uuid === lastBoundaryOnHot.uuid) {
+      break
+    }
+    // 热链无 CB：取首条热消息之前全部（含 CB、cold、CB 后未挂上的碎片）
+    if (!lastBoundaryOnHot && msg.uuid === firstHotUuid) {
+      break
+    }
+    if (seen.has(msg.uuid)) {
+      continue
+    }
+    if (msg.isSidechain) {
+      continue
+    }
+    if (sessionId && msg.sessionId && msg.sessionId !== sessionId) {
+      continue
+    }
+    prefix.push(msg)
+    seen.add(msg.uuid)
+  }
+
+  if (prefix.length === 0) {
+    return hotChain
+  }
+  return [...prefix, ...hotChain]
 }
 
 /**
