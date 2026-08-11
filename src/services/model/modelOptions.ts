@@ -1,7 +1,6 @@
 import { getInitialMainLoopModel } from '../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import { getGlobalConfig } from '../config/config.js'
-import { getLocalModelCapability } from '../settings/localModelCapabilities.js'
 import { getInitialSettings } from '../settings/settings.js'
 import {
   getDefaultMainLoopModelSetting,
@@ -9,8 +8,11 @@ import {
   getModelCandidatesForTier,
   getProviderForModel,
   getUserSpecifiedModelSetting,
+  type ModelTier,
   type ModelSetting,
   parseUserSpecifiedModel,
+  pinModelCandidate,
+  type ResolvedModelReference,
   renderDefaultModelSetting,
   selectActiveCandidate,
 } from './model.js'
@@ -19,9 +21,25 @@ import { getAPIProvider } from './providers.js'
 
 export type ModelOption = {
   value: ModelSetting
+  /** Select 内部使用的唯一值；候选模型仍向调用方返回所属 tier。 */
+  pickerValue?: string
   label: string
   description: string
   descriptionForModel?: string
+  candidateSelection?: {
+    tier: ModelTier
+    candidate: ResolvedModelReference
+  }
+}
+
+const MODEL_CANDIDATE_PICKER_PREFIX = '__zy_model_candidate__'
+
+function getConfiguredModelLabel(model: string): string {
+  // 延迟加载模型能力，避免仅导入 modelOptions 就提前冻结本地能力缓存。
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getLocalModelCapability } =
+    require('../settings/localModelCapabilities.js') as typeof import('../settings/localModelCapabilities.js')
+  return getLocalModelCapability(model)?.pattern ?? model
 }
 
 export function getDefaultOptionForUser(): ModelOption {
@@ -39,61 +57,86 @@ export function getDefaultOptionForUser(): ModelOption {
  * 从 settings.json 的 models tier 映射读取实际模型 ID，
  * label 从 model-capabilities.json 的 pattern 获取（或直接用模型 ID）。
  */
-function getTierOption(tier: string): ModelOption | undefined {
+function getTierLabel(tier: ModelTier): string {
+  return tSync(`modelOption.${tier}`)
+}
+
+/**
+ * 将一个档位的全部候选展开为可主动选择的选项。
+ * 当前 sticky 候选继续使用 tier 作为 picker value，确保重新打开时能正确聚焦；
+ * 其余候选使用内部唯一值，选中后仍将 tier 写入会话状态。
+ */
+export function createTierCandidateOptions(
+  tier: ModelTier,
+  candidates: ResolvedModelReference[],
+  active: ResolvedModelReference,
+  getModelLabel: (model: string) => string = getConfiguredModelLabel,
+): ModelOption[] {
+  return candidates.map((candidate, index) => {
+    const resolvedModel = candidate.model
+    const provider = candidate.provider ?? getProviderForModel(resolvedModel)
+    const isActive =
+      candidate.model === active.model &&
+      candidate.provider === active.provider &&
+      index === (active.candidateIndex ?? 0)
+    const position = tSync('modelOption.candidatePosition', {
+      current: index + 1,
+      total: candidates.length,
+    })
+    const activeHint = isActive ? ` · ${tSync('modelOption.activeCandidate')}` : ''
+
+    return {
+      value: tier,
+      pickerValue: isActive ? tier : `${MODEL_CANDIDATE_PICKER_PREFIX}:${tier}:${index}`,
+      label: tSync('modelOption.tierCandidateLabel', {
+        tier: getTierLabel(tier),
+        model: getModelLabel(resolvedModel),
+      }),
+      description: `${provider} · ${resolvedModel} · ${position}${activeHint}`,
+      descriptionForModel: `${provider} · ${resolvedModel} · ${position}${activeHint}`,
+      candidateSelection: {
+        tier,
+        candidate: { ...candidate, candidateIndex: index },
+      },
+    }
+  })
+}
+
+function getTierOptions(tier: ModelTier): ModelOption[] {
   const settings = getInitialSettings()
   const candidates = getModelCandidatesForTier(tier, settings, getAPIProvider())
   const active = selectActiveCandidate(candidates, tier, settings)
   if (!active) {
-    return undefined
+    return []
   }
-
-  const resolvedModel = active.model
-  const cap = getLocalModelCapability(resolvedModel)
-  const provider = active.provider ?? getProviderForModel(resolvedModel)
-  const chainHint =
-    candidates.length > 1
-      ? ` · failover ${(active.candidateIndex ?? 0) + 1}/${candidates.length}`
-      : ''
-
-  return {
-    value: tier,
-    label: cap?.pattern ?? resolvedModel,
-    description: `${provider} · ${resolvedModel}${chainHint}`,
-    descriptionForModel: `${provider} · ${resolvedModel}${chainHint}`,
-  }
+  return createTierCandidateOptions(tier, candidates, active)
 }
 
 function getStandardOption(): ModelOption {
-  return (
-    getTierOption('standard') ?? {
-      value: 'standard',
-      label: tSync('modelOption.standard'),
-      description: tSync('modelOption.standardDesc'),
-      descriptionForModel: tSync('modelOption.standardDescForModel'),
-    }
-  )
+  return {
+    value: 'standard',
+    label: tSync('modelOption.standard'),
+    description: tSync('modelOption.standardDesc'),
+    descriptionForModel: tSync('modelOption.standardDescForModel'),
+  }
 }
 
 function getAdvancedOption(): ModelOption {
-  return (
-    getTierOption('advanced') ?? {
-      value: 'advanced',
-      label: tSync('modelOption.advanced'),
-      description: tSync('modelOption.advancedDesc'),
-      descriptionForModel: tSync('modelOption.advancedDescForModel'),
-    }
-  )
+  return {
+    value: 'advanced',
+    label: tSync('modelOption.advanced'),
+    description: tSync('modelOption.advancedDesc'),
+    descriptionForModel: tSync('modelOption.advancedDescForModel'),
+  }
 }
 
 function getCompactOption(): ModelOption {
-  return (
-    getTierOption('compact') ?? {
-      value: 'compact',
-      label: tSync('modelOption.compact'),
-      description: tSync('modelOption.compactDesc'),
-      descriptionForModel: tSync('modelOption.compactDescForModel'),
-    }
-  )
+  return {
+    value: 'compact',
+    label: tSync('modelOption.compact'),
+    description: tSync('modelOption.compactDesc'),
+    descriptionForModel: tSync('modelOption.compactDescForModel'),
+  }
 }
 
 function getModelOptionsBase(): ModelOption[] {
@@ -114,7 +157,24 @@ function getModelOptionsBase(): ModelOption[] {
   }
 
   // 外部用户：Default + 三个 tier
-  return [getDefaultOptionForUser(), getStandardOption(), getAdvancedOption(), getCompactOption()]
+  const standard = getTierOptions('standard')
+  const advanced = getTierOptions('advanced')
+  const compact = getTierOptions('compact')
+  return [
+    getDefaultOptionForUser(),
+    ...(standard.length > 0 ? standard : [getStandardOption()]),
+    ...(advanced.length > 0 ? advanced : [getAdvancedOption()]),
+    ...(compact.length > 0 ? compact : [getCompactOption()]),
+  ]
+}
+
+/** 将 picker 候选落到该档位的 sticky 状态，并返回会话应保存的 tier。 */
+export function applyModelOptionSelection(option: ModelOption): ModelSetting {
+  if (!option.candidateSelection) {
+    return option.value
+  }
+  pinModelCandidate(option.candidateSelection.tier, option.candidateSelection.candidate)
+  return option.candidateSelection.tier
 }
 
 /**
@@ -191,6 +251,10 @@ function filterModelOptionsByAllowlist(options: ModelOption[]): ModelOption[] {
     return options
   }
   return options.filter(
-    (opt) => opt.value === null || (opt.value !== null && isModelAllowed(opt.value)),
+    (opt) =>
+      opt.value === null ||
+      (opt.candidateSelection
+        ? isModelAllowed(opt.candidateSelection.candidate.model)
+        : isModelAllowed(opt.value)),
   )
 }

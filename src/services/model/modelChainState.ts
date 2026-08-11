@@ -27,6 +27,7 @@ export type ModelChainFailoverReason =
 export type ModelChainTierSticky = {
   index: number
   provider: string
+  authProfile?: string
   model: string
   switchedAt: string
   reason?: ModelChainFailoverReason
@@ -161,6 +162,7 @@ export function setStickyForTier(
   tiers[tier] = {
     index: sticky.index,
     provider: sticky.provider,
+    authProfile: sticky.authProfile,
     model: sticky.model,
     reason: sticky.reason,
     switchedAt: sticky.switchedAt ?? new Date().toISOString(),

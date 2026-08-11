@@ -11,6 +11,7 @@ import {
 } from './modelChainState.js'
 import { getProviderEntry } from './providerRegistry.js'
 import { type APIProvider, getAPIProvider } from './providers.js'
+import { getAuthConfigForProvider } from '../auth/authConfig.js'
 
 export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
@@ -26,6 +27,8 @@ export type ModelTierValue = ModelReferenceInput | ModelReference[]
 export type ResolvedModelReference = {
   model: ModelName
   provider?: APIProvider
+  /** auth.json 中的命名连接；与底层 provider 分离以支持多个 generic。 */
+  authProfile?: string
   /** 在候选列表中的下标；单通道时为 0 */
   candidateIndex?: number
   label?: string
@@ -41,7 +44,7 @@ type CustomModelConfig = {
 type InitialSettings = SettingsJson
 
 /** 基于层级划分不同能力的模型 */
-type ModelTier = 'advanced' | 'standard' | 'compact'
+export type ModelTier = 'advanced' | 'standard' | 'compact'
 
 function isModelReference(value: unknown): value is ModelReference {
   return (
@@ -53,11 +56,26 @@ function isModelReference(value: unknown): value is ModelReference {
   )
 }
 
-function toAPIProvider(provider?: string): APIProvider | undefined {
-  if (!provider || !getProviderEntry(provider)) {
-    return undefined
+function resolveProviderReference(provider?: string): {
+  provider?: APIProvider
+  authProfile?: string
+} {
+  if (!provider) {
+    return {}
   }
-  return provider as APIProvider
+  const authConfig = getAuthConfigForProvider(provider)
+  const registryProvider = authConfig?.provider ?? provider
+  if (!getProviderEntry(registryProvider)) {
+    return {}
+  }
+  return {
+    provider: registryProvider as APIProvider,
+    ...(authConfig?.provider ? { authProfile: provider } : {}),
+  }
+}
+
+function toAPIProvider(provider?: string): APIProvider | undefined {
+  return resolveProviderReference(provider).provider
 }
 
 function getOptionalSettings(): InitialSettings | undefined {
@@ -81,12 +99,12 @@ function resolveModelReference(
   candidateIndex = 0,
 ): ResolvedModelReference | undefined {
   if (typeof value === 'string') {
-    return { model: value, provider: toAPIProvider(implicitProvider), candidateIndex }
+    return { model: value, ...resolveProviderReference(implicitProvider), candidateIndex }
   }
   if (isModelReference(value)) {
     return {
       model: value.model,
-      provider: toAPIProvider(value.provider) ?? toAPIProvider(implicitProvider),
+      ...resolveProviderReference(value.provider ?? implicitProvider),
       candidateIndex,
       label: value.label,
     }
@@ -186,14 +204,17 @@ export function selectActiveCandidate(
       if (
         byIndex &&
         byIndex.model === sticky.model &&
-        (byIndex.provider ?? '') === (sticky.provider || byIndex.provider || '')
+        (byIndex.provider ?? '') === (sticky.provider || byIndex.provider || '') &&
+        (byIndex.authProfile ?? '') === (sticky.authProfile ?? byIndex.authProfile ?? '')
       ) {
         return { ...byIndex, candidateIndex: sticky.index }
       }
     }
     const matched = candidates.findIndex(
       (c) =>
-        c.model === sticky.model && (c.provider ?? '') === (sticky.provider || c.provider || ''),
+        c.model === sticky.model &&
+        (c.provider ?? '') === (sticky.provider || c.provider || '') &&
+        (c.authProfile ?? '') === (sticky.authProfile ?? c.authProfile ?? ''),
     )
     if (matched >= 0) {
       return { ...candidates[matched]!, candidateIndex: matched }
@@ -225,6 +246,7 @@ export function advanceModelCandidate(
     {
       index: nextIndex,
       provider: providerId,
+      authProfile: next.authProfile,
       model: next.model,
       reason,
     },
@@ -249,6 +271,7 @@ export function pinModelCandidate(
     {
       index: candidate.candidateIndex ?? 0,
       provider: providerId,
+      authProfile: candidate.authProfile,
       model: candidate.model,
       reason: 'user_model',
     },
@@ -281,21 +304,24 @@ function getCustomModelReferences(
   model: string
   label?: string
   provider?: APIProvider
+  authProfile?: string
 }> {
   const refs: Array<{
     alias: string
     model: string
     label?: string
     provider?: APIProvider
+    authProfile?: string
   }> = []
 
   const addModels = (customModels: CustomModelConfig[] | undefined, implicitProvider?: string) => {
     for (const customModel of customModels ?? []) {
+      const resolvedProvider = resolveProviderReference(customModel.provider ?? implicitProvider)
       refs.push({
         alias: customModel.alias,
         model: customModel.model,
         label: customModel.label,
-        provider: toAPIProvider(customModel.provider) ?? toAPIProvider(implicitProvider),
+        ...resolvedProvider,
       })
     }
   }
@@ -323,6 +349,18 @@ function getModelByTierReferenceForSettings(
 
 function getModelByTierReference(tier: ModelTier): ResolvedModelReference | undefined {
   return getModelByTierReferenceForSettings(getOptionalSettings(), tier, getAPIProvider())
+}
+
+/** 解析当前 provider 生效的主循环档位，供模型与 provider 路由共同使用。 */
+function getMainLoopTierForSettings(
+  settings: InitialSettings | undefined,
+  activeProvider: APIProvider,
+): ModelTier {
+  return (
+    getProviderSettings(settings, activeProvider)?.mainLoopModel ??
+    settings?.mainLoopModel ??
+    'standard'
+  )
 }
 
 /**
@@ -402,7 +440,7 @@ export function getDefaultCompactModel(): ModelName | undefined {
  */
 export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias | undefined {
   const settings = getOptionalSettings()
-  const tier = getProviderSettings(settings)?.mainLoopModel ?? settings?.mainLoopModel ?? 'standard'
+  const tier = getMainLoopTierForSettings(settings, getAPIProvider())
   return getModelByTierReference(tier)?.model
 }
 
@@ -565,7 +603,11 @@ function findConfiguredModelReferenceForSettings(
 
   for (const customModel of getCustomModelReferences(settings, activeProvider)) {
     if (customModel.alias === model || customModel.model === model) {
-      return { model: customModel.model, provider: customModel.provider }
+      return {
+        model: customModel.model,
+        provider: customModel.provider,
+        authProfile: customModel.authProfile,
+      }
     }
   }
 
@@ -605,9 +647,9 @@ export function getProviderForModelFromSettings(
   activeProvider: APIProvider = getAPIProvider(),
 ): APIProvider {
   if (!model) {
+    const tier = getMainLoopTierForSettings(settings, activeProvider)
     return (
-      getModelByTierReferenceForSettings(settings, 'standard', activeProvider)?.provider ??
-      activeProvider
+      getModelByTierReferenceForSettings(settings, tier, activeProvider)?.provider ?? activeProvider
     )
   }
 
@@ -631,6 +673,44 @@ export function getProviderForModelFromSettings(
 
 export function getProviderForModel(model?: string | null): APIProvider {
   return getProviderForModelFromSettings(getOptionalSettings(), model, getAPIProvider())
+}
+
+export function getAuthProfileForModelFromSettings(
+  settings: InitialSettings | undefined,
+  model?: string | null,
+  activeProvider: APIProvider = getAPIProvider(),
+): string | undefined {
+  if (!model) {
+    const tier = getMainLoopTierForSettings(settings, activeProvider)
+    return getModelByTierReferenceForSettings(settings, tier, activeProvider)?.authProfile
+  }
+  const normalizedModel = model.trim().toLowerCase()
+  if (
+    normalizedModel === 'advanced' ||
+    normalizedModel === 'standard' ||
+    normalizedModel === 'compact'
+  ) {
+    return getModelByTierReferenceForSettings(settings, normalizedModel, activeProvider)
+      ?.authProfile
+  }
+
+  // 相同模型可以出现在多个连接中，先按主循环档位的 sticky 解析。
+  const mainTier = getMainLoopTierForSettings(settings, activeProvider)
+  const tiers: ModelTier[] = [
+    mainTier,
+    ...(['advanced', 'standard', 'compact'] as const).filter((tier) => tier !== mainTier),
+  ]
+  for (const tier of tiers) {
+    const active = getModelByTierReferenceForSettings(settings, tier, activeProvider)
+    if (active?.model === model) {
+      return active.authProfile
+    }
+  }
+  return findConfiguredModelReferenceForSettings(settings, model, activeProvider)?.authProfile
+}
+
+export function getAuthProfileForModel(model?: string | null): string | undefined {
+  return getAuthProfileForModelFromSettings(getOptionalSettings(), model, getAPIProvider())
 }
 
 export function normalizeModelStringForAPI(model: string): string {

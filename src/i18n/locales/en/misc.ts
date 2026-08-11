@@ -466,7 +466,7 @@ export const enMisc: TranslationResource = {
   'model.tier.advanced': 'Advanced',
   'model.tier.standard': 'Standard',
   'model.tier.compact': 'Compact',
-  'modelPicker.adjustHint': '\u2190\uFE0E \u2192\uFE0E to adjust',
+  'modelPicker.adjustHint': '← → to adjust',
   'modelPicker.andMore': 'and {count} more…',
   'modelPicker.currentlyUsing':
     'Currently using {model} for this session (set by plan mode). Selecting a model will undo this.',
@@ -493,12 +493,14 @@ export const enMisc: TranslationResource = {
   'modelCommand.setWithEffort': 'Set model to {model} with {effort} effort',
   'modelCommand.validateFailed': 'Failed to validate model: {error}',
   'modelOption.advanced': 'Advanced',
+  'modelOption.activeCandidate': 'active',
   'modelOption.advancedDesc': 'Advanced tier · Most capable for complex work',
   'modelOption.advancedDescForModel': 'Advanced tier - most capable for complex work',
   'modelOption.compact': 'Compact',
   'modelOption.compactDesc': 'Compact tier · Fastest for quick answers',
   'modelOption.compactDescForModel':
     'Compact tier - faster and lower cost, but less capable than standard tier. Use for simple tasks.',
+  'modelOption.candidatePosition': 'candidate {current}/{total}',
   'modelOption.customModel': 'Custom model',
   'modelOption.customModelDesc': 'Custom model ({model})',
   'modelOption.defaultRecommended': 'Default (recommended)',
@@ -506,6 +508,7 @@ export const enMisc: TranslationResource = {
   'modelOption.standardDesc': 'Standard tier · Best for everyday tasks',
   'modelOption.standardDescForModel':
     'Standard tier - best for everyday tasks. Generally recommended for most coding tasks',
+  'modelOption.tierCandidateLabel': '{tier} · {model}',
   'modelOption.useDefault': 'Use the default model (currently {model})',
   'notebook.errorEditing': 'Error editing notebook',
   'notebookEdit.atCell': 'at cell {cellId}',

@@ -211,6 +211,32 @@ describe('mapOpenAIStreamToStandard: 入站 OpenAI 流式映射', () => {
     expect(textStart!.index).toBeLessThan(toolStart!.index)
   })
 
+  test('仅空白文本 + tool_call：仍须完整产出工具块和 tool_use 结束原因', async () => {
+    const events = await collect(
+      mapOpenAIStreamToStandard(
+        chunksToStream([
+          textChunk('\n'),
+          toolCallStartChunk({
+            index: 0,
+            id: 'read-call',
+            name: 'Read',
+            argumentsFragment: '{"file_path":"example.ts"}',
+          }),
+          finishChunk({ finishReason: 'tool_calls' }),
+        ]),
+        'gpt-4',
+      ),
+    )
+
+    const toolStart = events.find(
+      (event) => event.type === 'chunk_start' && event.chunk.type === 'tool_call',
+    )
+    const responseDelta = events.find((event) => event.type === 'response_delta')
+
+    expect(toolStart).toBeDefined()
+    expect(responseDelta).toMatchObject({ stopReason: 'tool_use' })
+  })
+
   test('reasoning_content + tool_call：thinking 在前，tool_call index 必须 > thinking index', async () => {
     const events = await collect(
       mapOpenAIStreamToStandard(

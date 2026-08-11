@@ -7,6 +7,7 @@ import {
   parseTokenCount,
 } from '../settings/localModelCapabilities.js'
 import { getActiveOAuthProviderInfo } from '../oauth/oauthStorage.js'
+import { getAuthConfigApiFormat } from '../auth/authConfig.js'
 import { type ApiFormat } from './apiFormat.js'
 import {
   DEFAULT_OPENAI_THINKING_ATTR,
@@ -226,7 +227,20 @@ export function getEffectiveApiFormat(provider: APIProvider, model?: string): Ap
     return oauthProvider.apiFormat
   }
 
-  // 4. 用户显式设置优先
+  // 4. 命名连接可为 generic 等多协议 provider 分别指定格式。
+  if (model) {
+    try {
+      const { getAuthProfileForModel } = require('./model.js') as typeof import('./model.js')
+      const authFormat = getAuthConfigApiFormat(getAuthProfileForModel(model))
+      if (authFormat && supported.has(authFormat)) {
+        return authFormat
+      }
+    } catch {
+      // 模型配置尚未初始化时继续走既有解析链。
+    }
+  }
+
+  // 5. 用户显式设置优先
   try {
     const { getInitialSettings } =
       require('../settings/settings.js') as typeof import('../settings/settings.js')
@@ -239,7 +253,7 @@ export function getEffectiveApiFormat(provider: APIProvider, model?: string): Ap
     // settings 尚未就绪，继续按默认值推导
   }
 
-  // 5. 默认使用注册表中声明的第一个格式
+  // 6. 默认使用注册表中声明的第一个格式
   return entry.supportedFormats[0]
 }
 

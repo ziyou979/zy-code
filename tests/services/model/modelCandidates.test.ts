@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
+  getAuthProfileForModelFromSettings,
   getModelCandidatesForTier,
   normalizeModelTierValue,
+  pinModelCandidate,
   selectActiveCandidate,
 } from '../../../src/services/model/model.js'
 import {
@@ -65,6 +67,51 @@ describe('model candidates / multi-auth', () => {
     expect(list[1]?.provider).toBe('dashscope')
   })
 
+  test('provider 可引用 auth.json 中的多个 generic 命名连接', () => {
+    writeFileSync(
+      join(configDir, 'auth.json'),
+      JSON.stringify({
+        'generic-primary': { provider: 'generic', baseUrl: 'https://one.example/v1' },
+        'generic-backup': { provider: 'generic', baseUrl: 'https://two.example/v1' },
+      }),
+    )
+    const list = normalizeModelTierValue([
+      { provider: 'generic-primary', model: 'model-a' },
+      { provider: 'generic-backup', model: 'model-b' },
+    ])
+
+    expect(list.map((candidate) => candidate.provider)).toEqual(['generic', 'generic'])
+    expect(list.map((candidate) => candidate.authProfile)).toEqual([
+      'generic-primary',
+      'generic-backup',
+    ])
+  })
+
+  test('相同模型使用 sticky 区分不同 generic 连接', () => {
+    writeFileSync(
+      join(configDir, 'auth.json'),
+      JSON.stringify({
+        'generic-primary': { provider: 'generic', baseUrl: 'https://one.example/v1' },
+        'generic-backup': { provider: 'generic', baseUrl: 'https://two.example/v1' },
+      }),
+    )
+    const settings: SettingsJson = {
+      provider: 'generic',
+      models: {
+        standard: [
+          { provider: 'generic-primary', model: 'shared-model' },
+          { provider: 'generic-backup', model: 'shared-model' },
+        ],
+      },
+    }
+    const candidates = getModelCandidatesForTier('standard', settings, 'generic')
+    pinModelCandidate('standard', candidates[1]!, settings)
+
+    expect(getAuthProfileForModelFromSettings(settings, 'shared-model', 'generic')).toBe(
+      'generic-backup',
+    )
+  })
+
   test('getModelCandidatesForTier 读取顶层数组', () => {
     const settings: SettingsJson = {
       provider: 'generic',
@@ -101,6 +148,27 @@ describe('model candidates / multi-auth', () => {
     )
     expect(selectActiveCandidate(candidates, 'standard', settings)?.model).toBe('qwen3.6-plus')
     expect(getProviderForModelFromSettings(settings, 'qwen3.6-plus', 'generic')).toBe('dashscope')
+  })
+
+  test('pinModelCandidate 允许 /model 主动切换到备选 provider', () => {
+    const settings: SettingsJson = {
+      provider: 'generic',
+      models: {
+        standard: [
+          { provider: 'xai', model: 'grok-4.5' },
+          { provider: 'deepseek', model: 'deepseek-v4-flash' },
+        ],
+      },
+    }
+    const candidates = getModelCandidatesForTier('standard', settings, 'generic')
+
+    pinModelCandidate('standard', candidates[1]!, settings)
+
+    const selected = selectActiveCandidate(candidates, 'standard', settings)
+    expect(selected?.model).toBe('deepseek-v4-flash')
+    expect(selected?.provider).toBe('deepseek')
+    expect(selected?.candidateIndex).toBe(1)
+    expect(getProviderForModelFromSettings(settings, null, 'generic')).toBe('deepseek')
   })
 
   test('classifyAuthChainSwitchableError 识别 401/429，忽略 529', () => {

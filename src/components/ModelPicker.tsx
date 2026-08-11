@@ -1,4 +1,3 @@
-import capitalize from 'lodash-es/capitalize.js'
 import { useState } from 'react'
 import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKeybindings.js'
 import { logEvent } from 'src/services/analytics/index.js'
@@ -11,7 +10,11 @@ import {
   modelDisplayString,
   parseUserSpecifiedModel,
 } from '../services/model/model.js'
-import { getModelOptions } from '../services/model/modelOptions.js'
+import {
+  applyModelOptionSelection,
+  getModelOptions,
+  type ModelOption,
+} from '../services/model/modelOptions.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
 import {
   clampEffort,
@@ -66,7 +69,9 @@ export function ModelPicker({
   const initialEffort =
     effortValue !== undefined && isEffortLevel(effortValue) ? effortValue : undefined
   const [effort, setEffort] = useState(initialEffort)
-  const modelOptions = getModelOptions()
+  const modelOptions = getModelOptions().filter(
+    (option) => !skipSettingsWrite || !option.pickerValue || option.pickerValue === option.value,
+  )
   let optionsWithInitial
   if (initial !== null && !modelOptions.some((opt) => opt.value === initial)) {
     const initialModelDisplay = modelDisplayString(initial)
@@ -83,7 +88,7 @@ export function ModelPicker({
   }
   const selectOptions = optionsWithInitial.map((option) => ({
     ...option,
-    value: option.value === null ? NO_PREFERENCE : option.value,
+    value: option.pickerValue ?? (option.value === null ? NO_PREFERENCE : option.value),
   }))
   const initialFocusValue = selectOptions.some((_) => _.value === initialValue)
     ? initialValue
@@ -91,10 +96,10 @@ export function ModelPicker({
   const visibleCount = Math.min(10, selectOptions.length)
   const hiddenCount = Math.max(0, selectOptions.length - visibleCount)
   const focusedModelName = selectOptions.find((option) => option.value === focusedValue)?.label
-  const focusedModel = resolveOptionModel(focusedValue)
+  const focusedModel = resolveOptionModel(focusedValue, selectOptions)
   const focusedLevels = focusedModel ? getModelEffortLevels(focusedModel) : []
   const focusedSupportsEffort = focusedLevels.length > 0
-  const focusedDefaultEffort = getDefaultEffortLevelForOption(focusedValue)
+  const focusedDefaultEffort = getDefaultEffortLevelForOption(focusedValue, selectOptions)
   // 将当前选择 clamp 到聚焦模型支持的档位(例如从支持 max 的模型切到不支持的模型)。
   const displayEffort = focusedModel
     ? resolveEffortForModel(focusedModel, effort ?? focusedDefaultEffort)
@@ -102,7 +107,7 @@ export function ModelPicker({
   const handleFocus = (value: string) => {
     setFocusedValue(value)
     if (!hasToggledEffort && effortValue === undefined) {
-      setEffort(getDefaultEffortLevelForOption(value))
+      setEffort(getDefaultEffortLevelForOption(value, selectOptions))
     }
   }
   const handleCycleEffort = (direction: 'left' | 'right') => {
@@ -125,8 +130,9 @@ export function ModelPicker({
     logEvent('zy_model_command_menu_effort', {
       effort: effort as unknown as number | boolean | undefined,
     })
-    const selectedModel = resolveOptionModel(selectedValue)
-    const defaultEffort = getDefaultEffortLevelForOption(selectedValue)
+    const selectedOption = selectOptions.find((option) => option.value === selectedValue)
+    const selectedModel = resolveOptionModel(selectedValue, selectOptions)
+    const defaultEffort = getDefaultEffortLevelForOption(selectedValue, selectOptions)
     const effortLevel = resolvePickerEffortPersistence(
       selectedModel ? resolveEffortForModel(selectedModel, effort ?? defaultEffort) : undefined,
       defaultEffort,
@@ -147,11 +153,11 @@ export function ModelPicker({
     }
     const selectedEffort =
       selectedModel && modelSupportsEffort(selectedModel) ? effortLevel : undefined
-    if (selectedValue === NO_PREFERENCE) {
+    if (!selectedOption || selectedValue === NO_PREFERENCE) {
       onSelect(null, selectedEffort)
       return
     }
-    onSelect(selectedValue, selectedEffort)
+    onSelect(applyModelOptionSelection(selectedOption), selectedEffort)
   }
   const content = (
     <Box flexDirection="column">
@@ -203,7 +209,9 @@ export function ModelPicker({
               {focusedSupportsEffort ? (
                 <Text dimColor={true}>
                   <EffortLevelIndicator effort={displayEffort} />{' '}
-                  {tSync('modelPicker.effortLabel', { effort: capitalize(displayEffort) })}
+                  {tSync('modelPicker.effortLabel', {
+                    effort: tSync(`effort.${displayEffort}`),
+                  })}
                   {displayEffort === focusedDefaultEffort ? tSync('modelPicker.effortDefault') : ''}{' '}
                   <Text color="subtle">{tSync('modelPicker.adjustHint')}</Text>
                 </Text>
@@ -245,11 +253,20 @@ export function ModelPicker({
   return <Pane color="permission">{content}</Pane>
 }
 function _temp4() {}
-function resolveOptionModel(value?: string): string | undefined {
+function resolveOptionModel(
+  value: string | undefined,
+  options: Array<ModelOption & { value: string }>,
+): string | undefined {
   if (!value) {
     return undefined
   }
-  return value === NO_PREFERENCE ? getDefaultMainLoopModel() : parseUserSpecifiedModel(value)
+  if (value === NO_PREFERENCE) {
+    return getDefaultMainLoopModel()
+  }
+  const option = options.find((candidate) => candidate.value === value)
+  return (
+    option?.candidateSelection?.candidate.model ?? parseUserSpecifiedModel(option?.value ?? value)
+  )
 }
 // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
 function EffortLevelIndicator({ effort }: { effort: any }) {
@@ -273,8 +290,11 @@ function cycleEffortLevel(
     return levels[(currentIndex - 1 + levels.length) % levels.length]!
   }
 }
-function getDefaultEffortLevelForOption(value?: string): EffortLevel {
-  const resolved = resolveOptionModel(value) ?? getDefaultMainLoopModel()!
+function getDefaultEffortLevelForOption(
+  value: string | undefined,
+  options: Array<ModelOption & { value: string }>,
+): EffortLevel {
+  const resolved = resolveOptionModel(value, options) ?? getDefaultMainLoopModel()!
   const defaultValue = getDefaultEffortForModel(resolved)
   return defaultValue !== undefined && isEffortLevel(defaultValue) ? defaultValue : 'thorough'
 }

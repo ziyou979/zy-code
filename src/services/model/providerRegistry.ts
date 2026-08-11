@@ -79,7 +79,7 @@ export interface ProviderEntry {
    * - env-or-default 类型：环境变量未设置时使用
    * - 多格式 provider：按 'openai-chat'、'anthropic'、'google' 分别配置；
    *   'openai-responses' 与 'openai-chat' 共用端点（无独立 key 时回落 openai-chat）
-   * - onboarding 将 baseUrl 写入 settings.json（不再写全局 configuredBaseUrl）
+   * - onboarding 将 provider/baseUrl/apiFormat/apiKey 写入 auth.json 命名连接
    */
   defaultBaseUrls?: {
     'openai-chat'?: string
@@ -188,6 +188,47 @@ const XAI_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> = {
   },
   // 分类器等关 thinking：不传 reasoning_effort（响应侧 convertThinkingForResponses 同策略）
   disable: {},
+}
+
+/**
+ * NVIDIA NIM 的托管端点使用顶层 `reasoning_effort`，不接受通用的 `thinking.type`。
+ * 这里只覆盖 NVIDIA 已明确公布请求语义的模型；其他 NIM 模型维持通用映射。
+ */
+const NIM_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> = {
+  enable: (effort, model, context) => {
+    const normalizedModel = model?.toLowerCase()
+    if (normalizedModel?.includes('nemotron-3-ultra')) {
+      // Ultra 仅接受 none / medium / high；无指定档位时沿用端点默认的 high。
+      return { reasoning_effort: effort === 'medium' ? 'medium' : 'high' }
+    }
+    if (normalizedModel?.includes('gpt-oss-120b')) {
+      // gpt-oss 不支持关闭思考，且端点默认档位为 medium。
+      const normalizedEffort = effort?.toLowerCase()
+      return {
+        reasoning_effort:
+          normalizedEffort === 'low' || normalizedEffort === 'medium' || normalizedEffort === 'high'
+            ? normalizedEffort
+            : 'medium',
+      }
+    }
+    if (normalizedModel?.includes('inkling')) {
+      // NVIDIA 当前未公开 Inkling 的 effort 请求参数，保留模型默认思考行为。
+      return {}
+    }
+    return DEFAULT_OPENAI_THINKING_ATTR.enable(effort, model, context)
+  },
+  disable: (effort, model) => {
+    const normalizedModel = model?.toLowerCase()
+    if (normalizedModel?.includes('nemotron-3-ultra')) {
+      return { reasoning_effort: 'none' }
+    }
+    if (normalizedModel?.includes('gpt-oss-120b') || normalizedModel?.includes('inkling')) {
+      // 端点未声明关闭值；省略字段比发送非法的 none / thinking.type 更安全。
+      return {}
+    }
+    const params = DEFAULT_OPENAI_THINKING_ATTR.disable
+    return typeof params === 'function' ? params(effort, model) : (params ?? {})
+  },
 }
 
 // ---------------------------------------------------------------------------
@@ -493,6 +534,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { 'openai-chat': 'https://integrate.api.nvidia.com/v1' },
     apiKeyLabel: 'NVIDIA API Key',
     baseUrlHint: 'https://integrate.api.nvidia.com/v1',
+    openaiAttr: {
+      thinking: NIM_THINKING_ATTR,
+    },
   },
   {
     id: 'ollama',

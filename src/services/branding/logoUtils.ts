@@ -1,4 +1,5 @@
 import { getAPIProvider } from 'src/services/model/providers.js'
+import { getProviderForModel } from 'src/services/model/model.js'
 import { getDirectConnectServerUrl, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../utils/stringWidth.js'
@@ -286,15 +287,14 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   zhipu: '智谱',
 }
 
-function getProviderDisplayName(): string {
-  const provider = getAPIProvider()
+export function getProviderDisplayName(provider: string = getAPIProvider()): string {
   return PROVIDER_DISPLAY_NAMES[provider] ?? provider
 }
 
 /**
  * 获取 Logo 与 CondensedLogo 共用的展示数据
  */
-export function getLogoDisplayData(): {
+export function getLogoDisplayData(modelSetting?: string | null): {
   version: string
   cwd: string
   providerName: string
@@ -304,7 +304,7 @@ export function getLogoDisplayData(): {
   const serverUrl = getDirectConnectServerUrl()
   const displayPath = process.env.DEMO_VERSION ? '/code/zy' : getDisplayPath(getCwd())
   const cwd = serverUrl ? `${displayPath} in ${serverUrl.replace(/^https?:\/\//, '')}` : displayPath
-  const providerName = getProviderDisplayName()
+  const providerName = getProviderDisplayName(getProviderForModel(modelSetting))
   const agentName = getInitialSettings().agent
 
   return {

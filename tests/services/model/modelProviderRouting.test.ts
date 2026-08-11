@@ -3,6 +3,20 @@ import { getProviderForModelFromSettings } from '../../../src/services/model/mod
 import type { SettingsJson } from '../../../src/services/settings/types.js'
 
 describe('model provider routing', () => {
+  test('default 根据 mainLoopModel 档位解析 provider，而不是固定使用 standard', () => {
+    const settings: SettingsJson = {
+      provider: 'generic',
+      mainLoopModel: 'advanced',
+      models: {
+        advanced: { provider: 'xai', model: 'grok-4.5' },
+        standard: { provider: 'deepseek', model: 'deepseek-v4-flash' },
+      },
+    }
+
+    expect(getProviderForModelFromSettings(settings, null, 'generic')).toBe('xai')
+    expect(getProviderForModelFromSettings(settings, undefined, 'generic')).toBe('xai')
+  })
+
   test('顶层 models 可为不同 tier 绑定不同 provider', () => {
     const settings: SettingsJson = {
       provider: 'generic',

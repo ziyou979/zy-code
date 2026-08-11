@@ -81,6 +81,7 @@ export function Logo() {
   const showOnboarding = shouldShowProjectOnboarding()
   const showSandboxStatus = SandboxManager.isSandboxingEnabled()
   const agent = useAppState((s) => s.agent)
+  const modelSetting = useAppState((s) => s.mainLoopModelForSession ?? s.mainLoopModel)
   const model = useMainLoopModel()
   const config = getGlobalConfig()
   let changelog: string[]
@@ -118,7 +119,12 @@ export function Logo() {
     }
   }, [showOnboarding])
   const fullModelDisplayName = renderModelSetting(model)
-  const { version, cwd, providerName, agentName: agentNameFromSettings } = getLogoDisplayData()
+  const {
+    version,
+    cwd,
+    providerName,
+    agentName: agentNameFromSettings,
+  } = getLogoDisplayData(modelSetting)
   const agentName = agent ?? agentNameFromSettings
   const modelDisplayName = truncate(fullModelDisplayName, LEFT_PANEL_MAX_WIDTH - 20)
   if (!hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.ZY_CODE_FORCE_FULL_LOGO)) {
@@ -212,8 +218,11 @@ export function Logo() {
                 <AnimatedZy size="compact" />
               </Box>
             }
-            {<Text dimColor={true}>{modelDisplayName}</Text>}
-            <Text dimColor={true}>{providerName}</Text>
+            {
+              <Text dimColor={true}>
+                {modelDisplayName} · {providerName}
+              </Text>
+            }
             <Text dimColor={true}>
               {agentName ? `@${agentName} · ${truncatedCwd}` : truncatedCwd}
             </Text>
@@ -243,6 +252,7 @@ export function Logo() {
     : LEFT_PANEL_MAX_WIDTH
   const truncatedCwd = truncatePath(cwd, Math.max(cwdAvailableWidth, 10))
   const cwdLine = agentName ? `@${agentName} · ${truncatedCwd}` : truncatedCwd
+  // 路由摘要是辅助信息，不参与栏宽计算；空间不足时宁可截断，也不能挤压右侧动态栏。
   const optimalLeftWidth = calculateOptimalLeftWidth(welcomeMessage, cwdLine, modelLine)
   const { leftWidth, rightWidth } = calculateLayoutDimensions(columns, layoutMode, optimalLeftWidth)
   const debugInfoSection = isDebugMode() && (

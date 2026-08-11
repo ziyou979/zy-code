@@ -305,6 +305,39 @@ describe('convertThinkingForOpenAI', () => {
     })
   })
 
+  test('NIM Nemotron 3 Ultra → 使用 NVIDIA reasoning_effort 档位', () => {
+    const model = 'nvidia/nemotron-3-ultra-550b-a55b'
+
+    expect(fn(thinkingEnabled, model, 'nim')).toEqual({ reasoning_effort: 'high' })
+    expect(fn(thinkingEnabled, model, 'nim', 'medium')).toEqual({
+      reasoning_effort: 'medium',
+    })
+    expect(fn({ type: 'disabled' }, model, 'nim')).toEqual({
+      reasoning_effort: 'none',
+    })
+  })
+
+  test('NIM gpt-oss-120b → 仅发送受支持的 reasoning_effort', () => {
+    const model = 'openai/gpt-oss-120b'
+
+    expect(fn(thinkingEnabled, model, 'nim', 'low')).toEqual({ reasoning_effort: 'low' })
+    expect(fn(thinkingEnabled, model, 'nim')).toEqual({ reasoning_effort: 'medium' })
+    expect(fn({ type: 'disabled' }, model, 'nim')).toEqual({})
+  })
+
+  test('NIM Inkling → 沿用端点默认思考行为', () => {
+    const model = 'thinkingmachines/inkling'
+
+    expect(fn(thinkingEnabled, model, 'nim', 'high')).toEqual({})
+    expect(fn({ type: 'disabled' }, model, 'nim')).toEqual({})
+  })
+
+  test('NIM 非 Nemotron 3 模型维持通用 thinking 映射', () => {
+    expect(fn(thinkingEnabled, 'z-ai/glm-5.2', 'nim')).toEqual({
+      thinking: { type: 'enabled' },
+    })
+  })
+
   test('dashscope minimax → { thinking: { type: "adaptive" } }', () => {
     const previousConfigDir = process.env.ZY_CONFIG_DIR
     const configDir = mkdtempSync(join(tmpdir(), 'zy-openai-functions-'))

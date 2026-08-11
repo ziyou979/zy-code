@@ -17,9 +17,15 @@ import { Zy } from './Zy.js'
 export function CondensedLogo() {
   const { columns } = useTerminalSize()
   const agent = useAppState((s) => s.agent)
+  const modelSetting = useAppState((s) => s.mainLoopModelForSession ?? s.mainLoopModel)
   const model = useMainLoopModel()
   const modelDisplayName = renderModelSetting(model)
-  const { version, cwd, providerName, agentName: agentNameFromSettings } = getLogoDisplayData()
+  const {
+    version,
+    cwd,
+    providerName,
+    agentName: agentNameFromSettings,
+  } = getLogoDisplayData(modelSetting)
   const agentName = agent ?? agentNameFromSettings
   const textWidth = Math.max(columns - 15, 20)
   const truncatedVersion = truncate(version, Math.max(textWidth - 13, 6))
