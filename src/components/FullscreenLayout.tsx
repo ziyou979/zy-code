@@ -257,6 +257,35 @@ export type UnseenDivider = {
   count: number
 }
 
+type PillVisibilitySnapshot = {
+  isSticky: boolean
+  scrollTop: number
+  pendingDelta: number
+  viewportHeight: number
+  scrollHeight: number
+  dividerY: number | null
+}
+
+/**
+ * 对齐 CC：只有确实离开当前内容底部，并且尚未越过未读分割线时才显示按钮。
+ * dividerY 是历史高度快照，内容回流或折叠后可能大于当前 scrollHeight，
+ * 因此不能单独作为“尚未到底”的依据。
+ */
+export function shouldShowNewMessagesPill({
+  isSticky,
+  scrollTop,
+  pendingDelta,
+  viewportHeight,
+  scrollHeight,
+  dividerY,
+}: PillVisibilitySnapshot): boolean {
+  if (isSticky || dividerY === null) {
+    return false
+  }
+  const viewportBottom = scrollTop + pendingDelta + viewportHeight
+  return viewportBottom < dividerY && viewportBottom < scrollHeight
+}
+
 /**
  * Builds the unseenDivider object REPL passes to Messages + the pill.
  * Returns undefined only when no content has arrived past the divider
@@ -330,11 +359,17 @@ export function FullscreenLayout({
   const subscribe = (listener: () => void) => scrollRef?.current?.subscribe(listener) ?? (() => {})
   const pillVisible = useSyncExternalStore(subscribe, () => {
     const s = scrollRef?.current
-    const dividerY = dividerYRef?.current
-    if (!s || dividerY == null) {
+    if (!s) {
       return false
     }
-    return s.getScrollTop() + s.getPendingDelta() + s.getViewportHeight() < dividerY
+    return shouldShowNewMessagesPill({
+      isSticky: s.isSticky(),
+      scrollTop: s.getScrollTop(),
+      pendingDelta: s.getPendingDelta(),
+      viewportHeight: s.getViewportHeight(),
+      scrollHeight: s.getScrollHeight(),
+      dividerY: dividerYRef?.current ?? null,
+    })
   })
   useLayoutEffect(() => {
     if (!isFullscreenEnvEnabled()) {
@@ -664,9 +699,11 @@ function SuggestionsOverlay() {
       <PromptInputFooterSuggestions
         suggestions={data.suggestions}
         selectedSuggestion={data.selectedSuggestion}
+        hoveredSuggestionId={data.hoveredSuggestionId}
         maxColumnWidth={data.maxColumnWidth}
         onAcceptSuggestion={data.onAcceptSuggestion}
         onClickSuggestion={data.onClickSuggestion}
+        onHoverSuggestion={data.onHoverSuggestion}
         overlay={true}
       />
     </Box>

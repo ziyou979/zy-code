@@ -39,11 +39,6 @@ const teamMemCollapsed = feature('TEAMMEM')
 //（bash 命令、文件读取、搜索模式）才是可读的，而不是
 // 在一帧内闪烁消失。
 const MIN_HINT_DISPLAY_MS = 700
-const MAX_THINKING_SUMMARY_CHARS = 300
-
-function truncateThinkingSummary(summary: string, maxChars: number): string {
-  return summary.length > maxChars ? `${summary.slice(0, maxChars - 1)}…` : summary
-}
 
 /**
  * 收集折叠组内所有 tool_call 块（id + name + input），用于判断当前正在
@@ -308,9 +303,10 @@ export function CollapsedReadSearchContent({
     liveThinkingSummary !== undefined && liveThinkingSummary !== ''
       ? liveThinkingSummary
       : message.latestThinkingSummary
-  const thinkingSummary = rawThinkingSummary
-    ? truncateThinkingSummary(rawThinkingSummary.replace(/\s+/g, ' '), MAX_THINKING_SUMMARY_CHARS)
-    : undefined
+  // 完整展示思考内容：保留原始换行与段落结构，不压缩、不截断。
+  // 之前 replace(/\s+/g,' ')+截断 300 字符会把多段思考压成单行省略号，
+  // 导致用户在 REPL 实时流式中只能看到被截断的摘要。
+  const thinkingSummary = rawThinkingSummary || undefined
   // 活跃分组按真实流状态切换提示；非活跃或状态短暂缺失时，
   // 回退到归组阶段记录的最近可展示活动，避免首个子块类型粘住。
   const displayedHint =
