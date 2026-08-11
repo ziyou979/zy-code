@@ -452,6 +452,9 @@ async function* queryLoop(
         try {
           let streamingFallbackOccured = false
           queryCheckpoint('query_api_streaming_start')
+          log(
+            `model stream start turn=${turnCount} signalAborted=${toolUseContext.abortController.signal.aborted} abortReason=${String(toolUseContext.abortController.signal.reason ?? 'none')}`,
+          )
           for await (const message of deps.callModel({
             messages: prependUserContext(messagesForQuery, userContext),
             systemPrompt: fullSystemPrompt,
@@ -597,6 +600,9 @@ async function* queryLoop(
               yield yieldMessage
             }
             if (message.type === 'assistant') {
+              log(
+                `assistant received turn=${turnCount} request=${message.requestId ?? 'unknown'} blocks=${message.message.content.map((block) => (typeof block === 'string' ? 'string' : block.type)).join(',')} stop=${message.message.stopReason ?? 'unknown'} signalAborted=${toolUseContext.abortController.signal.aborted}`,
+              )
               assistantMessages.push(message)
 
               // 类型守卫：确保 content 是数组
@@ -634,6 +640,9 @@ async function* queryLoop(
             }
           }
           queryCheckpoint('query_api_streaming_end')
+          log(
+            `model stream end turn=${turnCount} assistantMessages=${assistantMessages.length} toolUses=${toolUseBlocks.length} needsFollowUp=${needsFollowUp} signalAborted=${toolUseContext.abortController.signal.aborted} abortReason=${String(toolUseContext.abortController.signal.reason ?? 'none')}`,
+          )
           // 本轮 API 成功：清零该候选的连续失效计数
           noteAuthChainSuccess(currentModel)
 
@@ -783,6 +792,10 @@ async function* queryLoop(
     } catch (error) {
       logError(error)
       const errorMessage = error instanceof Error ? error.message : String(error)
+      log(
+        `model stream failed turn=${turnCount} error=${errorMessage} assistantMessages=${assistantMessages.length} toolUses=${toolUseBlocks.length} signalAborted=${toolUseContext.abortController.signal.aborted} abortReason=${String(toolUseContext.abortController.signal.reason ?? 'none')}`,
+        { level: 'error' },
+      )
       logEvent('zy_query_error', {
         assistantMessages: assistantMessages.length,
         toolUses: assistantMessages.flatMap((_) => {
@@ -843,6 +856,10 @@ async function* queryLoop(
     // 执行器可以为排队/进行中的工具生成合成 tool_result 块。
     // 否则，tool_use 块将缺少匹配的 tool_result 块。
     if (toolUseContext.abortController.signal.aborted) {
+      log(
+        `terminating after model stream turn=${turnCount} reason=aborted_streaming abortReason=${String(toolUseContext.abortController.signal.reason ?? 'none')} assistantMessages=${assistantMessages.length} toolUses=${toolUseBlocks.length}`,
+        { level: 'warn' },
+      )
       if (streamingToolExecutor) {
         // 消费剩余结果 — 执行器为中止的工具生成合成 tool_results，
         // 因为它在 executeTool() 中检查中止信号
@@ -1233,6 +1250,10 @@ async function* queryLoop(
       //   - 'sigint': cli/print.ts 收到 SIGINT 信号
       //   - 'end_session': SDK end_session 控制消息
       const abortReason = toolUseContext.abortController.signal.reason
+      log(
+        `terminating after tools turn=${turnCount} reason=aborted_tools abortReason=${String(abortReason ?? 'none')} toolResults=${toolResults.length}`,
+        { level: 'warn' },
+      )
       const isKnownUserAbort =
         abortReason === 'interrupt' ||
         abortReason === 'user_rejected_permission' ||
@@ -1365,6 +1386,9 @@ async function* queryLoop(
     }
 
     queryCheckpoint('query_recursive_call')
+    log(
+      `continue next turn from=${turnCount} to=${nextTurnCount} assistantMessages=${assistantMessages.length} toolResults=${toolResults.length} signalAborted=${updatedToolUseContext.abortController.signal.aborted} abortReason=${String(updatedToolUseContext.abortController.signal.reason ?? 'none')}`,
+    )
     const next: State = {
       messages: [...messagesForQuery, ...assistantMessages, ...toolResults],
       toolUseContext: toolUseContextWithQueryTracking,

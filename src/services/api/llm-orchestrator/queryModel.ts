@@ -231,10 +231,26 @@ export async function* queryModel(
     })
     streamIdleWatchdog.reset()
 
+    streamLog(
+      `consume start request=${streamRequestId ?? 'unknown'} signalAborted=${signal.aborted} abortReason=${String(signal.reason ?? 'none')}`,
+    )
+    logForDiagnosticsNoPII('debug', 'cli_stream_consume_started', {
+      request_id: streamRequestId ?? 'unknown',
+      signal_aborted: signal.aborted,
+      abort_reason:
+        typeof signal.reason === 'string'
+          ? signal.reason
+          : signal.reason instanceof Error
+            ? signal.reason.name
+            : typeof signal.reason,
+    })
+
     startSessionActivity('api_call')
     try {
       // stream in and accumulate state
       let isFirstChunk = true
+      let streamEventCount = 0
+      let lastStreamEventType = 'none'
       let lastEventTime: number | null = null // 在首个数据块后设置，避免将 TTFB 计为停顿
       const STALL_THRESHOLD_MS = 30_000 // 30 秒
       let totalStallTime = 0
@@ -242,6 +258,8 @@ export async function* queryModel(
 
       for await (const part of stream) {
         streamIdleWatchdog.reset()
+        streamEventCount++
+        lastStreamEventType = part.type
         const now = Date.now()
 
         // 检测并记录流式停顿（仅在首个事件后，避免将 TTFB 计为停顿）
@@ -269,6 +287,9 @@ export async function* queryModel(
 
         if (isFirstChunk) {
           streamLog(`first chunk ${Date.now() - start}ms`)
+          streamLog(
+            `first event request=${streamRequestId ?? 'unknown'} type=${part.type} signalAborted=${signal.aborted} abortReason=${String(signal.reason ?? 'none')}`,
+          )
           queryCheckpoint('query_first_chunk_received')
           if (!options.agentId) {
             headlessProfilerCheckpoint('first_chunk')
@@ -484,6 +505,9 @@ export async function* queryModel(
             ) as unknown as AssistantContentBlock[]
             const sanitizedContent = sanitizeAssistantCompletionContent(normalizedContent)
             if (sanitizedContent.length === 0) {
+              streamLog(
+                `block dropped request=${streamRequestId ?? 'unknown'} index=${chunkStopEvent.index} rawType=${contentBlock.type}`,
+              )
               break
             }
 
@@ -501,6 +525,9 @@ export async function* queryModel(
               ...(isInternalBuild() && research !== undefined && { research }),
             }
             newMessages.push(assistantMsg)
+            streamLog(
+              `assistant block emitted request=${streamRequestId ?? 'unknown'} index=${chunkStopEvent.index} blockTypes=${sanitizedContent.map((block) => block.type).join(',')} signalAborted=${signal.aborted}`,
+            )
             yield assistantMsg
             break
           }
@@ -532,6 +559,10 @@ export async function* queryModel(
             //（100ms 刷新间隔）。对象替换（{ ...lastMsg.message, usage }）
             // 会断开队列中的引用；直接修改确保转录捕获最终值。
             stopReason = stopReasonV2
+
+            streamLog(
+              `response delta request=${streamRequestId ?? 'unknown'} stop=${stopReason ?? 'unknown'} emittedMessages=${newMessages.length} signalAborted=${signal.aborted} abortReason=${String(signal.reason ?? 'none')}`,
+            )
 
             const lastMsg = newMessages.at(-1)
             if (lastMsg) {
@@ -609,6 +640,23 @@ export async function* queryModel(
       }
       // 流循环已退出，清除空闲超时看门狗
       streamIdleWatchdog.clear()
+      streamLog(
+        `consume end request=${streamRequestId ?? 'unknown'} events=${streamEventCount} lastEvent=${lastStreamEventType} emittedMessages=${newMessages.length} stop=${stopReason ?? 'unknown'} signalAborted=${signal.aborted} abortReason=${String(signal.reason ?? 'none')}`,
+      )
+      logForDiagnosticsNoPII('debug', 'cli_stream_consume_completed', {
+        request_id: streamRequestId ?? 'unknown',
+        event_count: streamEventCount,
+        last_event_type: lastStreamEventType,
+        emitted_message_count: newMessages.length,
+        stop_reason: stopReason ?? 'unknown',
+        signal_aborted: signal.aborted,
+        abort_reason:
+          typeof signal.reason === 'string'
+            ? signal.reason
+            : signal.reason instanceof Error
+              ? signal.reason.name
+              : typeof signal.reason,
+      })
 
       // 如果流被空闲超时看门狗中止，则回退到非流式重试，
       // 而不是将其视为已完成的流。
@@ -720,6 +768,25 @@ export async function* queryModel(
     } catch (streamingError) {
       // 在错误路径上也清除空闲超时看门狗
       streamIdleWatchdog.clear()
+
+      streamLog(
+        `consume failed request=${streamRequestId ?? 'unknown'} error=${errorMessage(streamingError)} partialMessage=${partialMessage !== undefined} emittedMessages=${newMessages.length} stop=${stopReason ?? 'unknown'} signalAborted=${signal.aborted} abortReason=${String(signal.reason ?? 'none')}`,
+        { level: 'error' },
+      )
+      logForDiagnosticsNoPII('error', 'cli_stream_consume_failed', {
+        request_id: streamRequestId ?? 'unknown',
+        error_name: streamingError instanceof Error ? streamingError.name : typeof streamingError,
+        partial_message: partialMessage !== undefined,
+        emitted_message_count: newMessages.length,
+        stop_reason: stopReason ?? 'unknown',
+        signal_aborted: signal.aborted,
+        abort_reason:
+          typeof signal.reason === 'string'
+            ? signal.reason
+            : signal.reason instanceof Error
+              ? signal.reason.name
+              : typeof signal.reason,
+      })
 
       // 埋点：如果看门狗已经触发且 for-await 抛出（而非干净退出），
       // 记录循环确实退出以及看门狗触发后多久。区分真正的挂起和错误退出。

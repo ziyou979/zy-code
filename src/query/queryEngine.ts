@@ -55,6 +55,7 @@ import {
 import { headlessProfilerCheckpoint } from '../services/analytics/headlessProfiler.js'
 import { registerStructuredOutputEnforcement } from '../services/hooks/hookHelpers.js'
 import { getInMemoryErrors } from '../services/infra/log.js'
+import { createDebugLog } from '../services/infra/debug.js'
 import { countToolCalls } from '../services/messages/predicates.js'
 import { pruneCompletedTurnArtifacts } from '../services/messages/prune.js'
 import { SYNTHETIC_MESSAGES } from '../services/messages/constants.js'
@@ -86,6 +87,8 @@ import {
   isResultSuccessful,
   normalizeMessage,
 } from '../services/query/queryHelpers.js'
+
+const log = createDebugLog('query-engine')
 
 // 死代码消除：coordinator 模式的条件导入
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -970,6 +973,11 @@ export class QueryEngine {
     const edeResultType = result?.type ?? 'undefined'
     const edeLastContentType =
       result?.type === 'assistant' ? (result.message.content.at(-1)?.type ?? 'none') : 'n/a'
+    const resultSuccessful = isResultSuccessful(result, lastStopReason)
+    log(
+      `generator ended resultType=${edeResultType} lastContentType=${edeLastContentType} stop=${lastStopReason ?? 'unknown'} successful=${resultSuccessful} turns=${turnCount}`,
+      { level: resultSuccessful ? 'debug' : 'error' },
+    )
 
     // 在产生 result 之前刷新缓冲的 transcript 写入。
     // 桌面应用在收到 result 消息后会立即 kill CLI 进程，
@@ -983,7 +991,7 @@ export class QueryEngine {
       }
     }
 
-    if (!isResultSuccessful(result, lastStopReason)) {
+    if (!resultSuccessful) {
       // 内存优化：丢弃历史 turn 的 UI-only 消息
       this.pruneArtifactsBeforeResult()
       yield {
