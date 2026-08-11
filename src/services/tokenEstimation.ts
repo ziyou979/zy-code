@@ -31,7 +31,7 @@ export async function countMessagesTokensWithAPI(
       if (adapter.countTokens) {
         return adapter.countTokens(messages, tools)
       }
-      // Fallback to rough estimation if adapter doesn't support countTokens
+      // 如果 adapter 不支持 countTokens，回退到粗略估算
       return null
     } catch (error) {
       logError(error)

@@ -16,7 +16,7 @@ type Percentiles = {
 }
 
 /**
- * Pre-calculates percentiles from activity data for use in intensity calculations
+ * 从活动数据预计算百分位数，供强度计算使用
  */
 function calculatePercentiles(dailyActivity: DailyActivity[]): Percentiles | null {
   const counts = dailyActivity
@@ -36,7 +36,7 @@ function calculatePercentiles(dailyActivity: DailyActivity[]): Percentiles | nul
 }
 
 /**
- * Generates a GitHub-style activity heatmap for the terminal
+ * 为终端生成 GitHub 风格的活动热力图
  */
 export function generateHeatmap(
   dailyActivity: DailyActivity[],

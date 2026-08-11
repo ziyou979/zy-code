@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 /**
- * Creates a truncated SHA256 hash (16 chars) for file paths
- * Used for privacy-preserving analytics on file operations
+ * 为文件路径创建截断的 SHA256 哈希 (16 字符)
+ * 用于文件操作的隐私保护分析
  */
 function hashFilePath(
   filePath: string,
@@ -15,8 +15,8 @@ function hashFilePath(
 }
 
 /**
- * Creates a full SHA256 hash (64 chars) for file contents
- * Used for deduplication and change detection analytics
+ * 为文件内容创建完整 SHA256 哈希 (64 字符)
+ * 用于去重和变更检测分析
  */
 function hashFileContent(
   content: string,
@@ -26,12 +26,12 @@ function hashFileContent(
     .digest('hex') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 }
 
-// Maximum content size to hash (100KB)
-// Prevents memory exhaustion when hashing large files (e.g., base64-encoded images)
+// 最大哈希内容大小 (100KB)
+// 防止哈希大文件 (如 base64 编码图片) 导致内存耗尽
 const MAX_CONTENT_HASH_SIZE = 100 * 1024
 
 /**
- * Logs file operation analytics to Statsig
+ * 将文件操作分析记录到 Statsig
  */
 export function logFileOperation(params: {
   operation: 'read' | 'write' | 'edit'
@@ -49,8 +49,8 @@ export function logFileOperation(params: {
     filePathHash: hashFilePath(params.filePath),
   }
 
-  // Only hash content if it's provided and below size limit
-  // This prevents memory exhaustion from hashing large files (e.g., base64-encoded images)
+  // 仅在提供内容且低于大小限制时哈希内容
+  // 这防止哈希大文件 (如 base64 编码图片) 导致内存耗尽
   if (params.content !== undefined && params.content.length <= MAX_CONTENT_HASH_SIZE) {
     metadata.contentHash = hashFileContent(params.content)
   }

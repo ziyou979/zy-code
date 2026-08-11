@@ -3,12 +3,12 @@ import { DEFAULT_OUTPUT_STYLE_NAME, OUTPUT_STYLE_CONFIG } from '../../constants/
 import { getInitialSettings } from '../settings/settings.js'
 
 /**
- * Determines the prompt category for agent usage.
- * Used for analytics to track different agent patterns.
+ * 确定 Agent 用法的提示词类别。
+ * 用于分析以跟踪不同 Agent 模式。
  *
- * @param agentType - The type/name of the agent
- * @param isBuiltInAgent - Whether this is a built-in agent or custom
- * @returns The agent prompt category string
+ * @param agentType - Agent 类型/名称
+ * @param isBuiltInAgent - 是否为内置 Agent 或自定义
+ * @returns Agent 提示词类别字符串
  */
 export function getQuerySourceForAgent(
   agentType: string | undefined,
@@ -23,10 +23,10 @@ export function getQuerySourceForAgent(
 }
 
 /**
- * Determines the prompt category based on output style settings.
- * Used for analytics to track different output style usage.
+ * 基于输出样式设置确定提示词类别。
+ * 用于分析以跟踪不同输出样式的使用。
  *
- * @returns The prompt category string or undefined for default
+ * @returns 提示词类别字符串，默认为 undefined
  */
 export function getQuerySourceForREPL(): QuerySource {
   const settings = getInitialSettings()

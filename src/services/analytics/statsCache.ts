@@ -15,13 +15,13 @@ const MIN_MIGRATABLE_VERSION = 1
 const STATS_CACHE_FILENAME = 'stats-cache.json'
 
 /**
- * Simple in-memory lock to prevent concurrent cache operations.
+ * 简单的内存锁，防止并发缓存操作。
  */
 let statsCacheLockPromise: Promise<void> | null = null
 
 /**
- * Execute a function while holding the stats cache lock.
- * Only one operation can hold the lock at a time.
+ * 在持有统计缓存锁时执行函数。
+ * 一次仅允许一个操作持有锁。
  */
 export async function withStatsCacheLock<T>(fn: () => Promise<T>): Promise<T> {
   // Wait for any existing lock to be released
@@ -45,9 +45,9 @@ export async function withStatsCacheLock<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 /**
- * Persisted stats cache stored on disk.
- * Contains aggregated historical stats that won't change.
- * All fields are bounded to prevent unbounded file growth.
+ * 存储在磁盘上的持久化统计缓存。
+ * 包含不会变化的聚合历史统计数据。
+ * 所有字段均有界以防止文件无界增长。
  */
 export type PersistedStatsCache = {
   version: number
@@ -95,13 +95,12 @@ function getEmptyCache(): PersistedStatsCache {
 }
 
 /**
- * Migrate an older cache to the current schema.
- * Returns null if the version is unknown or too old to migrate.
+ * 将旧缓存迁移到当前模式。
+ * 版本未知或过旧无法迁移时返回 null。
  *
- * Preserves historical aggregates that would otherwise be lost when
- * transcript files have already aged out past cleanupPeriodDays.
- * Pre-migration days may undercount (e.g. v2 lacked subagent tokens);
- * we accept that rather than drop the history.
+ * 保留原本会在会话记录文件已过清理周期时丢失的历史聚合数据。
+ * 迁移前的天数可能计数不足 (如 v2 缺少子代理 token)；
+ * 我们接受这一点而非丢弃历史。
  */
 function migrateStatsCache(
   parsed: Partial<PersistedStatsCache> & { version: number },

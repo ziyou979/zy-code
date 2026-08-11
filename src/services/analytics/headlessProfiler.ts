@@ -1,15 +1,15 @@
 /**
- * Headless mode profiling utility for measuring per-turn latency in -p (print) mode.
+ * 无头模式分析工具，用于测量 -p (print) 模式下每轮的延迟。
  *
- * Tracks key timing phases per turn:
- * - Time to system message output (turn 0 only)
- * - Time to first query started
- * - Time to first API response (TTFT)
+ * 跟踪每轮关键时序阶段：
+ * - 系统消息输出时间 (仅第 0 轮)
+ * - 首个查询开始时间
+ * - 首个 API 响应时间 (TTFT)
  *
- * Uses Node.js built-in performance hooks API for standard timing measurement.
- * Sampled logging: 100% of ant users, 5% of external users.
+ * 使用 Node.js 内置的 performance hooks API 进行标准时序测量。
+ * 采样日志：100% ant 用户，5% 外部用户。
  *
- * Set ZY_CODE_PROFILE_STARTUP=1 for detailed logging output.
+ * 设置 ZY_CODE_PROFILE_STARTUP=1 可获取详细日志输出。
  */
 
 import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
@@ -21,27 +21,27 @@ import { logForDebugging } from '../../services/infra/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { getPerformance } from '../telemetry/profilerBase.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
-// Detailed profiling mode - same env var as startupProfiler
+// 详细分析模式 - 与 startupProfiler 同一环境变量
 // eslint-disable-next-line custom-rules/no-process-env-top-level
 const DETAILED_PROFILING = isEnvTruthy(process.env.ZY_CODE_PROFILE_STARTUP)
 
-// Sampling for Statsig logging: 100% ant, 5% external
-// Decision made once at module load - non-sampled users pay no profiling cost
+// Statsig 日志采样：100% ant，5% 外部
+// 模块加载时一次性决定 —— 非采样用户零分析成本
 const STATSIG_SAMPLE_RATE = 0.05
 // eslint-disable-next-line custom-rules/no-process-env-top-level
 const STATSIG_LOGGING_SAMPLED = isInternalBuild() || Math.random() < STATSIG_SAMPLE_RATE
 
-// Enable profiling if either detailed mode OR sampled for Statsig
+// 详细模式或 Statsig 采样时启用分析
 const SHOULD_PROFILE = DETAILED_PROFILING || STATSIG_LOGGING_SAMPLED
 
-// Use a unique prefix to avoid conflicts with other profiler marks
+// 使用唯一前缀避免与其他分析标记冲突
 const MARK_PREFIX = 'headless_'
 
 // Track current turn number (auto-incremented by headlessProfilerStartTurn)
 let currentTurnNumber = -1
 
 /**
- * Clear all headless profiler marks from performance timeline
+ * 从性能时间线清除所有无头分析标记
  */
 function clearHeadlessMarks(): void {
   const perf = getPerformance()
@@ -54,8 +54,8 @@ function clearHeadlessMarks(): void {
 }
 
 /**
- * Start a new turn for profiling. Clears previous marks, increments turn number,
- * and records turn_start. Call this at the beginning of each user message processing.
+ * 开始新轮进行分析。清除之前的标记，增加轮号，
+ * 并记录 turn_start。在处理每个用户消息开始时调用。
  */
 export function headlessProfilerStartTurn(): void {
   // Only profile in headless/non-interactive mode
@@ -79,8 +79,8 @@ export function headlessProfilerStartTurn(): void {
 }
 
 /**
- * Record a checkpoint with the given name.
- * Only records if in headless mode and profiling is enabled.
+ * 使用给定名称记录检查点。
+ * 仅在无头模式且分析启用时记录。
  */
 export function headlessProfilerCheckpoint(name: string): void {
   // Only profile in headless/non-interactive mode
@@ -101,7 +101,7 @@ export function headlessProfilerCheckpoint(name: string): void {
 }
 
 /**
- * 采样当前进程的内存使用情况并附加到当前 turn 的 profiler metadata。
+ * 采样当前进程的内存使用情况并附加到当前 turn 的分析元数据。
  * 在每个 turn 结束时调用，帮助发现长会话内存退化（rss 单调上涨等）。
  *
  * 与现有的 perf mark 一样，仅在 SHOULD_PROFILE 为 true 时实际工作；
@@ -131,8 +131,8 @@ export function headlessProfilerMemorySample(): void {
 }
 
 /**
- * Log headless latency metrics for the current turn to Statsig.
- * Call this at the end of each turn (before processing next user message).
+ * 将当前 turn 的无头延迟指标记录到 Statsig。
+ * 在每个 turn 结束时调用 (处理下一个用户消息前)。
  */
 export function logHeadlessProfilerTurn(): void {
   // Only log in headless mode

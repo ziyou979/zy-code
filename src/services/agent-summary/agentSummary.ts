@@ -23,17 +23,17 @@ const SUMMARY_INTERVAL_MS = 30_000
 function buildSummaryPrompt(previousSummary: string | null): string {
   const prevLine = previousSummary ? `\nPrevious: "${previousSummary}" — say something NEW.\n` : ''
 
-  return `Describe your most recent action in 3-5 words using present tense (-ing). Name the file or function, not the branch. Do not use tools.
+  return `用 3-5 个词描述你最近的动作，用现在进行时 (-ing)。点明文件或函数名，别提分支名。别用工具。
 ${prevLine}
-Good: "Reading runAgent.ts"
-Good: "Fixing null check in validate.ts"
-Good: "Running auth module tests"
-Good: "Adding retry logic to fetchUser"
+好的："Reading runAgent.ts"
+好的："Fixing null check in validate.ts"
+好的："Running auth module tests"
+好的："Adding retry logic to fetchUser"
 
-Bad (past tense): "Analyzed the branch diff"
-Bad (too vague): "Investigating the issue"
-Bad (too long): "Reviewing full branch diff and AgentTool.tsx integration"
-Bad (branch name): "Analyzed adam/background-summary branch diff"`
+坏（过去时）："Analyzed the branch diff"
+坏（太模糊）："Investigating the issue"
+坏（太长）："Reviewing full branch diff and AgentTool.tsx integration"
+坏（分支名）："Analyzed adam/background-summary branch diff"`
 }
 
 export function startAgentSummarization(
@@ -59,7 +59,7 @@ export function startAgentSummarization(
     logForDebugging(`[AgentSummary] Timer fired for agent ${agentId}`)
 
     try {
-      // Read current messages from transcript
+      // 从会话记录读取当前消息
       const transcript = await getAgentTranscript(agentId)
       if (!transcript || transcript.messages.length < 3) {
         // 上下文不足 — finally 块将安排下次尝试

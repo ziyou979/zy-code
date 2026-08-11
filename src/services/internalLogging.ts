@@ -9,10 +9,10 @@ import {
 } from './analytics/index.js'
 
 /**
- * Get the current Kubernetes namespace:
- * Returns null on laptops/local development,
- * "default" for devboxes in default namespace,
- * "ts" for devboxes in ts namespace,
+ * 获取当前 Kubernetes 命名空间：
+ * 笔记本/本地开发环境返回 null，
+ * default 命名空间的 devbox 返回 "default"，
+ * ts 命名空间的 devbox 返回 "ts"，
  * ...
  */
 const getKubernetesNamespace = memoize(async (): Promise<string | null> => {
@@ -30,7 +30,7 @@ const getKubernetesNamespace = memoize(async (): Promise<string | null> => {
 })
 
 /**
- * Get the OCI container ID from within a running container
+ * 从运行中的容器内获取 OCI 容器 ID
  */
 export const getContainerId = memoize(async (): Promise<string | null> => {
   if (!isInternalBuild()) {
@@ -63,7 +63,7 @@ export const getContainerId = memoize(async (): Promise<string | null> => {
 })
 
 /**
- * Logs an event with the current namespace and tool permission context
+ * 记录带有当前命名空间和工具权限上下文的事件
  */
 export async function logPermissionContextForAnts(
   toolPermissionContext: ToolPermissionContext | null,

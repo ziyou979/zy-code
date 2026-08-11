@@ -412,18 +412,18 @@ function getInitialState(): State {
           replWireActive: false,
         }
       : {}),
-    // Direct connect server URL
+    // 直接连接服务器 URL
     directConnectServerUrl: undefined,
     // 系统提示词部分缓存状态
     systemPromptSectionCache: new Map(),
-    // Last date emitted to the model
+    // 最后发送给模型的日期
     lastEmittedDate: null,
     // 来自 --add-dir 标志的额外目录（用于加载 AGENTS.md）
     additionalDirectoriesForAgentsMd: [],
-    // Channel server allowlist from --channels flag
+    // 来自 --channels 标志的频道服务器允许列表
     allowedChannels: [],
     hasDevChannels: false,
-    // Session project dir (null = derive from originalCwd)
+    // 会话项目目录（null = 从 originalCwd 推导）
     sessionProjectDir: null,
     // Beta 头锁定（null = 尚未触发）
     afkModeHeaderLatched: null,
@@ -443,7 +443,7 @@ function getInitialState(): State {
   return state
 }
 
-// AND ESPECIALLY HERE
+// 这里也是 — 修改前三思
 export const STATE: State = getInitialState()
 
 // session 切换 signal — 在 session.ts 中通过 switchSession 触发。

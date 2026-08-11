@@ -4,8 +4,8 @@ import { type ExportResult, ExportResultCode } from '@opentelemetry/core'
 import type { LogRecordExporter, ReadableLogRecord } from '@opentelemetry/sdk-logs'
 
 /**
- * Local-only exporter that writes all events to a local file
- * instead of sending them to the remote endpoint.
+ * 仅本地导出器，将所有事件写入本地文件
+ * 而非发送到远程端点。
  */
 export class LocalFileExporter implements LogRecordExporter {
   private readonly logFile: string

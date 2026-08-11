@@ -1,46 +1,44 @@
 /**
- * Analytics service - public API for event logging
+ * 分析服务 - 事件日志的公共 API
  *
- * This module serves as the main entry point for analytics events in Zy CLI.
+ * 此模块是 Zy CLI 中分析事件的主要入口点。
  *
- * DESIGN: This module has NO dependencies to avoid import cycles.
- * Events are queued until attachAnalyticsSink() is called during app initialization.
- * The sink handles routing to Datadog and direct API event logging.
+ * 设计：此模块无依赖以避免导入循环。
+ * 事件在调用 attachAnalyticsSink() 进行应用初始化前会被排队。
+ * 接收器处理向 Datadog 和直接 API 事件日志的路由。
  */
 
 /**
- * Marker type for verifying analytics metadata doesn't contain sensitive data
+ * 用于验证分析元数据不包含敏感数据的标记类型
  *
- * This type forces explicit verification that string values being logged
- * don't contain code snippets, file paths, or other sensitive information.
+ * 此类型强制显式验证被记录的字符串值
+ * 不包含代码片段、文件路径或其他敏感信息。
  *
- * Usage: `myString as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS`
+ * 用法：`myString as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS`
  */
 export type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS = never
 
 /**
- * Marker type for values routed to PII-tagged proto columns via `_PROTO_*`
- * payload keys. The destination BQ column has privileged access controls,
- * so unredacted values are acceptable — unlike general-access backends.
+ * 通过 `_PROTO_*` payload 键路由到标记 PII 的 proto 列的值的标记类型。
+ * 目标 BQ 列有特权访问控制，因此未脱敏值可接受 —— 与通用访问后端不同。
  *
- * sink.ts strips `_PROTO_*` keys before Datadog fanout; only the direct API
- * exporter (zyEventExporter) sees them and hoists them to the
- * top-level proto field. A single stripProtoFields call guards all non-direct-API
- * sinks — no per-sink filtering to forget.
+ * sink.ts 在 Datadog 分发前剥离 `_PROTO_*` 键；仅直接 API
+ * 导出器 (zyEventExporter) 看到它们并将它们提升到顶级 proto 字段。
+ * 单次 stripProtoFields 调用保护所有非直接 API 接收器 —— 无需每个接收器单独过滤。
  *
- * Usage: `rawName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED`
+ * 用法：`rawName as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED`
  */
 export type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED = never
 
 /**
- * Strip `_PROTO_*` keys from a payload destined for general-access storage.
- * Used by:
- *   - sink.ts: before Datadog fanout (never sees PII-tagged values)
- *   - zyEventExporter: defensive strip of additional_metadata
- *     after hoisting known _PROTO_* keys to proto fields — prevents a future
- *     unrecognized _PROTO_foo from silently landing in the BQ JSON blob.
+ * 从目标为通用访问存储的 payload 中剥离 `_PROTO_*` 键。
+ * 使用场景：
+ *   - sink.ts：Datadog 分发前 (永不见 PII 标记值)
+ *   - zyEventExporter：将已知 _PROTO_* 键提升到 proto 字段后，
+ *     防御性地剥离 additional_metadata —— 防止未来未识别的
+ *     _PROTO_foo 静默落入 BQ JSON blob。
  *
- * Returns the input unchanged (same reference) when no _PROTO_ keys present.
+ * 无 _PROTO_ 键时返回原输入 (同一引用)。
  */
 import { isInternalBuild } from '../../services/infra/envUtils.js'
 
@@ -67,7 +65,7 @@ type QueuedEvent = {
 }
 
 /**
- * Sink interface for the analytics backend
+ * 分析后端的接收器接口
  */
 export type AnalyticsSink = {
   logEvent: (eventName: string, metadata: LogEventMetadata) => void
@@ -81,13 +79,13 @@ const eventQueue: QueuedEvent[] = []
 let sink: AnalyticsSink | null = null
 
 /**
- * Attach the analytics sink that will receive all events.
- * Queued events are drained asynchronously via queueMicrotask to avoid
- * adding latency to the startup path.
+ * 附接将接收所有事件的分析接收器。
+ * 排队的事件通过 queueMicrotask 异步排出，以避免
+ * 给启动路径增加延迟。
  *
- * Idempotent: if a sink is already attached, this is a no-op. This allows
- * calling from both the preAction hook (for subcommands) and setup() (for
- * the default command) without coordination.
+ * 幂等：如果接收器已附接，则为空操作。这允许
+ * 从 preAction hook (子命令) 和 setup() (默认命令)
+ * 同时调用而无需协调。
  */
 export function attachAnalyticsSink(newSink: AnalyticsSink): void {
   if (sink !== null) {
@@ -120,12 +118,12 @@ export function attachAnalyticsSink(newSink: AnalyticsSink): void {
 }
 
 /**
- * Log an event to analytics backends (synchronous)
+ * 将事件记录到分析后端 (同步)
  *
- * Events may be sampled based on the 'zy_event_sampling_config' dynamic config.
- * When sampled, the sample_rate is added to the event metadata.
+ * 事件可能基于 'zy_event_sampling_config' 动态配置被采样。
+ * 采样时，sample_rate 会添加到事件元数据中。
  *
- * If no sink is attached, events are queued and drained when the sink attaches.
+ * 若无接收器附接，事件会排队并在接收器附接时排出。
  */
 export function logEvent(
   eventName: string,
@@ -141,12 +139,12 @@ export function logEvent(
 }
 
 /**
- * Log an event to analytics backends (asynchronous)
+ * 将事件记录到分析后端 (异步)
  *
- * Events may be sampled based on the 'zy_event_sampling_config' dynamic config.
- * When sampled, the sample_rate is added to the event metadata.
+ * 事件可能基于 'zy_event_sampling_config' 动态配置被采样。
+ * 采样时，sample_rate 会添加到事件元数据中。
  *
- * If no sink is attached, events are queued and drained when the sink attaches.
+ * 若无接收器附接，事件会排队并在接收器附接时排出。
  */
 export async function logEventAsync(
   eventName: string,
@@ -161,7 +159,7 @@ export async function logEventAsync(
 }
 
 /**
- * Reset analytics state for testing purposes only.
+ * 重置分析状态，仅供测试使用。
  * @internal
  */
 export function _resetForTesting(): void {

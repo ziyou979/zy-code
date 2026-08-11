@@ -25,8 +25,8 @@ type ZyEventLoggingPayload = {
 }
 
 /**
- * Simplified exporter for local telemetry event logging.
- * Writes events to local JSONL files instead of sending to remote API.
+ * 简化的本地遥测事件日志导出器。
+ * 将事件写入本地 JSONL 文件而非发送到远程 API。
  */
 export class ZyEventExporter implements LogRecordExporter {
   private readonly isKilled: () => boolean

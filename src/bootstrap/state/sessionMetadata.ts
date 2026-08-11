@@ -10,7 +10,7 @@ export function getSessionCreatedTeams(): Set<string> {
   return STATE.sessionCreatedTeams
 }
 
-// Teleported session tracking for reliability logging
+// 传送会话追踪，用于可靠性日志
 export function setTeleportedSessionInfo(info: { sessionId: string | null }): void {
   STATE.teleportedSessionInfo = {
     isTeleported: true,

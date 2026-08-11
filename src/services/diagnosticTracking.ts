@@ -34,10 +34,10 @@ export class DiagnosticTrackingService {
   private initialized = false
   private mcpClient: MCPServerConnection | undefined
 
-  // Track when files were last processed/fetched
+  // 跟踪文件最后处理/获取的时间
   private lastProcessedTimestamps: Map<string, number> = new Map()
 
-  // Track which files have received right file diagnostics and if they've changed
+  // 跟踪哪些文件已收到右文件诊断以及是否已更改
   // Map<normalizedPath, lastZyFsRightDiagnostics>
   private rightFileDiagnosticsState: Map<string, Diagnostic[]> = new Map()
 
@@ -66,8 +66,8 @@ export class DiagnosticTrackingService {
   }
 
   /**
-   * Reset tracking state while keeping the service initialized.
-   * This clears all tracked files and diagnostics.
+   * 重置跟踪状态同时保持服务已初始化。
+   * 这会清除所有已跟踪的文件和诊断。
    */
   reset() {
     this.baseline.clear()
@@ -93,8 +93,8 @@ export class DiagnosticTrackingService {
   }
 
   /**
-   * Ensure a file is opened in the IDE before processing.
-   * This is important for language services like diagnostics to work properly.
+   * 确保在处理前文件已在 IDE 中打开。
+   * 这对语言服务（如诊断）正常工作很重要。
    */
   async ensureFileOpened(fileUri: string): Promise<void> {
     if (!this.initialized || !this.mcpClient || this.mcpClient.type !== 'connected') {
@@ -121,8 +121,8 @@ export class DiagnosticTrackingService {
   }
 
   /**
-   * Capture baseline diagnostics for a specific file before editing.
-   * This is called before editing a file to ensure we have a baseline to compare against.
+   * 在编辑前捕获特定文件的基线诊断。
+   * 这会在编辑文件前调用，以确保我们有基线可供比较。
    */
   async beforeFileEdited(filePath: string): Promise<void> {
     if (!this.initialized || !this.mcpClient || this.mcpClient.type !== 'connected') {
@@ -167,8 +167,8 @@ export class DiagnosticTrackingService {
   }
 
   /**
-   * Get new diagnostics from file://, _Zy_fs_right, and _Zy_fs_ URIs that aren't in the baseline.
-   * Only processes diagnostics for files that have been edited.
+   * 从 file://、_Zy_fs_right 和 _Zy_fs_ URI 获取不在基线中的新诊断。
+   * 仅处理已编辑文件的诊断。
    */
   async getNewDiagnostics(): Promise<DiagnosticFile[]> {
     if (!this.initialized || !this.mcpClient || this.mcpClient.type !== 'connected') {
@@ -286,13 +286,13 @@ export class DiagnosticTrackingService {
   }
 
   /**
-   * Handle the start of a new query. This method:
-   * - Initializes the diagnostic tracker if not already initialized
-   * - Resets the tracker if already initialized (for new query loops)
-   * - Automatically finds the IDE client from the provided clients list
+   * 处理新查询的开始。此方法：
+   * - 如果未初始化则初始化诊断跟踪器
+   * - 如果已初始化则重置跟踪器（用于新的查询循环）
+   * - 从提供的客户端列表中自动查找 IDE 客户端
    *
-   * @param clients Array of MCP clients that may include an IDE client
-   * @param shouldQuery Whether a query is actually being made (not just a command)
+   * @param clients 可能包含 IDE 客户端的 MCP 客户端数组
+   * @param shouldQuery 是否实际发起查询（而非仅执行命令）
    */
   async handleQueryStart(clients: MCPServerConnection[]): Promise<void> {
     // Only proceed if we should query and have clients
@@ -310,11 +310,11 @@ export class DiagnosticTrackingService {
   }
 
   /**
-   * Format diagnostics into a human-readable summary string.
-   * This is useful for displaying diagnostics in messages or logs.
+   * 将诊断格式化为人类可读的摘要字符串。
+   * 这对于在消息或日志中显示诊断很有用。
    *
-   * @param files Array of diagnostic files to format
-   * @returns Formatted string representation of the diagnostics
+   * @param files 要格式化的诊断文件数组
+   * @returns 诊断的格式化字符串表示
    */
   static formatDiagnosticsSummary(files: DiagnosticFile[]): string {
     const truncationMarker = '…[truncated]'
@@ -342,7 +342,7 @@ export class DiagnosticTrackingService {
   }
 
   /**
-   * Get the severity symbol for a diagnostic
+   * 获取诊断的严重程度符号
    */
   static getSeveritySymbol(severity: Diagnostic['severity']): string {
     return (

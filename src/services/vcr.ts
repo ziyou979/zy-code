@@ -33,8 +33,8 @@ function shouldUseVCR(): boolean {
 }
 
 /**
- * Generic fixture management helper
- * Handles caching, reading, writing fixtures for any data type
+ * 通用固定装置管理助手
+ * 处理任意数据类型的缓存、读取、写入固定装置
  */
 async function withFixture<T>(
   input: unknown,
@@ -45,14 +45,14 @@ async function withFixture<T>(
     return await f()
   }
 
-  // Create hash of input for fixture filename
+  // 为固定装置文件名创建输入哈希
   const hash = createHash('sha1').update(jsonStringify(input)).digest('hex').slice(0, 12)
   const filename = join(
     process.env.ZY_CODE_TEST_FIXTURES_ROOT ?? getCwd(),
     `fixtures/${fixtureName}-${hash}.json`,
   )
 
-  // Fetch cached fixture
+  // 获取缓存的固定装置
   try {
     const cached = jsonParse(await readFile(filename, { encoding: 'utf8' })) as T
     return cached
@@ -69,7 +69,7 @@ async function withFixture<T>(
     )
   }
 
-  // Create & write new fixture
+  // 创建并写入新固定装置
   const result = await f()
 
   await mkdir(dirname(filename), { recursive: true })
@@ -109,7 +109,7 @@ export async function withVCR(
     `fixtures/${dehydratedInput.map((_) => createHash('sha1').update(jsonStringify(_)).digest('hex').slice(0, 6)).join('-')}.json`,
   )
 
-  // Fetch cached fixture
+  // 获取缓存的固定装置
   try {
     const cached = jsonParse(await readFile(filename, { encoding: 'utf8' })) as {
       output: (AssistantMessage | StreamEvent)[]
@@ -131,7 +131,7 @@ export async function withVCR(
     )
   }
 
-  // Create & write new fixture
+  // 创建并写入新固定装置
   const results = await f()
   if (env.isCI && !isEnvTruthy(process.env.VCR_RECORD)) {
     return results
@@ -237,10 +237,10 @@ function mapAssistantMessage(
   uuid?: UUID,
 ): AssistantMessage {
   return {
-    // Use provided UUID if given (hydrate path uses randomUUID for globally unique IDs),
-    // otherwise fall back to deterministic index-based UUID (dehydrate/fixture path).
-    // sessionStorage.ts deduplicates messages by UUID, so without unique UUIDs across
-    // VCR calls, resumed sessions would treat different responses as duplicates.
+    // 使用提供的 UUID（若给定，hydrate 路径用 randomUUID 生成全局唯一 ID），
+    // 否则回退到基于索引的确定性 UUID（dehydrate/固定装置路径）。
+    // sessionStorage.ts 按 UUID 去重消息，所以若 VCR 调用间 UUID 不唯一，
+    // 恢复的会话会将不同响应视为重复。
     uuid: uuid ?? (`UUID-${index}` as unknown as UUID),
     requestId: 'REQUEST_ID',
     timestamp: message.timestamp,
@@ -292,19 +292,19 @@ function dehydrateValue(s: unknown): unknown {
     .replace(/num_files="\d+"/g, 'num_files="[NUM]"')
     .replace(/duration_ms="\d+"/g, 'duration_ms="[DURATION]"')
     .replace(/cost_usd="\d+"/g, 'cost_usd="[COST]"')
-    // Note: We intentionally don't replace all forward slashes with path.sep here.
-    // That would corrupt XML-like tags (e.g., </system-reminder> -> <\system-reminder>).
-    // The [CONFIG_HOME] and [CWD] replacements below handle path normalization.
+    // 注意：我们有意不在这里将所有正斜杠替换为 path.sep。
+    // 那会破坏类 XML 标签（例如 </system-reminder> -> <\system-reminder>）。
+    // 下面的 [CONFIG_HOME] 和 [CWD] 替换处理路径归一化。
     .replaceAll(configHome, '[CONFIG_HOME]')
     .replaceAll(cwd, '[CWD]')
     .replace(/Available commands:.+/, 'Available commands: [COMMANDS]')
-  // On Windows, paths may appear in multiple forms:
-  // 1. Forward-slash variants (Git, some Node APIs)
-  // 2. JSON-escaped variants (backslashes doubled in serialized JSON within messages)
+  // Windows 上路径可能以多种形式出现：
+  // 1. 正斜杠变体（Git、某些 Node API）
+  // 2. JSON 转义变体（序列化 JSON 中反斜杠加倍）
   if (process.platform === 'win32') {
     const cwdFwd = cwd.replaceAll('\\', '/')
     const configHomeFwd = configHome.replaceAll('\\', '/')
-    // jsonStringify escapes \ to \\ - match paths embedded in JSON strings
+    // jsonStringify 转义 \ 为 \\ —— 匹配嵌入在 JSON 字符串中的路径
     const cwdJsonEscaped = jsonStringify(cwd).slice(1, -1)
     const configHomeJsonEscaped = jsonStringify(configHome).slice(1, -1)
     s1 = s1
@@ -313,9 +313,9 @@ function dehydrateValue(s: unknown): unknown {
       .replaceAll(cwdFwd, '[CWD]')
       .replaceAll(configHomeFwd, '[CONFIG_HOME]')
   }
-  // Normalize backslash path separators after placeholders so VCR fixture
-  // hashes match across platforms (e.g., [CWD]\foo\bar -> [CWD]/foo/bar)
-  // Handle both single backslashes and JSON-escaped double backslashes (\\)
+  // 在占位符后归一化反斜杠路径分隔符，使 VCR 固定装置
+  // 哈希跨平台匹配（如 [CWD]\foo\bar -> [CWD]/foo/bar）
+  // 同时处理单反斜杠和 JSON 转义双反斜杠 (\\)
   s1 = s1
     .replace(/\[CWD\][^\s"'<>]*/g, (match) => match.replaceAll('\\\\', '/').replaceAll('\\', '/'))
     .replace(/\[CONFIG_HOME\][^\s"'<>]*/g, (match) =>
@@ -370,11 +370,10 @@ export async function withTokenCountVCR(
   tools: unknown[],
   f: () => Promise<number | null>,
 ): Promise<number | null> {
-  // Dehydrate before hashing so fixture keys survive cwd/config-home/tempdir
-  // variation and message UUID/timestamp churn. System prompts embed the
-  // working directory (both raw and as a slash→dash project slug in the
-  // auto-memory path) and messages carry fresh UUIDs per run; without this,
-  // every test run produces a new hash and fixtures never hit in CI.
+  // 脱水前先脱水以便哈希，使固定装置键能跨越 cwd/config-home/tempdir
+  // 变化和消息 UUID/时间戳翻新而存活。系统提示词嵌入工作目录（原始形式
+  // 和 auto-memory 路径中斜杠转短横线的项目 slug 两种形式），消息携带每次运行
+  // 的新 UUID；没有这一步，每次测试运行都会产生新哈希，固定装置在 CI 中永远命中不了。
   const cwdSlug = getCwd().replace(/[^a-zA-Z0-9]/g, '-')
   const dehydrated = (dehydrateValue(jsonStringify({ messages, tools })) as string)
     .replaceAll(cwdSlug, '[CWD_SLUG]')

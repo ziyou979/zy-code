@@ -88,7 +88,7 @@ export type ZyCodeStats = {
 }
 
 /**
- * Result of processing session files - intermediate stats that can be merged.
+ * 处理会话文件的结果 —— 可合并的中间统计数据。
  */
 type ProcessedStats = {
   dailyActivity: DailyActivity[]

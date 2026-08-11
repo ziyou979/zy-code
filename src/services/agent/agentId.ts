@@ -1,8 +1,8 @@
 /**
- * Deterministic Agent ID System
+ * 确定性 Agent ID 系统
  *
- * This module provides helper functions for formatting and parsing deterministic
- * agent IDs used in the swarm/teammate system.
+ * 此模块提供用于格式化和解析蜂群/队友系统中
+ * 使用的确定性 agent ID 的辅助函数。
  */
 
 export function formatAgentId(agentName: string, teamName: string): string {

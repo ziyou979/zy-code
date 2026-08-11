@@ -1,9 +1,9 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 /**
- * Shared event metadata enrichment for analytics systems
+ * 为分析系统提供共享的事件元数据增强
  *
- * This module provides a single source of truth for collecting and formatting
- * event metadata across all analytics systems (Datadog, direct API).
+ * 此模块为所有分析系统 (Datadog、直接 API) 提供
+ * 收集和格式化事件元数据的单一事实来源。
  */
 
 import { extname } from 'node:path'
@@ -37,30 +37,30 @@ import {
 import { feature } from 'bun:bundle'
 
 /**
- * Marker type for verifying analytics metadata doesn't contain sensitive data
+ * 用于验证分析元数据不包含敏感数据的标记类型
  *
- * This type forces explicit verification that string values being logged
- * don't contain code snippets, file paths, or other sensitive information.
+ * 此类型强制显式验证被记录的字符串值
+ * 不包含代码片段、文件路径或其他敏感信息。
  *
- * The metadata is expected to be JSON-serializable.
+ * 元数据应为 JSON 可序列化。
  *
- * Usage: `myString as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS`
+ * 用法：`myString as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS`
  *
- * The type is `never` which means it can never actually hold a value - this is
- * intentional as it's only used for type-casting to document developer intent.
+ * 类型为 `never` 意味着它永远不能真正持有值 —— 这是有意为之，
+ * 因为它仅用于类型转换以记录开发者意图。
  */
 export type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS = never
 
 /**
- * Sanitizes tool names for analytics logging to avoid PII exposure.
+ * 为分析日志清洗工具名以避免 PII 泄露。
  *
- * MCP tool names follow the format `mcp__<server>__<tool>` and can reveal
- * user-specific server configurations, which is considered PII-medium.
- * This function redacts MCP tool names while preserving built-in tool names
- * (Bash, Read, Write, etc.) which are safe to log.
+ * MCP 工具名格式为 `mcp__<server>__<tool>` 可能泄露
+ * 用户特定的服务器配置，属于中等级 PII。
+ * 此函数在保留内置工具名 (Bash、Read、Write 等) 的同时，
+ * 对 MCP 工具名进行脱敏，内置工具名可安全记录。
  *
- * @param toolName - The tool name to sanitize
- * @returns The original name for built-in tools, or 'mcp_tool' for MCP tools
+ * @param toolName - 要清洗的工具名
+ * @returns 内置工具返回原名，MCP 工具返回 'mcp_tool'
  */
 export function sanitizeToolNameForAnalytics(
   toolName: string,
@@ -72,27 +72,26 @@ export function sanitizeToolNameForAnalytics(
 }
 
 /**
- * Check if detailed tool name logging is enabled for OTLP events.
- * When enabled, MCP server/tool names and Skill names are logged.
- * Disabled by default to protect PII (user-specific server configurations).
+ * 检查 OTLP 事件的详细工具名日志是否启用。
+ * 启用时，记录 MCP 服务器/工具名和技能名。
+ * 默认禁用以保护 PII (用户特定的服务器配置)。
  *
- * Enable with OTEL_LOG_TOOL_DETAILS=1
+ * 使用 OTEL_LOG_TOOL_DETAILS=1 启用
  */
 export function isToolDetailsLoggingEnabled(): boolean {
   return isEnvTruthy(process.env.OTEL_LOG_TOOL_DETAILS)
 }
 
 /**
- * Check if detailed tool name logging (MCP server/tool names) is enabled
- * for analytics events.
+ * 检查分析事件的详细工具名日志 (MCP 服务器/工具名) 是否启用。
  *
- * Per go/taxonomy, MCP names are medium PII. We log them for:
- * - Cowork (entrypoint=local-agent) — no ZDR concept, log all MCPs
- * - zy.ai-proxied connectors — always official (from zy.ai's list)
- * - Servers whose URL matches the official MCP registry — directory
- *   connectors added via `zy mcp add`, not customer-specific config
+ * 按 go/taxonomy，MCP 名称属于中等级 PII。我们为以下情况记录：
+ * - Cowork (entrypoint=local-agent) —— 无 ZDR 概念，记录所有 MCP
+ * - zy.ai 代理连接器 —— 始终为官方 (来自 zy.ai 列表)
+ * - URL 匹配官方 MCP 注册表的服务器 —— 通过 `zy mcp add`
+ *   添加的目录连接器，非客户特定配置
  *
- * Custom/user-configured MCPs stay sanitized (toolName='mcp_tool').
+ * 自定义/用户配置的 MCP 保持清洗状态 (toolName='mcp_tool')。
  */
 export function isAnalyticsToolDetailsLoggingEnabled(
   mcpServerType: string | undefined,

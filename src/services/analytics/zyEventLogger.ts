@@ -20,9 +20,9 @@ import { getEventMetadata } from './metadata.js'
 import { isSinkKilled } from './sinkKillswitch.js'
 
 /**
- * Configuration for sampling individual event types.
- * Each event name maps to an object containing sample_rate (0-1).
- * Events not in the config are logged at 100% rate.
+ * 单个事件类型采样配置。
+ * 每个事件名映射到包含 sample_rate (0-1) 的对象。
+ * 配置中未列出的事件按 100% 速率记录。
  */
 export type EventSamplingConfig = {
   [eventName: string]: {
@@ -32,19 +32,19 @@ export type EventSamplingConfig = {
 
 const EVENT_SAMPLING_CONFIG_NAME = 'zy_event_sampling_config'
 /**
- * Get the event sampling configuration from GrowthBook.
- * Uses cached value if available, updates cache in background.
+ * 从 GrowthBook 获取事件采样配置。
+ * 有缓存值时使用，后台更新缓存。
  */
 export function getEventSamplingConfig(): EventSamplingConfig {
   return getDynamicConfig_CACHED_MAY_BE_STALE<EventSamplingConfig>(EVENT_SAMPLING_CONFIG_NAME, {})
 }
 
 /**
- * Determine if an event should be sampled based on its sample rate.
- * Returns the sample rate if sampled, null if not sampled.
+ * 根据采样率判断事件是否应被采样。
+ * 采样时返回采样率，不采样时返回 null。
  *
- * @param eventName - Name of the event to check
- * @returns The sample_rate if event should be logged, null if it should be dropped
+ * @param eventName - 要检查的事件名
+ * @returns 事件应记录时返回 sample_rate，应丢弃时返回 null
  */
 export function shouldSampleEvent(eventName: string): number | null {
   const config = getEventSamplingConfig()

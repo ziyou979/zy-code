@@ -17,8 +17,8 @@ import { type GitHubActionsMetadata, getUserForGrowthBook } from '../auth/user.j
 import { isZyEventLoggingEnabled, logGrowthBookExperimentToZy } from './zyEventLogger.js'
 
 /**
- * User attributes sent to GrowthBook for targeting.
- * Uses UUID suffix (not Uuid) to align with GrowthBook conventions.
+ * 发送给 GrowthBook 用于定向的用户属性。
+ * 使用 UUID 后缀(非 Uuid)以符合 GrowthBook 惯例。
  */
 export type GrowthBookUserAttributes = {
   id: string
@@ -38,8 +38,8 @@ export type GrowthBookUserAttributes = {
 }
 
 /**
- * Malformed feature response from API that uses "value" instead of "defaultValue".
- * This is a workaround until the API is fixed.
+ * API 返回的格式错误的特性响应，使用 "value" 而非 "defaultValue"。
+ * 这是一个变通方法，直到 API 修复为止。
  */
 type MalformedFeatureDefinition = {
   value?: unknown
@@ -49,15 +49,15 @@ type MalformedFeatureDefinition = {
 
 let client: GrowthBook | null = null
 
-// Named handler refs so resetGrowthBook can remove them to prevent accumulation
+// 命名处理器引用，以便 resetGrowthBook 可移除它们防止累积
 let currentBeforeExitHandler: (() => void) | null = null
 let currentExitHandler: (() => void) | null = null
 
-// Track whether auth was available when the client was created
-// This allows us to detect when we need to recreate with fresh auth headers
+// 跟踪创建客户端时是否有可用的认证
+// 这让我们能检测何时需要用新的认证头重新创建
 let clientCreatedWithAuth = false
 
-// Store experiment data from payload for logging exposures later
+// 存储来自 payload 的实验数据，稍后记录曝光
 type StoredExperimentData = {
   experimentId: string
   variationId: number
@@ -67,37 +67,37 @@ type StoredExperimentData = {
 }
 const experimentDataByFeature = new Map<string, StoredExperimentData>()
 
-// Cache for remote eval feature values - workaround for SDK not respecting remoteEval response
-// The SDK's setForcedFeatures also doesn't work reliably with remoteEval
+// 远程评估特性值的缓存 —— SDK 不遵守 remoteEval 响应的变通方法
+// SDK 的 setForcedFeatures 与 remoteEval 也不可靠
 const remoteEvalFeatureValues = new Map<string, unknown>()
 
-// Track features accessed before init that need exposure logging
+// 跟踪 init 前访问的特性，稍后需记录曝光
 const pendingExposures = new Set<string>()
 
-// Track features that have already had their exposure logged this session (dedup)
-// This prevents firing duplicate exposure events when getFeatureValue_CACHED_MAY_BE_STALE
-// is called repeatedly in hot paths (e.g., isAutoMemoryEnabled in render loops)
+// 跟踪本会话已记录曝光的特性 (去重)
+// 这防止当 getFeatureValue_CACHED_MAY_BE_STALE 在热路径
+// 中重复调用时(如 render 循环中的 isAutoMemoryEnabled)
+// 触发重复曝光事件
 const loggedExposures = new Set<string>()
 
-// Track re-initialization promise for security gate checks
-// When GrowthBook is re-initializing (e.g., after auth change), security gate checks
-// should wait for init to complete to avoid returning stale values
+// 跟踪安全门检查的重新初始化 Promise
+// 当 GrowthBook 重新初始化时(如认证变更后)，安全门检查
+// 应等待 init 完成以避免返回陈旧值
 let reinitializingPromise: Promise<unknown> | null = null
 
-// Listeners notified when GrowthBook feature values refresh (initial init or
-// periodic refresh). Use for systems that bake feature values into long-lived
-// objects at construction time (e.g. zyEventLogger reads
-// zy_1p_event_batch_config once and builds a LoggerProvider with it) and
-// need to rebuild when config changes. Per-call readers like
-// getEventSamplingConfig / isSinkKilled don't need this — they're already
-// reactive.
+// GrowthBook 特性值刷新时通知的监听器 (初始 init 或周期性刷新)。
+// 用于在构造时将特性值烘焙进长生命周期对象的系统
+// (如 zyEventLogger 读取 zy_1p_event_batch_config 一次并用其
+// 构建 LoggerProvider)，当配置变化时需要重建。
+// 逐次读取器如 getEventSamplingConfig / isSinkKilled 不需要此机制
+// —— 它们本身已是响应式的。
 //
-// NOT cleared by resetGrowthBook — subscribers register once (typically in
-// init.ts) and must survive auth-change resets.
+// resetGrowthBook 不清除 —— 订阅者通常在 init.ts 中注册一次
+// 且必须在认证变更重置后存活。
 type GrowthBookRefreshListener = () => void | Promise<void>
 const refreshed = createSignal()
 
-/** Call a listener with sync-throw and async-rejection both routed to logError. */
+// 使用同步抛出和异步拒绝均路由到 logError 的方式调用监听器。
 function callSafe(listener: GrowthBookRefreshListener): void {
   try {
     // Promise.resolve() normalizes sync returns and Promises so both

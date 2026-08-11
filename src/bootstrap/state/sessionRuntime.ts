@@ -130,4 +130,4 @@ export function setLspRecommendationShownThisSession(value: boolean): void {
   STATE.lspRecommendationShownThisSession = value
 }
 
-// SDK init event state
+// SDK 初始化事件状态

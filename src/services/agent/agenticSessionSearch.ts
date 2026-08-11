@@ -7,44 +7,44 @@ import { isLiteLog, loadFullLog } from '../sessionStorage.js'
 import { sideQuery } from '../../services/query/sideQuery.js'
 import { jsonParse } from '../../services/infra/slowOperations.js'
 
-// Limits for transcript extraction
+// 会话记录提取的限制
 const MAX_TRANSCRIPT_CHARS = 2000 // Max chars of transcript per session
 const MAX_MESSAGES_TO_SCAN = 100 // Max messages to scan from start/end
 const MAX_SESSIONS_TO_SEARCH = 100 // Max sessions to send to the API
 
-const SESSION_SEARCH_SYSTEM_PROMPT = `Your goal is to find relevant sessions based on a user's search query.
+const SESSION_SEARCH_SYSTEM_PROMPT = `你的目标是根据用户的搜索查询找到相关的会话。
 
-You will be given a list of sessions with their metadata and a search query. Identify which sessions are most relevant to the query.
+你将获得一个带有元数据的会话列表和一个搜索查询。请识别哪些会话与查询最相关。
 
-Each session may include:
-- Title (display name or custom title)
-- Tag (user-assigned category, shown as [tag: name] - users tag sessions with /tag command to categorize them)
-- Branch (git branch name, shown as [branch: name])
-- Summary (AI-generated summary)
-- First message (beginning of the conversation)
-- Transcript (excerpt of conversation content)
+每个会话可能包含：
+- 标题（显示名称或自定义标题）
+- 标签（用户分配的类别，显示为 [tag: name] - 用户使用 /tag 命令标记会话以进行分类）
+- 分支（git 分支名，显示为 [branch: name]）
+- 摘要（AI 生成的摘要）
+- 首条消息（对话的开头）
+- 会话记录（对话内容片段）
 
-IMPORTANT: Tags are user-assigned labels that indicate the session's topic or category. If the query matches a tag exactly or partially, those sessions should be highly prioritized.
+重要：标签是用户分配的标签，指示会话的主题或类别。如果查询与标签完全或部分匹配，这些会话应被高度优先考虑。
 
-For each session, consider (in order of priority):
-1. Exact tag matches (highest priority - user explicitly categorized this session)
-2. Partial tag matches or tag-related terms
-3. Title matches (custom titles or first message content)
-4. Branch name matches
-5. Summary and transcript content matches
-6. Semantic similarity and related concepts
+对于每个会话，按以下优先级考虑（按重要性排序）：
+1. 精确标签匹配（最高优先级 - 用户显式分类了此会话）
+2. 部分标签匹配或标签相关术语
+3. 标题匹配（自定义标题或首条消息内容）
+4. 分支名匹配
+5. 摘要和会话记录内容匹配
+6. 语义相似性和相关概念
 
-CRITICAL: Be VERY inclusive in your matching. Include sessions that:
-- Contain the query term anywhere in any field
-- Are semantically related to the query (e.g., "testing" matches sessions about "tests", "unit tests", "QA", etc.)
-- Discuss topics that could be related to the query
-- Have transcripts that mention the concept even in passing
+关键：匹配时要非常包容。包含以下情况的会话：
+- 在任何字段的任何位置包含查询词
+- 与查询在语义上相关（如 "testing" 匹配 "tests"、"unit tests"、"QA" 等会话）
+- 讨论可能与查询相关的主题
+- 会话记录中哪怕路过提及了该概念
 
-When in doubt, INCLUDE the session. It's better to return too many results than too few. The user can easily scan through results, but missing relevant sessions is frustrating.
+拿不准时，包含该会话。返回过多结果总比返回过少好。用户可以轻松浏览结果，但遗漏相关会话会让人沮丧。
 
-Return sessions ordered by relevance (most relevant first). If truly no sessions have ANY connection to the query, return an empty array - but this should be rare.
+按相关性排序返回会话（最相关的在前）。如果确实没有任何会话与查询有任何关联，返回空数组 - 但这应该很少见。
 
-Respond with ONLY the JSON object, no markdown formatting:
+仅返回 JSON 对象，不要 markdown 格式：
 {"relevant_indices": [2, 5, 0]}`
 
 type AgenticSearchResult = {
@@ -52,7 +52,7 @@ type AgenticSearchResult = {
 }
 
 /**
- * Extracts searchable text content from a message.
+ * 从消息中提取可搜索的文本内容。
  */
 function extractMessageText(message: SerializedMessage): string {
   if (message.type !== 'user' && message.type !== 'assistant') {
@@ -76,7 +76,7 @@ function extractMessageText(message: SerializedMessage): string {
 }
 
 /**
- * Extracts a truncated transcript from session messages.
+ * 从会话消息中提取截断的会话记录。
  */
 function extractTranscript(messages: SerializedMessage[]): string {
   if (messages.length === 0) {
@@ -103,7 +103,7 @@ function extractTranscript(messages: SerializedMessage[]): string {
 }
 
 /**
- * Checks if a log contains the query term in any searchable field.
+ * 检查日志是否在任何可搜索字段中包含查询词。
  */
 function logContainsQuery(log: LogOption, queryLower: string): boolean {
   // Check title
@@ -149,8 +149,8 @@ function logContainsQuery(log: LogOption, queryLower: string): boolean {
 }
 
 /**
- * Performs an agentic search using Zy to find relevant sessions
- * based on semantic understanding of the query.
+ * 使用 Zy 基于查询的语义理解执行 Agentic 搜索，
+ * 找到相关会话。
  */
 export async function agenticSessionSearch(
   query: string,
@@ -163,8 +163,8 @@ export async function agenticSessionSearch(
 
   const queryLower = query.toLowerCase()
 
-  // Pre-filter: find sessions that contain the query term
-  // This ensures we search relevant sessions, not just recent ones
+  // 预过滤：找到包含查询词的会话
+  // 这确保我们搜索相关会话，而不仅是最近的
   const matchingLogs = logs.filter((log) => logContainsQuery(log, queryLower))
 
   // Take up to MAX_SESSIONS_TO_SEARCH matching logs
@@ -178,20 +178,20 @@ export async function agenticSessionSearch(
     logsToSearch = [...matchingLogs, ...nonMatchingLogs.slice(0, remainingSlots)]
   }
 
-  // Debug: log what data we have
+  // 调试：记录我们拥有的数据
   logForDebugging(
     `Agentic search: ${logsToSearch.length}/${logs.length} logs, query="${query}", ` +
       `matching: ${matchingLogs.length}, with messages: ${count(logsToSearch, (l) => l.messages?.length > 0)}`,
   )
 
-  // Load full logs for lite logs to get transcript content
+  // 为 lite 日志加载完整日志以获取会话记录内容
   const logsWithTranscriptsPromises = logsToSearch.map(async (log) => {
     if (isLiteLog(log)) {
       try {
         return await loadFullLog(log)
       } catch (error) {
         logError(error as Error)
-        // If loading fails, use the lite log (no transcript)
+        // 加载失败则使用 lite 日志（无会话记录）
         return log
       }
     }
@@ -203,41 +203,41 @@ export async function agenticSessionSearch(
     `Agentic search: loaded ${count(logsWithTranscripts, (l) => l.messages?.length > 0)}/${logsToSearch.length} logs with transcripts`,
   )
 
-  // Build session list for the prompt with all searchable metadata
+  // 为提示词构建包含所有可搜索元数据的会话列表
   const sessionList = logsWithTranscripts
     .map((log, index) => {
       const parts: string[] = [`${index}:`]
 
-      // Title (display title, may be custom or from first prompt)
+      // 标题（显示标题，可能是自定义或来自首个提示词）
       const displayTitle = getLogDisplayTitle(log)
       parts.push(displayTitle)
 
-      // Custom title if different from display title
+      // 与显示标题不同的自定义标题
       if (log.customTitle && log.customTitle !== displayTitle) {
         parts.push(`[custom title: ${log.customTitle}]`)
       }
 
-      // Tag
+      // 标签
       if (log.tag) {
         parts.push(`[tag: ${log.tag}]`)
       }
 
-      // Git branch
+      // Git 分支
       if (log.gitBranch) {
         parts.push(`[branch: ${log.gitBranch}]`)
       }
 
-      // Summary
+      // 摘要
       if (log.summary) {
         parts.push(`- Summary: ${log.summary}`)
       }
 
-      // First prompt content (truncated)
+      // 首个提示词内容（截断）
       if (log.firstPrompt && log.firstPrompt !== 'No prompt') {
         parts.push(`- First message: ${log.firstPrompt.slice(0, 300)}`)
       }
 
-      // Transcript excerpt (if messages are available)
+      // 会话记录片段（若消息可用）
       if (log.messages && log.messages.length > 0) {
         const transcript = extractTranscript(log.messages)
         if (transcript) {
@@ -249,14 +249,14 @@ export async function agenticSessionSearch(
     })
     .join('\n')
 
-  const userMessage = `Sessions:
+  const userMessage = `会话列表:
 ${sessionList}
 
-Search query: "${query}"
+搜索查询: "${query}"
 
-Find the sessions that are most relevant to this query.`
+找出与此查询最相关的会话。`
 
-  // Debug: log first part of the session list
+  // 调试：记录会话列表的前半部分
   logForDebugging(`Agentic search prompt (first 500 chars): ${userMessage.slice(0, 500)}...`)
 
   try {
@@ -271,17 +271,17 @@ Find the sessions that are most relevant to this query.`
       querySource: 'session_search',
     })
 
-    // Extract the text content from the response
+    // 从响应中提取文本内容
     const textContent = response.content.find((block) => block.type === 'text')
     if (!textContent || textContent.type !== 'text') {
       logForDebugging('No text content in agentic search response')
       return []
     }
 
-    // Debug: log the response
+    // 调试：记录响应
     logForDebugging(`Agentic search response: ${textContent.text}`)
 
-    // Parse the JSON response
+    // 解析 JSON 响应
     const jsonMatch = textContent.text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       logForDebugging('Could not find JSON in agentic search response')
@@ -291,7 +291,7 @@ Find the sessions that are most relevant to this query.`
     const result: AgenticSearchResult = jsonParse(jsonMatch[0])
     const relevantIndices = result.relevant_indices || []
 
-    // Map indices back to logs (indices are relative to logsWithTranscripts)
+    // 将索引映射回日志（索引相对于 logsWithTranscripts）
     const relevantLogs = relevantIndices
       .filter((index) => index >= 0 && index < logsWithTranscripts.length)
       .map((index) => logsWithTranscripts[index]!)
