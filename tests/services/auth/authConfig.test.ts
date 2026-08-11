@@ -6,6 +6,8 @@ import {
   AUTH_OAUTH_KEY,
   getAuthConfigApiKeyFromConfig,
   getAuthConfigApiKeyHelperFromConfig,
+  getAuthConfigApiFormat,
+  getAuthConfigBaseUrl,
   getAuthOAuthStore,
   getAuthOAuthStoreFromConfig,
   loadAuthConfigFromPath,
@@ -49,6 +51,29 @@ describe('authConfig', () => {
 
     expect(getAuthConfigApiKeyHelperFromConfig(config, 'dashscope')).toBe('get-dashscope-key')
     expect(getAuthConfigApiKeyHelperFromConfig(config, 'opencode-go')).toBeUndefined()
+  })
+
+  test('命名连接可集中保存底层 provider、地址、协议与密钥', () => {
+    writeFileSync(
+      join(configDir, 'auth.json'),
+      JSON.stringify({
+        'generic-work': {
+          provider: 'generic',
+          baseUrl: 'https://llm.example.com/v1',
+          apiFormat: 'openai-chat',
+          apiKey: 'work-key',
+        },
+      }),
+    )
+
+    expect(
+      getAuthConfigApiKeyFromConfig(
+        loadAuthConfigFromPath(join(configDir, 'auth.json')),
+        'generic-work',
+      ),
+    ).toBe('work-key')
+    expect(getAuthConfigBaseUrl('generic-work')).toBe('https://llm.example.com/v1')
+    expect(getAuthConfigApiFormat('generic-work')).toBe('openai-chat')
   })
 
   test('可从指定路径加载 auth.json', () => {

@@ -1,11 +1,10 @@
 /**
  * 用户级认证配置读写。
  *
- * auth.json 只承载敏感认证材料；settings.json 继续承载 provider/model/baseUrl
- * 等普通配置。
+ * auth.json 承载命名 API 连接；settings.json 只引用连接并配置模型组合。
  *
  * 结构：
- * - 顶层 key 为 provider id → { apiKey?, apiKeyHelper? }
+ * - 顶层 key 为连接 id → { provider?, baseUrl?, apiFormat?, apiKey?, apiKeyHelper? }
  * - 特殊键 `oauth` → 多 Provider OAuth 登录凭证（/login）
  * {
  *   "dashscope": { "apiKey": "..." },
@@ -35,6 +34,12 @@ export const AUTH_OAUTH_KEY = 'oauth' as const
 
 const AuthProviderConfigSchema = z
   .object({
+    provider: z.string().optional().describe('Registered provider used by this named connection.'),
+    baseUrl: z.string().optional().describe('API base URL for this named connection.'),
+    apiFormat: z
+      .enum(['anthropic', 'openai-chat', 'openai-responses', 'google'])
+      .optional()
+      .describe('API protocol used by this named connection.'),
     apiKey: z.string().optional().describe('Provider-scoped API key.'),
     apiKeyHelper: z.string().optional().describe('Provider-scoped command that prints an API key.'),
   })
@@ -260,6 +265,16 @@ export function getAuthConfigForProvider(provider?: string | null): AuthProvider
   return getAuthConfigForProviderFromConfig(loadAuthConfig(), provider)
 }
 
+export function getAuthConfigBaseUrl(provider?: string | null): string | undefined {
+  return getAuthConfigForProvider(provider)?.baseUrl
+}
+
+export function getAuthConfigApiFormat(
+  provider?: string | null,
+): 'anthropic' | 'openai-chat' | 'openai-responses' | 'google' | undefined {
+  return getAuthConfigForProvider(provider)?.apiFormat
+}
+
 export function getAuthConfigApiKeyFromConfig(
   config: AuthConfig | null,
   provider?: string | null,
@@ -316,6 +331,29 @@ export function setAuthConfigApiKey(
     } else {
       current[provider] = entry
     }
+  })
+}
+
+/** 写入 onboarding 产生的完整连接信息，同时保留已有 helper 等扩展字段。 */
+export function setAuthConfigConnection(
+  connectionId: string,
+  config: Pick<AuthProviderConfig, 'provider' | 'baseUrl' | 'apiFormat' | 'apiKey'>,
+): { success: boolean; warning?: string } {
+  if (!connectionId.trim()) {
+    return { success: false, warning: 'connection id is required' }
+  }
+  return updateAuthConfigRaw((current) => {
+    const existing = current[connectionId]
+    const entry =
+      existing && typeof existing === 'object' && !Array.isArray(existing)
+        ? { ...(existing as Record<string, unknown>) }
+        : {}
+    for (const [key, value] of Object.entries(config)) {
+      if (value !== undefined && value !== '') {
+        entry[key] = key === 'apiKey' ? value.trim() : value
+      }
+    }
+    current[connectionId] = entry
   })
 }
 

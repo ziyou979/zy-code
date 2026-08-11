@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import OpenAI from 'openai'
-import { getProviderForModel } from 'src/services/model/model.js'
+import { getAuthProfileForModel, getProviderForModel } from 'src/services/model/model.js'
 import { getProviderEntry } from 'src/services/model/providerRegistry.js'
 import {
   getSettingsBaseUrl,
@@ -15,6 +15,7 @@ import {
   isOpenAIResponsesProvider,
 } from 'src/services/model/providers.js'
 import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/services/auth/auth.js'
+import { getAuthConfigBaseUrl } from 'src/services/auth/authConfig.js'
 import { getUserAgent } from 'src/services/http/http.js'
 import { getProxyFetchOptions } from 'src/services/http/proxy.js'
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
@@ -110,10 +111,12 @@ export async function getAnthropicClient({
   // Handles env-or-default (dashscope, zhipu, kimi), preconfigured (deepseek,
   // siliconflow, etc.), and generic — all share the same client creation logic.
   const apiProvider = getProviderForModel(model)
+  const authProfile = getAuthProfileForModel(model)
+  const authProvider = authProfile ?? apiProvider
   const registryEntry = getProviderEntry(apiProvider)
 
   // 始终配置 API 密钥 header（无订阅上下文）
-  await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession(), apiProvider)
+  await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession(), authProvider)
   const resolvedFetch = buildFetch(fetchOverride, source, apiProvider)
   const ARGS = {
     defaultHeaders,
@@ -132,7 +135,7 @@ export async function getAnthropicClient({
     registryEntry &&
     (registryEntry.endpointType.includes('default') || apiProvider === 'generic')
   ) {
-    const resolvedApiKey = getApiKey(apiProvider)
+    const resolvedApiKey = getApiKey(authProvider)
     let resolvedBaseURL: string | undefined
 
     // 1. Provider-specific env var (e.g. DASHSCOPE_BASE_URL)
@@ -146,9 +149,10 @@ export async function getAnthropicClient({
     if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
       resolvedBaseURL = process.env.LLM_BASE_URL
     }
-    // 3. settings.json baseUrl（适用于所有 provider）
+    // 3. auth.json 命名连接；旧 settings baseUrl 仅作为迁移回退。
     if (!resolvedBaseURL) {
-      resolvedBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
+      resolvedBaseURL =
+        getAuthConfigBaseUrl(authProfile) ?? getSettingsBaseUrl(apiProvider) ?? undefined
     }
     // 4. Registry defaults（根据当前格式选择对应端点）
     if (!resolvedBaseURL && registryEntry.defaultBaseUrls) {
@@ -189,7 +193,8 @@ export async function getAnthropicClient({
       customBaseURL = process.env.LLM_BASE_URL
     }
     if (!customBaseURL) {
-      customBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
+      customBaseURL =
+        getAuthConfigBaseUrl(authProfile) ?? getSettingsBaseUrl(apiProvider) ?? undefined
     }
     if (!customBaseURL && registryEntry.defaultBaseUrls) {
       const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai-chat'
@@ -197,7 +202,7 @@ export async function getAnthropicClient({
         registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls['openai-chat']
     }
 
-    const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey(apiProvider)
+    const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey(authProvider)
     const customEndpointHeaders: Record<string, string> = {}
     if (defaultHeaders['User-Agent']) {
       customEndpointHeaders['User-Agent'] = defaultHeaders['User-Agent']
@@ -221,7 +226,7 @@ export async function getAnthropicClient({
 
   // 根据可用的 token 确定认证方式
   const clientConfig = {
-    apiKey: apiKey || getApiKey(apiProvider),
+    apiKey: apiKey || getApiKey(authProvider),
     authToken: undefined,
     // 使用 staging OAuth 时从 OAuth 配置设置 baseURL
     ...(isInternalBuild() && isEnvTruthy(process.env.USE_STAGING_OAUTH)
@@ -260,6 +265,8 @@ export async function getOpenAIClient(options?: {
   model?: string
 }): Promise<OpenAI> {
   const apiProvider = getProviderForModel(options?.model)
+  const authProfile = getAuthProfileForModel(options?.model)
+  const authProvider = authProfile ?? apiProvider
   const registryEntry = getProviderEntry(apiProvider)
 
   // ── Headers（与 getAnthropicClient 保持一致）──────────────────────────────────
@@ -282,9 +289,9 @@ export async function getOpenAIClient(options?: {
   if (!resolvedApiKey) {
     // custom-endpoint provider（ollama 等）优先取 LLM_API_KEY
     if (isCustomEndpointProvider(apiProvider)) {
-      resolvedApiKey = process.env.LLM_API_KEY || getApiKey(apiProvider) || undefined
+      resolvedApiKey = process.env.LLM_API_KEY || getApiKey(authProvider) || undefined
     } else {
-      resolvedApiKey = getApiKey(apiProvider) ?? undefined
+      resolvedApiKey = getApiKey(authProvider) ?? undefined
     }
   }
 
@@ -302,9 +309,10 @@ export async function getOpenAIClient(options?: {
     if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
       resolvedBaseURL = process.env.LLM_BASE_URL
     }
-    // 3. settings.json baseUrl（适用于所有 provider）
+    // 3. auth.json 命名连接；旧 settings baseUrl 仅作为迁移回退。
     if (!resolvedBaseURL) {
-      resolvedBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
+      resolvedBaseURL =
+        getAuthConfigBaseUrl(authProfile) ?? getSettingsBaseUrl(apiProvider) ?? undefined
     }
     // 4. Registry defaults（Responses 与 Chat 共用端点时可能只配其一）
     if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
@@ -355,15 +363,17 @@ export async function getGoogleClient(options?: {
   model?: string
 }): Promise<{ client: GoogleGenerativeAI; baseURL: string }> {
   const apiProvider = getProviderForModel(options?.model)
+  const authProfile = getAuthProfileForModel(options?.model)
+  const authProvider = authProfile ?? apiProvider
   const registryEntry = getProviderEntry(apiProvider)
 
   // ── API Key ────────────────────────────────────────────────────────────
   let resolvedApiKey = options?.apiKey
   if (!resolvedApiKey) {
     if (isCustomEndpointProvider(apiProvider)) {
-      resolvedApiKey = process.env.LLM_API_KEY || getApiKey(apiProvider) || undefined
+      resolvedApiKey = process.env.LLM_API_KEY || getApiKey(authProvider) || undefined
     } else {
-      resolvedApiKey = getApiKey(apiProvider) ?? undefined
+      resolvedApiKey = getApiKey(authProvider) ?? undefined
     }
   }
   if (!resolvedApiKey) {
@@ -384,9 +394,10 @@ export async function getGoogleClient(options?: {
     if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
       resolvedBaseURL = process.env.LLM_BASE_URL
     }
-    // 3. settings.json baseUrl（适用于所有 provider）
+    // 3. auth.json 命名连接；旧 settings baseUrl 仅作为迁移回退。
     if (!resolvedBaseURL) {
-      resolvedBaseURL = getSettingsBaseUrl(apiProvider) ?? undefined
+      resolvedBaseURL =
+        getAuthConfigBaseUrl(authProfile) ?? getSettingsBaseUrl(apiProvider) ?? undefined
     }
     // 4. Registry defaults
     if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {

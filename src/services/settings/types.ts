@@ -145,8 +145,8 @@ export const SettingsSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          'Base URL for the API provider. Set alongside the `provider` field. ' +
-            'Overrides registry defaults. Lower priority than env vars.',
+          'Deprecated compatibility field. Put baseUrl in an auth.json named connection. ' +
+            'Lower priority than environment variables and auth.json.',
         ),
       /** 主循环层级：主对话循环使用的能力层级 */
       mainLoopModel: z

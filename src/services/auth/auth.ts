@@ -47,7 +47,7 @@ import {
   saveGlobalConfig,
 } from '../config/config.js'
 import { getMockSubscriptionType, shouldUseMockSubscription } from '../mockRateLimits.js'
-import { getMainLoopModel, getProviderForModel } from '../model/model.js'
+import { getAuthProfileForModel, getMainLoopModel, getProviderForModel } from '../model/model.js'
 import {
   clearAllOAuthCredentials,
   clearOAuthCredentialsCache,
@@ -89,7 +89,7 @@ function getAuthProviderId(provider?: string): string | undefined {
   }
   const model = getMainLoopModel()
   if (model) {
-    return getProviderForModel(model)
+    return getAuthProfileForModel(model) ?? getProviderForModel(model)
   }
   return getInitialSettings().provider ?? getAPIProvider()
 }
@@ -106,8 +106,7 @@ export function isZyAISubscriber(): boolean {
  */
 export function isAuthEnabled(): boolean {
   // 检查用户级 auth.json 中配置的 API key / apiKeyHelper。
-  const settings = getInitialSettings()
-  const provider = getAuthProviderId(settings.provider)
+  const provider = getAuthProviderId()
   if (getAuthConfigApiKey(provider) || getAuthConfigApiKeyHelper(provider)) {
     return true
   }
@@ -129,8 +128,7 @@ export function isAuthEnabled(): boolean {
 // 此代码与 isAuthEnabled 密切相关
 export function getAuthTokenSource() {
   // 检查用户级 auth.json 中配置的 API key。
-  const settings = getInitialSettings()
-  const provider = getAuthProviderId(settings.provider)
+  const provider = getAuthProviderId()
   if (getAuthConfigApiKey(provider)) {
     return { source: 'settingsApiKey' as const, hasToken: true }
   }

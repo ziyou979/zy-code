@@ -35,7 +35,9 @@ export const ModelReferenceObjectSchema = lazySchema(() =>
       provider: z
         .string()
         .optional()
-        .describe('Provider id used for this model entry. Defaults to active provider.'),
+        .describe(
+          'auth.json connection id or registered provider id used for this model entry. Defaults to active provider.',
+        ),
       model: z.string().describe('Actual model ID sent to the API.'),
       label: z.string().optional().describe('Optional display label for this candidate.'),
     })
@@ -92,7 +94,7 @@ export const ProviderScopedSettingsSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          'Base URL for this provider. Overrides the top-level baseUrl for this provider only.',
+          'Deprecated compatibility field. Put baseUrl in the referenced auth.json connection.',
         ),
       apiFormat: z
         .enum(['anthropic', 'openai-chat', 'openai-responses', 'google'])

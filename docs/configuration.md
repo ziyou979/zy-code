@@ -63,7 +63,7 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 | Key | 类型 | 默认 | 用途 |
 |---|---|---|---|
 | `provider` | `'anthropic'\|'dashscope'\|'xai'\|'opencode-go'\|'openrouter'\|'generic'\|'local'\|…` | — | API 提供商(完整枚见 providerRegistry) |
-| `baseUrl` | string | — | API 基地址(覆盖 registry 默认值) |
+| `baseUrl` | string | — | 旧版兼容字段；新配置应写入 `auth.json` 命名连接 |
 | `model` | `string \| {provider?,model}` | — | 覆盖默认模型；对象格式可指定该模型使用的 provider |
 | `mainLoopModel` | `'advanced'\|'standard'\|'compact'` | `standard` | 主循环能力层级 |
 | `models` | `Record<层级, 模型ID \| {provider?,model} \| 候选数组>` | — | 按 advanced/standard/compact 指定模型；可为有序候选列表实现多 auth 混用 |
@@ -75,18 +75,17 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 模型引用支持：
 
 1. **字符串**模型 ID → 当前作用域 provider  
-2. **对象** `{ provider, model }` → 显式绑定 provider  
+2. **对象** `{ provider, model }` → `provider` 优先引用 `auth.json` 命名连接，也兼容注册表 provider id
 3. **有序数组**（多 auth）：`[{ provider, model }, ...]`，下标越小优先级越高  
 
 ```jsonc
 {
-  "provider": "xai",
   "mainLoopModel": "standard",
   "models": {
     // 多 auth：先 xAI 订阅，失败后切百炼，再切 OpenCode Go
     "standard": [
-      { "provider": "xai", "model": "grok-4.3" },
-      { "provider": "dashscope", "model": "qwen3.6-plus" },
+      { "provider": "grok-subscription", "model": "grok-4.3" },
+      { "provider": "qwen-work", "model": "qwen3.6-plus" },
       { "provider": "opencode-go", "model": "opencode-go/kimi-k2.7-code" }
     ],
     "advanced": { "provider": "xai", "model": "grok-4.3" },
@@ -114,7 +113,7 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 - 第一期 **不**因 529/5xx 自动粘走（CLI `--fallback-model` 仍处理过载）。  
 - 凭证：各 `provider` 对应 `auth.json` 条目或匹配的 OAuth；OAuth token 仅用于其 `apiProvider` 匹配的通道。
 
-运行时会先解析当前模型对应的 provider，再读取该 provider 的 `auth.json` 认证、`settings.providers.<id>` 覆盖项、provider 注册表默认值以及 `model-capabilities.json` 中的 `providerOverrides`。
+运行时会先把模型引用中的连接 id 解析为底层 provider，再按连接 id 读取 `auth.json` 的认证、URL 和协议；旧 `settings.providers.<id>` 覆盖项只作为迁移回退。provider 注册表默认值与 `model-capabilities.json` 的 `providerOverrides` 仍按底层 provider 生效。
 
 ### 2.2 认证 / 凭证
 
@@ -202,14 +201,20 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 
 ## 3. auth.json
 
-路径 `~/.zy/auth.json`。该文件只保存用户级认证材料,与可提交的项目级 `settings.json` 分离。权限建议 `0600`。
+路径 `~/.zy/auth.json`。该文件保存用户级命名 API 连接（provider、URL、协议与认证材料），与可提交的项目级 `settings.json` 分离。权限建议 `0600`。
 
 ```jsonc
 {
-  "opencode-go": {
+  "generic-primary": {
+    "provider": "generic",
+    "baseUrl": "https://primary.example.com/v1",
+    "apiFormat": "openai-chat",
     "apiKey": "sk-..."
   },
-  "dashscope": {
+  "generic-backup": {
+    "provider": "generic",
+    "baseUrl": "https://backup.example.com/v1",
+    "apiFormat": "anthropic",
     "apiKeyHelper": "C:\\Users\\you\\.zy\\get-dashscope-key.ps1"
   },
   // /login 多 Provider OAuth 订阅（xai-oauth / anthropic / openai-codex 等）
@@ -227,10 +232,11 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 }
 ```
 
-- **扁平 provider map**:顶层 key 就是 provider id,值为该 provider 的认证配置（`apiKey` / `apiKeyHelper`）。
+- **扁平命名连接 map**:顶层 key 是可自由命名的连接 id；值可包含底层注册表 `provider`、`baseUrl`、`apiFormat`、`apiKey` / `apiKeyHelper`。省略 `provider` 时连接 id 本身按注册表 provider 解析，兼容旧格式。
 - **`oauth` 保留键**:`/login` 与 `zy auth login` 的订阅 OAuth 凭证写在这里（`activeProvider` + `credentials`），与 API Key 共用同一文件。
-- **settings 分离**:`settings.json` 不再承载 `apiKey` / `apiKeyHelper`;这两个字段只放在 `auth.json`。
-- **模型路由**:`settings.json` 中通过 `{provider,model}` 或 `customModels[].provider` 绑定到的 provider,若需要 key,也应在这里有同名条目。
+- **settings 分离**:`settings.json` 不再承载连接细节；`baseUrl` 只作为旧版迁移回退，`apiKey` / `apiKeyHelper` 只放在 `auth.json`。
+- **模型路由**:`settings.json` 中通过 `{provider,model}` 或 `customModels[].provider` 的 `provider` 直接填写连接 id。运行时用连接的底层 `provider` 做协议分派，用连接 id 读取 URL 和凭证。
+- **多个 generic**:为每个端点定义不同连接 id，即可在同一 tier 的候选数组或不同 tier 中自由组合；failover 会保留具体连接身份。
 - **apiKeyHelper**:ZY 会执行该命令并读取 stdout 作为 key。provider 级 helper 按命令独立缓存,避免多个 provider 串用同一个缓存值。
 - **OAuth 与 API Key 同文件**:`/login` 订阅凭证只写 `auth.json` 的 `oauth` 块。MCP OAuth 等仍可能使用 `~/.zy/.credentials.json` / Keychain（SecureStorage），与 `/login` 无关。
 
@@ -426,7 +432,7 @@ SDK 把 betas 摘出 body → HTTP 头: anthropic-beta: a,b,c
 
 onboarding 完成后只写：
 
-- `~/.zy/settings.json`：`provider` / `baseUrl` / `models` / `mainLoopModel` 等  
-- `~/.zy/auth.json`：对应 provider 的 `apiKey`（或 `/login` 的 `oauth`）  
+- `~/.zy/settings.json`：连接选择、`models` / `mainLoopModel` 等模型组合
+- `~/.zy/auth.json`：命名连接的 `provider` / `baseUrl` / `apiFormat` / `apiKey`（或 `/login` 的 `oauth`）
 
 **不再**写入 `~/.zy.json` 的 `configuredProvider` / `configuredApiKey` / `configuredBaseUrl` / `configuredModel`（旧字段若存在会被忽略）。

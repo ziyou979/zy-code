@@ -10,7 +10,7 @@ import type { UiLanguage } from '../i18n/types.js'
 import { Box, Link, Newline, Text, useTheme } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
-import { setAuthConfigApiKey } from '../services/auth/authConfig.js'
+import { setAuthConfigConnection } from '../services/auth/authConfig.js'
 import { normalizeApiKeyForConfig } from '../services/auth/authPortable.js'
 import { saveGlobalConfig } from '../services/config/config.js'
 import { type EffortLevel, toPersistableEffort } from '../services/effort/effort.js'
@@ -201,11 +201,13 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
 
     // Resolve base URL from platform defaults based on supported formats
     let baseUrl: string | undefined
+    let apiFormat: 'anthropic' | 'openai-chat' | 'openai-responses' | 'google' | undefined
     if (platform?.defaultBaseUrls) {
       // Priority: google > openai > anthropic (based on provider's supportedFormats order)
       const entry = PROVIDER_REGISTRY.find((e) => e.id === platform.provider)
       const formats = entry?.supportedFormats ?? (['anthropic'] as const)
       const primaryFormat = formats[0]
+      apiFormat = primaryFormat
       baseUrl =
         (primaryFormat ? platform.defaultBaseUrls[primaryFormat] : undefined) ??
         platform.defaultBaseUrls['openai-chat'] ??
@@ -221,11 +223,10 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         approved: [...(current.apiKeyResponses?.approved ?? []), normalizedKey],
       },
     }))
-    // 密钥进 auth.json；provider / baseUrl 进 settings.json（不再写 ~/.zy.json 的 configured*）
-    setAuthConfigApiKey(provider, apiKey)
+    // 连接细节集中进 auth.json；settings 只选择连接/模型。
+    setAuthConfigConnection(provider, { provider, baseUrl, apiFormat, apiKey })
     updateSettingsForSource('userSettings', {
       provider: provider as SettingsJson['provider'],
-      ...(baseUrl && { baseUrl }),
     })
     setSelectedProvider(provider)
     goToNextStep()
