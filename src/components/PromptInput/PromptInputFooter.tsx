@@ -45,9 +45,11 @@ type Props = {
   onChangeIsUpdating: (isUpdating: boolean) => void
   suggestions: SuggestionItem[]
   selectedSuggestion: number
+  hoveredSuggestionId: string | null
   maxColumnWidth?: number
   onAcceptSuggestion?: (index: number) => void
   onClickSuggestion?: (index: number) => void
+  onHoverSuggestion: (id: string | null) => void
   toolPermissionContext: ToolPermissionContext
   helpOpen: boolean
   suppressHint: boolean
@@ -81,9 +83,11 @@ function PromptInputFooter({
   onChangeIsUpdating,
   suggestions,
   selectedSuggestion,
+  hoveredSuggestionId,
   maxColumnWidth,
   onAcceptSuggestion,
   onClickSuggestion,
+  onHoverSuggestion,
   toolPermissionContext,
   helpOpen,
   suppressHint: suppressHintFromProps,
@@ -131,18 +135,22 @@ function PromptInputFooter({
         ? {
             suggestions,
             selectedSuggestion,
+            hoveredSuggestionId,
             maxColumnWidth,
             onAcceptSuggestion,
             onClickSuggestion,
+            onHoverSuggestion,
           }
         : null,
     [
       isFullscreen,
       suggestions,
       selectedSuggestion,
+      hoveredSuggestionId,
       maxColumnWidth,
       onAcceptSuggestion,
       onClickSuggestion,
+      onHoverSuggestion,
     ],
   )
   useSetPromptOverlay(overlayData)
@@ -152,9 +160,11 @@ function PromptInputFooter({
         <PromptInputFooterSuggestions
           suggestions={suggestions}
           selectedSuggestion={selectedSuggestion}
+          hoveredSuggestionId={hoveredSuggestionId}
           maxColumnWidth={maxColumnWidth}
           onAcceptSuggestion={onAcceptSuggestion}
           onClickSuggestion={onClickSuggestion}
+          onHoverSuggestion={onHoverSuggestion}
         />
       </Box>
     )

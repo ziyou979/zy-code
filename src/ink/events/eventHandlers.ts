@@ -35,6 +35,7 @@ export type EventHandlerProps = {
   onResize?: ResizeEventHandler
 
   onClick?: ClickEventHandler
+  onMouseMove?: HoverEventHandler
   onMouseEnter?: HoverEventHandler
   onMouseLeave?: HoverEventHandler
 }
@@ -70,6 +71,7 @@ export const EVENT_HANDLER_PROPS = new Set<string>([
   'onPasteCapture',
   'onResize',
   'onClick',
+  'onMouseMove',
   'onMouseEnter',
   'onMouseLeave',
 ])

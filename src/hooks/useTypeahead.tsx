@@ -5,6 +5,10 @@ import { logEvent } from 'src/services/analytics/index.js'
 import { useDebounceCallback } from 'usehooks-ts'
 import { type Command, getCommandName } from '../commands/index.js'
 import { getModeFromInput, getValueFromInput } from '../components/PromptInput/inputModes.js'
+import {
+  getNextSuggestionIndex,
+  handleAutocompleteArrowFallback,
+} from '../components/PromptInput/promptInputNavigation.js'
 import type {
   SuggestionItem,
   SuggestionType,
@@ -108,6 +112,7 @@ type Props = {
 type UseTypeaheadResult = {
   suggestions: SuggestionItem[]
   selectedSuggestion: number
+  hoveredSuggestionId: string | null
   suggestionType: SuggestionType
   maxColumnWidth?: number
   commandArgumentHint?: string
@@ -115,6 +120,7 @@ type UseTypeaheadResult = {
   handleKeyDown: (e: KeyboardEvent) => void
   acceptSuggestion: (index: number) => void
   onClickSuggestion: (index: number) => void
+  onHoverSuggestion: (id: string | null) => void
 }
 /**
  * Hook for handling typeahead functionality for both commands and file paths
@@ -134,6 +140,8 @@ export function useTypeahead({
   markAccepted,
   onModeChange,
 }: Props): UseTypeaheadResult {
+  // 与 CC 一致，hover 独立于候选生成状态；候选异步刷新不能覆盖鼠标模态。
+  const [hoveredSuggestionId, setHoveredSuggestionId] = useState<string | null>(null)
   const { addNotification } = useNotifications()
   const thinkingToggleShortcut = useShortcutDisplay('chat:thinkingToggle', 'Chat', 'alt+t')
   const [suggestionType, setSuggestionType] = useState<SuggestionType>('none')
@@ -219,6 +227,7 @@ export function useTypeahead({
       suggestions: [],
       selectedSuggestion: -1,
     }))
+    setHoveredSuggestionId(null)
     setSuggestionType('none')
     setMaxColumnWidth(undefined)
     setInlineGhostText(undefined)
@@ -636,10 +645,16 @@ export function useTypeahead({
           // (set above when hasExactlyOneTrailingSpace is true)
         }
         const commandItems = generateCommandSuggestions(value, commands)
-        setSuggestionsState(() => ({
+        setSuggestionsState((prev) => ({
           commandArgumentHint,
           suggestions: commandItems,
-          selectedSuggestion: commandItems.length > 0 ? 0 : -1,
+          // updateSuggestions 会因命令注册或回调引用变化而对同一输入重跑；
+          // 按 ID 保留当前项，不能把刚完成的方向键导航重置到首项。
+          selectedSuggestion: getPreservedSelection(
+            prev.suggestions,
+            prev.selectedSuggestion,
+            commandItems,
+          ),
         }))
         setSuggestionType(commandItems.length > 0 ? 'command' : 'none')
 
@@ -789,6 +804,7 @@ export function useTypeahead({
     if (prevInputRef.current !== input) {
       prevInputRef.current = input
       latestSearchTokenRef.current = null
+      setHoveredSuggestionId(null)
     }
     // Clear the dismissed state when input changes
     dismissedForInputRef.current = null
@@ -1341,21 +1357,33 @@ export function useTypeahead({
 
   // Handler for autocomplete:previous - selects previous suggestion
   const handleAutocompletePrevious = useCallback(() => {
+    setHoveredSuggestionId(null)
     setSuggestionsState((prev) => ({
       ...prev,
-      selectedSuggestion:
-        prev.selectedSuggestion <= 0 ? suggestions.length - 1 : prev.selectedSuggestion - 1,
+      selectedSuggestion: getNextSuggestionIndex(
+        prev.selectedSuggestion,
+        suggestions.length,
+        'previous',
+      ),
     }))
   }, [suggestions.length, setSuggestionsState])
 
   // Handler for autocomplete:next - selects next suggestion
   const handleAutocompleteNext = useCallback(() => {
+    setHoveredSuggestionId(null)
     setSuggestionsState((prev) => ({
       ...prev,
-      selectedSuggestion:
-        prev.selectedSuggestion >= suggestions.length - 1 ? 0 : prev.selectedSuggestion + 1,
+      selectedSuggestion: getNextSuggestionIndex(
+        prev.selectedSuggestion,
+        suggestions.length,
+        'next',
+      ),
     }))
   }, [suggestions.length, setSuggestionsState])
+
+  const onHoverSuggestion = useCallback((id: string | null) => {
+    setHoveredSuggestionId(id)
+  }, [])
 
   // Autocomplete context keybindings - only active when suggestions are visible
   const autocompleteHandlers = useMemo(
@@ -1449,6 +1477,19 @@ export function useTypeahead({
       return
     }
 
+    // BaseTextInput 的监听器先于父级 autocomplete 注册。通常 keybinding
+    // 会消费 ↑/↓；若上下文解析没有命中，必须在这里兜底，不能让按键静默丢失。
+    if (
+      handleAutocompleteArrowFallback(
+        e,
+        suggestions.length > 0,
+        handleAutocompletePrevious,
+        handleAutocompleteNext,
+      )
+    ) {
+      return
+    }
+
     // Handle Ctrl-N/P for navigation (arrows handled by keybindings)
     // Skip if we're in the middle of a chord sequence to allow chords like ctrl+f n
     const hasPendingChord = keybindingContext?.pendingChord != null
@@ -1486,6 +1527,7 @@ export function useTypeahead({
   return {
     suggestions,
     selectedSuggestion,
+    hoveredSuggestionId,
     suggestionType,
     maxColumnWidth,
     commandArgumentHint,
@@ -1493,5 +1535,6 @@ export function useTypeahead({
     handleKeyDown,
     acceptSuggestion,
     onClickSuggestion,
+    onHoverSuggestion,
   }
 }

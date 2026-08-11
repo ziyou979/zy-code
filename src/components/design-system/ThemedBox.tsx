@@ -43,6 +43,7 @@ export type Props = BaseStylesWithoutColors &
     onBlurCapture?: (event: FocusEvent) => void
     onKeyDown?: (event: KeyboardEvent) => void
     onKeyDownCapture?: (event: KeyboardEvent) => void
+    onMouseMove?: () => void
     onMouseEnter?: () => void
     onMouseLeave?: () => void
   }

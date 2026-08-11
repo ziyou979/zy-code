@@ -1,4 +1,4 @@
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, type ClickEvent, Text } from '../../ink/index.js'
@@ -101,13 +101,13 @@ const SuggestionItemRow = memo(function SuggestionItemRow({
   item,
   maxColumnWidth,
   isSelected,
-  onMouseEnter,
+  onMouseMove,
   onClick,
 }: {
   item: SuggestionItem
   maxColumnWidth: number
   isSelected: boolean
-  onMouseEnter?: () => void
+  onMouseMove?: () => void
   onClick?: (event: ClickEvent) => void
 }) {
   const columns = useTerminalSize().columns
@@ -141,7 +141,7 @@ const SuggestionItemRow = memo(function SuggestionItemRow({
       lineContent = `${icon} ${displayText}`
     }
     return (
-      <Box width="100%" onMouseEnter={onMouseEnter} onClick={onClick}>
+      <Box width="100%" onMouseMove={onMouseMove} onClick={onClick}>
         <Text color={textColor} dimColor={dimColor} wrap="truncate">
           {lineContent}
         </Text>
@@ -168,7 +168,7 @@ const SuggestionItemRow = memo(function SuggestionItemRow({
     ? truncateToWidth(item.description.replace(/\s+/g, ' '), descriptionWidth)
     : ''
   return (
-    <Box width="100%" onMouseEnter={onMouseEnter} onClick={onClick}>
+    <Box width="100%" onMouseMove={onMouseMove} onClick={onClick}>
       <Text wrap="truncate">
         {
           <Text bold={isSelected}>
@@ -194,9 +194,11 @@ const SuggestionItemRow = memo(function SuggestionItemRow({
 type Props = {
   suggestions: SuggestionItem[]
   selectedSuggestion: number
+  hoveredSuggestionId?: string | null
   maxColumnWidth?: number
   onAcceptSuggestion?: (index: number) => void
   onClickSuggestion?: (index: number) => void
+  onHoverSuggestion?: (id: string | null) => void
   /**
    * When true, the suggestions are rendered inside a position=absolute
    * overlay. We omit minHeight and flex-end so the y-clamp in the
@@ -207,14 +209,14 @@ type Props = {
 export function PromptInputFooterSuggestions({
   suggestions,
   selectedSuggestion,
+  hoveredSuggestionId = null,
   maxColumnWidth: maxColumnWidthProp,
   onAcceptSuggestion,
   onClickSuggestion,
+  onHoverSuggestion,
   overlay,
 }: Props) {
   const { rows } = useTerminalSize()
-  // 鼠标悬停状态，独立于 selectedSuggestion，避免 hover 触发滚动
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const maxVisibleItems = overlay ? OVERLAY_MAX_ITEMS : Math.min(6, Math.max(1, rows - 3))
   if (suggestions.length === 0) {
     return null
@@ -230,22 +232,21 @@ export function PromptInputFooterSuggestions({
   )
   const endIndex = Math.min(startIndex + maxVisibleItems, suggestions.length)
   const visibleItems = suggestions.slice(startIndex, endIndex)
+  const activeSuggestionId = suggestions.some((item) => item.id === hoveredSuggestionId)
+    ? hoveredSuggestionId
+    : suggestions[selectedSuggestion]?.id
   const renderedItems = visibleItems.map((item_0, visibleIndex) => {
     const index = startIndex + visibleIndex
-    // 高亮逻辑：优先使用 hoveredId，否则使用 selectedSuggestion
-    const isHovered = hoveredId != null && item_0.id === hoveredId
-    const isActive = isHovered || item_0.id === suggestions[selectedSuggestion]?.id
+    // hover 与键盘选中由 typeahead 统一管理，避免渲染后的 effect 清理
+    // 覆盖刚到达的真实鼠标移动事件。
+    const isActive = item_0.id === activeSuggestionId
     return (
       <SuggestionItemRow
         key={item_0.id}
         item={item_0}
         maxColumnWidth={maxColumnWidth}
         isSelected={isActive}
-        onMouseEnter={() => {
-          setHoveredId(item_0.id)
-          // Windows Terminal 会持续发送 mouse-move；不要在 hover 时同步 selectedSuggestion，
-          // 否则列表窗口会按新焦点重算并在鼠标下连续滚动。点击仍按当前 hover 的 index 接受。
-        }}
+        onMouseMove={() => onHoverSuggestion?.(item_0.id)}
         onClick={
           onClickSuggestion
             ? (event) => {
@@ -266,7 +267,7 @@ export function PromptInputFooterSuggestions({
     <Box
       flexDirection={'column'}
       justifyContent={overlay ? undefined : 'flex-end'}
-      onMouseLeave={() => setHoveredId(null)}
+      onMouseLeave={() => onHoverSuggestion?.(null)}
     >
       {renderedItems}
     </Box>

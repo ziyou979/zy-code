@@ -105,7 +105,7 @@ export function dispatchClick(
 }
 
 /**
- * 当指针移动时触发 onMouseEnter/onMouseLeave。类似 DOM
+ * 当指针移动时先完成 onMouseLeave/onMouseEnter 转换，再触发 onMouseMove。类似 DOM
  * mouseenter/mouseleave：不冒泡——在子节点之间移动不会重新在父节点上触发。
  * 从命中节点向上遍历，收集所有带 hover 处理器的祖先节点；与之前的
  * hover 集合做差集；对退出的节点触发 leave，对进入的节点触发 enter。
@@ -120,9 +120,14 @@ export function dispatchHover(
   hovered: Set<DOMElement>,
 ): void {
   const next = new Set<DOMElement>()
+  // 只收集真正注册了 onMouseMove 的节点，避免为每个祖先节点分配并二次遍历整条链。
+  const moveTargets: DOMElement[] = []
   let node: DOMElement | undefined = hitTest(root, col, row) ?? undefined
   while (node) {
     const h = node._eventHandlers as EventHandlerProps | undefined
+    if (h?.onMouseMove) {
+      moveTargets.push(node)
+    }
     if (h?.onMouseEnter || h?.onMouseLeave) {
       next.add(node)
     }
@@ -142,5 +147,11 @@ export function dispatchHover(
       hovered.add(n)
       ;(n._eventHandlers as EventHandlerProps | undefined)?.onMouseEnter?.()
     }
+  }
+  // React 重绘可能替换命中路径中的宿主节点。必须先清理旧路径，再派发 move；
+  // 否则旧节点的 leave 会覆盖当前节点刚写入的 hover 状态，表现为高亮闪回默认项。
+  // App 已按终端单元格坐标去重，因此这里的 move 只来自真实指针移动。
+  for (const current of moveTargets) {
+    ;(current._eventHandlers as EventHandlerProps | undefined)?.onMouseMove?.()
   }
 }

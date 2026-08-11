@@ -24,9 +24,11 @@ import { logForDebugging } from '../services/infra/debug.js'
 export type PromptOverlayData = {
   suggestions: SuggestionItem[]
   selectedSuggestion: number
+  hoveredSuggestionId: string | null
   maxColumnWidth?: number
   onAcceptSuggestion?: (index: number) => void
   onClickSuggestion?: (index: number) => void
+  onHoverSuggestion: (id: string | null) => void
 }
 type Setter<T> = (d: T | null) => void
 const DataContext = createContext<PromptOverlayData | null>(null)
@@ -60,12 +62,14 @@ export function usePromptOverlayDialog() {
 export function useSetPromptOverlay(data: PromptOverlayData | null) {
   const set = useContext(SetContext)
   useEffect(() => {
-    if (!set) {
-      return
-    }
-    set(data)
-    return () => set(null)
+    set?.(data)
   }, [set, data])
+  useEffect(
+    () => () => {
+      set?.(null)
+    },
+    [set],
+  )
 }
 
 /**

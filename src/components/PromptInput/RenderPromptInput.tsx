@@ -18,6 +18,7 @@ import { Notifications } from './Notifications.js'
 import PromptInputFooter from './PromptInputFooter.js'
 import { PromptInputModeIndicator } from './PromptInputModeIndicator.js'
 import { PromptInputQueuedCommands } from './PromptInputQueuedCommands.js'
+import { resolvePromptHistoryNavigation } from './promptInputNavigation.js'
 import { PromptInputStashNotice } from './PromptInputStashNotice.js'
 import { isVimModeEnabled } from './utils.js'
 import { usePromptInputViewModel } from './usePromptInputViewModel.js'
@@ -202,11 +203,13 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
     onSubmit,
     suggestions,
     selectedSuggestion,
+    hoveredSuggestionId,
     commandArgumentHint,
     inlineGhostText,
     maxColumnWidth,
     acceptSuggestion,
     onClickSuggestion,
+    onHoverSuggestion,
     showPromptSuggestion,
     onImagePaste,
     onTextPaste,
@@ -269,6 +272,11 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
     )
   }
 
+  const historyNavigation = resolvePromptHistoryNavigation(
+    suggestions.length > 0,
+    handleHistoryUp,
+    handleHistoryDown,
+  )
   const baseProps: BaseTextInputProps = {
     multiline: true,
     onSubmit,
@@ -276,12 +284,9 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
     value: historyMatch
       ? getValueFromInput(typeof historyMatch === 'string' ? historyMatch : historyMatch.display)
       : input,
-    // History navigation is handled via TextInput props (onHistoryUp/onHistoryDown),
-    // NOT via useKeybindings. This allows useTextInput's upOrHistoryUp/downOrHistoryDown
-    // to try cursor movement first and only fall through to history navigation when the
-    // cursor can't move further (important for wrapped text and multi-line input).
-    onHistoryUp: handleHistoryUp,
-    onHistoryDown: handleHistoryDown,
+    // 无候选时由 TextInput 在光标无法继续跨行移动后进入历史记录；
+    // 有候选时不传历史回调，避免它先于父级 autocomplete keybinding 消费方向键。
+    ...historyNavigation,
     onHistoryReset: resetHistory,
     placeholder,
     onExit,
@@ -458,9 +463,11 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
         onChangeIsUpdating={setIsAutoUpdating}
         suggestions={suggestions}
         selectedSuggestion={selectedSuggestion}
+        hoveredSuggestionId={hoveredSuggestionId}
         maxColumnWidth={maxColumnWidth}
         onAcceptSuggestion={acceptSuggestion}
         onClickSuggestion={onClickSuggestion}
+        onHoverSuggestion={onHoverSuggestion}
         toolPermissionContext={effectiveToolPermissionContext}
         helpOpen={helpOpen}
         suppressHint={input.length > 0}

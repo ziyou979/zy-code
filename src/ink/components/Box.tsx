@@ -39,6 +39,11 @@ export type Props = Except<Styles, 'textWrap'> & {
   onKeyDown?: (event: KeyboardEvent) => void
   onKeyDownCapture?: (event: KeyboardEvent) => void
   /**
+   * 鼠标在此 Box 的渲染区域内发生真实单元格移动时触发。
+   * 仅在启用 mode-1003 鼠标追踪的 `<AlternateScreen>` 内有效。
+   */
+  onMouseMove?: () => void
+  /**
    * 鼠标移入此 Box 的渲染区域时触发。类似 DOM `mouseenter`，
    * 不会冒泡——在子元素之间移动不会在父元素上重新触发。
    * 仅在启用 mode-1003 鼠标追踪的 `<AlternateScreen>` 内有效。
@@ -66,6 +71,7 @@ function Box({
   onFocusCapture,
   onBlur,
   onBlurCapture,
+  onMouseMove,
   onMouseEnter,
   onMouseLeave,
   onKeyDown,
@@ -101,6 +107,7 @@ function Box({
       onFocusCapture={onFocusCapture}
       onBlur={onBlur}
       onBlurCapture={onBlurCapture}
+      onMouseMove={onMouseMove}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onKeyDown={onKeyDown}
