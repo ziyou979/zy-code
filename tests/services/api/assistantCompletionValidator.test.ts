@@ -45,6 +45,25 @@ describe('assistantCompletionValidator', () => {
     expect(validateAssistantCompletion({ content, stopReason: 'end_turn' })).toEqual({ ok: true })
   })
 
+  test('声明 tool_use 但没有工具块时判定为可重试异常', () => {
+    const content: AssistantContentBlock[] = [
+      { type: 'thinking', thinking: 'run a command', signature: '' },
+    ]
+
+    expect(validateAssistantCompletion({ content, stopReason: 'tool_use' })).toEqual({
+      ok: false,
+      reason: 'tool_use_without_tool_call',
+    })
+  })
+
+  test('声明 tool_use 且存在工具块时判定为有效', () => {
+    const content: AssistantContentBlock[] = [
+      { type: 'tool_call', id: 'call_1', name: 'Bash', input: { command: 'pwd' } },
+    ]
+
+    expect(validateAssistantCompletion({ content, stopReason: 'tool_use' })).toEqual({ ok: true })
+  })
+
   test('非 end_turn 停止原因不触发可见内容校验', () => {
     expect(validateAssistantCompletion({ content: [], stopReason: 'max_tokens' })).toEqual({
       ok: true,

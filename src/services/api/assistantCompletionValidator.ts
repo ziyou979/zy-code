@@ -10,6 +10,7 @@ export type MalformedAssistantCompletionReason =
   | 'empty_visible_content'
   | 'thinking_only'
   | 'thinking_tag_only'
+  | 'tool_use_without_tool_call'
 
 export type AssistantCompletionValidationResult =
   | { ok: true }
@@ -73,10 +74,6 @@ export function validateAssistantCompletion(args: {
   content: readonly AssistantCompletionBlock[]
   stopReason: StopReason | null | undefined
 }): AssistantCompletionValidationResult {
-  if (args.stopReason !== 'end_turn') {
-    return { ok: true }
-  }
-
   let hasRawText = false
   let hasVisibleText = false
   let hasThinking = false
@@ -107,6 +104,17 @@ export function validateAssistantCompletion(args: {
     if (block.type === 'redacted_thinking' && block.data.trim()) {
       hasThinking = true
     }
+  }
+
+  // stopReason 是协议层对本轮结果的承诺。若 provider 声明 tool_use，
+  // 转换后却没有任何 tool_call，继续按正常完成处理会让 agent 静默中断。
+  // 将其判为可重试异常，使流式路径回退到非流式响应重新解析。
+  if (args.stopReason === 'tool_use') {
+    return hasToolCall ? { ok: true } : { ok: false, reason: 'tool_use_without_tool_call' }
+  }
+
+  if (args.stopReason !== 'end_turn') {
+    return { ok: true }
   }
 
   if (hasToolCall || hasVisibleText) {
