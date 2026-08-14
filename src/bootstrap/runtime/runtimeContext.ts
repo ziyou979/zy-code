@@ -1,6 +1,7 @@
 import * as apiTrackingState from '../state/apiTracking.js'
 import * as agentRuntimeState from '../state/agentRuntime.js'
 import * as clientState from '../state/client.js'
+import * as channelPermissionsState from '../state/channelPermissions.js'
 import * as configurationState from '../state/configuration.js'
 import * as coreState from '../state/core.js'
 import * as costState from '../state/cost.js'
@@ -25,6 +26,7 @@ const state = {
   ...apiTrackingState,
   ...agentRuntimeState,
   ...clientState,
+  ...channelPermissionsState,
   ...configurationState,
   ...coreState,
   ...costState,
@@ -103,6 +105,10 @@ export const getAllowedChannels: StateModule['getAllowedChannels'] = (...args) =
 export const getCacheEditingHeaderLatched: StateModule['getCacheEditingHeaderLatched'] = (
   ...args
 ) => resolveRuntimeFunction('getCacheEditingHeaderLatched')(...args)
+
+export const getChannelPermissionCallbacks: StateModule['getChannelPermissionCallbacks'] = (
+  ...args
+) => resolveRuntimeFunction('getChannelPermissionCallbacks')(...args)
 
 export const getCachedAgentsMdContent: StateModule['getCachedAgentsMdContent'] = (...args) =>
   resolveRuntimeFunction('getCachedAgentsMdContent')(...args)
@@ -688,6 +694,10 @@ export const setSessionPersistenceDisabled: StateModule['setSessionPersistenceDi
 
 export const setSessionSource: StateModule['setSessionSource'] = (...args) =>
   resolveRuntimeFunction('setSessionSource')(...args)
+
+export const setChannelPermissionCallbacks: StateModule['setChannelPermissionCallbacks'] = (
+  ...args
+) => resolveRuntimeFunction('setChannelPermissionCallbacks')(...args)
 
 export const setStatsStore: StateModule['setStatsStore'] = (...args) =>
   resolveRuntimeFunction('setStatsStore')(...args)

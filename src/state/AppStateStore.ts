@@ -2,7 +2,6 @@ import type { Notification } from 'src/context/notifications.js'
 import type { TodoList } from 'src/services/todo/types.js'
 import type { WirePermissionCallbacks } from '../bridge/bridgePermissionCallbacks.js'
 import type { Command } from '../commands/index.js'
-import type { ChannelPermissionCallbacks } from '../services/mcp/channelPermissions.js'
 import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler.js'
 import type { MCPServerConnection, ServerResource } from '../services/mcp/types.js'
 import type { ModelSetting } from '../services/model/model.js'
@@ -116,7 +115,7 @@ export type AppState = DeepImmutable<{
   // 正在查看其转录的进行中 teammate task 的 task ID（undefined = 领导者视图）
   viewingAgentTaskId?: string
 
-  // TODO (ashwin): see if we can use utility-types DeepReadonly for this
+  // TODO (ashwin)：确认这里能否使用 utility-types 的 DeepReadonly。
   mcp: {
     clients: MCPServerConnection[]
     tools: Tool[]
@@ -393,10 +392,6 @@ export type AppState = DeepImmutable<{
   isUltraplanMode?: boolean
   // 常开 bridge：双向权限检查的权限回调
   replWirePermissionCallbacks?: WirePermissionCallbacks
-  // 渠道权限回调 —— Telegram/iMessage 等渠道的权限提示。
-  // 在 interactiveHandler.ts 中通过 claim() 与本地 UI + bridge + hooks + 分类器竞争。
-  // 在 useManageMCPConnections 中一次性构建。
-  channelPermissionCallbacks?: ChannelPermissionCallbacks
 }
 
 export type AppStateStore = Store<AppState>

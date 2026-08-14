@@ -1,5 +1,6 @@
 import { feature } from 'bun:bundle'
 import type React from 'react'
+import { getChannelPermissionCallbacks } from '../bootstrap/runtime/runtimeContext.js'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
 import { tSync } from '../i18n/index.js'
 import { Text } from '../ink/index.js'
@@ -21,7 +22,7 @@ import {
 import { logForDebugging } from '../services/infra/debug.js'
 import { AbortError } from '../utils/errors.js'
 import { logError } from '../services/infra/log.js'
-import type { PermissionDecision } from '../services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 import { hasPermissionsToUseTool } from '../services/permissions/permissions.js'
 import { handleCoordinatorPermission } from './tool-permission/handlers/coordinatorHandler.js'
 import { handleInteractivePermission } from './tool-permission/handlers/interactiveHandler.js'
@@ -258,7 +259,7 @@ function useCanUseTool(
                     : undefined,
                   channelCallbacks:
                     feature('KAIROS') || feature('KAIROS_CHANNELS')
-                      ? appState.channelPermissionCallbacks
+                      ? getChannelPermissionCallbacks()
                       : undefined,
                 },
                 resolve,
