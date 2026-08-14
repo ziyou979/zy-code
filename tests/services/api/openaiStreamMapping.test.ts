@@ -306,6 +306,36 @@ describe('mapOpenAIStreamToStandard: 入站 OpenAI 流式映射', () => {
     expect(idxByType.get('tool_call')).toBe(2)
   })
 
+  test('thinking + tool_call + 尾部 text：后到文本不得覆盖工具块', async () => {
+    const events = await collect(
+      mapOpenAIStreamToStandard(
+        chunksToStream([
+          reasoningChunk('think'),
+          toolCallStartChunk({
+            index: 0,
+            id: 'call_1',
+            name: 'Bash',
+            argumentsFragment: '{"command":"pwd"}',
+          }),
+          textChunk('\n'),
+          finishChunk({ finishReason: 'tool_calls' }),
+        ]),
+        'nvidia/nemotron-3-ultra-550b-a55b',
+      ),
+    )
+
+    const starts = events.filter((event) => event.type === 'chunk_start')
+    const indices = starts.map((event) => event.index)
+    expect(new Set(indices).size).toBe(indices.length)
+    expect(starts.map((event) => event.chunk.type)).toEqual(['thinking', 'tool_call', 'text'])
+
+    const toolStart = starts.find((event) => event.chunk.type === 'tool_call')
+    expect(toolStart).toMatchObject({
+      index: 1,
+      chunk: { type: 'tool_call', id: 'call_1', name: 'Bash' },
+    })
+  })
+
   test('chunk_stop 时序：block 类型切换时立即结束前一个 block，而非攒到 finish_reason', async () => {
     // 回归防护：OpenAI 流没有逐块的 content_block_stop，只有流末尾的
     // finish_reason。若把所有 chunk_stop 攒到 finish_reason 一起发，下游

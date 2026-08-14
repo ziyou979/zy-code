@@ -694,10 +694,10 @@ export function openAIResponseToStandard(
 /**
  * OpenAI 流式 → 标准 LLMStreamEvent。
  *
- * 关键设计：thinking / text / tool_call 三类 block 的 index 严格分离，
- * tool_call 的 baseIndex = max(textIndex, thinkingIndex) + 1，避免与
- * 思考块或文本块撞 index 导致 input_json_delta 累积到错误的 block 上
- * （那是 DashScope 400 的另一种触发方式）。
+ * 关键设计：thinking / text / tool_call 首次出现时从同一个单调计数器
+ * 分配 index。不能从类型推导位置，因为部分兼容端点会返回
+ * thinking → tool_call → 尾部空白 text；若仍假设 text 必然早于 tool，
+ * 后到的 text 会复用并覆盖 tool block。
  *
  * tool_call 通过 OpenAI 的 tc.index 标识第几个工具，首 chunk 带 id+name，
  * 后续 chunks 只带 arguments 增量片段。
@@ -707,13 +707,14 @@ export async function* mapOpenAIStreamToStandard(
   model: string,
 ): AsyncIterable<LLMStreamEvent> {
   const messageId = randomUUID()
-  let textBlockIndex = 0
+  let nextBlockIndex = 0
+  let textBlockIndex = -1
   const toolBlockIndices = new Map<number, number>()
   let textBlockStarted = false
   const toolBlocksStarted = new Map<number, boolean>()
   // 深度思考：reasoning_content 需要独立的 thinking block
   let thinkingBlockStarted = false
-  const thinkingBlockIndex = 0
+  let thinkingBlockIndex = -1
   // 每个 block 是否已发出 chunk_stop。OpenAI 流没有逐块的 content_block_stop
   // 信号，只有流末尾的 finish_reason；若把所有 chunk_stop 攒到 finish_reason
   // 一起发，下游 queryModel 会在同一时刻 yield thinking/text/tool 三条
@@ -742,6 +743,7 @@ export async function* mapOpenAIStreamToStandard(
       // 思考过程
       if (delta.reasoning_content && delta.reasoning_content !== '') {
         if (!thinkingBlockStarted) {
+          thinkingBlockIndex = nextBlockIndex++
           yield {
             type: 'chunk_start',
             index: thinkingBlockIndex,
@@ -766,7 +768,7 @@ export async function* mapOpenAIStreamToStandard(
               yield { type: 'chunk_stop', index: thinkingBlockIndex }
               thinkingBlockStopped = true
             }
-            textBlockIndex = thinkingBlockStarted ? thinkingBlockIndex + 1 : 0
+            textBlockIndex = nextBlockIndex++
             yield {
               type: 'chunk_start',
               index: textBlockIndex,
@@ -796,12 +798,7 @@ export async function* mapOpenAIStreamToStandard(
               yield { type: 'chunk_stop', index: textBlockIndex }
               textBlockStopped = true
             }
-            const baseIndex = textBlockStarted
-              ? textBlockIndex + 1
-              : thinkingBlockStarted
-                ? thinkingBlockIndex + 1
-                : 0
-            const blockIndex = baseIndex + toolBlocksStarted.size
+            const blockIndex = nextBlockIndex++
             toolBlockIndices.set(tcIdx, blockIndex)
             toolBlocksStarted.set(tcIdx, true)
             yield {

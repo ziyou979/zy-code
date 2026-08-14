@@ -389,7 +389,7 @@ export function buildGoogleRequestParams(params: CreateParams): GoogleGenerateCo
     request.systemInstruction = systemInstruction
   }
 
-  // GenerationConfig
+  // 生成配置
   const generationConfig: GoogleGenerationConfig = {}
   if (params.temperature !== undefined) {
     generationConfig.temperature = params.temperature
@@ -426,7 +426,7 @@ export function buildGoogleRequestParams(params: CreateParams): GoogleGenerateCo
     request.generationConfig = generationConfig
   }
 
-  // Tools / Function calling
+  // 工具与函数调用
   if (params.tools && params.tools.length > 0) {
     const functionDeclarations: GoogleFunctionDeclaration[] = params.tools.map((tool) => ({
       name: tool.name,
@@ -436,7 +436,7 @@ export function buildGoogleRequestParams(params: CreateParams): GoogleGenerateCo
 
     request.tools = [{ functionDeclarations }]
 
-    // Tool choice mapping
+    // 工具选择映射
     if (params.toolChoice) {
       request.toolConfig = mapToolChoiceToGoogle(params.toolChoice)
     }
@@ -653,10 +653,13 @@ export function googleStreamToStandard(
 ): AsyncIterable<LLMStreamEvent> {
   return {
     async *[Symbol.asyncIterator]() {
-      // 跟踪先前状态以计算增量
-      let previousTextLength = 0
-      let previousThinkingLength = 0
-      let previousToolCallCount = 0
+      // Google chunk 是累计快照。按 Part 位置保存文本状态，并从统一计数器
+      // 分配标准 block index，避免 thinking / text / tool 都从 0 开始互相覆盖。
+      const textStates = new Map<string, { index: number; value: string }>()
+      const emittedToolCalls = new Map<string, number>()
+      const openBlockIndices = new Set<number>()
+      let nextBlockIndex = 0
+      let sawToolCall = false
       let isFirstChunk = true
 
       for await (const chunk of stream) {
@@ -682,59 +685,82 @@ export function googleStreamToStandard(
           if (part.thought && part.text !== undefined) {
             // 思考内容增量
             const newText = part.text
-            const delta = newText.slice(previousThinkingLength)
-            previousThinkingLength = newText.length
+            const key = `thinking:${i}`
+            const state = textStates.get(key)
+            const delta =
+              state && newText.startsWith(state.value) ? newText.slice(state.value.length) : newText
 
-            if (delta && previousThinkingLength === delta.length) {
+            if (!state && delta) {
               // 新的思考块开始
+              const index = nextBlockIndex++
+              textStates.set(key, { index, value: newText })
+              openBlockIndices.add(index)
               yield {
                 type: 'chunk_start',
-                index: 0,
+                index,
                 chunk: { type: 'thinking', thinking: '', signature: '' },
               }
+            } else if (state) {
+              state.value = newText
             }
 
             if (delta) {
+              const index = textStates.get(key)?.index
+              if (index === undefined) continue
               yield {
                 type: 'chunk_delta',
-                index: 0,
+                index,
                 delta: { type: 'thinking_delta', thinking: delta },
               }
             }
 
             if (part.thoughtSignature) {
+              const index = textStates.get(key)?.index
+              if (index === undefined) continue
               yield {
                 type: 'chunk_delta',
-                index: 0,
+                index,
                 delta: { type: 'signature_delta', signature: part.thoughtSignature },
               }
             }
           } else if (part.text !== undefined && !part.thought) {
             // 文本内容增量
             const newText = part.text
-            const delta = newText.slice(previousTextLength)
-            previousTextLength = newText.length
+            const key = `text:${i}`
+            const state = textStates.get(key)
+            const delta =
+              state && newText.startsWith(state.value) ? newText.slice(state.value.length) : newText
 
-            if (delta && previousTextLength === delta.length) {
+            if (!state && delta) {
               // 新的文本块开始
+              const index = nextBlockIndex++
+              textStates.set(key, { index, value: newText })
+              openBlockIndices.add(index)
               yield {
                 type: 'chunk_start',
-                index: previousToolCallCount === 0 ? 0 : previousToolCallCount,
+                index,
                 chunk: { type: 'text', text: '' },
               }
+            } else if (state) {
+              state.value = newText
             }
 
             if (delta) {
+              const index = textStates.get(key)?.index
+              if (index === undefined) continue
               yield {
                 type: 'chunk_delta',
-                index: previousToolCallCount === 0 ? 0 : previousToolCallCount,
+                index,
                 delta: { type: 'text_delta', text: delta },
               }
             }
           } else if (part.functionCall) {
-            // 函数调用 — 检测新增的 function call
-            const toolCallIndex = previousToolCallCount
-            previousToolCallCount++
+            // 累计快照会重复携带同一个 functionCall，只发出一次标准工具块。
+            const toolKey = part.functionCall.id ?? `part:${i}:${part.functionCall.name}`
+            if (emittedToolCalls.has(toolKey)) continue
+            const toolCallIndex = nextBlockIndex++
+            emittedToolCalls.set(toolKey, toolCallIndex)
+            sawToolCall = true
 
             // 发出 chunk_start
             yield {
@@ -768,10 +794,15 @@ export function googleStreamToStandard(
 
         // 检查是否有 finish reason（最后一个 chunk）
         if (candidate.finishReason) {
-          const parts2 = candidate.content?.parts || []
-          const stopReason = hasFunctionCalls(parts2)
-            ? ('tool_use' as StopReason)
-            : mapFinishReason(candidate.finishReason)
+          for (const index of openBlockIndices) {
+            yield { type: 'chunk_stop', index }
+          }
+          openBlockIndices.clear()
+
+          const stopReason =
+            sawToolCall || hasFunctionCalls(candidate.content?.parts)
+              ? ('tool_use' as StopReason)
+              : mapFinishReason(candidate.finishReason)
 
           yield {
             type: 'response_delta',
@@ -781,6 +812,9 @@ export function googleStreamToStandard(
         }
       }
 
+      for (const index of openBlockIndices) {
+        yield { type: 'chunk_stop', index }
+      }
       // 流结束
       yield { type: 'response_stop' }
     },

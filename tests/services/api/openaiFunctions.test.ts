@@ -4,7 +4,7 @@
  * 这些函数是纯函数或接近纯函数，测试成本低、价值高。
  */
 
-import { describe, expect, test } from 'bun:test'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -252,6 +252,23 @@ describe('buildOpenAIRequestParams', () => {
 })
 
 describe('convertThinkingForOpenAI', () => {
+  const previousConfigDir = process.env.ZY_CONFIG_DIR
+  const isolatedConfigDir = mkdtempSync(join(tmpdir(), 'zy-openai-functions-suite-'))
+
+  beforeAll(() => {
+    // 转换测试必须与开发者本机的模型能力配置隔离，否则 preserveThinking 等配置会污染期望。
+    process.env.ZY_CONFIG_DIR = isolatedConfigDir
+  })
+
+  afterAll(() => {
+    if (previousConfigDir === undefined) {
+      delete process.env.ZY_CONFIG_DIR
+    } else {
+      process.env.ZY_CONFIG_DIR = previousConfigDir
+    }
+    rmSync(isolatedConfigDir, { recursive: true, force: true })
+  })
+
   const thinkingEnabled = { type: 'enabled' as const, budgetTokens: 1024 }
   // 通过第 4 参数 overrideProvider 直接指定 provider，避免 mock.module 跨文件缓存污染
   const { convertThinkingForOpenAI: fn } =
@@ -339,7 +356,6 @@ describe('convertThinkingForOpenAI', () => {
   })
 
   test('dashscope minimax → { thinking: { type: "adaptive" } }', () => {
-    const previousConfigDir = process.env.ZY_CONFIG_DIR
     const configDir = mkdtempSync(join(tmpdir(), 'zy-openai-functions-'))
     process.env.ZY_CONFIG_DIR = configDir
     try {
@@ -363,11 +379,7 @@ describe('convertThinkingForOpenAI', () => {
         thinking: { type: 'adaptive' },
       })
     } finally {
-      if (previousConfigDir === undefined) {
-        delete process.env.ZY_CONFIG_DIR
-      } else {
-        process.env.ZY_CONFIG_DIR = previousConfigDir
-      }
+      process.env.ZY_CONFIG_DIR = isolatedConfigDir
       rmSync(configDir, { recursive: true, force: true })
     }
   })

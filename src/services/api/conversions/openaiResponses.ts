@@ -304,15 +304,9 @@ function normalizeResponsesReasoningEffort(effort?: string): 'low' | 'medium' | 
   const e = effort?.toLowerCase()
   if (e === 'low') return 'low'
   if (e === 'medium' || e === 'balanced') return 'medium'
-  // "on" 是内部 toggle；extreme/thorough 等映射为 high
-  if (
-    e === 'high' ||
-    e === 'on' ||
-    e === 'extreme' ||
-    e === 'ultra' ||
-    e === 'thorough' ||
-    e === 'xhigh'
-  ) {
+  // "on" 是内部 toggle；只有明确受支持的 high 才映射为 high。
+  // 其他超出 Responses 值域的档位回退到 medium，避免擅自提高推理强度。
+  if (e === 'high' || e === 'on') {
     return 'high'
   }
   if (e === 'light' || e === 'quick') return 'low'
