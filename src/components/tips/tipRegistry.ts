@@ -223,8 +223,7 @@ const externalTips: Tip[] = [
   },
   {
     id: 'status-line',
-    content: async () =>
-      'Use /statusline to toggle the built-in status bar showing effort, context usage, model, tokens, and git branch',
+    content: async () => tSync('tip.statusLine'),
     cooldownSessions: 25,
     isRelevant: async () => {
       const statuslineConfig = loadStatuslineConfig()

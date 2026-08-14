@@ -195,6 +195,8 @@ export const enOnboarding: TranslationResource = {
   'tip.terminalSetupOther':
     'Run /terminal-setup to enable convenient terminal integration like Shift + Enter for new line and more',
   'tip.themeCommand': 'Use /theme to change the color theme',
+  'tip.statusLine':
+    'Use /statusline to toggle the built-in status bar showing effort, context usage, model, tokens, and git branch',
   'tip.todoList':
     'Ask ZY Code to create a todo list when working on complex tasks to track progress and remain on track',
   'tip.vercelPlugin': 'Working with Vercel? Install the vercel plugin:\n{command}',

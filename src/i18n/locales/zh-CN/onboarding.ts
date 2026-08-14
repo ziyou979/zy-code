@@ -176,6 +176,8 @@ export const zhOnboarding: TranslationResource = {
   'tip.terminalSetupApple': '运行 /terminal-setup 启用便捷的终端集成，如 Option + Enter 换行等',
   'tip.terminalSetupOther': '运行 /terminal-setup 启用便捷的终端集成，如 Shift + Enter 换行等',
   'tip.themeCommand': '使用 /theme 更换颜色主题',
+  'tip.statusLine':
+    '使用 /statusline 切换内置状态栏，显示思考强度、上下文使用量、模型、Token 和 Git 分支',
   'tip.todoList': '处理复杂任务时，让 ZY Code 创建待办列表来跟踪进度、保持专注',
   'tip.vercelPlugin': '在使用 Vercel？安装 Vercel 插件：\n{command}',
   'tip.vscodeCommandInstall':

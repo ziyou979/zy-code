@@ -15,6 +15,7 @@ export const zhSummary: TranslationResource = {
   'summary.bash.command_other': '命令',
   'summary.bash.done.first': '已运行 {count} 条{unit}',
   'summary.bash.done.sub': '已运行 {count} 条{unit}',
+  'summary.backgroundCommands.completed': '{count} 条后台命令已完成',
   'summary.git.amended': '修订提交',
   'summary.git.cherryPicked': '拣选',
   'summary.git.committed': '提交',

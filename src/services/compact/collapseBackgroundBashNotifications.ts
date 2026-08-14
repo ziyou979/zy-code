@@ -1,8 +1,9 @@
 import { STATUS_TAG, SUMMARY_TAG, TASK_NOTIFICATION_TAG } from '../../constants/xml.js'
 import { BACKGROUND_BASH_SUMMARY_PREFIX } from '../../tasks/local-shell-task/LocalShellTask.js'
 import type { RenderableMessage, UserMessage } from '../../types/message.js'
+import { tSync } from '../../i18n/index.js'
 import { isFullscreenEnvEnabled } from '../terminal/fullscreen.js'
-import { extractTag } from '../messages/./predicates.js'
+import { extractTag } from '../messages/predicates.js'
 
 function isCompletedBackgroundBash(msg: RenderableMessage): msg is UserMessage {
   if (msg.type !== 'user') {
@@ -15,23 +16,23 @@ function isCompletedBackgroundBash(msg: RenderableMessage): msg is UserMessage {
   if (!content.text.includes(`<${TASK_NOTIFICATION_TAG}`)) {
     return false
   }
-  // Only collapse successful completions — failed/killed stay visible individually.
+  // 仅折叠成功完成的任务；失败或被终止的任务仍逐条显示。
   if (extractTag(content.text, STATUS_TAG) !== 'completed') {
     return false
   }
-  // The prefix constant distinguishes bash-kind LocalShellTask completions from
-  // agent/workflow/monitor notifications. Monitor-kind completions have their
-  // own summary wording and deliberately don't collapse here.
+  // 通过前缀常量区分 bash 类型的 LocalShellTask 完成通知与
+  // agent/workflow/monitor 通知。monitor 完成通知有自己的摘要文案，
+  // 此处有意不折叠。
   return extractTag(content.text, SUMMARY_TAG)?.startsWith(BACKGROUND_BASH_SUMMARY_PREFIX) ?? false
 }
 
 /**
- * Collapses consecutive completed-background-bash task-notifications into a
- * single synthetic "N background commands completed" notification. Failed/killed
- * tasks and agent/workflow notifications are left alone. Monitor stream
- * events (enqueueStreamEvent) have no <status> tag and never match.
+ * 将连续的后台 bash 完成通知折叠为一条合成的
+ * “N background commands completed”通知。失败或被终止的任务以及
+ * agent/workflow 通知保持不变。monitor 流事件（enqueueStreamEvent）
+ * 不含 <status> 标签，因此不会命中。
  *
- * Pass-through in verbose mode so ctrl+O shows each completion.
+ * verbose 模式下原样返回，确保 ctrl+O 能显示每条完成通知。
  */
 export function collapseBackgroundBashNotifications(
   messages: RenderableMessage[],
@@ -58,8 +59,8 @@ export function collapseBackgroundBashNotifications(
       if (count === 1) {
         result.push(msg)
       } else {
-        // Synthesize a task-notification that UserAgentNotificationMessage
-        // already knows how to render — no new renderer needed.
+        // 合成 UserAgentNotificationMessage 已支持渲染的任务通知，
+        // 无需新增 renderer。
         result.push({
           ...msg,
           message: {
@@ -67,7 +68,7 @@ export function collapseBackgroundBashNotifications(
             content: [
               {
                 type: 'text',
-                text: `<${TASK_NOTIFICATION_TAG}><${STATUS_TAG}>completed</${STATUS_TAG}><${SUMMARY_TAG}>${count} background commands completed</${SUMMARY_TAG}></${TASK_NOTIFICATION_TAG}>`,
+                text: `<${TASK_NOTIFICATION_TAG}><${STATUS_TAG}>completed</${STATUS_TAG}><${SUMMARY_TAG}>${tSync('summary.backgroundCommands.completed', { count })}</${SUMMARY_TAG}></${TASK_NOTIFICATION_TAG}>`,
               },
             ],
           },

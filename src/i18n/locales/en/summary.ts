@@ -15,6 +15,7 @@ export const enSummary: TranslationResource = {
   'summary.bash.command_other': 'commands',
   'summary.bash.done.first': 'Ran {count} bash {unit}',
   'summary.bash.done.sub': 'ran {count} bash {unit}',
+  'summary.backgroundCommands.completed': '{count} background commands completed',
   'summary.git.amended': 'amended commit',
   'summary.git.cherryPicked': 'cherry-picked',
   'summary.git.committed': 'committed',
