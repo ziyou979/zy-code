@@ -1,7 +1,7 @@
 import { z } from 'zod/v4'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 import { isOutputLineTruncated } from '../../terminal-ui/terminal.js'
 import { DESCRIPTION, PROMPT } from './prompt.js'
 import {

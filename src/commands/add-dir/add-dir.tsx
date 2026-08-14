@@ -15,7 +15,7 @@ import {
   applyPermissionUpdate,
   persistPermissionUpdate,
 } from '../../services/permissions/permissionUpdate.js'
-import type { PermissionUpdateDestination } from '../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdateDestination } from 'src/types/permissions.js'
 import { addDirHelpMessage, validateDirectoryForWorkspace } from './validation.js'
 
 function AddDirError({

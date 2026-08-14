@@ -1,6 +1,6 @@
 import { logEvent } from 'src/services/analytics/index.js'
 import { tSync } from '../../i18n/index.js'
-import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 import { type ValidationContext, type BashSecurityCheckIds } from './securityTypes.js'
 
 function hasBackslashEscapedOperator(command: string): boolean {

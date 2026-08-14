@@ -6,6 +6,7 @@
  */
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'
+import type { AdditionalWorkingDirectory, PermissionRule } from '../../types/permissions.js'
 import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   getInitialSettings,
@@ -36,8 +37,7 @@ import {
   findOverlyBroadBashPermissions,
   findOverlyBroadPowerShellPermissions,
 } from './dangerousPermissionRules.js'
-import type { PermissionRule } from './permissionRule.js'
-import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './permissionUpdate.js'
+import { applyPermissionUpdate } from './permissionUpdate.js'
 import {
   normalizeLegacyToolName,
   permissionRuleValueFromString,

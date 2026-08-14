@@ -1,15 +1,14 @@
 /**
- * Pure permission type definitions extracted to break import cycles.
+ * 为解除循环导入而抽取的纯 permission 类型定义。
  *
- * This file contains only type definitions and constants with no runtime dependencies.
- * Implementation files remain in src/services/permissions/ but can now import from here
- * to avoid circular dependencies.
+ * 本文件仅包含类型定义和常量，不存在运行时依赖。
+ * 实现文件仍位于 src/services/permissions/，但现在可从此处导入以避免循环依赖。
  */
 
 import type { ContentBlock } from './llm.js'
 
 // ============================================================================
-// Permission Modes
+// Permission 模式
 // ============================================================================
 
 export const EXTERNAL_PERMISSION_MODES = [
@@ -22,13 +21,13 @@ export const EXTERNAL_PERMISSION_MODES = [
 
 export type ExternalPermissionMode = (typeof EXTERNAL_PERMISSION_MODES)[number]
 
-// Exhaustive mode union for typechecking. The user-addressable runtime set
-// is INTERNAL_PERMISSION_MODES below.
+// 用于类型检查的完整模式联合。用户可选的运行时集合
+// 是下方 INTERNAL_PERMISSION_MODES。
 export type InternalPermissionMode = ExternalPermissionMode | 'auto' | 'bubble'
 export type PermissionMode = InternalPermissionMode
 
-// Runtime validation set: modes that are user-addressable (settings.json
-// defaultMode, --permission-mode CLI flag, conversation recovery).
+// 运行时校验集合：用户可选的模式（settings.json defaultMode、
+// --permission-mode CLI flag、会话恢复）。
 export const INTERNAL_PERMISSION_MODES = [
   ...EXTERNAL_PERMISSION_MODES,
   'auto',
@@ -37,18 +36,18 @@ export const INTERNAL_PERMISSION_MODES = [
 export const PERMISSION_MODES = INTERNAL_PERMISSION_MODES
 
 // ============================================================================
-// Permission Behaviors
+// Permission 行为
 // ============================================================================
 
 export type PermissionBehavior = 'allow' | 'deny' | 'ask'
 
 // ============================================================================
-// Permission Rules
+// Permission 规则
 // ============================================================================
 
 /**
- * Where a permission rule originated from.
- * Includes all SettingSource values plus additional rule-specific sources.
+ * permission 规则的来源。
+ * 包括所有 SettingSource 值和规则专用的额外来源。
  */
 export type PermissionRuleSource =
   | 'userSettings'
@@ -61,7 +60,7 @@ export type PermissionRuleSource =
   | 'session'
 
 /**
- * The value of a permission rule - specifies which tool and optional content
+ * permission 规则的值，用于指定 Tool 及可选内容。
  */
 export type PermissionRuleValue = {
   toolName: string
@@ -69,7 +68,7 @@ export type PermissionRuleValue = {
 }
 
 /**
- * A permission rule with its source and behavior
+ * 包含来源和行为的 permission 规则。
  */
 export type PermissionRule = {
   source: PermissionRuleSource
@@ -78,11 +77,11 @@ export type PermissionRule = {
 }
 
 // ============================================================================
-// Permission Updates
+// Permission 更新
 // ============================================================================
 
 /**
- * Where a permission update should be persisted
+ * permission 更新的持久化位置。
  */
 export type PermissionUpdateDestination =
   | 'userSettings'
@@ -92,7 +91,7 @@ export type PermissionUpdateDestination =
   | 'cliArg'
 
 /**
- * Update operations for permission configuration
+ * permission 配置的更新操作。
  */
 export type PermissionUpdate =
   | {
@@ -130,14 +129,14 @@ export type PermissionUpdate =
     }
 
 /**
- * Source of an additional working directory permission.
- * Note: This is currently the same as PermissionRuleSource but kept as a
- * separate type for semantic clarity and potential future divergence.
+ * 额外工作目录 permission 的来源。
+ * 注意：当前与 PermissionRuleSource 相同，但为保持语义清晰并允许未来分化，
+ * 仍保留为独立类型。
  */
 export type WorkingDirectorySource = PermissionRuleSource
 
 /**
- * An additional directory included in permission scope
+ * permission scope 中包含的额外目录。
  */
 export type AdditionalWorkingDirectory = {
   path: string
@@ -145,28 +144,28 @@ export type AdditionalWorkingDirectory = {
 }
 
 // ============================================================================
-// Permission Decisions & Results
+// Permission 决策与结果
 // ============================================================================
 
 /**
- * Minimal command shape for permission metadata.
- * This is intentionally a subset of the full Command type to avoid import cycles.
- * Only includes properties needed by permission-related components.
+ * permission 元数据使用的最小命令结构。
+ * 为避免循环导入，特意只保留完整 Command 类型的子集，
+ * 仅包含 permission 相关组件所需属性。
  */
 export type PermissionCommandMetadata = {
   name: string
   description?: string
-  // Allow additional properties for forward compatibility
+  // 允许额外属性，以保持向前兼容
   [key: string]: unknown
 }
 
 /**
- * Metadata attached to permission decisions
+ * permission 决策附带的元数据。
  */
 export type PermissionMetadata = { command: PermissionCommandMetadata } | undefined
 
 /**
- * Result when permission is granted
+ * permission 通过时的结果。
  */
 export type PermissionAllowDecision<
   Input extends { [key: string]: unknown } = { [key: string]: unknown },
@@ -181,8 +180,8 @@ export type PermissionAllowDecision<
 }
 
 /**
- * Metadata for a pending classifier check that will run asynchronously.
- * Used to enable non-blocking allow classifier evaluation.
+ * 即将异步执行的 classifier 检查元数据。
+ * 用于启用非阻塞的 allow classifier 评估。
  */
 export type PendingClassifierCheck = {
   command: string
@@ -191,7 +190,7 @@ export type PendingClassifierCheck = {
 }
 
 /**
- * Result when user should be prompted
+ * 需要提示用户时的结果。
  */
 export type PermissionAskDecision<
   Input extends { [key: string]: unknown } = { [key: string]: unknown },
@@ -204,26 +203,26 @@ export type PermissionAskDecision<
   blockedPath?: string
   metadata?: PermissionMetadata
   /**
-   * If true, this ask decision was triggered by a bashCommandIsSafe_DEPRECATED security check
-   * for patterns that splitCommand_DEPRECATED could misparse (e.g. line continuations, shell-quote
-   * transformations). Used by bashToolHasPermission to block early before splitCommand_DEPRECATED
-   * transforms the command. Not set for simple newline compound commands.
+   * 为 true 时，表示该 ask 决策由 bashCommandIsSafe_DEPRECATED 安全检查触发，
+   * 针对 splitCommand_DEPRECATED 可能误解析的模式（如换行续写、shell 引号转换）。
+   * bashToolHasPermission 会在 splitCommand_DEPRECATED 转换命令前据此提前阻止。
+   * 简单的换行复合命令不设置此项。
    */
   isBashSecurityCheckForMisparsing?: boolean
   /**
-   * If set, an allow classifier check should be run asynchronously.
-   * The classifier may auto-approve the permission before the user responds.
+   * 设置后应异步运行 allow classifier 检查。
+   * classifier 可能在用户回应前自动批准 permission。
    */
   pendingClassifierCheck?: PendingClassifierCheck
   /**
-   * Optional content blocks (e.g., images) to include alongside the rejection
-   * message in the tool result. Used when users paste images as feedback.
+   * Tool 结果中与拒绝消息一同返回的可选内容块（如图像）。
+   * 用于用户粘贴图像作为反馈的场景。
    */
   contentBlocks?: ContentBlock[]
 }
 
 /**
- * Result when permission is denied
+ * permission 被拒绝时的结果。
  */
 export type PermissionDenyDecision = {
   behavior: 'deny'
@@ -233,14 +232,14 @@ export type PermissionDenyDecision = {
 }
 
 /**
- * A permission decision - allow, ask, or deny
+ * permission 决策：allow、ask 或 deny。
  */
 export type PermissionDecision<
   Input extends { [key: string]: unknown } = { [key: string]: unknown },
 > = PermissionAllowDecision<Input> | PermissionAskDecision<Input> | PermissionDenyDecision
 
 /**
- * Permission result with additional passthrough option
+ * 带额外透传选项的 permission 结果。
  */
 export type PermissionResult<
   Input extends { [key: string]: unknown } = { [key: string]: unknown },
@@ -253,14 +252,14 @@ export type PermissionResult<
       suggestions?: PermissionUpdate[]
       blockedPath?: string
       /**
-       * If set, an allow classifier check should be run asynchronously.
-       * The classifier may auto-approve the permission before the user responds.
+       * 设置后应异步运行 allow classifier 检查。
+       * classifier 可能在用户回应前自动批准 permission。
        */
       pendingClassifierCheck?: PendingClassifierCheck
     }
 
 /**
- * Explanation of why a permission decision was made
+ * permission 决策的原因说明。
  */
 export type PermissionDecisionReason =
   | {
@@ -306,10 +305,9 @@ export type PermissionDecisionReason =
   | {
       type: 'safetyCheck'
       reason: string
-      // When true, auto mode lets the classifier evaluate this instead of
-      // forcing a prompt. True for sensitive-file paths (.zy/, .git/,
-      // shell configs) — the classifier can see context and decide. False
-      // for Windows path bypass attempts and cross-machine bridge messages.
+      // 为 true 时，auto 模式会交由 classifier 评估，不强制弹出提示。敏感文件路径
+      //（.zy/、.git/、shell 配置）会设为 true，因为 classifier 可结合 context 判断；
+      // Windows 路径绕过尝试和跨机器 bridge 消息则设为 false。
       classifierApprovable: boolean
     }
   | {
@@ -318,7 +316,7 @@ export type PermissionDecisionReason =
     }
 
 // ============================================================================
-// Bash Classifier Types
+// Bash Classifier 类型
 // ============================================================================
 
 export type ClassifierResult = {

@@ -18,7 +18,7 @@ import type {
   PermissionRule,
   PermissionRuleSource,
   PermissionRuleValue,
-} from './permissionRule.js'
+} from '../../types/permissions.js'
 import {
   permissionRuleValueFromString,
   permissionRuleValueToString,

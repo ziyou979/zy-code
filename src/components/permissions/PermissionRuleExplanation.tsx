@@ -1,10 +1,7 @@
 import chalk from 'chalk'
 import { Ansi, Box, Text } from '../../ink/index.js'
 import { useAppState } from '../../state/AppState.js'
-import type {
-  PermissionDecision,
-  PermissionDecisionReason,
-} from '../../services/permissions/permissionResult.js'
+import type { PermissionDecision, PermissionDecisionReason } from 'src/types/permissions.js'
 import { permissionRuleValueToString } from '../../services/permissions/permissionRuleParser.js'
 import type { Theme } from '../../services/environment/theme.js'
 import ThemedText from '../design-system/ThemedText.js'

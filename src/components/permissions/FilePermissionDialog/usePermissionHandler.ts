@@ -11,7 +11,7 @@ import {
 } from '../../../tools/FileEditTool/constants.js'
 import { env } from '../../../services/environment/env.js'
 import { generateSuggestions } from '../../../services/permissions/filesystem.js'
-import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { type CompletionType, logUnaryEvent } from '../../../services/telemetry/unaryLogging.js'
 import type { ToolUseConfirm } from '../PermissionRequest.js'
 import type { FileOperationType, PermissionOption } from './PermissionOptions.js'

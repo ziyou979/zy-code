@@ -26,7 +26,7 @@ import type {
   UserMessage,
 } from 'src/types/message.js'
 import { logForDebugging } from 'src/services/infra/debug.js'
-import type { PermissionDecision } from 'src/services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 import { getRuleByContentsForTool } from 'src/services/permissions/permissionRuleQueries.js'
 import {
   isOfficialMarketplaceName,

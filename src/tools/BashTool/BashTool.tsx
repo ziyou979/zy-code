@@ -54,7 +54,7 @@ import { truncate } from '../../utils/format.js'
 import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { expandPath } from '../../utils/path.js'
-import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 import { maybeRecordPluginHint } from '../../services/plugins/hintRecommendation.js'
 import { exec } from '../../services/shell/shell.js'
 import type { ExecResult } from '../../services/shell/shellCommand.js'
@@ -103,12 +103,12 @@ import {
 
 const EOL = '\n'
 
-// Progress display constants
+// 进度显示常量
 const PROGRESS_THRESHOLD_MS = 2000 // Show progress after 2 seconds
-// In assistant mode, blocking bash auto-backgrounds after this many ms in the main agent
+// Assistant 模式下，主 agent 中的阻塞 bash 在经过这么多毫秒后自动转入后台
 const ASSISTANT_BLOCKING_BUDGET_MS = 15_000
 
-// Search commands for collapsible display (grep, find, etc.)
+// 可折叠显示的搜索命令（grep、find 等）
 const BASH_SEARCH_COMMANDS = new Set([
   'find',
   'grep',
@@ -120,19 +120,19 @@ const BASH_SEARCH_COMMANDS = new Set([
   'whereis',
 ])
 
-// Read/view commands for collapsible display (cat, head, etc.)
+// 可折叠显示的读取/查看命令（cat、head 等）
 const BASH_READ_COMMANDS = new Set([
   'cat',
   'head',
   'tail',
   'less',
   'more',
-  // Analysis commands
+  // 分析命令
   'wc',
   'stat',
   'file',
   'strings',
-  // Data processing — commonly used to parse/transform file content in pipes
+  // 数据处理：常用于在 pipe 中解析/转换文件内容
   'jq',
   'awk',
   'cut',
@@ -141,13 +141,13 @@ const BASH_READ_COMMANDS = new Set([
   'tr',
 ])
 
-// Directory-listing commands for collapsible display (ls, tree, du).
-// Split from BASH_READ_COMMANDS so the summary says "Listed N directories"
-// instead of the misleading "Read N files".
+// 可折叠显示的目录列表命令（ls、tree、du）。
+// 从 BASH_READ_COMMANDS 中拆出，使摘要显示“列出 N 个目录”，
+// 而非容易误导的“读取 N 个文件”。
 const BASH_LIST_COMMANDS = new Set(['ls', 'tree', 'du'])
 
-// Commands that are semantic-neutral in any position — pure output/status commands
-// that don't change the read/search nature of the overall pipeline.
+// 在任意位置都语义中性的命令：纯输出/状态命令，
+// 不会改变整个 pipeline 的读取/搜索属性。
 // e.g. `ls dir && echo "---" && ls dir2` is still a read-only compound command.
 const BASH_SEMANTIC_NEUTRAL_COMMANDS = new Set([
   'echo',
@@ -157,7 +157,7 @@ const BASH_SEMANTIC_NEUTRAL_COMMANDS = new Set([
   ':', // bash no-op
 ])
 
-// Commands that typically produce no stdout on success
+// 成功时通常不产生 stdout 的命令
 const BASH_SILENT_COMMANDS = new Set([
   'mv',
   'cp',
@@ -176,12 +176,11 @@ const BASH_SILENT_COMMANDS = new Set([
 ])
 
 /**
- * Checks if a bash command is a search or read operation.
- * Used to determine if the command should be collapsed in the UI.
- * Returns an object indicating whether it's a search or read operation.
+ * 检查 bash 命令是否为搜索或读取操作。
+ * 用于判断命令在 UI 中是否应折叠，并返回表示搜索/读取类型的对象。
  *
- * For pipelines (e.g., `cat file | bq`), ALL parts must be search/read commands
- * for the whole command to be considered collapsible.
+ * 对 pipeline（如 `cat file | bq`），所有部分都必须是搜索/读取命令，
+ * 整条命令才视为可折叠。
  *
  * Semantic-neutral commands (echo, printf, true, false, :) are skipped in any
  * position, as they're pure output/status commands that don't affect the read/search
@@ -196,8 +195,7 @@ export function isSearchOrReadBashCommand(command: string): {
   try {
     partsWithOperators = splitCommandWithOperators(command)
   } catch {
-    // If we can't parse the command due to malformed syntax,
-    // it's not a search/read command
+    // 因语法异常而无法解析时，不视为搜索/读取命令
     return {
       isSearch: false,
       isRead: false,
@@ -257,7 +255,7 @@ export function isSearchOrReadBashCommand(command: string): {
     }
   }
 
-  // Only neutral commands (e.g., just "echo foo") -- not collapsible
+  // 仅包含中性命令（如只有 "echo foo"）时不可折叠
   if (!hasNonNeutralCommand) {
     return {
       isSearch: false,
@@ -273,8 +271,8 @@ export function isSearchOrReadBashCommand(command: string): {
 }
 
 /**
- * Checks if a bash command is expected to produce no stdout on success.
- * Used to show "Done" instead of "(No output)" in the UI.
+ * 检查 bash 命令成功时是否预期不产生 stdout。
+ * 用于在 UI 中显示“完成”，而非“无输出”。
  */
 function isSilentBashCommand(command: string): boolean {
   let partsWithOperators: string[]
@@ -317,12 +315,12 @@ function isSilentBashCommand(command: string): boolean {
   return hasNonFallbackCommand
 }
 
-// Commands that should not be auto-backgrounded
+// 不应自动转入后台的命令
 const DISALLOWED_AUTO_BACKGROUND_COMMANDS = [
   'sleep', // Sleep should run in foreground unless explicitly backgrounded by user
 ]
 
-// Check if background tasks are disabled at module load time
+// 在模块加载时检查后台任务是否已禁用
 const isBackgroundTasksDisabled =
   // eslint-disable-next-line custom-rules/no-process-env-top-level -- Intentional: schema must be defined at module load
   isEnvTruthy(process.env.ZY_CODE_DISABLE_BACKGROUND_TASKS)
@@ -362,11 +360,10 @@ For commands that are harder to parse at a glance (piped commands, obscure flags
   }),
 )
 
-// Always omit _simulatedSedEdit from the model-facing schema. It is an internal-only
-// field set by SedEditPermissionRequest after the user approves a sed edit preview.
-// Exposing it in the schema would let the model bypass permission checks and the
-// sandbox by pairing an innocuous command with an arbitrary file write.
-// Also conditionally remove run_in_background when background tasks are disabled.
+// 始终从面向 model 的 schema 中省略 _simulatedSedEdit。它是仅内部使用的字段，
+// 由 SedEditPermissionRequest 在用户批准 sed 编辑预览后设置。如果在 schema 中暴露，
+// model 可将无害命令与任意文件写入绑定，从而绕过 permission 检查和 sandbox。
+// 后台任务禁用时也会有条件地移除 run_in_background。
 const inputSchema = lazySchema(() =>
   isBackgroundTasksDisabled
     ? fullInputSchema().omit({
@@ -379,8 +376,8 @@ const inputSchema = lazySchema(() =>
 )
 type InputSchema = ReturnType<typeof inputSchema>
 
-// Use fullInputSchema for the type to always include run_in_background
-// (even when it's omitted from the schema, the code needs to handle it)
+// 类型使用 fullInputSchema，始终包含 run_in_background；
+// 即使 schema 省略了该字段，代码仍需处理它。
 export type BashToolInput = z.infer<ReturnType<typeof fullInputSchema>>
 const COMMON_BACKGROUND_COMMANDS = [
   'npm',
@@ -414,7 +411,7 @@ function getCommandTypeForLogging(
     return 'other' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
   }
 
-  // Check each part of the command to see if any match common background commands
+  // 检查命令的每个部分，判断是否匹配常见后台命令
   for (const part of parts) {
     const baseCommand = part.split(' ')[0] || ''
     if (
@@ -477,13 +474,13 @@ const outputSchema = lazySchema(() =>
 type OutputSchema = ReturnType<typeof outputSchema>
 export type Out = z.infer<OutputSchema>
 
-// Re-export BashProgress from centralized types to break import cycles
+// 从集中类型重新导出 BashProgress，以解除循环导入
 export type { BashProgress } from '../../types/tools.js'
 
 import type { BashProgress } from '../../types/tools.js'
 
 /**
- * Checks if a command is allowed to be automatically backgrounded
+ * 检查命令是否允许自动转入后台。
  * @param command The command to check
  * @returns false for commands that should not be auto-backgrounded (like sleep)
  */
@@ -493,7 +490,7 @@ function isAutobackgroundingAllowed(command: string): boolean {
     return true
   }
 
-  // Get the first part which should be the base command
+  // 获取应为基础命令的第一部分
   const baseCommand = parts[0]?.trim()
   if (!baseCommand) {
     return true
@@ -502,9 +499,9 @@ function isAutobackgroundingAllowed(command: string): boolean {
 }
 
 /**
- * Detect standalone or leading `sleep N` patterns that should use Monitor
- * instead. Catches `sleep 5`, `sleep 5 && check`, `sleep 5; check` — but
- * not sleep inside pipelines, subshells, or scripts (those are fine).
+ * 检测应改用 Monitor 的独立或前导 `sleep N` 模式。
+ * 捕获 `sleep 5`、`sleep 5 && check`、`sleep 5; check`，
+ * 但不捕获 pipeline、subshell 或 script 内的 sleep（这些用法没有问题）。
  */
 export function detectBlockedSleepPattern(command: string): string | null {
   const parts = splitCommand_DEPRECATED(command)
@@ -512,8 +509,8 @@ export function detectBlockedSleepPattern(command: string): string | null {
     return null
   }
   const first = parts[0]?.trim() ?? ''
-  // Bare `sleep N` or `sleep N.N` as the first subcommand.
-  // Float durations (sleep 0.5) are allowed — those are legit pacing, not polls.
+  // 首个子命令为裸 `sleep N` 或 `sleep N.N`。
+  // 允许浮点时长（sleep 0.5），这是合理的节奏控制，而非轮询。
   const m = /^sleep\s+(\d+)\s*$/.exec(first)
   if (!m) {
     return null
@@ -530,12 +527,11 @@ export function detectBlockedSleepPattern(command: string): string | null {
 }
 
 /**
- * Checks if a command contains tools that shouldn't run in sandbox
- * This includes:
+ * 检查命令是否包含不应在 sandbox 中运行的 Tool，包括：
  * - Dynamic config-based disabled commands and substrings (zy_sandbox_disabled_commands)
  * - User-configured commands from settings.json (sandbox.excludedCommands)
  *
- * User-configured commands support the same pattern syntax as permission rules:
+ * 用户配置的命令支持与 permission 规则相同的模式语法：
  * - Exact matches: "npm run lint"
  * - Prefix patterns: "npm run test:*"
  */
@@ -546,9 +542,8 @@ type SimulatedSedEditResult = {
 type SimulatedSedEditContext = Pick<ToolUseContext, 'readFileState' | 'updateFileHistoryState'>
 
 /**
- * Applies a simulated sed edit directly instead of running sed.
- * This is used by the permission dialog to ensure what the user previews
- * is exactly what gets written to the file.
+ * 直接应用模拟 sed 编辑，而不执行 sed。
+ * permission 对话框据此确保用户预览的内容与实际写入文件的内容完全一致。
  */
 async function applySedEdit(
   simulatedEdit: {
@@ -562,7 +557,7 @@ async function applySedEdit(
   const absoluteFilePath = expandPath(filePath)
   const fs = getFsImplementation()
 
-  // Read original content for VS Code notification
+  // 读取原始内容，用于 VS Code 通知
   const encoding = detectFileEncoding(absoluteFilePath)
   let originalContent: string
   try {
@@ -582,7 +577,7 @@ async function applySedEdit(
     throw e
   }
 
-  // Track file history before making changes (for undo support)
+  // 更改前跟踪文件历史（用于支持撤销）
   if (fileHistoryEnabled() && parentMessage) {
     await fileHistoryTrackEdit(
       toolUseContext.updateFileHistoryState,
@@ -591,14 +586,14 @@ async function applySedEdit(
     )
   }
 
-  // Detect line endings and write new content
+  // 检测换行符并写入新内容
   const endings = detectLineEndings(absoluteFilePath)
   writeTextContent(absoluteFilePath, newContent, encoding, endings)
 
-  // Notify VS Code about the file change
+  // 向 VS Code 通知文件变更
   notifyVscodeFileUpdated(absoluteFilePath, originalContent, newContent)
 
-  // Update read timestamp to invalidate stale writes
+  // 更新读取时间戳，使过期写入失效
   toolUseContext.readFileState.set(absoluteFilePath, {
     content: newContent,
     timestamp: getFileModificationTime(absoluteFilePath),
@@ -606,7 +601,7 @@ async function applySedEdit(
     limit: undefined,
   })
 
-  // Return success result matching sed output format (sed produces no output on success)
+  // 返回符合 sed 输出格式的成功结果（sed 成功时不产生输出）
   return {
     data: {
       stdout: '',
@@ -682,7 +677,7 @@ export const BashTool = buildTool({
     if (!input) {
       return 'Bash'
     }
-    // Render sed in-place edits as file edits
+    // 将 sed 原地编辑渲染为文件编辑
     if (input.command) {
       const sedInfo = parseSedEditCommand(input.command)
       if (sedInfo) {
@@ -760,7 +755,7 @@ export const BashTool = buildTool({
     },
     toolUseID,
   ): ToolResultBlock {
-    // Handle structured content
+    // 处理结构化内容
     if (structuredContent && structuredContent.length > 0) {
       return {
         toolCallId: toolUseID,
@@ -769,7 +764,7 @@ export const BashTool = buildTool({
       }
     }
 
-    // For image data, format as image content block for ZY
+    // 对图像数据，格式化为供 ZY 使用的图像内容块
     if (isImage) {
       const block = buildImageToolResult(stdout, toolUseID)
       if (block) {
@@ -778,9 +773,9 @@ export const BashTool = buildTool({
     }
     let processedStdout = stdout
     if (stdout) {
-      // Replace any leading newlines or lines with only whitespace
+      // 替换任何前导换行或仅含空白的行
       processedStdout = stdout.replace(/^(\s*\n)+/, '')
-      // Still trim the end as before
+      // 末尾仍按原有逻辑 trim
       processedStdout = processedStdout.trimEnd()
     }
 
@@ -828,8 +823,8 @@ export const BashTool = buildTool({
     parentMessage?: AssistantMessage,
     onProgress?: ToolCallProgress<BashProgress>,
   ) {
-    // Handle simulated sed edit - apply directly instead of running sed
-    // This ensures what the user previewed is exactly what gets written
+    // 处理模拟 sed 编辑：直接应用，不执行 sed。
+    // 这可确保用户预览的内容与实际写入的内容完全一致。
     if (input._simulatedSedEdit) {
       return applySedEdit(input._simulatedSedEdit, toolUseContext, parentMessage)
     }
@@ -843,7 +838,7 @@ export const BashTool = buildTool({
     const isMainThread = !toolUseContext.agentId
     const preventCwdChanges = !isMainThread
     try {
-      // Use the new async generator version of runShellCommand
+      // 使用新的 runShellCommand 异步 generator 版本
       const commandGenerator = runShellCommand({
         input,
         abortController,
@@ -857,7 +852,7 @@ export const BashTool = buildTool({
         agentId: toolUseContext.agentId,
       })
 
-      // Consume the generator and capture the return value
+      // 消费 generator 并捕获返回值
       let generatorResult
       do {
         generatorResult = await commandGenerator.next()
@@ -879,15 +874,15 @@ export const BashTool = buildTool({
         }
       } while (!generatorResult.done)
 
-      // Get the final result from the generator's return value
+      // 从 generator 返回值中获取最终结果
       result = generatorResult.value
       trackGitOperations(input.command, result.code, result.stdout)
       const isInterrupt = result.interrupted && abortController.signal.reason === 'interrupt'
 
-      // stderr is interleaved in stdout (merged fd) — result.stdout has both
+      // stderr 与 stdout 交错（fd 已合并），result.stdout 包含两者
       stdoutAccumulator.append((result.stdout || '').trimEnd() + EOL)
 
-      // Interpret the command result using semantic rules
+      // 使用语义规则解释命令结果
       interpretationResult = interpretCommandResult(
         input.command,
         result.code,
@@ -895,12 +890,12 @@ export const BashTool = buildTool({
         '',
       )
 
-      // Check for git index.lock error (stderr is in stdout now)
+      // 检查 git index.lock 错误（stderr 现已在 stdout 中）
       if (result.stdout?.includes(".git/index.lock': File exists")) {
         logEvent('zy_git_index_lock_error', {})
       }
       if (interpretationResult.isError && !isInterrupt) {
-        // Only add exit code if it's actually an error
+        // 仅在确实为错误时添加退出码
         if (result.code !== 0) {
           stdoutAccumulator.append(`Exit code ${result.code}`)
         }
@@ -912,7 +907,7 @@ export const BashTool = buildTool({
         }
       }
 
-      // Annotate output with sandbox violations if any (stderr is in stdout)
+      // 如存在 sandbox 违规，对输出加注（stderr 已在 stdout 中）
       const outputWithSbFailures = SandboxManager.annotateStderrWithSandboxFailures(
         input.command,
         result.stdout || '',
@@ -933,7 +928,7 @@ export const BashTool = buildTool({
       }
     }
 
-    // Get final string from accumulator
+    // 从 accumulator 获取最终字符串
     const stdout = stdoutAccumulator.toString()
 
     // Large output: the file on disk has more than getMaxOutputLength() bytes.
@@ -959,7 +954,7 @@ export const BashTool = buildTool({
         }
         persistedOutputPath = dest
       } catch {
-        // File may already be gone — stdout preview is sufficient
+        // 文件可能已不存在，stdout 预览已足够
       }
     }
     const commandType = input.command.split(' ')[0]
@@ -971,7 +966,7 @@ export const BashTool = buildTool({
       interrupted: wasInterrupted,
     })
 
-    // Log code indexing tool usage
+    // 记录代码索引 Tool 使用情况
     const codeIndexingTool = detectCodeIndexingFromCommand(input.command)
     if (codeIndexingTool) {
       logEvent('zy_code_indexing_tool_used', {
@@ -1010,10 +1005,9 @@ export const BashTool = buildTool({
       if (resized) {
         compressedStdout = resized
       } else {
-        // Parse failed or file too large (e.g. exceeds MAX_IMAGE_FILE_SIZE).
-        // Keep isImage in sync with what we actually send so the UI label stays
-        // accurate — mapToolResultToToolResultBlock's defensive
-        // fallthrough will send text, not an image block.
+        // 解析失败或文件过大（如超过 MAX_IMAGE_FILE_SIZE）。
+        // 保持 isImage 与实际发送内容同步，确保 UI 标签准确。
+        // mapToolResultToToolResultBlock 的防御性 fallthrough 会发送文本，而非图像块。
         isImage = false
       }
     }

@@ -8,14 +8,14 @@ import type z from 'zod/v4'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { AnyObject, Tool, ToolUseContext } from '../../tools/tool.js'
 import type { AssistantMessage, AttachmentMessage, ProgressMessage } from '../../types/message.js'
-import type { PermissionDecision } from '../../types/permissions.js'
+import type {
+  PermissionDecision,
+  PermissionDecisionReason,
+  PermissionResult,
+} from '../../types/permissions.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { logError } from '../../services/infra/log.js'
-import {
-  getRuleBehaviorDescription,
-  type PermissionDecisionReason,
-  type PermissionResult,
-} from '../permissions/permissionResult.js'
+import { getRuleBehaviorDescription } from '../permissions/permissionResult.js'
 import { checkRuleBasedPermissions } from '../permissions/permissions.js'
 import { formatError } from '../tool-runtime/toolErrors.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'

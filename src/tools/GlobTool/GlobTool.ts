@@ -9,7 +9,7 @@ import { glob } from '../../services/file-search/glob.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { expandPath, toRelativePath } from '../../utils/path.js'
 import { checkReadPermissionForTool } from '../../services/permissions/filesystem.js'
-import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
 import { DESCRIPTION, GLOB_TOOL_NAME } from './prompt.js'
 import {

@@ -1,5 +1,11 @@
 import { extractOutputRedirections } from 'src/shell-eval/bash/commands.js'
 import type { Tool, ToolPermissionContext } from '../../tools/tool.js'
+import type {
+  PermissionBehavior,
+  PermissionDecisionReason,
+  PermissionRule,
+  PermissionRuleSource,
+} from '../../types/permissions.js'
 import { getSettingSourceDisplayNameLowercase, SETTING_SOURCES } from '../settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
 import { getToolNameForPermissionCheck, mcpInfoFromString } from '../mcp/mcpStringUtils.js'
@@ -7,8 +13,6 @@ import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { permissionModeTitle } from './permissionMode.js'
 import { getAutoModeConfig } from '../settings/settings.js'
-import type { PermissionDecisionReason } from './permissionResult.js'
-import type { PermissionBehavior, PermissionRule, PermissionRuleSource } from './permissionRule.js'
 import {
   permissionRuleValueFromString,
   permissionRuleValueToString,

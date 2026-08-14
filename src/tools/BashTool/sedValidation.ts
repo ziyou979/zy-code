@@ -2,7 +2,7 @@ import { tSync } from '../../i18n/index.js'
 import { splitCommand_DEPRECATED } from '../../shell-eval/bash/commands.js'
 import { tryParseShellCommand } from '../../shell-eval/bash/shellQuote.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'
-import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 
 /**
  * 辅助函数：根据允许列表验证标志。处理单个标志和组合标志（例如 -nE）。

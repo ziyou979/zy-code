@@ -12,7 +12,7 @@ import { getCompoundCommandPrefixesStatic } from '../../../shell-eval/powershell
 import { getDestructiveCommandWarning } from '../../../tools/PowerShellTool/destructiveCommandWarning.js'
 import { PowerShellTool } from '../../../tools/PowerShellTool/PowerShellTool.js'
 import { isAllowlistedCommand } from '../../../tools/PowerShellTool/readOnlyValidation.js'
-import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { Select } from '../../CustomSelect/select.js'
 import { type UnaryEvent, usePermissionRequestLogging } from '../hooks.js'
 import { PermissionDecisionDebugInfo } from '../PermissionDecisionDebugInfo.js'

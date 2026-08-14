@@ -12,7 +12,7 @@ import type { Tool } from '../../tools/tool.js'
 import { errorMessage } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logMCPDebug, logMCPError } from '../../services/infra/log.js'
-import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 
 const inputSchema = lazySchema(() => z.object({}))
 type InputSchema = ReturnType<typeof inputSchema>

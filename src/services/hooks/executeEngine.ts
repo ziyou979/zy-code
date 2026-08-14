@@ -8,7 +8,7 @@ import {
 import { createAttachmentMessage } from '../attachments/attachments.js'
 import { createCombinedAbortSignal } from '../../utils/abortController.js'
 import { isEnvTruthy } from '../../services/infra/envUtils.js'
-import type { PermissionResult } from '../permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 import { execCommandHook } from './commandRunner.js'
 import { emitHookResponse, emitHookStarted } from './hookEvents.js'
 import { getHookDisplayText } from './hooksSettings.js'

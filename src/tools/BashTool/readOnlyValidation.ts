@@ -20,7 +20,7 @@ import {
 import { getCwd } from '../../services/environment/cwd.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { isCurrentDirectoryBareGitRepo } from '../../services/infra/git.js'
-import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import type { BashTool } from './BashTool.js'
 import { isNormalizedGitCommand } from './bashCommandDetection.js'

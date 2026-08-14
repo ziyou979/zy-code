@@ -5,7 +5,7 @@ import type { Tool, ToolInputJSONSchema } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../utils/errors.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 
 // Allow any input object since the schema is provided dynamically

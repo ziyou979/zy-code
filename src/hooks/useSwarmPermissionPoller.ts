@@ -1,12 +1,11 @@
 /**
- * Swarm Permission Poller Hook
+ * Swarm permission 轮询 hook。
  *
- * This hook polls for permission responses from the team leader when running
- * as a worker agent in a swarm. When a response is received, it calls the
- * appropriate callback (onAllow/onReject) to continue execution.
+ * 作为 swarm worker agent 运行时，此 hook 会轮询 team leader 返回的 permission 响应。
+ * 收到响应后，它会调用对应的 callback（onAllow/onReject）以继续执行。
  *
- * This hook should be used in conjunction with the worker-side integration
- * in useCanUseTool.ts, which creates pending requests that this hook monitors.
+ * 此 hook 应与 useCanUseTool.ts 中的 worker 端集成配合使用；后者创建待处理请求，
+ * 此 hook 负责监控这些请求。
  */
 
 import { useCallback, useEffect, useRef } from 'react'
@@ -19,18 +18,16 @@ import {
 } from '../services/swarm/permissionSync.js'
 import { logForDebugging } from '../services/infra/debug.js'
 import { errorMessage } from '../utils/errors.js'
-import {
-  type PermissionUpdate,
-  permissionUpdateSchema,
-} from '../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from '../types/permissions.js'
+import { permissionUpdateSchema } from '../services/permissions/permissionUpdateSchema.js'
 import { getAgentName, getTeamName } from '../services/swarm/teammate.js'
 
 const POLL_INTERVAL_MS = 500
 
 /**
- * Validate permissionUpdates from external sources (mailbox IPC, disk polling).
- * Malformed entries from buggy/old teammate processes are filtered out rather
- * than propagated unchecked into callback.onAllow().
+ * 校验来自外部来源（mailbox IPC、磁盘轮询）的 permissionUpdates。
+ * 对于存在缺陷或版本过旧的 teammate 进程产生的异常条目，直接过滤，
+ * 不将未经校验的数据传给 callback.onAllow()。
  */
 function parsePermissionUpdates(raw: unknown): PermissionUpdate[] {
   if (!Array.isArray(raw)) {

@@ -4,6 +4,7 @@ import memoize from 'lodash-es/memoize.js'
 import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import { containsVulnerableUncPath } from 'src/shell-eval/shared/readOnlyCommandValidation.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'
+import type { PermissionDecisionReason } from '../../types/permissions.js'
 import {
   getFsImplementation,
   getPathsForPermissionCheck,
@@ -15,7 +16,6 @@ import { checkPathSafetyForAutoEdit } from './autoEditPathSafety.js'
 import { matchingRuleForInput, pathInAllowedWorkingPath } from './filesystem.js'
 import { checkEditableInternalPath, checkReadableInternalPath } from './filesystemPolicy.js'
 import { pathInWorkingPath } from './internalPaths.js'
-import type { PermissionDecisionReason } from './permissionResult.js'
 
 const MAX_DIRS_TO_LIST = 5
 const GLOB_PATTERN_REGEX = /[*?[\]{}]/
@@ -47,8 +47,7 @@ export function formatDirectoryList(directories: string[]): string {
 }
 
 /**
- * Extracts the base directory from a glob pattern for validation.
- * For example: "/path/to/*.txt" returns "/path/to"
+ * 从 glob 模式中提取基础目录供校验。例如 "/path/to/*.txt" 返回 "/path/to"。
  */
 export function getGlobBaseDirectory(path: string): string {
   const globMatch = path.match(GLOB_PATTERN_REGEX)
@@ -56,10 +55,10 @@ export function getGlobBaseDirectory(path: string): string {
     return path
   }
 
-  // Get everything before the first glob character
+  // 获取首个 glob 字符之前的内容
   const beforeGlob = path.substring(0, globMatch.index)
 
-  // Find the last directory separator
+  // 查找最后一个目录分隔符
   const lastSepIndex =
     getPlatform() === 'windows'
       ? Math.max(beforeGlob.lastIndexOf('/'), beforeGlob.lastIndexOf('\\'))
@@ -72,8 +71,7 @@ export function getGlobBaseDirectory(path: string): string {
 }
 
 /**
- * Expands tilde (~) at the start of a path to the user's home directory.
- * Note: ~username expansion is not supported for security reasons.
+ * 将路径开头的波浪号（~）展开为用户主目录。出于安全考虑，不支持 ~username 展开。
  */
 export function expandTilde(path: string): string {
   if (
@@ -87,28 +85,23 @@ export function expandTilde(path: string): string {
 }
 
 /**
- * Checks if a resolved path is writable according to the sandbox write allowlist.
- * When the sandbox is enabled, the user has explicitly configured which directories
- * are writable. We treat these as additional allowed write directories for path
- * validation purposes, so commands like `echo foo > /tmp/zy/x.txt` don't
- * prompt for permission when /tmp/zy/ is already in the sandbox allowlist.
+ * 根据 sandbox 写入 allowlist 检查解析后的路径是否可写。启用 sandbox 时，用户已明确配置
+ * 可写目录；路径校验将它们视为额外允许写入的目录。因此 /tmp/zy/ 已在 allowlist 中时，
+ * `echo foo > /tmp/zy/x.txt` 等命令无需再次请求权限。
  *
- * Respects the deny-within-allow list: paths in denyWithinAllow (like
- * .zy/settings.json) are still blocked even if their parent is in allowOnly.
+ * 同时遵守 allow 内部的 deny 列表：即使父目录位于 allowOnly，denyWithinAllow 中的
+ * .zy/settings.json 等路径仍会被阻止。
  */
 export function isPathInSandboxWriteAllowlist(resolvedPath: string): boolean {
   if (!SandboxManager.isSandboxingEnabled()) {
     return false
   }
   const { allowOnly, denyWithinAllow } = SandboxManager.getFsWriteConfig()
-  // Resolve symlinks on both sides so comparisons are symmetric (matching
-  // pathInAllowedWorkingPath). Without this, an allowlist entry that is a
-  // symlink (e.g. /home/user/proj -> /data/proj) would not match a write to
-  // its resolved target, causing an unnecessary prompt. Over-conservative,
-  // not a security issue. All resolved input representations must be allowed
-  // and none may be denied. Config paths are session-stable, so memoize
-  // their resolution to avoid N × config.length redundant syscalls per
-  // command with N write targets (matching getResolvedWorkingDirPaths).
+  // 对比较两侧都解析 symlink，使比较对称，与 pathInAllowedWorkingPath 一致。否则 allowlist
+  // 中的 symlink（如 /home/user/proj -> /data/proj）无法匹配对解析后目标的写入，造成不必要
+  // 的权限询问；这只是过度保守，并非安全问题。所有解析后的输入表示都必须被允许，且不能有
+  // 任一被拒绝。配置路径在会话中稳定，因此记忆化解析结果，避免含 N 个写入目标的命令产生
+  // N × config.length 次冗余 syscall，与 getResolvedWorkingDirPaths 的做法一致。
   const pathsToCheck = getPathsForPermissionCheck(resolvedPath)
   const resolvedAllow = allowOnly.flatMap(getResolvedSandboxConfigPath)
   const resolvedDeny = denyWithinAllow.flatMap(getResolvedSandboxConfigPath)
@@ -122,21 +115,17 @@ export function isPathInSandboxWriteAllowlist(resolvedPath: string): boolean {
   })
 }
 
-// Sandbox config paths are session-stable; memoize their resolved forms to
-// avoid repeated lstat/realpath syscalls on every write-target check.
-// Matches the getResolvedWorkingDirPaths pattern in filesystem.ts.
+// Sandbox 配置路径在会话中稳定，记忆化其解析形式，避免每次检查写入目标都重复调用
+// lstat/realpath；与 filesystem.ts 的 getResolvedWorkingDirPaths 模式一致。
 const getResolvedSandboxConfigPath = memoize(getPathsForPermissionCheck)
 
 /**
- * Checks if a resolved path is allowed for the given operation type.
+ * 检查解析后的路径是否允许执行指定类型的操作。
  *
- * @param precomputedPathsToCheck - Optional cached result of
- *   `getPathsForPermissionCheck(resolvedPath)`. When `resolvedPath` is the
- *   output of `realpathSync` (canonical path, all symlinks resolved), this
- *   is trivially `[resolvedPath]` and passing it here skips 5 redundant
- *   syscalls per inner check. Do NOT pass this for non-canonical paths
- *   (nonexistent files, UNC paths, etc.) — parent-directory symlink
- *   resolution is still required for those.
+ * @param precomputedPathsToCheck 可选的 `getPathsForPermissionCheck(resolvedPath)` 缓存结果。
+ *   resolvedPath 是 realpathSync 输出的规范路径且所有 symlink 均已解析时，结果必然为
+ *   `[resolvedPath]`，传入后每次内部检查可省去 5 次冗余 syscall。非规范路径（不存在的文件、
+ *   UNC 路径等）仍需解析父目录 symlink，不得传入此参数。
  */
 export function isPathAllowed(
   resolvedPath: string,
@@ -144,10 +133,10 @@ export function isPathAllowed(
   operationType: FileOperationType,
   precomputedPathsToCheck?: readonly string[],
 ): PathCheckResult {
-  // Determine which permission type to check based on operation
+  // 根据操作确定待检查的权限类型
   const permissionType = operationType === 'read' ? 'read' : 'edit'
 
-  // 1. Check deny rules first (they take precedence)
+  // 1. 优先检查 deny 规则
   const denyRule = matchingRuleForInput(resolvedPath, context, permissionType, 'deny')
   if (denyRule !== null) {
     return {
@@ -156,10 +145,9 @@ export function isPathAllowed(
     }
   }
 
-  // 2. For write/create operations, check internal editable paths (plan files, scratchpad, agent memory, job dirs)
-  // This MUST come before checkPathSafetyForAutoEdit since .zy is a dangerous directory
-  // and internal editable paths live under ~/.zy/ — matching the ordering in
-  // checkWritePermissionForTool (filesystem.ts step 1.5)
+  // 2. 对 write/create 操作检查内部可编辑路径，包括 plan 文件、scratchpad、agent memory 和
+  // job 目录。此检查必须早于 checkPathSafetyForAutoEdit，因为 .zy 属于危险目录，而内部可编辑
+  // 路径位于 ~/.zy/ 下；顺序与 checkWritePermissionForTool（filesystem.ts 第 1.5 步）一致。
   if (operationType !== 'read') {
     const internalEditResult = checkEditableInternalPath(resolvedPath, {})
     if (internalEditResult.behavior === 'allow') {
@@ -170,9 +158,8 @@ export function isPathAllowed(
     }
   }
 
-  // 2.5. For write/create operations, check comprehensive safety validations
-  // This MUST come before checking working directory to prevent bypass via acceptEdits mode
-  // Checks: Windows patterns, Zy config files, dangerous files (on original + symlink paths)
+  // 2.5. 对 write/create 操作执行完整安全校验。必须早于工作目录检查，防止通过 acceptEdits
+  // 模式绕过。检查 Windows 模式、Zy 配置文件及原始路径和 symlink 路径上的危险文件。
   if (operationType !== 'read') {
     const safetyCheck = checkPathSafetyForAutoEdit(resolvedPath, precomputedPathsToCheck)
     if (!safetyCheck.safe) {
@@ -187,19 +174,18 @@ export function isPathAllowed(
     }
   }
 
-  // 3. Check if path is in allowed working directory
-  // For write/create operations, require acceptEdits mode to auto-allow
-  // This is consistent with checkWritePermissionForTool in filesystem.ts
+  // 3. 检查路径是否位于允许的工作目录。write/create 操作需处于 acceptEdits 模式才自动允许，
+  // 与 filesystem.ts 的 checkWritePermissionForTool 一致。
   const isInWorkingDir = pathInAllowedWorkingPath(resolvedPath, context, precomputedPathsToCheck)
   if (isInWorkingDir) {
     if (operationType === 'read' || context.mode === 'acceptEdits') {
       return { allowed: true }
     }
-    // Write/create without acceptEdits mode falls through to check allow rules
+    // 非 acceptEdits 模式下的 write/create 继续检查 allow 规则
   }
 
-  // 3.5. For read operations, check internal readable paths (project temp dir, session memory, etc.)
-  // This allows reading agent output files without explicit permission
+  // 3.5. 对 read 操作检查项目临时目录、session memory 等内部可读路径，使 agent 输出文件无需
+  // 显式权限即可读取。
   if (operationType === 'read') {
     const internalReadResult = checkReadableInternalPath(resolvedPath, {})
     if (internalReadResult.behavior === 'allow') {
@@ -210,14 +196,11 @@ export function isPathAllowed(
     }
   }
 
-  // 3.7. For write/create operations to paths OUTSIDE the working directory,
-  // check the sandbox write allowlist. When the sandbox is enabled, users
-  // have explicitly configured writable directories (e.g. /tmp/zy/) —
-  // treat these as additional allowed write directories so redirects/touch/
-  // mkdir don't prompt unnecessarily. Safety checks (step 2) already ran.
-  // Paths IN the working directory are intentionally excluded: the sandbox
-  // allowlist always seeds '.' (cwd, see sandbox-adapter.ts), which would
-  // bypass the acceptEdits gate at step 3. Step 3 handles those.
+  // 3.7. 对工作目录外路径的 write/create 操作检查 sandbox 写入 allowlist。启用 sandbox 时，
+  // 用户已明确配置 /tmp/zy/ 等可写目录，将其视为额外允许写入目录，避免 redirect、touch、
+  // mkdir 无谓询问权限；第 2 步已完成安全检查。工作目录内路径有意排除：sandbox allowlist
+  // 始终加入 `.`（cwd，参见 sandbox-adapter.ts），否则会绕过第 3 步的 acceptEdits gate；
+  // 此类路径由第 3 步处理。
   if (operationType !== 'read' && !isInWorkingDir && isPathInSandboxWriteAllowlist(resolvedPath)) {
     return {
       allowed: true,
@@ -228,7 +211,7 @@ export function isPathAllowed(
     }
   }
 
-  // 4. Check allow rules for the operation type
+  // 4. 检查操作类型对应的 allow 规则
   const allowRule = matchingRuleForInput(resolvedPath, context, permissionType, 'allow')
   if (allowRule !== null) {
     return {
@@ -237,13 +220,12 @@ export function isPathAllowed(
     }
   }
 
-  // 5. Path is not allowed
+  // 5. 路径不被允许
   return { allowed: false }
 }
 
 /**
- * Validates a glob pattern by checking its base directory.
- * Returns the validation result for the base path where the glob would expand.
+ * 通过检查基础目录校验 glob 模式，并返回 glob 展开位置基础路径的校验结果。
  */
 export function validateGlobPattern(
   cleanPath: string,
@@ -252,7 +234,7 @@ export function validateGlobPattern(
   operationType: FileOperationType,
 ): ResolvedPathCheckResult {
   if (containsPathTraversal(cleanPath)) {
-    // For patterns with path traversal, resolve the full path
+    // 对包含路径穿越的模式解析完整路径
     const absolutePath = isAbsolute(cleanPath) ? cleanPath : resolve(cwd, cleanPath)
     const { resolvedPath, isCanonical } = safeResolvePath(getFsImplementation(), absolutePath)
     const result = isPathAllowed(
@@ -288,18 +270,17 @@ const WINDOWS_DRIVE_ROOT_REGEX = /^[A-Za-z]:\/?$/
 const WINDOWS_DRIVE_CHILD_REGEX = /^[A-Za-z]:\/[^/]+$/
 
 /**
- * Checks if a resolved path is dangerous for removal operations (rm/rmdir).
- * Dangerous paths are:
- * - Wildcard '*' (removes all files in directory)
- * - Any path ending with '/*' or '\*' (e.g., /path/to/dir/*, C:\foo\*)
- * - Root directory (/)
- * - Home directory (~)
- * - Direct children of root (/usr, /tmp, /etc, etc.)
- * - Windows drive root (C:\, D:\) and direct children (C:\Windows, C:\Users)
+ * 检查解析后的路径用于删除操作（rm/rmdir）时是否危险。危险路径包括：
+ * - 通配符 `*`（删除目录内全部文件）；
+ * - 以 `/*` 或 `\*` 结尾的路径（如 /path/to/dir/*、C:\foo\*）；
+ * - 根目录（/）；
+ * - 主目录（~）；
+ * - 根目录的直接子项（/usr、/tmp、/etc 等）；
+ * - Windows 盘符根目录（C:\、D:\）及直接子项（C:\Windows、C:\Users）。
  */
 export function isDangerousRemovalPath(resolvedPath: string): boolean {
-  // Callers pass both slash forms; collapse runs so C:\\Windows (valid in
-  // PowerShell) doesn't bypass the drive-child check.
+  // 调用方会传入两种斜杠形式，因此合并连续斜杠，避免 PowerShell 中有效的 C:\\Windows
+  // 绕过盘符直接子项检查。
   const forwardSlashed = resolvedPath.replace(/[\\/]+/g, '/')
 
   if (forwardSlashed === '*' || forwardSlashed.endsWith('/*')) {
@@ -321,7 +302,7 @@ export function isDangerousRemovalPath(resolvedPath: string): boolean {
     return true
   }
 
-  // Direct children of root: /usr, /tmp, /etc (but not /usr/local)
+  // 根目录直接子项：/usr、/tmp、/etc，但不包括 /usr/local
   const parentDir = dirname(normalizedPath)
   if (parentDir === '/') {
     return true
@@ -346,8 +327,7 @@ export function isDangerousRemovalPath(resolvedPath: string): boolean {
 }
 
 /**
- * Validates a file system path, handling tilde expansion and glob patterns.
- * Returns whether the path is allowed and the resolved path for error messages.
+ * 校验文件系统路径，处理波浪号展开和 glob 模式。返回是否允许以及供错误消息使用的解析路径。
  */
 export function validatePath(
   path: string,
@@ -355,10 +335,10 @@ export function validatePath(
   toolPermissionContext: ToolPermissionContext,
   operationType: FileOperationType,
 ): ResolvedPathCheckResult {
-  // Remove surrounding quotes if present
+  // 移除可能存在的首尾引号
   const cleanPath = expandTilde(path.replace(/^['"]|['"]$/g, ''))
 
-  // SECURITY: Block UNC paths that could leak credentials
+  // 安全：阻止可能泄露凭证的 UNC 路径
   if (containsVulnerableUncPath(cleanPath)) {
     return {
       allowed: false,
@@ -370,13 +350,11 @@ export function validatePath(
     }
   }
 
-  // SECURITY: Reject tilde variants (~user, ~+, ~-, ~N) that expandTilde doesn't handle.
-  // expandTilde resolves ~ and ~/ to $HOME, but ~root, ~+, ~- etc. are left as literal
-  // text and resolved as relative paths (e.g., /cwd/~root/.ssh/id_rsa).
-  // The shell expands these differently (~root → /var/root, ~+ → $PWD, ~- → $OLDPWD),
-  // creating a TOCTOU gap: we validate /cwd/~root/... but bash reads /var/root/...
-  // This check is safe from false positives because expandTilde already converted
-  // ~ and ~/ to absolute paths starting with /, so only unexpanded variants remain.
+  // 安全：拒绝 expandTilde 不处理的 ~user、~+、~-、~N 等波浪号变体。expandTilde 会将 ~ 和
+  // ~/ 解析为 $HOME，但 ~root、~+、~- 等会保留为字面量并按相对路径解析（如
+  // /cwd/~root/.ssh/id_rsa）。shell 的展开不同（~root → /var/root、~+ → $PWD、
+  // ~- → $OLDPWD），形成 TOCTOU 缺口：校验 /cwd/~root/...，bash 却读取 /var/root/...
+  // expandTilde 已将 ~ 和 ~/ 转成以 / 开头的绝对路径，此处剩余的只有未展开变体，不会误报。
   if (cleanPath.startsWith('~')) {
     return {
       allowed: false,
@@ -388,16 +366,14 @@ export function validatePath(
     }
   }
 
-  // SECURITY: Reject paths containing ANY shell expansion syntax ($ or % characters,
-  // or paths starting with = which triggers Zsh equals expansion)
-  // - $VAR (Unix/Linux environment variables like $HOME, $PWD)
-  // - ${VAR} (brace expansion)
-  // - $(cmd) (command substitution)
-  // - %VAR% (Windows environment variables like %TEMP%, %USERPROFILE%)
-  // - Nested combinations like $(echo $HOME)
-  // - =cmd (Zsh equals expansion, e.g. =rg expands to /usr/bin/rg)
-  // All of these are preserved as literal strings during validation but expanded
-  // by the shell during execution, creating a TOCTOU vulnerability
+  // 安全：拒绝包含任意 shell 展开语法的路径，包括 $、% 字符或以 = 开头触发 Zsh 等号展开
+  // - $VAR（Unix/Linux 环境变量，如 $HOME、$PWD）
+  // - ${VAR}（花括号展开）
+  // - $(cmd)（命令替换）
+  // - %VAR%（Windows 环境变量，如 %TEMP%、%USERPROFILE%）
+  // - $(echo $HOME) 等嵌套组合
+  // - =cmd（Zsh 等号展开，例如 =rg 展开为 /usr/bin/rg）
+  // 这些内容校验时保留为字面字符串，执行时却由 shell 展开，会形成 TOCTOU 漏洞
   if (cleanPath.includes('$') || cleanPath.includes('%') || cleanPath.startsWith('=')) {
     return {
       allowed: false,
@@ -409,11 +385,9 @@ export function validatePath(
     }
   }
 
-  // SECURITY: Block glob patterns in write/create operations
-  // Write tools don't expand globs - they use paths literally.
-  // Allowing globs in write operations could bypass security checks.
-  // Example: /allowed/dir/*.txt would only validate /allowed/dir,
-  // but the actual write would use the literal path with the *
+  // 安全：阻止 write/create 操作中的 glob 模式。写入 tool 不展开 glob，而是按字面路径使用；
+  // 允许 glob 可能绕过安全检查。例如 /allowed/dir/*.txt 只校验 /allowed/dir，实际写入却会
+  // 使用包含 * 的字面路径。
   if (GLOB_PATTERN_REGEX.test(cleanPath)) {
     if (operationType === 'write' || operationType === 'create') {
       return {
@@ -427,11 +401,11 @@ export function validatePath(
       }
     }
 
-    // For read operations, validate the base directory where the glob would expand
+    // 对 read 操作校验 glob 展开位置的基础目录
     return validateGlobPattern(cleanPath, cwd, toolPermissionContext, operationType)
   }
 
-  // Resolve path
+  // 解析路径
   const absolutePath = isAbsolute(cleanPath) ? cleanPath : resolve(cwd, cleanPath)
   const { resolvedPath, isCanonical } = safeResolvePath(getFsImplementation(), absolutePath)
 

@@ -7,12 +7,9 @@ import { SandboxManager } from '../../services/sandbox/sandboxAdapter.js'
 import { useAppState } from '../../state/AppState.js'
 import type { PermissionMode } from '../../services/permissions/permissionMode.js'
 import { permissionModeTitle } from '../../services/permissions/permissionMode.js'
-import type {
-  PermissionDecision,
-  PermissionDecisionReason,
-} from '../../services/permissions/permissionResult.js'
+import type { PermissionDecision, PermissionDecisionReason } from 'src/types/permissions.js'
 import { extractRules } from '../../services/permissions/permissionUpdate.js'
-import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { permissionRuleValueToString } from '../../services/permissions/permissionRuleParser.js'
 import { detectUnreachableRules } from '../../services/permissions/shadowedRuleDetection.js'
 import { getSettingSourceDisplayNameLowercase } from '../../services/settings/constants.js'

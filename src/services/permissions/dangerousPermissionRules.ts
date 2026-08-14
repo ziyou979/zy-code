@@ -6,14 +6,19 @@ import type { ToolPermissionContext } from '../../tools/tool.js'
 import { getCwd } from '../environment/cwd.js'
 import { createDebugLog } from '../../services/infra/debug.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
-import type { ToolPermissionRulesBySource } from '../../types/permissions.js'
+import type {
+  AdditionalWorkingDirectory,
+  PermissionRule,
+  PermissionRuleSource,
+  PermissionRuleValue,
+  PermissionUpdateDestination,
+  ToolPermissionRulesBySource,
+} from '../../types/permissions.js'
 import type { SettingSource } from '../settings/constants.js'
 import { SETTING_SOURCES } from '../settings/constants.js'
 import { getSettingsFilePathForSource } from '../settings/settings.js'
 import { CROSS_PLATFORM_CODE_EXEC, DANGEROUS_BASH_PATTERNS } from './dangerousPatterns.js'
-import type { PermissionRule, PermissionRuleSource, PermissionRuleValue } from './permissionRule.js'
-import { type AdditionalWorkingDirectory, applyPermissionUpdate } from './permissionUpdate.js'
-import type { PermissionUpdateDestination } from './permissionUpdateSchema.js'
+import { applyPermissionUpdate } from './permissionUpdate.js'
 import {
   normalizeLegacyToolName,
   permissionRuleValueFromString,

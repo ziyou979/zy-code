@@ -44,7 +44,7 @@ import {
   type PermissionMode,
   toExternalPermissionMode,
 } from '../../../services/permissions/permissionMode.js'
-import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { isAutoModeGateEnabled } from '../../../services/permissions/autoModePolicy.js'
 import {
   restoreDangerousPermissions,

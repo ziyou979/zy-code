@@ -8,13 +8,13 @@ import { getCwd } from '../environment/cwd.js'
 import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { expandPath } from '../../utils/path.js'
+import type { PermissionResult } from '../../types/permissions.js'
 import { getPlanSlug, getPlansDirectory } from '../plans/plans.js'
 import { getToolResultsDir } from '../../services/mcp/toolResultStorage.js'
 import { getProjectDir } from '../sessionStorage.js'
 import { SETTING_SOURCES } from '../settings/constants.js'
 import { getSettingsFilePathForSource } from '../settings/settings.js'
 import { getPathsForPermissionCheck } from '../../services/infra/fsOperations.js'
-import type { PermissionResult } from './permissionResult.js'
 import {
   isScratchpadEnabled,
   getScratchpadDir,

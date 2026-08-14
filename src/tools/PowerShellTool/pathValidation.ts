@@ -1,9 +1,8 @@
 /**
- * PowerShell-specific path validation for command arguments.
+ * PowerShell 命令参数专用路径验证。
  *
- * Extracts file paths from PowerShell commands using the AST parser
- * and validates they stay within allowed project directories.
- * Follows the same patterns as BashTool/pathValidation.ts.
+ * 使用 AST parser 从 PowerShell 命令提取文件路径，并验证其始终位于允许的项目目录内。
+ * 遵循与 BashTool/pathValidation.ts 相同的模式。
  */
 
 import { homedir } from 'node:os'
@@ -18,7 +17,7 @@ import {
   isPowerShellParameter,
 } from '../../shell-eval/powershell/parser.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'
-import type { PermissionRule } from '../../types/permissions.js'
+import type { PermissionRule, PermissionUpdate } from '../../types/permissions.js'
 import { getCwd } from '../../services/environment/cwd.js'
 import { getFsImplementation, safeResolvePath } from '../../services/infra/fsOperations.js'
 import { containsPathTraversal, getDirectoryForPath } from '../../utils/path.js'
@@ -32,9 +31,8 @@ import {
   checkEditableInternalPath,
   checkReadableInternalPath,
 } from '../../services/permissions/filesystemPolicy.js'
-import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 import { createReadRuleSuggestion } from '../../services/permissions/permissionUpdate.js'
-import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
 import {
   isDangerousRemovalPath,
   isPathInSandboxWriteAllowlist,
@@ -44,9 +42,8 @@ import { COMMON_SWITCHES, COMMON_VALUE_PARAMS } from './commonParameters.js'
 import { resolveToCanonical } from './readOnlyValidation.js'
 
 const MAX_DIRS_TO_LIST = 5
-// PowerShell wildcards are only * ? [ ] — braces are LITERAL characters
-// (no brace expansion). Including {} mis-routed paths like `./{x}/passwd`
-// through glob-base truncation instead of full-path symlink resolution.
+// PowerShell 通配符只有 * ? [ ]；花括号是字面字符，不会做 brace expansion。
+// 若包含 {}，`./{x}/passwd` 等路径会错误进入 glob base 截断，而非完整路径 symlink 解析。
 const GLOB_PATTERN_REGEX = /[*?[\]]/
 
 type FileOperationType = 'read' | 'write' | 'create'
@@ -79,7 +76,7 @@ function compoundCdRedirectionAsk(): PermissionResult {
 
 type PathCheckResult = {
   allowed: boolean
-  decisionReason?: import('../../services/permissions/permissionResult.js').PermissionDecisionReason
+  decisionReason?: import('src/types/permissions.js').PermissionDecisionReason
 }
 
 type ResolvedPathCheckResult = PathCheckResult & {
@@ -87,37 +84,36 @@ type ResolvedPathCheckResult = PathCheckResult & {
 }
 
 /**
- * Per-cmdlet parameter configuration.
+ * 逐 cmdlet 参数配置。
  *
- * Each entry declares:
- *   - operationType: whether this cmdlet reads or writes to the filesystem
- *   - pathParams: parameters that accept file paths (validated against allowed directories)
- *   - knownSwitches: switch parameters (take NO value) — next arg is NOT consumed
- *   - knownValueParams: value-taking parameters that are NOT paths — next arg IS consumed
- *     but NOT validated as a path (e.g., -Encoding UTF8, -Filter *.txt)
+ * 每个条目声明：
+ *   - operationType：此 cmdlet 读取还是写入文件系统；
+ *   - pathParams：接收文件路径的参数，会针对允许目录验证；
+ *   - knownSwitches：不接收值的 switch 参数，不消费下一参数；
+ *   - knownValueParams：接收值但并非路径的参数；消费下一参数，但不按路径验证，
+ *     如 -Encoding UTF8、-Filter *.txt。
  *
- * SECURITY MODEL: Any -Param NOT in one of these three sets forces
- * hasUnvalidatablePathArg → ask. This ends the KNOWN_SWITCH_PARAMS whack-a-mole
- * where every missing switch caused the unknown-param heuristic to swallow the
- * next arg (potentially the positional path). Now, Tier 2 cmdlets only auto-allow
- * with invocations we fully understand.
+ * 安全模型：任何不在这三个集合中的 -Param 都会强制
+ * hasUnvalidatablePathArg → ask。这终止了 KNOWN_SWITCH_PARAMS 的反复补漏：此前每漏掉
+ * 一个 switch，unknown-param 启发式就会吞掉下一参数，而它可能正是位置路径。
+ * 现在 Tier 2 cmdlet 只会对完全理解的调用自动允许。
  *
- * Sources:
+ * 来源：
  *   - (Get-Command <cmdlet>).Parameters on Windows PowerShell 5.1
  *   - PS 6+ additions from official docs (e.g., -AsByteStream, -NoEmphasis)
  *
- * NOTE: Common parameters (-Verbose, -ErrorAction, etc.) are NOT listed here;
- * they are merged in from COMMON_SWITCHES / COMMON_VALUE_PARAMS at lookup time.
+ * 注意：此处不列出 common 参数（-Verbose、-ErrorAction 等）；查询时会从
+ * COMMON_SWITCHES / COMMON_VALUE_PARAMS 合并。
  *
- * Parameter names are lowercase with leading dash to match runtime comparison.
+ * 参数名使用带前导短横线的小写形式，以匹配运行时比较。
  */
 type CmdletPathConfig = {
   operationType: FileOperationType
-  /** Parameter names that accept file paths (validated against allowed directories) */
+  /** 接收文件路径的参数名（针对允许目录验证） */
   pathParams: string[]
-  /** Switch parameters that take no value (next arg is NOT consumed) */
+  /** 不接收值的 switch 参数（不消费下一参数） */
   knownSwitches: string[]
-  /** Value-taking parameters that are not paths (next arg IS consumed, not path-validated) */
+  /** 接收值但不是路径的参数（消费下一参数，但不按路径验证） */
   knownValueParams: string[]
   /**
    * Parameter names that accept a leaf filename resolved by PowerShell
@@ -129,26 +125,24 @@ type CmdletPathConfig = {
    */
   leafOnlyPathParams?: string[]
   /**
-   * Number of leading positional arguments to skip (NOT extracted as paths).
-   * Used for cmdlets where positional-0 is a non-path value — e.g.,
-   * Invoke-WebRequest's positional -Uri is a URL, not a local filesystem path.
+   * 要跳过的开头位置参数数量，这些参数不会提取为路径。用于位置 0 是非路径值的 cmdlet；
+   * 例如 Invoke-WebRequest 的位置 -Uri 是 URL，而非本地文件系统路径。
    * Without this, `iwr http://example.com` extracts `http://example.com` as
    * a path, and validatePath's provider-path regex (^[a-z]{2,}:) misfires on
    * the URL scheme with a confusing "non-filesystem provider" message.
    */
   positionalSkip?: number
   /**
-   * When true, this cmdlet only writes to disk when a pathParam is present.
-   * Without a path (e.g., `Invoke-WebRequest https://example.com` with no
-   * -OutFile), it's effectively a read operation — output goes to the pipeline,
-   * not the filesystem. Skips the "write with no target path" forced-ask.
-   * Cmdlets like Set-Content that ALWAYS write should NOT set this.
+   * 为 true 时，此 cmdlet 只有存在 pathParam 才写磁盘。没有路径时（如不带 -OutFile 的
+   * `Invoke-WebRequest https://example.com`），它实际属于读取操作，输出进入管道而非
+   * 文件系统，因此跳过“写入但无目标路径”的强制 ask。Set-Content 等始终写入的 cmdlet
+   * 不应设置此项。
    */
   optionalWrite?: boolean
 }
 
 const CMDLET_PATH_CONFIG: Record<string, CmdletPathConfig> = {
-  // ─── Write/create operations ──────────────────────────────────────────────
+  // ─── 写入或创建操作 ───────────────────────────────────────────────────────
   'set-content': {
     operationType: 'write',
     // -PSPath and -LP are runtime aliases for -LiteralPath on all provider
@@ -337,7 +331,7 @@ const CMDLET_PATH_CONFIG: Record<string, CmdletPathConfig> = {
     knownSwitches: ['-force', '-passthru', '-whatif', '-confirm', '-usetransaction'],
     knownValueParams: ['-value', '-credential', '-filter', '-include', '-exclude'],
   },
-  // ─── Read operations ──────────────────────────────────────────────────────
+  // ─── 读取操作 ─────────────────────────────────────────────────────────────
   'get-content': {
     operationType: 'read',
     pathParams: ['-path', '-literalpath', '-pspath', '-lp'],

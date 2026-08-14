@@ -36,7 +36,7 @@ import {
   checkWritePermissionForTool,
   matchingRuleForInput,
 } from '../../services/permissions/filesystem.js'
-import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
 import { FILE_UNEXPECTEDLY_MODIFIED_ERROR } from '../FileEditTool/constants.js'
 import { gitDiffSchema, hunkSchema } from '../FileEditTool/types.js'

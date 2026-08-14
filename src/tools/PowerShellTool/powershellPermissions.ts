@@ -1,6 +1,5 @@
 /**
- * PowerShell-specific permission checking, adapted from bashPermissions.ts
- * for case-insensitive cmdlet matching.
+ * PowerShell 专用权限检查，由 bashPermissions.ts 改编，支持不区分大小写的 cmdlet 匹配。
  */
 
 import { resolve } from 'node:path'
@@ -17,11 +16,14 @@ import {
 } from '../../shell-eval/powershell/parser.js'
 import { containsVulnerableUncPath } from '../../shell-eval/shared/readOnlyCommandValidation.js'
 import type { ToolPermissionContext, ToolUseContext } from '../../tools/tool.js'
-import type { PermissionDecisionReason, PermissionResult } from '../../types/permissions.js'
+import type {
+  PermissionDecisionReason,
+  PermissionResult,
+  PermissionUpdate,
+} from '../../types/permissions.js'
 import { getCwd } from '../../services/environment/cwd.js'
 import { isCurrentDirectoryBareGitRepo } from '../../services/infra/git.js'
-import type { PermissionRule } from '../../services/permissions/permissionRule.js'
-import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionRule } from 'src/types/permissions.js'
 import {
   createPermissionRequestMessage,
   getRuleByContentsForToolName,
@@ -51,15 +53,14 @@ import {
 } from './readOnlyValidation.js'
 import { POWERSHELL_TOOL_NAME } from './toolName.js'
 
-// Matches `$var = `, `$var += `, `$env:X = `, `$x ??= ` etc. Used to strip
-// nested assignment prefixes in the parse-failed fallback path.
+// 匹配 `$var = `、`$var += `、`$env:X = `、`$x ??= ` 等形式，
+// 用于在解析失败的回退路径中剥离嵌套赋值前缀。
 const PS_ASSIGN_PREFIX_RE = /^\$[\w:]+\s*(?:[+\-*/%]|\?\?)?\s*=\s*/
 
 /**
- * Cmdlets that can place a file at a caller-specified path. The
- * git-internal-paths guard checks whether any arg is a git-internal path
- * (hooks/, refs/, objects/, HEAD). Non-creating writers (remove-item,
- * clear-content) are intentionally absent — they can't plant new hooks.
+ * 可在调用方指定路径放置文件的 cmdlet。git-internal-paths 关卡会检查是否有参数为
+ * git 内部路径（hooks/、refs/、objects/、HEAD）。有意不包含不会创建文件的 writer
+ *（remove-item、clear-content），因为它们无法植入新 hook。
  */
 const GIT_SAFETY_WRITE_CMDLETS = new Set([
   'new-item',
@@ -78,14 +79,11 @@ const GIT_SAFETY_WRITE_CMDLETS = new Set([
 ])
 
 /**
- * External archive-extraction applications that write files to cwd with
- * archive-controlled paths. `tar -xf payload.tar; git status` defeats
- * isCurrentDirectoryBareGitRepo (TOCTOU): the check runs at
- * permission-eval time, tar extracts HEAD/hooks/refs/ AFTER the check and
- * BEFORE git runs. Unlike GIT_SAFETY_WRITE_CMDLETS (where we can inspect
- * args for git-internal paths), archive contents are opaque — any
- * extraction preceding git must ask. Matched by name only (lowercase,
- * with and without .exe).
+ * 使用 archive 控制的路径向 cwd 写文件的外部解压应用。`tar -xf payload.tar; git status`
+ * 可通过 TOCTOU 绕过 isCurrentDirectoryBareGitRepo：检查在权限求值时执行，而 tar 会在
+ * 检查后、git 运行前解压 HEAD/hooks/refs/。与 GIT_SAFETY_WRITE_CMDLETS 不同，
+ * 后者可检查参数中的 git 内部路径，而 archive 内容不透明，因此 git 前的任何解压都必须
+ * ask。仅按小写名称匹配，同时包含带和不带 .exe 的形式。
  */
 const GIT_SAFETY_ARCHIVE_EXTRACTORS = new Set([
   'tar',
@@ -106,8 +104,7 @@ const GIT_SAFETY_ARCHIVE_EXTRACTORS = new Set([
 ])
 
 /**
- * Extract the command name from a PowerShell command string.
- * Uses the parser to get the first command name from the AST.
+ * 从 PowerShell 命令字符串提取命令名。使用 parser 从 AST 获取第一条命令名称。
  */
 async function extractCommandName(command: string): Promise<string> {
   const trimmed = command.trim()
@@ -120,15 +117,14 @@ async function extractCommandName(command: string): Promise<string> {
 }
 
 /**
- * Parse a permission rule string into a structured rule object.
- * Delegates to shared parsePermissionRule.
+ * 将权限规则字符串解析为结构化规则对象，委托给共享 parsePermissionRule。
  */
 export function powershellPermissionRule(permissionRule: string): ShellPermissionRule {
   return parsePermissionRule(permissionRule)
 }
 
 /**
- * Generate permission update suggestion for exact command match.
+ * 为精确命令匹配生成权限更新建议。
  *
  * Skip exact-command suggestion for commands that can't round-trip cleanly:
  * - Multi-line: newlines don't survive normalization, rule would never match
@@ -147,7 +143,7 @@ function suggestionForExactCommand(command: string): PermissionUpdate[] {
 }
 
 /**
- * PowerShell input schema type - simplified for initial implementation
+ * PowerShell 输入 schema 类型；初始实现采用简化形式。
  */
 type PowerShellInput = {
   command: string
@@ -155,9 +151,8 @@ type PowerShellInput = {
 }
 
 /**
- * Filter rules by contents matching an input command.
- * PowerShell-specific: uses case-insensitive matching throughout.
- * Follows the same structure as BashTool's local filterRulesByContentsMatchingInput.
+ * 按是否匹配输入命令内容过滤规则。PowerShell 专用实现全程不区分大小写，
+ * 结构与 BashTool 本地的 filterRulesByContentsMatchingInput 相同。
  */
 function filterRulesByContentsMatchingInput(
   input: PowerShellInput,
@@ -185,17 +180,15 @@ function filterRulesByContentsMatchingInput(
     return stripModulePrefix(name)
   }
 
-  // Extract the first word (command name) from the input for canonical matching.
-  // Keep both raw (for slicing the original `command` string) and stripped
-  // (for canonical resolution) versions. For module-qualified inputs like
-  // `Microsoft.PowerShell.Utility\Invoke-Expression foo`, rawCmdName holds the
-  // full token so `command.slice(rawCmdName.length)` yields the correct rest.
+  // 从输入提取第一个单词（命令名）供规范匹配使用。同时保留 raw 版本（用于切分原始
+  // `command` 字符串）和 stripped 版本（用于规范解析）。对于模块限定输入，
+  // rawCmdName 保留完整 token，使 `command.slice(rawCmdName.length)` 得到正确剩余内容。
   const rawCmdName = command.split(/\s+/)[0] ?? ''
   const inputCmdName = stripModulePrefix(rawCmdName)
   const inputCanonical = resolveToCanonical(inputCmdName)
 
-  // Build a version of the command with the canonical name substituted
-  // e.g., 'rm foo.txt' -> 'remove-item foo.txt' so deny rules on Remove-Item also block rm.
+  // 构建以规范名称替换后的命令版本，例如 'rm foo.txt' -> 'remove-item foo.txt'，
+  // 使针对 Remove-Item 的 deny 规则也能阻止 rm。
   // SECURITY: Normalize the whitespace separator between name and args to a
   // single space. PowerShell accepts any whitespace (tab, etc.) as separator,
   // but prefix rule matching uses `prefix + ' '` (literal space). Without this,
@@ -210,8 +203,8 @@ function filterRulesByContentsMatchingInput(
     .filter(([ruleContent]) => {
       const rule = powershellPermissionRule(ruleContent)
 
-      // Also resolve the rule's command name to canonical for cross-matching
-      // e.g., a deny rule for 'rm' should also block 'Remove-Item'
+      // 同时将规则的命令名解析为规范形式以交叉匹配；例如针对 'rm' 的 deny 规则
+      // 也应阻止 'Remove-Item'。
       function matchesCommand(cmd: string): boolean {
         switch (rule.type) {
           case 'exact':
@@ -236,13 +229,12 @@ function filterRulesByContentsMatchingInput(
         }
       }
 
-      // Check against the original command
+      // 对原始命令检查。
       if (matchesCommand(command)) {
         return true
       }
 
-      // Also check against the canonical form of the command
-      // This ensures 'deny Remove-Item' also blocks 'rm', 'del', 'ri', etc.
+      // 同时对命令规范形式检查，确保 'deny Remove-Item' 也阻止 'rm'、'del'、'ri' 等。
       if (matchesCommand(canonicalCommand)) {
         return true
       }
@@ -258,7 +250,7 @@ function filterRulesByContentsMatchingInput(
         const rawRuleCmdName = rule.command.split(/\s+/)[0] ?? ''
         const ruleCanonical = resolveToCanonical(stripModulePrefixForRule(rawRuleCmdName))
         if (ruleCanonical === inputCanonical) {
-          // Rule and input resolve to same canonical cmdlet
+          // 规则和输入解析到同一规范 cmdlet。
           // SECURITY: use normalized `rest` not a raw re-slice
           // from `command`. The raw slice preserves tab separators so
           // `Remove-Item\t./secret.txt` vs deny rule `rm ./secret.txt` misses.
@@ -289,13 +281,12 @@ function filterRulesByContentsMatchingInput(
           }
         }
       } else if (rule.type === 'wildcard') {
-        // Resolve the wildcard pattern's command name to canonical and re-match
-        // This ensures 'deny rm *' also blocks 'Remove-Item secret.txt'
+        // 将通配符模式的命令名解析为规范形式后重新匹配，确保 'deny rm *'
+        // 也阻止 'Remove-Item secret.txt'。
         const rawRuleCmdName = rule.pattern.split(/\s+/)[0] ?? ''
         const ruleCanonical = resolveToCanonical(stripModulePrefixForRule(rawRuleCmdName))
         if (ruleCanonical === inputCanonical && matchMode !== 'exact') {
-          // Rebuild the pattern with the canonical cmdlet name
-          // Normalize separator same as exact and prefix branches.
+          // 使用规范 cmdlet 名重建模式，并按精确和前缀分支的方式规范化分隔符。
           // Without this, a wildcard rule `rm\t*` produces canonicalPattern
           // with a literal tab that never matches the space-normalized
           // canonicalCommand.
@@ -313,7 +304,7 @@ function filterRulesByContentsMatchingInput(
 }
 
 /**
- * Get matching rules for input across all rule types (deny, ask, allow)
+ * 从所有规则类型（deny、ask、allow）中获取匹配输入的规则。
  */
 function matchingRulesForInput(
   input: PowerShellInput,
@@ -360,7 +351,7 @@ function matchingRulesForInput(
 }
 
 /**
- * Check if the command is an exact match for a permission rule.
+ * 检查命令是否与权限规则精确匹配。
  */
 export function powershellToolCheckExactMatchPermission(
   input: PowerShellInput,
@@ -410,7 +401,7 @@ export function powershellToolCheckExactMatchPermission(
 }
 
 /**
- * Check permission for a PowerShell command including prefix matches.
+ * 检查 PowerShell 命令权限，包括前缀匹配。
  */
 export function powershellToolCheckPermission(
   input: PowerShellInput,
@@ -418,22 +409,22 @@ export function powershellToolCheckPermission(
 ): PermissionResult {
   const command = input.command.trim()
 
-  // 1. Check exact match first
+  // 1. 先检查精确匹配。
   const exactMatchResult = powershellToolCheckExactMatchPermission(input, toolPermissionContext)
 
-  // 1a. Deny/ask if exact command has a rule
+  // 1a. 精确命令存在规则时 deny/ask。
   if (exactMatchResult.behavior === 'deny' || exactMatchResult.behavior === 'ask') {
     return exactMatchResult
   }
 
-  // 2. Find all matching rules (prefix or exact)
+  // 2. 查找所有匹配规则（前缀或精确）。
   const { matchingDenyRules, matchingAskRules, matchingAllowRules } = matchingRulesForInput(
     input,
     toolPermissionContext,
     'prefix',
   )
 
-  // 2a. Deny if command has a deny rule
+  // 2a. 命令存在 deny 规则时拒绝。
   if (matchingDenyRules[0] !== undefined) {
     return {
       behavior: 'deny',
@@ -445,7 +436,7 @@ export function powershellToolCheckPermission(
     }
   }
 
-  // 2b. Ask if command has an ask rule
+  // 2b. 命令存在 ask 规则时询问。
   if (matchingAskRules[0] !== undefined) {
     return {
       behavior: 'ask',
@@ -457,12 +448,12 @@ export function powershellToolCheckPermission(
     }
   }
 
-  // 3. Allow if command had an exact match allow
+  // 3. 命令精确匹配 allow 时允许。
   if (exactMatchResult.behavior === 'allow') {
     return exactMatchResult
   }
 
-  // 4. Allow if command has an allow rule
+  // 4. 命令存在 allow 规则时允许。
   if (matchingAllowRules[0] !== undefined) {
     return {
       behavior: 'allow',
@@ -474,7 +465,7 @@ export function powershellToolCheckPermission(
     }
   }
 
-  // 5. Passthrough since no rules match, will trigger permission prompt
+  // 5. 没有规则匹配时 passthrough，以触发权限 prompt。
   const decisionReason = {
     type: 'other' as const,
     reason: 'This command requires approval',
@@ -488,7 +479,7 @@ export function powershellToolCheckPermission(
 }
 
 /**
- * Information about a sub-command for permission checking.
+ * 用于权限检查的子命令信息。
  */
 type SubCommandInfo = {
   text: string
@@ -615,7 +606,7 @@ export async function powershellToolHasPermission(
   const toolPermissionContext = context.getAppState().toolPermissionContext
   const command = input.command.trim()
 
-  // Empty command check
+  // 检查空命令。
   if (!command) {
     return {
       behavior: 'allow',
@@ -627,7 +618,7 @@ export async function powershellToolHasPermission(
     }
   }
 
-  // Parse the command once and thread through all sub-functions
+  // 命令只解析一次，并将结果传给所有子函数。
   const parsed = await parsePowerShellCommand(command)
 
   // SECURITY: Check deny/ask rules BEFORE parse validity check.

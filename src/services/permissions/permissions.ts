@@ -8,21 +8,22 @@ import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
 import { REPL_TOOL_NAME } from '../../tools/REPLTool/constants.js'
 import { isAbortError } from '../../types/llm.js'
 import type { AssistantMessage } from '../../types/message.js'
-import { createDebugLog } from '../../services/infra/debug.js'
-import { isInternalBuild } from '../../services/infra/envUtils.js'
-import { AbortError, toError } from '../../utils/errors.js'
-import { logError } from '../../services/infra/log.js'
-import { isAutoModeAllowlistedTool } from './classifierDecision.js'
 import type {
   PermissionAskDecision,
   PermissionDecision,
   PermissionDecisionReason,
   PermissionDenyDecision,
   PermissionResult,
-} from './permissionResult.js'
-import type { PermissionRule, PermissionRuleSource } from './permissionRule.js'
+  PermissionRule,
+  PermissionRuleSource,
+  PermissionUpdate,
+} from '../../types/permissions.js'
+import { createDebugLog } from '../../services/infra/debug.js'
+import { isInternalBuild } from '../../services/infra/envUtils.js'
+import { AbortError, toError } from '../../utils/errors.js'
+import { logError } from '../../services/infra/log.js'
+import { isAutoModeAllowlistedTool } from './classifierDecision.js'
 import { applyPermissionUpdates, persistPermissionUpdates } from './permissionUpdate.js'
-import type { PermissionUpdate } from './permissionUpdateSchema.js'
 import { permissionRuleValueToString } from './permissionRuleParser.js'
 import {
   applyPermissionRulesToPermissionContext,

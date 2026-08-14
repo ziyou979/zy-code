@@ -3,7 +3,7 @@ import { expandPath } from '../../utils/path.js'
 import { containsPathTraversal } from '../../utils/path.js'
 import { getPlatform } from '../shell/platform.js'
 import { windowsPathToPosixPath } from '../shell/windowsPaths.js'
-import type { PermissionRuleSource } from './permissionRule.js'
+import type { PermissionRuleSource } from '../../types/permissions.js'
 import { getSettingsRootPathForSource } from '../settings/settings.js'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 

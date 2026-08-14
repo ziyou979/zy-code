@@ -7,7 +7,7 @@ import type {
   PermissionBehavior,
   PermissionRule,
   PermissionRuleValue,
-} from '../../../services/permissions/permissionRule.js'
+} from 'src/types/permissions.js'
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,

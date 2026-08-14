@@ -1,7 +1,11 @@
 import { posix } from 'node:path'
 import type { ToolPermissionContext } from '../../tools/tool.js'
 // Types extracted to src/types/permissions.ts to break import cycles
-import type { AdditionalWorkingDirectory, WorkingDirectorySource } from '../../types/permissions.js'
+import type {
+  PermissionRuleValue,
+  PermissionUpdate,
+  PermissionUpdateDestination,
+} from '../../types/permissions.js'
 import { createDebugLog } from '../../services/infra/debug.js'
 
 const permLog = createDebugLog('permissions')
@@ -10,16 +14,11 @@ import type { EditableSettingSource } from '../settings/constants.js'
 import { getSettingsForSource, updateSettingsForSource } from '../settings/settings.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { toPosixPath } from './internalPaths.js'
-import type { PermissionRuleValue } from './permissionRule.js'
-import type { PermissionUpdate, PermissionUpdateDestination } from './permissionUpdateSchema.js'
 import {
   permissionRuleValueFromString,
   permissionRuleValueToString,
 } from './permissionRuleParser.js'
 import { addPermissionRulesToSettings } from './permissionsLoader.js'
-
-// Re-export for backwards compatibility
-export type { AdditionalWorkingDirectory, WorkingDirectorySource }
 
 export function extractRules(updates: PermissionUpdate[] | undefined): PermissionRuleValue[] {
   if (!updates) {

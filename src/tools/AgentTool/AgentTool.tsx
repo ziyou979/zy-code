@@ -54,7 +54,7 @@ import { extractTextContent } from '../../services/messages/./predicates.js'
 import { isSyntheticMessage } from '../../services/messages/./constants.js'
 import { normalizeMessages } from '../../services/messages/./normalize.js'
 import { permissionModeSchema } from '../../services/permissions/permissionMode.js'
-import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 import {
   filterDeniedAgents,
   getDenyRuleForAgent,

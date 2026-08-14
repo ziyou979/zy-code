@@ -7,10 +7,7 @@ import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js
 import { SandboxManager } from 'src/services/sandbox/sandboxAdapter.js'
 import { splitCommand_DEPRECATED } from 'src/shell-eval/bash/commands.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
-import type {
-  PermissionDecisionReason,
-  PermissionResult,
-} from 'src/services/permissions/permissionResult.js'
+import type { PermissionDecisionReason, PermissionResult } from 'src/types/permissions.js'
 import { extractRules, hasRules } from 'src/services/permissions/permissionUpdate.js'
 import { permissionRuleValueToString } from 'src/services/permissions/permissionRuleParser.js'
 import type { ToolUseConfirm } from './PermissionRequest.js'

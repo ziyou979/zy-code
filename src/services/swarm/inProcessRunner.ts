@@ -85,7 +85,7 @@ import {
   applyPermissionUpdates,
   persistPermissionUpdates,
 } from '../permissions/permissionUpdate.js'
-import type { PermissionUpdate } from '../permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { hasPermissionsToUseTool } from '../permissions/permissions.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'

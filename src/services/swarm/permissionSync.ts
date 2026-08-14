@@ -20,7 +20,7 @@
 
 import { logForDebugging } from '../../services/infra/debug.js'
 import { logError } from '../../services/infra/log.js'
-import type { PermissionUpdate } from '../permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { getAgentId, getAgentName, getTeammateColor, getTeamName } from './teammate.js'
 import {

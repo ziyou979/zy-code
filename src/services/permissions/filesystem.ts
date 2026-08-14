@@ -18,6 +18,13 @@ import type { z } from 'zod/v4'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import type { AnyObject, Tool, ToolPermissionContext } from '../../tools/tool.js'
+import type {
+  PermissionDecision,
+  PermissionResult,
+  PermissionRule,
+  PermissionRuleSource,
+  PermissionUpdate,
+} from '../../types/permissions.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import { getCwd } from '../environment/cwd.js'
 import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
@@ -35,10 +42,7 @@ import { getPlatform } from '../shell/platform.js'
 import { windowsPathToPosixPath } from '../shell/windowsPaths.js'
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { getSettingsRootPathForSource } from '../settings/settings.js'
-import type { PermissionDecision, PermissionResult } from './permissionResult.js'
-import type { PermissionRule, PermissionRuleSource } from './permissionRule.js'
 import { createReadRuleSuggestion } from './permissionUpdate.js'
-import type { PermissionUpdate } from './permissionUpdateSchema.js'
 import { getRuleByContentsForToolName } from './permissionRuleQueries.js'
 import {
   checkEditableInternalPath,

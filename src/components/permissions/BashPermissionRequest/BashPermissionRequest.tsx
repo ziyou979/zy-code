@@ -28,7 +28,7 @@ import {
   isClassifierPermissionsEnabled,
 } from '../../../services/permissions/bashClassifier.js'
 import { extractRules } from '../../../services/permissions/permissionUpdate.js'
-import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { Select } from '../../CustomSelect/select.js'
 import { ShimmerChar } from '../../Spinner/ShimmerChar.js'
 import { useShimmerAnimation } from '../../Spinner/useShimmerAnimation.js'

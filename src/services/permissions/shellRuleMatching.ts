@@ -7,7 +7,7 @@
  * - Generating permission suggestions
  */
 
-import type { PermissionUpdate } from './permissionUpdateSchema.js'
+import type { PermissionUpdate } from '../../types/permissions.js'
 
 // Null-byte sentinel placeholders for wildcard pattern escaping — module-level
 // so the RegExp objects are compiled once instead of per permission check.

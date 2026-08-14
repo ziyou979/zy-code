@@ -12,7 +12,7 @@ import {
   getFileReadIgnorePatterns,
 } from '../../services/permissions/filesystem.js'
 import { normalizePatternsToPath } from '../../services/permissions/internalPaths.js'
-import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
 import { getGlobExclusionsForPluginCache } from '../../services/plugins/orphanedPluginFilter.js'
 import { ripGrep } from '../../services/file-search/ripgrep.js'

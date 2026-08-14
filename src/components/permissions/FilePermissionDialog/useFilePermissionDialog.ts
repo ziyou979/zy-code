@@ -6,7 +6,7 @@ import {
   logEvent,
 } from '../../../services/analytics/index.js'
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js'
-import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import type { CompletionType } from '../../../services/telemetry/unaryLogging.js'
 import type { ToolUseConfirm } from '../PermissionRequest.js'
 import {

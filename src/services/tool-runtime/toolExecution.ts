@@ -66,7 +66,7 @@ import {
   createUserMessage,
 } from '../messages/constructors.js'
 import { withMemoryCorrectionHint } from '../messages/predicates.js'
-import type { PermissionDecisionReason, PermissionResult } from '../permissions/permissionResult.js'
+import type { PermissionDecisionReason, PermissionResult } from 'src/types/permissions.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { Stream } from '../../utils/stream.js'
 import { formatZodValidationError } from '../tool-runtime/toolErrors.js'

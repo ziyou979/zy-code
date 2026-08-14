@@ -1,32 +1,19 @@
 import z from 'zod/v4'
 import { PermissionBehaviorSchema } from '../../types/coreSchemas.js'
-// Types extracted to src/types/permissions.ts to break import cycles
-import type {
-  PermissionBehavior,
-  PermissionRule,
-  PermissionRuleSource,
-  PermissionRuleValue,
-} from '../../types/permissions.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
-// Re-export for backwards compatibility
-export type { PermissionBehavior, PermissionRule, PermissionRuleSource, PermissionRuleValue }
-
 /**
- * ToolPermissionBehavior is the behavior associated with a permission rule.
- * 'allow' means the rule allows the tool to run.
- * 'deny' means the rule denies the tool from running.
- * 'ask' means the rule forces a prompt to be shown to the user.
+ * ToolPermissionBehavior 表示权限规则关联的行为：allow 允许 tool 运行，deny 禁止 tool
+ * 运行，ask 强制向用户显示确认提示。
  *
  * @deprecated 请从 coreSchemas.ts 导入 PermissionBehaviorSchema。
  */
 export const permissionBehaviorSchema = PermissionBehaviorSchema
 
 /**
- * PermissionRuleValue is the content of a permission rule.
- * @param toolName - The name of the tool this rule applies to
- * @param ruleContent - The optional content of the rule.
- *   Each tool may implement custom handling in `checkPermissions()`
+ * PermissionRuleValue 是权限规则的内容。
+ * @param toolName 此规则适用的 tool 名称
+ * @param ruleContent 可选的规则内容；每个 tool 可在 `checkPermissions()` 中自定义处理
  */
 export const permissionRuleValueSchema = lazySchema(() =>
   z.object({

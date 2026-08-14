@@ -25,8 +25,8 @@ import {
   setYoloClassifierApproval,
 } from '../../../services/permissions/classifierApprovals.js'
 import { errorMessage } from '../../../utils/errors.js'
-import type { PermissionDecision } from '../../../services/permissions/permissionResult.js'
-import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { hasPermissionsToUseTool } from '../../../services/permissions/permissions.js'
 import type { PermissionContext } from '../permissionContext.js'
 import { createResolveOnce } from '../permissionContext.js'

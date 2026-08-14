@@ -1,4 +1,4 @@
-import type { PermissionRule } from 'src/services/permissions/permissionRule.js'
+import type { PermissionRule } from 'src/types/permissions.js'
 import { getSettingsForSource } from 'src/services/settings/settings.js'
 import type { SettingsJson } from 'src/services/settings/types.js'
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'

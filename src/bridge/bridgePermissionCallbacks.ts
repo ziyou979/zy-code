@@ -1,4 +1,4 @@
-import type { PermissionUpdate } from '../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 type WirePermissionResponse = {
   behavior: 'allow' | 'deny'
   updatedInput?: Record<string, unknown>
@@ -17,14 +17,13 @@ type WirePermissionCallbacks = {
     blockedPath?: string,
   ): void
   sendResponse(requestId: string, response: WirePermissionResponse): void
-  /** Cancel a pending control_request so the web app can dismiss its prompt. */
+  /** 取消待处理的 control_request，使 Web 应用可以关闭其 prompt。 */
   cancelRequest(requestId: string): void
-  onResponse(requestId: string, handler: (response: WirePermissionResponse) => void): () => void // returns unsubscribe
+  onResponse(requestId: string, handler: (response: WirePermissionResponse) => void): () => void // 返回取消订阅函数
 }
 
-/** Type predicate for validating a parsed control_response payload
- *  as a WirePermissionResponse. Checks the required `behavior`
- *  discriminant rather than using an unsafe `as` cast. */
+/** 类型谓词：验证解析后的 control_response payload 是否为 WirePermissionResponse。
+ *  通过检查必需的 `behavior` 判别字段完成验证，而不使用不安全的 `as` 断言。 */
 function isWirePermissionResponse(value: unknown): value is WirePermissionResponse {
   if (!value || typeof value !== 'object') {
     return false

@@ -1,26 +1,7 @@
-// Types extracted to src/types/permissions.ts to break import cycles
-import type {
-  PermissionAllowDecision,
-  PermissionAskDecision,
-  PermissionDecision,
-  PermissionDecisionReason,
-  PermissionDenyDecision,
-  PermissionMetadata,
-  PermissionResult,
-} from '../../types/permissions.js'
+// 类型已提取到 src/types/permissions.ts，以打破循环导入
+import type { PermissionResult } from '../../types/permissions.js'
 
-// Re-export for backwards compatibility
-export type {
-  PermissionAllowDecision,
-  PermissionAskDecision,
-  PermissionDecision,
-  PermissionDecisionReason,
-  PermissionDenyDecision,
-  PermissionMetadata,
-  PermissionResult,
-}
-
-// Helper function to get the appropriate prose description for rule behavior
+// 获取规则行为对应文字说明的辅助函数
 export function getRuleBehaviorDescription(permissionResult: PermissionResult['behavior']): string {
   switch (permissionResult) {
     case 'allow':

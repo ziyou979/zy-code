@@ -1,7 +1,6 @@
 /**
- * Adapter layer that wraps @anthropic-ai/sandbox-runtime with Zy CLI-specific integrations.
- * This file provides the bridge between the external sandbox-runtime package and Zy CLI's
- * settings system, tool integration, and additional features.
+ * 封装 @anthropic-ai/sandbox-runtime 并接入 Zy CLI 特有能力的 adapter 层。
+ * 本文件连接外部 sandbox-runtime package 与 Zy CLI 的设置系统、tool 集成及附加功能。
  */
 
 import { rmSync, statSync } from 'node:fs'
@@ -45,7 +44,7 @@ import {
 import type { SettingsJson } from '../settings/types.js'
 
 // ============================================================================
-// Settings Converter
+// 设置转换器。
 // ============================================================================
 
 import { BASH_TOOL_NAME } from 'src/tools/BashTool/toolName.js'
@@ -54,11 +53,11 @@ import { FILE_READ_TOOL_NAME } from 'src/tools/FileReadTool/prompt.js'
 import { WEB_FETCH_TOOL_NAME } from 'src/tools/WebFetchTool/prompt.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getZyTempDir } from '../permissions/scratchpadStorage.js'
-import type { PermissionRuleValue } from '../permissions/permissionRule.js'
+import type { PermissionRuleValue } from 'src/types/permissions.js'
 import { ripgrepCommand } from '../file-search/ripgrep.js'
 
-// Local copies to avoid circular dependency
-// (permissions.ts imports SandboxManager, bashPermissions.ts imports permissions.ts)
+// 使用本地副本避免循环依赖：permissions.ts 导入 SandboxManager，
+// bashPermissions.ts 又导入 permissions.ts。
 function permissionRuleValueFromString(ruleString: string): PermissionRuleValue {
   const matches = ruleString.match(/^([^(]+)\(([^)]+)\)$/)
   if (!matches) {
@@ -78,60 +77,58 @@ function permissionRuleExtractPrefix(permissionRule: string): string | null {
 }
 
 /**
- * Resolve ZY Code-specific path patterns for sandbox-runtime.
+ * 为 sandbox-runtime 解析 ZY Code 特有的路径模式。
  *
- * ZY Code uses special path prefixes in permission rules:
- * - `//path` → absolute from filesystem root (becomes `/path`)
- * - `/path` → relative to settings file directory (becomes `$SETTINGS_DIR/path`)
- * - `~/path` → passed through (sandbox-runtime handles this)
- * - `./path` or `path` → passed through (sandbox-runtime handles this)
+ * ZY Code 在权限规则中使用特殊路径前缀：
+ * - `//path` → 相对于文件系统根目录的绝对路径（变为 `/path`）
+ * - `/path` → 相对于设置文件目录（变为 `$SETTINGS_DIR/path`）
+ * - `~/path` → 原样传递，由 sandbox-runtime 处理
+ * - `./path` 或 `path` → 原样传递，由 sandbox-runtime 处理
  *
- * This function only handles CC-specific conventions (`//` and `/`).
- * Standard path patterns like `~/` and relative paths are passed through
- * for sandbox-runtime's normalizePathForSandbox to handle.
+ * 此函数仅处理 CC 特有约定（`//` 和 `/`）。`~/` 和相对路径等标准模式原样传递，
+ * 交给 sandbox-runtime 的 normalizePathForSandbox 处理。
  *
- * @param pattern The path pattern from a permission rule
- * @param source The settings source this pattern came from (needed to resolve `/path` patterns)
+ * @param pattern 权限规则中的路径模式
+ * @param source 模式所属设置来源，用于解析 `/path` 模式
  */
 export function resolvePathPatternForSandbox(pattern: string, source: SettingSource): string {
-  // Handle // prefix - absolute from root (CC-specific convention)
+  // 处理 // 前缀：相对于根目录的绝对路径，属于 CC 特有约定。
   if (pattern.startsWith('//')) {
     return pattern.slice(1) // "//.aws/**" → "/.aws/**"
   }
 
-  // Handle / prefix - relative to settings file directory (CC-specific convention)
-  // Note: ~/path and relative paths are passed through for sandbox-runtime to handle
+  // 处理 / 前缀：相对于设置文件目录，属于 CC 特有约定。~/path 和相对路径
+  // 原样传递给 sandbox-runtime 处理。
   if (pattern.startsWith('/') && !pattern.startsWith('//')) {
     const root = getSettingsRootPathForSource(source)
-    // Pattern like "/foo/**" becomes "${root}/foo/**"
+    // "/foo/**" 等模式变为 "${root}/foo/**"。
     return resolve(root, pattern.slice(1))
   }
 
-  // Other patterns (~/path, ./path, path) pass through as-is
-  // sandbox-runtime's normalizePathForSandbox will handle them
+  // 其他模式（~/path、./path、path）原样传递，由 sandbox-runtime 的
+  // normalizePathForSandbox 处理。
   return pattern
 }
 
 /**
- * Resolve paths from sandbox.filesystem.* settings (allowWrite, denyWrite, etc).
+ * 解析 sandbox.filesystem.* 设置中的路径，如 allowWrite、denyWrite。
  *
- * Unlike permission rules (Edit/Read), these settings use standard path semantics:
- * - `/path` → absolute path (as written, NOT settings-relative)
- * - `~/path` → expanded to home directory
- * - `./path` or `path` → relative to settings file directory
- * - `//path` → absolute (legacy permission-rule syntax, accepted for compat)
+ * 与权限规则（Edit/Read）不同，这些设置采用标准路径语义：
+ * - `/path` → 原样作为绝对路径，而非相对于设置目录
+ * - `~/path` → 展开到主目录
+ * - `./path` 或 `path` → 相对于设置文件目录
+ * - `//path` → 绝对路径；为兼容旧权限规则语法而接受
  *
- * Fix for #30067: resolvePathPatternForSandbox treats `/Users/foo/.cargo` as
- * settings-relative (permission-rule convention). Users reasonably expect
- * absolute paths in sandbox.filesystem.allowWrite to work as-is.
+ * 修复 #30067：resolvePathPatternForSandbox 会按权限规则约定将
+ * `/Users/foo/.cargo` 视为相对于设置目录，但用户合理地期望
+ * sandbox.filesystem.allowWrite 中的绝对路径原样生效。
  *
- * Also expands `~` here rather than relying on sandbox-runtime, because
- * sandbox-runtime's getFsWriteConfig() does not call normalizePathForSandbox
- * on allowWrite paths (it only strips trailing glob suffixes).
+ * 此处也直接展开 `~`，不依赖 sandbox-runtime，因为其 getFsWriteConfig()
+ * 不会对 allowWrite 路径调用 normalizePathForSandbox，只会移除尾部 glob 后缀。
  */
 export function resolveSandboxFilesystemPath(pattern: string, source: SettingSource): string {
-  // Legacy permission-rule escape: //path → /path. Kept for compat with
-  // users who worked around #30067 by writing //Users/foo/.cargo in config.
+  // 旧权限规则转义：//path → /path。保留用于兼容通过在配置中写入
+  // //Users/foo/.cargo 来规避 #30067 的用户。
   if (pattern.startsWith('//')) {
     return pattern.slice(1)
   }
@@ -139,8 +136,8 @@ export function resolveSandboxFilesystemPath(pattern: string, source: SettingSou
 }
 
 /**
- * Check if only managed sandbox domains should be used.
- * This is true when policySettings has sandbox.network.allowManagedDomainsOnly: true
+ * 检查是否只能使用托管 sandbox domain。当 policySettings 中
+ * sandbox.network.allowManagedDomainsOnly 为 true 时成立。
  */
 export function shouldAllowManagedSandboxDomainsOnly(): boolean {
   return getSettingsForSource('policySettings')?.sandbox?.network?.allowManagedDomainsOnly === true
@@ -153,19 +150,18 @@ function shouldAllowManagedReadPathsOnly(): boolean {
 }
 
 /**
- * Convert ZY Code settings format to SandboxRuntimeConfig format
- * (Function exported for testing)
+ * 将 ZY Code 设置格式转换为 SandboxRuntimeConfig 格式；函数导出供测试使用。
  *
- * @param settings Merged settings (used for sandbox config like network, ripgrep, etc.)
+ * @param settings 合并后的设置，用于 network、ripgrep 等 sandbox 配置
  */
 export function convertToSandboxRuntimeConfig(settings: SettingsJson): SandboxRuntimeConfig {
   const permissions = settings.permissions || {}
 
-  // Extract network domains from WebFetch rules
+  // 从 WebFetch 规则提取网络 domain。
   const allowedDomains: string[] = []
   const deniedDomains: string[] = []
 
-  // When allowManagedSandboxDomainsOnly is enabled, only use domains from policy settings
+  // 启用 allowManagedSandboxDomainsOnly 时，仅使用策略设置中的 domain。
   if (shouldAllowManagedSandboxDomainsOnly()) {
     const policySettings = getSettingsForSource('policySettings')
     for (const domain of policySettings?.sandbox?.network?.allowedDomains || []) {
@@ -196,24 +192,22 @@ export function convertToSandboxRuntimeConfig(settings: SettingsJson): SandboxRu
     }
   }
 
-  // Extract filesystem paths from Edit and Read rules
-  // Always include current directory and Zy temp directory as writable
-  // The temp directory is needed for Shell.ts cwd tracking files
+  // 从 Edit 和 Read 规则提取文件系统路径。始终将当前目录和 Zy 临时目录设为可写；
+  // Shell.ts 的 cwd 跟踪文件需要临时目录。
   const allowWrite: string[] = ['.', getZyTempDir()]
   const denyWrite: string[] = []
   const denyRead: string[] = []
   const allowRead: string[] = []
 
-  // Always deny writes to settings.json files to prevent sandbox escape
-  // This blocks settings in the original working directory (where ZY Code started)
+  // 始终禁止写入 settings.json，防止 sandbox 逃逸。这会阻止写入 ZY Code 启动时
+  // 原始工作目录中的设置。
   const settingsPaths = SETTING_SOURCES.map((source) =>
     getSettingsFilePathForSource(source),
   ).filter((p): p is string => p !== undefined)
   denyWrite.push(...settingsPaths)
   denyWrite.push(getManagedSettingsDropInDir())
 
-  // Also block settings files in the current working directory if it differs from original
-  // This handles the case where the user has cd'd to a different directory
+  // 当前工作目录与原始目录不同时，也阻止其中的设置文件，以处理用户 cd 到其他目录的情况。
   const cwd = getCwdState()
   const originalCwd = getOriginalCwd()
   if (cwd !== originalCwd) {
@@ -221,26 +215,25 @@ export function convertToSandboxRuntimeConfig(settings: SettingsJson): SandboxRu
     denyWrite.push(resolve(cwd, '.zy', 'settings.local.json'))
   }
 
-  // Block writes to .zy/skills in both original and current working directories.
-  // The sandbox-runtime's getDangerousDirectories() protects .zy/commands and
-  // .zy/agents but not .zy/skills. Skills have the same privilege level
-  // (auto-discovered, auto-loaded, full Zy capabilities) so they need the
-  // same OS-level sandbox protection.
+  // 阻止写入原始与当前工作目录中的 .zy/skills。sandbox-runtime 的
+  // getDangerousDirectories() 会保护 .zy/commands 和 .zy/agents，但不保护
+  // .zy/skills。skill 具有相同权限等级（自动发现、自动加载、完整 Zy 能力），
+  // 因此需要同等 OS 层 sandbox 保护。
   denyWrite.push(resolve(originalCwd, '.zy', 'skills'))
   if (cwd !== originalCwd) {
     denyWrite.push(resolve(cwd, '.zy', 'skills'))
   }
 
-  // SECURITY: Git's is_git_directory() treats cwd as a bare repo if it has
-  // HEAD + objects/ + refs/. An attacker planting these (plus a config with
-  // core.fsmonitor) escapes the sandbox when Zy's unsandboxed git runs.
+  // 安全：Git 的 is_git_directory() 会在 cwd 含以下内容时将其视为 bare repo：
+  // HEAD + objects/ + refs/。攻击者植入这些内容和带 core.fsmonitor 的配置后，
+  // 可在 Zy 未 sandbox 的 git 运行时逃逸。
   //
-  // Unconditionally denying these paths makes sandbox-runtime mount
-  // /dev/null at non-existent ones, which (a) leaves a 0-byte HEAD stub on
-  // the host and (b) breaks `git log HEAD` inside bwrap ("ambiguous argument").
-  // So: if a file exists, denyWrite (ro-bind in place, no stub). If not, scrub
-  // it post-command in scrubBareGitRepoFiles() — planted files are gone before
-  // unsandboxed git runs; inside the command, git is itself sandboxed.
+  // 无条件拒绝这些路径会使 sandbox-runtime 在不存在的位置挂载
+  // /dev/null 到不存在的位置，这会在 host 留下 0 字节 HEAD stub，且使 bwrap 内的
+  // `git log HEAD` 报 "ambiguous argument"。
+  // 因此：文件存在时 denyWrite（原位 ro-bind，不产生 stub）；不存在时在命令后由
+  // scrubBareGitRepoFiles() 清除。未 sandbox 的 git 运行前，植入文件已删除；
+  // 命令内部的 git 本身处于 sandbox 中。
   bareGitRepoScrubPaths.length = 0
   const bareGitRepoFiles = ['HEAD', 'objects', 'refs', 'hooks', 'config']
   for (const dir of cwd === originalCwd ? [originalCwd] : [originalCwd, cwd]) {
@@ -256,32 +249,29 @@ export function convertToSandboxRuntimeConfig(settings: SettingsJson): SandboxRu
     }
   }
 
-  // If we detected a git worktree during initialize(), the main repo path is
-  // cached in worktreeMainRepoPath. Git operations in a worktree need write
-  // access to the main repo's .git directory for index.lock etc.
-  // This is resolved once at init time (worktree status doesn't change mid-session).
+  // initialize() 检测到 git worktree 时，将主仓库路径缓存到 worktreeMainRepoPath。
+  // worktree 中的 Git 操作需要写入主仓库 .git 目录，如 index.lock。
+  // 该路径仅在 init 时解析一次，因为会话中途 worktree 状态不会变化。
   if (worktreeMainRepoPath && worktreeMainRepoPath !== cwd) {
     allowWrite.push(worktreeMainRepoPath)
   }
 
-  // Include directories added via --add-dir CLI flag or /add-dir command.
-  // These must be in allowWrite so that Bash commands (which run inside the
-  // sandbox) can access them — not just file tools, which check permissions
-  // at the app level via pathInAllowedWorkingPath().
-  // Two sources: persisted in settings, and session-only in bootstrap state.
+  // 包含通过 --add-dir CLI flag 或 /add-dir 命令添加的目录。这些目录必须加入
+  // allowWrite，才能让 sandbox 内运行的 Bash 命令访问；不能只依赖在应用层通过
+  // pathInAllowedWorkingPath() 检查权限的文件 tool。来源有两个：持久化设置，
+  // 以及 bootstrap state 中的仅会话设置。
   const additionalDirs = new Set([
     ...(settings.permissions?.additionalDirectories || []),
     ...getAdditionalDirectoriesForAgentsMd(),
   ])
   allowWrite.push(...additionalDirs)
 
-  // Iterate through each settings source to resolve paths correctly
-  // Path patterns like `/foo` are relative to the settings file directory,
-  // so we need to know which source each rule came from
+  // 遍历各设置来源以正确解析路径。`/foo` 等路径模式相对于设置文件目录，
+  // 因此需要知道每条规则所属来源。
   for (const source of SETTING_SOURCES) {
     const sourceSettings = getSettingsForSource(source)
 
-    // Extract filesystem paths from permission rules
+    // 从权限规则提取文件系统路径。
     if (sourceSettings?.permissions) {
       for (const ruleString of sourceSettings.permissions.allow || []) {
         const rule = permissionRuleValueFromString(ruleString)
@@ -301,9 +291,8 @@ export function convertToSandboxRuntimeConfig(settings: SettingsJson): SandboxRu
       }
     }
 
-    // Extract filesystem paths from sandbox.filesystem settings
-    // sandbox.filesystem.* uses standard path semantics (/path = absolute),
-    // NOT the permission-rule convention (/path = settings-relative). #30067
+    // 从 sandbox.filesystem 设置提取文件系统路径。sandbox.filesystem.* 使用标准
+    // 路径语义（/path 为绝对路径），而非权限规则约定（/path 相对于设置目录）。#30067
     const fs = sourceSettings?.sandbox?.filesystem
     if (fs) {
       for (const p of fs.allowWrite || []) {
@@ -353,25 +342,25 @@ export function convertToSandboxRuntimeConfig(settings: SettingsJson): SandboxRu
 }
 
 // ============================================================================
-// Zy CLI-specific state
+// Zy CLI 特有状态。
 // ============================================================================
 
 let initializationPromise: Promise<void> | undefined
 let settingsSubscriptionCleanup: (() => void) | undefined
 
-// Cached main repo path for git worktrees, resolved once during initialize().
-// In a worktree, .git is a file containing "gitdir: /path/to/main/repo/.git/worktrees/name".
-// undefined = not yet resolved; null = not a worktree or detection failed.
+// git worktree 的主仓库路径缓存，在 initialize() 期间解析一次。worktree 中 .git
+// 是包含 "gitdir: /path/to/main/repo/.git/worktrees/name" 的文件。
+// undefined 表示尚未解析；null 表示不是 worktree 或检测失败。
 let worktreeMainRepoPath: string | null | undefined
 
-// Bare-repo files at cwd that didn't exist at config time and should be
-// scrubbed if they appear after a sandboxed command. See anthropics/zy-code#29316.
+// 配置时 cwd 中不存在、但在 sandbox 命令后出现时应清除的 bare-repo 文件。
+// 参见 anthropics/zy-code#29316。
 let bareGitRepoScrubPaths: string[]
 bareGitRepoScrubPaths = []
 
 /**
- * Delete bare-repo files planted at cwd during a sandboxed command, before
- * Zy's unsandboxed git calls can see them. See the SECURITY block above
+ * 在 Zy 未 sandbox 的 git 调用看到之前，删除 sandbox 命令期间植入 cwd 的
+ * bare-repo 文件。参见上方安全说明。
  * bareGitRepoFiles. anthropics/zy-code#29316.
  */
 function scrubBareGitRepoFiles(): void {
@@ -381,16 +370,15 @@ function scrubBareGitRepoFiles(): void {
       rmSync(p, { recursive: true })
       logForDebugging(`[Sandbox] scrubbed planted bare-repo file: ${p}`)
     } catch {
-      // ENOENT is the expected common case — nothing was planted
+      // ENOENT 是预期的常见情况，表示没有植入文件。
     }
   }
 }
 
 /**
- * Detect if cwd is a git worktree and resolve the main repo path.
- * Called once during initialize() and cached for the session.
- * In a worktree, .git is a file (not a directory) containing "gitdir: ...".
- * If .git is a directory, readFile throws EISDIR and we return null.
+ * 检测 cwd 是否为 git worktree，并解析主仓库路径。initialize() 期间调用一次，
+ * 结果在会话内缓存。worktree 中 .git 是包含 "gitdir: ..." 的文件，而非目录；
+ * 若 .git 是目录，readFile 会抛出 EISDIR，此时返回 null。
  */
 async function detectWorktreeMainRepoPath(cwd: string): Promise<string | null> {
   const gitPath = join(cwd, '.git')
@@ -400,11 +388,11 @@ async function detectWorktreeMainRepoPath(cwd: string): Promise<string | null> {
     if (!gitdirMatch?.[1]) {
       return null
     }
-    // gitdir may be relative (rare, but git accepts it) — resolve against cwd
+    // gitdir 可能是相对路径，虽少见但 git 接受；此时相对于 cwd 解析。
     const gitdir = resolve(cwd, gitdirMatch[1].trim())
-    // gitdir format: /path/to/main/repo/.git/worktrees/worktree-name
-    // Match the /.git/worktrees/ segment specifically — indexOf('.git') alone
-    // would false-match paths like /home/user/.github-projects/...
+    // gitdir 格式：/path/to/main/repo/.git/worktrees/worktree-name。
+    // 必须明确匹配 /.git/worktrees/ 段；只用 indexOf('.git') 会误匹配
+    // /home/user/.github-projects/... 等路径。
     const marker = `${sep}.git${sep}worktrees${sep}`
     const markerIndex = gitdir.lastIndexOf(marker)
     if (markerIndex > 0) {
@@ -412,14 +400,13 @@ async function detectWorktreeMainRepoPath(cwd: string): Promise<string | null> {
     }
     return null
   } catch {
-    // Not in a worktree, .git is a directory (EISDIR), or can't read .git file
+    // 不在 worktree 中、.git 是目录（EISDIR），或无法读取 .git 文件。
     return null
   }
 }
 
 /**
- * Check if dependencies are available (memoized)
- * Returns { errors, warnings } - errors mean sandbox cannot run
+ * 检查依赖是否可用（memoized）。返回 { errors, warnings }；errors 表示 sandbox 无法运行。
  */
 const checkDependencies = memoize((): SandboxDependencyCheck => {
   const { rgPath, rgArgs } = ripgrepCommand()
@@ -455,22 +442,21 @@ function isSandboxRequired(): boolean {
 }
 
 /**
- * Check if the current platform is supported for sandboxing (memoized)
- * Supports: macOS, Linux, and WSL2+ (WSL1 is not supported)
+ * 检查当前平台是否支持 sandbox（memoized）。支持 macOS、Linux、WSL2+，不支持 WSL1。
  */
 const isSupportedPlatform = memoize((): boolean => {
   return BaseSandboxManager.isSupportedPlatform()
 })
 
 /**
- * Check if the current platform is in the enabledPlatforms list.
+ * 检查当前平台是否在 enabledPlatforms 列表中。
  *
- * This is an undocumented setting that allows restricting sandbox to specific platforms.
- * When enabledPlatforms is not set, all supported platforms are allowed.
+ * 这是未公开设置，用于将 sandbox 限制到特定平台。未设置 enabledPlatforms 时，
+ * 允许所有受支持平台。
  *
- * Added to unblock NVIDIA enterprise rollout: they want to enable autoAllowBashIfSandboxed
- * but only on macOS initially, since Linux/WSL sandbox support is newer. This allows
- * setting enabledPlatforms: ["macos"] to disable sandbox (and auto-allow) on other platforms.
+ * 为解除 NVIDIA 企业推广阻塞而加入：由于 Linux/WSL sandbox 支持较新，他们希望
+ * 初期只在 macOS 启用 autoAllowBashIfSandboxed。设置 enabledPlatforms: ["macos"]
+ * 可在其他平台禁用 sandbox 及自动允许。
  */
 function isPlatformInEnabledList(): boolean {
   try {
@@ -495,8 +481,7 @@ function isPlatformInEnabledList(): boolean {
 }
 
 /**
- * Check if sandboxing is enabled
- * This checks the user's enabled setting, platform support, and enabledPlatforms restriction
+ * 检查 sandbox 是否启用，包括用户 enabled 设置、平台支持和 enabledPlatforms 限制。
  */
 function isSandboxingEnabled(): boolean {
   if (!isSupportedPlatform()) {
@@ -507,7 +492,7 @@ function isSandboxingEnabled(): boolean {
     return false
   }
 
-  // Check if current platform is in the enabledPlatforms list (undocumented setting)
+  // 检查当前平台是否在 enabledPlatforms 列表中；这是未公开设置。
   if (!isPlatformInEnabledList()) {
     return false
   }
@@ -516,21 +501,18 @@ function isSandboxingEnabled(): boolean {
 }
 
 /**
- * If the user explicitly enabled sandbox (sandbox.enabled: true in settings)
- * but it cannot actually run, return a human-readable reason. Otherwise
- * return undefined.
+ * 用户显式启用 sandbox（设置中 sandbox.enabled: true）但实际无法运行时，
+ * 返回可读原因；否则返回 undefined。
  *
- * Fix for #34044: previously isSandboxingEnabled() silently returned false
- * when dependencies were missing, giving users zero feedback that their
- * explicit security setting was being ignored. This is a security footgun —
- * users configure allowedDomains expecting enforcement, get none.
+ * 修复 #34044：此前依赖缺失时 isSandboxingEnabled() 静默返回 false，用户完全
+ * 不知道显式安全设置已被忽略。这是安全陷阱：用户配置 allowedDomains 并期待强制
+ * 执行，实际却没有任何限制。
  *
- * Call this once at startup (REPL/print) and surface the reason if present.
- * Does not cover the case where the user never enabled sandbox (no noise).
+ * 启动时（REPL/print）调用一次，并在有原因时展示。用户从未启用 sandbox 时不处理，
+ * 避免噪声。
  */
 function getSandboxUnavailableReason(): string | undefined {
-  // Only warn if user explicitly asked for sandbox. If they didn't enable
-  // it, missing deps are irrelevant.
+  // 仅在用户显式要求 sandbox 时警告；未启用时，缺失依赖无关紧要。
   if (!getSandboxEnabledSetting()) {
     return undefined
   }
@@ -561,10 +543,10 @@ function getSandboxUnavailableReason(): string | undefined {
 }
 
 /**
- * Get glob patterns that won't work fully on Linux/WSL
+ * 获取无法在 Linux/WSL 上完整工作的 glob 模式。
  */
 function getLinuxGlobPatternWarnings(): string[] {
-  // Only return warnings on Linux/WSL (bubblewrap doesn't support globs)
+  // 仅在 Linux/WSL 返回警告，因为 bubblewrap 不支持 glob。
   const platform = getPlatform()
   if (platform !== 'linux' && platform !== 'wsl') {
     return []
@@ -573,7 +555,7 @@ function getLinuxGlobPatternWarnings(): string[] {
   try {
     const settings = getInitialSettings()
 
-    // Only return warnings when sandboxing is enabled (check settings directly, not cached value)
+    // 仅在 sandbox 已启用时返回警告；直接检查设置，不使用缓存值。
     if (!settings?.sandbox?.enabled) {
       return []
     }
@@ -581,13 +563,13 @@ function getLinuxGlobPatternWarnings(): string[] {
     const permissions = settings?.permissions || {}
     const warnings: string[] = []
 
-    // Helper to check if a path has glob characters (excluding trailing /**)
+    // 检查路径是否含 glob 字符的辅助函数，不含尾部 /**。
     const hasGlobs = (path: string): boolean => {
       const stripped = path.replace(/\/\*\*$/, '')
       return /[*?[\]]/.test(stripped)
     }
 
-    // Check all permission rules
+    // 检查全部权限规则。
     for (const ruleString of [...(permissions.allow || []), ...(permissions.deny || [])]) {
       const rule = permissionRuleValueFromString(ruleString)
       if (
@@ -607,11 +589,11 @@ function getLinuxGlobPatternWarnings(): string[] {
 }
 
 /**
- * Check if sandbox settings are locked by policy
+ * 检查 sandbox 设置是否被策略锁定。
  */
 function areSandboxSettingsLockedByPolicy(): boolean {
-  // Check if sandbox settings are explicitly set in any source that overrides localSettings
-  // These sources have higher priority than localSettings and would make local changes ineffective
+  // 检查是否有覆盖 localSettings 的来源显式设置 sandbox。这些来源优先级更高，
+  // 会使本地修改无效。
   const overridingSources = ['flagSettings', 'policySettings'] as const
 
   for (const source of overridingSources) {
@@ -629,7 +611,7 @@ function areSandboxSettingsLockedByPolicy(): boolean {
 }
 
 /**
- * Set sandbox settings
+ * 设置 sandbox。
  */
 async function setSandboxSettings(options: {
   enabled?: boolean
@@ -638,8 +620,8 @@ async function setSandboxSettings(options: {
 }): Promise<void> {
   const existingSettings = getSettingsForSource('localSettings')
 
-  // Note: Memoized caches auto-invalidate when settings change because they use
-  // the settings object as the cache key (new settings object = cache miss)
+  // 注意：memoize 缓存以 settings 对象为键，因此设置变化时会自动失效；
+  // 新 settings 对象会导致缓存未命中。
 
   updateSettingsForSource('localSettings', {
     sandbox: {
@@ -656,7 +638,7 @@ async function setSandboxSettings(options: {
 }
 
 /**
- * Get excluded commands (commands that should not be sandboxed)
+ * 获取不应在 sandbox 中运行的排除命令。
  */
 function getExcludedCommands(): string[] {
   const settings = getInitialSettings()
@@ -664,7 +646,7 @@ function getExcludedCommands(): string[] {
 }
 
 /**
- * Wrap command with sandbox, optionally specifying the shell to use
+ * 使用 sandbox 包装命令，并可指定要使用的 shell。
  */
 async function wrapWithSandbox(
   command: string,
@@ -672,7 +654,7 @@ async function wrapWithSandbox(
   customConfig?: Partial<SandboxRuntimeConfig>,
   abortSignal?: AbortSignal,
 ): Promise<string> {
-  // If sandboxing is enabled, ensure initialization is complete
+  // sandbox 已启用时确保初始化完成。
   if (isSandboxingEnabled()) {
     if (initializationPromise) {
       await initializationPromise
@@ -685,21 +667,21 @@ async function wrapWithSandbox(
 }
 
 /**
- * Initialize sandbox with log monitoring enabled by default
+ * 初始化 sandbox，默认启用日志监控。
  */
 async function initialize(sandboxAskCallback?: SandboxAskCallback): Promise<void> {
-  // If already initializing or initialized, return the promise
+  // 正在初始化或已初始化时返回现有 Promise。
   if (initializationPromise) {
     return initializationPromise
   }
 
-  // Check if sandboxing is enabled in settings
+  // 检查设置中是否启用 sandbox。
   if (!isSandboxingEnabled()) {
     return
   }
 
-  // Wrap the callback to enforce allowManagedDomainsOnly policy.
-  // This ensures all code paths (REPL, print/SDK) are covered.
+  // 包装 callback 以强制执行 allowManagedDomainsOnly 策略，覆盖 REPL、print/SDK
+  // 等全部代码路径。
   const wrappedCallback: SandboxAskCallback | undefined = sandboxAskCallback
     ? async (hostPattern: NetworkHostPattern) => {
         if (shouldAllowManagedSandboxDomainsOnly()) {
@@ -712,14 +694,13 @@ async function initialize(sandboxAskCallback?: SandboxAskCallback): Promise<void
       }
     : undefined
 
-  // Create the initialization promise synchronously (before any await) to prevent
-  // race conditions where wrapWithSandbox() is called before the promise is assigned.
+  // 在任何 await 前同步创建初始化 Promise，避免 Promise 赋值前调用
+  // wrapWithSandbox() 的竞态。
   initializationPromise = (async () => {
     try {
-      // Resolve worktree main repo path once before building config.
-      // Worktree status doesn't change mid-session, so this is cached for all
-      // subsequent refreshConfig() calls (which must be synchronous to avoid
-      // race conditions where pending requests slip through with stale config).
+      // 构建配置前解析一次 worktree 主仓库路径。会话中途 worktree 状态不会变化，
+      // 因此缓存供后续 refreshConfig() 调用使用；这些调用必须同步，避免待处理请求
+      // 使用陈旧配置漏过检查的竞态。
       if (worktreeMainRepoPath === undefined) {
         worktreeMainRepoPath = await detectWorktreeMainRepoPath(getCwdState())
       }
@@ -727,10 +708,10 @@ async function initialize(sandboxAskCallback?: SandboxAskCallback): Promise<void
       const settings = getInitialSettings()
       const runtimeConfig = convertToSandboxRuntimeConfig(settings)
 
-      // Log monitor is automatically enabled for macOS
+      // macOS 上自动启用日志 monitor。
       await BaseSandboxManager.initialize(runtimeConfig, wrappedCallback)
 
-      // Subscribe to settings changes to update sandbox config dynamically
+      // 订阅设置变化，动态更新 sandbox 配置。
       settingsSubscriptionCleanup = settingsChangeDetector.subscribe(() => {
         const settings = getInitialSettings()
         const newConfig = convertToSandboxRuntimeConfig(settings)
@@ -738,10 +719,10 @@ async function initialize(sandboxAskCallback?: SandboxAskCallback): Promise<void
         logForDebugging('Sandbox configuration updated from settings change')
       })
     } catch (error) {
-      // Clear the promise on error so initialization can be retried
+      // 出错时清空 Promise，以便重试初始化。
       initializationPromise = undefined
 
-      // Log error but don't throw - let sandboxing fail gracefully
+      // 记录错误但不抛出，让 sandbox 平稳失败。
       logForDebugging(`Failed to initialize sandbox: ${errorMessage(error)}`)
     }
   })()
@@ -750,8 +731,7 @@ async function initialize(sandboxAskCallback?: SandboxAskCallback): Promise<void
 }
 
 /**
- * Refresh sandbox config from current settings immediately
- * Call this after updating permissions to avoid race conditions
+ * 立即根据当前设置刷新 sandbox 配置。更新权限后调用，以避免竞态。
  */
 function refreshConfig(): void {
   if (!isSandboxingEnabled()) {
@@ -763,27 +743,26 @@ function refreshConfig(): void {
 }
 
 /**
- * Reset sandbox state and clear memoized values
+ * 重置 sandbox 状态并清除 memoize 值。
  */
 async function reset(): Promise<void> {
-  // Clean up settings subscription
+  // 清理设置订阅。
   settingsSubscriptionCleanup?.()
   settingsSubscriptionCleanup = undefined
   worktreeMainRepoPath = undefined
   bareGitRepoScrubPaths.length = 0
 
-  // Clear memoized caches
+  // 清除 memoize 缓存。
   checkDependencies.cache.clear?.()
   isSupportedPlatform.cache.clear?.()
   initializationPromise = undefined
 
-  // Reset the base sandbox manager
+  // 重置基础 sandbox manager。
   return BaseSandboxManager.reset()
 }
 
 /**
- * Add a command to the excluded commands list (commands that should not be sandboxed)
- * This is a Zy CLI-specific function that updates local settings.
+ * 将命令加入排除列表，使其不在 sandbox 中运行。这是更新本地设置的 Zy CLI 特有函数。
  */
 export function addToExcludedCommands(
   command: string,
@@ -795,9 +774,8 @@ export function addToExcludedCommands(
   const existingSettings = getSettingsForSource('localSettings')
   const existingExcludedCommands = existingSettings?.sandbox?.excludedCommands || []
 
-  // Determine the command pattern to add
-  // If there are suggestions with Bash rules, extract the pattern (e.g., "npm run test" from "npm run test:*")
-  // Otherwise use the exact command
+  // 确定要添加的命令模式。有带 Bash 规则的 suggestion 时提取模式，例如从
+  // "npm run test:*" 提取 "npm run test"；否则使用精确命令。
   let commandPattern: string = command
 
   if (permissionUpdates) {
@@ -811,14 +789,14 @@ export function addToExcludedCommands(
         (rule) => rule.toolName === BASH_TOOL_NAME,
       )
       if (firstBashRule?.ruleContent) {
-        // Extract pattern from Bash(command) or Bash(command:*) format
+        // 从 Bash(command) 或 Bash(command:*) 格式提取模式。
         const prefix = permissionRuleExtractPrefix(firstBashRule.ruleContent)
         commandPattern = prefix || firstBashRule.ruleContent
       }
     }
   }
 
-  // Add to excludedCommands if not already present
+  // 尚不存在时加入 excludedCommands。
   if (!existingExcludedCommands.includes(commandPattern)) {
     updateSettingsForSource('localSettings', {
       sandbox: {
@@ -832,7 +810,7 @@ export function addToExcludedCommands(
 }
 
 // ============================================================================
-// Export interface and implementation
+// 导出接口和实现。
 // ============================================================================
 
 export interface ISandboxManager {
@@ -880,10 +858,10 @@ export interface ISandboxManager {
 }
 
 /**
- * Zy CLI sandbox manager - wraps sandbox-runtime with Zy-specific features
+ * Zy CLI sandbox manager：在 sandbox-runtime 外封装 Zy 特有功能。
  */
 export const SandboxManager: ISandboxManager = {
-  // Custom implementations
+  // 自定义实现。
   initialize,
   isSandboxingEnabled,
   isSandboxEnabledInSettings: getSandboxEnabledSetting,
@@ -900,7 +878,7 @@ export const SandboxManager: ISandboxManager = {
   reset,
   checkDependencies,
 
-  // Forward to base sandbox manager
+  // 转发到基础 sandbox manager。
   getFsReadConfig: BaseSandboxManager.getFsReadConfig,
   getFsWriteConfig: BaseSandboxManager.getFsWriteConfig,
   getNetworkRestrictionConfig: BaseSandboxManager.getNetworkRestrictionConfig,
@@ -924,7 +902,7 @@ export const SandboxManager: ISandboxManager = {
 }
 
 // ============================================================================
-// Re-export types from sandbox-runtime
+// 从 sandbox-runtime 重新导出类型。
 // ============================================================================
 
 export type {

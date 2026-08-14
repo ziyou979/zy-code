@@ -26,13 +26,13 @@ import {
   SUBAGENT_REJECT_MESSAGE_WITH_REASON_PREFIX,
 } from '../../services/messages/./constants.js'
 import { withMemoryCorrectionHint } from '../../services/messages/./predicates.js'
-import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 import {
   applyPermissionUpdates,
   persistPermissionUpdates,
   supportsPersistence,
 } from '../../services/permissions/permissionUpdate.js'
-import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { logPermissionDecision, type PermissionDecisionArgs } from './permissionLogging.js'
 
 type PermissionApprovalSource =

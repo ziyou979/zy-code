@@ -10,7 +10,7 @@
  */
 import { beforeEach, describe, expect, test, mock } from 'bun:test'
 import type { ToolPermissionContext } from '../../../src/tools/tool.js'
-import type { PermissionRule } from '../../../src/services/permissions/permissionRule.js'
+import type { PermissionRule } from 'src/types/permissions.js'
 
 // 模拟 permissionsLoader 中的 deletePermissionRuleFromSettings
 const mockDeleteFromSettings = mock<(rule: { source: string }) => boolean>(() => true)

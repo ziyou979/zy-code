@@ -30,7 +30,7 @@ import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../services/infra/log.js'
 import { expandPath } from '../../utils/path.js'
 import { checkReadPermissionForTool } from '../../services/permissions/filesystem.js'
-import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 import {
   formatDocumentSymbolResult,
   formatFindReferencesResult,

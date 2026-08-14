@@ -65,7 +65,7 @@ import {
   checkReadPermissionForTool,
   matchingRuleForInput,
 } from '../../services/permissions/filesystem.js'
-import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
 import { readFileInRange } from '../../services/file-persistence/readFileInRange.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'

@@ -3,7 +3,7 @@ import { type ReactNode } from 'react'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink/index.js'
-import type { PermissionUpdate } from '../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { permissionRuleExtractPrefix } from '../../services/permissions/shellRuleMatching.js'
 
 function commandListDisplay(commands: string[]): ReactNode {

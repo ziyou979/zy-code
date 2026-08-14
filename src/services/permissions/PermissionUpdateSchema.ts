@@ -1,34 +1,27 @@
 /**
- * Zod schemas for permission updates.
+ * 权限更新使用的 Zod schema。
  *
- * This file is intentionally kept minimal with no complex dependencies
- * so it can be safely imported by src/types/hooks.ts without creating
- * circular dependencies.
+ * 本文件有意保持精简且不含复杂依赖，使 src/types/hooks.ts 可安全导入而不产生循环依赖。
  */
 import z from 'zod/v4'
-// Types extracted to src/types/permissions.ts to break import cycles
-import type { PermissionUpdate, PermissionUpdateDestination } from '../../types/permissions.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { externalPermissionModeSchema } from './permissionMode.js'
 import { permissionBehaviorSchema, permissionRuleValueSchema } from './permissionRule.js'
 
-// Re-export for backwards compatibility
-export type { PermissionUpdate, PermissionUpdateDestination }
-
 /**
- * PermissionUpdateDestination is where a new permission rule should be saved to.
+ * PermissionUpdateDestination 表示新权限规则的保存位置。
  */
 export const permissionUpdateDestinationSchema = lazySchema(() =>
   z.enum([
-    // User settings (global)
+    // 用户设置（全局）
     'userSettings',
-    // Project settings (shared per-directory)
+    // 项目设置（目录内共享）
     'projectSettings',
-    // Local settings (gitignored)
+    // 本地设置（被 gitignore）
     'localSettings',
-    // In-memory for the current session only
+    // 仅保存在当前会话内存中
     'session',
-    // From the command line arguments
+    // 来自命令行参数
     'cliArg',
   ]),
 )

@@ -1,7 +1,7 @@
 import type { ElicitResult } from '@modelcontextprotocol/sdk/types.js'
 import type { HookCallback, PermissionRequestResult } from 'src/types/hooks/index.js'
 import type { HookResultMessage, Message } from 'src/types/message.js'
-import type { PermissionResult } from '../permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 import type { HookCommand } from '../settings/types.js'
 import type { FunctionHook } from './sessionHooks.js'
 
@@ -62,13 +62,13 @@ export type InstructionsLoadReason =
 
 export type InstructionsMemoryType = 'User' | 'Project' | 'Local' | 'Managed'
 
-/** Result of an elicitation hook execution (non-REPL path). */
+/** elicitation hook 的执行结果，用于非 REPL 路径。 */
 export type ElicitationHookResult = {
   elicitationResponse?: ElicitationResponse
   blockingError?: HookBlockingError
 }
 
-/** Result of an elicitation-result hook execution (non-REPL path). */
+/** elicitation-result hook 的执行结果，用于非 REPL 路径。 */
 export type ElicitationResultHookResult = {
   elicitationResultResponse?: ElicitationResponse
   blockingError?: HookBlockingError

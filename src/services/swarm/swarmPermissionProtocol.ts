@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
-import type { PermissionUpdate } from '../permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 
 export const SwarmPermissionRequestSchema = lazySchema(() =>
   z.object({

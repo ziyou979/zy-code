@@ -14,10 +14,7 @@ import { useSearchInput } from '../../../hooks/useSearchInput.js'
 import { Box, Text, useTerminalFocus } from '../../../ink/index.js'
 import { useKeybinding } from '../../../keybindings/useKeybinding.js'
 import { getAutoModeDenials } from '../../../services/hooks/autoModeDenials.js'
-import type {
-  PermissionBehavior,
-  PermissionRule,
-} from '../../../services/permissions/permissionRule.js'
+import type { PermissionBehavior, PermissionRule } from 'src/types/permissions.js'
 import { permissionRuleValueToString } from '../../../services/permissions/permissionRuleParser.js'
 import { deletePermissionRule } from '../../../services/permissions/permissionRuleRepository.js'
 import {

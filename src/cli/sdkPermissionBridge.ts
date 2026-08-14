@@ -5,11 +5,10 @@ import {
   applyPermissionUpdates,
   persistPermissionUpdates,
 } from '../services/permissions/permissionUpdate.js'
-import type { PermissionDecision } from '../services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 
 /**
- * Execute PermissionRequest hooks and return a decision if one is made.
- * Returns undefined if no hook made a decision.
+ * 执行 PermissionRequest hook；若有 hook 作出决定则返回，否则返回 undefined。
  */
 export async function executePermissionRequestHooksForSDK(
   toolName: string,
@@ -21,7 +20,7 @@ export async function executePermissionRequestHooksForSDK(
   const appState = toolUseContext.getAppState()
   const permissionMode = appState.toolPermissionContext.mode
 
-  // Iterate directly over the generator instead of using `all`
+  // 直接迭代 generator，而不使用 `all`
   const hookGenerator = executePermissionRequestHooks(
     toolName,
     toolUseID,
@@ -42,7 +41,7 @@ export async function executePermissionRequestHooksForSDK(
       if (decision.behavior === 'allow') {
         const finalInput = decision.updatedInput || input
 
-        // Apply permission updates if provided by hook ("always allow")
+        // 若 hook 提供权限更新（“始终允许”），则应用更新
         const permissionUpdates = decision.updatedPermissions ?? []
         if (permissionUpdates.length > 0) {
           persistPermissionUpdates(permissionUpdates)
@@ -51,7 +50,7 @@ export async function executePermissionRequestHooksForSDK(
             currentAppState.toolPermissionContext,
             permissionUpdates,
           )
-          // Update permission context via setAppState
+          // 通过 setAppState 更新权限 context
           toolUseContext.setAppState((prev) => {
             if (prev.toolPermissionContext === updatedContext) {
               return prev
@@ -71,7 +70,7 @@ export async function executePermissionRequestHooksForSDK(
         }
       }
 
-      // Hook denied the permission
+      // hook 拒绝了权限
       return {
         behavior: 'deny',
         message: decision.message || 'Permission denied by PermissionRequest hook',

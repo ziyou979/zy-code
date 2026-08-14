@@ -1,7 +1,7 @@
 import type { z } from 'zod/v4'
 import { splitCommand_DEPRECATED } from '../../shell-eval/bash/commands.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'
-import type { PermissionResult } from '../../services/permissions/permissionResult.js'
+import type { PermissionResult } from 'src/types/permissions.js'
 import type { BashTool } from './BashTool.js'
 
 const ACCEPT_EDITS_ALLOWED_COMMANDS = ['mkdir', 'touch', 'rm', 'rmdir', 'mv', 'cp', 'sed'] as const
@@ -26,7 +26,7 @@ function validateCommandForMode(
     }
   }
 
-  // In Accept Edits mode, auto-allow filesystem operations
+  // Accept Edits 模式下自动允许文件系统操作
   if (toolPermissionContext.mode === 'acceptEdits' && isFilesystemCommand(baseCmd)) {
     return {
       behavior: 'allow',
@@ -45,11 +45,10 @@ function validateCommandForMode(
 }
 
 /**
- * Checks if commands should be handled differently based on the current permission mode
+ * 检查是否应根据当前 permission 模式对命令采取不同处理。
  *
- * This is the main entry point for mode-based permission logic.
- * Currently handles Accept Edits mode for filesystem commands,
- * but designed to be extended for other modes.
+ * 这是基于模式的 permission 逻辑主入口。
+ * 当前处理 Accept Edits 模式下的文件系统命令，设计上可扩展到其他模式。
  *
  * @param input - The bash command input
  * @param toolPermissionContext - Context containing mode and permissions
@@ -62,7 +61,7 @@ export function checkPermissionMode(
   input: z.infer<typeof BashTool.inputSchema>,
   toolPermissionContext: ToolPermissionContext,
 ): PermissionResult {
-  // Skip if in bypass mode (handled elsewhere)
+  // bypass 模式由其他流程处理，此处跳过
   if (toolPermissionContext.mode === 'bypassPermissions') {
     return {
       behavior: 'passthrough',
@@ -70,7 +69,7 @@ export function checkPermissionMode(
     }
   }
 
-  // Skip if in dontAsk mode (handled in main permission flow)
+  // dontAsk 模式由主 permission 流程处理，此处跳过
   if (toolPermissionContext.mode === 'dontAsk') {
     return {
       behavior: 'passthrough',
@@ -80,17 +79,17 @@ export function checkPermissionMode(
 
   const commands = splitCommand_DEPRECATED(input.command)
 
-  // Check each subcommand
+  // 检查每个子命令
   for (const cmd of commands) {
     const result = validateCommandForMode(cmd, toolPermissionContext)
 
-    // If any command triggers mode-specific behavior, return that result
+    // 任一命令触发模式专属行为时，返回该结果
     if (result.behavior !== 'passthrough') {
       return result
     }
   }
 
-  // No mode-specific handling needed
+  // 无需模式专属处理
   return {
     behavior: 'passthrough',
     message: 'No mode-specific validation required',

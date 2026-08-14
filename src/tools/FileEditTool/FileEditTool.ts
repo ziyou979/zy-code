@@ -44,7 +44,7 @@ import {
   checkWritePermissionForTool,
   matchingRuleForInput,
 } from '../../services/permissions/filesystem.js'
-import type { PermissionDecision } from '../../services/permissions/permissionResult.js'
+import type { PermissionDecision } from 'src/types/permissions.js'
 import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
 import { validateInputForSettingsFileEdit } from '../../services/settings/validateEditTool.js'
 import { NOTEBOOK_EDIT_TOOL_NAME } from '../NotebookEditTool/constants.js'

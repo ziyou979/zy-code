@@ -1,6 +1,6 @@
 import { tSync } from 'src/i18n/index.js'
 import { POWERSHELL_TOOL_NAME } from '../../../tools/PowerShellTool/toolName.js'
-import type { PermissionUpdate } from '../../../services/permissions/permissionUpdateSchema.js'
+import type { PermissionUpdate } from 'src/types/permissions.js'
 import { shouldShowAlwaysAllowOptions } from '../../../services/permissions/permissionsLoader.js'
 import type { OptionWithDescription } from '../../CustomSelect/select.js'
 import { generateShellSuggestionsLabel } from '../ShellPermissionHelpers.js'
