@@ -11,6 +11,7 @@ import {
 } from '../../../src/services/model/model.js'
 import {
   clearAllModelChainSticky,
+  getStickyForTier,
   setStickyForTier,
 } from '../../../src/services/model/modelChainState.js'
 import {
@@ -150,6 +151,68 @@ describe('model candidates / multi-auth', () => {
     expect(getProviderForModelFromSettings(settings, 'qwen3.6-plus', 'generic')).toBe('dashscope')
   })
 
+  test('models 配置重排后按候选身份保留用户选择', () => {
+    const oldSettings: SettingsJson = {
+      provider: 'generic',
+      models: {
+        standard: [
+          { provider: 'deepseek', model: 'deepseek-v4-flash' },
+          { provider: 'nim', model: 'nemotron' },
+        ],
+      },
+    }
+    const oldCandidates = getModelCandidatesForTier('standard', oldSettings, 'generic')
+    pinModelCandidate('standard', oldCandidates[1]!, oldSettings)
+
+    const newSettings: SettingsJson = {
+      ...oldSettings,
+      models: {
+        standard: [
+          { provider: 'nim', model: 'nemotron' },
+          { provider: 'deepseek', model: 'deepseek-v4-flash' },
+          { provider: 'xai', model: 'grok' },
+        ],
+      },
+    }
+    const newCandidates = getModelCandidatesForTier('standard', newSettings, 'generic')
+
+    expect(selectActiveCandidate(newCandidates, 'standard', newSettings)).toMatchObject({
+      model: 'nemotron',
+      provider: 'nim',
+      candidateIndex: 0,
+    })
+    expect(getStickyForTier('standard', newSettings)).toMatchObject({
+      model: 'nemotron',
+      provider: 'nim',
+      index: 0,
+    })
+  })
+
+  test('models 配置移除原候选后只清理失效档位', () => {
+    const oldSettings: SettingsJson = {
+      provider: 'generic',
+      models: {
+        standard: [
+          { provider: 'deepseek', model: 'deepseek-v4-flash' },
+          { provider: 'nim', model: 'nemotron' },
+        ],
+      },
+    }
+    const oldCandidates = getModelCandidatesForTier('standard', oldSettings, 'generic')
+    pinModelCandidate('standard', oldCandidates[1]!, oldSettings)
+
+    const newSettings: SettingsJson = {
+      ...oldSettings,
+      models: { standard: [{ provider: 'deepseek', model: 'deepseek-v4-flash' }] },
+    }
+    const newCandidates = getModelCandidatesForTier('standard', newSettings, 'generic')
+
+    expect(selectActiveCandidate(newCandidates, 'standard', newSettings)?.model).toBe(
+      'deepseek-v4-flash',
+    )
+    expect(getStickyForTier('standard', newSettings)).toBeNull()
+  })
+
   test('pinModelCandidate 允许 /model 主动切换到备选 provider', () => {
     const settings: SettingsJson = {
       provider: 'generic',
@@ -171,9 +234,9 @@ describe('model candidates / multi-auth', () => {
     expect(getProviderForModelFromSettings(settings, null, 'generic')).toBe('deepseek')
   })
 
-  test('classifyAuthChainSwitchableError 识别 401/429，忽略 529', () => {
-    expect(classifyAuthChainSwitchableError(new LLMError('nope', 401))).toBe('auth_failed')
-    expect(classifyAuthChainSwitchableError(new LLMError('slow', 429))).toBe('rate_limit_exhausted')
+  test('classifyAuthChainSwitchableError 仅识别重试耗尽后的 401/429', () => {
+    expect(classifyAuthChainSwitchableError(new LLMError('nope', 401))).toBeNull()
+    expect(classifyAuthChainSwitchableError(new LLMError('slow', 429))).toBeNull()
     expect(classifyAuthChainSwitchableError(new LLMError('overload', 529))).toBeNull()
 
     const wrapped = new CannotRetryError(new LLMError('x', 401), {
@@ -181,6 +244,33 @@ describe('model candidates / multi-auth', () => {
       thinkingConfig: { type: 'disabled' },
     })
     expect(classifyAuthChainSwitchableError(wrapped)).toBe('auth_failed')
+
+    const rateLimited = new CannotRetryError(new LLMError('slow', 429), {
+      model: 'm',
+      thinkingConfig: { type: 'disabled' },
+    })
+    expect(classifyAuthChainSwitchableError(rateLimited)).toBe('rate_limit_exhausted')
+  })
+
+  test('无法精确定位当前 provider/model 时不推进候选链', () => {
+    const settings: SettingsJson = {
+      provider: 'generic',
+      mainLoopModel: 'standard',
+      models: {
+        standard: [
+          { provider: 'xai', model: 'grok-a' },
+          { provider: 'dashscope', model: 'qwen-b' },
+        ],
+      },
+      modelFailover: { enabled: true, maxConsecutiveFailures: 1 },
+    }
+    const err = new CannotRetryError(new LLMError('bad key', 401), {
+      model: 'unknown-model',
+      thinkingConfig: { type: 'disabled' },
+    })
+
+    expect(tryAdvanceAuthChainOnError('unknown-model', err, settings)).toBeNull()
+    expect(getStickyForTier('standard', settings)).toBeNull()
   })
 
   test('tryAdvanceAuthChainOnError 达到阈值后推进', () => {

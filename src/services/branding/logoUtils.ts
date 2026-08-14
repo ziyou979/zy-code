@@ -1,5 +1,5 @@
 import { getAPIProvider } from 'src/services/model/providers.js'
-import { getProviderForModel } from 'src/services/model/model.js'
+import { getAuthProfileForModel, getProviderForModel } from 'src/services/model/model.js'
 import { getDirectConnectServerUrl, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../utils/stringWidth.js'
@@ -217,7 +217,7 @@ export async function getRecentActivity(): Promise<LogOption[]> {
             return false
           }
 
-          // Filter out sessions where both summary and firstPrompt are "No prompt" or missing
+          // 过滤 summary 和 firstPrompt 均为 "No prompt" 或缺失的会话
           const hasSummary = log.summary && log.summary !== 'No prompt'
           const hasFirstPrompt = log.firstPrompt && log.firstPrompt !== 'No prompt'
           return hasSummary || hasFirstPrompt
@@ -304,7 +304,9 @@ export function getLogoDisplayData(modelSetting?: string | null): {
   const serverUrl = getDirectConnectServerUrl()
   const displayPath = process.env.DEMO_VERSION ? '/code/zy' : getDisplayPath(getCwd())
   const cwd = serverUrl ? `${displayPath} in ${serverUrl.replace(/^https?:\/\//, '')}` : displayPath
-  const providerName = getProviderDisplayName(getProviderForModel(modelSetting))
+  const providerName = getProviderDisplayName(
+    getAuthProfileForModel(modelSetting) ?? getProviderForModel(modelSetting),
+  )
   const agentName = getInitialSettings().agent
 
   return {

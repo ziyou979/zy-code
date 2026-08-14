@@ -12,7 +12,9 @@ import { errorMessage } from '../../utils/errors.js'
 import { CannotRetryError } from '../api/withRetry.js'
 import {
   advanceModelCandidate,
+  getAuthProfileForModelFromSettings,
   getModelCandidatesForTier,
+  getProviderForModelFromSettings,
   isModelFailoverEnabled,
   type ResolvedModelReference,
 } from './model.js'
@@ -42,6 +44,11 @@ function unwrapError(error: unknown): unknown {
  * 529/5xx 不在此列。
  */
 export function classifyAuthChainSwitchableError(error: unknown): ModelChainFailoverReason | null {
+  // 候选切换只发生在同一模型的重试策略明确耗尽之后。普通业务错误、
+  // 本地校验错误或偶发单次错误不得仅凭文案触发跨 provider 切换。
+  if (!(error instanceof CannotRetryError)) {
+    return null
+  }
   const e = unwrapError(error)
 
   if (isAPIError(e)) {
@@ -105,6 +112,7 @@ export function tryAdvanceAuthChainOnError(
   error: unknown,
   settings: SettingsJson | null | undefined = getOptionalSettings(),
 ): {
+  from: ResolvedModelReference
   next: ResolvedModelReference
   reason: ModelChainFailoverReason
   fromIndex: number
@@ -122,22 +130,33 @@ export function tryAdvanceAuthChainOnError(
   }
 
   const tier = getActiveModelTier(resolvedSettings)
-  const candidates = getModelCandidatesForTier(tier, resolvedSettings, getAPIProvider())
+  const fallbackProvider = getAPIProvider()
+  const activeProvider = getProviderForModelFromSettings(
+    resolvedSettings,
+    currentModel,
+    fallbackProvider,
+  )
+  const activeAuthProfile = getAuthProfileForModelFromSettings(
+    resolvedSettings,
+    currentModel,
+    activeProvider,
+  )
+  const candidates = getModelCandidatesForTier(tier, resolvedSettings, activeProvider)
   if (candidates.length < 2) {
     return null
   }
 
-  // 定位当前候选
-  let fromIndex = candidates.findIndex((c) => c.model === currentModel)
+  // provider/model 必须同时吻合。无法定位时禁止猜测索引，否则可能无异常跳链。
+  const fromIndex = candidates.findIndex(
+    (candidate) =>
+      candidate.model === currentModel &&
+      candidate.provider === activeProvider &&
+      (activeAuthProfile === undefined || candidate.authProfile === activeAuthProfile),
+  )
   if (fromIndex < 0) {
-    // 尝试 sticky index 0 附近
-    fromIndex = candidates.findIndex(
-      (c) => c.candidateIndex !== undefined && c.model === currentModel,
-    )
+    return null
   }
-  if (fromIndex < 0) {
-    fromIndex = 0
-  }
+  const from = candidates[fromIndex]!
 
   const key = countKey(tier, fromIndex)
   const prev = consecutiveExhaustionCounts.get(key) ?? 0
@@ -149,7 +168,7 @@ export function tryAdvanceAuthChainOnError(
     return null
   }
 
-  const next = advanceModelCandidate(tier, fromIndex, reason, resolvedSettings, getAPIProvider())
+  const next = advanceModelCandidate(tier, fromIndex, reason, resolvedSettings, activeProvider)
   if (!next) {
     return null
   }
@@ -159,6 +178,7 @@ export function tryAdvanceAuthChainOnError(
   consecutiveExhaustionCounts.set(countKey(tier, next.candidateIndex ?? fromIndex + 1), 0)
 
   return {
+    from,
     next,
     reason,
     fromIndex,

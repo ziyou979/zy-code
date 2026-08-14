@@ -97,7 +97,7 @@ export const zhSession: TranslationResource = {
   'oauth.fetchingToken': '正在获取令牌...',
   'oauth.fetchingModels': '正在获取可用模型...',
   'modelFailover.switched':
-    '已切换模型通道：{from} → {to}（{reason}）。将保持到 /model 或修改 models 配置。',
+    '模型通道请求失败，已切换：{from} → {to}（{reason}）。新 provider 和模型将保持到再次使用 /model，或该候选被移除。',
   'modelFailover.reason.auth_failed': '认证失败',
   'modelFailover.reason.rate_limit_exhausted': '限流耗尽',
   'modelFailover.reason.quota_exhausted': '额度/账单耗尽',

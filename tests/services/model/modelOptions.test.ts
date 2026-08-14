@@ -38,6 +38,24 @@ describe('modelOptions candidate selection', () => {
     expect(options[1]?.pickerValue).toBe('standard')
   })
 
+  test('generic 候选优先显示 auth.json 的命名连接', () => {
+    const candidate: ResolvedModelReference = {
+      model: 'DeepSeek-V4-Flash',
+      provider: 'generic',
+      authProfile: 'amd',
+      candidateIndex: 0,
+    }
+    const [option] = createTierCandidateOptions(
+      'standard',
+      [candidate],
+      candidate,
+      (model) => model,
+    )
+
+    expect(option?.description).toContain('amd · DeepSeek-V4-Flash')
+    expect(option?.description).not.toContain('generic ·')
+  })
+
   test('普通选项不触发候选 pin，并原样返回模型设置', () => {
     expect(
       applyModelOptionSelection({

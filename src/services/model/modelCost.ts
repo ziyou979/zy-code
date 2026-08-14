@@ -128,8 +128,8 @@ export function calculateCost(resolvedModel: string, usage: Usage): number {
 }
 
 /**
- * Calculate cost from raw token counts without requiring a full BetaUsage object.
- * Useful for side queries (e.g. classifier) that track token counts independently.
+ * 直接根据原始 token 数量计算成本，无需完整的 BetaUsage 对象。
+ * 适用于 classifier 等独立跟踪 token 数量的 side query。
  */
 export function calculateCostFromTokens(
   model: string,

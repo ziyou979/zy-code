@@ -542,13 +542,16 @@ export function loadLocalModelCapabilities(): ModelCapabilitiesFile | null {
  *
  * 此处延迟 require，避免 settings/model provider 初始化阶段形成静态循环依赖。
  */
-function getCurrentModelCapabilityContext(): ModelCapabilityMatchContext {
+function getCurrentModelCapabilityContext(model: string): ModelCapabilityMatchContext {
   try {
     const providers = require('../model/providers.js') as typeof import('../model/providers.js')
-    const provider = providers.getAPIProvider()
+    const modelService = require('../model/model.js') as typeof import('../model/model.js')
+    // 模型链可以在一次会话中跨 provider 切换。能力解析必须跟随当前模型
+    // 的候选引用，不能继续读取可能滞后的全局 provider。
+    const provider = modelService.getProviderForModel(model)
     return {
       provider,
-      apiFormat: providers.getEffectiveApiFormat(provider),
+      apiFormat: providers.getEffectiveApiFormat(provider, model),
     }
   } catch {
     return {}
@@ -663,7 +666,7 @@ export function getLocalModelCapability(
     return undefined
   }
   const m = model.toLowerCase()
-  const resolvedContext = context ?? getCurrentModelCapabilityContext()
+  const resolvedContext = context ?? getCurrentModelCapabilityContext(model)
   return config.models
     .map((entry, index) => ({ entry, index }))
     .map(({ entry, index }) => {
@@ -709,7 +712,7 @@ export function getLocalModelApiFormat(
   if (!config) {
     return undefined
   }
-  const resolvedContext = context ?? getCurrentModelCapabilityContext()
+  const resolvedContext = context ?? getCurrentModelCapabilityContext(model)
   const m = model.toLowerCase()
   const entry = config.models
     .map((candidate, index) => ({ entry: candidate, index }))

@@ -6,8 +6,8 @@ export function isModelAlias(modelInput: string): modelInput is ModelAlias {
 }
 
 /**
- * Bare model family aliases that act as wildcards in the availableModels allowlist.
- * When "advanced" is in the allowlist, any model configured for that tier is allowed.
+ * 在 availableModels allowlist 中作为通配符使用的裸模型系列别名。
+ * allowlist 包含 "advanced" 时，该 tier 配置的任意模型都可使用。
  */
 export const MODEL_FAMILY_ALIASES = ['advanced', 'standard', 'compact'] as const
 

@@ -74,7 +74,9 @@ export function createTierCandidateOptions(
 ): ModelOption[] {
   return candidates.map((candidate, index) => {
     const resolvedModel = candidate.model
-    const provider = candidate.provider ?? getProviderForModel(resolvedModel)
+    // 命名连接是用户在 auth.json 中认知的名称，应优先于底层 generic。
+    const provider =
+      candidate.authProfile ?? candidate.provider ?? getProviderForModel(resolvedModel)
     const isActive =
       candidate.model === active.model &&
       candidate.provider === active.provider &&

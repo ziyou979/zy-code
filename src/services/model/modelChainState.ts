@@ -2,7 +2,8 @@
  * 多 auth 候选链的跨会话粘住状态。
  *
  * 写入 `~/.zy/model-chain-state.json`。当 settings 中 models / modelFailover
- * 指纹变化时整表作废；用户 /model 或失效切换时更新 index。
+ * 指纹变化时保留候选身份，交由模型解析层按 provider/model/authProfile
+ * 重新校验；用户 /model 或失效切换时更新 index。
  */
 
 import { createHash } from 'node:crypto'
@@ -118,8 +119,9 @@ function writeStateFile(state: ModelChainStateFile): void {
 }
 
 /**
- * 读取与当前 settings 指纹匹配的 sticky。
- * 指纹不匹配时返回 null（并可选清理文件）。
+ * 读取 sticky。配置指纹变化时保留候选身份并刷新指纹，模型解析层会
+ * 按 provider/model/authProfile 校验它是否仍存在，避免仅因配置重排或
+ * 增加其它候选就丢失用户通过 /model 做出的选择。
  */
 export function getStickyForTier(
   tier: string,
@@ -131,19 +133,30 @@ export function getStickyForTier(
     return null
   }
   if (state.configFingerprint !== fingerprint) {
-    // 配置已变，作废旧 sticky
+    // 先保留候选身份；selectActiveCandidate 会负责重新定位或删除失效项。
     try {
-      writeStateFile({ version: STATE_VERSION, configFingerprint: fingerprint, tiers: {} })
+      writeStateFile({ version: STATE_VERSION, configFingerprint: fingerprint, tiers: state.tiers })
     } catch {
       // 忽略写失败
     }
-    return null
   }
   const sticky = state.tiers[tier]
   if (!sticky || typeof sticky.index !== 'number' || sticky.index < 0) {
     return null
   }
   return sticky
+}
+
+/** 仅删除一个已确认不再存在的档位选择，避免影响其它档位。 */
+export function clearStickyForTier(tier: string, settings: SettingsJson | null | undefined): void {
+  const fingerprint = computeModelChainFingerprint(settings)
+  const prev = readStateFile()
+  if (!prev || prev.configFingerprint !== fingerprint || !prev.tiers[tier]) {
+    return
+  }
+  const tiers = { ...prev.tiers }
+  delete tiers[tier]
+  writeStateFile({ version: STATE_VERSION, configFingerprint: fingerprint, tiers })
 }
 
 /** 写入某档位 sticky（保留其它档位） */

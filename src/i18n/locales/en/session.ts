@@ -105,7 +105,7 @@ export const enSession: TranslationResource = {
   'oauth.fetchingToken': 'Fetching token...',
   'oauth.fetchingModels': 'Fetching available models...',
   'modelFailover.switched':
-    'Switched model channel: {from} → {to} ({reason}). Sticky until /model or models config change.',
+    'The model channel failed and was switched: {from} → {to} ({reason}). The new provider and model remain active until /model is used again or the candidate is removed.',
   'modelFailover.reason.auth_failed': 'authentication failed',
   'modelFailover.reason.rate_limit_exhausted': 'rate limit exhausted',
   'modelFailover.reason.quota_exhausted': 'quota / billing exhausted',

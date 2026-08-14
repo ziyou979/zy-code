@@ -770,12 +770,15 @@ async function* queryLoop(
             })
 
             const reasonLabel = tSync(`modelFailover.reason.${authFailover.reason}`)
+            const fromLabel = authFailover.from.provider
+              ? `${renderModelName(previousModel)} (${authFailover.from.provider})`
+              : renderModelName(previousModel)
             const toLabel = authFailover.next.provider
               ? `${renderModelName(nextModel)} (${authFailover.next.provider})`
               : renderModelName(nextModel)
             yield createSystemMessage(
               tSync('modelFailover.switched', {
-                from: renderModelName(previousModel),
+                from: fromLabel,
                 to: toLabel,
                 provider: authFailover.next.provider ?? '',
                 reason: reasonLabel,

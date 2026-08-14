@@ -4,6 +4,7 @@ import type { SettingsJson } from '../settings/types.js'
 import type { ModelAlias } from './aliases.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import {
+  clearStickyForTier,
   getModelFailoverConfig,
   getStickyForTier,
   setStickyForTier,
@@ -217,8 +218,25 @@ export function selectActiveCandidate(
         (c.authProfile ?? '') === (sticky.authProfile ?? c.authProfile ?? ''),
     )
     if (matched >= 0) {
-      return { ...candidates[matched]!, candidateIndex: matched }
+      const candidate = candidates[matched]!
+      if (matched !== sticky.index) {
+        setStickyForTier(
+          tier,
+          {
+            index: matched,
+            provider: candidate.provider ?? sticky.provider,
+            authProfile: candidate.authProfile,
+            model: candidate.model,
+            reason: sticky.reason,
+            switchedAt: sticky.switchedAt,
+          },
+          settings,
+        )
+      }
+      return { ...candidate, candidateIndex: matched }
     }
+    // 配置确实移除了该候选时，只清除此档位，不误伤其它用户选择。
+    clearStickyForTier(tier, settings)
   }
   return { ...candidates[0]!, candidateIndex: 0 }
 }
