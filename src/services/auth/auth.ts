@@ -49,18 +49,14 @@ import {
 import { getMockSubscriptionType, shouldUseMockSubscription } from '../mockRateLimits.js'
 import { getAuthProfileForModel, getMainLoopModel, getProviderForModel } from '../model/model.js'
 import {
-  clearAllOAuthCredentials,
   clearOAuthCredentialsCache,
-  getActiveOAuthApiKeySync,
-  getActiveOAuthProvider,
-  getActiveOAuthProviderInfo,
-  getOAuthCredentials,
-  getOAuthCredentialsAsync,
-  isActiveOAuthTokenExpired,
-  refreshActiveOAuthToken,
-  saveOAuthCredentials,
+  getOAuthApiKeySyncForConnection,
+  getOAuthCredentialsForConnection,
+  getOAuthProviderIdForConnection,
+  getOAuthProviderInfoForConnection,
+  isOAuthTokenExpiredForConnection,
+  refreshOAuthTokenForConnection,
 } from '../oauth/oauthStorage.js'
-import { getOAuthProvider } from '../oauth/providers/index.js'
 import type { OAuthTokens, SubscriptionType } from '../oauth/types.js'
 import {
   clearAllAuthConfigApiKeys,
@@ -116,8 +112,8 @@ export function isAuthEnabled(): boolean {
     return true
   }
 
-  // 检查多 Provider OAuth 登录
-  if (getActiveOAuthProvider()) {
+  // 只检查当前 settings 选中连接的 OAuth。
+  if (getOAuthCredentialsForConnection(provider)) {
     return true
   }
 
@@ -142,8 +138,8 @@ export function getAuthTokenSource() {
     return { source: 'none' as const, hasToken: false }
   }
 
-  // 多 Provider OAuth（有 active 即视为有 token）
-  if (getActiveOAuthProvider()) {
+  // OAuth 按当前 settings 选中的命名连接解析。
+  if (getOAuthCredentialsForConnection(provider)) {
     return { source: 'oauth' as const, hasToken: true }
   }
 
@@ -241,17 +237,11 @@ export function getApiKeyWithSource(
     }
   }
 
-  // 多 Provider OAuth：仅当 OAuth 绑定的 apiProvider 与当前请求 provider 一致时使用。
-  const activeOAuthInfo = getActiveOAuthProviderInfo()
-  if (activeOAuthInfo) {
-    const oauthApiProvider = activeOAuthInfo.apiProvider
-    const providerMatches = !oauthApiProvider || !provider || oauthApiProvider === provider
-    if (providerMatches) {
-      const oauthApiKey = getActiveOAuthApiKeySync()
-      if (oauthApiKey) {
-        return { key: oauthApiKey, source: 'oauth' as const }
-      }
-    }
+  // OAuth 与 API Key 一样按 auth.json 命名连接选取，不再依赖全局 active provider。
+  const oauthInfo = getOAuthProviderInfoForConnection(provider)
+  const oauthApiKey = getOAuthApiKeySyncForConnection(provider)
+  if (oauthInfo && oauthApiKey) {
+    return { key: oauthApiKey, source: 'oauth' as const }
   }
 
   const apiKeyFromConfigOrMacOSKeychain = getApiKeyFromConfigOrMacOSKeychain()
@@ -635,18 +625,14 @@ export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
     }
   }
 
-  // 从新的多 Provider OAuth 存储读取
-  const apiKey = getActiveOAuthApiKeySync()
+  // 按当前模型的命名连接读取，避免多 OAuth 串用。
+  const connectionId = getAuthProviderId()
+  const apiKey = getOAuthApiKeySyncForConnection(connectionId)
   if (!apiKey) {
     return null
   }
 
-  const providerId = getActiveOAuthProvider()
-  if (!providerId) {
-    return null
-  }
-
-  const credentials = getOAuthCredentials(providerId)
+  const credentials = getOAuthCredentialsForConnection(connectionId)
   if (!credentials) {
     return null
   }
@@ -717,12 +703,12 @@ export function handleOAuth401Error(failedAccessToken: string): Promise<boolean>
 }
 
 async function handleOAuth401ErrorImpl(failedAccessToken: string): Promise<boolean> {
-  // 首先检查是否是多 Provider OAuth
-  const activeProvider = getActiveOAuthProvider()
-  if (activeProvider) {
+  const connectionId = getAuthProviderId()
+  const providerId = getOAuthProviderIdForConnection(connectionId)
+  if (providerId) {
     // 多 Provider OAuth 401 处理：强制刷新 token
     clearOAuthCredentialsCache()
-    const credentials = getOAuthCredentials(activeProvider)
+    const credentials = getOAuthCredentialsForConnection(connectionId)
     if (!credentials) {
       return false
     }
@@ -756,14 +742,15 @@ export function checkAndRefreshOAuthTokenIfNeeded(
  */
 async function _checkAndRefreshMultiProviderOAuthTokenImpl(force: boolean): Promise<boolean> {
   try {
+    const connectionId = getAuthProviderId()
     if (!force) {
       // 检查 token 是否已过期
-      if (!isActiveOAuthTokenExpired()) {
+      if (!isOAuthTokenExpiredForConnection(connectionId)) {
         return false
       }
     }
     // 强制刷新或 token 已过期，执行刷新
-    const refreshed = await refreshActiveOAuthToken()
+    const refreshed = await refreshOAuthTokenForConnection(connectionId)
     if (refreshed) {
       clearOAuthCredentialsCache()
     }

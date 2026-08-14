@@ -6,6 +6,7 @@ import {
   clearAllOAuthCredentials,
   clearOAuthCredentialsCache,
   getActiveOAuthProvider,
+  getOAuthApiKeySyncForConnection,
   getOAuthCredentials,
   removeOAuthCredentials,
   saveOAuthCredentials,
@@ -32,7 +33,7 @@ describe('oauthStorage (auth.json)', () => {
     rmSync(configDir, { recursive: true, force: true })
   })
 
-  test('saveOAuthCredentials 写入 auth.json 的 oauth 块', () => {
+  test('saveOAuthCredentials 写入 API provider 同名连接', () => {
     // 先放一个 apiKey，确认不会被冲掉
     writeFileSync(
       join(configDir, 'auth.json'),
@@ -52,20 +53,17 @@ describe('oauthStorage (auth.json)', () => {
 
     const raw = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf-8')) as {
       dashscope?: { apiKey?: string }
-      oauth?: {
-        activeProvider?: string
-        credentials?: Record<string, { access?: string; tokenEndpoint?: string }>
+      xai?: {
+        oauth?: { provider?: string; access?: string; tokenEndpoint?: string }
       }
     }
     expect(raw.dashscope?.apiKey).toBe('keep')
-    expect(raw.oauth?.activeProvider).toBe('xai-oauth')
-    expect(raw.oauth?.credentials?.['xai-oauth']?.access).toBe('at')
-    expect(raw.oauth?.credentials?.['xai-oauth']?.tokenEndpoint).toBe(
-      'https://auth.x.ai/oauth2/token',
-    )
+    expect(raw.xai?.oauth?.provider).toBe('xai-oauth')
+    expect(raw.xai?.oauth?.access).toBe('at')
+    expect(raw.xai?.oauth?.tokenEndpoint).toBe('https://auth.x.ai/oauth2/token')
   })
 
-  test('removeOAuthCredentials 切换 activeProvider', () => {
+  test('removeOAuthCredentials 仅删除指定连接', () => {
     saveOAuthCredentials('xai-oauth', {
       access: 'a1',
       refresh: 'r1',
@@ -76,11 +74,61 @@ describe('oauthStorage (auth.json)', () => {
       refresh: 'r2',
       expires: Date.now() + 60_000,
     })
-    expect(getActiveOAuthProvider()).toBe('anthropic')
-
     removeOAuthCredentials('anthropic')
     expect(getOAuthCredentials('anthropic')).toBeNull()
     expect(getActiveOAuthProvider()).toBe('xai-oauth')
+  })
+
+  test('OpenAI 与 GitHub Copilot OAuth 可同时保存为独立连接', () => {
+    saveOAuthCredentials('openai-codex', {
+      access: 'openai-access',
+      refresh: 'openai-refresh',
+      expires: Date.now() + 60_000,
+    })
+    saveOAuthCredentials('github-copilot', {
+      access: 'copilot-access',
+      refresh: 'copilot-refresh',
+      expires: Date.now() + 60_000,
+    })
+
+    const raw = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf-8')) as {
+      openai?: { oauth?: { provider?: string; access?: string } }
+      'github-copilot'?: { oauth?: { provider?: string; access?: string } }
+    }
+    expect(raw.openai?.oauth?.provider).toBe('openai-codex')
+    expect(raw.openai?.oauth?.access).toBe('openai-access')
+    expect(raw['github-copilot']?.oauth?.provider).toBe('github-copilot')
+    expect(raw['github-copilot']?.oauth?.access).toBe('copilot-access')
+    expect(getOAuthApiKeySyncForConnection('openai')).toBe('openai-access')
+    expect(getOAuthApiKeySyncForConnection('github-copilot')).toBe('copilot-access')
+  })
+
+  test('旧版全局 oauth 在下次写入时迁移', () => {
+    writeFileSync(
+      join(configDir, 'auth.json'),
+      JSON.stringify({
+        oauth: {
+          activeProvider: 'xai-oauth',
+          credentials: {
+            'xai-oauth': { access: 'old-a', refresh: 'old-r', expires: Date.now() + 60_000 },
+          },
+        },
+      }),
+    )
+
+    saveOAuthCredentials('openai-codex', {
+      access: 'new-a',
+      refresh: 'new-r',
+      expires: Date.now() + 60_000,
+    })
+
+    const raw = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf-8')) as Record<
+      string,
+      unknown
+    >
+    expect(raw.oauth).toBeUndefined()
+    expect((raw.xai as { oauth?: { access?: string } }).oauth?.access).toBe('old-a')
+    expect((raw.openai as { oauth?: { access?: string } }).oauth?.access).toBe('new-a')
   })
 
   test('clearAllOAuthCredentials 删除 oauth 键', () => {
@@ -105,6 +153,7 @@ describe('oauthStorage (auth.json)', () => {
       unknown
     >
     expect(raw.oauth).toBeUndefined()
+    expect((raw.xai as { oauth?: unknown } | undefined)?.oauth).toBeUndefined()
     expect((raw.generic as { apiKey: string }).apiKey).toBe('g')
   })
 })

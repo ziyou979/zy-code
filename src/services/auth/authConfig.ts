@@ -5,14 +5,11 @@
  *
  * 结构：
  * - 顶层 key 为连接 id → { provider?, baseUrl?, apiFormat?, apiKey?, apiKeyHelper? }
- * - 特殊键 `oauth` → 多 Provider OAuth 登录凭证（/login）
+ * - OAuth 凭证直接归属于命名连接的 `oauth` 字段
  * {
  *   "dashscope": { "apiKey": "..." },
- *   "oauth": {
- *     "activeProvider": "xai-oauth",
- *     "credentials": {
- *       "xai-oauth": { "access", "refresh", "expires", ... }
- *     }
+ *   "xai": {
+ *     "oauth": { "provider": "xai-oauth", "access", "refresh", "expires", ... }
  *   }
  * }
  */
@@ -29,8 +26,18 @@ import {
   writeFileSync_DEPRECATED,
 } from '../../services/infra/slowOperations.js'
 
-/** auth.json 中存放 OAuth 订阅登录态的保留键（非 API provider id） */
+/** 旧版全局 OAuth 存储键；仅用于读取迁移，新数据不再写入。 */
 export const AUTH_OAUTH_KEY = 'oauth' as const
+
+/** 单条 OAuth 凭证（access/refresh/expires + provider 扩展字段） */
+const AuthOAuthCredentialsSchema = z
+  .object({
+    provider: z.string().optional().describe('OAuth implementation id for this connection.'),
+    access: z.string(),
+    refresh: z.string(),
+    expires: z.number(),
+  })
+  .passthrough()
 
 const AuthProviderConfigSchema = z
   .object({
@@ -42,15 +49,9 @@ const AuthProviderConfigSchema = z
       .describe('API protocol used by this named connection.'),
     apiKey: z.string().optional().describe('Provider-scoped API key.'),
     apiKeyHelper: z.string().optional().describe('Provider-scoped command that prints an API key.'),
-  })
-  .passthrough()
-
-/** 单条 OAuth 凭证（access/refresh/expires + provider 扩展字段） */
-const AuthOAuthCredentialsSchema = z
-  .object({
-    access: z.string(),
-    refresh: z.string(),
-    expires: z.number(),
+    oauth: AuthOAuthCredentialsSchema.optional().describe(
+      'OAuth credentials owned by this named connection.',
+    ),
   })
   .passthrough()
 
@@ -78,6 +79,12 @@ export type AuthConfig = {
   [providerId: string]: AuthProviderConfig | AuthOAuthStore | undefined
 } & {
   oauth?: AuthOAuthStore
+}
+
+export type AuthOAuthConnection = {
+  connectionId: string
+  providerId?: string
+  credentials: AuthOAuthCredentials
 }
 
 export function getAuthConfigPath(): string {
@@ -215,33 +222,112 @@ export function updateAuthConfigRaw(mutator: (current: Record<string, unknown>) 
 
 /** 读取 oauth 块；不存在则返回空结构 */
 export function getAuthOAuthStoreFromConfig(config: AuthConfig | null): AuthOAuthStore {
-  const oauth = config?.oauth
-  if (!oauth) {
-    return { activeProvider: null, credentials: {} }
+  const credentials: Record<string, AuthOAuthCredentials> = {}
+  let activeProvider: string | null = null
+
+  // 旧版结构仅作兼容读取；任何后续 OAuth 写入都会迁移为连接内的 oauth。
+  const legacy = config?.oauth
+  if (legacy) {
+    Object.assign(credentials, legacy.credentials)
+    activeProvider = legacy.activeProvider ?? null
   }
-  return {
-    activeProvider: oauth.activeProvider ?? null,
-    credentials: oauth.credentials ?? {},
+
+  for (const connection of getAuthOAuthConnectionsFromConfig(config)) {
+    if (connection.providerId) {
+      credentials[connection.providerId] = connection.credentials
+      activeProvider ??= connection.providerId
+    }
   }
+  return { activeProvider, credentials }
 }
 
 export function getAuthOAuthStore(): AuthOAuthStore {
   return getAuthOAuthStoreFromConfig(loadAuthConfig())
 }
 
-/**
- * 写入 oauth 块（合并进现有 auth.json，不覆盖其它 provider 的 apiKey）。
- */
-export function saveAuthOAuthStore(store: AuthOAuthStore): { success: boolean; warning?: string } {
+/** 枚举新版连接内 OAuth 凭证。 */
+export function getAuthOAuthConnectionsFromConfig(
+  config: AuthConfig | null,
+): AuthOAuthConnection[] {
+  if (!config) {
+    return []
+  }
+  const result: AuthOAuthConnection[] = []
+  for (const [connectionId, value] of Object.entries(config)) {
+    if (connectionId === AUTH_OAUTH_KEY || !value || isAuthOAuthStore(value)) {
+      continue
+    }
+    const oauth = (value as AuthProviderConfig).oauth
+    if (!oauth) {
+      continue
+    }
+    result.push({
+      connectionId,
+      providerId: oauth.provider,
+      credentials: oauth,
+    })
+  }
+  return result
+}
+
+export function getAuthOAuthConnections(): AuthOAuthConnection[] {
+  return getAuthOAuthConnectionsFromConfig(loadAuthConfig())
+}
+
+/** 将 OAuth 凭证写入指定命名连接，并删除旧版全局存储。 */
+export function setAuthConfigOAuth(
+  connectionId: string,
+  providerId: string,
+  credentials: AuthOAuthCredentials,
+): { success: boolean; warning?: string } {
   return updateAuthConfigRaw((current) => {
-    const hasCredentials = Object.keys(store.credentials).length > 0
-    if (!hasCredentials && (store.activeProvider === null || store.activeProvider === undefined)) {
-      delete current[AUTH_OAUTH_KEY]
+    const existing = current[connectionId]
+    const entry =
+      existing && typeof existing === 'object' && !Array.isArray(existing)
+        ? { ...(existing as Record<string, unknown>) }
+        : {}
+    entry.oauth = { ...credentials, provider: providerId }
+    current[connectionId] = entry
+    delete current[AUTH_OAUTH_KEY]
+  })
+}
+
+export function removeAuthConfigOAuth(connectionId: string): {
+  success: boolean
+  warning?: string
+} {
+  return updateAuthConfigRaw((current) => {
+    const existing = current[connectionId]
+    if (!existing || typeof existing !== 'object' || Array.isArray(existing)) {
       return
     }
-    current[AUTH_OAUTH_KEY] = {
-      activeProvider: store.activeProvider ?? null,
-      credentials: store.credentials,
+    const entry = { ...(existing as Record<string, unknown>) }
+    delete entry.oauth
+    if (Object.keys(entry).length === 0) {
+      delete current[connectionId]
+    } else {
+      current[connectionId] = entry
+    }
+  })
+}
+
+export function clearAllAuthConfigOAuth(): { success: boolean; warning?: string } {
+  return updateAuthConfigRaw((current) => {
+    delete current[AUTH_OAUTH_KEY]
+    for (const [connectionId, existing] of Object.entries(current)) {
+      if (!existing || typeof existing !== 'object' || Array.isArray(existing)) {
+        continue
+      }
+      const entry = { ...(existing as Record<string, unknown>) }
+      if (!Object.hasOwn(entry, 'oauth')) {
+        continue
+      }
+      delete entry.oauth
+      if (Object.keys(entry).length === 0) {
+        delete current[connectionId]
+      } else {
+        current[connectionId] = entry
+      }
     }
   })
 }

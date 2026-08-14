@@ -1,20 +1,19 @@
 /**
- * OAuth redirect port helpers — extracted from auth.ts to break the
- * auth.ts ↔ xaaIdpLogin.ts circular dependency.
+ * OAuth redirect 端口辅助函数；从 auth.ts 提取，以打破 auth.ts ↔ xaaIdpLogin.ts 循环依赖。
  */
 import { createServer } from 'node:http'
 import { getPlatform } from '../shell/platform.js'
 
-// Windows dynamic port range 49152-65535 is reserved
+// 避开 Windows 保留的 49152-65535 动态端口范围
 const REDIRECT_PORT_RANGE =
   getPlatform() === 'windows' ? { min: 39152, max: 49151 } : { min: 49152, max: 65535 }
 const REDIRECT_PORT_FALLBACK = 3118
 
 /**
- * Builds a redirect URI on localhost with the given port and a fixed `/callback` path.
+ * 使用给定端口和固定 `/callback` 路径构造 localhost redirect URI。
  *
- * RFC 8252 Section 7.3 (OAuth for Native Apps): loopback redirect URIs match any
- * port as long as the path matches.
+ * RFC 8252 第 7.3 节（原生应用 OAuth）规定：只要路径匹配，loopback redirect URI 可匹配
+ * 任意端口。
  */
 export function buildRedirectUri(port: number = REDIRECT_PORT_FALLBACK): string {
   return `http://localhost:${port}/callback`
@@ -26,11 +25,10 @@ function getMcpOAuthCallbackPort(): number | undefined {
 }
 
 /**
- * Finds an available port in the specified range for OAuth redirect
- * Uses random selection for better security
+ * 在指定范围内随机选择一个可用端口供 OAuth redirect 使用，以提高安全性。
  */
 export async function findAvailablePort(): Promise<number> {
-  // First, try the configured port if specified
+  // 若指定了配置端口，优先尝试该端口
   const configuredPort = getMcpOAuthCallbackPort()
   if (configuredPort) {
     return configuredPort
@@ -55,7 +53,7 @@ export async function findAvailablePort(): Promise<number> {
     } catch {}
   }
 
-  // If random selection failed, try the fallback port
+  // 随机选择失败时尝试后备端口
   try {
     await new Promise<void>((resolve, reject) => {
       const testServer = createServer()

@@ -1,109 +1,174 @@
 /**
- * 多 Provider OAuth 凭证存储层
+ * OAuth 凭证存储层。
  *
- * 仅存 `~/.zy/auth.json` 的 `oauth` 块（与 API Key 同文件）：
+ * 正式结构与 API Key 一样按命名连接归属：
  * {
- *   "dashscope": { "apiKey": "..." },
- *   "oauth": {
- *     "activeProvider": "xai-oauth",
- *     "credentials": {
- *       "xai-oauth": { refresh, access, expires, ... }
- *     }
+ *   "xai": {
+ *     "oauth": { "provider": "xai-oauth", "access": "...", "refresh": "...", "expires": 0 }
  *   }
  * }
+ *
+ * 旧版根级 `oauth.activeProvider/credentials` 只读；下次写入时自动迁移。
  */
 
 import memoize from 'lodash-es/memoize.js'
 import {
+  clearAllAuthConfigOAuth,
+  getAuthConfigForProvider,
+  getAuthOAuthConnections,
   getAuthOAuthStore,
-  saveAuthOAuthStore,
+  removeAuthConfigOAuth,
+  setAuthConfigOAuth,
   type AuthOAuthCredentials,
-  type AuthOAuthStore,
 } from '../auth/authConfig.js'
 import { logError } from '../../services/infra/log.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { getOAuthApiKey, getOAuthProvider } from './providers/index.js'
+import { getOAuthApiKey, getOAuthProvider, getOAuthProviders } from './providers/index.js'
 import type { OAuthCredentials, OAuthProviderInterface } from './providers/types.js'
 
-function loadOAuthStore(): AuthOAuthStore {
-  return getAuthOAuthStore()
+type StoredOAuthConnection = {
+  connectionId: string
+  providerId: string
+  credentials: OAuthCredentials
 }
 
-function persistOAuthStore(store: AuthOAuthStore): { success: boolean; warning?: string } {
-  const result = saveAuthOAuthStore(store)
-  clearOAuthCredentialsCache()
-  return result
+function inferOAuthProviderId(connectionId: string): string | undefined {
+  const apiProvider = getAuthConfigForProvider(connectionId)?.provider ?? connectionId
+  return getOAuthProviders().find((provider) => provider.apiProvider === apiProvider)?.id
 }
 
-/** 同步读取 OAuth 凭证（带 memoize 缓存） */
+function getStoredOAuthConnections(): StoredOAuthConnection[] {
+  const connections: StoredOAuthConnection[] = []
+  const seen = new Set<string>()
+
+  for (const connection of getAuthOAuthConnections()) {
+    const providerId = connection.providerId ?? inferOAuthProviderId(connection.connectionId)
+    if (!providerId) {
+      continue
+    }
+    connections.push({
+      connectionId: connection.connectionId,
+      providerId,
+      credentials: connection.credentials as OAuthCredentials,
+    })
+    seen.add(providerId)
+  }
+
+  // 兼容读取旧版全局存储，新连接数据优先。
+  const legacyStore = getAuthOAuthStore()
+  for (const [providerId, credentials] of Object.entries(legacyStore.credentials)) {
+    if (seen.has(providerId)) {
+      continue
+    }
+    const provider = getOAuthProvider(providerId)
+    connections.push({
+      connectionId: provider?.apiProvider ?? providerId,
+      providerId,
+      credentials: credentials as OAuthCredentials,
+    })
+  }
+  return connections
+}
+
+function getConnectionByProviderId(providerId: string): StoredOAuthConnection | undefined {
+  return getStoredOAuthConnections().find((connection) => connection.providerId === providerId)
+}
+
+function getConnectionById(connectionId: string): StoredOAuthConnection | undefined {
+  const exact = getStoredOAuthConnections().find(
+    (connection) => connection.connectionId === connectionId,
+  )
+  if (exact) {
+    return exact
+  }
+  return getStoredOAuthConnections().find(
+    (connection) => getOAuthProvider(connection.providerId)?.apiProvider === connectionId,
+  )
+}
+
+function migrateLegacyCredentials(): void {
+  const store = getAuthOAuthStore()
+  for (const [providerId, credentials] of Object.entries(store.credentials)) {
+    const provider = getOAuthProvider(providerId)
+    setAuthConfigOAuth(
+      provider?.apiProvider ?? providerId,
+      providerId,
+      credentials as AuthOAuthCredentials,
+    )
+  }
+}
+
+/** 同步按 OAuth 实现 ID 读取凭证（带 memoize 缓存）。 */
 export const getOAuthCredentials = memoize((providerId: string): OAuthCredentials | null => {
   try {
-    const store = loadOAuthStore()
-    const oauthData = store.credentials[providerId]
-    if (!oauthData?.access) {
-      return null
-    }
-    return oauthData as OAuthCredentials
+    const credentials = getConnectionByProviderId(providerId)?.credentials
+    return credentials?.access ? credentials : null
   } catch (error) {
     logError(error)
     return null
   }
 })
 
-/** 异步读取 OAuth 凭证（与同步路径一致；保留 API 兼容） */
 export async function getOAuthCredentialsAsync(
   providerId: string,
 ): Promise<OAuthCredentials | null> {
   return getOAuthCredentials(providerId)
 }
 
-/** 获取活跃 OAuth Provider ID */
+/** 按 settings 引用的命名连接读取 OAuth 凭证。 */
+export function getOAuthCredentialsForConnection(connectionId?: string): OAuthCredentials | null {
+  if (!connectionId) {
+    return null
+  }
+  return getConnectionById(connectionId)?.credentials ?? null
+}
+
+export function getOAuthProviderIdForConnection(connectionId?: string): string | null {
+  if (!connectionId) {
+    return null
+  }
+  return getConnectionById(connectionId)?.providerId ?? null
+}
+
+/**
+ * 返回兼容意义上的默认 OAuth provider。
+ * 模型请求不依赖该值，而是按命名连接精确选取凭证。
+ */
 export function getActiveOAuthProvider(): string | null {
   try {
-    const store = loadOAuthStore()
-    return store.activeProvider ?? null
+    return getStoredOAuthConnections()[0]?.providerId ?? null
   } catch (error) {
     logError(error)
     return null
   }
 }
 
-/** 设置活跃 OAuth Provider */
+/** 兼容旧调用：新结构无全局 active，仅确保该凭证已迁移。 */
 export function setActiveOAuthProvider(providerId: string): void {
-  try {
-    const store = loadOAuthStore()
-    store.activeProvider = providerId
-    persistOAuthStore(store)
-  } catch (error) {
-    logError(error)
+  const credentials = getOAuthCredentials(providerId)
+  if (credentials) {
+    saveOAuthCredentials(providerId, credentials)
   }
 }
 
-/** 保存 OAuth 凭证并设为活跃 provider */
+/** 保存 OAuth 凭证到其 API provider 同名连接。 */
 export function saveOAuthCredentials(
   providerId: string,
   credentials: OAuthCredentials,
 ): { success: boolean; warning?: string } {
   try {
-    const store = loadOAuthStore()
-    store.credentials[providerId] = credentials as AuthOAuthCredentials
-    store.activeProvider = providerId
+    migrateLegacyCredentials()
+    const provider = getOAuthProvider(providerId)
+    const connectionId = provider?.apiProvider ?? providerId
+    const result = setAuthConfigOAuth(connectionId, providerId, credentials as AuthOAuthCredentials)
+    clearOAuthCredentialsCache()
 
-    const result = persistOAuthStore(store)
-
-    if (result.success) {
-      logEvent('zy_oauth_credentials_saved', {
-        providerId: providerId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-    } else {
-      logEvent('zy_oauth_credentials_save_failed', {
-        providerId: providerId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-    }
-
+    logEvent(result.success ? 'zy_oauth_credentials_saved' : 'zy_oauth_credentials_save_failed', {
+      providerId: providerId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+    })
     return result
   } catch (error) {
     logError(error)
@@ -114,40 +179,32 @@ export function saveOAuthCredentials(
   }
 }
 
-/** 删除指定 provider 的 OAuth 凭证 */
 export function removeOAuthCredentials(providerId: string): void {
   try {
-    const store = loadOAuthStore()
-    delete store.credentials[providerId]
-
-    if (store.activeProvider === providerId) {
-      const remaining = Object.keys(store.credentials)
-      store.activeProvider = remaining.length > 0 ? remaining[0] : null
+    migrateLegacyCredentials()
+    const connection = getConnectionByProviderId(providerId)
+    if (connection) {
+      removeAuthConfigOAuth(connection.connectionId)
     }
-
-    persistOAuthStore(store)
+    clearOAuthCredentialsCache()
   } catch (error) {
     logError(error)
   }
 }
 
-/** 清除所有 OAuth 凭证 */
 export function clearAllOAuthCredentials(): void {
   try {
-    persistOAuthStore({ activeProvider: null, credentials: {} })
+    clearAllAuthConfigOAuth()
+    clearOAuthCredentialsCache()
   } catch (error) {
     logError(error)
   }
 }
 
-/** 清除凭证缓存 */
 export function clearOAuthCredentialsCache(): void {
   getOAuthCredentials.cache?.clear?.()
 }
 
-/**
- * 获取活跃 provider 的 API key（自动刷新过期 token）。
- */
 export async function getActiveOAuthApiKey(): Promise<{
   key: string
   provider: string
@@ -156,19 +213,15 @@ export async function getActiveOAuthApiKey(): Promise<{
   if (!providerId) {
     return null
   }
-
   const credentials = await getOAuthCredentialsAsync(providerId)
   if (!credentials) {
     return null
   }
-
   try {
     const { newCredentials, apiKey } = await getOAuthApiKey(providerId, credentials)
-
     if (newCredentials !== credentials) {
       saveOAuthCredentials(providerId, newCredentials)
     }
-
     return { key: apiKey, provider: providerId }
   } catch (error) {
     logError(error)
@@ -176,80 +229,82 @@ export async function getActiveOAuthApiKey(): Promise<{
   }
 }
 
-/**
- * 同步获取活跃 provider 的 API key（从缓存读取，不过期检查）。
- */
+export function getOAuthApiKeySyncForConnection(connectionId?: string): string | null {
+  if (!connectionId) {
+    return null
+  }
+  const connection = getConnectionById(connectionId)
+  if (!connection) {
+    return null
+  }
+  const provider = getOAuthProvider(connection.providerId)
+  return provider?.getApiKey(connection.credentials) ?? null
+}
+
 export function getActiveOAuthApiKeySync(): string | null {
   const providerId = getActiveOAuthProvider()
   if (!providerId) {
     return null
   }
-
-  const credentials = getOAuthCredentials(providerId)
-  if (!credentials) {
-    return null
-  }
-
-  const provider = getOAuthProvider(providerId)
-  if (!provider) {
-    return null
-  }
-
-  return provider.getApiKey(credentials)
+  const connection = getConnectionByProviderId(providerId)
+  return connection
+    ? (getOAuthProvider(providerId)?.getApiKey(connection.credentials) ?? null)
+    : null
 }
 
-/**
- * 获取活跃 provider 的信息。
- */
+export function getOAuthProviderInfoForConnection(
+  connectionId?: string,
+): OAuthProviderInterface | null {
+  if (!connectionId) {
+    return null
+  }
+  const providerId = getConnectionById(connectionId)?.providerId
+  return providerId ? (getOAuthProvider(providerId) ?? null) : null
+}
+
 export function getActiveOAuthProviderInfo(): OAuthProviderInterface | null {
   const providerId = getActiveOAuthProvider()
-  if (!providerId) {
-    return null
-  }
-
-  return getOAuthProvider(providerId) ?? null
+  return providerId ? (getOAuthProvider(providerId) ?? null) : null
 }
 
-/**
- * 检查活跃 provider 的凭证是否已过期。
- */
 export function isActiveOAuthTokenExpired(): boolean {
   const providerId = getActiveOAuthProvider()
-  if (!providerId) {
-    return false
-  }
-
-  const credentials = getOAuthCredentials(providerId)
-  if (!credentials) {
-    return false
-  }
-
-  const bufferTime = 5 * 60 * 1000
-  return Date.now() + bufferTime >= credentials.expires
+  const credentials = providerId ? getOAuthCredentials(providerId) : null
+  return credentials ? Date.now() + 5 * 60 * 1000 >= credentials.expires : false
 }
 
-/**
- * 刷新活跃 provider 的 OAuth token。
- */
+export function isOAuthTokenExpiredForConnection(connectionId?: string): boolean {
+  const credentials = getOAuthCredentialsForConnection(connectionId)
+  return credentials ? Date.now() + 5 * 60 * 1000 >= credentials.expires : false
+}
+
+export async function refreshOAuthTokenForConnection(connectionId?: string): Promise<boolean> {
+  if (!connectionId) {
+    return false
+  }
+  const connection = getConnectionById(connectionId)
+  const provider = connection ? getOAuthProvider(connection.providerId) : undefined
+  if (!connection || !provider) {
+    return false
+  }
+  try {
+    saveOAuthCredentials(connection.providerId, await provider.refreshToken(connection.credentials))
+    return true
+  } catch (error) {
+    logError(error)
+    return false
+  }
+}
+
 export async function refreshActiveOAuthToken(): Promise<boolean> {
   const providerId = getActiveOAuthProvider()
-  if (!providerId) {
+  const provider = providerId ? getOAuthProvider(providerId) : undefined
+  const credentials = providerId ? await getOAuthCredentialsAsync(providerId) : null
+  if (!providerId || !provider || !credentials) {
     return false
   }
-
-  const provider = getOAuthProvider(providerId)
-  if (!provider) {
-    return false
-  }
-
-  const credentials = await getOAuthCredentialsAsync(providerId)
-  if (!credentials) {
-    return false
-  }
-
   try {
-    const newCredentials = await provider.refreshToken(credentials)
-    saveOAuthCredentials(providerId, newCredentials)
+    saveOAuthCredentials(providerId, await provider.refreshToken(credentials))
     return true
   } catch (error) {
     logError(error)

@@ -11,7 +11,7 @@ import { Box, Link, Text } from '../ink/index.js'
 import { useKeybinding } from '../keybindings/useKeybinding.js'
 import { getSSLErrorHint } from '../services/api/errorUtils.js'
 import { sendNotification } from '../services/notifier.js'
-import { getActiveOAuthProviderInfo, saveOAuthCredentials } from '../services/oauth/oauthStorage.js'
+import { saveOAuthCredentials } from '../services/oauth/oauthStorage.js'
 import { getOAuthProviders } from '../services/oauth/providers/index.js'
 import type {
   OAuthLoginCallbacks,
@@ -41,7 +41,7 @@ type OAuthStatus =
   | { state: 'prompt_input'; message: string; placeholder?: string }
   | { state: 'progress'; message: string }
   | { state: 'about_to_retry'; nextState: OAuthStatus }
-  | { state: 'success' }
+  | { state: 'success'; providerName: string }
   | { state: 'error'; message: string; toRetry?: OAuthStatus }
 
 const PASTE_HERE_MSG = 'Paste code here if prompted > '
@@ -226,7 +226,7 @@ export function ConsoleOAuthFlow({ onDone, startingMessage }: Props): React.Reac
           providerId: provider.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
 
-        setOAuthStatus({ state: 'success' })
+        setOAuthStatus({ state: 'success', providerName: provider.name })
         void sendNotification(
           { message: 'ZY Code login successful', notificationType: 'auth_success' },
           terminal,
@@ -566,14 +566,11 @@ function OAuthStatusMessage({
         </Box>
       )
     case 'success': {
-      const providerInfo = getActiveOAuthProviderInfo()
       return (
         <Box flexDirection="column">
-          {providerInfo && (
-            <Text dimColor={true}>
-              {tSync('oauth.loggedInAs')} <Text>{providerInfo.name}</Text>
-            </Text>
-          )}
+          <Text dimColor={true}>
+            {tSync('oauth.loggedInAs')} <Text>{oauthStatus.providerName}</Text>
+          </Text>
           <Text color="success">{tSync('oauth.loginSuccessful')}</Text>
         </Box>
       )

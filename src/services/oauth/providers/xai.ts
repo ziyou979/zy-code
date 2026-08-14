@@ -79,7 +79,7 @@ function readJwtExpSeconds(token: string): number | null {
     const parts = token.split('.')
     if (parts.length < 2) return null
     const payload = parts[1] ?? ''
-    // base64url → base64
+    // 将 base64url 转换为 base64
     const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
     const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
     const decoded = JSON.parse(atob(padded)) as { exp?: unknown }

@@ -9,9 +9,13 @@ import {
 import { getSSLErrorHint } from '../../services/api/errorUtils.js'
 import { getAPIProvider } from '../../services/model/providers.js'
 import {
+  getAuthProfileForModel,
+  getMainLoopModel,
+  getProviderForModel,
+} from '../../services/model/model.js'
+import {
   clearOAuthCredentialsCache,
-  getActiveOAuthProvider,
-  getActiveOAuthProviderInfo,
+  getOAuthProviderInfoForConnection,
   saveOAuthCredentials,
 } from '../../services/oauth/oauthStorage.js'
 import { getOAuthProvider, getOAuthProviders } from '../../services/oauth/providers/index.js'
@@ -137,9 +141,11 @@ export async function authStatus(opts: { json?: boolean; text?: boolean }): Prom
   const hasApiKeyEnvVar = !!process.env.ZY_API_KEY && !isRunningOnHomespace()
   const loggedIn = hasToken || apiKeySource !== 'none' || hasApiKeyEnvVar
 
-  // 检查多 Provider OAuth
-  const activeOAuthProvider = getActiveOAuthProvider()
-  const activeOAuthProviderInfo = getActiveOAuthProviderInfo()
+  // 按当前模型连接检查 OAuth，避免多账号状态串用。
+  const currentModel = getMainLoopModel()
+  const authConnection = getAuthProfileForModel(currentModel) ?? getProviderForModel(currentModel)
+  const activeOAuthProviderInfo = getOAuthProviderInfoForConnection(authConnection)
+  const activeOAuthProvider = activeOAuthProviderInfo?.id ?? null
 
   // 确定认证方式
   let authMethod: string = 'none'

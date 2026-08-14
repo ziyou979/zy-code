@@ -6,7 +6,10 @@ import {
   getLocalModelCosts,
   parseTokenCount,
 } from '../settings/localModelCapabilities.js'
-import { getActiveOAuthProviderInfo } from '../oauth/oauthStorage.js'
+import {
+  getActiveOAuthProviderInfo,
+  getOAuthProviderInfoForConnection,
+} from '../oauth/oauthStorage.js'
 import { getAuthConfigApiFormat } from '../auth/authConfig.js'
 import { type ApiFormat } from './apiFormat.js'
 import {
@@ -54,16 +57,16 @@ export function getAPIProvider(): APIProvider {
     // settings / sticky 未就绪
   }
 
-  // 1. 多 Provider OAuth 登录的活跃 provider
-  const oauthProvider = getActiveOAuthProviderInfo()
-  if (oauthProvider?.apiProvider) {
-    return oauthProvider.apiProvider as APIProvider
-  }
-
-  // 2. settings.json 中配置的平台
+  // 1. settings.json 中配置的平台。OAuth 不应覆盖用户的模型组合。
   const settingsProvider = getSettingsProvider()
   if (settingsProvider) {
     return settingsProvider
+  }
+
+  // 2. 未配置 settings 时，任意已登录 OAuth 可作为启动回退。
+  const oauthProvider = getActiveOAuthProviderInfo()
+  if (oauthProvider?.apiProvider) {
+    return oauthProvider.apiProvider as APIProvider
   }
 
   // 3. 默认 anthropic
@@ -217,8 +220,17 @@ export function getEffectiveApiFormat(provider: APIProvider, model?: string): Ap
     }
   }
 
-  // 3. OAuth provider 自带格式优先于全局 settings，避免登录源被全局配置误伤。
-  const oauthProvider = getActiveOAuthProviderInfo()
+  // 3. 按当前模型的命名连接取 OAuth 格式，避免多个 OAuth 串用。
+  let oauthConnectionId: string = provider
+  if (model) {
+    try {
+      const { getAuthProfileForModel } = require('./model.js') as typeof import('./model.js')
+      oauthConnectionId = getAuthProfileForModel(model) ?? provider
+    } catch {
+      // 模型配置尚未初始化时使用 provider 本身。
+    }
+  }
+  const oauthProvider = getOAuthProviderInfoForConnection(oauthConnectionId)
   if (
     oauthProvider?.apiProvider === provider &&
     oauthProvider.apiFormat &&

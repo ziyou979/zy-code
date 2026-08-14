@@ -109,7 +109,7 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 
 - 同候选内仍走 `withRetry`（401 刷新、429 退避）。  
 - 当认证失败（刷新后仍 401/403）或 **限流/额度耗尽** 连续达到 `maxConsecutiveFailures`（默认 2）时，自动切到数组下一项。  
-- 切换后写入 `~/.zy/model-chain-state.json` **跨会话粘住**，直到 `/model` 或修改 `models` / `modelFailover`。  
+- 切换后写入 `~/.zy/model-chain-state.json` **跨会话粘住**；配置重排或增加候选时按 `provider + model + authProfile` 保留选择，直到再次使用 `/model` 或该候选被移除。  
 - 第一期 **不**因 529/5xx 自动粘走（CLI `--fallback-model` 仍处理过载）。  
 - 凭证：各 `provider` 对应 `auth.json` 条目或匹配的 OAuth；OAuth token 仅用于其 `apiProvider` 匹配的通道。
 
@@ -217,28 +217,34 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
     "apiFormat": "anthropic",
     "apiKeyHelper": "C:\\Users\\you\\.zy\\get-dashscope-key.ps1"
   },
-  // /login 多 Provider OAuth 订阅（xai-oauth / anthropic / openai-codex 等）
-  "oauth": {
-    "activeProvider": "xai-oauth",
-    "credentials": {
-      "xai-oauth": {
-        "access": "...",
-        "refresh": "...",
-        "expires": 1710000000000,
-        "tokenEndpoint": "https://auth.x.ai/oauth2/token"
-      }
+  // /login OAuth 与 API Key 一样归属于命名连接
+  "xai": {
+    "oauth": {
+      "provider": "xai-oauth",
+      "access": "...",
+      "refresh": "...",
+      "expires": 1710000000000,
+      "tokenEndpoint": "https://auth.x.ai/oauth2/token"
+    }
+  },
+  "openai": {
+    "oauth": {
+      "provider": "openai-codex",
+      "access": "...",
+      "refresh": "...",
+      "expires": 1710000000000
     }
   }
 }
 ```
 
 - **扁平命名连接 map**:顶层 key 是可自由命名的连接 id；值可包含底层注册表 `provider`、`baseUrl`、`apiFormat`、`apiKey` / `apiKeyHelper`。省略 `provider` 时连接 id 本身按注册表 provider 解析，兼容旧格式。
-- **`oauth` 保留键**:`/login` 与 `zy auth login` 的订阅 OAuth 凭证写在这里（`activeProvider` + `credentials`），与 API Key 共用同一文件。
+- **连接内 OAuth**:`/login` 与 `zy auth login` 将凭证写到 API provider 同名连接的 `oauth` 字段；`provider` 标识具体登录/刷新实现。不再存在全局 `activeProvider`。
 - **settings 分离**:`settings.json` 不再承载连接细节；`baseUrl` 只作为旧版迁移回退，`apiKey` / `apiKeyHelper` 只放在 `auth.json`。
 - **模型路由**:`settings.json` 中通过 `{provider,model}` 或 `customModels[].provider` 的 `provider` 直接填写连接 id。运行时用连接的底层 `provider` 做协议分派，用连接 id 读取 URL 和凭证。
 - **多个 generic**:为每个端点定义不同连接 id，即可在同一 tier 的候选数组或不同 tier 中自由组合；failover 会保留具体连接身份。
 - **apiKeyHelper**:ZY 会执行该命令并读取 stdout 作为 key。provider 级 helper 按命令独立缓存,避免多个 provider 串用同一个缓存值。
-- **OAuth 与 API Key 同文件**:`/login` 订阅凭证只写 `auth.json` 的 `oauth` 块。MCP OAuth 等仍可能使用 `~/.zy/.credentials.json` / Keychain（SecureStorage），与 `/login` 无关。
+- **OAuth 与 API Key 同文件**:xAI、OpenAI Codex、GitHub Copilot 等 OAuth 连接可同时存在，请求按 settings 中的连接 id 精确选取。旧版根级 `oauth.activeProvider/credentials` 可读，下次 OAuth 写入时自动迁移。MCP OAuth 等仍可能使用 `~/.zy/.credentials.json` / Keychain，与 `/login` 无关。
 
 ---
 
@@ -305,7 +311,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 | `ZY_CODE_MODEL` / `ZY_CODE_SUBAGENT_MODEL` / `ZY_CODE_AUTO_MODE_MODEL` | 主循环 / 子 agent / 自动模式分类器 模型 |
 | `ANTHROPIC_SMALL_FAST_MODEL` | 小快模型 ID 覆盖 |
 
-provider 解析优先级: sticky 多 auth 候选 > OAuth active > `settings.provider` > 默认 `anthropic`。
+provider 解析优先级: sticky 多 auth 候选 > `settings.provider` > 已登录 OAuth 启动回退 > 默认 `anthropic`。
 
 ### 5.2 API / 认证 / 网络
 
@@ -426,7 +432,7 @@ SDK 把 betas 摘出 body → HTTP 头: anthropic-beta: a,b,c
 | anthropic | 默认 | hardcoded | anthropic | ✓ |
 | bedrock / vertex / foundry | 基础设施 | hardcoded | anthropic | ✗ |
 
-**xAI Grok 订阅（SuperGrok / X Premium+）**：`zy auth login --provider xai-oauth` 走 Device Code OAuth，无需 `XAI_API_KEY`；凭据存 secure storage，推理端点 `https://api.x.ai/v1`。也可用 API Key 配 `provider: xai`。
+**xAI Grok 订阅（SuperGrok / X Premium+）**：`zy auth login --provider xai-oauth` 走 Device Code OAuth，无需 `XAI_API_KEY`；凭据写入 `auth.json` 的 `xai.oauth`，推理端点 `https://api.x.ai/v1`。也可用 API Key 配 `provider: xai`。
 
 **端点类型**:`hardcoded`(URL 写死)、`env-or-default`(读 env 否则默认)、`custom`(用户自填) 等，见注册表 `endpointType`。
 

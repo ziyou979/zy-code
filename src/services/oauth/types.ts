@@ -1,4 +1,4 @@
-// OAuth Types
+// OAuth 类型
 
 export interface OAuthConfig {
   clientId: string
