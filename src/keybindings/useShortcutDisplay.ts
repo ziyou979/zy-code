@@ -6,25 +6,23 @@ import {
 import { useOptionalKeybindingContext } from './KeybindingContext.js'
 import type { KeybindingContextName } from './types.js'
 
-// TODO(keybindings-migration): Remove fallback parameter after migration is complete
-// and we've confirmed no 'keybinding_fallback_used' events are being logged.
-// The fallback exists as a safety net during migration - if bindings fail to load
-// or an action isn't found, we fall back to hardcoded values. Once stable, callers
-// should be able to trust that getBindingDisplayText always returns a value for
-// known actions, and we can remove this defensive pattern.
+// TODO(keybindings-migration): 迁移完成并确认不再记录 keybinding_fallback_used 事件后，
+// 移除 fallback 参数。fallback 是迁移期的安全兜底：绑定加载失败或找不到 action 时，退回
+// 硬编码值。稳定后，调用方应能确信 getBindingDisplayText 总会为已知 action 返回值，届时
+// 即可移除此防御逻辑。
 
 /**
- * Hook to get the display text for a configured shortcut.
- * Returns the configured binding or a fallback if unavailable.
+ * 获取已配置快捷键展示文本的 hook。
+ * 返回配置的绑定；无法获取时返回 fallback。
  *
- * @param action - The action name (e.g., 'app:toggleTranscript')
- * @param context - The keybinding context (e.g., 'Global')
- * @param fallback - Fallback text if keybinding context unavailable
- * @returns The configured shortcut display text
+ * @param action action 名称，例如 `app:toggleTranscript`
+ * @param context 快捷键 context，例如 `Global`
+ * @param fallback 无法获取快捷键 context 时使用的后备文本
+ * @returns 已配置快捷键的展示文本
  *
  * @example
  * const expandShortcut = useShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
- * // Returns the user's configured binding, or 'ctrl+o' as default
+ * // 返回用户配置的绑定，未配置时默认返回 'ctrl+o'
  */
 export function useShortcutDisplay(
   action: string,
@@ -36,8 +34,7 @@ export function useShortcutDisplay(
   const isFallback = resolved === undefined
   const reason = keybindingContext ? 'action_not_found' : 'no_context'
 
-  // Log fallback usage once per mount (not on every render) to avoid
-  // flooding analytics with events from frequent re-renders.
+  // 每次挂载只记录一次 fallback 使用情况，避免频繁重新渲染时向 analytics 写入大量事件。
   const hasLoggedRef = useRef(false)
   useEffect(() => {
     if (isFallback && !hasLoggedRef.current) {

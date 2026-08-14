@@ -1,38 +1,15 @@
 /**
- * Zod schema for keybindings.json configuration.
- * Used for validation and JSON schema generation.
+ * keybindings.json 配置的 Zod schema。
+ * 用于校验和生成 JSON Schema。
  */
 
 import { z } from 'zod/v4'
 import { lazySchema } from '../utils/lazySchema.js'
+export { KEYBINDING_CONTEXTS } from './types.js'
+import { KEYBINDING_CONTEXTS } from './types.js'
 
 /**
- * Valid context names where keybindings can be applied.
- */
-export const KEYBINDING_CONTEXTS = [
-  'Global',
-  'Chat',
-  'Autocomplete',
-  'Confirmation',
-  'Help',
-  'Transcript',
-  'HistorySearch',
-  'Task',
-  'ThemePicker',
-  'Settings',
-  'Tabs',
-  // New contexts for keybindings migration
-  'Attachments',
-  'Footer',
-  'MessageSelector',
-  'DiffDialog',
-  'ModelPicker',
-  'Select',
-  'Plugin',
-] as const
-
-/**
- * Human-readable descriptions for each keybinding context.
+ * 各快捷键 context 的易读说明。
  */
 export const KEYBINDING_CONTEXT_DESCRIPTIONS: Record<(typeof KEYBINDING_CONTEXTS)[number], string> =
   {
@@ -47,9 +24,11 @@ export const KEYBINDING_CONTEXT_DESCRIPTIONS: Record<(typeof KEYBINDING_CONTEXTS
     ThemePicker: 'When the theme picker is open',
     Settings: 'When the settings menu is open',
     Tabs: 'When tab navigation is active',
+    Scroll: 'When a scrollable view is focused',
     Attachments: 'When navigating image attachments in a select dialog',
     Footer: 'When footer indicators are focused',
     MessageSelector: 'When the message selector (rewind) is open',
+    MessageActions: 'When the message actions menu is open',
     DiffDialog: 'When the diff dialog is open',
     ModelPicker: 'When the model picker is open',
     Select: 'When a select/list component is focused',
@@ -57,10 +36,10 @@ export const KEYBINDING_CONTEXT_DESCRIPTIONS: Record<(typeof KEYBINDING_CONTEXTS
   }
 
 /**
- * All valid keybinding action identifiers.
+ * 所有有效的快捷键 action 标识符。
  */
 export const KEYBINDING_ACTIONS = [
-  // App-level actions (Global context)
+  // 应用级 action（Global context）
   'app:interrupt',
   'app:exit',
   'app:toggleTodos',
@@ -71,11 +50,11 @@ export const KEYBINDING_ACTIONS = [
   'app:redraw',
   'app:globalSearch',
   'app:quickOpen',
-  // History navigation
+  // 历史记录导航
   'history:search',
   'history:previous',
   'history:next',
-  // Chat input actions
+  // Chat 输入 action
   'chat:cancel',
   'chat:killAgents',
   'chat:cycleMode',
@@ -88,12 +67,12 @@ export const KEYBINDING_ACTIONS = [
   'chat:stash',
   'chat:imagePaste',
   'chat:messageActions',
-  // Autocomplete menu actions
+  // 自动补全菜单 action
   'autocomplete:accept',
   'autocomplete:dismiss',
   'autocomplete:previous',
   'autocomplete:next',
-  // Confirmation dialog actions
+  // 确认对话框 action
   'confirm:yes',
   'confirm:no',
   'confirm:previous',
@@ -103,29 +82,29 @@ export const KEYBINDING_ACTIONS = [
   'confirm:cycleMode',
   'confirm:toggle',
   'confirm:toggleExplanation',
-  // Tabs navigation actions
+  // Tabs 导航 action
   'tabs:next',
   'tabs:previous',
-  // Transcript viewer actions
+  // Transcript 查看器 action
   'transcript:toggleShowAll',
   'transcript:exit',
-  // History search actions
+  // 历史搜索 action
   'historySearch:next',
   'historySearch:accept',
   'historySearch:cancel',
   'historySearch:execute',
-  // Task/agent actions
+  // Task/agent 相关 action
   'task:background',
-  // Theme picker actions
+  // 主题选择器 action
   'theme:toggleSyntaxHighlighting',
-  // Help menu actions
+  // 帮助菜单 action
   'help:dismiss',
-  // Attachment navigation (select dialog image attachments)
+  // 附件导航（选择对话框中的图片附件）
   'attachments:next',
   'attachments:previous',
   'attachments:remove',
   'attachments:exit',
-  // Footer indicator actions
+  // 页脚指示器 action
   'footer:up',
   'footer:down',
   'footer:next',
@@ -133,13 +112,13 @@ export const KEYBINDING_ACTIONS = [
   'footer:openSelected',
   'footer:clearSelection',
   'footer:close',
-  // Message selector (rewind) actions
+  // 消息选择器（rewind）action
   'messageSelector:up',
   'messageSelector:down',
   'messageSelector:top',
   'messageSelector:bottom',
   'messageSelector:select',
-  // Diff dialog actions
+  // Diff 对话框 action
   'diff:dismiss',
   'diff:previousSource',
   'diff:nextSource',
@@ -147,29 +126,29 @@ export const KEYBINDING_ACTIONS = [
   'diff:viewDetails',
   'diff:previousFile',
   'diff:nextFile',
-  // Model picker actions (ant-only)
+  // 模型选择器 action（仅限 ant）
   'modelPicker:decreaseEffort',
   'modelPicker:increaseEffort',
-  // Select component actions (distinct from confirm: to avoid collisions)
+  // Select 组件 action；与 confirm: 分开以避免冲突
   'select:next',
   'select:previous',
   'select:accept',
   'select:cancel',
-  // Plugin dialog actions
+  // Plugin 对话框 action
   'plugin:toggle',
   'plugin:install',
-  // Permission dialog actions
+  // 权限对话框 action
   'permission:toggleDebug',
-  // Settings config panel actions
+  // Settings 配置面板 action
   'settings:search',
   'settings:retry',
   'settings:close',
-  // Voice actions
+  // Voice 相关 action
   'voice:pushToTalk',
 ] as const
 
 /**
- * Schema for a single keybinding block.
+ * 单个快捷键绑定块的 schema。
  */
 export const KeybindingBlockSchema = lazySchema(() =>
   z
@@ -199,8 +178,8 @@ export const KeybindingBlockSchema = lazySchema(() =>
 )
 
 /**
- * Schema for the entire keybindings.json file.
- * Uses object wrapper format with optional $schema and $docs metadata.
+ * 整个 keybindings.json 文件的 schema。
+ * 使用对象包装格式，并支持可选的 $schema 和 $docs 元数据。
  */
 export const KeybindingsSchema = lazySchema(() =>
   z
@@ -213,6 +192,6 @@ export const KeybindingsSchema = lazySchema(() =>
 )
 
 /**
- * TypeScript types derived from the schema.
+ * 从 schema 推导出的 TypeScript 类型。
  */
 export type KeybindingsSchemaType = z.infer<ReturnType<typeof KeybindingsSchema>>

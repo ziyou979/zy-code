@@ -1,21 +1,19 @@
 /**
- * Setup utilities for integrating KeybindingProvider into the app.
+ * 将 KeybindingProvider 集成到应用中的设置工具。
  *
- * This file provides the bindings and a composed provider that can be
- * added to the app's component tree. It loads both default bindings and
- * user-defined bindings from ~/.zy/keybindings.json, with hot-reload
- * support when the file changes.
+ * 本文件提供绑定和可加入应用组件树的组合 provider。它会加载默认绑定和
+ * ~/.zy/keybindings.json 中的用户绑定，并在文件变化时支持热重载。
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNotifications } from '../context/notifications.js'
-// ChordInterceptor intentionally uses useInput to intercept all keystrokes before
-// other handlers process them - this is required for chord sequence support
+// ChordInterceptor 有意使用 useInput，先于其他 handler 拦截所有按键，这是支持 chord 序列所必需的
 // eslint-disable-next-line custom-rules/prefer-use-keybindings
 import { type InputEvent, type Key, useInput } from '../ink/index.js'
 import { count } from '../utils/array.js'
 import { logForDebugging } from '../services/infra/debug.js'
 import { plural } from '../utils/stringUtils.js'
 import { KeybindingProvider } from './KeybindingContext.js'
+import { invokeFirstMatchingHandler, type KeybindingHandlerRegistration } from './dispatch.js'
 import {
   initializeKeybindingWatcher,
   type KeybindingsLoadResult,
@@ -27,8 +25,8 @@ import type { KeybindingContextName, ParsedBinding, ParsedKeystroke } from './ty
 import type { KeybindingWarning } from './validate.js'
 
 /**
- * Timeout for chord sequences in milliseconds.
- * If the user doesn't complete the chord within this time, it's cancelled.
+ * chord 序列的超时时间（ms）。
+ * 用户未在此时间内完成 chord 时将其取消。
  */
 const CHORD_TIMEOUT_MS = 1000
 type Props = {
@@ -36,28 +34,8 @@ type Props = {
 }
 
 /**
- * Keybinding provider with default + user bindings and hot-reload support.
- *
- * Usage: Wrap your app with this provider to enable keybinding support.
- *
- * ```tsx
- * <AppStateProvider>
- *   <KeybindingSetup>
- *     <REPL ... />
- *   </KeybindingSetup>
- * </AppStateProvider>
- * ```
- *
- * Features:
- * - Loads default bindings from code
- * - Merges with user bindings from ~/.zy/keybindings.json
- * - Watches for file changes and reloads automatically (hot-reload)
- * - User bindings override defaults (later entries win)
- * - Chord support with automatic timeout
- */
-/**
- * Display keybinding warnings to the user via notifications.
- * Shows a brief message pointing to /doctor for details.
+ * 通过通知向用户展示快捷键警告。
+ * 简短消息会引导用户前往 /doctor 查看详情。
  */
 function useKeybindingWarnings(warnings: KeybindingWarning[], _isReload: boolean) {
   const { addNotification, removeNotification } = useNotifications()
@@ -90,8 +68,13 @@ function useKeybindingWarnings(warnings: KeybindingWarning[], _isReload: boolean
     })
   }, [warnings, addNotification, removeNotification])
 }
+
+/**
+ * 支持默认绑定、用户绑定、热重载及 chord 的快捷键 provider。
+ * 使用此 provider 包裹应用即可启用快捷键支持。
+ */
 export function KeybindingSetup({ children }: Props): React.ReactNode {
-  // Load bindings synchronously for initial render
+  // 为首次渲染同步加载绑定
   const [{ bindings, warnings }, setLoadResult] = useState<KeybindingsLoadResult>(() => {
     const result = loadKeybindingsSyncWithWarnings()
     logForDebugging(
@@ -100,34 +83,23 @@ export function KeybindingSetup({ children }: Props): React.ReactNode {
     return result
   })
 
-  // Track if this is a reload (not initial load)
+  // 记录本次是否为重载，而非首次加载
   const [isReload, setIsReload] = useState(false)
 
-  // Display warnings via notifications
+  // 通过通知展示警告
   useKeybindingWarnings(warnings, isReload)
 
-  // Chord state management - use ref for immediate access, state for re-renders
-  // The ref is used by resolve() to get the current value without waiting for re-render
-  // The state is used to trigger re-renders when needed (e.g., for UI updates)
+  // chord 状态使用 ref 供同步访问，使用 state 触发重新渲染。
+  // resolve() 通过 ref 获取当前值，无需等待重新渲染；state 则在 UI 更新等场景触发渲染。
   const pendingChordRef = useRef<ParsedKeystroke[] | null>(null)
   const [pendingChord, setPendingChordState] = useState<ParsedKeystroke[] | null>(null)
   const chordTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Handler registry for action callbacks (used by ChordInterceptor to invoke handlers)
-  const handlerRegistryRef = useRef(
-    new Map<
-      string,
-      Set<{
-        action: string
-        context: KeybindingContextName
-        handler: () => void
-      }>
-    >(),
-  )
+  // action 回调的 handler 注册表，供 ChordInterceptor 调用
+  const handlerRegistryRef = useRef(new Map<string, Set<KeybindingHandlerRegistration>>())
 
-  // Active context tracking for keybinding priority resolution
-  // Using a ref instead of state for synchronous updates - input handlers need
-  // to see the current value immediately, not after a React render cycle.
+  // 跟踪活跃 context，用于解析快捷键优先级。
+  // 使用 ref 而非 state 以便同步更新；输入 handler 必须立即看到当前值，不能等待 React 渲染周期。
   const activeContextsRef = useRef<Set<KeybindingContextName>>(new Set())
   const registerActiveContext = useCallback((context: KeybindingContextName) => {
     activeContextsRef.current.add(context)
@@ -136,7 +108,7 @@ export function KeybindingSetup({ children }: Props): React.ReactNode {
     activeContextsRef.current.delete(context)
   }, [])
 
-  // Clear chord timeout when component unmounts or chord changes
+  // 组件卸载或 chord 变化时清除超时定时器
   const clearChordTimeout = useCallback(() => {
     if (chordTimeoutRef.current) {
       clearTimeout(chordTimeoutRef.current)
@@ -144,12 +116,12 @@ export function KeybindingSetup({ children }: Props): React.ReactNode {
     }
   }, [])
 
-  // Wrapper for setPendingChord that manages timeout and syncs ref+state
+  // 封装 setPendingChord，统一管理超时并同步 ref 与 state
   const setPendingChord = useCallback(
     (pending: ParsedKeystroke[] | null) => {
       clearChordTimeout()
       if (pending !== null) {
-        // Set timeout to cancel chord if not completed
+        // 设置超时，未完成 chord 时将其取消
         chordTimeoutRef.current = setTimeout(() => {
           logForDebugging('[keybindings] Chord timeout - cancelling')
           pendingChordRef.current = null
@@ -157,21 +129,20 @@ export function KeybindingSetup({ children }: Props): React.ReactNode {
         }, CHORD_TIMEOUT_MS)
       }
 
-      // Update ref immediately for synchronous access in resolve()
+      // 立即更新 ref，供 resolve() 同步访问
       pendingChordRef.current = pending
-      // Update state to trigger re-renders for UI updates
+      // 更新 state，触发 UI 重新渲染
       setPendingChordState(pending)
     },
     [clearChordTimeout],
   )
   useEffect(() => {
-    // Initialize file watcher (idempotent - only runs once)
+    // 初始化文件 watcher；操作幂等，只会运行一次
     void initializeKeybindingWatcher()
 
-    // Subscribe to changes
+    // 订阅变化
     const unsubscribe = subscribeToKeybindingChanges((result) => {
-      // Any callback invocation is a reload since initial load happens
-      // synchronously in useState, not via this subscription
+      // 首次加载由 useState 同步完成，而非通过此订阅，因此任何回调调用都属于重载
       setIsReload(true)
       setLoadResult(result)
       logForDebugging(
@@ -207,20 +178,13 @@ export function KeybindingSetup({ children }: Props): React.ReactNode {
 }
 
 /**
- * Global chord interceptor that registers useInput FIRST (before children).
+ * 全局 chord 拦截器，先于子组件注册 useInput。
  *
- * This component intercepts keystrokes that are part of chord sequences and
- * stops propagation before other handlers (like PromptInput) can see them.
+ * 此组件会拦截 chord 序列中的按键，并在 PromptInput 等其他 handler 收到之前停止传播。
  *
- * Without this, the second key of a chord (e.g., 'r' in "ctrl+c r") would be
- * captured by PromptInput and added to the input field before the keybinding
- * system could recognize it as completing a chord.
+ * 若无此拦截，"ctrl+c r" 中的 `r` 等 chord 第二个按键会先被 PromptInput 捕获并写入输入框，
+ * 此时快捷键系统还来不及识别 chord 已完成。
  */
-type HandlerRegistration = {
-  action: string
-  context: KeybindingContextName
-  handler: () => void
-}
 function ChordInterceptor({
   bindings,
   pendingChordRef,
@@ -232,7 +196,7 @@ function ChordInterceptor({
   pendingChordRef: React.RefObject<ParsedKeystroke[] | null>
   setPendingChord: (pending: ParsedKeystroke[] | null) => void
   activeContexts: Set<KeybindingContextName>
-  handlerRegistryRef: React.RefObject<Map<string, Set<HandlerRegistration>>>
+  handlerRegistryRef: React.RefObject<Map<string, Set<KeybindingHandlerRegistration>>>
 }) {
   const handleInput = (input: string, key: Key, event: InputEvent) => {
     if ((key.wheelUp || key.wheelDown) && pendingChordRef.current === null) {
@@ -259,17 +223,10 @@ function ChordInterceptor({
       case 'match': {
         setPendingChord(null)
         if (wasInChord) {
-          const contextsSet = new Set(contexts)
           if (registry) {
             const handlers = registry.get(result.action)
-            if (handlers && handlers.size > 0) {
-              for (const registration of handlers) {
-                if (contextsSet.has(registration.context)) {
-                  registration.handler()
-                  event.stopImmediatePropagation()
-                  break
-                }
-              }
+            if (handlers && handlers.size > 0 && invokeFirstMatchingHandler(handlers, contexts)) {
+              event.stopImmediatePropagation()
             }
           }
         }
@@ -282,7 +239,11 @@ function ChordInterceptor({
       }
       case 'unbound': {
         setPendingChord(null)
-        event.stopImmediatePropagation()
+        // 单键 null 绑定表示“恢复默认输入”，应继续传给输入组件；若它是 chord 的
+        // 后续按键，则前缀已经被消费，仍需拦截以免只插入残缺的尾键。
+        if (wasInChord) {
+          event.stopImmediatePropagation()
+        }
         break
       }
       case 'none':

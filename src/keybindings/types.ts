@@ -1,6 +1,6 @@
-// Keybinding Types
+// Keybinding 类型
 
-/** A single parsed keystroke with its modifiers */
+/** 解析后的单次按键及其修饰键。 */
 type ParsedKeystroke = {
   key: string
   ctrl: boolean
@@ -10,46 +10,49 @@ type ParsedKeystroke = {
   super: boolean
 }
 
-/** A chord is a sequence of keystrokes (e.g., "ctrl+k ctrl+s") */
+/** chord 是一组连续按键，例如 "ctrl+k ctrl+s"。 */
 type Chord = ParsedKeystroke[]
 
-/** A parsed keybinding with its chord, action, and context */
+/** 解析后的快捷键绑定，包含 chord、action 和 context。 */
 type ParsedBinding = {
   chord: Chord
   action: string | null
   context: KeybindingContextName
 }
 
-/** A keybinding block from config JSON */
+/** 配置 JSON 中的快捷键绑定块。 */
 type KeybindingBlock = {
   context: KeybindingContextName
   bindings: Record<string, string | null>
 }
 
-/** Valid context names for keybindings */
-type KeybindingContextName =
-  | 'Global'
-  | 'Chat'
-  | 'Autocomplete'
-  | 'Settings'
-  | 'Confirmation'
-  | 'Tabs'
-  | 'Transcript'
-  | 'HistorySearch'
-  | 'Task'
-  | 'ThemePicker'
-  | 'Scroll'
-  | 'Help'
-  | 'Attachments'
-  | 'Footer'
-  | 'MessageSelector'
-  | 'MessageActions'
-  | 'DiffDialog'
-  | 'ModelPicker'
-  | 'Select'
-  | 'Plugin'
+/** 快捷键绑定可用的 context 名称，也是 schema 与运行时校验的唯一事实来源。 */
+export const KEYBINDING_CONTEXTS = [
+  'Global',
+  'Chat',
+  'Autocomplete',
+  'Settings',
+  'Confirmation',
+  'Tabs',
+  'Transcript',
+  'HistorySearch',
+  'Task',
+  'ThemePicker',
+  'Scroll',
+  'Help',
+  'Attachments',
+  'Footer',
+  'MessageSelector',
+  'MessageActions',
+  'DiffDialog',
+  'ModelPicker',
+  'Select',
+  'Plugin',
+] as const
 
-/** A string literal type for keybinding action names (e.g., 'app:toggleTranscript') */
+type KeybindingContextName = (typeof KEYBINDING_CONTEXTS)[number]
+
+/** 快捷键 action 名称的字符串类型，例如 `app:toggleTranscript`。 */
 type KeybindingAction = string
 
 export type {

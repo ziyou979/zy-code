@@ -1,9 +1,8 @@
 import type { Chord, KeybindingBlock, ParsedBinding, ParsedKeystroke } from './types.js'
 
 /**
- * Parse a keystroke string like "ctrl+shift+k" into a ParsedKeystroke.
- * Supports various modifier aliases (ctrl/control, alt/opt/option/meta,
- * cmd/command/super/win).
+ * 将 "ctrl+shift+k" 形式的按键字符串解析为 ParsedKeystroke。
+ * 支持多种修饰键别名（ctrl/control、alt/opt/option/meta、cmd/command/super/win）。
  */
 export function parseKeystroke(input: string): ParsedKeystroke {
   const parts = input.split('+')
@@ -70,10 +69,10 @@ export function parseKeystroke(input: string): ParsedKeystroke {
 }
 
 /**
- * Parse a chord string like "ctrl+k ctrl+s" into an array of ParsedKeystrokes.
+ * 将 "ctrl+k ctrl+s" 形式的 chord 字符串解析为 ParsedKeystroke 数组。
  */
 export function parseChord(input: string): Chord {
-  // A lone space character IS the space key binding, not a separator
+  // 单独的空格字符表示空格键绑定，而不是分隔符
   if (input === ' ') {
     return [parseKeystroke('space')]
   }
@@ -81,7 +80,7 @@ export function parseChord(input: string): Chord {
 }
 
 /**
- * Convert a ParsedKeystroke to its canonical string representation for display.
+ * 将 ParsedKeystroke 转换为用于展示的规范字符串。
  */
 export function keystrokeToString(ks: ParsedKeystroke): string {
   const parts: string[] = []
@@ -100,14 +99,14 @@ export function keystrokeToString(ks: ParsedKeystroke): string {
   if (ks.super) {
     parts.push('cmd')
   }
-  // Use readable names for display
+  // 展示时使用易读名称
   const displayKey = keyToDisplayName(ks.key)
   parts.push(displayKey)
   return parts.join('+')
 }
 
 /**
- * Map internal key names to human-readable display names.
+ * 将内部按键名映射为易读的展示名称。
  */
 function keyToDisplayName(key: string): string {
   switch (key) {
@@ -145,21 +144,21 @@ function keyToDisplayName(key: string): string {
 }
 
 /**
- * Convert a Chord to its canonical string representation for display.
+ * 将 Chord 转换为用于展示的规范字符串。
  */
 export function chordToString(chord: Chord): string {
   return chord.map(keystrokeToString).join(' ')
 }
 
 /**
- * Display platform type - a subset of Platform that we care about for display.
- * WSL and unknown are treated as linux for display purposes.
+ * 展示所需的平台类型，是 Platform 的子集。
+ * 展示时将 WSL 和 unknown 按 linux 处理。
  */
 type DisplayPlatform = 'macos' | 'windows' | 'linux' | 'wsl' | 'unknown'
 
 /**
- * Convert a ParsedKeystroke to a platform-appropriate display string.
- * Uses "opt" for alt on macOS, "alt" elsewhere.
+ * 将 ParsedKeystroke 转换为适合当前平台的展示字符串。
+ * macOS 上将 alt 展示为 "opt"，其他平台展示为 "alt"。
  */
 export function keystrokeToDisplayString(
   ks: ParsedKeystroke,
@@ -169,9 +168,9 @@ export function keystrokeToDisplayString(
   if (ks.ctrl) {
     parts.push('ctrl')
   }
-  // Alt/meta are equivalent in terminals, show platform-appropriate name
+  // Alt/meta 在终端中等价，按平台展示对应名称
   if (ks.alt || ks.meta) {
-    // Only macOS uses "opt", all other platforms use "alt"
+    // 仅 macOS 使用 "opt"，其他平台均使用 "alt"
     parts.push(platform === 'macos' ? 'opt' : 'alt')
   }
   if (ks.shift) {
@@ -180,21 +179,21 @@ export function keystrokeToDisplayString(
   if (ks.super) {
     parts.push(platform === 'macos' ? 'cmd' : 'super')
   }
-  // Use readable names for display
+  // 展示时使用易读名称
   const displayKey = keyToDisplayName(ks.key)
   parts.push(displayKey)
   return parts.join('+')
 }
 
 /**
- * Convert a Chord to a platform-appropriate display string.
+ * 将 Chord 转换为适合当前平台的展示字符串。
  */
 export function chordToDisplayString(chord: Chord, platform: DisplayPlatform = 'linux'): string {
   return chord.map((ks) => keystrokeToDisplayString(ks, platform)).join(' ')
 }
 
 /**
- * Parse keybinding blocks (from JSON config) into a flat list of ParsedBindings.
+ * 将 JSON 配置中的快捷键绑定块解析为扁平的 ParsedBinding 列表。
  */
 export function parseBindings(blocks: KeybindingBlock[]): ParsedBinding[] {
   const bindings: ParsedBinding[] = []
