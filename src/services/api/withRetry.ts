@@ -238,7 +238,7 @@ export async function* withRetry<T, TClient = unknown>(
       if (is529Error(error)) {
         consecutive529Errors++
         if (consecutive529Errors >= MAX_529_RETRIES) {
-          // Check if fallback model is specified
+          // 检查是否指定 fallback 模型
           if (options.fallbackModel) {
             logEvent('zy_api_opus_fallback_triggered', {
               original_model:
@@ -453,7 +453,7 @@ export function parseMaxTokensContextOverflowError(error: APIErrorLike):
     return undefined
   }
 
-  // Example format: "input length and `max_tokens` exceed context limit: 188059 + 20000 > 200000"
+  // 示例格式："input length and `max_tokens` exceed context limit: 188059 + 20000 > 200000"
   const regex = /input length and `max_tokens` exceed context limit: (\d+) \+ (\d+) > (\d+)/
   const match = error.message.match(regex)
 

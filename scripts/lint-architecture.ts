@@ -46,7 +46,7 @@ function walkDir(dir: string): string[] {
       }
     }
   } catch {
-    // skip
+    // 跳过
   }
   return files
 }
@@ -968,7 +968,7 @@ function collectDirs(dir: string): string[] {
       }
     }
   } catch {
-    // skip
+    // 跳过
   }
   return result
 }

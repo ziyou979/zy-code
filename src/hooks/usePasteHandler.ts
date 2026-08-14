@@ -106,18 +106,16 @@ export function usePasteHandler({ onPaste, onInput, onImagePaste }: PasteHandler
         ) => {
           pastePendingRef.current = false
           setPasteState(({ chunks }) => {
-            // Join chunks and filter out orphaned focus sequences
-            // These can appear when focus events split during paste
+            // 合并 chunk 并过滤孤立的焦点序列；粘贴期间焦点事件被拆分时可能出现这些序列
             const pastedText = chunks.join('').replace(/\[I$/, '').replace(/\[O$/, '')
 
-            // Check if the pasted text contains image file paths
-            // When dragging multiple images, they may come as:
-            // 1. Newline-separated paths (common in some terminals)
-            // 2. Space-separated paths (common when dragging from Finder)
-            // For space-separated paths, we split on spaces that precede absolute paths:
-            // - Unix: space followed by `/` (e.g., `/Users/...`)
-            // - Windows: space followed by drive letter and `:\` (e.g., `C:\Users\...`)
-            // This works because spaces within paths are escaped (e.g., `file\ name.png`)
+            // 检查粘贴文本是否包含图片文件路径。拖入多张图片时可能收到：
+            // 1. 以换行分隔的路径（部分终端常见）
+            // 2. 以空格分隔的路径（从 Finder 拖入时常见）
+            // 对空格分隔路径，在绝对路径前的空格处分割：
+            // - Unix：空格后跟 `/`（如 `/Users/...`）
+            // - Windows：空格后跟盘符和 `:\`（如 `C:\Users\...`）
+            // 路径内部的空格会被转义（如 `file\ name.png`），因此此方法可行
             const lines = pastedText
               .split(/ (?=\/|[A-Za-z]:\\)/)
               .flatMap((part) => part.split('\n'))
@@ -129,13 +127,13 @@ export function usePasteHandler({ onPaste, onInput, onImagePaste }: PasteHandler
                 pastedText,
               )
 
-              // Process all image paths
+              // 处理所有图片路径
               void Promise.all(imagePaths.map((imagePath) => tryReadImageFromPath(imagePath))).then(
                 (results) => {
                   const validImages = results.filter((r): r is NonNullable<typeof r> => r !== null)
 
                   if (validImages.length > 0) {
-                    // Successfully read at least one image
+                    // 至少成功读取一张图片
                     for (const imageData of validImages) {
                       const filename = basename(imageData.path)
                       onImagePaste(
@@ -146,14 +144,14 @@ export function usePasteHandler({ onPaste, onInput, onImagePaste }: PasteHandler
                         imageData.path,
                       )
                     }
-                    // If some paths weren't images, paste them as text
+                    // 部分路径不是图片时，将其作为文本粘贴
                     const nonImageLines = lines.filter((line) => !isImageFilePath(line))
                     if (nonImageLines.length > 0 && onPaste) {
                       onPaste(nonImageLines.join('\n'))
                     }
                     setIsPasting(false)
                   } else if (isTempScreenshot && isMacOS) {
-                    // For temporary screenshot files that no longer exist, try clipboard
+                    // 临时截图文件已不存在时，尝试读取剪贴板
                     checkClipboardForImage()
                   } else {
                     if (onPaste) {
@@ -166,18 +164,17 @@ export function usePasteHandler({ onPaste, onInput, onImagePaste }: PasteHandler
               return { chunks: [], timeoutId: null }
             }
 
-            // If paste is empty (common when trying to paste images with Cmd+V),
-            // check if clipboard has an image (macOS only)
+            // 粘贴内容为空（使用 Cmd+V 粘贴图片时常见）时，检查剪贴板中是否有图片（仅 macOS）
             if (isMacOS && onImagePaste && pastedText.length === 0) {
               checkClipboardForImage()
               return { chunks: [], timeoutId: null }
             }
 
-            // Handle regular paste
+            // 处理普通粘贴
             if (onPaste) {
               onPaste(pastedText)
             }
-            // Reset isPasting state after paste is complete
+            // 粘贴完成后重置 isPasting 状态
             setIsPasting(false)
             return { chunks: [], timeoutId: null }
           })
@@ -195,51 +192,42 @@ export function usePasteHandler({ onPaste, onInput, onImagePaste }: PasteHandler
     [checkClipboardForImage, isMacOS, onImagePaste, onPaste],
   )
 
-  // Paste detection is now done via the InputEvent's keypress.isPasted flag,
-  // which is set by the keypress parser when it detects bracketed paste mode.
-  // This avoids the race condition caused by having multiple listeners on stdin.
-  // Previously, we had a stdin.on('data') listener here which competed with
-  // the 'readable' listener in App.tsx, causing dropped characters.
+  // 现在通过 InputEvent 的 keypress.isPasted flag 检测粘贴；keypress parser
+  // 检测到 bracketed paste mode 时会设置该值。这避免了 stdin 上多个 listener
+  // 引发的竞态。此前这里的 stdin.on('data') listener 会与 App.tsx 中的
+  // 'readable' listener 竞争，导致字符丢失。
 
   const wrappedOnInput = (input: string, key: Key, event: InputEvent): void => {
-    // Detect paste from the parsed keypress event.
-    // The keypress parser sets isPasted=true for content within bracketed paste.
+    // 从解析后的 keypress event 检测粘贴；bracketed paste 内的内容会被 parser
+    // 标记为 isPasted=true。
     const isFromPaste = event.keypress.isPasted
 
-    // If this is pasted content, set isPasting state for UI feedback
+    // 内容来自粘贴时设置 isPasting 状态，供 UI 反馈
     if (isFromPaste) {
       setIsPasting(true)
     }
 
-    // Handle large pastes (>PASTE_THRESHOLD chars)
-    // Usually we get one or two input characters at a time. If we
-    // get more than the threshold, the user has probably pasted.
-    // Unfortunately node batches long pastes, so it's possible
-    // that we would see e.g. 1024 characters and then just a few
-    // more in the next frame that belong with the original paste.
-    // This batching number is not consistent.
+    // 处理超过 PASTE_THRESHOLD 个字符的大段粘贴。通常每次只收到一两个输入字符，
+    // 超过阈值基本可判定为粘贴。但 Node 会分批处理长粘贴，因此可能先看到 1024 个字符，
+    // 下一帧又收到属于同次粘贴的少量字符；每批数量并不固定。
 
-    // Handle potential image filenames (even if they're shorter than paste threshold)
-    // When dragging multiple images, they may come as newline-separated or
-    // space-separated paths. Split on spaces preceding absolute paths:
-    // - Unix: ` /` - Windows: ` C:\` etc.
+    // 处理可能的图片文件名，即使短于粘贴阈值。拖入多张图片时，路径可能以换行或空格分隔。
+    // 在绝对路径前的空格处分割：Unix 为 ` /`，Windows 为 ` C:\` 等。
     const hasImageFilePath = input
       .split(/ (?=\/|[A-Za-z]:\\)/)
       .flatMap((part) => part.split('\n'))
       .some((line) => isImageFilePath(line.trim()))
 
-    // Handle empty paste (clipboard image on macOS)
-    // When the user pastes an image with Cmd+V, the terminal sends an empty
-    // bracketed paste sequence. The keypress parser emits this as isPasted=true
-    // with empty input.
+    // 处理空粘贴（macOS 剪贴板图片）。用户用 Cmd+V 粘贴图片时，终端会发送空的
+    // bracketed paste sequence；keypress parser 将其作为 isPasted=true 且 input 为空发出。
     if (isFromPaste && input.length === 0 && isMacOS && onImagePaste) {
       checkClipboardForImage()
-      // Reset isPasting since there's no text content to process
+      // 没有文本内容可处理，重置 isPasting
       setIsPasting(false)
       return
     }
 
-    // Check if we should handle as paste (from bracketed paste, large input, or continuation)
+    // 检查是否应按粘贴处理：bracketed paste、大段输入或前次粘贴的延续
     const shouldHandleAsPaste =
       onPaste &&
       (input.length > PASTE_THRESHOLD || pastePendingRef.current || hasImageFilePath || isFromPaste)
@@ -256,10 +244,8 @@ export function usePasteHandler({ onPaste, onInput, onImagePaste }: PasteHandler
     }
     onInput(input, key)
     if (input.length > 10) {
-      // Ensure that setIsPasting is turned off on any other multicharacter
-      // input, because the stdin buffer may chunk at arbitrary points and split
-      // the closing escape sequence if the input length is too long for the
-      // stdin buffer.
+      // 其他多字符输入中确保关闭 setIsPasting，因为 stdin buffer 可能在任意位置分块；
+      // 输入长度超出 buffer 时，结束 escape sequence 也可能被拆开。
       setIsPasting(false)
     }
   }

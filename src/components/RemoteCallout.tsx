@@ -19,7 +19,7 @@ export function RemoteCallout({ onDone }: Props): React.ReactNode {
     onDoneRef.current('dismiss')
   }, [])
 
-  // Permanently mark as seen on mount so it only shows once
+  // 挂载时永久标记为已查看，确保只显示一次
   useEffect(() => {
     saveGlobalConfig((current) => {
       if (current.remoteDialogSeen) {
@@ -66,7 +66,7 @@ export function RemoteCallout({ onDone }: Props): React.ReactNode {
 }
 
 /**
- * Check whether to show the remote callout (first-time dialog).
+ * 检查是否显示 remote callout（首次使用 dialog）。
  */
 export function shouldShowRemoteCallout(): boolean {
   const config = getGlobalConfig()

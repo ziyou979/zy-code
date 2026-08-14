@@ -544,7 +544,7 @@ export async function loadRootResources(
     // 从服务器获取引导数据并更新所有缓存值。
     void fetchBootstrapData()
 
-    // TODO: Consolidate other prefetches into a single bootstrap request.
+    // TODO：将其他预取合并为单个 bootstrap 请求。
     if (bgRefreshThrottleMs > 0) {
       saveGlobalConfig((current) => ({
         ...current,
@@ -709,7 +709,7 @@ export async function loadRootResources(
   // 下次交互会话将协调。此处的 await 之前
   // 阻塞了 -p 在市场往返上。
   if (isBareMode()) {
-    // skip — no-op
+    // 跳过，不执行任何操作
   } else if (isNonInteractiveSession) {
     // 在无头模式下，等待以确保插件同步在 CLI 退出之前完成
     await initializeVersionedPlugins()

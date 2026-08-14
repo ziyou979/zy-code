@@ -1,4 +1,4 @@
-// Query Source Constants
+// 查询来源常量。
 
 export const QUERY_SOURCES = ['cli', 'sdk', 'ide', 'web', 'api'] as const
 

@@ -14,7 +14,7 @@ export function useIdeConnectionStatus(mcpClients?: MCPServerConnection[]): IdeC
     if (!ideClient) {
       return { status: null, ideName: null }
     }
-    // Extract IDE name from config if available
+    // 如果配置中有 IDE 名称，则从中提取
     const config = ideClient.config
     const ideName = config.type === 'sse-ide' || config.type === 'ws-ide' ? config.ideName : null
     if (ideClient.type === 'connected') {

@@ -5,7 +5,7 @@ import { callIdeRpc } from '../services/mcp/mcpToolCall.js'
 import type { ConnectedMCPServer, MCPServerConnection } from '../services/mcp/types.js'
 import { lazySchema } from '../utils/lazySchema.js'
 
-// Schema for the prompt notification from Chrome extension (JSON-RPC 2.0 format)
+// Chrome 扩展 prompt 通知的 schema（JSON-RPC 2.0 格式）
 const _ClaudeInChromePromptNotificationSchema = lazySchema(() =>
   z.object({
     method: z.literal('notifications/message'),
@@ -24,8 +24,8 @@ const _ClaudeInChromePromptNotificationSchema = lazySchema(() =>
 )
 
 /**
- * A hook that listens for prompt notifications from the Zy for Chrome extension,
- * enqueues them as user prompts, and syncs permission mode changes to the extension.
+ * 监听 Zy for Chrome 扩展的 prompt 通知，将其作为用户 prompt 入队，
+ * 并向扩展同步权限模式变化。
  */
 export function usePromptsFromClaudeInChrome(
   mcpClients: MCPServerConnection[],

@@ -1,7 +1,6 @@
 /**
- * Detects potentially destructive PowerShell commands and returns a warning
- * string for display in the permission dialog. This is purely informational
- * -- it doesn't affect permission logic or auto-approval.
+ * 检测可能具有破坏性的 PowerShell 命令，并返回在 permission 对话框中显示的警告字符串。
+ * 该信息仅用于提示，不影响 permission 逻辑或自动批准。
  */
 
 type DestructivePattern = {
@@ -10,7 +9,7 @@ type DestructivePattern = {
 }
 
 const DESTRUCTIVE_PATTERNS: DestructivePattern[] = [
-  // Remove-Item with -Recurse and/or -Force (and common aliases)
+  // 带 -Recurse 和/或 -Force 的 Remove-Item（及常见别名）
   // Anchored to statement start (^, |, ;, &, newline, {, () so `git rm --force`
   // doesn't match — \b would match `rm` after any word boundary. The `{(`
   // chars catch scriptblock/group bodies: `{ rm -Force ./x }`. The stopper
@@ -37,13 +36,13 @@ const DESTRUCTIVE_PATTERNS: DestructivePattern[] = [
     warning: 'Note: may force-remove files',
   },
 
-  // Clear-Content on broad paths
+  // 对宽泛路径执行 Clear-Content
   {
     pattern: /\bClear-Content\b[^|;&\n]*\*/i,
     warning: 'Note: may clear content of multiple files',
   },
 
-  // Format-Volume and Clear-Disk
+  // Format-Volume 和 Clear-Disk
   {
     pattern: /\bFormat-Volume\b/i,
     warning: 'Note: may format a disk volume',
@@ -53,7 +52,7 @@ const DESTRUCTIVE_PATTERNS: DestructivePattern[] = [
     warning: 'Note: may clear a disk',
   },
 
-  // Git destructive operations (same as BashTool)
+  // Git 破坏性操作（与 BashTool 一致）
   {
     pattern: /\bgit\s+reset\s+--hard\b/i,
     warning: 'Note: may discard uncommitted changes',
@@ -71,13 +70,13 @@ const DESTRUCTIVE_PATTERNS: DestructivePattern[] = [
     warning: 'Note: may permanently remove stashed changes',
   },
 
-  // Database operations
+  // 数据库操作
   {
     pattern: /\b(DROP|TRUNCATE)\s+(TABLE|DATABASE|SCHEMA)\b/i,
     warning: 'Note: may drop or truncate database objects',
   },
 
-  // System operations
+  // 系统操作
   {
     pattern: /\bStop-Computer\b/i,
     warning: 'Note: will shut down the computer',
@@ -93,8 +92,8 @@ const DESTRUCTIVE_PATTERNS: DestructivePattern[] = [
 ]
 
 /**
- * Checks if a PowerShell command matches known destructive patterns.
- * Returns a human-readable warning string, or null if no destructive pattern is detected.
+ * 检查 PowerShell 命令是否匹配已知破坏性模式。
+ * 返回易读的警告字符串；未检测到破坏性模式时返回 null。
  */
 export function getDestructiveCommandWarning(command: string): string | null {
   for (const { pattern, warning } of DESTRUCTIVE_PATTERNS) {

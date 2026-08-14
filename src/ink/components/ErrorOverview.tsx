@@ -41,7 +41,7 @@ export default function ErrorOverview({ error }: Props) {
         }
       }
     } catch {
-      // file not readable — skip source context
+      // 文件不可读，跳过源码上下文
     }
   }
   return (

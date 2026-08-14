@@ -4,7 +4,7 @@ import { fetchPrStatus, type PrReviewState } from '../services/github/ghPrStatus
 
 const POLL_INTERVAL_MS = 60_000
 const SLOW_GH_THRESHOLD_MS = 4_000
-const IDLE_STOP_MS = 60 * 60_000 // stop polling after 60 min idle
+const IDLE_STOP_MS = 60 * 60_000 // 空闲 60 分钟后停止轮询
 
 export type PrStatusState = {
   number: number | null
@@ -21,18 +21,14 @@ const INITIAL_STATE: PrStatusState = {
 }
 
 /**
- * Polls PR review status every 60s while the session is active.
- * When no interaction is detected for 60 minutes, the loop stops — no
- * timers remain. React re-runs the effect when isLoading changes
- * (turn starts/ends), restarting the loop. Effect setup schedules
- * the next poll relative to the last fetch time so turn boundaries
- * don't spawn `gh` more than once per interval. Disables permanently
- * if a fetch exceeds 4s.
+ * 会话活跃期间每 60 秒轮询一次 PR 审查状态。
+ * 连续 60 分钟没有交互时停止循环，不留下定时器。isLoading 在轮次开始或结束时
+ * 发生变化，React 会重新运行 effect 并恢复循环。effect 以最近一次获取时间为基准
+ * 安排下次轮询，避免轮次边界在同一间隔内多次启动 `gh`。单次获取超过 4 秒后永久停用。
  *
- * Pass `enabled: false` to skip polling entirely (hook still must be
- * called unconditionally to satisfy the rules of hooks).
+ * 传入 `enabled: false` 可完全跳过轮询，但仍须无条件调用此 hook，以遵守 hooks 规则。
  */
-export function usePrStatus(_isLoading: boolean, enabled = true): PrStatusState {
+export function usePrStatus(isLoading: boolean, enabled = true): PrStatusState {
   const [prStatus, setPrStatus] = useState<PrStatusState>(INITIAL_STATE)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const disabledRef = useRef(false)
@@ -108,7 +104,7 @@ export function usePrStatus(_isLoading: boolean, enabled = true): PrStatusState 
         timeoutRef.current = null
       }
     }
-  }, [enabled])
+  }, [enabled, isLoading])
 
   return prStatus
 }

@@ -1,11 +1,10 @@
-// Auto mode state functions — lives in its own module so callers can
-// conditionally require() it on true.
+// Auto mode 状态函数单独放在本模块，使调用方可在条件为 true 时才 require()。
 
 let autoModeActive = false
 let autoModeFlagCli = false
-// Set by the async verifyAutoModeGateAccess check when it
-// reads a fresh zy_auto_mode_config.enabled === 'disabled' from GrowthBook.
-// Used by isAutoModeGateEnabled() to block SDK/explicit re-entry after kick-out.
+// 异步 verifyAutoModeGateAccess 从 GrowthBook 读取到最新的
+// zy_auto_mode_config.enabled === 'disabled' 时设置。isAutoModeGateEnabled() 据此阻止
+// 被移出后的 SDK 或显式重新进入。
 let autoModeCircuitBroken = false
 
 export function setAutoModeActive(active: boolean): void {

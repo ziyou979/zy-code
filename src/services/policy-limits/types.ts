@@ -2,8 +2,8 @@ import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
 
 /**
- * Schema for the policy limits API response
- * Only blocked policies are included. If a policy key is absent, it's allowed.
+ * policy limits API 响应的 schema。
+ * 只包含被阻止的策略；缺少某个策略 key 即表示允许。
  */
 export const PolicyLimitsResponseSchema = lazySchema(() =>
   z.object({
@@ -14,7 +14,7 @@ export const PolicyLimitsResponseSchema = lazySchema(() =>
 export type PolicyLimitsResponse = z.infer<ReturnType<typeof PolicyLimitsResponseSchema>>
 
 /**
- * Result of fetching policy limits
+ * 获取 policy limits 的结果。
  */
 export type PolicyLimitsFetchResult = {
   success: boolean

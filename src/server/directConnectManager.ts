@@ -152,7 +152,7 @@ export class DirectConnectSessionManager {
   }
 
   /**
-   * Send an interrupt signal to cancel the current request
+   * 发送中断信号以取消当前请求。
    */
   sendInterrupt(): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {

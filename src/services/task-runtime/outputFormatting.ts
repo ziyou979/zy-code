@@ -15,9 +15,8 @@ export function getMaxTaskOutputLength(): number {
 }
 
 /**
- * Format task output for API consumption, truncating if too large.
- * When truncated, includes a header with the file path and returns
- * the last N characters that fit within the limit.
+ * 格式化任务输出供 API 使用，并在过大时截断。
+ * 截断后包含带文件路径的标头，并返回限制范围内容得下的末尾 N 个字符。
  */
 export function formatTaskOutput(
   output: string,

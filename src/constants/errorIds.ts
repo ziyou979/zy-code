@@ -1,15 +1,13 @@
 /**
- * Error IDs for tracking error sources in production.
- * These IDs are obfuscated identifiers that help us trace
- * which logError() call generated an error.
+ * 用于在生产环境追踪错误来源的错误 ID。
+ * 这些 ID 是经过混淆的标识符，可帮助定位由哪个 logError() 调用产生错误。
  *
- * These errors are represented as individual const exports for optimal
- * dead code elimination (external build will only see the numbers).
+ * 每种错误均以独立 const 导出，以获得最佳死代码消除效果；外部构建只能看到数字。
  *
- * ADDING A NEW ERROR TYPE:
- * 1. Add a const based on Next ID.
- * 2. Increment Next ID.
- * Next ID: 346
+ * 新增错误类型：
+ * 1. 使用下一个 ID 新增 const。
+ * 2. 递增“下一个 ID”。
+ * 下一个 ID：346
  */
 
 export const E_TOOL_USE_SUMMARY_GENERATION_FAILED = 344

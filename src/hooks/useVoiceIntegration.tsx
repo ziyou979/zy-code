@@ -18,11 +18,10 @@ import type { ParsedKeystroke } from '../keybindings/types.js'
 import { normalizeFullWidthSpace } from '../utils/stringUtils.js'
 import { useVoiceEnabled } from './useVoiceEnabled.js'
 
-// Dead code elimination: conditional import for voice input hook.
+// dead code elimination：按条件导入语音输入 hook。
 /* eslint-disable @typescript-eslint/no-require-imports */
-// Capture the module namespace, not the function: spyOn() mutates the module
-// object, so `voiceNs.useVoice(...)` resolves to the spy even if this module
-// was loaded before the spy was installed (test ordering independence).
+// 捕获 module namespace 而非函数：spyOn() 会修改 module 对象，因此即使此模块
+// 先于 spy 安装加载，`voiceNs.useVoice(...)` 仍会解析到 spy，不受测试顺序影响。
 const voiceNs: {
   useVoice: typeof import('./useVoice.js').useVoice
 } = feature('VOICE_MODE')
@@ -35,9 +34,8 @@ const voiceNs: {
     }
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// Maximum gap (ms) between key presses to count as held (auto-repeat).
-// Terminal auto-repeat fires every 30-80ms; 120ms covers jitter while
-// excluding normal typing speed (100-300ms between keystrokes).
+// 将按键视为按住（自动重复）的最大间隔（毫秒）。终端每 30-80 毫秒自动重复一次；
+// 120 毫秒可覆盖抖动，同时排除正常输入速度（按键间隔 100-300 毫秒）。
 const RAPID_KEY_GAP_MS = 120
 
 // Fallback (ms) for modifier-combo first-press activation. Must match
@@ -47,22 +45,20 @@ const RAPID_KEY_GAP_MS = 120
 // auto-repeat arrives after the default 600ms REPEAT_FALLBACK_MS.
 const MODIFIER_FIRST_PRESS_FALLBACK_MS = 2000
 
-// Number of rapid consecutive key events required to activate voice.
-// Only applies to bare-char bindings (space, v, etc.) where a single press
-// could be normal typing. Modifier combos activate on the first press.
+// 激活语音所需的连续快速 key event 数量。仅适用于裸字符 binding（空格、v 等），
+// 因为单次按下可能是正常输入；modifier 组合键首次按下即激活。
 const HOLD_THRESHOLD = 5
 
-// Number of rapid key events to start showing warmup feedback.
+// 开始显示 warmup 反馈所需的快速 key event 数量。
 const WARMUP_THRESHOLD = 2
 
-// Match a KeyboardEvent against a ParsedKeystroke. Replaces the legacy
-// matchesKeystroke(input, Key, ...) path which assumed useInput's raw
-// `input` arg — KeyboardEvent.key holds normalized names (e.g. 'space',
-// 'f9') that getKeyName() didn't handle, so modifier combos and f-keys
-// silently failed to match after the onKeyDown migration (#23524).
+// 将 KeyboardEvent 与 ParsedKeystroke 匹配。替代旧的 matchesKeystroke(input, Key, ...)
+// 路径，后者假定使用 useInput 的原始 `input` 参数。KeyboardEvent.key 保存规范化名称
+//（如 'space'、'f9'），getKeyName() 无法处理，导致迁移到 onKeyDown 后 modifier
+// 组合键和 F 键静默匹配失败（#23524）。
 function matchesKeyboardEvent(e: KeyboardEvent, target: ParsedKeystroke): boolean {
-  // KeyboardEvent stores key names; ParsedKeystroke stores ' ' for space
-  // and 'enter' for return (see parser.ts case 'space'/'return').
+  // KeyboardEvent 保存按键名称；ParsedKeystroke 用 ' ' 表示 space，
+  // 用 'enter' 表示 return（见 parser.ts 的 'space'/'return' 分支）。
   const key = e.key === 'space' ? ' ' : e.key === 'return' ? 'enter' : e.key.toLowerCase()
   if (key !== target.key) {
     return false
@@ -73,8 +69,8 @@ function matchesKeyboardEvent(e: KeyboardEvent, target: ParsedKeystroke): boolea
   if (e.shift !== target.shift) {
     return false
   }
-  // KeyboardEvent.meta folds alt|option (terminal limitation — esc-prefix);
-  // ParsedKeystroke has both alt and meta as aliases for the same thing.
+  // 受终端 esc-prefix 限制，KeyboardEvent.meta 合并了 alt|option；
+  // ParsedKeystroke 的 alt 和 meta 都是同一含义的 alias。
   if (e.meta !== (target.alt || target.meta)) {
     return false
   }
@@ -111,18 +107,17 @@ type InterimRange = {
   end: number
 }
 type StripOpts = {
-  // Which char to strip (the configured hold key). Defaults to space.
+  // 要移除的字符（配置的 hold key），默认为空格。
   char?: string
-  // Capture the voice prefix/suffix anchor at the stripped position.
+  // 在移除位置捕获语音 prefix/suffix anchor。
   anchor?: boolean
-  // Minimum trailing count to leave behind — prevents stripping the
-  // intentional warmup chars when defensively cleaning up leaks.
+  // 至少保留的尾随字符数，避免防御性清理泄漏时移除有意保留的 warmup 字符。
   floor?: number
 }
 type UseVoiceIntegrationResult = {
-  // Returns the number of trailing chars remaining after stripping.
+  // 返回移除后剩余的尾随字符数。
   stripTrailing: (maxStrip: number, opts?: StripOpts) => number
-  // Undo the gap space and reset anchor refs after a failed voice activation.
+  // 语音激活失败后撤销间隔空格，并重置 anchor ref。
   resetAnchor: () => void
   handleKeyEvent: (fallbackMs?: number) => void
   interimRange: InterimRange | null

@@ -1,5 +1,5 @@
 /**
- * Server logger factory
+ * 服务器 logger 工厂。
  */
 // biome-ignore lint/suspicious/noExplicitAny: 运行时动态类型处理
 export function createServerLogger(): any {

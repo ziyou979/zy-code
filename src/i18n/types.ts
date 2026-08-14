@@ -1,8 +1,8 @@
 /**
- * UI i18n system — lightweight key-based translation
+ * UI i18n 系统——基于 key 的轻量翻译机制。
  *
- * Supported languages: 'en' (default), 'zh-CN'
- * Derived from settings.language (free-form response language)
+ * 支持语言：'en'（默认）、'zh-CN'。
+ * 根据 settings.language（自由格式的回复语言）推导。
  */
 
 export type UiLanguage = 'en' | 'zh-CN'
@@ -10,8 +10,8 @@ export type UiLanguage = 'en' | 'zh-CN'
 export const SUPPORTED_UI_LANGUAGES: UiLanguage[] = ['en', 'zh-CN']
 
 /**
- * Map a free-form language setting to a supported UI language.
- * Priority: env var > language setting > 'en' default
+ * 将自由格式的语言设置映射为受支持的 UI 语言。
+ * 优先级：环境变量 > 语言设置 > 默认的 'en'
  */
 export function resolveUiLanguage(settingsLanguage?: string): UiLanguage {
   const envLang = process.env.ZY_CODE_UI_LANG

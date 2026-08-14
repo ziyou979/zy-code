@@ -1,5 +1,5 @@
 /**
- * SSH Session types and creation functions
+ * SSH 会话类型与创建函数。
  */
 
 export interface SSHSession {

@@ -25,22 +25,22 @@ describe('WorkflowSemaphore', () => {
       releases.push(() => sem.release())
     }
 
-    // Next acquire should not resolve immediately
+    // 下一次 acquire 不应立即完成
     let resolved = false
     const pending = sem.acquire().then(() => {
       resolved = true
     })
 
-    // Give microtask queue a chance
+    // 给微任务队列一次执行机会
     await new Promise((r) => setTimeout(r, 10))
     expect(resolved).toBe(false)
 
-    // Release one slot
+    // 释放一个并发槽位
     releases[0]!()
     await pending
     expect(resolved).toBe(true)
 
-    // Cleanup
+    // 清理
     sem.release()
     releases.slice(1).forEach((r) => r())
   })
@@ -57,7 +57,7 @@ describe('WorkflowSemaphore', () => {
 
     sem.release()
     sem.release()
-    // Agent count doesn't decrease — it's a lifetime counter
+    // Agent 数量不会减少——这是生命周期累计值
     expect(sem.getAgentCount()).toBe(2)
   })
 
@@ -80,7 +80,7 @@ describe('WorkflowSemaphore', () => {
     expect(error).not.toBeNull()
     expect(error!.message).toBe('Workflow aborted')
 
-    // Cleanup
+    // 清理
     for (let i = 0; i < capacity; i++) sem.release()
   })
 

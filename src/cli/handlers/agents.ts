@@ -1,6 +1,6 @@
 /**
- * Agents subcommand handler — prints the list of configured agents.
- * Dynamically imported only when `zy agents` runs.
+ * Agents 子命令处理器，输出已配置的 agent 列表。
+ * 仅在运行 `zy agents` 时动态导入。
  */
 
 import { tSync } from '../../i18n/index.js'

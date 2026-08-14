@@ -28,21 +28,21 @@ export type DiffData = {
 }
 
 /**
- * Hook to fetch current git diff data on demand.
- * Fetches both stats and hunks when component mounts.
+ * 按需获取当前 git diff 数据的 hook。
+ * 组件挂载时同时获取统计信息和 diff 块。
  */
 export function useDiffData(): DiffData {
   const [diffResult, setDiffResult] = useState<GitDiffResult | null>(null)
   const [hunks, setHunks] = useState<Map<string, StructuredPatchHunk[]>>(new Map())
   const [loading, setLoading] = useState(true)
 
-  // Fetch diff data on mount
+  // 挂载时获取 diff 数据
   useEffect(() => {
     let cancelled = false
 
     async function loadDiffData() {
       try {
-        // Fetch both stats and hunks
+        // 同时获取统计信息和 diff 块
         const [statsResult, hunksResult] = await Promise.all([fetchGitDiff(), fetchGitDiffHunks()])
 
         if (!cancelled) {
@@ -74,15 +74,15 @@ export function useDiffData(): DiffData {
     const { stats, perFileStats } = diffResult
     const files: DiffFile[] = []
 
-    // Iterate over perFileStats to get all files including large/skipped ones
+    // 遍历 perFileStats，纳入大文件和被跳过文件在内的全部文件
     for (const [path, fileStats] of perFileStats) {
       const fileHunks = hunks.get(path)
       const isUntracked = fileStats.isUntracked ?? false
 
-      // Detect large file (in perFileStats but not in hunks, and not binary/untracked)
+      // 识别大文件：存在于 perFileStats，但不在 hunks 中，且不是二进制或未跟踪文件
       const isLargeFile = !fileStats.isBinary && !isUntracked && !fileHunks
 
-      // Detect truncated file (total > limit means we truncated)
+      // 识别被截断的文件（总量超过限制即表示发生了截断）
       const totalLines = fileStats.added + fileStats.removed
       const isTruncated = !isLargeFile && !fileStats.isBinary && totalLines > MAX_LINES_PER_FILE
 

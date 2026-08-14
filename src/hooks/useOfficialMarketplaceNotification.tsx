@@ -4,8 +4,7 @@ import { checkAndInstallOfficialMarketplace } from '../services/plugins/official
 import { useStartupNotification } from './notifs/useStartupNotification.js'
 
 /**
- * Hook that handles official marketplace auto-installation and shows
- * notifications for success/failure in the bottom right of the REPL.
+ * 处理官方 marketplace 自动安装，并在 REPL 右下角显示成功或失败通知。
  */
 export function useOfficialMarketplaceNotification() {
   useStartupNotification(_temp)

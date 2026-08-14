@@ -1,29 +1,28 @@
 export const PRODUCT_URL = 'https://zy.com/zy-code'
 
-// ZY Code Remote session URLs
+// ZY Code Remote session URL
 export const ZY_AI_BASE_URL = 'https://zy.ai'
 // TODO: 自建 staging 环境后替换此 URL（原 ant.dev staging URL 已移除）
 export const ZY_AI_STAGING_BASE_URL = ''
 export const ZY_AI_LOCAL_BASE_URL = 'http://localhost:4000'
 
 /**
- * Determine if we're in a staging environment for remote sessions.
- * Checks session ID format and ingress URL.
+ * 根据 session ID 格式和 ingress URL 判断远程 session 是否处于 staging 环境。
  */
 export function isRemoteSessionStaging(sessionId?: string, ingressUrl?: string): boolean {
   return sessionId?.includes('_staging_') === true || ingressUrl?.includes('staging') === true
 }
 
 /**
- * Determine if we're in a local-dev environment for remote sessions.
- * Checks session ID format (e.g. `session_local_...`) and ingress URL.
+ * 根据 session ID 格式（如 `session_local_...`）和 ingress URL，
+ * 判断远程 session 是否处于本地开发环境。
  */
 export function isRemoteSessionLocal(sessionId?: string, ingressUrl?: string): boolean {
   return sessionId?.includes('_local_') === true || ingressUrl?.includes('localhost') === true
 }
 
 /**
- * Get the base URL for Zy AI based on environment.
+ * 根据环境获取 Zy AI 的 base URL。
  */
 export function getZyAiBaseUrl(sessionId?: string, ingressUrl?: string): string {
   if (isRemoteSessionLocal(sessionId, ingressUrl)) {
@@ -37,17 +36,15 @@ export function getZyAiBaseUrl(sessionId?: string, ingressUrl?: string): string 
 }
 
 /**
- * Get the full session URL for a remote session.
+ * 获取远程 session 的完整 URL。
  *
- * The cse_→session_ translation is a temporary shim gated by
- * zy_bridge_repl_v2_cse_shim_enabled (see isCseShimEnabled). Worker
- * endpoints (/v1/code/sessions/{id}/worker/*) want `cse_*` but the zy.ai
- * frontend currently routes on `session_*` (compat/convert.go:27 validates
- * TagSession). Same UUID body, different tag prefix. Once the server tags by
- * environment_kind and the frontend accepts `cse_*` directly, flip the gate
- * off. No-op for IDs already in `session_*` form. See toCompatSessionId in
- * src/bridge/sessionIdCompat.ts for the canonical helper (lazy-required here
- * to keep constants/ leaf-of-DAG at module-load time).
+ * cse_→session_ 转换是由 zy_bridge_repl_v2_cse_shim_enabled 控制的临时 shim
+ *（见 isCseShimEnabled）。worker endpoint（/v1/code/sessions/{id}/worker/*）需要
+ * `cse_*`，但 zy.ai 前端目前按 `session_*` 路由（compat/convert.go:27 校验
+ * TagSession）。两者 UUID 主体相同，只有 tag 前缀不同。服务器改为按 environment_kind
+ * 标记且前端直接接受 `cse_*` 后，应关闭此 gate。已经是 `session_*` 的 ID 不作处理。
+ * 标准 helper 见 src/bridge/sessionIdCompat.ts 的 toCompatSessionId；此处延迟 require，
+ * 以保持 constants/ 在模块加载 DAG 中处于叶节点。
  */
 export function getRemoteSessionUrl(sessionId: string, ingressUrl?: string): string {
   /* eslint-disable @typescript-eslint/no-require-imports */

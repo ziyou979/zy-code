@@ -1,13 +1,12 @@
 /**
- * Text selection state for fullscreen mode.
+ * fullscreen 模式下的文本选择状态。
  *
- * Tracks a linear selection in screen-buffer coordinates (0-indexed col/row).
- * Selection is line-based: cells from (startCol, startRow) through
- * (endCol, endRow) inclusive, wrapping across line boundaries. This matches
- * terminal-native selection behavior (not rectangular/block).
+ * 以 screen buffer 坐标（col/row 从 0 开始）跟踪线性选区。
+ * 选区以行为单位，包含从 (startCol, startRow) 到 (endCol, endRow) 的所有 cell，
+ * 可跨行换行。这与终端原生的选择行为一致，而不是矩形或块选择。
  *
- * The selection is stored as ANCHOR (where the drag started) + FOCUS (where
- * the cursor is now). The rendered highlight normalizes to start ≤ end.
+ * 选区存为 ANCHOR（开始拖动的位置）和 FOCUS（当前光标位置）。
+ * 渲染高亮时会将其规范化为 start ≤ end。
  */
 
 import { clamp } from './layout/geometry.js'
@@ -17,48 +16,39 @@ import { CellWidth, cellAt, cellAtIndex, setCellStyleId } from './screen.js'
 type Point = { col: number; row: number }
 
 export type SelectionState = {
-  /** Where the mouse-down occurred. Null when no selection. */
+  /** 鼠标按下的位置；没有选区时为 null。 */
   anchor: Point | null
-  /** Current drag position (updated on mouse-move while dragging). */
+  /** 当前拖动位置，拖动期间随 mouse-move 更新。 */
   focus: Point | null
-  /** True between mouse-down and mouse-up. */
+  /** 从 mouse-down 到 mouse-up 之间为 true。 */
   isDragging: boolean
-  /** For word/line mode: the initial word/line bounds from the first
-   *  multi-click. Drag extends from this span to the word/line at the
-   *  current mouse position so the original word/line stays selected
-   *  even when dragging backward past it. Null ⇔ char mode. The kind
-   *  tells extendSelection whether to snap to word or line boundaries. */
+  /** word/line 模式下首次多击选中的 word/line 边界。拖动时从该区间扩展至
+   *  当前鼠标所在的 word/line，因此即使反向拖过起点，原 word/line 仍保持选中。
+   *  null ⇔ char 模式。kind 告知 extendSelection 应吸附到 word 还是 line 边界。 */
   anchorSpan: { lo: Point; hi: Point; kind: 'word' | 'line' } | null
-  /** Text from rows that scrolled out ABOVE the viewport during
-   *  drag-to-scroll. The screen buffer only holds the current viewport,
-   *  so without this accumulator, dragging down past the bottom edge
-   *  loses the top of the selection once the anchor clamps. Prepended
-   *  to the on-screen text by getSelectedText. Reset on start/clear. */
+  /** drag-to-scroll 期间滚出 viewport 上方各行的文本。screen buffer 只保留当前 viewport，
+   *  如果没有该累加器，向下拖过底边后 anchor 被钳制，选区顶部就会丢失。
+   *  getSelectedText 会将其加到屏幕内文本之前；开始或清除选区时重置。 */
   scrolledOffAbove: string[]
-  /** Symmetric: rows scrolled out BELOW when dragging up. Appended. */
+  /** 对称字段：向上拖动时滚出下方的行，追加到屏幕内文本之后。 */
   scrolledOffBelow: string[]
-  /** Soft-wrap bits parallel to scrolledOffAbove — true means the row
-   *  is a continuation of the one before it (the `\n` was inserted by
-   *  word-wrap, not in the source). Captured alongside the text at
-   *  scroll time since the screen's softWrap bitmap shifts with content.
-   *  getSelectedText uses these to join wrapped rows back into logical
-   *  lines. */
+  /** 与 scrolledOffAbove 平行的 soft-wrap 位；true 表示该行是前一行的延续
+   *（`\n` 由 word-wrap 插入，而非来自源码）。screen 的 softWrap bitmap 会随内容移动，
+   *  因此滚动时需要和文本一起捕获。getSelectedText 用它们将换行后的行还原为逻辑行。 */
   scrolledOffAboveSW: boolean[]
-  /** Parallel to scrolledOffBelow. */
+  /** 与 scrolledOffBelow 平行。 */
   scrolledOffBelowSW: boolean[]
-  /** Pre-clamp anchor row. Set when shiftSelection clamps anchor so a
-   *  reverse scroll can restore the true position and pop accumulators.
-   *  Without this, PgDn (clamps anchor) → PgUp leaves anchor at the wrong
-   *  row AND scrolledOffAbove stale — highlight ≠ copy. Undefined when
-   *  anchor is in-bounds (no clamp debt). Cleared on start/clear. */
+  /** 钳制前的 anchor 行。shiftSelection 钳制 anchor 时设置，使反向滚动能恢复真实位置
+   *  并弹出累加内容。否则 PgDn（钳制 anchor）→ PgUp 后 anchor 会停在错误行，
+   *  scrolledOffAbove 也会过期，导致高亮内容 ≠ 复制内容。anchor 在边界内时为 undefined
+   *（没有 clamp debt）；开始或清除选区时清空。 */
   virtualAnchorRow?: number
-  /** Same for focus. */
+  /** focus 对应的同类字段。 */
   virtualFocusRow?: number
-  /** True if the mouse-down that started this selection had the alt
-   *  modifier set (SGR button bit 0x08). On macOS xterm.js this is a
-   *  signal that VS Code's macOptionClickForcesSelection is OFF — if it
-   *  were on, xterm.js would have consumed the event for native selection
-   *  and we'd never receive it. Used by the footer to show the right hint. */
+  /** 开始选区的 mouse-down 带 alt modifier（SGR button 第 0x08 位）时为 true。
+   *  在 macOS xterm.js 上，这表示 VS Code 的 macOptionClickForcesSelection 已关闭；
+   *  若开启，xterm.js 会为原生选区消费该事件，我们根本收不到它。
+   *  footer 据此显示正确提示。 */
   lastPressHadAlt: boolean
 }
 
@@ -78,9 +68,9 @@ export function createSelectionState(): SelectionState {
 
 export function startSelection(s: SelectionState, col: number, row: number): void {
   s.anchor = { col, row }
-  // Focus is not set until the first drag motion. A click-release with no
-  // drag leaves focus null → hasSelection/selectionBounds return false/null
-  // via the `!s.focus` check, so a bare click never highlights a cell.
+  // 首次拖动前不设置 focus。单击后直接松开会让 focus 保持 null，
+  // hasSelection/selectionBounds 经 `!s.focus` 检查返回 false/null，
+  // 因此单纯点击不会高亮 cell。
   s.focus = null
   s.isDragging = true
   s.anchorSpan = null
@@ -97,11 +87,10 @@ export function updateSelection(s: SelectionState, col: number, row: number): vo
   if (!s.isDragging) {
     return
   }
-  // First motion at the same cell as anchor is a no-op. Terminals in mode
-  // 1002 can fire a drag event at the anchor cell (sub-pixel tremor, or a
-  // motion-release pair). Setting focus here would turn a bare click into
-  // a 1-cell selection and clobber the clipboard via useCopyOnSelect. Once
-  // focus is set (real drag), we track normally including back to anchor.
+  // 第一次移动仍位于 anchor cell 时不执行任何操作。处于 mode 1002 的终端可能因亚像素抖动
+  // 或 motion-release 事件对，在 anchor cell 触发拖动事件。此时设置 focus 会把单击变成
+  // 单 cell 选区，并通过 useCopyOnSelect 覆盖剪贴板。真正拖动并设置 focus 后，
+  // 即使回到 anchor 也会正常跟踪。
   if (!s.focus && s.anchor && s.anchor.col === col && s.anchor.row === row) {
     return
   }
@@ -110,8 +99,8 @@ export function updateSelection(s: SelectionState, col: number, row: number): vo
 
 export function finishSelection(s: SelectionState): void {
   s.isDragging = false
-  // Keep anchor/focus so highlight stays visible and text can be copied.
-  // Clear via clearSelection() on Esc or after copy.
+  // 保留 anchor/focus，使高亮持续可见并可复制文本。
+  // 按 Esc 或复制后通过 clearSelection() 清除。
 }
 
 export function clearSelection(s: SelectionState): void {
@@ -128,20 +117,17 @@ export function clearSelection(s: SelectionState): void {
   s.lastPressHadAlt = false
 }
 
-// Unicode-aware word character matcher: letters (any script), digits,
-// and the punctuation set iTerm2 treats as word-part by default.
-// Matching iTerm2's default means double-clicking a path like
-// `/usr/bin/bash` or `~/.zy/config.json` selects the whole thing,
-// which is the muscle memory most macOS terminal users have.
-// iTerm2 default "characters considered part of a word": /-+\~_.
+// 支持 Unicode 的 word 字符匹配器：包括任意文字系统的字母、数字，
+// 以及 iTerm2 默认视为 word 一部分的标点集合。
+// 与 iTerm2 默认行为一致后，双击 `/usr/bin/bash` 或 `~/.zy/config.json` 这类路径
+// 会选中整个路径，符合大多数 macOS 终端用户的操作习惯。
+// iTerm2 默认的“视为 word 一部分的字符”：/-+\~_.
 const WORD_CHAR = /[\p{L}\p{N}_/.\-+~\\]/u
 
 /**
- * Character class for double-click word-expansion. Cells with the same
- * class as the clicked cell are included in the selection; a class change
- * is a boundary. Matches typical terminal-emulator behavior (iTerm2 etc.):
- * double-click on `foo` selects `foo`, on `->` selects `->`, on spaces
- * selects the whitespace run.
+ * 用于双击扩展 word 的字符类别。与被点击 cell 类别相同的 cell 会纳入选区，
+ * 类别变化即为边界。该行为与常见终端模拟器（如 iTerm2）一致：
+ * 双击 `foo` 选中 `foo`，双击 `->` 选中 `->`，双击空格则选中连续空白。
  */
 function charClass(c: string): 0 | 1 | 2 {
   if (c === ' ' || c === '') {
@@ -516,18 +502,17 @@ export function shiftSelection(
   if (!s.anchor || !s.focus) {
     return
   }
-  // Virtual rows track pre-clamp positions so reverse scrolls restore
-  // correctly. Without this, clamp(5→0) + shift(+10) = 10, not the true 5,
-  // and scrolledOffAbove stays stale (highlight ≠ copy).
+  // virtual row 跟踪钳制前的位置，使反向滚动能正确恢复。
+  // 否则 clamp(5→0) + shift(+10) = 10，而不是真实的 5，
+  // scrolledOffAbove 也会保持过期状态（高亮 ≠ 复制内容）。
   const vAnchor = (s.virtualAnchorRow ?? s.anchor.row) + dRow
   const vFocus = (s.virtualFocusRow ?? s.focus.row) + dRow
   if ((vAnchor < minRow && vFocus < minRow) || (vAnchor > maxRow && vFocus > maxRow)) {
     clearSelection(s)
     return
   }
-  // Debt = how far the nearer endpoint overshoots each edge. When debt
-  // shrinks (reverse scroll), those rows are back on-screen — pop from
-  // the accumulator so getSelectedText doesn't double-count them.
+  // debt 表示较近端点越过各边界的距离。反向滚动使 debt 缩小时，
+  // 相应行已回到屏幕内，需要从累加器中弹出，避免 getSelectedText 重复计入。
   const oldMin = Math.min(s.virtualAnchorRow ?? s.anchor.row, s.virtualFocusRow ?? s.focus.row)
   const oldMax = Math.max(s.virtualAnchorRow ?? s.anchor.row, s.virtualFocusRow ?? s.focus.row)
   const oldAboveDebt = Math.max(0, minRow - oldMin)
@@ -535,38 +520,36 @@ export function shiftSelection(
   const newAboveDebt = Math.max(0, minRow - Math.min(vAnchor, vFocus))
   const newBelowDebt = Math.max(0, Math.max(vAnchor, vFocus) - maxRow)
   if (newAboveDebt < oldAboveDebt) {
-    // scrolledOffAbove pushes newest at the end (closest to on-screen).
+    // scrolledOffAbove 将最新项压入末尾（最接近屏幕内的一侧）。
     const drop = oldAboveDebt - newAboveDebt
     s.scrolledOffAbove.length -= drop
     s.scrolledOffAboveSW.length = s.scrolledOffAbove.length
   }
   if (newBelowDebt < oldBelowDebt) {
-    // scrolledOffBelow unshifts newest at the front (closest to on-screen).
+    // scrolledOffBelow 将最新项插入开头（最接近屏幕内的一侧）。
     const drop = oldBelowDebt - newBelowDebt
     s.scrolledOffBelow.splice(0, drop)
     s.scrolledOffBelowSW.splice(0, drop)
   }
-  // Invariant: accumulator length ≤ debt. If the accumulator exceeds debt,
-  // the excess is stale — e.g., moveFocus cleared virtualFocusRow without
-  // trimming the accumulator, orphaning entries the pop above can never
-  // reach because oldDebt was ALREADY 0. Truncate to debt (keeping the
-  // newest = closest-to-on-screen entries). Check newDebt (not oldDebt):
-  // captureScrolledRows runs BEFORE this shift in the real flow (ink.tsx),
-  // so at entry the accumulator is populated but oldDebt is still 0 —
-  // that's the normal establish-debt path, not stale.
+  // 不变量：累加器长度 ≤ debt。若累加器超过 debt，多余项已经过期。例如 moveFocus
+  // 清除了 virtualFocusRow，却没有裁剪累加器；由于 oldDebt 已经是 0，上方的 pop
+  // 永远无法触及这些孤立项。将其截到 debt 长度，并保留最新、最靠近屏幕内的项。
+  // 此处检查 newDebt 而非 oldDebt：实际流程（ink.tsx）中 captureScrolledRows
+  // 在这次 shift 之前运行，所以进入时累加器已有内容但 oldDebt 仍为 0；
+  // 这是正常建立 debt 的路径，并非过期数据。
   if (s.scrolledOffAbove.length > newAboveDebt) {
-    // Above pushes newest at END → keep END.
+    // Above 将最新项压入末尾，因此保留末尾。
     s.scrolledOffAbove = newAboveDebt > 0 ? s.scrolledOffAbove.slice(-newAboveDebt) : []
     s.scrolledOffAboveSW = newAboveDebt > 0 ? s.scrolledOffAboveSW.slice(-newAboveDebt) : []
   }
   if (s.scrolledOffBelow.length > newBelowDebt) {
-    // Below unshifts newest at FRONT → keep FRONT.
+    // Below 将最新项插入开头，因此保留开头。
     s.scrolledOffBelow = s.scrolledOffBelow.slice(0, newBelowDebt)
     s.scrolledOffBelowSW = s.scrolledOffBelowSW.slice(0, newBelowDebt)
   }
-  // Clamp col depends on which EDGE (not dRow direction): virtual tracking
-  // means a top-clamped point can stay top-clamped during a dRow>0 reverse
-  // shift — dRow-based clampCol would give it the bottom col.
+  // col 的钳制值取决于所在边界，而非 dRow 方向。采用 virtual 跟踪后，
+  // 被钳在顶部的点可能在 dRow>0 的反向 shift 期间仍处于顶部；
+  // 若按 dRow 选择 clampCol，会错误地给它底部 col。
   const shift = (p: Point, vRow: number): Point => {
     if (vRow < minRow) {
       return { col: 0, row: minRow }

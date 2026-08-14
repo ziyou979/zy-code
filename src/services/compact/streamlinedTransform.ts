@@ -1,11 +1,11 @@
 /**
- * Transforms SDK messages for streamlined output mode.
+ * 将 SDK 消息转换为 streamlined 输出模式。
  *
- * Streamlined mode is a "distillation-resistant" output format that:
- * - Keeps text messages intact
- * - Summarizes tool calls with cumulative counts (resets when text appears)
- * - Omits thinking content
- * - Strips tool list and model info from init messages
+ * Streamlined 模式是一种“抗蒸馏”的输出格式：
+ * - 完整保留文本消息
+ * - 以累计数量汇总 tool 调用（出现文本时重置）
+ * - 省略 thinking 内容
+ * - 从 init 消息中移除 tool 列表和模型信息
  */
 
 import { SHELL_TOOL_NAMES } from 'src/shell-eval/shared/shellToolUtils.js'
@@ -33,7 +33,7 @@ type ToolCounts = {
 }
 
 /**
- * Tool categories for summarization.
+ * 用于生成摘要的 tool 分类。
  */
 const SEARCH_TOOLS = [GREP_TOOL_NAME, GLOB_TOOL_NAME, WEB_SEARCH_TOOL_NAME, LSP_TOOL_NAME]
 const READ_TOOLS = [FILE_READ_TOOL_NAME, LIST_MCP_RESOURCES_TOOL_NAME]
@@ -67,12 +67,12 @@ function createEmptyToolCounts(): ToolCounts {
 }
 
 /**
- * Generate a summary text for tool counts.
+ * 根据 tool 调用次数生成摘要文本。
  */
 function getToolSummaryText(counts: ToolCounts): string | undefined {
   const parts: string[] = []
 
-  // Use similar phrasing to collapseReadSearch.ts
+  // 使用与 collapseReadSearch.ts 相近的措辞。
   if (counts.searches > 0) {
     parts.push(`searched ${counts.searches} ${counts.searches === 1 ? 'pattern' : 'patterns'}`)
   }
@@ -97,7 +97,7 @@ function getToolSummaryText(counts: ToolCounts): string | undefined {
 }
 
 /**
- * Count tool uses in an assistant message and add to existing counts.
+ * 统计 assistant 消息中的 tool 调用，并累加到现有计数。
  */
 function accumulateToolUses(message: WireAssistantMessage, counts: ToolCounts): void {
   const content = message.message.content
@@ -114,8 +114,8 @@ function accumulateToolUses(message: WireAssistantMessage, counts: ToolCounts): 
 }
 
 /**
- * Create a stateful transformer that accumulates tool counts between text messages.
- * Tool counts reset when a message with text content is encountered.
+ * 创建有状态转换器，在两条文本消息之间累计 tool 调用次数。
+ * 遇到包含文本内容的消息时重置计数。
  */
 export function createStreamlinedTransformer(): (message: StdoutMessage) => StdoutMessage | null {
   let cumulativeCounts = createEmptyToolCounts()
@@ -126,11 +126,11 @@ export function createStreamlinedTransformer(): (message: StdoutMessage) => Stdo
         const content = message.message.content
         const text = Array.isArray(content) ? extractTextContent(content, '\n').trim() : ''
 
-        // Accumulate tool counts from this message
+        // 累加当前消息中的 tool 调用次数。
         accumulateToolUses(message, cumulativeCounts)
 
         if (text.length > 0) {
-          // Text message: emit text only, reset counts
+          // 文本消息：仅输出文本并重置计数。
           cumulativeCounts = createEmptyToolCounts()
           return {
             type: 'streamlined_text',
@@ -140,7 +140,7 @@ export function createStreamlinedTransformer(): (message: StdoutMessage) => Stdo
           }
         }
 
-        // Tool-only message: emit cumulative tool summary
+        // 仅含 tool 的消息：输出累计 tool 摘要。
         const toolSummary = getToolSummaryText(cumulativeCounts)
         if (!toolSummary) {
           return null
@@ -155,7 +155,7 @@ export function createStreamlinedTransformer(): (message: StdoutMessage) => Stdo
       }
 
       case 'result':
-        // Keep result messages as-is (they have structured_output, permission_denials)
+        // result 消息包含 structured_output、permission_denials，保持原样。
         return message
 
       case 'system':
@@ -177,8 +177,8 @@ export function createStreamlinedTransformer(): (message: StdoutMessage) => Stdo
 }
 
 /**
- * Check if a message should be included in streamlined output.
- * Useful for filtering before transformation.
+ * 检查消息是否应包含在 streamlined 输出中。
+ * 可用于转换前的过滤。
  */
 export function shouldIncludeInStreamlined(message: StdoutMessage): boolean {
   return message.type === 'assistant' || message.type === 'result'

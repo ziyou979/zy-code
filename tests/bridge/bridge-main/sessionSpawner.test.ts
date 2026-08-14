@@ -1,5 +1,5 @@
 /**
- * sessionSpawner characterization tests。
+ * sessionSpawner 特性测试。
  */
 import { describe, expect, test } from 'bun:test'
 import { safeSpawn } from '../../../src/bridge/bridge-main/sessionSpawner.js'

@@ -11,7 +11,7 @@ import { logError } from '../services/infra/log.js'
 import { SessionsWebSocket, type SessionsWebSocketCallbacks } from './sessionsWebSocket.js'
 
 /**
- * Type guard to check if a message is an WireMessage (not a control message)
+ * 判断消息是否为 WireMessage（而非控制消息）的类型守卫。
  */
 function isSDKMessage(
   message: WireMessage | WireControlRequest | WireControlResponse | WireControlCancelRequest,
@@ -24,8 +24,8 @@ function isSDKMessage(
 }
 
 /**
- * Simple permission response for remote sessions.
- * This is a simplified version of PermissionResult for CCR communication.
+ * 远程会话使用的简化权限响应。
+ * 这是为 CCR 通信精简过的 PermissionResult。
  */
 export type RemotePermissionResponse =
   | {
@@ -41,40 +41,39 @@ export type RemoteSessionConfig = {
   sessionId: string
   getAccessToken: () => string
   orgUuid: string
-  /** True if session was created with an initial prompt that's being processed */
+  /** 会话是否由一条仍在处理的初始 prompt 创建。 */
   hasInitialPrompt?: boolean
   /**
-   * When true, this client is a pure viewer. Ctrl+C/Escape do NOT send
-   * interrupt to the remote agent; 60s reconnect timeout is disabled;
-   * session title is never updated. Used by `zy assistant`.
+   * 为 true 时，此客户端仅用于查看。Ctrl+C/Escape 不会向远程 agent 发送中断，
+   * 60 秒重连超时会禁用，且不会更新会话标题。供 `zy assistant` 使用。
    */
   viewerOnly?: boolean
 }
 
 export type RemoteSessionCallbacks = {
-  /** Called when an WireMessage is received from the session */
+  /** 从会话收到 WireMessage 时调用。 */
   onMessage: (message: WireMessage) => void
-  /** Called when a permission request is received from CCR */
+  /** 从 CCR 收到权限请求时调用。 */
   onPermissionRequest: (request: WireControlPermissionRequest, requestId: string) => void
-  /** Called when the server cancels a pending permission request */
+  /** 服务器取消待处理权限请求时调用。 */
   onPermissionCancelled?: (requestId: string, toolUseId: string | undefined) => void
-  /** Called when connection is established */
+  /** 连接建立时调用。 */
   onConnected?: () => void
-  /** Called when connection is lost and cannot be restored */
+  /** 连接丢失且无法恢复时调用。 */
   onDisconnected?: () => void
-  /** Called on transient WS drop while reconnect backoff is in progress */
+  /** WS 暂时断开且正处于重连退避时调用。 */
   onReconnecting?: () => void
-  /** Called on error */
+  /** 发生错误时调用。 */
   onError?: (error: Error) => void
 }
 
 /**
- * Manages a remote CCR session.
+ * 管理远程 CCR 会话。
  *
- * Coordinates:
- * - WebSocket subscription for receiving messages from CCR
- * - HTTP POST for sending user messages to CCR
- * - Permission request/response flow
+ * 负责协调：
+ * - 通过 WebSocket 订阅接收 CCR 消息
+ * - 通过 HTTP POST 向 CCR 发送用户消息
+ * - 权限请求与响应流程
  */
 export class RemoteSessionManager {
   private websocket: SessionsWebSocket | null = null
@@ -86,7 +85,7 @@ export class RemoteSessionManager {
   ) {}
 
   /**
-   * Connect to the remote session via WebSocket
+   * 通过 WebSocket 连接远程会话。
    */
   connect(): void {
     logForDebugging(`[RemoteSessionManager] Connecting to session ${this.config.sessionId}`)
@@ -122,18 +121,18 @@ export class RemoteSessionManager {
   }
 
   /**
-   * Handle messages from WebSocket
+   * 处理 WebSocket 消息。
    */
   private handleMessage(
     message: WireMessage | WireControlRequest | WireControlResponse | WireControlCancelRequest,
   ): void {
-    // Handle control requests (permission prompts from CCR)
+    // 处理 control request（来自 CCR 的权限提示）。
     if (message.type === 'control_request') {
       this.handleControlRequest(message)
       return
     }
 
-    // Handle control cancel requests (server cancelling a pending permission prompt)
+    // 处理 control cancel request（服务器取消待处理的权限提示）。
     if (message.type === 'control_cancel_request') {
       const { request_id } = message
       const pendingRequest = this.pendingPermissionRequests.get(request_id)
@@ -143,20 +142,20 @@ export class RemoteSessionManager {
       return
     }
 
-    // Handle control responses (acknowledgments)
+    // 处理 control response（确认回执）。
     if (message.type === 'control_response') {
       logForDebugging('[RemoteSessionManager] Received control response')
       return
     }
 
-    // Forward SDK messages to callback (type guard ensures proper narrowing)
+    // 将 SDK 消息转发给 callback；类型守卫确保正确收窄。
     if (isSDKMessage(message)) {
       this.callbacks.onMessage(message)
     }
   }
 
   /**
-   * Handle control requests from CCR (e.g., permission requests)
+   * 处理 CCR 发来的控制请求，例如权限请求。
    */
   private handleControlRequest(request: WireControlRequest): void {
     const { request_id, request: inner } = request
@@ -166,8 +165,7 @@ export class RemoteSessionManager {
       this.pendingPermissionRequests.set(request_id, inner)
       this.callbacks.onPermissionRequest(inner, request_id)
     } else {
-      // Send an error response for unrecognized subtypes so the server
-      // doesn't hang waiting for a reply that never comes.
+      // 对无法识别的 subtype 返回错误，避免服务器一直等待不会到来的响应。
       logForDebugging(
         `[RemoteSessionManager] Unsupported control request subtype: ${inner.subtype}`,
       )
@@ -184,7 +182,7 @@ export class RemoteSessionManager {
   }
 
   /**
-   * Send a user message to the remote session via HTTP POST
+   * 通过 HTTP POST 向远程会话发送用户消息。
    */
   async sendMessage(content: RemoteMessageContent, opts?: { uuid?: string }): Promise<boolean> {
     logForDebugging(`[RemoteSessionManager] Sending message to session ${this.config.sessionId}`)
@@ -203,7 +201,7 @@ export class RemoteSessionManager {
   }
 
   /**
-   * Respond to a permission request from CCR
+   * 响应 CCR 发来的权限请求。
    */
   respondToPermissionRequest(requestId: string, result: RemotePermissionResponse): void {
     const pendingRequest = this.pendingPermissionRequests.get(requestId)
@@ -236,14 +234,14 @@ export class RemoteSessionManager {
   }
 
   /**
-   * Check if connected to the remote session
+   * 检查是否已连接远程会话。
    */
   isConnected(): boolean {
     return this.websocket?.isConnected() ?? false
   }
 
   /**
-   * Send an interrupt signal to cancel the current request on the remote session
+   * 发送中断信号，取消远程会话中的当前请求。
    */
   cancelSession(): void {
     logForDebugging('[RemoteSessionManager] Sending interrupt signal')
@@ -251,14 +249,14 @@ export class RemoteSessionManager {
   }
 
   /**
-   * Get the session ID
+   * 获取会话 ID。
    */
   getSessionId(): string {
     return this.config.sessionId
   }
 
   /**
-   * Disconnect from the remote session
+   * 断开远程会话连接。
    */
   disconnect(): void {
     logForDebugging('[RemoteSessionManager] Disconnecting')
@@ -268,8 +266,8 @@ export class RemoteSessionManager {
   }
 
   /**
-   * Force reconnect the WebSocket.
-   * Useful when the subscription becomes stale after container shutdown.
+   * 强制重连 WebSocket。
+   * 适用于容器关闭后订阅失效的情况。
    */
   reconnect(): void {
     logForDebugging('[RemoteSessionManager] Reconnecting WebSocket')
@@ -278,7 +276,7 @@ export class RemoteSessionManager {
 }
 
 /**
- * Create a remote session config from OAuth tokens
+ * 根据 OAuth token 创建远程会话配置。
  */
 export function createRemoteSessionConfig(
   sessionId: string,

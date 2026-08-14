@@ -1,5 +1,4 @@
-// Union of all concrete task state types
-// Use this for components that need to work with any task type
+// 所有具体 task state 类型的联合，供需要处理任意 task 类型的组件使用
 
 import type { DreamTaskState } from './dream-task/dreamTask.js'
 import type { InProcessTeammateTaskState } from './in-process-teammate-task/types.js'
@@ -18,7 +17,7 @@ export type TaskState =
   | MonitorMcpTaskState
   | DreamTaskState
 
-// Task types that can appear in the background tasks indicator
+// 可出现在后台 task 指示器中的 task 类型
 export type BackgroundTaskState =
   | LocalShellTaskState
   | LocalAgentTaskState
@@ -29,8 +28,8 @@ export type BackgroundTaskState =
   | DreamTaskState
 
 /**
- * Check if a task should be shown in the background tasks indicator.
- * A task is considered a background task if:
+ * 检查 task 是否应显示在后台 task 指示器中。
+ * 满足以下条件时视为后台 task：
  * 1. It is running or pending
  * 2. It has been explicitly backgrounded (not a foreground task)
  */
@@ -38,7 +37,7 @@ export function isBackgroundTask(task: TaskState): task is BackgroundTaskState {
   if (task.status !== 'running' && task.status !== 'pending') {
     return false
   }
-  // Foreground tasks (isBackgrounded === false) are not yet "background tasks"
+  // 前台 task（isBackgrounded === false）尚不属于“后台 task”
   if ('isBackgrounded' in task && task.isBackgrounded === false) {
     return false
   }

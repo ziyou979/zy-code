@@ -10,37 +10,36 @@ import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 import type { Transport } from './transport.js'
 
 // ---------------------------------------------------------------------------
-// Configuration
+// 配置
 // ---------------------------------------------------------------------------
 
 const RECONNECT_BASE_DELAY_MS = 1000
 const RECONNECT_MAX_DELAY_MS = 30_000
-/** Time budget for reconnection attempts before giving up (10 minutes). */
+/** 放弃重连前的尝试时间预算（10 分钟）。 */
 const RECONNECT_GIVE_UP_MS = 600_000
-/** Server sends keepalives every 15s; treat connection as dead after 45s of silence. */
+/** 服务端每 15 秒发送 keepalive；静默 45 秒后视为连接失效。 */
 const LIVENESS_TIMEOUT_MS = 45_000
 
 /**
- * HTTP status codes that indicate a permanent server-side rejection.
- * The transport transitions to 'closed' immediately without retrying.
+ * 表示服务端永久拒绝的 HTTP 状态码。transport 会立即转为 'closed'，不再重试。
  */
 const PERMANENT_HTTP_CODES = new Set([401, 403, 404])
 
-// POST retry configuration (matches HybridTransport)
+// POST 重试配置，与 HybridTransport 一致
 const POST_MAX_RETRIES = 10
 const POST_BASE_DELAY_MS = 500
 const POST_MAX_DELAY_MS = 8000
 
-/** Hoisted TextDecoder options to avoid per-chunk allocation in readStream. */
+/** 提升到模块级的 TextDecoder 选项，避免 readStream 为每个 chunk 分配对象。 */
 const STREAM_DECODE_OPTS: TextDecodeOptions = { stream: true }
 
-/** Hoisted axios validateStatus callback to avoid per-request closure allocation. */
+/** 提升到模块级的 axios validateStatus callback，避免每次请求分配闭包。 */
 function alwaysValidStatus(): boolean {
   return true
 }
 
 // ---------------------------------------------------------------------------
-// SSE Frame Parser
+// SSE 帧 parser
 // ---------------------------------------------------------------------------
 
 type SSEFrame = {
@@ -50,10 +49,9 @@ type SSEFrame = {
 }
 
 /**
- * Incrementally parse SSE frames from a text buffer.
- * Returns parsed frames and the remaining (incomplete) buffer.
+ * 从文本缓冲区增量解析 SSE 帧，返回已解析帧与剩余的不完整缓冲区。
  *
- * @internal exported for testing
+ * @internal 为测试导出
  */
 export function parseSSEFrames(buffer: string): {
   frames: SSEFrame[]
@@ -62,13 +60,13 @@ export function parseSSEFrames(buffer: string): {
   const frames: SSEFrame[] = []
   let pos = 0
 
-  // SSE frames are delimited by double newlines
+  // SSE 帧以连续两个换行符分隔
   let idx: number
   while ((idx = buffer.indexOf('\n\n', pos)) !== -1) {
     const rawFrame = buffer.slice(pos, idx)
     pos = idx + 2
 
-    // Skip empty frames
+    // 跳过空帧
     if (!rawFrame.trim()) {
       continue
     }
@@ -78,7 +76,7 @@ export function parseSSEFrames(buffer: string): {
 
     for (const line of rawFrame.split('\n')) {
       if (line.startsWith(':')) {
-        // SSE comment (e.g., `:keepalive`)
+        // SSE 注释，例如 `:keepalive`
         isComment = true
         continue
       }
@@ -89,7 +87,7 @@ export function parseSSEFrames(buffer: string): {
       }
 
       const field = line.slice(0, colonIdx)
-      // Per SSE spec, strip one leading space after colon if present
+      // 按 SSE 规范，若冒号后有一个前导空格则移除
       const value = line[colonIdx + 1] === ' ' ? line.slice(colonIdx + 2) : line.slice(colonIdx + 1)
 
       switch (field) {
@@ -100,14 +98,14 @@ export function parseSSEFrames(buffer: string): {
           frame.id = value
           break
         case 'data':
-          // Per SSE spec, multiple data: lines are concatenated with \n
+          // 按 SSE 规范，多行 data: 使用 \n 连接
           frame.data = frame.data ? `${frame.data}\n${value}` : value
           break
-        // Ignore other fields (retry:, etc.)
+        // 忽略 retry: 等其他字段
       }
     }
 
-    // Only emit frames that have data (or are pure comments which reset liveness)
+    // 只发送含 data 的帧，或可重置存活检测的纯注释帧
     if (frame.data || isComment) {
       frames.push(frame)
     }
@@ -117,17 +115,16 @@ export function parseSSEFrames(buffer: string): {
 }
 
 // ---------------------------------------------------------------------------
-// Types
+// 类型
 // ---------------------------------------------------------------------------
 
 type SSETransportState = 'idle' | 'connected' | 'reconnecting' | 'closing' | 'closed'
 
 /**
- * Payload for `event: client_event` frames, matching the StreamClientEvent
- * proto message in session_stream.proto. This is the only event type sent
- * to worker subscribers — delivery_update, session_update, ephemeral_event,
- * and catch_up_truncated are client-channel-only (see notifier.go and
- * event_stream.go SubscriberClient guard).
+ * `event: client_event` 帧的 payload，与 session_stream.proto 中 StreamClientEvent proto
+ * 消息一致。这是发送给 worker subscriber 的唯一事件类型；delivery_update、session_update、
+ * ephemeral_event 与 catch_up_truncated 仅用于 client channel，参见 notifier.go 与
+ * event_stream.go 的 SubscriberClient 防护。
  */
 export type StreamClientEvent = {
   event_id: string
@@ -143,17 +140,15 @@ export type StreamClientEvent = {
 // ---------------------------------------------------------------------------
 
 /**
- * Transport that uses SSE for reading and HTTP POST for writing.
+ * 使用 SSE 读取、HTTP POST 写入的 transport。
  *
- * Reads events via Server-Sent Events from the CCR v2 event stream endpoint.
- * Writes events via HTTP POST with retry logic (same pattern as HybridTransport).
+ * 通过 Server-Sent Events 从 CCR v2 事件流端点读取事件，并通过带重试逻辑的 HTTP POST 写入，
+ * 与 HybridTransport 的模式相同。
  *
- * Each `event: client_event` frame carries a StreamClientEvent proto JSON
- * directly in `data:`. The transport extracts `payload` and passes it to
- * `onData` as newline-delimited JSON for StructuredIO consumers.
+ * 每个 `event: client_event` 帧都在 `data:` 中直接携带 StreamClientEvent proto JSON。
+ * transport 提取 `payload`，并以换行分隔 JSON 传给 `onData`，供 StructuredIO 消费。
  *
- * Supports automatic reconnection with exponential backoff and Last-Event-ID
- * for resumption after disconnection.
+ * 支持指数退避自动重连，并使用 Last-Event-ID 在断开后恢复。
  */
 export class SSETransport implements Transport {
   // @ts-expect-error
@@ -166,23 +161,23 @@ export class SSETransport implements Transport {
   private refreshHeaders?: () => Record<string, string>
   private readonly getAuthHeaders: () => Record<string, string>
 
-  // SSE connection state
+  // SSE 连接状态
   private abortController: AbortController | null = null
   private lastSequenceNum = 0
   private seenSequenceNums = new Set<number>()
 
-  // Reconnection state
+  // 重连状态
   private reconnectAttempts = 0
   private reconnectStartTime: number | null = null
   private reconnectTimer: NodeJS.Timeout | null = null
 
-  // Liveness detection
+  // 存活检测
   private livenessTimer: NodeJS.Timeout | null = null
 
-  // POST URL (derived from SSE URL)
+  // POST URL，由 SSE URL 推导
   private postUrl: string
 
-  // Runtime epoch for CCR v2 event format
+  // CCR v2 事件格式使用的运行时 epoch
 
   constructor(
     private readonly url: URL,
@@ -191,10 +186,8 @@ export class SSETransport implements Transport {
     refreshHeaders?: () => Record<string, string>,
     initialSequenceNum?: number,
     /**
-     * Per-instance auth header source. Omit to read the process-wide
-     * ZY_CODE_SESSION_ACCESS_TOKEN (single-session callers). Required
-     * for concurrent multi-session callers — the env-var path is a process
-     * global and would stomp across sessions.
+     * 各实例独立的认证标头来源。省略时读取进程级 ZY_CODE_SESSION_ACCESS_TOKEN，适用于单会话
+     * 调用方。并发多会话调用方必须提供；环境变量是进程全局状态，会导致会话互相覆盖。
      */
     getAuthHeaders?: () => Record<string, string>,
   ) {
@@ -203,10 +196,9 @@ export class SSETransport implements Transport {
     this.refreshHeaders = refreshHeaders
     this.getAuthHeaders = getAuthHeaders ?? getSessionIngressAuthHeaders
     this.postUrl = convertSSEUrlToPostUrl(url)
-    // Seed with a caller-provided high-water mark so the first connect()
-    // sends from_sequence_num / Last-Event-ID. Without this, a fresh
-    // SSETransport always asks the server to replay from sequence 0 —
-    // the entire session history on every transport swap.
+    // 以调用方提供的高水位为种子，使首次 connect() 发送 from_sequence_num / Last-Event-ID。
+    // 否则每个新 SSETransport 都会要求服务端从 sequence 0 重放，即每次更换 transport 都重放
+    // 整个会话历史。
     if (initialSequenceNum !== undefined && initialSequenceNum > 0) {
       this.lastSequenceNum = initialSequenceNum
     }
@@ -216,10 +208,9 @@ export class SSETransport implements Transport {
   }
 
   /**
-   * High-water mark of sequence numbers seen on this stream. Callers that
-   * recreate the transport (e.g. replBridge onWorkReceived) read this before
-   * close() and pass it as `initialSequenceNum` to the next instance so the
-   * server resumes from the right point instead of replaying everything.
+   * 此流已见 sequence number 的高水位。重建 transport 的调用方（如 replBridge
+   * onWorkReceived）在 close() 前读取，并作为 `initialSequenceNum` 传给下个实例，使服务端从
+   * 正确位置恢复，而非重放所有内容。
    */
   getLastSequenceNum(): number {
     return this.lastSequenceNum
@@ -237,15 +228,14 @@ export class SSETransport implements Transport {
     this.state = 'reconnecting'
     const connectStartTime = Date.now()
 
-    // Build SSE URL with sequence number for resumption
+    // 构建包含 sequence number 的 SSE URL，供恢复使用
     const sseUrl = new URL(this.url.href)
     if (this.lastSequenceNum > 0) {
       sseUrl.searchParams.set('from_sequence_num', String(this.lastSequenceNum))
     }
 
-    // Build headers -- use fresh auth headers (supports Cookie for session keys).
-    // Remove stale Authorization header from this.headers when Cookie auth is used,
-    // since sending both confuses the auth interceptor.
+    // 构建标头：使用新认证标头，并支持以 Cookie 携带 session key。使用 Cookie 认证时，从
+    // this.headers 移除陈旧 Authorization；同时发送二者会干扰认证 interceptor。
     const authHeaders = this.getAuthHeaders()
     const headers: Record<string, string> = {
       ...this.headers,
@@ -299,7 +289,7 @@ export class SSETransport implements Transport {
         return
       }
 
-      // Successfully connected
+      // 连接成功
       const connectDuration = Date.now() - connectStartTime
       logForDebugging('SSETransport: Connected')
       logForDiagnosticsNoPII('info', 'cli_sse_connect_connected', {
@@ -311,11 +301,11 @@ export class SSETransport implements Transport {
       this.reconnectStartTime = null
       this.resetLivenessTimer()
 
-      // Read the SSE stream
+      // 读取 SSE 流
       await this.readStream(response.body)
     } catch (error) {
       if (this.abortController?.signal.aborted) {
-        // Intentional close
+        // 主动关闭
         return
       }
 
@@ -326,7 +316,7 @@ export class SSETransport implements Transport {
   }
 
   /**
-   * Read and process the SSE stream body.
+   * 读取并处理 SSE 流响应体。
    */
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
   private async readStream(body: ReadableStream<Uint8Array>): Promise<void> {
@@ -346,7 +336,7 @@ export class SSETransport implements Transport {
         buffer = remaining
 
         for (const frame of frames) {
-          // Any frame (including keepalive comments) proves the connection is alive
+          // 任意帧（包括 keepalive 注释）都能证明连接存活
           this.resetLivenessTimer()
 
           if (frame.id) {
@@ -360,9 +350,8 @@ export class SSETransport implements Transport {
                 logForDiagnosticsNoPII('warn', 'cli_sse_duplicate_sequence')
               } else {
                 this.seenSequenceNums.add(seqNum)
-                // Prevent unbounded growth: once we have many entries, prune
-                // old sequence numbers that are well below the high-water mark.
-                // Only sequence numbers near lastSequenceNum matter for dedup.
+                // 防止无界增长：积累较多项后，清理远低于高水位的旧 sequence number。去重只关心
+                // lastSequenceNum 附近的值。
                 if (this.seenSequenceNums.size > 1000) {
                   const threshold = this.lastSequenceNum - 200
                   for (const s of this.seenSequenceNums) {
@@ -381,8 +370,8 @@ export class SSETransport implements Transport {
           if (frame.event && frame.data) {
             this.handleSSEFrame(frame.event, frame.data)
           } else if (frame.data) {
-            // data: without event: — server is emitting the old envelope format
-            // or a bug. Log so incidents show as a signal instead of silent drops.
+            // 出现无 event: 的 data:，说明服务端仍在发送旧 envelope 格式或存在 bug。记录日志，
+            // 使事故表现为可见信号而非静默丢弃。
             logForDebugging('SSETransport: Frame has data: but no event: field — dropped', {
               level: 'warn',
             })
@@ -400,7 +389,7 @@ export class SSETransport implements Transport {
       reader.releaseLock()
     }
 
-    // Stream ended — reconnect unless we're closing
+    // 流已结束；除非正在关闭，否则重连
     if (this.state !== 'closing' && this.state !== 'closed') {
       logForDebugging('SSETransport: Stream ended, reconnecting')
       this.handleConnectionError()
@@ -408,12 +397,10 @@ export class SSETransport implements Transport {
   }
 
   /**
-   * Handle a single SSE frame. The event: field names the variant; data:
-   * carries the inner proto JSON directly (no envelope).
+   * 处理单个 SSE 帧。event: 字段标识 variant，data: 直接携带内部 proto JSON，不含 envelope。
    *
-   * Worker subscribers only receive client_event frames (see notifier.go) —
-   * any other event type indicates a server-side change that CC doesn't yet
-   * understand. Log a diagnostic so we notice in telemetry.
+   * worker subscriber 只接收 client_event 帧，参见 notifier.go；其他事件类型说明服务端发生了
+   * CC 尚不理解的变化。记录诊断以便在 telemetry 中发现。
    */
   private handleSSEFrame(eventType: string, data: string): void {
     if (eventType !== 'client_event') {
@@ -443,8 +430,8 @@ export class SSETransport implements Transport {
         `SSETransport: Event seq=${ev.sequence_num} event_id=${ev.event_id} event_type=${ev.event_type} payload_type=${String(payload.type)}${sessionLabel}`,
       )
       logForDiagnosticsNoPII('info', 'cli_sse_message_received')
-      // Pass the unwrapped payload as newline-delimited JSON,
-      // matching the format that StructuredIO/WebSocketTransport consumers expect
+      // 将解包后的 payload 作为换行分隔 JSON 传递，与 StructuredIO/WebSocketTransport 消费方
+      // 预期格式一致
       this.onData?.(`${jsonStringify(payload)}\n`)
     } else {
       logForDebugging(
@@ -456,7 +443,7 @@ export class SSETransport implements Transport {
   }
 
   /**
-   * Handle connection errors with exponential backoff and time budget.
+   * 在时间预算内以指数退避处理连接错误。
    */
   private handleConnectionError(): void {
     this.clearLivenessTimer()
@@ -465,7 +452,7 @@ export class SSETransport implements Transport {
       return
     }
 
-    // Abort any in-flight SSE fetch
+    // 中止正在进行的 SSE 请求
     this.abortController?.abort()
     this.abortController = null
 
@@ -476,13 +463,13 @@ export class SSETransport implements Transport {
 
     const elapsed = now - this.reconnectStartTime
     if (elapsed < RECONNECT_GIVE_UP_MS) {
-      // Clear any existing timer
+      // 清除已有定时器
       if (this.reconnectTimer) {
         clearTimeout(this.reconnectTimer)
         this.reconnectTimer = null
       }
 
-      // Refresh headers before reconnecting
+      // 重连前刷新标头
       if (this.refreshHeaders) {
         const freshHeaders = this.refreshHeaders()
         Object.assign(this.headers, freshHeaders)
@@ -496,7 +483,7 @@ export class SSETransport implements Transport {
         RECONNECT_BASE_DELAY_MS * 2 ** (this.reconnectAttempts - 1),
         RECONNECT_MAX_DELAY_MS,
       )
-      // Add ±25% jitter
+      // 增加 ±25% 随机抖动
       const delay = Math.max(0, baseDelay + baseDelay * 0.25 * (2 * Math.random() - 1))
 
       logForDebugging(
@@ -525,9 +512,8 @@ export class SSETransport implements Transport {
   }
 
   /**
-   * Bound timeout callback. Hoisted from an inline closure so that
-   * resetLivenessTimer (called per-frame) does not allocate a new closure
-   * on every SSE frame.
+   * 已绑定的超时 callback。从内联闭包提升出来，避免每帧调用的 resetLivenessTimer 为每个 SSE
+   * 帧分配新闭包。
    */
   private readonly onLivenessTimeout = (): void => {
     this.livenessTimer = null
@@ -540,8 +526,7 @@ export class SSETransport implements Transport {
   }
 
   /**
-   * Reset the liveness timer. If no SSE frame arrives within the timeout,
-   * treat the connection as dead and reconnect.
+   * 重置存活定时器。超时时间内未收到 SSE 帧时，视为连接失效并重连。
    */
   private resetLivenessTimer(): void {
     this.clearLivenessTimer()
@@ -556,7 +541,7 @@ export class SSETransport implements Transport {
   }
 
   // -----------------------------------------------------------------------
-  // Write (HTTP POST) — same pattern as HybridTransport
+  // 写入（HTTP POST），模式与 HybridTransport 相同
   // -----------------------------------------------------------------------
 
   async write(message: StdoutMessage): Promise<void> {
@@ -593,7 +578,7 @@ export class SSETransport implements Transport {
         logForDebugging(
           `SSETransport: POST ${response.status} body=${jsonStringify(response.data).slice(0, 200)}`,
         )
-        // 4xx errors (except 429) are permanent - don't retry
+        // 除 429 外的 4xx 错误均为永久错误，不重试
         if (response.status >= 400 && response.status < 500 && response.status !== 429) {
           logForDebugging(
             `SSETransport: POST returned ${response.status} (client error), not retrying`,
@@ -604,7 +589,7 @@ export class SSETransport implements Transport {
           return
         }
 
-        // 429 or 5xx - retry
+        // 429 或 5xx 错误需要重试
         logForDebugging(
           `SSETransport: POST returned ${response.status}, attempt ${attempt}/${POST_MAX_RETRIES}`,
         )
@@ -634,7 +619,7 @@ export class SSETransport implements Transport {
   }
 
   // -----------------------------------------------------------------------
-  // Transport interface
+  // Transport 接口
   // -----------------------------------------------------------------------
 
   isConnectedStatus(): boolean {
@@ -671,20 +656,19 @@ export class SSETransport implements Transport {
 }
 
 // ---------------------------------------------------------------------------
-// URL Conversion
+// URL 转换
 // ---------------------------------------------------------------------------
 
 /**
- * Convert an SSE URL to the HTTP POST endpoint URL.
- * The SSE stream URL and POST URL share the same base; the POST endpoint
- * is at `/events` (without `/stream`).
+ * 将 SSE URL 转换为 HTTP POST 端点 URL。SSE 流 URL 与 POST URL 共用同一 base，POST 端点位于
+ * `/events`，不含 `/stream`。
  *
  * From: https://api.example.com/v2/session_ingress/session/<session_id>/events/stream
  * To:   https://api.example.com/v2/session_ingress/session/<session_id>/events
  */
 function convertSSEUrlToPostUrl(sseUrl: URL): string {
   let pathname = sseUrl.pathname
-  // Remove /stream suffix to get the POST events endpoint
+  // 移除 /stream 后缀，得到 POST events 端点
   if (pathname.endsWith('/stream')) {
     pathname = pathname.slice(0, -'/stream'.length)
   }

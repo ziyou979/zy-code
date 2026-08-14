@@ -11,7 +11,7 @@ type ProactiveProps = {
 }
 
 /**
- * Proactive mode React hook。
+ * 主动模式的 React hook。
  * 当 proactive mode 激活时，定期发送 tick 提示以驱动自主行为。
  */
 export function useProactive(props: ProactiveProps): void {

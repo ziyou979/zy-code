@@ -38,7 +38,7 @@ type AgentSuggestionSource = {
 type SuggestionSource = FileSuggestionSource | McpResourceSuggestionSource | AgentSuggestionSource
 
 /**
- * Creates a unified suggestion item from a source
+ * 根据来源创建统一格式的候选项
  */
 function createSuggestionFromSource(source: SuggestionSource): SuggestionItem {
   switch (source.type) {
@@ -147,12 +147,12 @@ export async function generateUnifiedSuggestions(
 
   const nonFileSources: SuggestionSource[] = [...mcpSources, ...agentSources]
 
-  // Score non-file sources with Fuse.js
-  // File sources are already scored by Rust/nucleo
+  // 用 Fuse.js 为非文件来源评分
+  // 文件来源已由 Rust/nucleo 完成评分
   type ScoredSource = { source: SuggestionSource; score: number }
   const scoredResults: ScoredSource[] = []
 
-  // Add file sources with their nucleo scores (already 0-1, lower is better)
+  // 添加文件来源及其 nucleo 分数（已归一化到 0-1，越低越好）
   for (const fileSource of fileSources) {
     scoredResults.push({
       source: fileSource,
@@ -160,7 +160,7 @@ export async function generateUnifiedSuggestions(
     })
   }
 
-  // Score non-file sources with Fuse.js and add them
+  // 用 Fuse.js 为非文件来源评分后添加
   if (nonFileSources.length > 0) {
     const fuse = new Fuse(nonFileSources, {
       includeScore: true,
@@ -183,7 +183,7 @@ export async function generateUnifiedSuggestions(
     }
   }
 
-  // Sort all results by score (lower is better) and return top results
+  // 将所有结果按分数排序（越低越好），并返回排名靠前的结果
   scoredResults.sort((a, b) => a.score - b.score)
 
   return scoredResults

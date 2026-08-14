@@ -6,12 +6,12 @@ import type { Transport } from './transport.js'
 import { WebSocketTransport } from './webSocketTransport.js'
 
 /**
- * Helper function to get the appropriate transport for a URL.
+ * 根据 URL 获取合适 transport 的辅助函数。
  *
- * Transport selection priority:
- * 1. SSETransport (SSE reads + POST writes) when ZY_CODE_ is set
- * 2. HybridTransport (WS reads + POST writes) when ZY_CODE_ is set
- * 3. WebSocketTransport (WS reads + WS writes) — default
+ * Transport 选择优先级：
+ * 1. 设置 ZY_CODE_ 时使用 SSETransport（SSE 读取 + POST 写入）
+ * 2. 设置 ZY_CODE_ 时使用 HybridTransport（WS 读取 + POST 写入）
+ * 3. 默认使用 WebSocketTransport（WS 读取 + WS 写入）
  */
 export function getTransportForUrl(
   url: URL,
@@ -20,9 +20,8 @@ export function getTransportForUrl(
   refreshHeaders?: () => Record<string, string>,
 ): Transport {
   if (isEnvTruthy(process.env.ZY_CODE_)) {
-    // v2: SSE for reads, HTTP POST for writes
-    // --sdk-url is the session URL (.../sessions/{id});
-    // derive the SSE stream URL by appending /worker/events/stream
+    // v2 使用 SSE 读取、HTTP POST 写入。--sdk-url 是会话 URL（.../sessions/{id}），追加
+    // /worker/events/stream 得到 SSE 流 URL。
     const sseUrl = new URL(url.href)
     if (sseUrl.protocol === 'wss:') {
       sseUrl.protocol = 'https:'

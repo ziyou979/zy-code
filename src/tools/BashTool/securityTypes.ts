@@ -5,14 +5,14 @@ export type ValidationContext = {
   baseCommand: string
   unquotedContent: string
   fullyUnquotedContent: string
-  /** fullyUnquoted before stripSafeRedirections — used by validateBraceExpansion
-   * to avoid false negatives from redirection stripping creating backslash adjacencies */
+  /** stripSafeRedirections 之前的 fullyUnquoted，供 validateBraceExpansion 使用，
+   * 避免移除重定向后形成相邻反斜杠而导致假阴性 */
   fullyUnquotedPreStrip: string
-  /** Like fullyUnquotedPreStrip but preserves quote characters ('/"): e.g.,
-   * echo 'x'# → echo ''# (the quote chars remain, revealing adjacency to #) */
+  /** 与 fullyUnquotedPreStrip 类似，但保留引号字符 ('/")：例如
+   * echo 'x'# → echo ''#（引号仍保留，可暴露它与 # 相邻） */
   unquotedKeepQuoteChars: string
-  /** Tree-sitter analysis data, if available. Validators can use this for
-   * more accurate analysis when present, falling back to regex otherwise. */
+  /** 可用时提供 Tree-sitter 分析数据。validator 可据此进行更准确的分析，
+   * 不可用时回退到 regex。 */
   treeSitter?: TreeSitterAnalysis | null
 }
 

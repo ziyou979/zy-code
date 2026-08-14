@@ -29,7 +29,7 @@ export function redactSecrets(s: string): string {
   })
 }
 
-/** Truncate a string for debug logging, collapsing newlines. */
+/** 截断 debug 日志字符串，并折叠换行。 */
 export function debugTruncate(s: string): string {
   const flat = s.replace(/\n/g, '\\n')
   if (flat.length <= DEBUG_MSG_LIMIT) {
@@ -38,7 +38,7 @@ export function debugTruncate(s: string): string {
   return `${flat.slice(0, DEBUG_MSG_LIMIT)}... (${flat.length} chars)`
 }
 
-/** Truncate a JSON-serializable value for debug logging. */
+/** 截断用于 debug 日志的 JSON 可序列化值。 */
 export function debugBody(data: unknown): string {
   const raw = typeof data === 'string' ? data : jsonStringify(data)
   const s = redactSecrets(raw)
@@ -49,9 +49,8 @@ export function debugBody(data: unknown): string {
 }
 
 /**
- * Extract a descriptive error message from an axios error (or any error).
- * For HTTP errors, appends the server's response body message if available,
- * since axios's default message only includes the status code.
+ * 从 axios error（或任意 error）提取具有描述性的错误消息。
+ * 对 HTTP 错误，若服务端响应 body 包含消息则附加该消息，因为 axios 默认消息只有状态码。
  */
 export function describeAxiosError(err: unknown): string {
   const msg = errorMessage(err)
@@ -77,8 +76,7 @@ export function describeAxiosError(err: unknown): string {
 }
 
 /**
- * Extract the HTTP status code from an axios error, if present.
- * Returns undefined for non-HTTP errors (e.g. network failures).
+ * 从 axios error 中提取 HTTP 状态码。非 HTTP 错误（如网络故障）返回 undefined。
  */
 export function extractHttpStatus(err: unknown): number | undefined {
   if (
@@ -94,8 +92,8 @@ export function extractHttpStatus(err: unknown): number | undefined {
 }
 
 /**
- * Pull a human-readable message out of an API error response body.
- * Checks `data.message` first, then `data.error.message`.
+ * 从 API 错误响应 body 中提取便于阅读的消息。
+ * 先检查 `data.message`，再检查 `data.error.message`。
  */
 export function extractErrorDetail(data: unknown): string | undefined {
   if (!data || typeof data !== 'object') {
@@ -117,9 +115,8 @@ export function extractErrorDetail(data: unknown): string | undefined {
 }
 
 /**
- * Log a bridge init skip — debug message + `zy_bridge_repl_skipped`
- * analytics event. Centralizes the event name and the AnalyticsMetadata
- * cast so call sites don't each repeat the 5-line boilerplate.
+ * 记录 bridge 初始化跳过事件：debug 消息 + `zy_bridge_repl_skipped` analytics event。
+ * 统一管理 event 名称与 AnalyticsMetadata 断言，避免每个调用点重复 5 行模板代码。
  */
 export function logWireSkip(reason: string, debugMsg?: string, v2?: boolean): void {
   if (debugMsg) {

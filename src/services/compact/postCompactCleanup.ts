@@ -57,11 +57,10 @@ export function runPostCompactCleanup(querySource?: QuerySource): void {
   clearSystemPromptSections()
   clearClassifierApprovals()
   clearSpeculativeChecks()
-  // Intentionally NOT calling resetSentSkillNames(): re-injecting the full
-  // skill_listing (~4K tokens) post-compact is pure cache_creation. The
-  // model still has SkillTool in schema, invoked_skills preserves used
-  // skills, and dynamic additions are handled by skillChangeDetector /
-  // cacheUtils resets. See compactConversation() for full rationale.
+  // 有意不调用 resetSentSkillNames()：compact 后重新注入完整的
+  // skill_listing（约 4K token）只会产生 cache_creation。模型 schema 中
+  // 仍有 SkillTool，invoked_skills 会保留已使用的技能，动态新增项则由
+  // skillChangeDetector / cacheUtils 重置处理。完整理由见 compactConversation()。
   clearBetaTracingState()
   if (feature('COMMIT_ATTRIBUTION')) {
     void import('../attribution/attributionHooks.js').then(

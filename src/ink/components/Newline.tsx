@@ -1,6 +1,6 @@
 export type Props = {
   /**
-   * Number of newlines to insert.
+   * 要插入的换行符数量。
    *
    * @default 1
    */
@@ -8,7 +8,7 @@ export type Props = {
 }
 
 /**
- * Adds one or more newline (\n) characters. Must be used within <Text> components.
+ * 添加一个或多个换行符（\n），必须在 <Text> 组件内使用。
  */
 export default function Newline({ count = 1 }: Props) {
   // @ts-expect-error

@@ -1,4 +1,4 @@
-// Critical system constants extracted to break circular dependencies
+// 为打破循环依赖而抽出的关键系统常量。
 
 import { getAPIProvider } from '../services/model/providers.js'
 
@@ -15,8 +15,7 @@ const CLI_SYSPROMPT_PREFIX_VALUES = [
 export type CLISyspromptPrefix = (typeof CLI_SYSPROMPT_PREFIX_VALUES)[number]
 
 /**
- * All possible CLI sysprompt prefix values, used by splitSysPromptPrefix
- * to identify prefix blocks by content rather than position.
+ * CLI sysprompt 所有可能的前缀值，供 splitSysPromptPrefix 按内容而非位置识别前缀块。
  */
 export const CLI_SYSPROMPT_PREFIXES: ReadonlySet<string> = new Set(CLI_SYSPROMPT_PREFIX_VALUES)
 

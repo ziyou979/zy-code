@@ -1,15 +1,15 @@
 /**
- * Sandbox types for the ZY Code Agent SDK
+ * ZY Code Agent SDK 使用的 Sandbox 类型。
  *
- * This file is the single source of truth for sandbox configuration types.
- * Both the SDK and the settings validation import from here.
+ * 本文件是 Sandbox 配置类型的唯一事实来源。
+ * SDK 和设置校验均从这里导入类型。
  */
 
 import { z } from 'zod/v4'
 import { lazySchema } from '../utils/lazySchema.js'
 
 /**
- * Network configuration schema for sandbox.
+ * Sandbox 网络配置 schema。
  */
 export const SandboxNetworkConfigSchema = lazySchema(() =>
   z
@@ -40,7 +40,7 @@ export const SandboxNetworkConfigSchema = lazySchema(() =>
 )
 
 /**
- * Filesystem configuration schema for sandbox.
+ * Sandbox 文件系统配置 schema。
  */
 export const SandboxFilesystemConfigSchema = lazySchema(() =>
   z
@@ -84,7 +84,7 @@ export const SandboxFilesystemConfigSchema = lazySchema(() =>
 )
 
 /**
- * Sandbox settings schema.
+ * Sandbox 设置 schema。
  */
 export const SandboxSettingsSchema = lazySchema(() =>
   z

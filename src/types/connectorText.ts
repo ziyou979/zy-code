@@ -1,5 +1,5 @@
-// Stub for src/types/connectorText.ts
-// Used by CONNECTOR_TEXT feature flag path
+// src/types/connectorText.ts 的占位实现
+// 用于 CONNECTOR_TEXT feature flag 路径
 
 export type ConnectorTextBlock = {
   type: 'connector_text'

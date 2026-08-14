@@ -1,8 +1,8 @@
 /**
- * Command semantics configuration for interpreting exit codes in different contexts.
+ * 用于在不同 context 中解释退出码的命令语义配置。
  *
- * Many commands use exit codes to convey information other than just success/failure.
- * For example, grep returns 1 when no matches are found, which is not an error condition.
+ * 许多命令会用退出码传达成功/失败以外的信息。
+ * 例如 grep 未找到匹配项时返回 1，这并非错误状态。
  */
 
 import { splitCommand_DEPRECATED } from '../../shell-eval/bash/commands.js'
@@ -17,7 +17,7 @@ export type CommandSemantic = (
 }
 
 /**
- * Default semantic: treat only 0 as success, everything else as error
+ * 默认语义：仅将 0 视为成功，其他值均视为错误。
  */
 const DEFAULT_SEMANTIC: CommandSemantic = (exitCode, _stdout, _stderr) => ({
   isError: exitCode !== 0,
@@ -25,7 +25,7 @@ const DEFAULT_SEMANTIC: CommandSemantic = (exitCode, _stdout, _stderr) => ({
 })
 
 /**
- * Command-specific semantics
+ * 命令专属语义。
  */
 const COMMAND_SEMANTICS: Map<string, CommandSemantic> = new Map([
   // grep: 0=matches found, 1=no matches, 2+=error
@@ -37,7 +37,7 @@ const COMMAND_SEMANTICS: Map<string, CommandSemantic> = new Map([
     }),
   ],
 
-  // ripgrep has same semantics as grep
+  // ripgrep 与 grep 语义相同
   [
     'rg',
     (exitCode, _stdout, _stderr) => ({
@@ -82,42 +82,41 @@ const COMMAND_SEMANTICS: Map<string, CommandSemantic> = new Map([
     }),
   ],
 
-  // wc, head, tail, cat, etc.: these typically only fail on real errors
-  // so we use default semantics
+  // wc、head、tail、cat 等通常只在真实错误时失败，因此使用默认语义
 ])
 
 /**
- * Get the semantic interpretation for a command
+ * 获取命令的语义解释。
  */
 function getCommandSemantic(command: string): CommandSemantic {
-  // Extract the base command (first word, handling pipes)
+  // 提取基础命令（首个单词，同时处理 pipe）
   const baseCommand = heuristicallyExtractBaseCommand(command)
   const semantic = COMMAND_SEMANTICS.get(baseCommand)
   return semantic !== undefined ? semantic : DEFAULT_SEMANTIC
 }
 
 /**
- * Extract just the command name (first word) from a single command string.
+ * 仅从单个命令字符串中提取命令名（首个单词）。
  */
 function extractBaseCommand(command: string): string {
   return command.trim().split(/\s+/)[0] || ''
 }
 
 /**
- * Extract the primary command from a complex command line;
- * May get it super wrong - don't depend on this for security
+ * 从复杂命令行中提取主命令。
+ * 结果可能严重不准确，不得依赖它作为安全边界。
  */
 function heuristicallyExtractBaseCommand(command: string): string {
   const segments = splitCommand_DEPRECATED(command)
 
-  // Take the last command as that's what determines the exit code
+  // 取最后一个命令，因为它决定退出码
   const lastCommand = segments[segments.length - 1] || command
 
   return extractBaseCommand(lastCommand)
 }
 
 /**
- * Interpret command result based on semantic rules
+ * 根据语义规则解释命令结果。
  */
 export function interpretCommandResult(
   command: string,

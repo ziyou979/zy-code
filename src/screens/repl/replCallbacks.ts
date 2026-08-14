@@ -149,10 +149,10 @@ export function rewindConversationToImpl(
     rewindToMessageIndex: messageIndex,
   })
   params.setMessages(prev.slice(0, messageIndex))
-  // Careful, this has to happen after setMessages
+  // 注意：必须在 setMessages 之后执行
   params.regenerateConversationId()
-  // Reset cached microcompact state so stale pinned cache edits
-  // don't reference tool_use_ids from truncated messages
+  // 重置缓存的 microcompact 状态，避免旧的 pinned cache edit
+  // 引用已截断消息中的 tool_use_id
   resetMicrocompactState()
   if (feature('CONTEXT_COLLAPSE')) {
     // 回退截断 REPL 数组。归档跨度超过回退点的提交

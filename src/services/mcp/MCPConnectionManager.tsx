@@ -34,7 +34,7 @@ interface MCPConnectionManagerProps {
   isStrictMcpConfig: boolean
 }
 
-// TODO (ollie): We may be able to get rid of this context by putting these function on app state
+// TODO (ollie)：可考虑将这些函数放入 app state，从而移除此 context
 export function MCPConnectionManager({
   children,
   dynamicMcpConfig,

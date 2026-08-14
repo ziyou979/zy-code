@@ -5,9 +5,9 @@ import type { WireControlPermissionRequest } from '../types/wire/control.js'
 import { jsonStringify } from '../services/infra/slowOperations.js'
 
 /**
- * Create a synthetic AssistantMessage for remote permission requests.
- * The ToolUseConfirm type requires an AssistantMessage, but in remote mode
- * we don't have a real one — the tool use runs on the CCR container.
+ * 为远程权限请求创建合成的 AssistantMessage。
+ * ToolUseConfirm 类型要求提供 AssistantMessage，但远程模式没有真实消息，
+ * 因为工具实际运行在 CCR 容器中。
  */
 export function createSyntheticAssistantMessage(
   request: WireControlPermissionRequest,
@@ -43,9 +43,9 @@ export function createSyntheticAssistantMessage(
 }
 
 /**
- * Create a minimal Tool stub for tools that aren't loaded locally.
- * This happens when the remote CCR has tools (e.g., MCP tools) that the
- * local CLI doesn't know about. The stub routes to FallbackPermissionRequest.
+ * 为本地未加载的工具创建最小 Tool 替身。
+ * 当远程 CCR 拥有本地 CLI 不认识的工具（例如 MCP 工具）时会走此路径，
+ * 该替身会将请求交给 FallbackPermissionRequest。
  */
 export function createToolStub(toolName: string): Tool {
   return {

@@ -1,8 +1,8 @@
 /**
- * useReplQueryCallbacks -- query lifecycle callback construction extracted from REPL.tsx.
+ * useReplQueryCallbacks：从 REPL.tsx 提取的 query 生命周期 callback 构造逻辑。
  *
- * Builds queryFlowCtx, getToolUseContext, onQueryEvent, onQueryImpl, onQuery, onSubmit,
- * handleBackgroundQuery, handleBackgroundSession.
+ * 构造 queryFlowCtx、getToolUseContext、onQueryEvent、onQueryImpl、onQuery、onSubmit、
+ * handleBackgroundQuery 和 handleBackgroundSession。
  */
 
 import { useCallback, useRef } from 'react'

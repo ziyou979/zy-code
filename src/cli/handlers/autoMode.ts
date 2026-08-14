@@ -1,6 +1,6 @@
 /**
- * Auto mode subcommand handlers — dump default/merged classifier rules and
- * critique user-written rules. Dynamically imported when `zy auto-mode ...` runs.
+ * Auto mode 子命令 handler：输出默认或合并后的 classifier 规则，并评审用户编写的规则。
+ * 运行 `zy auto-mode ...` 时动态导入。
  */
 
 import { getMainLoopModel, parseUserSpecifiedModel } from '../../services/model/model.js'
@@ -23,11 +23,9 @@ export function autoModeDefaultsHandler(): void {
 }
 
 /**
- * Dump the effective auto mode config: user settings where provided, template
- * defaults otherwise. Per-section REPLACE semantics — matches how
- * buildYoloSystemPrompt resolves the permissions template (a non-empty user
- * section replaces that section's defaults entirely; an empty/absent section
- * falls through to defaults).
+ * 输出最终生效的 auto mode 配置：有用户设置时使用用户值，否则使用模板默认值。各 section 采用
+ * REPLACE 语义，与 buildYoloSystemPrompt 解析权限模板的方式一致：非空用户 section 完全替换
+ * 该 section 的默认值，空或缺失则回退到默认值。
  */
 export function autoModeConfigHandler(): void {
   const config = getAutoModeConfig()

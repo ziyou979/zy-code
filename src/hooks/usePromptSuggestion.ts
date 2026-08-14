@@ -34,12 +34,12 @@ export function usePromptSuggestion({ inputValue, isAssistantResponding }: Props
 
   const isValidSuggestion = suggestionText && shownAt > 0
 
-  // Track engagement depth for telemetry
+  // 跟踪 engagement 深度，用于 telemetry
   const firstKeystrokeAt = useRef<number>(0)
   const wasFocusedWhenShown = useRef<boolean>(true)
   const prevShownAt = useRef<number>(0)
 
-  // Capture focus state when a new suggestion appears (shownAt changes)
+  // 新 suggestion 出现（shownAt 变化）时捕获焦点状态
   if (shownAt > 0 && shownAt !== prevShownAt.current) {
     prevShownAt.current = shownAt
     wasFocusedWhenShown.current = isTerminalFocused
@@ -48,7 +48,7 @@ export function usePromptSuggestion({ inputValue, isAssistantResponding }: Props
     prevShownAt.current = 0
   }
 
-  // Record first keystroke while suggestion is visible
+  // 记录 suggestion 可见期间的首次按键
   if (inputValue.length > 0 && firstKeystrokeAt.current === 0 && isValidSuggestion) {
     firstKeystrokeAt.current = Date.now()
   }
@@ -82,10 +82,10 @@ export function usePromptSuggestion({ inputValue, isAssistantResponding }: Props
   }, [isValidSuggestion, setAppState])
 
   const markShown = useCallback(() => {
-    // Check shownAt inside setAppState callback to avoid depending on it
-    // (depending on shownAt causes infinite loop when this callback is called)
+    // 在 setAppState callback 内检查 shownAt，避免依赖它；
+    // 否则调用此 callback 时会造成无限循环
     setAppState((prev) => {
-      // Only mark shown if not already shown and suggestion exists
+      // 仅在尚未标记且 suggestion 存在时标记为已显示
       if (prev.promptSuggestion.shownAt !== 0 || !prev.promptSuggestion.text) {
         return prev
       }
@@ -105,8 +105,8 @@ export function usePromptSuggestion({ inputValue, isAssistantResponding }: Props
         return
       }
 
-      // Determine if accepted: either Tab was pressed (acceptedAt set) OR
-      // final input matches suggestion (empty Enter case)
+      // 判断是否接受：按下 Tab（已设置 acceptedAt），或最终输入与 suggestion 匹配
+      //（空输入按 Enter 的情况）
       const tabWasPressed = acceptedAt > shownAt
       const wasAccepted = tabWasPressed || finalInput === suggestionText
       const timeMs = wasAccepted ? acceptedAt || Date.now() : Date.now()

@@ -28,7 +28,7 @@ const QR_OPTIONS = {
   small: true,
 }
 
-/** Generate a QR code and return its lines. */
+/** 生成二维码并按行返回。 */
 async function generateQr(url: string): Promise<string[]> {
   const qr = await qrToString(url, QR_OPTIONS)
   return qr.split('\n').filter((line: string) => line.length > 0)
@@ -41,88 +41,87 @@ export function createWireLogger(options: {
   const write = options.write ?? ((s: string) => process.stdout.write(s))
   const verbose = options.verbose
 
-  // Status state machine
+  // 状态展示状态机
   let currentState: StatusState = 'idle'
   let currentStateText = 'Ready'
   let repoName = ''
   let branch = ''
   let debugLogPath = ''
 
-  // Connect URL (built in printBanner with correct base for staging/prod)
+  // 连接 URL，由 printBanner 使用 staging/prod 对应的正确 base 构造
   let connectUrl = ''
   let cachedIngressUrl = ''
   let cachedEnvironmentId = ''
   let activeSessionUrl: string | null = null
 
-  // QR code lines for the current URL
+  // 当前 URL 对应的二维码文本行
   let qrLines: string[] = []
   let qrVisible = false
 
-  // Tool activity for the second status line
+  // 第二行状态中展示的工具活动
   let lastToolSummary: string | null = null
   let lastToolTime = 0
 
-  // Session count indicator (shown when multi-session mode is enabled)
+  // 会话数量指示器，仅在多会话模式下显示
   let sessionActive = 0
   let sessionMax = 1
-  // Spawn mode shown in the session-count line + gates the `w` hint
+  // 会话数量行显示的启动模式，同时控制是否显示 `w` 提示
   let spawnModeDisplay: 'same-dir' | 'worktree' | null = null
   let spawnMode: SpawnMode = 'single-session'
 
-  // Per-session display info for the multi-session bullet list (keyed by compat sessionId)
+  // 多会话项目列表中各会话的展示信息，以兼容 sessionId 为 key
   const sessionDisplayInfo = new Map<
     string,
     { title?: string; url: string; activity?: SessionActivity }
   >()
 
-  // Connecting spinner state
+  // 连接中 spinner 的状态
   let connectingTimer: ReturnType<typeof setInterval> | null = null
   let connectingTick = 0
 
   /**
-   * Count how many visual terminal rows a string occupies, accounting for
-   * line wrapping. Each `\n` is one row, and content wider than the terminal
-   * wraps to additional rows.
+   * 计算字符串实际占用的终端行数，并考虑自动换行。每个 `\n` 占一行，宽于终端的内容还会
+   * 折行占用额外行。
    */
   function _countVisualLines(text: string): number {
     // eslint-disable-next-line custom-rules/prefer-use-terminal-size
-    const cols = process.stdout.columns || 80 // non-React CLI context
+    const cols = process.stdout.columns || 80 // 非 React CLI context
     let count = 0
-    // Split on newlines to get logical lines
+    // 按换行符拆分为逻辑行
     for (const logical of text.split('\n')) {
       if (logical.length === 0) {
-        // Empty segment between consecutive \n — counts as 1 row
+        // 连续 \n 之间的空片段计为一行
         count++
         continue
       }
       const width = stringWidth(logical)
       count += Math.max(1, Math.ceil(width / cols))
     }
-    // The trailing \n in "line\n" produces an empty last element — don't count it
-    // because the cursor sits at the start of the next line, not a new visual row.
+    // "line\n" 末尾的 \n 会产生空的最后一项，但光标只是停在下一行开头，并未占用新的可视行，
+    // 因此不计入。
     if (text.endsWith('\n')) {
       count--
     }
     return count
   }
 
-  /** Write a status line. */
+  /** 写入状态行。 */
   function writeStatus(text: string): void {
     write(text)
   }
 
-  /** Clear any currently displayed status lines. */
+  /** 清除当前显示的所有状态行。 */
   function clearStatusLines(): void {
-    write('\x1b[J') // erase from cursor to end of screen
+    write('\x1b[J') // 从光标位置清除到屏幕末尾
   }
 
-  /** Print a permanent log line, clearing status first and restoring after. */
+  /** 输出永久日志行；先清除状态展示，随后由下一次渲染恢复。 */
   function printLog(line: string): void {
     clearStatusLines()
     write(line)
   }
 
-  /** Regenerate the QR code with the given URL. */
+  /** 根据给定 URL 重新生成二维码。 */
   function regenerateQr(url: string): void {
     generateQr(url)
       .then((lines) => {
@@ -134,7 +133,7 @@ export function createWireLogger(options: {
       })
   }
 
-  /** Render the connecting spinner line (shown before first updateIdleStatus). */
+  /** 渲染连接中的 spinner 行，在首次 updateIdleStatus 前显示。 */
   function renderConnectingLine(): void {
     clearStatusLines()
 
@@ -149,7 +148,7 @@ export function createWireLogger(options: {
     writeStatus(`${chalk.yellow(frame)} ${chalk.yellow('Connecting')}${suffix}\n`)
   }
 
-  /** Start the connecting spinner. Stopped by first updateIdleStatus(). */
+  /** 启动连接中的 spinner，首次 updateIdleStatus() 会将其停止。 */
   function startConnecting(): void {
     stopConnecting()
     renderConnectingLine()
@@ -159,7 +158,7 @@ export function createWireLogger(options: {
     }, 150)
   }
 
-  /** Stop the connecting spinner. */
+  /** 停止连接中的 spinner。 */
   function stopConnecting(): void {
     if (connectingTimer) {
       clearInterval(connectingTimer)
@@ -167,12 +166,11 @@ export function createWireLogger(options: {
     }
   }
 
-  /** Render and write the current status lines based on state. */
+  /** 根据当前状态渲染并写入状态行。 */
   function renderStatusLine(): void {
     if (currentState === 'reconnecting' || currentState === 'failed') {
-      // These states are handled separately (updateReconnectingStatus /
-      // updateFailedStatus). Return before clearing so callers like toggleQr
-      // and setSpawnModeDisplay don't blank the display during these states.
+      // 这些状态分别由 updateReconnectingStatus / updateFailedStatus 处理。清除前直接返回，
+      // 避免 toggleQr、setSpawnModeDisplay 等调用方在这些状态下清空展示。
       return
     }
 
@@ -180,26 +178,25 @@ export function createWireLogger(options: {
 
     const isIdle = currentState === 'idle'
 
-    // QR code above the status line
+    // 状态行上方的二维码
     if (qrVisible) {
       for (const line of qrLines) {
         writeStatus(`${chalk.dim(line)}\n`)
       }
     }
 
-    // Determine indicator and colors based on state
+    // 根据状态确定指示符与颜色
     const indicator = BRIDGE_READY_INDICATOR
     const indicatorColor = isIdle ? chalk.green : chalk.cyan
     const baseColor = isIdle ? chalk.green : chalk.cyan
     const stateText = baseColor(currentStateText)
 
-    // Build the suffix with repo and branch
+    // 用 repo 与 branch 构造后缀
     let suffix = ''
     if (repoName) {
       suffix += chalk.dim(' \u00b7 ') + chalk.dim(repoName)
     }
-    // In worktree mode each session gets its own branch, so showing the
-    // bridge's branch would be misleading.
+    // worktree 模式下每个会话都有自己的 branch，显示 bridge 所在 branch 会产生误导。
     if (branch && spawnMode !== 'worktree') {
       suffix += chalk.dim(' \u00b7 ') + chalk.dim(branch)
     }
@@ -209,7 +206,7 @@ export function createWireLogger(options: {
     }
     writeStatus(`${indicatorColor(indicator)} ${stateText}${suffix}\n`)
 
-    // Session count and per-session list (multi-session mode only)
+    // 会话数量及各会话列表，仅用于多会话模式
     if (sessionMax > 1) {
       const modeHint =
         spawnMode === 'worktree'
@@ -229,7 +226,7 @@ export function createWireLogger(options: {
       }
     }
 
-    // Mode line for spawn modes with a single slot (or true single-session mode)
+    // 只有一个槽位的启动模式或真正单会话模式所用的模式行
     if (sessionMax === 1) {
       const modeText =
         spawnMode === 'single-session'
@@ -240,7 +237,7 @@ export function createWireLogger(options: {
       writeStatus(`    ${chalk.dim(modeText)}\n`)
     }
 
-    // Tool activity line for single-session mode
+    // 单会话模式的工具活动行
     if (
       sessionMax === 1 &&
       !isIdle &&
@@ -250,7 +247,7 @@ export function createWireLogger(options: {
       writeStatus(`  ${chalk.dim(truncatePrompt(lastToolSummary, 60))}\n`)
     }
 
-    // Blank line separator before footer
+    // footer 前的空行分隔符
     const url = activeSessionUrl ?? connectUrl
     if (url) {
       writeStatus('\n')
@@ -286,7 +283,7 @@ export function createWireLogger(options: {
       }
       write('\n')
 
-      // Start connecting spinner — first updateIdleStatus() will stop it
+      // 启动连接中的 spinner，首次 updateIdleStatus() 会停止它
       startConnecting()
     },
 
@@ -362,8 +359,8 @@ export function createWireLogger(options: {
       currentStateText = 'Connected'
       lastToolSummary = null
       lastToolTime = 0
-      // Multi-session: keep footer/QR on the environment connect URL so users
-      // can spawn more sessions. Per-session links are in the bullet list.
+      // 多会话模式下 footer 与二维码继续使用环境连接 URL，以便用户启动更多会话；各会话链接
+      // 位于项目列表中。
       if (sessionMax <= 1) {
         activeSessionUrl = buildWireSessionUrl(sessionId, cachedEnvironmentId, cachedIngressUrl)
         regenerateQr(activeSessionUrl)
@@ -376,7 +373,7 @@ export function createWireLogger(options: {
       clearStatusLines()
       currentState = 'reconnecting'
 
-      // QR code above the status line
+      // 状态行上方的二维码
       if (qrVisible) {
         for (const line of qrLines) {
           writeStatus(`${chalk.dim(line)}\n`)
@@ -419,7 +416,7 @@ export function createWireLogger(options: {
       activity: SessionActivity,
       _trail: string[],
     ): void {
-      // Cache tool activity for the second status line
+      // 缓存工具活动，供第二行状态展示
       if (activity.type === 'tool_start') {
         lastToolSummary = activity.summary
         lastToolTime = Date.now()
@@ -444,8 +441,7 @@ export function createWireLogger(options: {
       sessionActive = active
       sessionMax = max
       spawnMode = mode
-      // Don't re-render here — the status ticker calls renderStatusLine
-      // on its own cadence, and the next tick will pick up the new values.
+      // 此处不重新渲染；状态 ticker 会按自身节奏调用 renderStatusLine，下一个 tick 会读取新值。
     },
 
     setSpawnModeDisplay(mode: 'same-dir' | 'worktree' | null): void {
@@ -453,10 +449,9 @@ export function createWireLogger(options: {
         return
       }
       spawnModeDisplay = mode
-      // Also sync the #21118-added spawnMode so the next render shows correct
-      // mode hint + branch visibility. Don't render here — matches
-      // updateSessionCount: called before printBanner (initial setup) and
-      // again from the `w` handler (which follows with refreshDisplay).
+      // 同时同步 #21118 新增的 spawnMode，使下次渲染显示正确的模式提示与 branch 可见性。
+      // 此处不渲染，与 updateSessionCount 一致：初始设置时在 printBanner 前调用，之后由 `w`
+      // handler 调用并紧接着执行 refreshDisplay。
       if (mode) {
         spawnMode = mode
       }
@@ -480,13 +475,13 @@ export function createWireLogger(options: {
         return
       }
       info.title = title
-      // Guard against reconnecting/failed — renderStatusLine clears then returns
-      // early for those states, which would erase the spinner/error.
+      // 防止 reconnecting/failed 状态下渲染；renderStatusLine 会先清除再提前返回，从而擦掉
+      // spinner 或错误信息。
       if (currentState === 'reconnecting' || currentState === 'failed') {
         return
       }
       if (sessionMax === 1) {
-        // Single-session: show title in the main status line too.
+        // 单会话模式下也在主状态行显示标题。
         currentState = 'titled'
         currentStateText = truncatePrompt(title, 40)
       }
@@ -498,8 +493,8 @@ export function createWireLogger(options: {
     },
 
     refreshDisplay(): void {
-      // Skip during reconnecting/failed — renderStatusLine clears then returns
-      // early for those states, which would erase the spinner/error.
+      // reconnecting/failed 状态下跳过；renderStatusLine 会先清除再提前返回，从而擦掉 spinner
+      // 或错误信息。
       if (currentState === 'reconnecting' || currentState === 'failed') {
         return
       }

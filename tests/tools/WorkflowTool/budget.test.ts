@@ -10,7 +10,7 @@ describe('MutableWorkflowBudget', () => {
     expect(budget.total).toBeNull()
     expect(budget.remaining()).toBe(Infinity)
     expect(budget.spent()).toBe(0)
-    // Should not throw
+    // 不应抛出异常
     budget.checkBudget()
   })
 

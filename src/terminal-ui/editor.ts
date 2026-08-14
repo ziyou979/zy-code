@@ -9,9 +9,8 @@ function isCommandAvailable(command: string): boolean {
   return !!whichSync(command)
 }
 
-// GUI editors that open in a separate window and can be spawned detached
-// without fighting the TUI for stdin. VS Code forks (cursor, windsurf, codium)
-// are listed explicitly since none contain 'code' as a substring.
+// 在独立窗口打开、可分离启动且不会与 TUI 争用 stdin 的 GUI 编辑器。
+// VS Code 分支（cursor、windsurf、codium）名称中不含 'code'，因此显式列出。
 const GUI_EDITORS = [
   'code',
   'cursor',
@@ -28,22 +27,20 @@ const GUI_EDITORS = [
   'start',
 ]
 
-// Editors that accept +N as a goto-line argument. The Windows default
-// ('start /wait notepad') does not — notepad treats +42 as a filename.
+// 支持以 +N 作为跳转行参数的编辑器。Windows 默认命令（'start /wait notepad'）
+// 不支持，notepad 会把 +42 当成文件名。
 const PLUS_N_EDITORS = /\b(vi|vim|nvim|nano|emacs|pico|micro|helix|hx)\b/
 
-// VS Code and forks use -g file:line. subl uses bare file:line (no -g).
+// VS Code 及其分支使用 -g file:line，subl 直接使用 file:line（不带 -g）。
 const VSCODE_FAMILY = new Set(['code', 'cursor', 'windsurf', 'codium'])
 
 /**
- * Classify the editor as GUI or not. Returns the matched GUI family name
- * for goto-line argv selection, or undefined for terminal editors.
- * Note: this is classification only — spawn the user's actual binary, not
- * this return value, so `code-insiders` / absolute paths are preserved.
+ * 判断编辑器是否为 GUI。返回匹配的 GUI 家族名称，以便选择跳转行 argv；
+ * 终端编辑器返回 undefined。注意：这里只做分类，启动时仍使用用户实际指定的二进制，
+ * 而不是此返回值，以保留 `code-insiders` 和绝对路径。
  *
- * Uses basename so /home/alice/code/bin/nvim doesn't match 'code' via the
- * directory component. code-insiders → still matches 'code', /usr/bin/code →
- * 'code' → matches.
+ * 使用 basename，避免 /home/alice/code/bin/nvim 因目录部分而误匹配 'code'。
+ * code-insiders 仍匹配 'code'，/usr/bin/code 的 basename 为 'code'，也能匹配。
  */
 export function classifyGuiEditor(editor: string): string | undefined {
   const base = basename(editor.split(' ')[0] ?? '')
@@ -51,8 +48,8 @@ export function classifyGuiEditor(editor: string): string | undefined {
 }
 
 /**
- * Build goto-line argv for a GUI editor. VS Code family uses -g file:line;
- * subl uses bare file:line; others don't support goto-line.
+ * 构建 GUI 编辑器的跳转行 argv。VS Code 家族使用 -g file:line，subl 直接使用
+ * file:line，其他编辑器不支持跳转行。
  */
 function guiGotoArgv(guiFamily: string, filePath: string, line: number | undefined): string[] {
   if (!line) {
@@ -68,16 +65,14 @@ function guiGotoArgv(guiFamily: string, filePath: string, line: number | undefin
 }
 
 /**
- * Launch a file in the user's external editor.
+ * 在用户的外部编辑器中打开文件。
  *
- * For GUI editors (code, subl, etc.): spawns detached — the editor opens
- * in a separate window and ZY Code stays interactive.
+ * GUI 编辑器（code、subl 等）采用分离启动：编辑器在独立窗口打开，ZY Code 保持交互。
  *
- * For terminal editors (vim, nvim, nano, etc.): blocks via Ink's alt-screen
- * handoff until the editor exits. This is the same dance as editFileInEditor()
- * in promptEditor.ts, minus the read-back.
+ * 终端编辑器（vim、nvim、nano 等）通过 Ink alt-screen 交接阻塞，直到编辑器退出。
+ * 流程与 promptEditor.ts 的 editFileInEditor() 相同，只是不读回文件内容。
  *
- * Returns true if the editor was launched, false if no editor is available.
+ * 成功启动编辑器时返回 true，没有可用编辑器时返回 false。
  */
 export function openFileInExternalEditor(filePath: string, line?: number): boolean {
   const editor = getExternalEditor()
@@ -85,9 +80,9 @@ export function openFileInExternalEditor(filePath: string, line?: number): boole
     return false
   }
 
-  // Spawn the user's actual binary (preserves code-insiders, abs paths, etc.).
-  // Split into binary + extra args so multi-word values like 'start /wait
-  // notepad' or 'code --wait' propagate all tokens to spawn.
+  // 启动用户实际指定的二进制，以保留 code-insiders、绝对路径等。
+  // 拆分为二进制和附加参数，使 'start /wait notepad'、'code --wait' 等多词值的
+  // 所有 token 都能传给 spawn。
   const parts = editor.split(' ')
   const base = parts[0] ?? editor
   const editorArgs = parts.slice(1)
@@ -98,51 +93,46 @@ export function openFileInExternalEditor(filePath: string, line?: number): boole
     const detachedOpts: SpawnOptions = { detached: true, stdio: 'ignore' }
     let child
     if (process.platform === 'win32') {
-      // shell: true on win32 so code.cmd / cursor.cmd / windsurf.cmd resolve —
-      // CreateProcess can't execute .cmd/.bat directly. Assemble quoted command
-      // string; cmd.exe doesn't expand $() or backticks inside double quotes.
-      // Quote each arg so paths with spaces survive the shell join.
+      // Windows 使用 shell: true，以便解析 code.cmd / cursor.cmd / windsurf.cmd；
+      // CreateProcess 无法直接执行 .cmd/.bat。组装带引号的命令字符串，cmd.exe 不会在
+      // 双引号内展开 $() 或反引号。每个参数都加引号，确保含空格路径经过 shell 拼接后不变。
       const gotoStr = gotoArgv.map((a) => `"${a}"`).join(' ')
       child = spawn(`${editor} ${gotoStr}`, { ...detachedOpts, shell: true })
     } else {
-      // POSIX: argv array with no shell — injection-safe. shell: true would
-      // expand $() / backticks inside double quotes, and filePath is
-      // filesystem-sourced (possible RCE from a malicious repo filename).
+      // POSIX 直接使用 argv 数组而不经过 shell，可防止注入。shell: true 会在双引号内
+      // 展开 $() 和反引号，而 filePath 来自文件系统，恶意仓库文件名可能造成 RCE。
       child = spawn(base, [...editorArgs, ...gotoArgv], detachedOpts)
     }
-    // spawn() emits ENOENT asynchronously. ENOENT on $VISUAL/$EDITOR is a
-    // user-config error, not an internal bug — don't pollute error telemetry.
+    // spawn() 会异步发出 ENOENT。$VISUAL/$EDITOR 的 ENOENT 属于用户配置错误，
+    // 不是内部缺陷，不应污染错误 telemetry。
     child.on('error', (e) => logForDebugging(`editor spawn failed: ${e}`, { level: 'error' }))
     child.unref()
     return true
   }
 
-  // Terminal editor — needs alt-screen handoff since it takes over the
-  // terminal. Blocks until the editor exits.
+  // 终端编辑器会接管终端，因此需要交接 alt-screen，并阻塞到编辑器退出。
   const inkInstance = instances.get(process.stdout)
   if (!inkInstance) {
     return false
   }
-  // Only prepend +N for editors known to support it — notepad treats +42 as a
-  // filename to open. Test basename so /home/vim/bin/kak doesn't match 'vim'
-  // via the directory segment.
+  // 只为明确支持的编辑器添加 +N；notepad 会把 +42 当成文件名。
+  // 对 basename 做匹配，避免 /home/vim/bin/kak 因目录部分而误匹配 'vim'。
   const useGotoLine = line && PLUS_N_EDITORS.test(basename(base))
   inkInstance.enterAlternateScreen()
   try {
     const syncOpts: SpawnSyncOptions = { stdio: 'inherit' }
     let result
     if (process.platform === 'win32') {
-      // On Windows use shell: true so cmd.exe builtins like `start` resolve.
-      // shell: true joins args unquoted, so assemble the command string with
-      // explicit quoting ourselves (matching promptEditor.ts:74). spawnSync
-      // returns errors in .error rather than throwing.
+      // Windows 使用 shell: true，以解析 `start` 等 cmd.exe 内建命令。
+      // shell: true 会无引号拼接参数，因此自行组装并显式加引号，与 promptEditor.ts:74
+      // 保持一致。spawnSync 通过 .error 返回错误，而不是抛出异常。
       const lineArg = useGotoLine ? `+${line} ` : ''
       result = spawnSync(`${editor} ${lineArg}"${filePath}"`, {
         ...syncOpts,
         shell: true,
       })
     } else {
-      // POSIX: spawn directly (no shell), argv array is quote-safe.
+      // POSIX 直接启动而不经过 shell，argv 数组无需额外转义。
       const args = [...editorArgs, ...(useGotoLine ? [`+${line}`, filePath] : [filePath])]
       result = spawnSync(base, args, syncOpts)
     }
@@ -159,7 +149,7 @@ export function openFileInExternalEditor(filePath: string, line?: number): boole
 }
 
 export const getExternalEditor = memoize((): string | undefined => {
-  // Prioritize environment variables
+  // 优先使用环境变量。
   if (process.env.VISUAL?.trim()) {
     return process.env.VISUAL.trim()
   }
@@ -168,13 +158,12 @@ export const getExternalEditor = memoize((): string | undefined => {
     return process.env.EDITOR.trim()
   }
 
-  // `isCommandAvailable` breaks the zy process' stdin on Windows
-  // as a bandaid, we skip it
+  // `isCommandAvailable` 会破坏 Windows 下 zy 进程的 stdin，因此暂时跳过检查。
   if (process.platform === 'win32') {
     return 'start /wait notepad'
   }
 
-  // Search for available editors in order of preference
+  // 按优先顺序查找可用编辑器。
   const editors = ['code', 'vi', 'nano']
   return editors.find((command) => isCommandAvailable(command))
 })

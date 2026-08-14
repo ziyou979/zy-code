@@ -42,8 +42,8 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
   const persistentRef = React.useRef<PersistentState>(createInitialPersistentState())
 
   // ── vimInsertModeRemaps ──────────────────────────────────────────────────
-  // Read from settings once; re-render won't pick up live changes (acceptable
-  // — the user must toggle editorMode to affect vim behaviour).
+  // 仅从 settings 读取一次；重新渲染不会获取实时变化，这是可接受的，
+  // 因为用户必须切换 editorMode 才会改变 vim 行为。
   const remapsRef = useRef<Record<string, string> | undefined>(undefined)
   const remapBufferRef = useRef<{ char: string; timer: NodeJS.Timeout | null } | null>(null)
   if (remapsRef.current === undefined) {
@@ -84,8 +84,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       }
     }
 
-    // Vim behavior: move cursor left by 1 when exiting insert mode
-    // (unless at beginning of line or at offset 0)
+    // Vim 行为：退出 insert 模式时将光标左移一位，除非位于行首或 offset 0
     const offset = textInput.offset
     if (offset > 0 && props.value[offset - 1] !== '\n') {
       textInput.setOffset(offset - 1)
@@ -190,37 +189,36 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       return
     }
 
-    // NOTE(keybindings): This escape handler is intentionally NOT migrated to the keybindings system.
-    // It's vim's standard INSERT->NORMAL mode switch - a vim-specific behavior that should not be
-    // configurable via keybindings. Vim users expect Esc to always exit INSERT mode.
+    // NOTE(keybindings)：此 escape 处理器有意不迁移到 keybinding 系统。
+    // 它是 vim 标准的 INSERT->NORMAL 模式切换，属于 vim 固有行为，不应通过 keybinding 配置。
+    // Vim 用户预期 Esc 始终退出 INSERT 模式。
     if (key.escape && state.mode === 'INSERT') {
       switchToNormalMode()
       return
     }
 
-    // Escape in NORMAL mode cancels any pending command (replace, operator, etc.)
+    // NORMAL 模式下 Escape 取消所有待处理命令（replace、operator 等）
     if (key.escape && state.mode === 'NORMAL') {
       vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
       return
     }
 
-    // Pass Enter to base handler regardless of mode (allows submission from NORMAL)
+    // 无论模式如何都将 Enter 交给基础处理器，使 NORMAL 模式也能提交
     if (key.return) {
       textInput.onInput(input, key)
       return
     }
 
     if (state.mode === 'INSERT') {
-      // Track inserted text for dot-repeat
+      // 跟踪插入文本，供 dot-repeat 使用
       if (key.backspace || key.delete) {
-        // Flush any pending remap buffer
+        // 刷新待处理的 remap buffer
         if (remapBufferRef.current) {
           clearTimeout(remapBufferRef.current.timer as unknown as NodeJS.Timeout)
           const saved = remapBufferRef.current.char
           remapBufferRef.current = null
-          // The buffered char was never committed — push backspace to remove it
-          // from the virtual state.  The text input never got the buffered
-          // char, so we just update the ref.
+          // buffer 中的字符从未提交，因此推入 backspace 将其从虚拟状态移除。
+          // 文本输入从未收到该字符，只需更新 ref。
           if (state.insertedText.endsWith(saved)) {
             vimStateRef.current = {
               mode: 'INSERT',
@@ -243,8 +241,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       }
 
       // ── vimInsertModeRemaps ────────────────────────────────────────────
-      // If a single-char buffer is pending, combine with the new key and check
-      // against the remap dictionary.
+      // 有单字符 buffer 待处理时，与新按键组合并查询 remap 字典。
       const buf = remapBufferRef.current
       if (buf) {
         clearTimeout(buf.timer as unknown as NodeJS.Timeout)
@@ -253,29 +250,27 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
         const seq = buf.char + input
         const target = remapsRef.current?.[seq]
         if (target === '<Esc>') {
-          // Swallow both chars and switch to NORMAL.
+          // 吞掉两个字符并切换到 NORMAL。
           switchToNormalMode()
           return
         }
-        // Unknown sequence — flush the buffered char first, then fall through
-        // to commit the new char via the normal INSERT path below.
+        // 未知序列：先刷新 buffer 中的字符，再落入下方正常 INSERT 路径提交新字符。
         vimStateRef.current = {
           mode: 'INSERT',
           insertedText: state.insertedText + buf.char,
         }
         textInput.onInput(buf.char, key)
-        // Fall through — the new `input` char still needs to be committed
+        // 继续向下执行；新的 `input` 字符仍需提交
       }
 
       // ── Normal INSERT character ────────────────────────────────────────
-      // Check whether this char could start a 2-char remap sequence.
-      // If so, buffer it instead of committing immediately.
+      // 检查此字符能否作为双字符 remap 序列的开头；若可以则放入 buffer，不立即提交。
       const pendingSeq =
         remapsRef.current &&
         Object.keys(remapsRef.current).some((k) => k[0] === input && k.length === 2)
       if (pendingSeq) {
         const timer = setTimeout(() => {
-          // Timeout — flush the buffered char as normal input
+          // 超时后将 buffer 中的字符作为普通输入刷新
           if (remapBufferRef.current) {
             const saved = remapBufferRef.current.char
             remapBufferRef.current = null
@@ -298,11 +293,11 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       return
     }
 
-    // VISUAL mode handling
+    // VISUAL 模式处理
     if (state.mode === 'VISUAL') {
       const ctx = createOperatorContext(cursor, false)
 
-      // Escape or v returns to NORMAL idle
+      // Escape 或 v 返回 NORMAL idle
       if (key.escape || input === 'v') {
         vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
         setMode('NORMAL')
@@ -310,7 +305,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
         return
       }
 
-      // Map arrow keys to motions
+      // 将方向键映射为 motion
       let visInput = input
       if (key.leftArrow) {
         visInput = 'h'
@@ -322,7 +317,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
         visInput = 'j'
       }
 
-      // Motion keys extend selection
+      // motion 键扩展选区
       if (['h', 'j', 'k', 'l'].includes(visInput)) {
         const motionMap: Record<string, () => void> = {
           h: () => textInput.setOffset(Math.max(0, cursor.offset - 1)),
@@ -356,7 +351,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
         return
       }
 
-      // w/b/e word motions
+      // w/b/e word motion
       if (['w', 'b', 'e'].includes(visInput)) {
         const wordMap: Record<string, () => Cursor> = {
           w: () => cursor.nextVimWord(),
@@ -370,7 +365,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
         return
       }
 
-      // Line boundaries
+      // 行边界
       if (visInput === '0') {
         textInput.setOffset(cursor.startOfLogicalLine().offset)
         return
@@ -384,7 +379,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
         return
       }
 
-      // Operators on selection
+      // 作用于选区的 operator
       if (visInput === 'd') {
         executeVisualOperator('delete', state.anchor, cursor.offset, ctx)
         vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
@@ -443,7 +438,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       return
     }
 
-    // v in idle enters VISUAL mode
+    // idle 状态下按 v 进入 VISUAL 模式
     if (state.command.type === 'idle' && input === 'v' && !key.ctrl) {
       vimStateRef.current = { mode: 'VISUAL', anchor: cursor.offset }
       setMode('VISUAL')
@@ -469,7 +464,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       state.command.type === 'operator' ||
       state.command.type === 'operatorCount'
 
-    // Map arrow keys to vim motions in NORMAL mode
+    // NORMAL 模式下将方向键映射为 vim motion
     let vimInput = input
     if (key.leftArrow) {
       vimInput = 'h'
@@ -491,7 +486,7 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       result.execute()
     }
 
-    // Update command state (only if execute didn't switch to INSERT)
+    // 更新命令状态（仅当 execute 未切换到 INSERT 时）
     if (vimStateRef.current.mode === 'NORMAL') {
       if (result.next) {
         vimStateRef.current = { mode: 'NORMAL', command: result.next }

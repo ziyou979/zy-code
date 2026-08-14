@@ -1,14 +1,14 @@
 /**
- * Logs the shape of a memory recall operation for telemetry.
- * This is a stub implementation for external builds.
+ * 记录 memory 召回操作的结构，用于 telemetry。
+ * 这是外部 build 使用的占位实现。
  */
 export function logMemoryRecallShape(_memories: unknown, _selected: unknown): void {
-  // Stub: no-op in external builds
+  // 占位逻辑：外部 build 中不执行操作
 }
 
 /**
- * Logs the shape of a memory write operation for telemetry.
- * This is a stub implementation for external builds.
+ * 记录 memory 写入操作的结构，用于 telemetry。
+ * 这是外部 build 使用的占位实现。
  */
 export function logMemoryWriteShape(
   _toolName: string,
@@ -16,5 +16,5 @@ export function logMemoryWriteShape(
   _filePath: string,
   _scope: unknown,
 ): void {
-  // Stub: no-op in external builds
+  // 占位逻辑：外部 build 中不执行操作
 }

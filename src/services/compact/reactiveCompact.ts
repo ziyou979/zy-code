@@ -52,35 +52,34 @@ import { formatCompactSummary, getCompactPrompt, getCompactUserSummaryMessage } 
 import { getCompactSummaryText, pickCompactSummaryAssistant } from './summarySelection.js'
 
 // ---------------------------------------------------------------------------
-// Feature gates
+// 功能开关
 // ---------------------------------------------------------------------------
 
 /**
- * Whether reactive compact is enabled for this session.
- * Consulted by the query loop to gate media-error withholding and
- * to suppress proactive auto-compact when reactive owns recovery.
+ * 当前会话是否启用 reactive compact。
+ * query loop 据此决定是否暂不展示媒体错误，并在 reactive 负责恢复时
+ * 禁用主动 auto-compact。
  */
 export function isReactiveCompactEnabled(): boolean {
   return isAutoCompactEnabled() && getFeatureValue_CACHED_MAY_BE_STALE('zy_cobalt_raccoon', false)
 }
 
 /**
- * Whether we are in "reactive-only" mode — proactive auto-compact is
- * suppressed and `/compact` routes through the reactive path instead
- * of the traditional summarization pipeline.
+ * 是否处于“仅 reactive”模式：禁用主动 auto-compact，且 `/compact`
+ * 改走 reactive 路径，而非传统摘要流程。
  */
 export function isReactiveOnlyMode(): boolean {
   return isReactiveCompactEnabled()
 }
 
 // ---------------------------------------------------------------------------
-// Message withholding predicates
+// 消息暂缓展示条件
 // ---------------------------------------------------------------------------
 
 /**
- * Should this message be withheld from the user during streaming?
- * Returns true for prompt-too-long API error messages so the query loop
- * can attempt reactive recovery before surfacing the error.
+ * 流式传输期间是否应暂缓向用户展示该消息。
+ * 对 prompt-too-long API 错误返回 true，让 query loop 在展示错误前
+ * 先尝试 reactive 恢复。
  */
 export function isWithheldPromptTooLong(message: Message): boolean {
   if (message.type !== 'assistant') {
@@ -91,9 +90,9 @@ export function isWithheldPromptTooLong(message: Message): boolean {
 }
 
 /**
- * Should this media-size error message be withheld?
- * Returns true for image/PDF size rejection errors that reactive compact
- * can recover from by stripping media and retrying.
+ * 是否应暂缓展示该媒体大小错误。
+ * 对可由 reactive compact 通过移除媒体并重试来恢复的图片/PDF
+ * 大小拒绝错误返回 true。
  */
 export function isWithheldMediaSizeError(message: Message): boolean {
   if (message.type !== 'assistant') {
@@ -104,10 +103,10 @@ export function isWithheldMediaSizeError(message: Message): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Core reactive compact
+// reactive compact 核心逻辑
 // ---------------------------------------------------------------------------
 
-/** Maximum number of group-stripping iterations before giving up. */
+/** 放弃前最多尝试移除消息组的次数。 */
 const MAX_STRIP_ITERATIONS = 10
 
 type ReactiveOutcome =
@@ -118,17 +117,16 @@ type ReactiveOutcome =
     }
 
 /**
- * Attempt to compact a conversation that is too long for the API.
+ * 尝试压缩超出 API 长度限制的会话。
  *
- * Strategy:
- * 1. Group messages by API round (each assistant response = one group).
- * 2. Strip images from messages (they inflate token count massively).
- * 3. Build a compact prompt and attempt summarization via forked agent.
- * 4. If the summarization itself hits prompt-too-long, drop the oldest
- *    group(s) and retry — using the token gap from the error to skip
- *    multiple groups at once when possible.
- * 5. On success, build a CompactionResult with boundary marker, summary,
- *    preserved tail messages, and re-injected attachments.
+ * 策略：
+ * 1. 按 API 轮次为消息分组（每条 assistant 响应为一组）。
+ * 2. 从消息中移除图片，避免其大幅增加 token 数量。
+ * 3. 构造 compact prompt，并通过 forked agent 尝试生成摘要。
+ * 4. 若生成摘要时仍遇到 prompt-too-long，则丢弃最早的消息组后重试；
+ *    可取得错误中的 token 缺口时，尽量一次跳过多组。
+ * 5. 成功后构造 CompactionResult，其中包含边界标记、摘要、
+ *    保留的尾部消息以及重新注入的附件。
  */
 export async function reactiveCompactOnPromptTooLong(
   messages: Message[],
@@ -150,8 +148,7 @@ export async function reactiveCompactOnPromptTooLong(
   const preCompactTokenCount = tokenCountWithEstimation(messages)
   const abortSignal = cacheSafeParams.toolUseContext.abortController.signal
 
-  // Strip images and re-injectable attachments to reduce token count
-  // before sending to the summarization model.
+  // 发送给摘要模型前移除图片和可重新注入的附件，以减少 token 数量。
   let messagesToSummarize = stripReinjectedAttachments(stripImagesFromMessages(messages))
   let groupsRemaining = groups.length
 
@@ -160,7 +157,7 @@ export async function reactiveCompactOnPromptTooLong(
     content: [{ type: 'text' as const, text: compactPrompt }],
   })
 
-  // Iteratively attempt summarization, dropping oldest groups on PTL failure
+  // 迭代尝试生成摘要；遇到 PTL 失败时丢弃最早的消息组。
   for (let iteration = 0; iteration < MAX_STRIP_ITERATIONS; iteration++) {
     if (abortSignal.aborted) {
       return { ok: false, reason: 'aborted' }
@@ -188,10 +185,10 @@ export async function reactiveCompactOnPromptTooLong(
       const lastAssistant = getLastAssistantMessage(result.messages)
       const lastText = lastAssistant ? getAssistantMessageText(lastAssistant) : null
 
-      // Check for abort / API error during the API call
+      // 检查 API 调用期间是否中止或发生错误。
       if (lastAssistant?.isApiErrorMessage) {
         if (lastText?.startsWith(PROMPT_TOO_LONG_ERROR_MESSAGE)) {
-          // Summarization itself hit PTL — drop oldest groups and retry
+          // 生成摘要本身遇到 PTL：丢弃最早的消息组后重试。
           const tokenGap = getPromptTooLongTokenGap(lastAssistant)
           const groupsToDrop = estimateGroupsToDrop(
             groups,
@@ -200,7 +197,7 @@ export async function reactiveCompactOnPromptTooLong(
           )
 
           if (groupsToDrop === 0) {
-            // Can't drop any more groups
+            // 已无更多消息组可丢弃。
             logForDebugging('reactiveCompact: cannot drop more groups, exhausted')
             return { ok: false, reason: 'exhausted' }
           }
@@ -210,7 +207,7 @@ export async function reactiveCompactOnPromptTooLong(
             return { ok: false, reason: 'exhausted' }
           }
 
-          // Rebuild messagesToSummarize from remaining groups
+          // 根据剩余消息组重建 messagesToSummarize。
           const keptGroups = groups.slice(groups.length - groupsRemaining)
           messagesToSummarize = stripReinjectedAttachments(
             stripImagesFromMessages(keptGroups.flat()),
@@ -222,7 +219,7 @@ export async function reactiveCompactOnPromptTooLong(
           continue
         }
 
-        // Other API error — not recoverable
+        // 其他 API 错误无法由此流程恢复。
         logForDebugging(`reactiveCompact: API error during summarization: ${lastText}`, {
           level: 'error',
         })
@@ -239,7 +236,7 @@ export async function reactiveCompactOnPromptTooLong(
         return { ok: false, reason: 'error' }
       }
 
-      // Success — build the CompactionResult
+      // 摘要成功，构造 CompactionResult。
       const formattedSummary = formatCompactSummary(summaryText)
       const compactionResult = await buildReactiveCompactionResult({
         messages,
@@ -274,22 +271,21 @@ export async function reactiveCompactOnPromptTooLong(
     }
   }
 
-  // Exhausted all iterations
+  // 已用尽全部迭代次数。
   logForDebugging('reactiveCompact: exhausted all strip iterations')
   return { ok: false, reason: 'exhausted' }
 }
 
 // ---------------------------------------------------------------------------
-// tryReactiveCompact — query-loop entry point
+// tryReactiveCompact：query loop 入口
 // ---------------------------------------------------------------------------
 
 /**
- * Called from the query loop when a prompt-too-long or media-size error
- * is withheld. Wraps reactiveCompactOnPromptTooLong with guard checks
- * and post-success cleanup.
+ * query loop 暂缓展示 prompt-too-long 或媒体大小错误时调用。
+ * 在 reactiveCompactOnPromptTooLong 外增加前置检查和成功后的清理。
  *
- * Returns a CompactionResult on success, or null if recovery is not
- * possible (already attempted, aborted, or compact failed).
+ * 成功时返回 CompactionResult；无法恢复（已尝试、中止或 compact 失败）
+ * 时返回 null。
  */
 export async function tryReactiveCompact(params: {
   hasAttempted: boolean
@@ -298,8 +294,7 @@ export async function tryReactiveCompact(params: {
   messages: Message[]
   cacheSafeParams: CacheSafeParams
 }): Promise<CompactionResult | null> {
-  // Guard: only attempt once per query-loop iteration to prevent
-  // infinite compact → still too long → compact → … spirals.
+  // 每轮 query loop 只尝试一次，避免 compact → 仍过长 → compact → … 的无限循环。
   if (params.hasAttempted) {
     logForDebugging('reactiveCompact: already attempted, skipping')
     return null
@@ -319,7 +314,7 @@ export async function tryReactiveCompact(params: {
       return null
     }
 
-    // Post-success cleanup — mirrors compactViaReactive in compact command
+    // 成功后执行清理，与 compact 命令中的 compactViaReactive 保持一致。
     runPostCompactCleanup(params.querySource)
     suppressCompactWarning()
 
@@ -336,13 +331,12 @@ export async function tryReactiveCompact(params: {
 }
 
 // ---------------------------------------------------------------------------
-// Internal helpers
+// 内部辅助函数
 // ---------------------------------------------------------------------------
 
 /**
- * Estimate how many groups to drop based on the token gap reported
- * by the prompt-too-long error. Falls back to dropping one group
- * if the gap is unknown.
+ * 根据 prompt-too-long 错误报告的 token 缺口估算应丢弃的消息组数量。
+ * 无法取得缺口时，退回到每次丢弃一组。
  */
 function estimateGroupsToDrop(
   groups: Message[][],
@@ -350,12 +344,12 @@ function estimateGroupsToDrop(
   tokenGap: number | undefined,
 ): number {
   if (tokenGap === undefined || tokenGap <= 0) {
-    // No gap info — drop one group at a time
+    // 没有缺口信息时，每次丢弃一组。
     return 1
   }
 
-  // Walk from the first un-dropped group forward, accumulating tokens
-  // until we've freed enough to cover the gap (with 10% margin).
+  // 从第一组尚未丢弃的消息开始向后累加 token，直至释放量足以覆盖缺口，
+  // 并额外保留 10% 余量。
   const targetTokens = tokenGap * 1.1
   let accumulated = 0
   let groupsToDrop = 0
@@ -372,7 +366,7 @@ function estimateGroupsToDrop(
 }
 
 /**
- * Build a CompactionResult from a successful reactive compact summarization.
+ * 根据成功生成的 reactive compact 摘要构造 CompactionResult。
  */
 async function buildReactiveCompactionResult({
   messages,
@@ -395,11 +389,11 @@ async function buildReactiveCompactionResult({
 }): Promise<CompactionResult> {
   const context = cacheSafeParams.toolUseContext
 
-  // Preserved tail messages — the groups that were NOT summarized
+  // 保留未纳入摘要的尾部消息组。
   const preservedGroups = groups.slice(groups.length - groupsRemaining)
   const messagesToKeep = groupsRemaining < groups.length ? preservedGroups.flat() : undefined
 
-  // Boundary marker
+  // 边界标记。
   const lastMessageUuid = messages.at(-1)?.uuid as UUID | undefined
   const boundaryMarker = createCompactBoundaryMessage(
     trigger === 'manual' ? 'manual' : 'auto',
@@ -407,7 +401,7 @@ async function buildReactiveCompactionResult({
     lastMessageUuid,
   )
 
-  // Summary messages
+  // 摘要消息。
   const summaryMessages: UserMessage[] = [
     createUserMessage({
       content: [
@@ -424,7 +418,7 @@ async function buildReactiveCompactionResult({
     }),
   ]
 
-  // Re-inject attachments that compact consumed
+  // 重新注入 compact 已消费的附件。
   const attachments: AttachmentMessage[] = []
   const preservedMessages = messagesToKeep ?? []
 
@@ -448,7 +442,7 @@ async function buildReactiveCompactionResult({
     attachments.push(createAttachmentMessage(att))
   }
 
-  // Execute PostCompact hooks
+  // 执行 PostCompact hooks。
   let hookUserDisplayMessage: string | undefined
   const hookResults: Message[] = []
   try {
@@ -458,7 +452,7 @@ async function buildReactiveCompactionResult({
     )
     hookUserDisplayMessage = hookResult.userDisplayMessage
   } catch {
-    // Hook failures should not block compaction
+    // Hook 失败不应阻塞压缩流程。
   }
 
   const compactionUsage = getTokenUsage(assistantMsg)

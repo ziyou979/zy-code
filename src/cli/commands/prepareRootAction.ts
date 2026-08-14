@@ -192,7 +192,7 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
     seedEarlyInput(options.prefill)
   }
 
-  // Promise for file downloads - started early, awaited before REPL renders
+  // 文件下载 promise 提前启动，并在 REPL 渲染前等待完成
   let fileDownloadPromise: Promise<DownloadResult[]> | undefined
 
   const agentsJson = options.agents
@@ -203,9 +203,8 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
     process.env.ZY_CODE_AGENT = agentCli
   }
 
-  // NOTE: LSP manager initialization is intentionally deferred until after
-  // the trust dialog is accepted. This prevents plugin LSP servers from
-  // executing code in untrusted directories before user consent.
+  // 注意：LSP manager 初始化有意延迟到用户接受信任对话框后，避免 plugin LSP server 在用户
+  // 同意前于不受信任目录中执行代码。
 
   // 单独提取这些以便需要时可以修改
   let outputFormat = options.outputFormat
@@ -631,8 +630,8 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
         }
       }
       if (reservedNameError) {
-        // stderr+exit(1) — a throw here becomes a silent unhandled
-        // rejection in stream-json mode (void main() in cli.tsx).
+        // 使用 stderr+exit(1)；stream-json 模式下若在此抛错，会因 cli.tsx 中 void main() 而
+        // 成为静默的未处理 rejection。
         process.stderr.write(`Error: ${reservedNameError}\n`)
         process.exit(1)
       }

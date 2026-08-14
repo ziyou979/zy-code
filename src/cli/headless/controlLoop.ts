@@ -180,8 +180,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
     })
   }
 
-  // Handle unexpected permission responses by looking up the unresolved tool
-  // call in the transcript and executing it
+  // 在 transcript 中查找尚未解决的工具调用并执行，以处理意外到达的权限响应
   const handledOrphanedToolUseIds = new Set<string>()
   structuredIO.setUnexpectedResponseCallback(async (message) => {
     await handleOrphanedPermissionResponse({
@@ -189,33 +188,26 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       setAppState,
       handledToolUseIds: handledOrphanedToolUseIds,
       onEnqueued: () => {
-        // The first message of a session might be the orphaned permission
-        // check rather than a user prompt, so kick off the loop.
+        // 会话首条消息可能是孤立权限检查而非用户 prompt，因此启动循环。
         kickRun()
       },
     })
   })
 
-  // Track active OAuth flows per server so we can abort a previous flow
-  // when a new mcp_authenticate request arrives for the same server.
+  // 按 server 跟踪活跃 OAuth 流程，使同一 server 收到新的 mcp_authenticate 请求时可以中止
+  // 上一个流程。
   const activeOAuthFlows = new Map<string, AbortController>()
-  // Track manual callback URL submit functions for active OAuth flows.
-  // Used when localhost is not reachable (e.g., browser-based IDEs).
+  // 跟踪活跃 OAuth 流程的手动 callback URL 提交函数，用于 localhost 无法访问的场景，
+  // 例如基于浏览器的 IDE。
   const oauthCallbackSubmitters = new Map<string, (callbackUrl: string) => void>()
-  // Track servers where the manual callback was actually invoked (so the
-  // automatic reconnect path knows to skip — the extension will reconnect).
+  // 跟踪实际调用过手动 callback 的 server，使自动重连路径知道应跳过；extension 会负责重连。
   const oauthManualCallbackUsed = new Set<string>()
-  // Track OAuth auth-only promises so mcp_oauth_callback_url can await
-  // token exchange completion. Reconnect is handled separately by the
-  // extension via handleAuthDone → mcp_reconnect.
+  // 跟踪仅认证的 OAuth promise，使 mcp_oauth_callback_url 能等待 token 交换完成。重连由
+  // extension 通过 handleAuthDone → mcp_reconnect 另行处理。
   const oauthAuthPromises = new Map<string, Promise<void>>()
 
-  // This is essentially spawning a parallel async task- we have two
-  // running in parallel- one reading from stdin and adding to the
-  // queue to be processed and another reading from the queue,
-  // processing and returning the result of the generation.
-  // The process is complete when the input stream completes and
-  // the last generation of the queue has complete.
+  // 这里实质上启动了并行异步任务：一个从 stdin 读取并加入处理队列，另一个读取队列、执行处理
+  // 并返回生成结果。输入流结束且队列最后一次生成完成后，整个流程才结束。
   let initialized = false
   logForDiagnosticsNoPII('info', 'cli_message_loop_started')
 
@@ -264,8 +256,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
     get_settings: (message) => {
       const currentAppState = getAppState()
       const model = getMainLoopModel() ?? ''
-      // modelSupportsEffort gate matches zy.ts — applied.effort must
-      // mirror what actually goes to the API, not just what's configured.
+      // modelSupportsEffort 检查与 zy.ts 一致；applied.effort 必须反映实际发送到 API 的值，
+      // 而不只是配置值。
       const effort = modelSupportsEffort(model)
         ? resolveAppliedEffort(model, currentAppState.effortValue)
         : undefined
@@ -273,13 +265,13 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         ...getSettingsWithSources(),
         applied: {
           model,
-          // Numeric effort (ant-only) → null; SDK schema is string-level only.
+          // 数值 effort 仅供 ant 使用，因此转为 null；SDK schema 只支持字符串级别。
           effort: typeof effort === 'string' ? effort : null,
         },
       })
     },
     interrupt: (message) => {
-      // Track escapes for attribution (ant-only feature)
+      // 跟踪 escape，供归因使用（仅限 ant 功能）
       if (feature('COMMIT_ATTRIBUTION')) {
         setAppState((prev) => ({
           ...prev,
@@ -311,9 +303,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         ),
         isUltraplanMode: m.ultraplan ?? prev.isUltraplanMode,
       }))
-      // handleSetPermissionMode sends the control_response; the
-      // notifySessionMetadataChanged that used to follow here is
-      // now fired by onChangeAppState (with externalized mode name).
+      // handleSetPermissionMode 会发送 control_response；此前紧随其后的
+      // notifySessionMetadataChanged 现由 onChangeAppState 触发，并使用外部模式名。
     },
     mcp_status: (message) => {
       sendControlResponseSuccess(message, {
@@ -340,14 +331,14 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       }
     },
     mcp_message: (message) => {
-      // Handle MCP notifications from SDK servers
+      // 处理 SDK server 发来的 MCP 通知
       const mcpRequest = message.request as Extract<
         WireControlRequest['request'],
         { subtype: 'mcp_message' }
       >
       const sdkClient = mcp.sdkClients.find((client) => client.name === mcpRequest.server_name)
-      // Check client exists - dynamically added SDK servers may have
-      // placeholder clients with null client until updateSdkMcp() runs
+      // 检查 client 是否存在；动态添加的 SDK server 在 updateSdkMcp() 运行前，可能只有
+      // client 为 null 的占位项。
       if (sdkClient && sdkClient.type === 'connected' && sdkClient.client?.transport?.onmessage) {
         sdkClient.client.transport.onmessage(mcpRequest.message as JSONRPCMessage)
       }
@@ -404,7 +395,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       >
       const { response, sdkServersChanged } = await mcp.applyMcpServerChanges(req.servers)
       sendControlResponseSuccess(message, response as unknown as Record<string, unknown>)
-      // Connect SDK servers AFTER response to avoid deadlock
+      // 响应后再连接 SDK server，避免死锁
       if (sdkServersChanged) {
         void mcp.updateSdkMcp()
       }
@@ -414,17 +405,15 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         WireControlRequest['request'],
         { subtype: 'apply_flag_settings' }
       >
-      // Snapshot the current model before applying — we need to detect
-      // model switches so we can inject breadcrumbs and notify listeners.
+      // 应用前创建当前 model 快照，用于检测 model 切换，以注入 breadcrumb 并通知 listener。
       const prevModel = getMainLoopModel()
 
-      // Merge the provided settings into the in-memory flag settings
+      // 将传入 settings 合并到内存中的 flag settings
       const existing = getFlagSettingsInline() ?? {}
       const incoming = req.settings
-      // Shallow-merge top-level keys; getSettingsForSource handles the deep
-      // merge with file-based flag settings via mergeWith. JSON drops
-      // `undefined`, so callers use `null` to clear a key — convert nulls
-      // to deletions so SettingsSchema().safeParse() doesn't reject.
+      // 顶层 key 做浅合并；getSettingsForSource 会通过 mergeWith 与文件 flag settings 深度
+      // 合并。JSON 会丢弃 `undefined`，调用方因此用 `null` 清除 key；将 null 转为删除操作，
+      // 避免 SettingsSchema().safeParse() 拒绝。
       const merged = { ...existing, ...incoming }
       for (const key of Object.keys(merged)) {
         if (merged[key as keyof typeof merged] === null) {
@@ -432,12 +421,12 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         }
       }
       setFlagSettingsInline(merged)
-      // Route through notifyChange so fanOut() resets the settings cache
-      // before listeners run (subscriber at :392 calls applySettingsChange).
+      // 通过 notifyChange 路由，使 fanOut() 在 listener 运行前重置 settings 缓存；:392 的
+      // subscriber 会调用 applySettingsChange。
       settingsChangeDetector.notifyChange('flagSettings')
 
-      // If the incoming settings include a model change, update the override
-      // so getMainLoopModel() reflects it (override outranks the cascade).
+      // 若传入 settings 包含 model 变化，则更新 override，使 getMainLoopModel() 能反映该变化；
+      // override 优先于级联值。
       if ('model' in incoming) {
         if (incoming.model != null) {
           setMainLoopModelOverride(String(incoming.model))
@@ -446,7 +435,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         }
       }
 
-      // If the model changed, inject breadcrumbs + notify metadata listeners.
+      // model 变化时注入 breadcrumb，并通知 metadata listener。
       const newModel = getMainLoopModel() ?? prevModel
       if (newModel !== prevModel) {
         loopState.activeUserSpecifiedModel = newModel
@@ -477,29 +466,23 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         WireControlRequest['request'],
         { subtype: 'seed_read_state' }
       >
-      // Client observed a Read that was later removed from context (e.g.
-      // by snip), so transcript-based seeding missed it. Queued into
-      // pendingSeeds; applied at the next clone-replace boundary.
+      // client 观察到一次 Read，随后该记录被移出 context（例如被 snip），导致基于 transcript
+      // 的种子初始化遗漏。先放入 pendingSeeds，在下个 clone-replace 边界应用。
       try {
-        // expandPath: all other readFileState writers normalize (~, relative,
-        // session cwd vs process cwd). FileEditTool looks up by expandPath'd
-        // key — a verbatim client path would miss.
+        // 使用 expandPath：其他 readFileState 写入方都会规范化 `~`、相对路径以及 session cwd
+        // 与 process cwd。FileEditTool 按 expandPath 处理后的 key 查找，原样使用 client 路径会漏掉。
         const normalizedPath = expandPath(req.path)
-        // Check disk mtime before reading content. If the file changed
-        // since the client's observation, readFile would return C_current
-        // but we'd store it with the client's M_observed — getChangedFiles
-        // then sees disk > cache.timestamp, re-reads, diffs C_current vs
-        // C_current = empty, emits no attachment, and the model is never
-        // told about the C_observed → C_current change. Skipping the seed
-        // makes Edit fail "file not read yet" → forces a fresh Read.
-        // Math.floor matches FileReadTool and getFileModificationTime.
+        // 读取内容前检查磁盘 mtime。若文件在 client 观察后发生变化，readFile 会返回 C_current，
+        // 但保存时使用 client 的 M_observed。随后 getChangedFiles 发现 disk > cache.timestamp，
+        // 重新读取并比较 C_current 与 C_current，结果为空，不发送附件，模型永远不知道
+        // C_observed → C_current 的变化。跳过种子会让 Edit 以 “file not read yet” 失败，从而
+        // 强制重新 Read。Math.floor 与 FileReadTool、getFileModificationTime 保持一致。
         const diskMtime = Math.floor((await stat(normalizedPath)).mtimeMs)
         if (diskMtime <= req.mtime) {
           const raw = await readFile(normalizedPath, 'utf-8')
-          // Strip BOM + normalize CRLF→LF to match readFileInRange and
-          // readFileSyncWithMetadata. FileEditTool's content-compare
-          // fallback (for Windows mtime bumps without content change)
-          // compares against LF-normalized disk reads.
+          // 去除 BOM 并将 CRLF 规范为 LF，与 readFileInRange、readFileSyncWithMetadata 一致。
+          // FileEditTool 在 Windows mtime 变化但内容未变时使用内容比较回退，该比较也针对
+          // LF 规范化后的磁盘读取结果。
           const content = (raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw).replaceAll(
             '\r\n',
             '\n',
@@ -512,7 +495,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
           })
         }
       } catch {
-        // ENOENT etc — skip seeding but still succeed
+        // ENOENT 等错误时跳过种子初始化，但仍视为成功
       }
       sendControlResponseSuccess(message)
     },
@@ -520,8 +503,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       try {
         if (feature('DOWNLOAD_USER_SETTINGS')) {
           if (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode()) {
-            // Re-pull user settings so enabledPlugins pushed from the
-            // user's local CLI take effect before the cache sweep.
+            // 重新拉取用户 settings，使本地 CLI 推送的 enabledPlugins 在清扫缓存前生效。
             const applied = await redownloadUserSettings()
             if (applied) {
               settingsChangeDetector.notifyChange('userSettings')
@@ -534,9 +516,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         const sdkAgents = mcp.currentAgents.filter((a) => a.source === 'flagSettings')
         mcp.currentAgents = [...r.agentDefinitions.allAgents, ...sdkAgents]
 
-        // Reload succeeded — gather response data best-effort so a
-        // read failure doesn't mask the successful state change.
-        // allSettled so one failure doesn't discard the others.
+        // 重载已成功；尽力收集响应数据，避免读取失败掩盖成功的状态变化。使用 allSettled，
+        // 使单项失败不会丢弃其他结果。
         let plugins: WireControlReloadPluginsResponse['plugins'] = []
         const [cmdsR, mcpR, pluginsR] = await Promise.allSettled([
           getCommands(cwd()),
@@ -589,7 +570,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       handleChannelEnable(
         message.request_id,
         req.serverName,
-        // Pool spread matches mcp_status — all three client sources.
+        // pool 展开方式与 mcp_status 一致，覆盖三个 client 来源。
         [...currentAppState.mcp.clients, ...mcp.sdkClients, ...mcp.dynamicMcpState.clients],
         output,
       )
@@ -599,12 +580,10 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         WireControlRequest['request'],
         { subtype: 'initialize' }
       >
-      // SDK MCP server names from the initialize message
-      // Populated by both browser and ProcessTransport sessions
+      // initialize 消息中的 SDK MCP server 名称；browser 与 ProcessTransport 会话均会填充
       if (req.sdkMcpServers && req.sdkMcpServers.length > 0) {
         for (const serverName of req.sdkMcpServers) {
-          // Create placeholder config for SDK MCP servers
-          // The actual server connection is managed by the SDK Query class
+          // 为 SDK MCP server 创建占位配置；实际 server 连接由 SDK Query 类管理
           sdkMcpConfigs[serverName] = {
             type: 'sdk',
             name: serverName,
@@ -626,9 +605,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         getAppState,
       )
 
-      // Enable prompt suggestions in AppState when SDK consumer opts in.
-      // shouldEnablePromptSuggestion() returns false for non-interactive
-      // sessions, but the SDK consumer explicitly requested suggestions.
+      // SDK 消费方选择启用时，在 AppState 中开启 prompt 建议。非交互会话下
+      // shouldEnablePromptSuggestion() 返回 false，但 SDK 消费方已显式请求建议。
       if (req.promptSuggestions) {
         setAppState((prev) => {
           if (prev.promptSuggestionEnabled) {
@@ -647,8 +625,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
 
       initialized = true
 
-      // If the auto-resume logic pre-enqueued a command, drain it now
-      // that initialize has set up systemPrompt, agents, hooks, etc.
+      // 若自动恢复逻辑已预先加入 command，此时 initialize 已设置 systemPrompt、agent、hook 等，
+      // 可以开始清空队列。
       if (hasCommandsInQueue()) {
         kickRun()
       }
@@ -661,11 +639,9 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       const currentAppState = getAppState()
       const { serverName } = req
       mcp.elicitationRegistered.delete(serverName)
-      // Config-existence gate must cover the SAME sources as the
-      // operations below. SDK-injected servers (query({mcpServers:{...}}))
-      // and dynamically-added servers were missing here, so
-      // toggleMcpServer/reconnect returned "Server not found" even though
-      // the disconnect/reconnect would have worked (gh-31339 / CC-314).
+      // 配置存在性检查必须覆盖与下方操作相同的来源。此前遗漏 SDK 注入的 server
+      //（query({mcpServers:{...}})）及动态添加的 server，导致即使 disconnect/reconnect
+      // 本可正常工作，toggleMcpServer/reconnect 仍返回 “Server not found”（gh-31339 / CC-314）。
       const config =
         getMcpConfigByName(serverName) ??
         mcpClients.find((c) => c.name === serverName)?.config ??
@@ -677,7 +653,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         sendControlResponseError(message, `Server not found: ${serverName}`)
       } else {
         const result = await reconnectMcpServerImpl(serverName, config)
-        // Update appState.mcp with the new client, tools, commands, and resources
+        // 用新 client、tool、command 与 resource 更新 appState.mcp
         const prefix = getMcpPrefix(serverName)
         setAppState((prev) => ({
           ...prev,
@@ -695,8 +671,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
                 : omit(prev.mcp.resources, serverName),
           },
         }))
-        // Also update mcp.dynamicMcpState so run() picks up the new tools
-        // on the next turn (run() reads mcp.dynamicMcpState, not appState)
+        // 同时更新 mcp.dynamicMcpState，使 run() 在下个 turn 获取新 tool；run() 读取的是
+        // mcp.dynamicMcpState，而非 appState。
         mcp.dynamicMcpState = {
           ...mcp.dynamicMcpState,
           clients: [
@@ -729,9 +705,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       const currentAppState = getAppState()
       const { serverName, enabled } = req
       mcp.elicitationRegistered.delete(serverName)
-      // Gate must match the client-lookup spread below (which
-      // includes mcp.sdkClients and mcp.dynamicMcpState.clients). Same fix as
-      // mcp_reconnect above (gh-31339 / CC-314).
+      // 检查必须与下方 client 查找的展开来源一致，其中包括 mcp.sdkClients 与
+      // mcp.dynamicMcpState.clients。与上方 mcp_reconnect 的修复相同（gh-31339 / CC-314）。
       const config =
         getMcpConfigByName(serverName) ??
         mcpClients.find((c) => c.name === serverName)?.config ??
@@ -743,7 +718,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       if (!config) {
         sendControlResponseError(message, `Server not found: ${serverName}`)
       } else if (!enabled) {
-        // Disabling: persist + disconnect (matches TUI toggleMcpServer behavior)
+        // 禁用：持久化并断开，与 TUI toggleMcpServer 行为一致
         setMcpServerEnabled(serverName, false)
         const client = [
           ...mcpClients,
@@ -754,7 +729,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         if (client && client.type === 'connected') {
           await clearServerCache(serverName, config)
         }
-        // Update appState.mcp to reflect disabled status and remove tools/commands/resources
+        // 更新 appState.mcp 以反映禁用状态，并移除 tool、command 与 resource
         const prefix = getMcpPrefix(serverName)
         setAppState((prev) => ({
           ...prev,
@@ -770,11 +745,11 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         }))
         sendControlResponseSuccess(message)
       } else {
-        // Enabling: persist + reconnect
+        // 启用：持久化并重连
         setMcpServerEnabled(serverName, true)
         const result = await reconnectMcpServerImpl(serverName, config)
-        // Update appState.mcp with the new client, tools, commands, and resources
-        // This ensures the LLM sees updated tools after enabling the server
+        // 用新 client、tool、command 与 resource 更新 appState.mcp，确保启用 server 后
+        // LLM 能看到更新后的 tool。
         const prefix = getMcpPrefix(serverName)
         setAppState((prev) => ({
           ...prev,
@@ -822,18 +797,18 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         )
       } else {
         try {
-          // Abort any previous in-flight OAuth flow for this server
+          // 中止该 server 上一个仍在进行的 OAuth 流程
           activeOAuthFlows.get(serverName)?.abort()
           const controller = new AbortController()
           activeOAuthFlows.set(serverName, controller)
 
-          // Capture the auth URL from the callback
+          // 从 callback 捕获认证 URL
           let resolveAuthUrl: (url: string) => void
           const authUrlPromise = new Promise<string>((resolve) => {
             resolveAuthUrl = resolve
           })
 
-          // Start the OAuth flow in the background
+          // 在后台启动 OAuth 流程
           const oauthPromise = performMCPOAuthFlow(
             serverName,
             config,
@@ -847,7 +822,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
             },
           )
 
-          // Wait for the auth URL (or the flow to complete without needing redirect)
+          // 等待认证 URL，或等待无需重定向的流程完成
           const authUrl = await Promise.race([
             authUrlPromise,
             oauthPromise.then(() => null as string | null),
@@ -864,28 +839,24 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
             })
           }
 
-          // Store auth-only promise for mcp_oauth_callback_url handler.
-          // Don't swallow errors — the callback handler needs to detect
-          // auth failures and report them to the caller.
+          // 为 mcp_oauth_callback_url handler 保存仅认证 promise。不要吞掉错误，callback handler
+          // 需要检测认证失败并报告给调用方。
           oauthAuthPromises.set(serverName, oauthPromise)
 
-          // Handle background completion — reconnect after auth.
-          // When manual callback is used, skip the reconnect here;
-          // the extension's handleAuthDone → mcp_reconnect handles it
-          // (which also updates mcp.dynamicMcpState for tool registration).
+          // 处理后台完成：认证后重连。使用手动 callback 时在此跳过重连，由 extension 的
+          // handleAuthDone → mcp_reconnect 处理；该流程也会更新 mcp.dynamicMcpState 以注册 tool。
           const fullFlowPromise = oauthPromise
             .then(async () => {
-              // Don't reconnect if the server was disabled during the OAuth flow
+              // 若 server 在 OAuth 流程中被禁用，则不重连
               if (isMcpServerDisabled(serverName)) {
                 return
               }
-              // Skip reconnect if the manual callback path was used —
-              // handleAuthDone will do it via mcp_reconnect (which
-              // updates mcp.dynamicMcpState for tool registration).
+              // 使用手动 callback 路径时跳过重连；handleAuthDone 会通过 mcp_reconnect 完成，
+              // 同时更新 mcp.dynamicMcpState 以注册 tool。
               if (oauthManualCallbackUsed.has(serverName)) {
                 return
               }
-              // Reconnect the server after successful auth
+              // 认证成功后重连 server
               const result = await reconnectMcpServerImpl(serverName, config)
               const prefix = getMcpPrefix(serverName)
               setAppState((prev) => ({
@@ -910,8 +881,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
                       : omit(prev.mcp.resources, serverName),
                 },
               }))
-              // Also update mcp.dynamicMcpState so run() picks up the new tools
-              // on the next turn (run() reads mcp.dynamicMcpState, not appState)
+              // 同时更新 mcp.dynamicMcpState，使 run() 在下个 turn 获取新 tool；run() 读取的是
+              // mcp.dynamicMcpState，而非 appState。
               mcp.dynamicMcpState = {
                 ...mcp.dynamicMcpState,
                 clients: [
@@ -930,7 +901,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
               })
             })
             .finally(() => {
-              // Clean up only if this is still the active flow
+              // 仅当这仍是活跃流程时清理
               if (activeOAuthFlows.get(serverName) === controller) {
                 activeOAuthFlows.delete(serverName)
                 oauthCallbackSubmitters.delete(serverName)
@@ -951,16 +922,14 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       }
       const submit = oauthCallbackSubmitters.get(serverName)
       if (submit) {
-        // Validate the callback URL before submitting. The submit
-        // callback in auth.ts silently ignores URLs missing a code
-        // param, which would leave the auth promise unresolved and
-        // block the control message loop until timeout.
+        // 提交前校验 callback URL。auth.ts 中的 submit callback 会静默忽略缺少 code 参数的 URL，
+        // 从而使认证 promise 一直未解决，并阻塞控制消息循环直到超时。
         let hasCodeOrError = false
         try {
           const parsed = new URL(callbackUrl)
           hasCodeOrError = parsed.searchParams.has('code') || parsed.searchParams.has('error')
         } catch {
-          // Invalid URL
+          // URL 无效
         }
         if (!hasCodeOrError) {
           sendControlResponseError(
@@ -970,9 +939,8 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         } else {
           oauthManualCallbackUsed.add(serverName)
           submit(callbackUrl)
-          // Wait for auth (token exchange) to complete before responding.
-          // Reconnect is handled by the extension via handleAuthDone →
-          // mcp_reconnect (which updates mcp.dynamicMcpState for tools).
+          // 响应前等待认证（token 交换）完成。重连由 extension 通过 handleAuthDone →
+          // mcp_reconnect 处理，该流程会为 tool 更新 mcp.dynamicMcpState。
           const authPromise = oauthAuthPromises.get(serverName)
           if (authPromise) {
             try {
@@ -1039,13 +1007,11 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       }
     },
     generate_session_title: (message) => {
-      // Fire-and-forget so the compact model call does not block the stdin loop
-      // (which would delay processing of subsequent user messages /
-      // interrupts for the duration of the API roundtrip).
+      // 以 fire-and-forget 方式运行，避免 compact model 调用阻塞 stdin 循环；否则在整个 API
+      // 往返期间都会延迟处理后续用户消息与中断。
       const { description, persist } = message.request as { description: string; persist?: boolean }
-      // Reuse the live controller only if it has not already been aborted
-      // (e.g. by interrupt()); an aborted signal would cause queryCompactModel to
-      // immediately throw APIUserAbortError → {title: null}.
+      // 仅当现有 controller 尚未被 abort（例如被 interrupt() 中止）时才复用；已 abort 的
+      // signal 会让 queryCompactModel 立即抛出 APIUserAbortError，最终得到 {title: null}。
       const titleSignal = (
         loopState.abortController && !loopState.abortController.signal.aborted
           ? loopState.abortController
@@ -1063,30 +1029,26 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
           }
           sendControlResponseSuccess(message, { title })
         } catch (e) {
-          // Unreachable in practice — generateSessionTitle wraps its
-          // own body and returns null, saveAiGeneratedTitle is wrapped
-          // above. Propagate (not swallow) so unexpected failures are
-          // visible to the SDK caller (hostComms.ts catches and logs).
+          // 实际上不可达：generateSessionTitle 会捕获自身函数体错误并返回 null，
+          // saveAiGeneratedTitle 在上方也已被包装。此处继续传播而非吞掉，使意外失败对 SDK
+          // 调用方可见；hostComms.ts 会捕获并记录。
           sendControlResponseError(message, errorMessage(e))
         }
       })()
     },
     side_question: (message) => {
-      // Same fire-and-forget pattern as generate_session_title above —
-      // the forked agent's API roundtrip must not block the stdin loop.
+      // 与上方 generate_session_title 使用相同的 fire-and-forget 模式；fork agent 的 API
+      // 往返不能阻塞 stdin 循环。
       //
-      // The snapshot captured by stopHooks (for querySource === 'sdk')
-      // holds the exact systemPrompt/userContext/systemContext/messages
-      // sent on the last main-thread turn. Reusing them gives a byte-
-      // identical prefix → prompt cache hit.
+      // stopHooks 在 querySource === 'sdk' 时捕获的快照，包含上个主线程 turn 实际发送的
+      // systemPrompt/userContext/systemContext/messages。复用可获得逐字节一致的前缀，从而命中
+      // prompt 缓存。
       //
-      // Fallback (resume before first turn completes — no snapshot yet):
-      // rebuild from scratch. buildSideQuestionFallbackParams mirrors
-      // QueryEngine.ts:ask()'s system prompt assembly (including
-      // --system-prompt / --append-system-prompt) so the rebuilt prefix
-      // matches in the common case. May still miss the cache for
-      // coordinator mode or memory-mechanics extras — acceptable, the
-      // alternative is the side question failing entirely.
+      // 回退场景（首个 turn 完成前恢复，尚无快照）：从头重建。
+      // buildSideQuestionFallbackParams 复刻 QueryEngine.ts:ask() 的 system prompt 组装，
+      // 包括 --system-prompt / --append-system-prompt，使常见场景下重建前缀一致。coordinator
+      // 模式或额外 memory mechanics 仍可能无法命中缓存，但可以接受，否则 side question 会
+      // 完全失败。
       const { question } = message.request as { question: string }
       void (async () => {
         try {
@@ -1094,12 +1056,9 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
           const cacheSafeParams = saved
             ? {
                 ...saved,
-                // If the last turn was interrupted, the snapshot holds an
-                // already-aborted controller; createChildAbortController in
-                // createSubagentContext would propagate it and the fork
-                // would die before sending a request. The controller is
-                // not part of the cache key — swapping in a fresh one is
-                // safe. Same guard as generate_session_title above.
+                // 若上个 turn 被中断，快照会包含已 abort 的 controller；createSubagentContext 中的
+                // createChildAbortController 会传播该状态，使 fork 在发送请求前终止。controller 不属于
+                // 缓存 key，替换为新实例是安全的。检查与上方 generate_session_title 相同。
                 toolUseContext: {
                   ...saved.toolUseContext,
                   abortController: createAbortController(),
@@ -1136,7 +1095,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       const req = message.request as unknown as { enabled: boolean }
       if (req.enabled) {
         if (bridgeState.handle) {
-          // Already connected
+          // 已连接
           sendControlResponseSuccess(message, {
             session_url: getRemoteSessionUrl(
               bridgeState.handle.bridgeSessionId,
@@ -1149,11 +1108,9 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
             environment_id: bridgeState.handle.environmentId,
           })
         } else {
-          // initReplBridge surfaces gate-failure reasons via
-          // onStateChange('failed', detail) before returning null.
-          // Capture so the control-response error is actionable
-          // ("/login", "disabled by your organization's policy", etc.)
-          // instead of a generic "initialization failed".
+          // initReplBridge 返回 null 前，会通过 onStateChange('failed', detail) 暴露开关失败原因。
+          // 捕获该原因，使 control-response 错误包含可操作信息（如 "/login"、组织策略已禁用），
+          // 而非泛泛的“初始化失败”。
           let bridgeFailureDetail: string | undefined
           try {
             const { initReplBridge } = await import('src/bridge/initReplBridge.js')
@@ -1173,9 +1130,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
                 kickRun()
               },
               onPermissionResponse(response) {
-                // Forward bridge permission responses into the
-                // stdin processing loop so they resolve pending
-                // permission requests from the SDK consumer.
+                // 将 bridge 权限响应转发到 stdin 处理循环，以解决 SDK 消费方待处理的权限请求。
                 structuredIO.injectControlResponse(response)
               },
               onInterrupt() {
@@ -1224,12 +1179,11 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
             } else {
               bridgeState.handle = handle
               bridgeState.lastForwardedIndex = session.messages.length
-              // Forward permission requests to the bridge
+              // 将权限请求转发到 bridge
               structuredIO.setOnControlRequestSent((request) => {
                 handle.sendControlRequest(request)
               })
-              // Cancel stale bridge permission prompts when the SDK
-              // consumer resolves a can_use_tool request first.
+              // SDK 消费方先解决 can_use_tool 请求时，取消陈旧的 bridge 权限 prompt。
               structuredIO.setOnControlRequestResolved((requestId) => {
                 handle.sendControlCancelRequest(requestId)
               })
@@ -1244,7 +1198,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
           }
         }
       } else {
-        // Disable
+        // 禁用
         if (bridgeState.handle) {
           structuredIO.setOnControlRequestSent(undefined)
           structuredIO.setOnControlRequestResolved(undefined)
@@ -1291,10 +1245,9 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
   }
 
   for await (const message of structuredIO.structuredInput) {
-    // Non-user events are handled inline (no queue). started→completed in
-    // the same tick carries no information, so only fire completed.
-    // control_response is reported by StructuredIO.processLine (which also
-    // sees orphans that never yield here).
+    // 非用户事件内联处理，不进入队列。同一 tick 内从 started→completed 不携带有效信息，因此
+    // 只发送 completed。control_response 由 StructuredIO.processLine 报告，它也能看到不会在
+    // 此处 yield 的孤立响应。
     const eventId = 'uuid' in message ? message.uuid : undefined
     if (eventId && message.type !== 'user' && message.type !== 'control_response') {
       notifyCommandLifecycle(eventId, 'completed')
@@ -1317,46 +1270,44 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
       }
       continue
     } else if (message.type === 'control_response') {
-      // Replay control_response messages when replay mode is enabled
+      // 启用 replay 模式时重放 control_response 消息
       if (options.replayUserMessages) {
         output.enqueue(message)
       }
       continue
     } else if (message.type === 'keep_alive') {
-      // Silently ignore keep-alive messages
+      // 静默忽略 keep-alive 消息
       continue
     } else if (message.type === 'update_environment_variables') {
-      // Handled in structuredIO.ts, but TypeScript needs the type guard
+      // 由 structuredIO.ts 处理，但 TypeScript 仍需要类型守卫
       continue
     } else if (message.type === 'assistant' || message.type === 'system') {
-      // History replay from bridge: inject into session.messages as
-      // conversation context so the model sees prior turns.
+      // bridge 的历史重放：注入 session.messages 作为对话 context，使模型看到之前的 turn。
       const internalMsgs = toInternalMessages([message])
       session.appendMessages(...internalMsgs)
-      // Echo assistant messages back so CCR displays them
+      // 回显 assistant 消息，使 CCR 能显示
       if (message.type === 'assistant' && options.replayUserMessages) {
         output.enqueue(message)
       }
       continue
     }
-    // After handling control, keep-alive, env-var, assistant, and system
-    // messages above, only user messages should remain.
+    // 上方处理 control、keep-alive、env-var、assistant 与 system 消息后，只应剩余用户消息。
     if (message.type !== 'user') {
       continue
     }
 
-    // First prompt message implicitly initializes if not already done.
+    // 若尚未初始化，首条 prompt 消息会隐式完成初始化。
     initialized = true
 
-    // Check for duplicate user message - skip if already processed
+    // 检查重复用户消息；已处理则跳过
     if (message.uuid) {
       const sessionId = getSessionId() as UUID
       const existsInSession = await doesMessageExistInSession(sessionId, message.uuid as UUID)
 
-      // Check both historical duplicates (from file) and runtime duplicates (this session)
+      // 同时检查文件中的历史重复与当前会话的运行时重复
       if (existsInSession || receivedMessageUuids.has(message.uuid as UUID)) {
         logForDebugging(`Skipping duplicate user message: ${message.uuid}`)
-        // Send acknowledgment for duplicate message if replay mode is enabled
+        // 启用 replay 模式时对重复消息发送 ack
         if (options.replayUserMessages) {
           logForDebugging(`Sending acknowledgment for duplicate user message: ${message.uuid}`)
           output.enqueue({
@@ -1369,30 +1320,28 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
             isReplay: true,
           } as WireUserMessageReplay)
         }
-        // Historical dup = transcript already has this turn's output, so it
-        // ran but its lifecycle was never closed (interrupted before ack).
-        // Runtime dups don't need this — the original enqueue path closes them.
+        // 历史重复表示 transcript 已有该 turn 的输出，即执行过但生命周期未关闭（ack 前被中断）。
+        // 运行时重复不需要此处理，原始入队路径会负责关闭。
         if (existsInSession) {
           notifyCommandLifecycle(message.uuid, 'completed')
         }
-        // Don't enqueue duplicate messages for execution
+        // 不将重复消息加入执行队列
         continue
       }
 
-      // Track this UUID to prevent runtime duplicates
+      // 跟踪此 UUID，防止运行时重复
       trackReceivedMessageUuid(message.uuid as UUID)
     }
 
     enqueue({
       mode: 'prompt' as const,
-      // file_attachments rides the protobuf catchall from the web composer.
-      // Same-ref no-op when absent (no 'file_attachments' key).
+      // file_attachments 通过 Web composer 的 protobuf catchall 传入。缺失时没有
+      // 'file_attachments' key，保持同一引用且不操作。
       value: await resolveAndPrepend(message, message.message.content),
       uuid: message.uuid as UUID,
       priority: message.priority,
     })
-    // Increment prompt count for attribution tracking and save snapshot
-    // The snapshot persists promptCount so it survives compaction
+    // 增加 prompt 计数供归因跟踪，并保存快照；快照持久化 promptCount，使其不受 compaction 影响。
     if (feature('COMMIT_ATTRIBUTION')) {
       setAppState((prev) => ({
         ...prev,
@@ -1408,8 +1357,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
   loopState.inputClosed = true
   cronScheduler?.stop()
   if (!loopState.running) {
-    // If a push-suggestion is in-flight, wait for it to emit before closing
-    // the output stream (5 s safety timeout to prevent hanging).
+    // 若 push suggestion 仍在进行，则关闭输出流前等待其发送；设置 5 秒安全超时以防挂起。
     if (suggestionState.inflightPromise) {
       await Promise.race([suggestionState.inflightPromise, sleep(5000)])
     }

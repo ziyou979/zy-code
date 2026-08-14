@@ -81,7 +81,7 @@ export async function preprocessMessages(
     ),
   )
 
-  // 3. Microcompact
+  // 3. 微压缩（Microcompact）
   queryCheckpoint('query_microcompact_start')
   const microcompactResult = await deps.microcompact(
     messagesForQuery,

@@ -80,8 +80,8 @@ export async function runWireLoop(
   initialSessionId?: string,
   getAccessToken?: () => string | undefined | Promise<string | undefined>,
 ): Promise<void> {
-  // Local abort controller so that onSessionDone can stop the poll loop.
-  // Linked to the incoming signal so external aborts also work.
+  // 本地 abort controller 让 onSessionDone 可以停止轮询循环；同时关联传入的 signal，
+  // 使外部 abort 也能生效。
   const controller = new AbortController()
   if (signal.aborted) {
     controller.abort()
@@ -93,13 +93,11 @@ export async function runWireLoop(
   const activeSessions = new Map<string, SessionHandle>()
   const sessionStartTimes = new Map<string, number>()
   const sessionWorkIds = new Map<string, string>()
-  // Compat-surface ID (session_*) computed once at spawn and cached so
-  // cleanup and status-update ticks use the same key regardless of whether
-  // the zy_bridge_repl_v2_cse_shim_enabled gate flips mid-session.
+  // 启动时计算并缓存兼容接口 ID（session_*），确保即使
+  // zy_bridge_repl_v2_cse_shim_enabled 开关在会话中途变化，清理与状态更新仍使用同一 key。
   const sessionCompatIds = new Map<string, string>()
-  // Session ingress JWTs for heartbeat auth, keyed by sessionId.
-  // Stored separately from handle.accessToken because the token refresh
-  // scheduler overwrites that field with the OAuth token (~3h55m in).
+  // 用于心跳认证的 session ingress JWT，以 sessionId 为 key。单独存储，不复用
+  // handle.accessToken，因为 token 刷新调度器会在约 3 小时 55 分后用 OAuth token 覆盖该字段。
   const sessionIngressTokens = new Map<string, string>()
   const sessionTimers = new Map<string, ReturnType<typeof setTimeout>>()
   const completedWorkIds = new Set<string>()
@@ -112,15 +110,12 @@ export async function runWireLoop(
       hookBased?: boolean
     }
   >()
-  // Track sessions killed by the timeout watchdog so onSessionDone can
-  // distinguish them from server-initiated or shutdown interrupts.
+  // 记录被超时 watchdog 终止的会话，使 onSessionDone 能将其与服务端发起或关停导致的中断区分。
   const timedOutSessions = new Set<string>()
-  // Sessions that already have a title (server-set or bridge-derived) so
-  // onFirstUserMessage doesn't clobber a user-assigned --name / web rename.
-  // Keyed by compatSessionId to match logger.setSessionTitle's key.
+  // 记录已有标题（服务端设置或 bridge 推导）的会话，避免 onFirstUserMessage 覆盖用户通过
+  // --name 或 Web 重命名设置的标题。以 compatSessionId 为 key，与 logger.setSessionTitle 一致。
   const titledSessions = new Set<string>()
-  // Signal to wake the at-capacity sleep early when a session completes,
-  // so the bridge can immediately accept new work.
+  // 会话结束时提前唤醒容量已满的休眠，使 bridge 能立即接收新任务。
   const capacityWake = createCapacityWake(loopSignal)
 
   const heartbeatActiveWorkItems = (): ReturnType<typeof heartbeatWireSessions> =>
@@ -151,9 +146,8 @@ export async function runWireLoop(
   let connErrorStart: number | null = null
   let generalErrorStart: number | null = null
   let lastPollErrorTime: number | null = null
-  // Set by WireFatalError and give-up paths so the shutdown block can
-  // skip the resume message (resume is impossible after env expiry/auth
-  // failure/sustained connection errors).
+  // WireFatalError 与放弃重试路径会设置此值，使关停逻辑跳过恢复提示；环境过期、认证失败或
+  // 持续连接错误后已无法恢复。
   let fatalExit = false
 
   initializeWireLogger(logger, config, environmentId, initialSessionId)
@@ -185,20 +179,19 @@ export async function runWireLoop(
       logger.removeSession(compatId)
       titledSessions.delete(compatId)
       v2Sessions.delete(sessionId)
-      // Clear per-session timeout timer
+      // 清除该会话的超时定时器
       const timer = sessionTimers.get(sessionId)
       if (timer) {
         clearTimeout(timer)
         sessionTimers.delete(sessionId)
       }
-      // Clear token refresh timer
+      // 清除 token 刷新定时器
       tokenRefresh?.cancel(sessionId)
-      // Wake the at-capacity sleep so the bridge can accept new work immediately
+      // 唤醒容量已满的休眠，使 bridge 立即接收新任务
       capacityWake.wake()
 
-      // If the session was killed by the timeout watchdog, treat it as a
-      // failed session (not a server/shutdown interrupt) so we still call
-      // stopWork and archiveSession below.
+      // 若会话被超时 watchdog 终止，将其视为失败而非服务端或关停中断，以便下方仍调用
+      // stopWork 和 archiveSession。
       const wasTimedOut = timedOutSessions.delete(sessionId)
       const status: SessionDoneStatus =
         wasTimedOut && rawStatus === 'interrupted' ? 'failed' : rawStatus
@@ -216,11 +209,11 @@ export async function runWireLoop(
         duration_ms: durationMs,
       })
 
-      // Clear the status display before printing final log
+      // 输出最终日志前清除状态展示
       logger.clearStatus()
       stopStatusUpdates()
 
-      // Build error message from stderr if available
+      // 尽可能根据 stderr 构造错误消息
       const stderrSummary = handle.lastStderr.length > 0 ? handle.lastStderr.join('\n') : undefined
       let failureMessage: string | undefined
 
@@ -229,10 +222,8 @@ export async function runWireLoop(
           logger.logSessionComplete(sessionId, durationMs)
           break
         case 'failed':
-          // Skip failure log during shutdown — the child exits non-zero when
-          // killed, which is expected and not a real failure.
-          // Also skip for timeout-killed sessions — the timeout watchdog
-          // already logged a clear timeout message.
+          // 关停时跳过失败日志；子进程被终止后非零退出属于预期行为，并非真实故障。被超时终止的
+          // 会话也跳过，因为 timeout watchdog 已输出明确的超时消息。
           if (!wasTimedOut && !loopSignal.aborted) {
             failureMessage = stderrSummary ?? 'Process exited with error'
             logger.logSessionFailed(sessionId, failureMessage)
@@ -244,9 +235,8 @@ export async function runWireLoop(
           break
       }
 
-      // Notify the server that this work item is done. Skip for interrupted
-      // sessions — interrupts are either server-initiated (the server already
-      // knows) or caused by bridge shutdown (which calls stopWork() separately).
+      // 通知服务端工作项已结束。中断的会话跳过：中断要么由服务端发起（服务端已知），要么由
+      // bridge 关停导致（关停流程会另行调用 stopWork()）。
       if (status !== 'interrupted' && workId) {
         trackCleanup(
           stopWorkWithRetry(api, environmentId, workId, logger, backoffConfig.stopWorkBaseDelayMs),
@@ -254,7 +244,7 @@ export async function runWireLoop(
         completedWorkIds.add(workId)
       }
 
-      // Clean up worktree if one was created for this session
+      // 若为此会话创建过 worktree，则执行清理
       const wt = sessionWorktrees.get(sessionId)
       if (wt) {
         sessionWorktrees.delete(sessionId)
@@ -268,18 +258,14 @@ export async function runWireLoop(
         )
       }
 
-      // Lifecycle decision: in multi-session mode, keep the bridge running
-      // after a session completes. In single-session mode, abort the poll
-      // loop so the bridge exits cleanly.
+      // 生命周期策略：多会话模式下，会话结束后继续运行 bridge；单会话模式下 abort 轮询循环，
+      // 让 bridge 干净退出。
       if (status !== 'interrupted' && !loopSignal.aborted) {
         if (config.spawnMode !== 'single-session') {
-          // Multi-session: archive the completed session so it doesn't linger
-          // as stale in the web UI. archiveSession is idempotent (409 if already
-          // archived), so double-archiving at shutdown is safe.
-          // sessionId arrived as cse_* from the work poll (infrastructure-layer
-          // tag). archiveSession hits /v1/sessions/{id}/archive which is the
-          // compat surface and validates TagSession (session_*). Re-tag — same
-          // UUID underneath.
+          // 多会话：归档已完成会话，避免其以陈旧状态留在 Web UI。archiveSession 是幂等操作
+          //（已归档时返回 409），因此关停时再次归档也安全。工作轮询返回的 sessionId 是基础设施层
+          // tag `cse_*`，而 archiveSession 调用兼容接口 /v1/sessions/{id}/archive，该接口校验
+          // TagSession（session_*）；二者底层 UUID 相同，只需重新标记。
           trackCleanup(
             api
               .archiveSession(compatId)
@@ -291,7 +277,7 @@ export async function runWireLoop(
             `[bridge:session] Session ${status}, returning to idle (multi-session mode)`,
           )
         } else {
-          // Single-session: coupled lifecycle — tear down environment
+          // 单会话：生命周期耦合，销毁环境
           logForDebugging(
             `[bridge:session] Session ${status}, aborting poll loop to tear down environment`,
           )
@@ -306,17 +292,15 @@ export async function runWireLoop(
     }
   }
 
-  // Start the idle status display immediately — unless we have a pre-created
-  // session, in which case setAttached() already set up the display and the
-  // poll loop will start status updates when it picks up the session.
+  // 立即启动空闲状态展示；若存在预创建会话则除外，因为 setAttached() 已设置展示，轮询循环
+  // 取得该会话后会开始更新状态。
   if (!initialSessionId) {
     startStatusUpdates()
   }
 
   while (!loopSignal.aborted) {
-    // Fetched once per iteration — the GrowthBook cache refreshes every
-    // 5 min, so a loop running at the at-capacity rate picks up config
-    // changes within one sleep cycle.
+    // 每轮获取一次。GrowthBook 缓存每 5 分钟刷新，因此按容量已满频率运行的循环能在一个
+    // 休眠周期内获取配置变化。
     const pollConfig = getPollIntervalConfig()
 
     try {
@@ -327,7 +311,7 @@ export async function runWireLoop(
         pollConfig.reclaim_older_than_ms,
       )
 
-      // Log reconnection if we were previously disconnected
+      // 若此前已断开，则记录重连
       const wasDisconnected = connErrorStart !== null || generalErrorStart !== null
       if (wasDisconnected) {
         const disconnectedMs = Date.now() - (connErrorStart ?? generalErrorStart ?? Date.now())
@@ -344,28 +328,25 @@ export async function runWireLoop(
       generalErrorStart = null
       lastPollErrorTime = null
 
-      // Null response = no work available in the queue.
-      // Add a minimum delay to avoid hammering the server.
+      // null 响应表示队列中没有任务；增加最小延迟，避免频繁请求服务端。
       if (!work) {
-        // Use live check (not a snapshot) since sessions can end during poll.
+        // 使用实时检查而非快照，因为会话可能在轮询期间结束。
         const atCap = activeSessions.size >= config.maxSessions
         if (atCap) {
           const atCapMs = pollConfig.multisession_poll_interval_ms_at_capacity
-          // Heartbeat loops WITHOUT polling. When at-capacity polling is also
-          // enabled (atCapMs > 0), the loop tracks a deadline and breaks out
-          // to poll at that interval — heartbeat and poll compose instead of
-          // one suppressing the other. We break out to poll when:
-          //   - Poll deadline reached (atCapMs > 0 only)
-          //   - Auth fails (JWT expired → poll refreshes tokens)
-          //   - Capacity wake fires (session ended → poll for new work)
-          //   - Loop aborted (shutdown)
+          // 心跳循环本身不轮询。若同时启用容量已满轮询（atCapMs > 0），循环会跟踪截止时间，
+          // 到期后退出并执行轮询，使心跳与轮询组合运行而非彼此抑制。以下情况会退出并轮询：
+          //   - 到达轮询截止时间（仅 atCapMs > 0）
+          //   - 认证失败（JWT 过期，由轮询刷新 token）
+          //   - 容量唤醒触发（会话结束，轮询新任务）
+          //   - 循环被 abort（关停）
           if (pollConfig.non_exclusive_heartbeat_interval_ms > 0) {
             logEvent('zy_bridge_heartbeat_mode_entered', {
               active_sessions: activeSessions.size,
               heartbeat_interval_ms: pollConfig.non_exclusive_heartbeat_interval_ms,
             })
-            // Deadline computed once at entry — GB updates to atCapMs don't
-            // shift an in-flight deadline (next entry picks up the new value).
+            // 截止时间只在进入时计算一次；GB 对 atCapMs 的更新不会改变进行中的截止时间，下次进入
+            // 时才采用新值。
             const pollDeadline = atCapMs > 0 ? Date.now() + atCapMs : null
             let hbResult: 'ok' | 'auth_failed' | 'fatal' | 'failed' = 'ok'
             let hbCycles = 0
@@ -374,15 +355,14 @@ export async function runWireLoop(
               activeSessions.size >= config.maxSessions &&
               (pollDeadline === null || Date.now() < pollDeadline)
             ) {
-              // Re-read config each cycle so GrowthBook updates take effect
+              // 每个周期重新读取配置，使 GrowthBook 更新生效
               const hbConfig = getPollIntervalConfig()
               if (hbConfig.non_exclusive_heartbeat_interval_ms <= 0) {
                 break
               }
 
-              // Capture capacity signal BEFORE the async heartbeat call so
-              // a session ending during the HTTP request is caught by the
-              // subsequent sleep (instead of being lost to a replaced controller).
+              // 在异步心跳调用前捕获容量 signal，使 HTTP 请求期间结束的会话能被后续休眠感知，
+              // 而不会因 controller 被替换而丢失通知。
               const cap = capacityWake.signal()
 
               hbResult = await heartbeatActiveWorkItems()
@@ -396,7 +376,7 @@ export async function runWireLoop(
               cap.cleanup()
             }
 
-            // Determine exit reason for telemetry
+            // 确定 telemetry 所需的退出原因
             const exitReason =
               hbResult === 'auth_failed' || hbResult === 'fatal'
                 ? hbResult
@@ -413,21 +393,17 @@ export async function runWireLoop(
               active_sessions: activeSessions.size,
             })
             if (exitReason === 'poll_due') {
-              // bridgeApi throttles empty-poll logs (EMPTY_POLL_LOG_INTERVAL=100)
-              // so the once-per-10min poll_due poll is invisible at counter=2.
-              // Log it here so verification runs see both endpoints in the debug log.
+              // bridgeApi 会限流空轮询日志（EMPTY_POLL_LOG_INTERVAL=100），因此每 10 分钟一次的
+              // poll_due 在计数为 2 时不可见。此处补记日志，让验证运行能在 debug 日志中看到两个端点。
               logForDebugging(
                 `[bridge:poll] Heartbeat poll_due after ${hbCycles} cycles — falling through to pollForWork`,
               )
             }
 
-            // On auth_failed or fatal, sleep before polling to avoid a tight
-            // poll+heartbeat loop. Auth_failed: heartbeatActiveWorkItems
-            // already called reconnectSession — the sleep gives the server
-            // time to propagate the re-queue. Fatal (404/410): may be a
-            // single work item GCd while the environment is still valid.
-            // Use atCapMs if enabled, else the heartbeat interval as a floor
-            // (guaranteed > 0 here) so heartbeat-only configs don't tight-loop.
+            // auth_failed 或 fatal 后先休眠再轮询，避免轮询与心跳形成紧密循环。auth_failed 时
+            // heartbeatActiveWorkItems 已调用 reconnectSession，休眠为服务端传播重新入队留出时间。
+            // fatal（404/410）可能只是单个工作项被 GC，而环境仍有效。启用时采用 atCapMs，否则
+            // 以心跳间隔为下限（此处保证大于 0），避免仅启用心跳的配置紧密循环。
             if (hbResult === 'auth_failed' || hbResult === 'fatal') {
               const cap = capacityWake.signal()
               await sleep(
@@ -437,7 +413,7 @@ export async function runWireLoop(
               cap.cleanup()
             }
           } else if (atCapMs > 0) {
-            // Heartbeat disabled: slow poll as liveness signal.
+            // 心跳禁用时，以低频轮询作为存活信号。
             const cap = capacityWake.signal()
             await sleep(atCapMs, cap.signal)
             cap.cleanup()
@@ -452,21 +428,16 @@ export async function runWireLoop(
         continue
       }
 
-      // At capacity — we polled to keep the heartbeat alive, but cannot
-      // accept new work right now. We still enter the switch below so that
-      // token refreshes for existing sessions are processed (the case
-      // 'session' handler checks for existing sessions before the inner
-      // capacity guard).
+      // 已达容量上限：轮询用于维持心跳，但当前无法接收新任务。仍进入下方 switch，以处理已有
+      // 会话的 token 刷新；'session' handler 会在内部容量检查前先检查已有会话。
       const atCapacityBeforeSwitch = activeSessions.size >= config.maxSessions
 
-      // Skip work items that have already been completed and stopped.
-      // The server may re-deliver stale work before processing our stop
-      // request, which would otherwise cause a duplicate session spawn.
+      // 跳过已完成并停止的工作项。服务端处理 stop 请求前可能再次投递陈旧任务，否则会重复
+      // 启动会话。
       if (completedWorkIds.has(work.id)) {
         logForDebugging(`[bridge:work] Skipping already-completed workId=${work.id}`)
-        // Respect capacity throttle — without a sleep here, persistent stale
-        // redeliveries would tight-loop at poll-request speed (the !work
-        // branch above is the only sleep, and work != null skips it).
+        // 遵守容量限流；若此处不休眠，持续重新投递陈旧任务会以轮询请求速度紧密循环，因为
+        // 上方 !work 分支是唯一休眠点，而 work != null 会跳过该分支。
         if (atCapacityBeforeSwitch) {
           const cap = capacityWake.signal()
           if (pollConfig.non_exclusive_heartbeat_interval_ms > 0) {
@@ -482,8 +453,7 @@ export async function runWireLoop(
         continue
       }
 
-      // Decode the work secret for session spawning and to extract the JWT
-      // used for the ack call below.
+      // 解码 work secret，供启动会话并提取下方 ack 调用使用的 JWT。
       let secret
       try {
         secret = decodeWorkSecret(work.secret)
@@ -491,16 +461,14 @@ export async function runWireLoop(
         const errMsg = errorMessage(err)
         logger.logError(`Failed to decode work secret for workId=${work.id}: ${errMsg}`)
         logEvent('zy_bridge_work_secret_failed', {})
-        // Can't ack (needs the JWT we failed to decode). stopWork uses OAuth,
-        // so it's callable here — prevents XAUTOCLAIM from re-delivering this
-        // poisoned item every reclaim_older_than_ms cycle.
+        // 无法 ack，因为所需 JWT 解码失败。stopWork 使用 OAuth，因此此处仍可调用，避免
+        // XAUTOCLAIM 在每个 reclaim_older_than_ms 周期重新投递这一损坏项。
         completedWorkIds.add(work.id)
         trackCleanup(
           stopWorkWithRetry(api, environmentId, work.id, logger, backoffConfig.stopWorkBaseDelayMs),
         )
-        // Respect capacity throttle before retrying — without a sleep here,
-        // repeated decode failures at capacity would tight-loop at
-        // poll-request speed (work != null skips the !work sleep above).
+        // 重试前遵守容量限流；若此处不休眠，容量已满时反复解码失败会以轮询请求速度紧密
+        // 循环，因为 work != null 会跳过上方 !work 休眠。
         if (atCapacityBeforeSwitch) {
           const cap = capacityWake.signal()
           if (pollConfig.non_exclusive_heartbeat_interval_ms > 0) {
@@ -514,11 +482,9 @@ export async function runWireLoop(
         continue
       }
 
-      // Explicitly acknowledge after committing to handle the work — NOT
-      // before. The at-capacity guard inside case 'session' can break
-      // without spawning; acking there would permanently lose the work.
-      // Ack failures are non-fatal: server re-delivers, and existingHandle
-      // / completedWorkIds paths handle the dedup.
+      // 确定处理工作项后才显式 ack，不能提前。case 'session' 内的容量检查可能在未启动会话时
+      // break，此时若已 ack 会永久丢失任务。ack 失败不是致命错误：服务端会重新投递，
+      // existingHandle 与 completedWorkIds 路径负责去重。
       const ackWork = async (): Promise<void> => {
         logForDebugging(`[bridge:work] Acknowledging workId=${work.id}`)
         try {
@@ -547,17 +513,15 @@ export async function runWireLoop(
             break
           }
 
-          // If the session is already running, deliver the fresh token so
-          // the child process can reconnect its WebSocket with the new
-          // session ingress token. This handles the case where the server
-          // re-dispatches work for an existing session after the WS drops.
+          // 若会话已运行，则传递新 token，使子进程能用新的 session ingress token 重连
+          // WebSocket。这用于处理 WS 断开后服务端再次分发已有会话任务的情况。
           const existingHandle = activeSessions.get(sessionId)
           if (existingHandle) {
             existingHandle.updateAccessToken(secret.session_ingress_token)
             sessionIngressTokens.set(sessionId, secret.session_ingress_token)
             sessionWorkIds.set(sessionId, work.id)
-            // Re-schedule next refresh from the fresh JWT's expiry. onRefresh
-            // branches on v2Sessions so both v1 and v2 are safe here.
+            // 根据新 JWT 的过期时间重新安排下次刷新。onRefresh 会按 v2Sessions 分支，
+            // 因此 v1 与 v2 在此都安全。
             tokenRefresh?.schedule(sessionId, secret.session_ingress_token)
             logForDebugging(
               `[bridge:work] Updated access token for existing sessionId=${sessionId} workId=${work.id}`,
@@ -566,9 +530,8 @@ export async function runWireLoop(
             break
           }
 
-          // At capacity — token refresh for existing sessions is handled
-          // above, but we cannot spawn new ones. The post-switch capacity
-          // sleep will throttle the loop; just break here.
+          // 已达容量上限：上方已处理已有会话的 token 刷新，但不能启动新会话。switch 后的容量
+          // 休眠会限流循环，此处直接 break。
           if (activeSessions.size >= config.maxSessions) {
             logForDebugging(
               `[bridge:work] At capacity (${activeSessions.size}/${config.maxSessions}), cannot spawn new session for workId=${work.id}`,
@@ -579,23 +542,20 @@ export async function runWireLoop(
           await ackWork()
           const spawnStartTime = Date.now()
 
-          // CCR v2 path: register this bridge as the session worker, get the
-          // epoch, and point the child at /v1/code/sessions/{id}. The child
-          // already has the full v2 client (SSETransport + CCRClient) — same
-          // code path environment-manager launches in containers.
+          // CCR v2 路径：将此 bridge 注册为会话 worker，获取 epoch，并让子进程连接
+          // /v1/code/sessions/{id}。子进程已包含完整 v2 客户端（SSETransport + CCRClient），
+          // 与 environment-manager 在容器中启动的代码路径相同。
           //
-          // v1 path: Session-Ingress WebSocket. Uses config.sessionIngressUrl
-          // (not secret.api_base_url, which may point to a remote proxy tunnel
-          // that doesn't know about locally-created sessions).
+          // v1 路径使用 Session-Ingress WebSocket，地址取 config.sessionIngressUrl，而非
+          // secret.api_base_url；后者可能指向不了解本地创建会话的远程代理隧道。
           let sdkUrl: string
           let useCcrV2 = false
           let workerEpoch: number | undefined
-          // Server decides per-session via the work secret; env var is the
-          // ant-dev override (e.g. forcing v2 before the server flag is on).
+          // 服务端通过 work secret 按会话决定；环境变量是 ant 开发覆盖项，例如服务端开关启用前
+          // 强制使用 v2。
           if (secret.use_code_sessions === true || isEnvTruthy(process.env.ZY_BRIDGE_USE_CCR)) {
             sdkUrl = buildCCRv2SdkUrl(config.apiBaseUrl, sessionId)
-            // Retry once on transient failure (network blip, 500) before
-            // permanently giving up and killing the session.
+            // 瞬时失败（短暂网络故障、500）时重试一次，再永久放弃并终止会话。
             for (let attempt = 1; attempt <= 2; attempt++) {
               try {
                 workerEpoch = await registerWorker(sdkUrl, secret.session_ingress_token)
@@ -639,16 +599,12 @@ export async function runWireLoop(
             sdkUrl = buildSdkUrl(config.sessionIngressUrl, sessionId)
           }
 
-          // In worktree mode, on-demand sessions get an isolated git worktree
-          // so concurrent sessions don't interfere with each other's file
-          // changes. The pre-created initial session (if any) runs in
-          // config.dir so the user's first session lands in the directory they
-          // invoked `rc` from — matching the old single-session UX.
-          // In same-dir and single-session modes, all sessions share config.dir.
-          // Capture spawnMode before the await below — the `w` key handler
-          // mutates config.spawnMode directly, and createAgentWorktree can
-          // take 1-2s, so reading config.spawnMode after the await can
-          // produce contradictory analytics (spawn_mode:'same-dir', in_worktree:true).
+          // worktree 模式下，按需会话会获得独立 git worktree，避免并发会话的文件改动互相干扰。
+          // 预创建的初始会话（若有）在 config.dir 中运行，使用户首个会话位于调用 `rc` 的目录，
+          // 与旧版单会话体验一致。same-dir 与单会话模式下，所有会话共享 config.dir。
+          // 在下方 await 前捕获 spawnMode：`w` 键 handler 会直接修改 config.spawnMode，而
+          // createAgentWorktree 可能耗时 1 至 2 秒；若 await 后再读取，可能产生矛盾 analytics
+          //（spawn_mode:'same-dir', in_worktree:true）。
           const spawnModeAtDecision = config.spawnMode
           let sessionDir = config.dir
           let worktreeCreateMs = 0
@@ -690,9 +646,8 @@ export async function runWireLoop(
 
           logForDebugging(`[bridge:session] Spawning sessionId=${sessionId} sdkUrl=${sdkUrl}`)
 
-          // compat-surface session_* form for logger/Sessions-API calls.
-          // Work poll returns cse_* under v2 compat; convert before spawn so
-          // the onFirstUserMessage callback can close over it.
+          // logger 与 Sessions API 调用使用兼容接口的 session_* 形式。v2 兼容模式下工作轮询返回
+          // cse_*，启动前完成转换，使 onFirstUserMessage 回调可以闭包捕获。
           const compatSessionId = toCompatSessionId(sessionId)
 
           const spawnResult = safeSpawn(
@@ -704,10 +659,8 @@ export async function runWireLoop(
               useCcrV2,
               workerEpoch,
               onFirstUserMessage: (text) => {
-                // Server-set titles (--name, web rename) win. fetchSessionTitle
-                // runs concurrently; if it already populated titledSessions,
-                // skip. If it hasn't resolved yet, the derived title sticks —
-                // acceptable since the server had no title at spawn time.
+                // 服务端设置的标题（--name、Web 重命名）优先。fetchSessionTitle 并发运行；若已填充
+                // titledSessions 则跳过。若尚未完成，则保留推导标题；启动时服务端没有标题，故可接受。
                 if (titledSessions.has(compatSessionId)) {
                   return
                 }
@@ -733,7 +686,7 @@ export async function runWireLoop(
           )
           if (typeof spawnResult === 'string') {
             logger.logError(`Failed to spawn session ${sessionId}: ${spawnResult}`)
-            // Clean up worktree if one was created for this session
+            // 若为此会话创建过 worktree，则执行清理
             const wt = sessionWorktrees.get(sessionId)
             if (wt) {
               sessionWorktrees.delete(sessionId)
@@ -789,10 +742,10 @@ export async function runWireLoop(
           const startTime = Date.now()
           sessionStartTimes.set(sessionId, startTime)
 
-          // Use a generic prompt description since we no longer get startup_context
+          // 不再接收 startup_context，因此使用通用 prompt 描述
           logger.logSessionStart(sessionId, `Session ${sessionId}`)
 
-          // Compute the actual debug file path (mirrors sessionRunner.ts logic)
+          // 计算实际 debug 文件路径，与 sessionRunner.ts 的逻辑一致
           const safeId = safeFilenameId(sessionId)
           let sessionDebugFile: string | undefined
           if (config.debugFile) {
@@ -810,21 +763,19 @@ export async function runWireLoop(
             logger.logVerbose(`Debug log: ${sessionDebugFile}`)
           }
 
-          // Register in the sessions Map before starting status updates so the
-          // first render tick shows the correct count and bullet list in sync.
+          // 在启动状态更新前注册到 sessions Map，使首个渲染 tick 同步显示正确数量和项目列表。
           logger.addSession(
             compatSessionId,
             getRemoteSessionUrl(compatSessionId, config.sessionIngressUrl),
           )
 
-          // Start live status updates and transition to "Attached" state.
+          // 启动实时状态更新，并切换到 “Attached” 状态。
           startStatusUpdates()
           logger.setAttached(compatSessionId)
 
-          // One-shot title fetch. If the session already has a title (set via
-          // --name, web rename, or /remote-control), display it and mark as
-          // titled so the first-user-message fallback doesn't overwrite it.
-          // Otherwise onFirstUserMessage derives one from the first prompt.
+          // 单次获取标题。若会话已有通过 --name、Web 重命名或 /remote-control 设置的标题，
+          // 则展示并标记为已有标题，避免首条用户消息的回退逻辑覆盖；否则由 onFirstUserMessage
+          // 根据首个 prompt 推导。
           void fetchSessionTitle(compatSessionId, config.apiBaseUrl)
             .then((title) => {
               if (title && activeSessions.has(sessionId)) {
@@ -840,7 +791,7 @@ export async function runWireLoop(
               ),
             )
 
-          // Start per-session timeout watchdog
+          // 启动该会话的超时 watchdog
           const timeoutMs = config.sessionTimeoutMs ?? DEFAULT_SESSION_TIMEOUT_MS
           if (timeoutMs > 0) {
             const timer = setTimeout(
@@ -855,9 +806,8 @@ export async function runWireLoop(
             sessionTimers.set(sessionId, timer)
           }
 
-          // Schedule proactive token refresh before the JWT expires.
-          // onRefresh branches on v2Sessions: v1 delivers OAuth to the
-          // child, v2 triggers server re-dispatch via reconnectSession.
+          // 在 JWT 过期前主动安排 token 刷新。onRefresh 按 v2Sessions 分支：v1 向子进程传递
+          // OAuth，v2 通过 reconnectSession 触发服务端重新分发。
           if (useCcrV2) {
             v2Sessions.add(sessionId)
           }
@@ -868,16 +818,13 @@ export async function runWireLoop(
         }
         default:
           await ackWork()
-          // Gracefully ignore unknown work types. The backend may send new
-          // types before the bridge client is updated.
+          // 安全忽略未知工作类型；后端可能先于 bridge 客户端更新而发送新类型。
           logForDebugging(`[bridge:work] Unknown work type: ${workType}, skipping`)
           break
       }
 
-      // When at capacity, throttle the loop. The switch above still runs so
-      // existing-session token refreshes are processed, but we sleep here
-      // to avoid busy-looping. Include the capacity wake signal so the
-      // sleep is interrupted immediately when a session completes.
+      // 达到容量上限时限流循环。上方 switch 仍会运行以处理已有会话的 token 刷新，但此处休眠
+      // 以避免忙循环；同时加入容量唤醒 signal，使会话结束时立即中断休眠。
       if (atCapacityBeforeSwitch) {
         const cap = capacityWake.signal()
         if (pollConfig.non_exclusive_heartbeat_interval_ms > 0) {
@@ -893,15 +840,15 @@ export async function runWireLoop(
         break
       }
 
-      // Fatal errors (401/403) — no point retrying, auth won't fix itself
+      // 致命错误（401/403）无需重试，认证问题不会自行恢复
       if (err instanceof WireFatalError) {
         fatalExit = true
-        // Server-enforced expiry gets a clean status message, not an error
+        // 服务端强制过期时展示清晰状态消息，而非错误
         if (isExpiredErrorType(err.errorType)) {
           logger.logStatus(err.message)
         } else if (isSuppressible403(err)) {
-          // Cosmetic 403 errors (e.g., external_poll_sessions scope,
-          // environments:manage permission) — don't show to user
+          // 表面性的 403 错误，例如 external_poll_sessions scope 或 environments:manage 权限，
+          // 不向用户展示
           logForDebugging(`[bridge:work] Suppressed 403 error: ${err.message}`)
         } else {
           logger.logError(err.message)
@@ -924,9 +871,8 @@ export async function runWireLoop(
       if (isConnectionError(err) || isServerError(err)) {
         const now = Date.now()
 
-        // Detect system sleep/wake: if the gap since the last poll error
-        // greatly exceeds the expected backoff, the machine likely slept.
-        // Reset error tracking so the bridge retries with a fresh budget.
+        // 检测系统休眠与唤醒：若距上次轮询错误的间隔远超预期退避，机器可能进入过休眠。重置
+        // 错误跟踪，使 bridge 使用全新预算重试。
         if (
           lastPollErrorTime !== null &&
           now - lastPollErrorTime > pollSleepDetectionThresholdMs(backoffConfig)
@@ -964,7 +910,7 @@ export async function runWireLoop(
           break
         }
 
-        // Reset the other track when switching error types
+        // 错误类型切换时重置另一条跟踪记录
         generalErrorStart = null
         generalBackoff = 0
 
@@ -976,11 +922,9 @@ export async function runWireLoop(
           `Connection error, retrying in ${formatDelay(delay)} (${Math.round(elapsed / 1000)}s elapsed): ${errMsg}`,
         )
         logger.updateReconnectingStatus(formatDelay(delay), formatDuration(elapsed))
-        // The poll_due heartbeat-loop exit leaves a healthy lease exposed to
-        // this backoff path. Heartbeat before each sleep so /poll outages
-        // (the VerifyEnvironmentSecretAuth DB path heartbeat was introduced
-        // to avoid) don't kill the 300s lease TTL. No-op when activeSessions
-        // is empty or heartbeat is disabled.
+        // poll_due 退出心跳循环后，健康 lease 会进入此退避路径。每次休眠前发送心跳，避免 /poll
+        // 故障（引入 VerifyEnvironmentSecretAuth 数据库路径心跳正是为规避此问题）耗尽 300 秒
+        // lease TTL。activeSessions 为空或禁用心跳时不执行。
         if (getPollIntervalConfig().non_exclusive_heartbeat_interval_ms > 0) {
           await heartbeatActiveWorkItems()
         }
@@ -988,7 +932,7 @@ export async function runWireLoop(
       } else {
         const now = Date.now()
 
-        // Sleep detection for general errors (same logic as connection errors)
+        // 检测一般错误期间的休眠，逻辑与连接错误相同
         if (
           lastPollErrorTime !== null &&
           now - lastPollErrorTime > pollSleepDetectionThresholdMs(backoffConfig)
@@ -1026,7 +970,7 @@ export async function runWireLoop(
           break
         }
 
-        // Reset the other track when switching error types
+        // 错误类型切换时重置另一条跟踪记录
         connErrorStart = null
         connBackoff = 0
 
@@ -1046,7 +990,7 @@ export async function runWireLoop(
     }
   }
 
-  // Clean up
+  // 清理
   stopStatusUpdates()
   logger.clearStatus()
 
@@ -1060,28 +1004,25 @@ export async function runWireLoop(
     loop_duration_ms: loopDurationMs,
   })
 
-  // Graceful shutdown: kill active sessions, report them as interrupted,
-  // archive sessions, then deregister the environment so the web UI shows
-  // the bridge as offline.
+  // 优雅关停：终止活跃会话并报告为中断，归档会话，随后注销环境，使 Web UI 将 bridge 显示为离线。
 
-  // Collect all session IDs to archive on exit. This includes:
-  // 1. Active sessions (snapshot before killing — onSessionDone clears maps)
-  // 2. The initial auto-created session (may never have had work dispatched)
-  // api.archiveSession is idempotent (409 if already archived), so
-  // double-archiving is safe.
+  // 收集退出时要归档的所有会话 ID，包括：
+  // 1. 活跃会话（终止前创建快照，因为 onSessionDone 会清空 map）
+  // 2. 自动创建的初始会话（可能从未分发过任务）
+  // api.archiveSession 是幂等操作（已归档时返回 409），因此重复归档安全。
   const sessionsToArchive = new Set(activeSessions.keys())
   if (initialSessionId) {
     sessionsToArchive.add(initialSessionId)
   }
-  // Snapshot before killing — onSessionDone clears sessionCompatIds.
+  // 终止前创建快照，因为 onSessionDone 会清空 sessionCompatIds。
   const compatIdSnapshot = new Map(sessionCompatIds)
 
   if (activeSessions.size > 0) {
     logForDebugging(`[bridge:shutdown] Shutting down ${activeSessions.size} active session(s)`)
     logger.logStatus(`Shutting down ${activeSessions.size} active session(s)\u2026`)
 
-    // Snapshot work IDs before killing — onSessionDone clears the maps when
-    // each child exits, so we need a copy for the stopWork calls below.
+    // 终止前创建 work ID 快照；每个子进程退出时 onSessionDone 会清空 map，下方 stopWork 调用
+    // 因此需要副本。
     const shutdownWorkIds = new Map(sessionWorkIds)
 
     for (const [sessionId, handle] of activeSessions.entries()) {
@@ -1096,23 +1037,21 @@ export async function runWireLoop(
     ])
     timeout.abort()
 
-    // SIGKILL any processes that didn't respond to SIGTERM within the grace window
+    // 对宽限期内未响应 SIGTERM 的进程发送 SIGKILL
     for (const [sid, handle] of activeSessions.entries()) {
       logForDebugging(`[bridge:shutdown] Force-killing stuck sessionId=${sid}`)
       handle.forceKill()
     }
 
-    // Clear any remaining session timeout and refresh timers
+    // 清除所有剩余的会话超时与刷新定时器
     for (const timer of sessionTimers.values()) {
       clearTimeout(timer)
     }
     sessionTimers.clear()
     tokenRefresh?.cancelAll()
 
-    // Clean up any remaining worktrees from active sessions.
-    // Snapshot and clear the map first so onSessionDone (which may fire
-    // during the await below when handle.done resolves) won't try to
-    // remove the same worktrees again.
+    // 清理活跃会话遗留的所有 worktree。先创建快照并清空 map，避免下方 await 期间 handle.done
+    // 完成并触发 onSessionDone 时再次尝试移除同一 worktree。
     if (sessionWorktrees.size > 0) {
       const remainingWorktrees = [...sessionWorktrees.values()]
       sessionWorktrees.clear()
@@ -1124,7 +1063,7 @@ export async function runWireLoop(
       )
     }
 
-    // Stop all active work items so the server knows they're done
+    // 停止所有活跃工作项，使服务端获知其已结束
     await Promise.allSettled(
       [...shutdownWorkIds.entries()].map(([sessionId, workId]) => {
         return api
@@ -1138,23 +1077,18 @@ export async function runWireLoop(
     )
   }
 
-  // Ensure all in-flight cleanup (stopWork, worktree removal) from
-  // onSessionDone completes before deregistering — otherwise
-  // process.exit() can kill them mid-flight.
+  // 注销前确保 onSessionDone 发起的所有清理（stopWork、移除 worktree）完成，否则
+  // process.exit() 可能在执行中途终止它们。
   if (pendingCleanups.size > 0) {
     await Promise.allSettled([...pendingCleanups])
   }
 
-  // In single-session mode with a known session, leave the session and
-  // environment alive so `zy remote-control --session-id=<id>` can resume.
-  // The backend GCs stale environments via a 4h TTL (BRIDGE_LAST_POLL_TTL).
-  // Archiving the session or deregistering the environment would make the
-  // printed resume command a lie — deregister deletes Firestore + Redis stream.
-  // Skip when the loop exited fatally (env expired, auth failed, give-up) —
-  // resume is impossible in those cases and the message would contradict the
-  // error already printed.
-  // feature('KAIROS') gate: --session-id is ant-only; without the gate,
-  // revert to the pre-PR behavior (archive + deregister on every shutdown).
+  // 单会话模式且会话已知时，保留会话与环境，使 `zy remote-control --session-id=<id>` 可以恢复。
+  // 后端通过 4 小时 TTL（BRIDGE_LAST_POLL_TTL）回收陈旧环境。若归档会话或注销环境，输出的
+  // 恢复命令将无法使用，因为注销会删除 Firestore 与 Redis stream。若循环因致命错误退出
+  //（环境过期、认证失败、放弃重试）则跳过；这些情况下无法恢复，提示也会与已输出错误矛盾。
+  // feature('KAIROS') 开关：--session-id 仅供 ant 使用；未启用时恢复 PR 前的行为，即每次关停
+  // 都归档并注销。
   if (
     feature('KAIROS')
       ? config.spawnMode === 'single-session' && initialSessionId && !fatalExit
@@ -1167,8 +1101,7 @@ export async function runWireLoop(
     return
   }
 
-  // Archive all known sessions so they don't linger as idle/running on the
-  // server after the bridge goes offline.
+  // 归档所有已知会话，避免 bridge 离线后它们仍以 idle/running 状态滞留在服务端。
   if (sessionsToArchive.size > 0) {
     logForDebugging(`[bridge:shutdown] Archiving ${sessionsToArchive.size} session(s)`)
     await Promise.allSettled(
@@ -1182,8 +1115,7 @@ export async function runWireLoop(
     )
   }
 
-  // Deregister the environment so the web UI shows the bridge as offline
-  // and the Redis stream is cleaned up.
+  // 注销环境，使 Web UI 将 bridge 显示为离线，并清理 Redis stream。
   try {
     await api.deregisterEnvironment(environmentId)
     logForDebugging(`[bridge:shutdown] Environment deregistered, bridge offline`)
@@ -1192,9 +1124,8 @@ export async function runWireLoop(
     logger.logVerbose(`Failed to deregister environment: ${errorMessage(err)}`)
   }
 
-  // Clear the crash-recovery pointer — the env is gone, pointer would be
-  // stale. The early return above (resumable SIGINT shutdown) skips this,
-  // leaving the pointer as a backup for the printed --session-id hint.
+  // 清除崩溃恢复 pointer；环境已不存在，pointer 会失效。上方可恢复的 SIGINT 关停会提前返回，
+  // 跳过此处并保留 pointer，作为已输出 --session-id 提示的备用方案。
   const { clearWirePointer } = await import('../bridgePointer.js')
   await clearWirePointer(config.dir)
 

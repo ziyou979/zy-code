@@ -52,26 +52,25 @@ export function isMcpSessionExpiredError(error: Error): boolean {
 }
 
 /**
- * Default timeout for MCP tool calls (effectively infinite - ~27.8 hours).
+ * MCP tool 调用的默认超时，约 27.8 小时，实际相当于无限。
  */
 export const DEFAULT_MCP_TOOL_TIMEOUT_MS = 100_000_000
 
 /**
- * Cap on MCP tool descriptions and server instructions sent to the model.
+ * 发送给模型的 MCP tool 描述和 server instruction 长度上限。
  */
 export const MAX_MCP_DESCRIPTION_LENGTH = 2048
 
 /**
- * Gets the timeout for MCP tool calls in milliseconds.
+ * 获取 MCP tool 调用超时时间（ms）。
  */
 export function getMcpToolTimeoutMs(): number {
   return parseInt(process.env.MCP_TOOL_TIMEOUT || '', 10) || DEFAULT_MCP_TOOL_TIMEOUT_MS
 }
 
 /**
- * Gets the idle timeout for MCP tools in milliseconds.
- * When set, idle MCP connections are closed after this period of inactivity.
- * Falls back to MCP_TOOL_TIMEOUT if not specified.
+ * 获取 MCP tool 的 idle 超时时间（ms）。设置后，MCP 连接在此时长内无活动便会关闭；
+ * 未指定时回退到 MCP_TOOL_TIMEOUT。
  */
 export function getMcpToolIdleTimeoutMs(): number | undefined {
   const val = process.env.MCP_TOOL_IDLE_TIMEOUT

@@ -55,7 +55,7 @@ export function createStatsStore(): StatsStore {
       if (value > h.max) {
         h.max = value
       }
-      // Reservoir sampling (Algorithm R)
+      // 蓄水池采样（Algorithm R）。
       if (h.reservoir.length < RESERVOIR_SIZE) {
         h.reservoir.push(value)
       } else {

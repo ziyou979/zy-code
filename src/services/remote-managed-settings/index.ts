@@ -515,7 +515,7 @@ async function fetchAndLoadRemoteManagedSettings(): Promise<SettingsJson | null>
       return cachedSettings
     }
 
-    // No cache available - fail open, continue without remote settings
+    // 没有可用缓存时按开放策略继续，不加载远程设置
     return null
   }
 }

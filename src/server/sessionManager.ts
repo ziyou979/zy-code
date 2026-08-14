@@ -1,5 +1,5 @@
 /**
- * Session manager class
+ * 会话管理器。
  */
 export class SessionManager {
   constructor(_backend: unknown, _options?: { idleTimeoutMs?: number; maxSessions?: number }) {}

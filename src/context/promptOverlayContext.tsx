@@ -1,22 +1,19 @@
 /**
- * Portal for content that floats above the prompt so it escapes
- * FullscreenLayout's bottom-slot `overflowY:hidden` clip.
+ * 将内容 Portal 到 prompt 上方，使其避开 FullscreenLayout 底部插槽的
+ * `overflowY:hidden` 裁剪。
  *
- * The clip is load-bearing (CC-668: tall pastes squash the ScrollBox
- * without it), but floating overlays use `position:absolute
- * bottom="100%"` to float above the prompt — and Ink's clip stack
- * intersects ALL descendants, so they were clipped to ~1 row.
+ * 该裁剪不能移除（CC-668：否则粘贴长文本会挤压 ScrollBox），但浮动 Overlay 通过
+ * `position:absolute; bottom="100%"` 显示在 prompt 上方，而 Ink 会对所有后代叠加
+ * 裁剪区域，导致它们只剩约一行可见。
  *
- * Two channels:
- * - `useSetPromptOverlay` — slash-command suggestion data (structured,
- *   written by PromptInputFooter)
- * - `useSetPromptOverlayDialog` — arbitrary dialog node (e.g.
- *   AutoModeOptInDialog, written by PromptInput)
+ * 两条通道：
+ * - `useSetPromptOverlay`：slash command 的结构化建议数据，由 PromptInputFooter 写入
+ * - `useSetPromptOverlayDialog`：任意对话框节点（如 AutoModeOptInDialog），由 PromptInput 写入
  *
- * FullscreenLayout reads both and renders them outside the clipped slot.
+ * FullscreenLayout 读取两者，并在受裁剪插槽之外渲染。
  *
- * Split into data/setter context pairs so writers never re-render on
- * their own writes — the setter contexts are stable.
+ * 数据与 setter 拆成两组 context，使写入方不会因自己的写入而重新渲染；
+ * setter context 的引用保持稳定。
  */
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
@@ -56,8 +53,8 @@ export function usePromptOverlayDialog() {
 }
 
 /**
- * Register suggestion data for the floating overlay. Clears on unmount.
- * No-op outside the provider (non-fullscreen renders inline instead).
+ * 注册浮动 Overlay 的建议数据，卸载时清除。
+ * 在 provider 外不执行操作（非全屏模式会改为原地渲染）。
  */
 export function useSetPromptOverlay(data: PromptOverlayData | null) {
   const set = useContext(SetContext)

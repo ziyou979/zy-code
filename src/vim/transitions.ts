@@ -38,7 +38,7 @@ import {
 } from './types.js'
 
 /**
- * Context passed to transition functions.
+ * 传给 transition 函数的上下文。
  */
 export type TransitionContext = OperatorContext & {
   onUndo?: () => void
@@ -46,7 +46,7 @@ export type TransitionContext = OperatorContext & {
 }
 
 /**
- * Result of a transition.
+ * transition 结果。
  */
 export type TransitionResult = {
   next?: CommandState
@@ -54,7 +54,7 @@ export type TransitionResult = {
 }
 
 /**
- * Main transition function. Dispatches based on current state type.
+ * 主 transition 函数，根据当前状态类型分发。
  */
 export function transition(
   state: CommandState,
@@ -88,12 +88,11 @@ export function transition(
 }
 
 // ============================================================================
-// Shared Input Handling
+// 共享输入处理
 // ============================================================================
 
 /**
- * Handle input that's valid in both idle and count states.
- * Returns null if input is not recognized.
+ * 处理 idle 与 count 状态都接受的输入。无法识别时返回 null。
  */
 function handleNormalInput(
   input: string,
@@ -150,8 +149,7 @@ function handleNormalInput(
   if (input === 'G') {
     return {
       execute: () => {
-        // count=1 means no count given, go to last line
-        // otherwise go to line N
+        // count=1 表示未指定计数，此时跳到末行；否则跳到第 N 行。
         if (count === 1) {
           ctx.setOffset(ctx.cursor.startOfLastLine().offset)
         } else {
@@ -201,8 +199,7 @@ function handleNormalInput(
 }
 
 /**
- * Handle operator input (motion, find, text object scope).
- * Returns null if input is not recognized.
+ * 处理 operator 输入（motion、find、text object scope）。无法识别时返回 null。
  */
 function handleOperatorInput(
   op: Operator,
@@ -243,11 +240,11 @@ function handleOperatorInput(
 }
 
 // ============================================================================
-// Transition Functions - One per state type
+// Transition 函数——每种状态类型各一个
 // ============================================================================
 
 function fromIdle(input: string, ctx: TransitionContext): TransitionResult {
-  // 0 is line-start motion, not a count prefix
+  // 0 表示移动到行首，不是计数前缀。
   if (/[1-9]/.test(input)) {
     return { next: { type: 'count', digits: input } }
   }
@@ -290,7 +287,7 @@ function fromOperator(
   input: string,
   ctx: TransitionContext,
 ): TransitionResult {
-  // dd, cc, yy = line operation
+  // dd、cc、yy 表示整行操作。
   if (input === state.op[0]) {
     return { execute: () => executeLineOp(state.op, state.count, ctx) }
   }
@@ -403,7 +400,7 @@ function fromG(
     }
   }
   if (input === 'g') {
-    // If count provided (e.g., 5gg), go to that line. Otherwise go to first line.
+    // 提供 count（如 5gg）时跳到对应行，否则跳到首行。
     if (state.count > 1) {
       return {
         execute: () => {
@@ -437,7 +434,7 @@ function fromOperatorG(
   if (input === 'g') {
     return { execute: () => executeOperatorGg(state.op, state.count, ctx) }
   }
-  // Any other input cancels the operator
+  // 其他输入都会取消 operator。
   return { next: { type: 'idle' } }
 }
 
@@ -446,9 +443,8 @@ function fromReplace(
   input: string,
   ctx: TransitionContext,
 ): TransitionResult {
-  // Backspace/Delete arrive as empty input in literal-char states. In vim,
-  // r<BS> cancels the replace; without this guard, executeReplace("") would
-  // delete the character under the cursor instead.
+  // 在 literal-char 状态中，Backspace/Delete 会以空输入到达。Vim 中 r<BS> 会取消替换；
+  // 若无此守卫，executeReplace("") 反而会删除光标下的字符。
   if (input === '') {
     return { next: { type: 'idle' } }
   }
@@ -467,7 +463,7 @@ function fromIndent(
 }
 
 // ============================================================================
-// Helper functions for special commands
+// 特殊命令辅助函数
 // ============================================================================
 
 function executeRepeatFind(reverse: boolean, count: number, ctx: TransitionContext): void {
@@ -476,10 +472,10 @@ function executeRepeatFind(reverse: boolean, count: number, ctx: TransitionConte
     return
   }
 
-  // Determine the effective find type based on reverse
+  // 根据 reverse 确定实际 find 类型。
   let findType = lastFind.type
   if (reverse) {
-    // Flip the direction
+    // 反转方向。
     const flipMap: Record<FindType, FindType> = {
       f: 'F',
       F: 'f',

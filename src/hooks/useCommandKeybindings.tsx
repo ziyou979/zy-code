@@ -1,12 +1,12 @@
 /**
- * Component that registers keybinding handlers for command bindings.
+ * 为 command binding 注册 keybinding 处理器的组件。
  *
- * Must be rendered inside KeybindingSetup to have access to the keybinding context.
- * Reads "command:*" actions from the current keybinding configuration and registers
- * handlers that invoke the corresponding slash command via onSubmit.
+ * 必须在 KeybindingSetup 内渲染，才能访问 keybinding context。
+ * 从当前 keybinding 配置读取 "command:*" action，并注册通过 onSubmit
+ * 调用相应 slash command 的处理器。
  *
- * Commands triggered via keybinding are treated as "immediate" - they execute right
- * away and preserve the user's existing input text (the prompt is not cleared).
+ * 通过 keybinding 触发的命令视为 "immediate"：立即执行并保留用户现有输入文本，
+ * 不会清空 prompt。
  */
 
 import { useIsModalOverlayActive } from '../context/OverlayContext.js'
@@ -15,8 +15,7 @@ import { useKeybindings } from '../keybindings/useKeybinding.js'
 import type { PromptInputHelpers } from '../services/input/handlePromptSubmit.js'
 
 type Props = {
-  // onSubmit accepts additional parameters beyond what we pass here,
-  // so we use a rest parameter to allow any additional args
+  // onSubmit 除此处传入的参数外还接受其他参数，因此用 rest parameter 容纳额外参数
   onSubmit: (
     input: string,
     helpers: PromptInputHelpers,
@@ -27,7 +26,7 @@ type Props = {
       },
     ]
   ) => void
-  /** Set to false to disable command keybindings (e.g., when a dialog is open) */
+  /** 设为 false 可禁用 command keybinding，例如打开 dialog 时。 */
   isActive?: boolean
 }
 const NOOP_HELPERS: PromptInputHelpers = {
@@ -37,9 +36,8 @@ const NOOP_HELPERS: PromptInputHelpers = {
 }
 
 /**
- * Registers keybinding handlers for all "command:*" actions found in the
- * user's keybinding configuration. When triggered, each handler submits
- * the corresponding slash command (e.g., "command:commit" submits "/commit").
+ * 为用户 keybinding 配置中的所有 "command:*" action 注册处理器。
+ * 触发时，各处理器提交相应 slash command，例如 "command:commit" 提交 "/commit"。
  */
 export function CommandKeybindingHandlers({ onSubmit, isActive = true }: Props) {
   const keybindingContext = useOptionalKeybindingContext()

@@ -1,9 +1,8 @@
 /**
- * Reads plugin-related settings (enabledPlugins, extraKnownMarketplaces)
- * from --add-dir directories.
+ * 从 --add-dir 目录读取插件相关设置（enabledPlugins、extraKnownMarketplaces）。
  *
- * These have the LOWEST priority — callers must spread standard settings
- * on top so that user/project/local/flag/policy sources all override.
+ * 这些设置优先级最低；调用方必须在其上展开标准设置，使
+ * user/project/local/flag/policy 来源均可覆盖。
  */
 
 import { join } from 'node:path'
@@ -17,14 +16,13 @@ type ExtraKnownMarketplace = z.infer<ReturnType<typeof ExtraKnownMarketplaceSche
 const SETTINGS_FILES = ['settings.json', 'settings.local.json'] as const
 
 /**
- * Returns a merged record of enabledPlugins from all --add-dir directories.
+ * 返回合并了所有 --add-dir 目录的 enabledPlugins 记录。
  *
- * Within each directory, settings.local.json is processed after settings.json
- * (local wins within that dir). Across directories, later CLI-order wins on
- * conflict.
+ * 每个目录内先处理 settings.json，再处理 settings.local.json，因此 local 胜出；
+ * 多个目录间发生冲突时，CLI 顺序靠后的目录胜出。
  *
- * This has the lowest priority — callers must spread their standard settings
- * on top to let user/project/local/flag/policy override.
+ * 此记录优先级最低；调用方必须在其上展开标准设置，允许
+ * user/project/local/flag/policy 覆盖。
  */
 export function getAddDirEnabledPlugins(): NonNullable<SettingsJson['enabledPlugins']> {
   const result: NonNullable<SettingsJson['enabledPlugins']> = {}
@@ -41,10 +39,10 @@ export function getAddDirEnabledPlugins(): NonNullable<SettingsJson['enabledPlug
 }
 
 /**
- * Returns a merged record of extraKnownMarketplaces from all --add-dir directories.
+ * 返回合并了所有 --add-dir 目录的 extraKnownMarketplaces 记录。
  *
- * Same priority rules as getAddDirEnabledPlugins: settings.local.json wins
- * within each dir, and callers spread standard settings on top.
+ * 优先级规则与 getAddDirEnabledPlugins 相同：每个目录内 settings.local.json
+ * 胜出，调用方再在其上展开标准设置。
  */
 export function getAddDirExtraMarketplaces(): Record<string, ExtraKnownMarketplace> {
   const result: Record<string, ExtraKnownMarketplace> = {}

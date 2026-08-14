@@ -1,18 +1,16 @@
 /**
- * Built-in terminal panel toggled with Meta+J.
+ * 使用 Meta+J 切换的内置终端面板。
  *
- * Uses tmux for shell persistence: a separate tmux server with a per-instance
- * socket (e.g., "zy-panel-a1b2c3d4") holds the shell session. Each ZY Code
- * instance gets its own isolated terminal panel that persists within the
- * session but is destroyed when the instance exits.
+ * 使用 tmux 保持 shell：独立 tmux server 通过每实例 socket（如
+ * "zy-panel-a1b2c3d4"）保存 shell session。每个 ZY Code 实例拥有隔离的
+ * 终端面板，在 session 内持续存在，并在实例退出时销毁。
  *
- * Meta+J is bound to detach-client inside tmux, so pressing it returns to
- * ZY Code while the shell keeps running. Next toggle re-attaches to the
- * same session.
+ * tmux 内将 Meta+J 绑定到 detach-client，按下后返回 ZY Code，同时 shell
+ * 继续运行；下次切换会重新连接同一 session。
  *
- * When tmux is not available, falls back to a non-persistent shell via spawnSync.
+ * tmux 不可用时，通过 spawnSync 回退到非持久 shell。
  *
- * Uses the same suspend-Ink pattern as the external editor (promptEditor.ts).
+ * 使用与外部 editor（promptEditor.ts）相同的暂停 Ink 模式。
  */
 
 import { spawn, spawnSync } from 'node:child_process'
@@ -25,12 +23,11 @@ import { logForDebugging } from '../services/infra/debug.js'
 const TMUX_SESSION = 'panel'
 
 /**
- * Get the tmux socket name for the terminal panel.
- * Uses a unique socket per ZY Code instance (based on session ID)
- * so that each instance has its own isolated terminal panel.
+ * 获取终端面板的 tmux socket 名称。根据 session ID 为每个 ZY Code 实例使用
+ * 唯一 socket，使各实例拥有相互隔离的终端面板。
  */
 export function getTerminalPanelSocket(): string {
-  // Use first 8 chars of session UUID for uniqueness while keeping name short
+  // 使用 session UUID 的前 8 个字符，在保持名称简短的同时确保唯一性
   const sessionId = getSessionId()
   return `zy-panel-${sessionId.slice(0, 8)}`
 }
@@ -38,7 +35,7 @@ export function getTerminalPanelSocket(): string {
 let instance: TerminalPanel | undefined
 
 /**
- * Return the singleton TerminalPanel, creating it lazily on first use.
+ * 返回 TerminalPanel 单例，首次使用时延迟创建。
  */
 export function getTerminalPanel(): TerminalPanel {
   if (!instance) {
@@ -51,13 +48,13 @@ class TerminalPanel {
   private hasTmux: boolean | undefined
   private cleanupRegistered = false
 
-  // ── public API ────────────────────────────────────────────────────
+  // ── 公共 API ─────────────────────────────────────────────────────
 
   toggle(): void {
     this.showShell()
   }
 
-  // ── tmux helpers ──────────────────────────────────────────────────
+  // ── tmux 辅助方法 ────────────────────────────────────────────────
 
   private checkTmux(): boolean {
     if (this.hasTmux !== undefined) {
@@ -96,9 +93,8 @@ class TerminalPanel {
       return false
     }
 
-    // Bind Meta+J (toggles back to ZY Code from inside the terminal)
-    // and configure the status bar hint. Chained with ';' to collapse
-    // 5 spawnSync calls into 1.
+    // 绑定 Meta+J（从终端内切回 ZY Code）并配置状态栏提示。
+    // 使用 ';' 串联，把 5 次 spawnSync 合并为 1 次。
     // biome-ignore format: one tmux command per line
     spawnSync('tmux', [
       '-L', socket,
@@ -112,10 +108,9 @@ class TerminalPanel {
     if (!this.cleanupRegistered) {
       this.cleanupRegistered = true
       registerCleanup(async () => {
-        // Detached async spawn — spawnSync here would block the event loop
-        // and serialize the entire cleanup Promise.all in gracefulShutdown.
-        // .on('error') swallows ENOENT if tmux disappears between session
-        // creation and cleanup — prevents spurious uncaughtException noise.
+        // 使用分离的异步 spawn；此处若用 spawnSync，会阻塞 event loop，并使
+        // gracefulShutdown 中整个清理 Promise.all 串行化。若 tmux 在 session 创建后、
+        // 清理前消失，.on('error') 会吞掉 ENOENT，避免无意义的 uncaughtException 噪声。
         spawn('tmux', ['-L', socket, 'kill-server'], {
           detached: true,
           stdio: 'ignore',
@@ -134,7 +129,7 @@ class TerminalPanel {
     })
   }
 
-  // ── show shell ────────────────────────────────────────────────────
+  // ── 显示 shell ───────────────────────────────────────────────────
 
   private showShell(): void {
     const inkInstance = instances.get(process.stdout)
@@ -155,9 +150,9 @@ class TerminalPanel {
     }
   }
 
-  // ── helpers ───────────────────────────────────────────────────────
+  // ── 辅助方法 ─────────────────────────────────────────────────────
 
-  /** Ensure a tmux session exists, creating one if needed. */
+  /** 确保 tmux session 存在，必要时创建。 */
   private ensureSession(): boolean {
     if (this.hasSession()) {
       return true
@@ -165,7 +160,7 @@ class TerminalPanel {
     return this.createSession()
   }
 
-  /** Fallback when tmux is not available — runs a non-persistent shell. */
+  /** tmux 不可用时的回退路径：运行非持久 shell。 */
   private runShellDirect(): void {
     const shell = process.env.SHELL || '/bin/bash'
     const cwd = pwd()

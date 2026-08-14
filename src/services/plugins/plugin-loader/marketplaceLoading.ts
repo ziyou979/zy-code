@@ -238,9 +238,8 @@ export async function finishLoadingPluginFromPath(
       )
       const skillPaths = Array.isArray(entry.skills) ? entry.skills : [entry.skills]
 
-      // Parallelize pathExists checks; process results in order.
-      // Note: previously this loop called pathExists() TWICE per iteration
-      // (once in a debug log template, once in the if) — now called once.
+      // 并行执行 pathExists 检查，并按顺序处理结果。注意：此前此循环每轮会调用
+      // 两次 pathExists()（一次在 debug 日志模板中，一次在 if 中），现在只调用一次。
       const checks = await Promise.all(
         skillPaths.map(async (skillPath) => {
           const fullPath = join(pluginPath, skillPath)
@@ -344,7 +343,7 @@ export async function finishLoadingPluginFromPath(
         }
         const validPaths: string[] = []
 
-        // Parallelize pathExists checks; process results in order.
+        // 并行执行 pathExists 检查，并按顺序处理结果。
         const entries = Object.entries(entry.commands)
         const checks = await Promise.all(
           entries.map(async ([commandName, metadata]) => {
@@ -394,7 +393,7 @@ export async function finishLoadingPluginFromPath(
         // 路径或路径数组格式
         const commandPaths = Array.isArray(entry.commands) ? entry.commands : [entry.commands]
 
-        // Parallelize pathExists checks; process results in order.
+        // 并行执行 pathExists 检查，并按顺序处理结果。
         const checks = await Promise.all(
           commandPaths.map(async (cmdPath) => {
             if (typeof cmdPath !== 'string') {

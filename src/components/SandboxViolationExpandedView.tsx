@@ -4,8 +4,8 @@ import { Box, Text } from '../ink/index.js'
 import { SandboxManager } from '../services/sandbox/sandboxAdapter.js'
 
 /**
- * Format a timestamp as "h:mm:ssa" (e.g., "1:30:45pm").
- * Replaces date-fns format() to avoid pulling in a 39MB dependency for one call.
+ * 将时间戳格式化为 "h:mm:ssa"（例如 "1:30:45pm"）。
+ * 代替 date-fns format()，避免为一次调用引入 39MB 依赖。
  */
 function formatTime(date: Date): string {
   const h = date.getHours() % 12 || 12

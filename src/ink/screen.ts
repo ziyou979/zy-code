@@ -1103,7 +1103,7 @@ export function clearRegion(
       // 右边界：如果 maxX-1 处的单元格是 Wide，其 maxX 处的
       // SpacerTail（区域外）将变为孤立。清除它。
       if (checkRight) {
-        // rightEdge points to word0 of cell at maxX-1; +1 is its word1
+        // rightEdge 指向 maxX-1 位置 cell 的 word0，+1 即为其 word1
         if ((cells[rightEdge + 1]! & WIDTH_MASK) === CellWidth.Wide) {
           // maxX 处单元格的 word1 是 rightEdge+3（+2 到下一个 word0，+1 到 word1）
           const nextW1 = rightEdge + 3

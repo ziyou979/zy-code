@@ -21,8 +21,8 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
     const { key, source } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })
-    // If apiKeyHelper is configured, we have a key source even though we
-    // haven't executed it yet - return 'loading' to indicate we'll verify later
+    // 配置了 apiKeyHelper 即表示存在 key 来源，即使尚未执行；
+    // 返回 'loading' 表示稍后验证
     if (key || source === 'apiKeyHelper') {
       return 'loading'
     }
@@ -34,8 +34,8 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
       setStatus('valid')
       return
     }
-    // Warm the apiKeyHelper cache (no-op if not configured), then read from
-    // all sources. getApiKeyWithSource() reads the now-warm cache.
+    // 预热 apiKeyHelper cache（未配置时不执行操作），再读取所有来源。
+    // getApiKeyWithSource() 会读取已经预热的 cache。
     await getApiKeyFromApiKeyHelper(getIsNonInteractiveSession())
     const { key: apiKey, source } = getApiKeyWithSource()
     if (!apiKey) {

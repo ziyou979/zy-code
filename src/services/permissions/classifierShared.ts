@@ -1,16 +1,16 @@
 /**
- * Shared infrastructure for classifier-based permission systems.
+ * 基于 classifier 的权限系统共享基础设施。
  *
- * This module provides common types, schemas, and utilities used by both:
- * - bashClassifier.ts (semantic Bash command matching)
- * - yoloClassifier.ts (YOLO mode security classification)
+ * 本模块提供以下两处共用的类型、schema 和工具：
+ * - bashClassifier.ts（Bash 命令语义匹配）；
+ * - yoloClassifier.ts（YOLO mode 安全分类）。
  */
 
 import type { z } from 'zod/v4'
 import type { ContentBlock } from '../../types/llm.js'
 
 /**
- * Extract tool call block from message content by tool name.
+ * 按 tool 名称从消息内容中提取 tool call block。
  */
 export function extractToolCallInlineBlock(
   content: ContentBlock[],
@@ -24,8 +24,7 @@ export function extractToolCallInlineBlock(
 }
 
 /**
- * Parse and validate classifier response from tool use block.
- * Returns null if parsing fails.
+ * 从 tool use block 中解析并校验 classifier 响应；解析失败时返回 null。
  */
 export function parseClassifierResponse<T extends z.ZodTypeAny>(
   toolCallInlineBlock: Extract<ContentBlock, { type: 'tool_call' }>,

@@ -2,7 +2,7 @@ import { useContext } from 'react'
 import StdinContext from '../components/StdinContext.js'
 
 /**
- * `useStdin` is a React hook, which exposes stdin stream.
+ * `useStdin` 是一个 React hook，用于提供 stdin stream。
  */
 const useStdin = () => useContext(StdinContext)
 export default useStdin

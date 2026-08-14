@@ -3,7 +3,7 @@ import { ClockContext } from '../ink/components/ClockContext.js'
 import { getLocalizedDurationFormatter } from '../utils/format.js'
 
 /**
- * Hook that returns formatted elapsed time since startTime.
+ * 返回从 startTime 开始计算的格式化耗时。
  * 使用共享的 ClockContext 驱动更新，避免每个调用者创建独立的 setInterval，
  * 从而防止 Ink 帧周期内多个零散 setState 导致的渲染重叠（帧覆盖）问题。
  *

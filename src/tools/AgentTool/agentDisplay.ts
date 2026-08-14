@@ -1,6 +1,6 @@
 /**
- * Shared utilities for displaying agent information.
- * Used by both the CLI `zy agents` handler and the interactive `/agents` command.
+ * 展示 agent 信息的共享工具。
+ * 供 CLI `zy agents` handler 和交互式 `/agents` 命令共同使用。
  */
 
 import { getDefaultSubagentModel } from '../../services/model/agent.js'
@@ -15,8 +15,8 @@ export type AgentSourceGroup = {
 }
 
 /**
- * Ordered list of agent source groups for display.
- * Both the CLI and interactive UI should use this to ensure consistent ordering.
+ * 用于显示的 agent 来源分组有序列表。
+ * CLI 和交互式 UI 都应使用该列表，以确保顺序一致。
  */
 export const AGENT_SOURCE_GROUPS: AgentSourceGroup[] = [
   { label: 'agents.source.userSettings', source: 'userSettings' },
@@ -33,12 +33,11 @@ export type ResolvedAgent = AgentDefinition & {
 }
 
 /**
- * Annotate agents with override information by comparing against the active
- * (winning) agent list. An agent is "overridden" when another agent with the
- * same type from a higher-priority source takes precedence.
+ * 通过与当前生效的 agent 列表对比，为 agent 标注覆盖信息。当更高优先级来源中
+ * 存在同类型 agent 并优先生效时，当前 agent 被视为“已覆盖”。
  *
- * Also deduplicates by (agentType, source) to handle git worktree duplicates
- * where the same agent file is loaded from both the worktree and main repo.
+ * 同时按 (agentType, source) 去重，处理同一 agent 文件同时从 git worktree 和主仓库
+ * 加载而导致的重复。
  */
 export function resolveAgentOverrides(
   allAgents: AgentDefinition[],
@@ -52,8 +51,8 @@ export function resolveAgentOverrides(
   const seen = new Set<string>()
   const resolved: ResolvedAgent[] = []
 
-  // Iterate allAgents, annotating each with override info from activeAgents.
-  // Deduplicate by (agentType, source) to handle git worktree duplicates.
+  // 遍历 allAgents，用 activeAgents 中的覆盖信息逐个标注。
+  // 按 (agentType, source) 去重，处理 git worktree 重复项。
   for (const agent of allAgents) {
     const key = `${agent.agentType}:${agent.source}`
     if (seen.has(key)) {
@@ -70,8 +69,8 @@ export function resolveAgentOverrides(
 }
 
 /**
- * Resolve the display model string for an agent.
- * Returns the model alias or 'inherit' for display purposes.
+ * 解析 agent 的 model 显示字符串。
+ * 返回 model 别名，或用于显示的 'inherit'。
  */
 export function resolveAgentModelDisplay(agent: AgentDefinition): string | undefined {
   const model = agent.model || getDefaultSubagentModel()
@@ -82,15 +81,15 @@ export function resolveAgentModelDisplay(agent: AgentDefinition): string | undef
 }
 
 /**
- * Get a human-readable label for the source that overrides an agent.
- * Returns lowercase, e.g. "user", "project", "managed".
+ * 获取覆盖 agent 的来源所对应的易读标签。
+ * 返回小写形式，如 "user"、"project"、"managed"。
  */
 export function getOverrideSourceLabel(source: AgentSource): string {
   return getSourceDisplayName(source).toLowerCase()
 }
 
 /**
- * Compare agents alphabetically by name (case-insensitive).
+ * 按名称字母顺序比较 agent，忽略大小写。
  */
 export function compareAgentsByName(a: AgentDefinition, b: AgentDefinition): number {
   return a.agentType.localeCompare(b.agentType, undefined, {

@@ -19,17 +19,16 @@ type UseKeybindingsHook = (
 ) => void
 
 /**
- * Handle ctrl+c and ctrl+d for exiting the application.
+ * 处理用于退出应用的 ctrl+c 和 ctrl+d。
  *
- * Uses a time-based double-press mechanism:
- * - First press: Shows "Press X again to exit" message
- * - Second press within timeout: Exits the application
+ * 使用基于时间的双击机制：
+ * - 首次按下：显示“再次按 X 退出”消息
+ * - 超时前第二次按下：退出应用
  *
- * Note: We use time-based double-press rather than the chord system because
- * we want the first ctrl+c to also trigger interrupt (handled elsewhere).
- * The chord system would prevent the first press from firing any action.
+ * 此处使用基于时间的双击，而非 chord 系统，因为首次 ctrl+c 还要触发由其他位置处理的 interrupt。
+ * chord 系统会阻止首次按键触发任何 action。
  *
- * These keys are hardcoded and cannot be rebound via keybindings.json.
+ * 这些按键为硬编码，无法通过 keybindings.json 重新绑定。
  *
  * @param useKeybindingsHook - The useKeybindings hook to use for registering handlers
  *                            (dependency injection to avoid import cycles)
@@ -56,20 +55,20 @@ export function useExitOnCtrlCD(
 
   const exitFn = useMemo(() => onExit ?? exit, [onExit, exit])
 
-  // Double-press handler for ctrl+c
+  // ctrl+c 双击处理器
   const handleCtrlCDoublePress = useDoublePress(
     (pending) => setExitState({ pending, keyName: 'Ctrl-C' }),
     exitFn,
   )
 
-  // Double-press handler for ctrl+d
+  // ctrl+d 双击处理器
   const handleCtrlDDoublePress = useDoublePress(
     (pending) => setExitState({ pending, keyName: 'Ctrl-D' }),
     exitFn,
   )
 
-  // Handler for app:interrupt (ctrl+c by default)
-  // Let features handle interrupt first via callback
+  // app:interrupt 处理器（默认为 ctrl+c）
+  // 先让各功能通过 callback 处理 interrupt
   const handleInterrupt = useCallback(() => {
     if (onInterrupt?.()) {
       return // Feature handled it
@@ -77,8 +76,7 @@ export function useExitOnCtrlCD(
     handleCtrlCDoublePress()
   }, [handleCtrlCDoublePress, onInterrupt])
 
-  // Handler for app:exit (ctrl+d by default)
-  // This also uses double-press to confirm exit
+  // app:exit 处理器（默认为 ctrl+d），同样通过双击确认退出
   const handleExit = useCallback(() => {
     handleCtrlDDoublePress()
   }, [handleCtrlDDoublePress])

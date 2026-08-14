@@ -15,48 +15,47 @@ import * as nodePath from 'node:path'
 import { getErrnoCode } from '../../utils/errors.js'
 import { slowLogging } from './slowOperations.js'
 /**
- * Simplified filesystem operations interface based on Node.js fs module.
- * Provides a subset of commonly used sync operations with type safety.
- * Allows abstraction for alternative implementations (e.g., mock, virtual).
+ * 基于 Node.js fs 模块的简化文件系统操作接口。以类型安全方式提供常用操作子集，
+ * 并支持 mock、virtual 等替代实现。
  */
 export type FsOperations = {
-  // File access and information operations
-  /** Gets the current working directory */
+  // 文件访问与信息操作。
+  /** 获取当前工作目录。 */
   cwd(): string
-  /** Checks if a file or directory exists */
+  /** 检查文件或目录是否存在。 */
   existsSync(path: string): boolean
-  /** Gets file stats asynchronously */
+  /** 异步获取文件 stat。 */
   stat(path: string): Promise<fs.Stats>
-  /** Lists directory contents with file type information asynchronously */
+  /** 异步列出目录内容及文件类型信息。 */
   readdir(path: string): Promise<fs.Dirent[]>
-  /** Deletes file asynchronously */
+  /** 异步删除文件。 */
   unlink(path: string): Promise<void>
-  /** Removes an empty directory asynchronously */
+  /** 异步移除空目录。 */
   rmdir(path: string): Promise<void>
-  /** Removes files and directories asynchronously (with recursive option) */
+  /** 异步移除文件和目录，支持递归选项。 */
   rm(path: string, options?: { recursive?: boolean; force?: boolean }): Promise<void>
-  /** Creates directory recursively asynchronously. */
+  /** 异步递归创建目录。 */
   mkdir(path: string, options?: { mode?: number }): Promise<void>
-  /** Reads file content as string asynchronously */
+  /** 异步以字符串读取文件内容。 */
   readFile(path: string, options: { encoding: BufferEncoding }): Promise<string>
-  /** Renames/moves file asynchronously */
+  /** 异步重命名或移动文件。 */
   rename(oldPath: string, newPath: string): Promise<void>
-  /** Gets file stats */
+  /** 获取文件 stat。 */
   statSync(path: string): fs.Stats
-  /** Gets file stats without following symlinks */
+  /** 不跟随符号链接获取文件 stat。 */
   lstatSync(path: string): fs.Stats
 
-  // File content operations
-  /** Reads file content as string with specified encoding */
+  // 文件内容操作。
+  /** 使用指定编码以字符串读取文件内容。 */
   readFileSync(
     path: string,
     options: {
       encoding: BufferEncoding
     },
   ): string
-  /** Reads raw file bytes as Buffer */
+  /** 以 Buffer 读取原始文件字节。 */
   readFileBytesSync(path: string): Buffer
-  /** Reads specified number of bytes from file start */
+  /** 从文件开头读取指定字节数。 */
   readSync(
     path: string,
     options: {
@@ -66,40 +65,40 @@ export type FsOperations = {
     buffer: Buffer
     bytesRead: number
   }
-  /** Appends string to file */
+  /** 向文件追加字符串。 */
   appendFileSync(path: string, data: string, options?: { mode?: number }): void
-  /** Copies file from source to destination */
+  /** 将文件从源路径复制到目标路径。 */
   copyFileSync(src: string, dest: string): void
-  /** Deletes file */
+  /** 删除文件。 */
   unlinkSync(path: string): void
-  /** Renames/moves file */
+  /** 重命名或移动文件。 */
   renameSync(oldPath: string, newPath: string): void
-  /** Creates hard link */
+  /** 创建硬链接。 */
   linkSync(target: string, path: string): void
-  /** Creates symbolic link */
+  /** 创建符号链接。 */
   symlinkSync(target: string, path: string, type?: 'dir' | 'file' | 'junction'): void
-  /** Reads symbolic link */
+  /** 读取符号链接。 */
   readlinkSync(path: string): string
-  /** Resolves symbolic links and returns the canonical pathname */
+  /** 解析符号链接并返回规范路径名。 */
   realpathSync(path: string): string
 
-  // Directory operations
-  /** Creates directory recursively. Mode defaults to 0o777 & ~umask if not specified. */
+  // 目录操作。
+  /** 递归创建目录。未指定时 mode 默认为 0o777 & ~umask。 */
   mkdirSync(
     path: string,
     options?: {
       mode?: number
     },
   ): void
-  /** Lists directory contents with file type information */
+  /** 列出目录内容及文件类型信息。 */
   readdirSync(path: string): fs.Dirent[]
-  /** Lists directory contents as strings */
+  /** 以字符串形式列出目录内容。 */
   readdirStringSync(path: string): string[]
-  /** Checks if the directory is empty */
+  /** 检查目录是否为空。 */
   isDirEmptySync(path: string): boolean
-  /** Removes an empty directory */
+  /** 移除空目录。 */
   rmdirSync(path: string): void
-  /** Removes files and directories (with recursive option) */
+  /** 移除文件和目录，支持递归选项。 */
   rmSync(
     path: string,
     options?: {
@@ -107,41 +106,37 @@ export type FsOperations = {
       force?: boolean
     },
   ): void
-  /** Create a writable stream for writing data to a file. */
+  /** 创建用于向文件写入数据的可写流。 */
   createWriteStream(path: string): fs.WriteStream
-  /** Reads raw file bytes as Buffer asynchronously.
-   *  When maxBytes is set, only reads up to that many bytes. */
+  /** 异步以 Buffer 读取原始文件字节；设置 maxBytes 时最多读取该字节数。 */
   readFileBytes(path: string, maxBytes?: number): Promise<Buffer>
 }
 
 /**
- * Safely resolves a file path, handling symlinks and errors gracefully.
+ * 安全解析文件路径，并平稳处理符号链接和错误。
  *
- * Error handling strategy:
- * - If the file doesn't exist, returns the original path (allows for file creation)
- * - If symlink resolution fails (broken symlink, permission denied, circular links),
- *   returns the original path and marks it as not a symlink
- * - This ensures operations can continue with the original path rather than failing
+ * 错误处理策略：
+ * - 文件不存在时返回原始路径，以允许创建文件
+ * - 符号链接解析失败（损坏、权限不足、循环链接）时返回原始路径，并标记为非符号链接
+ * - 确保操作可继续使用原始路径，而非直接失败
  *
- * @param fs The filesystem implementation to use
- * @param filePath The path to resolve
- * @returns Object containing the resolved path and whether it was a symlink
+ * @param fs 要使用的文件系统实现
+ * @param filePath 要解析的路径
+ * @returns 包含解析后路径及其是否为符号链接的对象
  */
 export function safeResolvePath(
   fs: FsOperations,
   filePath: string,
 ): { resolvedPath: string; isSymlink: boolean; isCanonical: boolean } {
-  // Block UNC paths before any filesystem access to prevent network
-  // requests (DNS/SMB) during validation on Windows
+  // 在任何文件系统访问前阻止 UNC 路径，避免 Windows 校验期间发起 DNS/SMB 网络请求。
   if (filePath.startsWith('//') || filePath.startsWith('\\\\')) {
     return { resolvedPath: filePath, isSymlink: false, isCanonical: false }
   }
 
   try {
-    // Check for special file types (FIFOs, sockets, devices) before calling realpathSync.
-    // realpathSync can block on FIFOs waiting for a writer, causing hangs.
-    // If the file doesn't exist, lstatSync throws ENOENT which the catch
-    // below handles by returning the original path (allows file creation).
+    // 调用 realpathSync 前检查 FIFO、socket、device 等特殊文件类型。realpathSync
+    // 可能在 FIFO 上等待 writer 而挂起。文件不存在时 lstatSync 抛出 ENOENT，
+    // 下方 catch 会返回原始路径，以允许创建文件。
     const stats = fs.lstatSync(filePath)
     if (stats.isFIFO() || stats.isSocket() || stats.isCharacterDevice() || stats.isBlockDevice()) {
       return { resolvedPath: filePath, isSymlink: false, isCanonical: false }
@@ -151,25 +146,23 @@ export function safeResolvePath(
     return {
       resolvedPath,
       isSymlink: resolvedPath !== filePath,
-      // realpathSync returned: resolvedPath is canonical (all symlinks in
-      // all path components resolved). Callers can skip further symlink
-      // resolution on this path.
+      // realpathSync 已返回规范 resolvedPath，所有路径组件中的符号链接均已解析；
+      // 调用方可跳过进一步解析。
       isCanonical: true,
     }
   } catch (_error) {
-    // If lstat/realpath fails for any reason (ENOENT, broken symlink,
-    // EACCES, ELOOP, etc.), return the original path to allow operations
+    // lstat/realpath 因 ENOENT、损坏链接、EACCES、ELOOP 等原因失败时，
+    // 返回原始路径以允许继续操作。
     // to proceed
     return { resolvedPath: filePath, isSymlink: false, isCanonical: false }
   }
 }
 
 /**
- * Check if a file path is a duplicate and should be skipped.
- * Resolves symlinks to detect duplicates pointing to the same file.
- * If not a duplicate, adds the resolved path to loadedPaths.
+ * 检查文件路径是否重复并应跳过。解析符号链接以识别指向同一文件的重复项；
+ * 若不重复，则将解析后的路径加入 loadedPaths。
  *
- * @returns true if the file should be skipped (is duplicate)
+ * @returns 文件重复并应跳过时为 true
  */
 export function isDuplicatePath(
   fs: FsOperations,
@@ -185,19 +178,16 @@ export function isDuplicatePath(
 }
 
 /**
- * Resolve the deepest existing ancestor of a path via realpathSync, walking
- * up until it succeeds. Detects dangling symlinks (link entry exists, target
- * doesn't) via lstat and resolves them via readlink.
+ * 向上遍历直至 realpathSync 成功，解析路径中最深的现有祖先。通过 lstat 检测
+ * 悬空符号链接（链接项存在、目标不存在），并用 readlink 解析。
  *
- * Use when the input path may not exist (new file writes) and you need to
- * know where the write would ACTUALLY land after the OS follows symlinks.
+ * 输入路径可能不存在（写入新文件），且需要知道 OS 跟随符号链接后实际写入位置时使用。
  *
- * Returns the resolved absolute path with non-existent tail segments
- * rejoined, or undefined if no symlink was found in any existing ancestor
- * (the path's existing ancestors all resolve to themselves).
+ * 返回解析后的绝对路径，并重新拼接不存在的尾部路径段。若所有现有祖先均解析到
+ * 自身，即未发现符号链接，则返回 undefined。
  *
- * Handles: live parent symlinks, dangling file symlinks, dangling parent
- * symlinks. Same core algorithm as teamMemPaths.ts:realpathDeepestExisting.
+ * 处理有效父级符号链接、悬空文件符号链接、悬空父级符号链接。
+ * 核心算法与 teamMemPaths.ts:realpathDeepestExisting 相同。
  */
 export function resolveDeepestExistingAncestorSync(
   fs: FsOperations,
@@ -205,27 +195,26 @@ export function resolveDeepestExistingAncestorSync(
 ): string | undefined {
   let dir = absolutePath
   const segments: string[] = []
-  // Walk up using lstat (cheap, O(1)) to find the first existing component.
-  // lstat does not follow symlinks, so dangling symlinks are detected here.
-  // Only call realpathSync (expensive, O(depth)) once at the end.
+  // 使用开销较低、O(1) 的 lstat 向上查找首个现有组件。lstat 不跟随符号链接，
+  // 因此可检测悬空链接；仅在最后调用一次开销为 O(depth) 的 realpathSync。
   while (dir !== nodePath.dirname(dir)) {
     let st: fs.Stats
     try {
       st = fs.lstatSync(dir)
     } catch {
-      // lstat failed: truly non-existent. Walk up.
+      // lstat 失败，表示确实不存在，继续向上。
       segments.unshift(nodePath.basename(dir))
       dir = nodePath.dirname(dir)
       continue
     }
     if (st.isSymbolicLink()) {
-      // Found a symlink (live or dangling). Try realpath first (resolves
-      // chained symlinks); fall back to readlink for dangling symlinks.
+      // 找到有效或悬空符号链接。先尝试 realpath 以解析链接链；
+      // 悬空链接则退回 readlink。
       try {
         const resolved = fs.realpathSync(dir)
         return segments.length === 0 ? resolved : nodePath.join(resolved, ...segments)
       } catch {
-        // Dangling: realpath failed but lstat saw the link entry.
+        // 悬空链接：realpath 失败，但 lstat 已看到链接项。
         const target = fs.readlinkSync(dir)
         const absTarget = nodePath.isAbsolute(target)
           ? target
@@ -233,17 +222,16 @@ export function resolveDeepestExistingAncestorSync(
         return segments.length === 0 ? absTarget : nodePath.join(absTarget, ...segments)
       }
     }
-    // Existing non-symlink component. One realpath call resolves any
-    // symlinks in its ancestors. If none, return undefined (no symlink).
+    // 找到现有非符号链接组件。一次 realpath 即可解析其祖先中的全部符号链接；
+    // 若没有则返回 undefined。
     try {
       const resolved = fs.realpathSync(dir)
       if (resolved !== dir) {
         return segments.length === 0 ? resolved : nodePath.join(resolved, ...segments)
       }
     } catch {
-      // realpath can still fail (e.g. EACCES in ancestors). Return
-      // undefined — we can't resolve, and the logical path is already
-      // in pathSet for the caller.
+      // realpath 仍可能失败，如祖先目录 EACCES。此时无法解析，返回 undefined；
+      // 调用方的 pathSet 中已包含逻辑路径。
     }
     return undefined
   }
@@ -251,24 +239,23 @@ export function resolveDeepestExistingAncestorSync(
 }
 
 /**
- * Gets all paths that should be checked for permissions.
- * This includes the original path, all intermediate symlink targets in the chain,
- * and the final resolved path.
+ * 获取所有需要检查权限的路径，包括原始路径、符号链接链中的全部中间目标，
+ * 以及最终解析路径。
  *
- * For example, if test.txt -> /etc/passwd -> /private/etc/passwd:
+ * 例如 test.txt -> /etc/passwd -> /private/etc/passwd：
  * - test.txt (original path)
  * - /etc/passwd (intermediate symlink target)
  * - /private/etc/passwd (final resolved path)
  *
- * This is important for security: a deny rule for /etc/passwd should block
- * access even if the file is actually at /private/etc/passwd (as on macOS).
+ * 这对安全至关重要：即使文件实际位于 /private/etc/passwd（如 macOS），
+ * 针对 /etc/passwd 的 deny 规则也应阻止访问。
  *
- * @param path - The path to check (will be converted to absolute)
- * @returns An array of absolute paths to check permissions for
+ * @param path 要检查的路径，将转换为绝对路径
+ * @returns 需要检查权限的绝对路径数组
  */
 export function getPathsForPermissionCheck(inputPath: string): string[] {
-  // Expand tilde notation defensively - tools should do this in getPath(),
-  // but we normalize here as defense in depth for permission checking
+  // 防御性展开波浪号。tool 应在 getPath() 中处理，但此处仍规范化，
+  // 为权限检查提供纵深防御。
   let path = inputPath
   if (path === '~') {
     path = homedir().normalize('NFC')
@@ -279,38 +266,35 @@ export function getPathsForPermissionCheck(inputPath: string): string[] {
   const pathSet = new Set<string>()
   const fsImpl = getFsImplementation()
 
-  // Always check the original path
+  // 始终检查原始路径。
   pathSet.add(path)
 
-  // Block UNC paths before any filesystem access to prevent network
-  // requests (DNS/SMB) during validation on Windows
+  // 在任何文件系统访问前阻止 UNC 路径，避免 Windows 校验期间发起 DNS/SMB 网络请求。
   if (path.startsWith('//') || path.startsWith('\\\\')) {
     return Array.from(pathSet)
   }
 
-  // Follow the symlink chain, collecting ALL intermediate targets
-  // This handles cases like: test.txt -> /etc/passwd -> /private/etc/passwd
-  // We want to check all three paths, not just test.txt and /private/etc/passwd
+  // 沿符号链接链收集全部中间目标。对 test.txt -> /etc/passwd ->
+  // /private/etc/passwd，应检查全部三个路径，而非只检查首尾。
   try {
     let currentPath = path
     const visited = new Set<string>()
     const maxDepth = 40 // Prevent runaway loops, matches typical SYMLOOP_MAX
 
     for (let depth = 0; depth < maxDepth; depth++) {
-      // Prevent infinite loops from circular symlinks
+      // 防止循环符号链接造成无限循环。
       if (visited.has(currentPath)) {
         break
       }
       visited.add(currentPath)
 
       if (!fsImpl.existsSync(currentPath)) {
-        // Path doesn't exist (new file case). existsSync follows symlinks,
-        // so this is also reached for DANGLING symlinks (link entry exists,
-        // target doesn't). Resolve symlinks in the path and its ancestors
-        // so permission checks see the real destination. Without this,
+        // 路径不存在，属于新文件情况。existsSync 会跟随符号链接，因此悬空链接
+        //（链接项存在但目标不存在）也会到达此处。解析路径及其祖先中的符号链接，
+        // 使权限检查看到真实目标；否则以下情况会逃逸工作目录：
         // `./data -> /etc/cron.d/` (live parent symlink) or
         // `./evil.txt -> ~/.ssh/authorized_keys2` (dangling file symlink)
-        // would allow writes that escape the working directory.
+        // 此类写入原本会逃逸工作目录。
         if (currentPath === path) {
           const resolved = resolveDeepestExistingAncestorSync(fsImpl, path)
           if (resolved !== undefined) {
@@ -322,7 +306,7 @@ export function getPathsForPermissionCheck(inputPath: string): string[] {
 
       const stats = fsImpl.lstatSync(currentPath)
 
-      // Skip special file types that can cause issues
+      // 跳过可能引发问题的特殊文件类型。
       if (
         stats.isFIFO() ||
         stats.isSocket() ||
@@ -336,24 +320,23 @@ export function getPathsForPermissionCheck(inputPath: string): string[] {
         break
       }
 
-      // Get the immediate symlink target
+      // 获取直接符号链接目标。
       const target = fsImpl.readlinkSync(currentPath)
 
-      // If target is relative, resolve it relative to the symlink's directory
+      // 目标为相对路径时，相对于符号链接所在目录解析。
       const absoluteTarget = nodePath.isAbsolute(target)
         ? target
         : nodePath.resolve(nodePath.dirname(currentPath), target)
 
-      // Add this intermediate target to the set
+      // 将中间目标加入集合。
       pathSet.add(absoluteTarget)
       currentPath = absoluteTarget
     }
   } catch {
-    // If anything fails during chain traversal, continue with what we have
+    // 遍历链接链期间发生任何失败，都使用已收集结果继续。
   }
 
-  // Also add the final resolved path using realpathSync for completeness
-  // This handles any remaining symlinks in directory components
+  // 为完整性再用 realpathSync 添加最终解析路径，处理目录组件中的剩余符号链接。
   const { resolvedPath, isSymlink } = safeResolvePath(fsImpl, path)
   if (isSymlink && resolvedPath !== path) {
     pathSet.add(resolvedPath)
@@ -396,10 +379,10 @@ export const NodeFsOperations: FsOperations = {
     try {
       await mkdirPromise(dirPath, { recursive: true, ...options })
     } catch (e) {
-      // Bun/Windows: recursive:true throws EEXIST on directories with the
-      // FILE_ATTRIBUTE_READONLY bit set (Group Policy, OneDrive, desktop.ini).
-      // Bun's directoryExistsAt misclassifies DIRECTORY+READONLY as not-a-dir
-      // (bun-internal src/sys.zig existsAtType). The dir exists; ignore.
+      // Bun/Windows：对设置 FILE_ATTRIBUTE_READONLY 位的目录（Group Policy、
+      // OneDrive、desktop.ini），recursive:true 会抛出 EEXIST。Bun 的
+      // directoryExistsAt 会将 DIRECTORY+READONLY 误判为非目录
+      //（bun-internal src/sys.zig existsAtType）。目录确实存在，忽略。
       // https://github.com/anthropics/zy-code/issues/30924
       if (getErrnoCode(e) !== 'EEXIST') {
         throw e
@@ -452,8 +435,8 @@ export const NodeFsOperations: FsOperations = {
 
   appendFileSync(path, data, options) {
     using _ = slowLogging`fs.appendFileSync(${path}, ${data.length} chars)`
-    // For new files with explicit mode, use 'ax' (atomic create-with-mode) to avoid
-    // TOCTOU race between existence check and open. Fall back to normal append if exists.
+    // 对显式指定 mode 的新文件使用 'ax' 原子创建，避免存在性检查与 open 间的
+    // TOCTOU；文件已存在时退回普通 append。
     if (options?.mode !== undefined) {
       try {
         const fd = fs.openSync(path, 'ax', options.mode)
@@ -467,7 +450,7 @@ export const NodeFsOperations: FsOperations = {
         if (getErrnoCode(e) !== 'EEXIST') {
           throw e
         }
-        // File exists — fall through to normal append
+        // 文件已存在，继续执行普通 append。
       }
     }
     fs.appendFileSync(path, data)
@@ -519,10 +502,10 @@ export const NodeFsOperations: FsOperations = {
     try {
       fs.mkdirSync(dirPath, mkdirOptions)
     } catch (e) {
-      // Bun/Windows: recursive:true throws EEXIST on directories with the
-      // FILE_ATTRIBUTE_READONLY bit set (Group Policy, OneDrive, desktop.ini).
-      // Bun's directoryExistsAt misclassifies DIRECTORY+READONLY as not-a-dir
-      // (bun-internal src/sys.zig existsAtType). The dir exists; ignore.
+      // Bun/Windows：对设置 FILE_ATTRIBUTE_READONLY 位的目录（Group Policy、
+      // OneDrive、desktop.ini），recursive:true 会抛出 EEXIST。Bun 的
+      // directoryExistsAt 会将 DIRECTORY+READONLY 误判为非目录
+      //（bun-internal src/sys.zig existsAtType）。目录确实存在，忽略。
       // https://github.com/anthropics/zy-code/issues/30924
       if (getErrnoCode(e) !== 'EEXIST') {
         throw e
@@ -584,29 +567,27 @@ export const NodeFsOperations: FsOperations = {
   },
 }
 
-// The currently active filesystem implementation
+// 当前生效的文件系统实现。
 let activeFs: FsOperations = NodeFsOperations
 
 /**
- * Overrides the filesystem implementation. Note: This function does not
- * automatically update cwd.
- * @param implementation The filesystem implementation to use
+ * 覆盖文件系统实现。注意：此函数不会自动更新 cwd。
+ * @param implementation 要使用的文件系统实现
  */
 export function setFsImplementation(implementation: FsOperations): void {
   activeFs = implementation
 }
 
 /**
- * Gets the currently active filesystem implementation
- * @returns The currently active filesystem implementation
+ * 获取当前生效的文件系统实现。
+ * @returns 当前生效的文件系统实现
  */
 export function getFsImplementation(): FsOperations {
   return activeFs
 }
 
 /**
- * Resets the filesystem implementation to the default Node.js implementation.
- * Note: This function does not automatically update cwd.
+ * 将文件系统实现重置为默认 Node.js 实现。注意：此函数不会自动更新 cwd。
  */
 export function setOriginalFsImplementation(): void {
   activeFs = NodeFsOperations
@@ -619,9 +600,8 @@ export type ReadFileRangeResult = {
 }
 
 /**
- * Read up to `maxBytes` from a file starting at `offset`.
- * Returns a flat string from Buffer — no sliced string references to a
- * larger parent. Returns null if the file is smaller than the offset.
+ * 从文件的 `offset` 位置开始读取最多 `maxBytes`。从 Buffer 返回独立字符串，
+ * 不保留指向更大父字符串的切片引用。文件小于 offset 时返回 null。
  */
 export async function readFileRange(
   path: string,
@@ -658,8 +638,7 @@ export async function readFileRange(
 }
 
 /**
- * Read the last `maxBytes` of a file.
- * Returns the whole file if it's smaller than maxBytes.
+ * 读取文件末尾 `maxBytes` 字节；文件较小时返回完整内容。
  */
 export async function tailFile(path: string, maxBytes: number): Promise<ReadFileRangeResult> {
   await using fh = await open(path, 'r')
@@ -693,10 +672,9 @@ export async function tailFile(path: string, maxBytes: number): Promise<ReadFile
 }
 
 /**
- * Async generator that yields lines from a file in reverse order.
- * Reads the file backwards in chunks to avoid loading the entire file into memory.
- * @param path - The path to the file to read
- * @returns An async generator that yields lines in reverse order
+ * 以逆序产出文件各行的异步生成器。分块向前读取文件，避免将完整文件载入内存。
+ * @param path 要读取的文件路径
+ * @returns 逆序产出各行的异步生成器
  */
 export async function* readLinesReverse(path: string): AsyncGenerator<string, void, undefined> {
   const CHUNK_SIZE = 1024 * 4
@@ -704,10 +682,9 @@ export async function* readLinesReverse(path: string): AsyncGenerator<string, vo
   try {
     const stats = await fileHandle.stat()
     let position = stats.size
-    // Carry raw bytes (not a decoded string) across chunk boundaries so that
-    // multi-byte UTF-8 sequences split by the 4KB boundary are not corrupted.
-    // Decoding per-chunk would turn a split sequence into U+FFFD on both sides,
-    // which for history.jsonl means JSON.parse throws and the entry is dropped.
+    // 跨 chunk 边界携带原始字节而非已解码字符串，避免被 4KB 边界拆开的多字节
+    // UTF-8 序列损坏。逐 chunk 解码会使拆分序列两侧都变成 U+FFFD；对
+    // history.jsonl 而言，这会导致 JSON.parse 抛错并丢弃条目。
     let remainder = Buffer.alloc(0)
     const buffer = Buffer.alloc(CHUNK_SIZE)
 

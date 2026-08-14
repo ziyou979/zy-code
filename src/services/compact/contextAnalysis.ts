@@ -49,7 +49,7 @@ export function analyzeContext(messages: Message[]): TokenStats {
     )
   })
 
-  // Calculate duplicate file reads
+  // 计算重复读取文件产生的开销。
   fileReadStats.forEach((data, path) => {
     if (data.count > 1) {
       const averageTokensPerRead = Math.floor(data.totalTokens / data.count)
@@ -78,7 +78,7 @@ function processBlock(
 
   switch (block.type as string) {
     case 'text':
-      // Check if this is a local command output
+      // 检查是否为本地命令输出。
       if (
         message.type === 'user' &&
         'text' in block &&
@@ -96,7 +96,7 @@ function processBlock(
         increment(stats.toolRequests, toolName, tokens)
         toolIds.set(block.id, toolName)
 
-        // Track Read tool file paths
+        // 记录 Read tool 读取的文件路径。
         if (
           toolName === 'Read' &&
           'input' in block &&
@@ -116,7 +116,7 @@ function processBlock(
         const toolName = toolIds.get(block.toolCallId) || 'unknown'
         increment(stats.toolResults, toolName, tokens)
 
-        // Track file read tokens
+        // 记录文件读取消耗的 token。
         if (toolName === 'Read') {
           const path = readToolPaths.get(block.toolCallId)
           if (path) {
@@ -146,7 +146,7 @@ function processBlock(
     case 'text_editor_code_execution_tool_result':
     case 'tool_search_tool_result':
     case 'compaction':
-      // Don't care about these for now..
+      // 这些类型目前统一计入其他开销。
       stats.other += tokens
       break
   }
@@ -199,12 +199,12 @@ export function tokenStatsToStatsigMetrics(stats: TokenStats): Record<string, nu
     metrics.tool_request_percent = Math.round((toolRequestTotal / stats.total) * 100)
     metrics.tool_result_percent = Math.round((toolResultTotal / stats.total) * 100)
 
-    // Add individual tool request percentages
+    // 记录各 tool 请求所占比例。
     stats.toolRequests.forEach((tokens, tool) => {
       metrics[`tool_request_${tool}_percent`] = Math.round((tokens / stats.total) * 100)
     })
 
-    // Add individual tool result percentages
+    // 记录各 tool 结果所占比例。
     stats.toolResults.forEach((tokens, tool) => {
       metrics[`tool_result_${tool}_percent`] = Math.round((tokens / stats.total) * 100)
     })

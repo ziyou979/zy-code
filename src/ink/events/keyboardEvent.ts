@@ -2,12 +2,12 @@ import type { ParsedKey } from '../parseKeypress.js'
 import { TerminalEvent } from './terminalEvent.js'
 
 /**
- * Keyboard event dispatched through the DOM tree via capture/bubble.
+ * 通过捕获和冒泡阶段在 DOM 树中分发的键盘事件。
  *
- * Follows browser KeyboardEvent semantics: `key` is the literal character
- * for printable keys ('a', '3', ' ', '/') and a multi-char name for
- * special keys ('down', 'return', 'escape', 'f1'). The idiomatic
- * printable-char check is `e.key.length === 1`.
+ * 遵循浏览器 KeyboardEvent 语义：可打印键的 `key` 是其原始字符
+ *（'a'、'3'、' '、'/'），特殊键则使用多字符名称
+ *（'down'、'return'、'escape'、'f1'）。通常用 `e.key.length === 1`
+ * 判断是否为可打印字符。
  */
 export class KeyboardEvent extends TerminalEvent {
   readonly key: string
@@ -33,14 +33,14 @@ function keyFromParsed(parsed: ParsedKey): string {
   const seq = parsed.sequence ?? ''
   const name = parsed.name ?? ''
 
-  // Ctrl combos: sequence is a control byte (\x03 for ctrl+c), name is the
-  // letter. Browsers report e.key === 'c' with e.ctrlKey === true.
+  // Ctrl 组合键：sequence 是控制字节（ctrl+c 对应 \x03），name 是字母。
+  // 浏览器会报告 e.key === 'c' 且 e.ctrlKey === true。
   if (parsed.ctrl) {
     return name
   }
 
-  // Single printable char (space through ~, plus anything above ASCII):
-  // use the literal char. Browsers report e.key === '3', not 'Digit3'.
+  // 单个可打印字符（空格到 ~，以及 ASCII 以上的字符）直接使用原始字符。
+  // 浏览器会报告 e.key === '3'，而不是 'Digit3'。
   if (seq.length === 1) {
     const code = seq.charCodeAt(0)
     if (code >= 0x20 && code !== 0x7f) {
@@ -48,8 +48,8 @@ function keyFromParsed(parsed: ParsedKey): string {
     }
   }
 
-  // Special keys (arrows, F-keys, return, tab, escape, etc.): sequence is
-  // either an escape sequence (\x1b[B) or a control byte (\r, \t), so use
-  // the parsed name. Browsers report e.key === 'ArrowDown'.
+  // 特殊键（方向键、F 键、return、tab、escape 等）的 sequence 是
+  // escape sequence（\x1b[B）或控制字节（\r、\t），因此使用解析后的 name。
+  // 浏览器会报告 e.key === 'ArrowDown'。
   return name || seq
 }

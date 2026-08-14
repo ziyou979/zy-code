@@ -1,4 +1,4 @@
-// Transport Interface - base type for all transport implementations.
+// Transport 接口：所有 transport 实现的基础类型。
 
 import type { StdinMessage, StdoutMessage } from 'src/types/wire/control.js'
 

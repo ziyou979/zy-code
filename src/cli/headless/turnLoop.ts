@@ -199,16 +199,15 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
   idleTimeout.stop()
 
   headlessProfilerCheckpoint('run_entry')
-  // TODO(custom-tool-refactor): Should move to the init message, like browser
+  // TODO(custom-tool-refactor)：应像 browser 一样移到 init 消息中
 
   await mcp.updateSdkMcp()
   headlessProfilerCheckpoint('after_updateSdkMcp')
 
-  // Resolve deferred plugin installation (ZY_CODE_SYNC_PLUGIN_INSTALL).
-  // The promise was started eagerly so installation overlaps with other init.
-  // Awaiting here guarantees plugins are available before the first ask().
-  // If ZY_CODE_SYNC_PLUGIN_INSTALL_TIMEOUT_MS is set, races against that
-  // deadline and proceeds without plugins on timeout (logging an error).
+  // 等待延迟的 plugin 安装（ZY_CODE_SYNC_PLUGIN_INSTALL）。promise 已提前启动，使安装与其他
+  // 初始化并行；此处 await 可保证首次 ask() 前 plugin 可用。若设置
+  // ZY_CODE_SYNC_PLUGIN_INSTALL_TIMEOUT_MS，则与该截止时间竞争；超时后记录错误并在无 plugin
+  // 状态下继续。
   if (mcp.pluginInstallPromise) {
     const timeoutMs = parseInt(process.env.ZY_CODE_SYNC_PLUGIN_INSTALL_TIMEOUT_MS || '', 10)
     if (timeoutMs > 0) {
@@ -229,29 +228,25 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
     }
     mcp.pluginInstallPromise = null
 
-    // Refresh commands, agents, and hooks now that plugins are installed
+    // plugin 安装完成后刷新 command、agent 与 hook
     await mcp.refreshPluginState()
 
-    // Set up hot-reload for plugin hooks now that the initial install is done.
-    // In sync-install mode, setup.ts skips this to avoid racing with the install.
+    // 初始安装完成后为 plugin hook 设置热重载。同步安装模式下 setup.ts 会跳过此步骤，避免与
+    // 安装过程竞争。
     const { setupPluginHookHotReload } = await import('../../services/plugins/loadPluginHooks.js')
     setupPluginHookHotReload()
   }
 
-  // Only main-thread commands (agentId===undefined) — subagent
-  // notifications are drained by the subagent's mid-turn gate in query.ts.
-  // Defined outside the try block so it's accessible in the post-finally
-  // queue re-checks at the bottom of run().
+  // 仅处理主线程 command（agentId === undefined）；子代理通知由 query.ts 中子代理的 turn
+  // 中途关卡清空。定义在 try 块外，使 run() 底部 finally 后的队列复查也能访问。
   const isMainThread = (cmd: QueuedCommand) => cmd.agentId === undefined
 
   try {
     let command: QueuedCommand | undefined
     let waitingForAgents = false
 
-    // Extract command processing into a named function for the do-while pattern.
-    // Drains the queue, batching consecutive prompt-mode commands into one
-    // ask() call so messages that queued up during a long turn coalesce
-    // into a single follow-up turn instead of N separate turns.
+    // 将 command 处理提取为命名函数供 do-while 使用。清空队列时，把连续 prompt 模式 command
+    // 批量合并到一次 ask()，使长 turn 期间积累的消息合并为一个后续 turn，而非 N 个独立 turn。
     const drainCommandQueue = async () => {
       while ((command = dequeue(isMainThread))) {
         if (
@@ -262,9 +257,8 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           throw new Error('only prompt commands are supported in streaming mode')
         }
 
-        // Non-prompt commands (task-notification, orphaned-permission) carry
-        // side effects or orphanedPermission state, so they process singly.
-        // Prompt commands greedily collect followers with matching workload.
+        // 非 prompt command（task-notification、orphaned-permission）带有副作用或
+        // orphanedPermission 状态，因此逐个处理。prompt command 则尽量收集 workload 相同的后续项。
         const batch: QueuedCommand[] = [command]
         if (command.mode === 'prompt') {
           while (canBatchWith(command, peek(isMainThread))) {
@@ -280,11 +274,9 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
         }
         const batchUuids = batch.map((c) => c.uuid).filter((u) => u !== undefined)
 
-        // QueryEngine will emit a replay for command.uuid (the last uuid in
-        // the batch) via its messagesToAck path. Emit replays here for the
-        // rest so consumers that track per-uuid delivery (clank's
-        // asyncMessages footer, CCR) see an ack for every message they sent,
-        // not just the one that survived the merge.
+        // QueryEngine 会通过 messagesToAck 路径为 command.uuid（批次最后一个 UUID）发送 replay。
+        // 此处为其余项发送 replay，使按 UUID 跟踪投递的消费方（clank 的 asyncMessages footer、
+        // CCR）能看到每条消息的 ack，而非只有合并后保留的那条。
         if (options.replayUserMessages && batch.length > 1) {
           for (const c of batch) {
             if (c.uuid && c.uuid !== command.uuid) {
@@ -306,10 +298,9 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           }
         }
 
-        // Combine all MCP clients. appState.mcp is populated incrementally
-        // per-server by main.tsx (mirrors useManageMCPConnections). Reading
-        // fresh per-command means late-connecting servers are visible on the
-        // next turn. registerElicitationHandlers is idempotent (tracking set).
+        // 合并所有 MCP client。main.tsx 按 server 增量填充 appState.mcp，与
+        // useManageMCPConnections 一致。每个 command 都重新读取，使较晚连接的 server 在下个 turn
+        // 可见。registerElicitationHandlers 通过集合跟踪，调用幂等。
         const appState = getAppState()
         const allMcpClients = [
           ...appState.mcp.clients,
@@ -317,11 +308,9 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           ...mcp.dynamicMcpState.clients,
         ]
         mcp.registerElicitationHandlers(allMcpClients)
-        // Channel handlers for servers allowlisted via --channels at
-        // construction time (or enableChannel() mid-session). Runs every
-        // turn like registerElicitationHandlers — idempotent per-client
-        // (setNotificationHandler replaces, not stacks) and no-ops for
-        // non-allowlisted servers (one feature-flag check).
+        // 为构造时通过 --channels 加入允许列表的 server 注册 channel handler，也支持会话中途调用
+        // enableChannel()。与 registerElicitationHandlers 一样每个 turn 都运行；对各 client 幂等
+        //（setNotificationHandler 会替换而非叠加），不在允许列表的 server 只做一次功能开关检查。
         for (const client of allMcpClients) {
           reregisterChannelHandlerAfterReconnect(client)
         }
@@ -332,14 +321,12 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           notifyCommandLifecycle(uuid, 'started')
         }
 
-        // Task notifications arrive when background agents complete.
-        // Emit an SDK system event for SDK consumers, then fall through
-        // to ask() so the model sees the agent result and can act on it.
-        // This matches TUI behavior where useQueueProcessor always feeds
-        // notifications to the model regardless of coordinator mode.
+        // 后台 agent 完成时会收到 task 通知。先为 SDK 消费方发送系统事件，再继续进入 ask()，
+        // 使模型看到并处理 agent 结果。这与 TUI 行为一致：useQueueProcessor 无论 coordinator
+        // 模式如何，都会将通知交给模型。
         if (command.mode === 'task-notification') {
           const notificationText = typeof command.value === 'string' ? command.value : ''
-          // Parse the XML-formatted notification
+          // 解析 XML 格式的通知
           const taskIdMatch = notificationText.match(/<task-id>([^<]+)<\/task-id>/)
           const toolUseIdMatch = notificationText.match(/<tool-use-id>([^<]+)<\/tool-use-id>/)
           const outputFileMatch = notificationText.match(/<output-file>([^<]+)<\/output-file>/)
@@ -363,13 +350,10 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           const toolUsesMatch = usageContent.match(/<tool_uses>(\d+)<\/tool_uses>/)
           const durationMsMatch = usageContent.match(/<duration_ms>(\d+)<\/duration_ms>/)
 
-          // Only emit a task_notification SDK event when a <status> tag is
-          // present — that means this is a terminal notification (completed/
-          // failed/stopped). Stream events from enqueueStreamEvent carry no
-          // <status> (they're progress pings); emitting them here would
-          // default to 'completed' and falsely close the task for SDK
-          // consumers. Terminal bookends are now emitted directly via
-          // emitTaskTerminatedBridge, so skipping statusless events is safe.
+          // 仅当存在 <status> 标签时发送 task_notification SDK 事件，说明这是终态通知
+          //（completed/failed/stopped）。enqueueStreamEvent 的流事件不含 <status>，只是进度 ping；
+          // 若在此发送会默认成 'completed'，导致 SDK 消费方错误关闭任务。终态边界事件现由
+          // emitTaskTerminatedBridge 直接发送，因此安全跳过无 status 的事件。
           if (statusMatch) {
             output.enqueue({
               type: 'system',
@@ -391,7 +375,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
               uuid: randomUUID(),
             })
           }
-          // No continue -- fall through to ask() so the model processes the result
+          // 不 continue，继续进入 ask() 让模型处理结果
         }
 
         const input = command.value
@@ -402,14 +386,14 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           })
         }
 
-        // Abort any in-flight suggestion generation and track acceptance
+        // 中止正在进行的建议生成并跟踪接受情况
         suggestionState.abortController?.abort()
         suggestionState.abortController = null
         suggestionState.pendingSuggestion = null
         suggestionState.pendingLastEmittedEntry = null
         if (suggestionState.lastEmitted) {
           if (command.mode === 'prompt') {
-            // SDK user messages enqueue UserContentBlock[], not a plain string
+            // SDK 用户消息入队的是 UserContentBlock[]，而非普通字符串
             const inputText =
               typeof input === 'string'
                 ? input
@@ -438,11 +422,9 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
 
         headlessProfilerCheckpoint('before_ask')
         startQueryProfile()
-        // Per-iteration ALS context so bg agents spawned inside ask()
-        // inherit workload across their detached awaits. In-process cron
-        // stamps cmd.workload; the SDK --workload flag is options.workload.
-        // const-capture: TS loses `while ((command = dequeue()))` narrowing
-        // inside the closure.
+        // 每轮创建 ALS context，使 ask() 内启动的后台 agent 在脱离主流程的 await 中继承 workload。
+        // 进程内 cron 写入 cmd.workload，SDK --workload 参数对应 options.workload。使用 const 捕获，
+        // 因为 TS 会在闭包内丢失 `while ((command = dequeue()))` 的类型缩窄。
         const cmd = command
         await runWithWorkload(cmd.workload ?? options.workload, async () => {
           for await (const message of ask({
@@ -510,18 +492,16 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
               })
             },
           })) {
-            // Forward messages to bridge incrementally (mid-turn) so
-            // zy.ai sees progress and the connection stays alive
-            // while blocked on permission requests.
+            // turn 进行中增量向 bridge 转发消息，让 zy.ai 能看到进度，并在等待权限请求时保持连接。
             forwardMessagesToBridge()
 
             if (message.type === 'result') {
-              // Flush pending SDK events so they appear before result on the stream.
+              // flush 待发送的 SDK 事件，使其在流中的 result 前出现。
               for (const event of drainWireEvents()) {
                 output.enqueue(event)
               }
 
-              // Hold-back: don't emit result while background agents are running
+              // 延迟发送：后台 agent 运行期间不发送 result
               const currentState = getAppState()
               if (
                 getRunningTasks(currentState).some(
@@ -536,8 +516,8 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
                 output.enqueue(message)
               }
             } else {
-              // Flush SDK events (task_started, task_progress) so background
-              // agent progress is streamed in real-time, not batched until result.
+              // flush SDK 事件（task_started、task_progress），实时流式发送后台 agent 进度，而不是
+              // 等到 result 时批量发送。
               for (const event of drainWireEvents()) {
                 output.enqueue(event)
               }
@@ -550,7 +530,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           notifyCommandLifecycle(uuid, 'completed')
         }
 
-        // Forward messages to bridge after each turn
+        // 每个 turn 后向 bridge 转发消息
         forwardMessagesToBridge()
         getBridgeHandle()?.sendResult()
 
@@ -568,13 +548,12 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           })
         }
 
-        // Generate and emit prompt suggestion for SDK consumers
+        // 为 SDK 消费方生成并发送 prompt 建议
         if (
           options.promptSuggestions &&
           !isEnvDefinedFalsy(process.env.ZY_CODE_ENABLE_PROMPT_SUGGESTION)
         ) {
-          // TS narrows suggestionState to never in the while loop body;
-          // cast via unknown to reset narrowing.
+          // TS 在 while 循环体内将 suggestionState 缩窄为 never；经 unknown 断言重置缩窄。
           const state = suggestionState as unknown as typeof suggestionState
           state.abortController?.abort()
           const localAbort = new AbortController()
@@ -584,8 +563,8 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           if (!cacheSafeParams) {
             logSuggestionSuppressed('sdk_no_params', undefined, undefined, 'sdk')
           } else {
-            // Use a ref object so the IIFE's finally can compare against its own
-            // promise without a self-reference (which upsets TypeScript's flow analysis).
+            // 使用 ref 对象，使 IIFE 的 finally 能与自身 promise 比较而不形成自引用；自引用会
+            // 干扰 TypeScript 流分析。
             const ref: { promise: Promise<void> | null } = { promise: null }
             ref.promise = (async () => {
               try {
@@ -611,11 +590,9 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
                   promptId: result.promptId,
                   generationRequestId: result.generationRequestId,
                 }
-                // Defer emission if the result is being held for background agents,
-                // so that prompt_suggestion always arrives after result.
-                // Only set lastEmitted when the suggestion is actually delivered
-                // to the consumer; deferred suggestions may be discarded before
-                // delivery if a new command arrives first.
+                // 若 result 因后台 agent 而暂缓，则也延迟发送，确保 prompt_suggestion 始终位于
+                // result 之后。只有建议实际送达消费方时才设置 lastEmitted；若新 command 先到，
+                // 延迟建议可能在投递前被丢弃。
                 if (loopState.heldBackResult) {
                   suggestionState.pendingSuggestion = suggestionMsg
                   suggestionState.pendingLastEmittedEntry = {
@@ -646,7 +623,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           }
         }
 
-        // Log headless profiler metrics for this turn and start next turn
+        // 记录本 turn 的 headless profiler 指标并开始下一 turn
         // 内存优化：每个 turn 结束都采样一次，多 turn 对比可发现单调上涨的泄漏
         headlessProfilerMemorySample()
         logHeadlessProfilerTurn()
@@ -655,12 +632,11 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
       }
     }
 
-    // Use a do-while loop to drain commands and then wait for any
-    // background agents that are still running. When agents complete,
-    // their notifications are enqueued and the loop re-drains.
+    // 使用 do-while 清空 command，随后等待仍在运行的后台 agent。agent 完成后通知会入队，
+    // 循环再次清空队列。
     do {
-      // Drain SDK events (task_started, task_progress) before command queue
-      // so progress events precede task_notification on the stream.
+      // 在 command 队列前清空 SDK 事件（task_started、task_progress），使流中的进度事件先于
+      // task_notification。
       for (const event of drainWireEvents()) {
         output.enqueue(event)
       }
@@ -668,14 +644,10 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
       loopState.runPhase = 'draining_commands'
       await drainCommandQueue()
 
-      // Check for running background tasks before exiting.
-      // Exclude in_process_teammate — teammates are long-lived by design
-      // (status: 'running' for their whole lifetime, cleaned up by the
-      // shutdown protocol, not by transitioning to 'completed'). Waiting
-      // on them here loops forever (gh-30008). Same exclusion already
-      // exists at useBackgroundTaskNavigation.ts:55 for the same reason;
-      // L1839 above is already narrower (type === 'local_agent') so it
-      // doesn't hit this.
+      // 退出前检查运行中的后台任务。排除 in_process_teammate：teammate 按设计长期存活，整个
+      // 生命周期 status 都是 'running'，由关停协议清理而非转为 'completed'。在此等待会导致
+      // 永久循环（gh-30008）。useBackgroundTaskNavigation.ts:55 已因同一原因排除；上方 L1839
+      // 已缩窄为 type === 'local_agent'，不会受影响。
       waitingForAgents = false
       {
         const state = getAppState()
@@ -687,10 +659,10 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           waitingForAgents = true
           if (!hasMainThreadQueued) {
             loopState.runPhase = 'waiting_for_agents'
-            // No commands ready yet, wait for tasks to complete
+            // 尚无可处理 command，等待任务完成
             await sleep(100)
           }
-          // Loop back to drain any newly queued commands
+          // 返回循环，清空新入队的 command
         }
       }
     } while (waitingForAgents)
@@ -700,7 +672,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
       loopState.heldBackResult = null
       if (suggestionState.pendingSuggestion) {
         output.enqueue(suggestionState.pendingSuggestion)
-        // Now that the suggestion is actually delivered, record it for acceptance tracking
+        // 建议现已实际送达，记录下来以跟踪接受情况
         if (suggestionState.pendingLastEmittedEntry) {
           suggestionState.lastEmitted = {
             ...suggestionState.pendingLastEmittedEntry,
@@ -712,8 +684,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
       }
     }
   } catch (error) {
-    // Emit error result message before shutting down
-    // Write directly to structuredIO to ensure immediate delivery
+    // 关停前发送错误 result 消息；直接写入 structuredIO 以确保立即送达
     try {
       await structuredIO.write({
         type: 'result',
@@ -732,34 +703,32 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
         errors: [errorMessage(error), ...getInMemoryErrors().map((_) => _.error)],
       })
     } catch {
-      // If we can't emit the error result, continue with shutdown anyway
+      // 即使无法发送错误 result，也继续关停
     }
     suggestionState.abortController?.abort()
     gracefulShutdownSync(1)
     return
   } finally {
     loopState.runPhase = 'finally_flush'
-    // Flush pending internal events before going idle
+    // 进入空闲前 flush 待发送的内部事件
     await structuredIO.flushInternalEvents()
     loopState.runPhase = 'finally_post_flush'
     if (!isShuttingDown()) {
       notifySessionStateChanged('idle')
-      // Drain so the idle session_state_changed SDK event (plus any
-      // terminal task_notification bookends emitted during bg-agent
-      // teardown) reach the output stream before we block on the next
-      // command. The do-while drain above only runs while
-      // waitingForAgents; once we're here the next drain would be the
-      // top of the next run(), which won't come if input is idle.
+      // 清空队列，使 idle session_state_changed SDK 事件及后台 agent 清理期间发送的终态
+      // task_notification 边界事件，在等待下个 command 前到达输出流。上方 do-while 只在
+      // waitingForAgents 时清空；执行到此处后，下一次清空要等到下次 run() 开头，而输入空闲时
+      // 不会触发。
       for (const event of drainWireEvents()) {
         output.enqueue(event)
       }
     }
     loopState.running = false
-    // Start idle timer when we finish processing and are waiting for input
+    // 处理完成并等待输入时启动空闲计时器
     idleTimeout.start()
   }
 
-  // Proactive tick: if proactive is active and queue is empty, inject a tick
+  // proactive tick：若 proactive 活跃且队列为空，则注入一个 tick
   if (
     (feature('PROACTIVE') || feature('KAIROS')) &&
     proactiveModule &&
@@ -772,19 +741,16 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
     }
   }
 
-  // Re-check the queue after releasing the mutex. A message may have
-  // arrived (and called run()) between the last dequeue() returning
-  // undefined and `running = false` above. In that case the caller
-  // saw `running === true` and returned immediately, leaving the
-  // message stranded in the queue with no one to process it.
+  // 释放 mutex 后重新检查队列。在最后一次 dequeue() 返回 undefined 与上方设置
+  // `running = false` 之间，消息可能已到达并调用 run()；此时调用方看到 `running === true`
+  // 会立即返回，导致消息滞留队列且无人处理。
   if (peek(isMainThread) !== undefined) {
     kickRun()
     return
   }
 
-  // Check for unread teammate messages and process them
-  // This mirrors what useInboxPoller does in interactive REPL mode
-  // Poll until no more messages (teammates may still be working)
+  // 检查并处理未读 teammate 消息，与交互式 REPL 模式中的 useInboxPoller 一致。持续轮询到
+  // 没有消息为止，此时 teammate 仍可能在工作。
   {
     const currentAppState = getAppState()
     const teamContext = currentAppState.teamContext
@@ -792,13 +758,11 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
     if (teamContext && isTeamLead(teamContext)) {
       const agentName = 'team-lead'
 
-      // Poll for messages while teammates are active
-      // This is needed because teammates may send messages while we're waiting
-      // Keep polling until the team is shut down
+      // teammate 活跃期间持续轮询消息，因为等待期间他们仍可能发送消息；一直轮询到 team 关停。
       const POLL_INTERVAL_MS = 500
 
       while (true) {
-        // Check if teammates are still active
+        // 检查 teammate 是否仍活跃
         const refreshedState = getAppState()
         const hasActiveTeammates =
           hasActiveInProcessTeammates(refreshedState) ||
@@ -815,11 +779,11 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
         if (unread.length > 0) {
           logForDebugging(`[print.ts] Team-lead found ${unread.length} unread messages`)
 
-          // Mark as read immediately to avoid duplicate processing
+          // 立即标记为已读，避免重复处理
           await markMessagesAsRead(agentName, refreshedState.teamContext?.teamName)
 
-          // Process shutdown_approved messages - remove teammates from team file
-          // This mirrors what useInboxPoller does in interactive mode (lines 546-606)
+          // 处理 shutdown_approved 消息，从 team 文件移除 teammate；与交互模式中
+          // useInboxPoller 的处理一致。
           const teamName = refreshedState.teamContext?.teamName
           for (const m of unread) {
             const shutdownApproval = isShutdownApproved(m.text)
@@ -827,7 +791,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
               const teammateToRemove = shutdownApproval.from
               logForDebugging(`[print.ts] Processing shutdown_approved from ${teammateToRemove}`)
 
-              // Find the teammate ID by name
+              // 按名称查找 teammate ID
               const teammateId = refreshedState.teamContext?.teammates
                 ? Object.entries(refreshedState.teamContext.teammates).find(
                     ([, t]) => t.name === teammateToRemove,
@@ -835,17 +799,17 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
                 : undefined
 
               if (teammateId) {
-                // Remove from team file
+                // 从 team 文件移除
                 removeTeammateFromTeamFile(teamName, {
                   agentId: teammateId,
                   name: teammateToRemove,
                 })
                 logForDebugging(`[print.ts] Removed ${teammateToRemove} from team file`)
 
-                // Unassign tasks owned by this teammate
+                // 解除分配给该 teammate 的任务
                 await unassignTeammateTasks(teamName, teammateId, teammateToRemove, 'shutdown')
 
-                // Remove from teamContext in AppState
+                // 从 AppState 的 teamContext 移除
                 setAppState((prev) => {
                   if (!prev.teamContext?.teammates) {
                     return prev
@@ -866,7 +830,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
             }
           }
 
-          // Format messages same as useInboxPoller
+          // 按 useInboxPoller 的方式格式化消息
           const formatted = unread
             .map(
               (m: { from: string; text: string; color?: string }) =>
@@ -874,7 +838,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
             )
             .join('\n\n')
 
-          // Enqueue and process
+          // 入队并处理
           enqueue({
             mode: 'prompt',
             value: formatted,
@@ -884,8 +848,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           return // run() will come back here after processing
         }
 
-        // No messages - check if we need to prompt for shutdown
-        // If input is closed and teammates are active, inject shutdown prompt once
+        // 没有消息时检查是否需要提示关停。若输入已关闭且 teammate 仍活跃，只注入一次关停 prompt。
         if (loopState.inputClosed && !loopState.shutdownPromptInjected) {
           loopState.shutdownPromptInjected = true
           logForDebugging(
@@ -900,22 +863,22 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           return // run() will come back here after processing
         }
 
-        // Wait and check again
+        // 等待后再次检查
         await sleep(POLL_INTERVAL_MS)
       }
     }
   }
 
   if (loopState.inputClosed) {
-    // Check for active swarm that needs shutdown
+    // 检查需要关停的活跃 swarm
     const hasActiveSwarm = await (async () => {
-      // Wait for any working in-process team members to finish
+      // 等待所有仍在工作的进程内 team member 完成
       const currentAppState = getAppState()
       if (hasWorkingInProcessTeammates(currentAppState)) {
         await waitForTeammatesToBecomeIdle(setAppState, currentAppState)
       }
 
-      // Re-fetch state after potential wait
+      // 可能等待后重新获取状态
       const refreshedAppState = getAppState()
       const refreshedTeamContext = refreshedAppState.teamContext
       const hasTeamMembersNotCleanedUp =
@@ -925,7 +888,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
     })()
 
     if (hasActiveSwarm) {
-      // Team members are idle or pane-based - inject prompt to shut down team
+      // team member 已空闲或基于 pane 运行，注入 prompt 以关闭 team
       enqueue({
         mode: 'prompt',
         value: SHUTDOWN_TEAM_PROMPT,
@@ -933,7 +896,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
       })
       kickRun()
     } else {
-      // Wait for any in-flight push suggestion before closing the output stream.
+      // 关闭输出流前等待正在进行的 push suggestion。
       if (suggestionState.inflightPromise) {
         await Promise.race([suggestionState.inflightPromise, sleep(5000)])
       }

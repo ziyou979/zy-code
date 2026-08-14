@@ -1,11 +1,11 @@
 /**
- * Fetches MCP skills for a given client by discovering skill:// resources.
- * This is a stub implementation for external builds.
+ * 通过发现 skill:// resource，为指定 client 获取 MCP skill。
+ * 这是供外部 build 使用的占位实现。
  */
 export async function fetchMcpSkillsForClient(_client: unknown): Promise<unknown[]> {
-  // Stub: returns empty array in external builds
+  // 占位逻辑：在外部 build 中返回空数组
   return []
 }
 
-// Add cache property to match the expected interface
+// 添加 cache 属性以匹配预期接口
 fetchMcpSkillsForClient.cache = new Map()

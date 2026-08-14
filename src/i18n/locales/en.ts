@@ -17,7 +17,7 @@ import { enWorkflow } from './en/workflow.js'
 import type { TranslationResource } from './resourceTypes.js'
 
 /**
- * English — base language (source of truth for keys)
+ * 英文——基础语言，也是翻译 key 的唯一事实来源。
  *
  * 按 prefix 分组到 ./<locale>/<group>.ts；本文件仅做合并入口，无业务逻辑。
  * 新增 key 时：

@@ -1,16 +1,16 @@
-// Stub for ink devtools - only loaded when DEV env is set
-// react-devtools-core integration
+// Ink devtools 的 stub，仅在设置 DEV 环境变量时加载
+// react-devtools-core 集成
 
 /**
- * Initialize devtools connection
- * This is a stub implementation that does nothing in production builds
+ * 初始化 devtools 连接。
+ * 这是 stub 实现，在生产构建中不执行任何操作。
  */
 export function initDevtools(): void {
-  // Stub implementation - only active in DEV mode
+  // stub 实现，仅在 DEV 模式下生效
 }
 
 /**
- * Check if devtools are connected
+ * 检查 devtools 是否已连接
  */
 export function isDevtoolsConnected(): boolean {
   return false

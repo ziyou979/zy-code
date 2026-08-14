@@ -1,31 +1,28 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 /**
- * Env-less Remote Control bridge core.
+ * 无环境层的 Remote Control bridge 核心。
  *
- * "Env-less" = no Environments API layer. Distinct from "CCR v2" (the
- * /worker/* transport protocol) — the env-based path (replBridge.ts) can also
- * use CCR v2 transport via ZY_CODE_. This file is about removing
- * the poll/dispatch layer, not about which transport protocol is underneath.
+ * “无环境层”表示不经过 Environments API，与作为 /worker/* transport 协议的 “CCR v2” 不同；
+ * 基于环境的路径 replBridge.ts 也能通过 ZY_CODE_ 使用 CCR v2 transport。本文件关注移除
+ * poll/dispatch 层，而不是底层采用哪种 transport 协议。
  *
- * Unlike initBridgeCore (env-based, ~2400 lines), this connects directly
- * to the session-ingress layer without the Environments API work-dispatch
- * layer:
+ * 与基于环境、约 2400 行的 initBridgeCore 不同，此实现不经过 Environments API 工作分发层，
+ * 而是直接连接 session-ingress 层：
  *
  *   1. POST /v1/code/sessions              (OAuth, no env_id)  → session.id
  *   2. POST /v1/code/sessions/{id}/bridge  (OAuth)             → {worker_jwt, expires_in, api_base_url, worker_epoch}
- *      Each /bridge call bumps epoch — it IS the register. No separate /worker/register.
+ *      每次 /bridge 调用都会递增 epoch；该调用本身就是注册，无需单独调用 /worker/register。
  *   3. createV2ReplTransport(worker_jwt, worker_epoch)         → SSE + CCRClient
  *   4. createTokenRefreshScheduler                             → proactive /bridge re-call (new JWT + new epoch)
  *   5. 401 on SSE → rebuild transport with fresh /bridge credentials (same seq-num)
  *
- * No register/poll/ack/stop/heartbeat/deregister environment lifecycle.
- * The Environments API historically existed because CCR's /worker/*
- * endpoints required a session_id+role=worker JWT that only the work-dispatch
- * layer could mint. Server PR #292605 (renamed in #293280) adds the /bridge endpoint as a direct
- * OAuth→worker_jwt exchange, making the env layer optional for REPL sessions.
+ * 不包含环境的 register/poll/ack/stop/heartbeat/deregister 生命周期。历史上需要
+ * Environments API，是因为 CCR 的 /worker/* 端点要求 session_id+role=worker JWT，且只有
+ * 工作分发层能签发。服务端 PR #292605（在 #293280 中重命名）新增 /bridge 端点，可直接完成
+ * OAuth→worker_jwt 交换，使 REPL 会话可以不使用环境层。
  *
- * Gated by `zy_bridge_repl_v2` GrowthBook flag in initReplBridge.ts.
- * REPL-only — daemon/print stay on env-based.
+ * 由 initReplBridge.ts 中的 `zy_bridge_repl_v2` GrowthBook 开关控制。
+ * 仅用于 REPL；daemon/print 仍使用环境路径。
  */
 
 import { feature } from 'bun:bundle'
@@ -63,9 +60,8 @@ import type { WireControlRequest, WireControlResponse } from '../types/wire/cont
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 const ANTHROPIC_VERSION = '2023-06-01'
 
-// Telemetry discriminator for ws_connected. 'initial' is the default and
-// never passed to rebuildTransport (which can only be called post-init);
-// Exclude<> makes that constraint explicit at both signatures.
+// ws_connected 的 telemetry 判别值。'initial' 是默认值，绝不会传给只能在初始化后调用的
+// rebuildTransport；Exclude<> 在两个签名中显式表达此约束。
 type ConnectCause = 'initial' | 'proactive_refresh' | 'auth_401_recovery'
 
 function oauthHeaders(accessToken: string): Record<string, string> {
@@ -83,23 +79,19 @@ export type EnvLessWireParams = {
   getAccessToken: () => string | undefined
   onAuth401?: (staleAccessToken: string) => Promise<boolean>
   /**
-   * Converts internal Message[] → WireMessage[] for writeMessages() and the
-   * initial-flush/drain paths. Injected rather than imported — mappers.ts
-   * transitively pulls in src/commands.ts (entire command registry + React
-   * tree) which would bloat bundles that don't already have it.
+   * 为 writeMessages() 及初始 flush/drain 路径将内部 Message[] 转为 WireMessage[]。通过注入而非
+   * import 提供，因为 mappers.ts 会间接引入 src/commands.ts（完整 command 注册表与 React 树），
+   * 使原本不含这些内容的 bundle 膨胀。
    */
   toSDKMessages: (messages: Message[]) => WireMessage[]
   initialHistoryCap: number
   initialMessages?: Message[]
   onInboundMessage?: (msg: WireMessage) => void | Promise<void>
   /**
-   * Fired on each title-worthy user message seen in writeMessages() until
-   * the callback returns true (done). Mirrors replBridge.ts's onUserMessage —
-   * caller derives a title and PATCHes /v1/sessions/{id} so auto-started
-   * sessions don't stay at the generic fallback. The caller owns the
-   * derive-at-count-1-and-3 policy; the transport just keeps calling until
-   * told to stop. sessionId is the raw cse_* — updateWireSessionTitle
-   * retags internally.
+   * writeMessages() 每看到一条适合生成标题的用户消息便触发，直到 callback 返回 true（完成）。
+   * 与 replBridge.ts 的 onUserMessage 一致：调用方推导标题并 PATCH /v1/sessions/{id}，避免自动
+   * 启动会话一直使用通用回退标题。调用方负责在第 1 与第 3 条时推导的策略；transport 只负责
+   * 持续调用直到收到停止信号。sessionId 是原始 cse_*，updateWireSessionTitle 会在内部重新标记。
    */
   onUserMessage?: (text: string, sessionId: string) => boolean
   onPermissionResponse?: (response: WireControlResponse) => void
@@ -109,21 +101,19 @@ export type EnvLessWireParams = {
   onSetPermissionMode?: (mode: PermissionMode) => { ok: true } | { ok: false; error: string }
   onStateChange?: (state: WireState, detail?: string) => void
   /**
-   * When true, skip opening the SSE read stream — only the CCRClient write
-   * path is activated. Threaded to createV2ReplTransport and
-   * handleServerControlRequest.
+   * 为 true 时不打开 SSE 读取流，只启用 CCRClient 写入路径。该值传递给
+   * createV2ReplTransport 与 handleServerControlRequest。
    */
   outboundOnly?: boolean
-  /** Free-form tags for session categorization (e.g. ['ccr-mirror']). */
+  /** 用于会话分类的自由格式 tag，例如 ['ccr-mirror']。 */
   tags?: string[]
 }
 
 /**
- * Create a session, fetch a worker JWT, connect the v2 transport.
+ * 创建会话、获取 worker JWT，并连接 v2 transport。
  *
- * Returns null on any pre-flight failure (session create failed, /bridge
- * failed, transport setup failed). Caller (initReplBridge) surfaces this
- * as a generic "initialization failed" state.
+ * 任一前置步骤失败（创建会话、/bridge、transport 设置失败）时返回 null。调用方
+ * initReplBridge 会将其呈现为通用的“初始化失败”状态。
  */
 export async function initEnvLessWireCore(
   params: EnvLessWireParams,
@@ -151,7 +141,7 @@ export async function initEnvLessWireCore(
 
   const cfg = await getEnvLessWireConfig()
 
-  // ── 1. Create session (POST /v1/code/sessions, no env_id) ───────────────
+  // ── 1. 创建会话（POST /v1/code/sessions，不含 env_id）──────────────────
   const accessToken = getAccessToken()
   if (!accessToken) {
     logForDebugging('[remote-bridge] No OAuth token')
@@ -172,7 +162,7 @@ export async function initEnvLessWireCore(
   logForDebugging(`[remote-bridge] Created session ${sessionId}`)
   logForDiagnosticsNoPII('info', 'bridge_repl_v2_session_created')
 
-  // ── 2. Fetch bridge credentials (POST /bridge → worker_jwt, expires_in, api_base_url) ──
+  // ── 2. 获取 bridge 凭据（POST /bridge → worker_jwt、expires_in、api_base_url）──
   const credentials = await withRetry(
     () => fetchRemoteCredentials(sessionId, baseUrl, accessToken, cfg.http_timeout_ms),
     'fetchRemoteCredentials',
@@ -188,7 +178,7 @@ export async function initEnvLessWireCore(
     `[remote-bridge] Fetched bridge credentials (expires_in=${credentials.expires_in}s)`,
   )
 
-  // ── 3. Build v2 transport (SSETransport + CCRClient) ────────────────────
+  // ── 3. 构建 v2 transport（SSETransport + CCRClient）────────────────────
   const sessionUrl = buildCCRv2SdkUrl(credentials.api_base_url, sessionId)
   logForDebugging(`[remote-bridge] v2 session URL: ${sessionUrl}`)
 
@@ -201,11 +191,9 @@ export async function initEnvLessWireCore(
       epoch: credentials.worker_epoch,
       heartbeatIntervalMs: cfg.heartbeat_interval_ms,
       heartbeatJitterFraction: cfg.heartbeat_jitter_fraction,
-      // Per-instance closure — keeps the worker JWT out of
-      // process.env.ZY_CODE_SESSION_ACCESS_TOKEN, which mcp/client.ts
-      // reads ungatedly and would otherwise send to user-configured ws/http
-      // MCP servers. Frozen-at-construction is correct: transport is fully
-      // rebuilt on refresh (rebuildTransport below).
+      // 各实例独立的闭包，避免将 worker JWT 放入 process.env.ZY_CODE_SESSION_ACCESS_TOKEN。
+      // mcp/client.ts 会无条件读取该环境变量，否则可能把 JWT 发给用户配置的 ws/http MCP server。
+      // 构造时固定值是正确的，因为刷新时会完整重建 transport（见下方 rebuildTransport）。
       getAuthToken: () => credentials.worker_jwt,
       outboundOnly,
     })
@@ -221,13 +209,11 @@ export async function initEnvLessWireCore(
   logForDebugging(`[remote-bridge] v2 transport created (epoch=${credentials.worker_epoch})`)
   onStateChange?.('ready')
 
-  // ── 4. State ────────────────────────────────────────────────────────────
+  // ── 4. 状态 ─────────────────────────────────────────────────────────────
 
-  // Echo dedup: messages we POST come back on the read stream. Seeded with
-  // initial message UUIDs so server echoes of flushed history are recognized.
-  // Both sets cover initial UUIDs — recentPostedUUIDs is a 2000-cap ring buffer
-  // and could evict them after enough live writes; initialMessageUUIDs is the
-  // unbounded fallback. Defense-in-depth; mirrors replBridge.ts.
+  // 回显去重：POST 的消息会从读取流返回。以初始消息 UUID 作为种子，从而识别服务端对已 flush
+  // 历史的回显。两个集合都覆盖初始 UUID：recentPostedUUIDs 是容量 2000 的环形缓冲区，实时写入
+  // 足够多后可能淘汰它们；initialMessageUUIDs 是无界回退。形成纵深防御，与 replBridge.ts 一致。
   const recentPostedUUIDs = new BoundedUUIDSet(cfg.uuid_dedup_buffer_size)
   const initialMessageUUIDs = new Set<string>()
   if (initialMessages) {
@@ -237,32 +223,28 @@ export async function initEnvLessWireCore(
     }
   }
 
-  // Defensive dedup for re-delivered inbound prompts (seq-num negotiation
-  // edge cases, server history replay after transport swap).
+  // 对重新投递的入站 prompt 做防御性去重，覆盖 seq-num 协商边界情况及 transport 更换后的
+  // 服务端历史重放。
   const recentInboundUUIDs = new BoundedUUIDSet(cfg.uuid_dedup_buffer_size)
 
-  // FlushGate: queue live writes while the history flush POST is in flight,
-  // so the server receives [history..., live...] in order.
+  // FlushGate：历史 flush POST 进行期间将实时写入排队，使服务端按 [history..., live...] 顺序接收。
   const flushGate = new FlushGate<Message>()
 
   let initialFlushDone = false
   let tornDown = false
   let authRecoveryInFlight = false
-  // Latch for onUserMessage — flips true when the callback returns true
-  // (policy says "done deriving"). sessionId is const (no re-create path —
-  // rebuildTransport swaps JWT/epoch, same session), so no reset needed.
+  // onUserMessage 的 latch；callback 返回 true（策略表示“完成推导”）时置为 true。sessionId 是
+  // const，不存在重建会话路径；rebuildTransport 只替换同一会话的 JWT/epoch，因此无需重置。
   let userMessageCallbackDone = !onUserMessage
 
-  // Telemetry: why did onConnect fire? Set by rebuildTransport before
-  // wireTransportCallbacks; read asynchronously by onConnect. Race-safe
-  // because authRecoveryInFlight serializes rebuild callers, and a fresh
-  // initEnvLessWireCore() call gets a fresh closure defaulting to 'initial'.
+  // telemetry：onConnect 为何触发？rebuildTransport 在 wireTransportCallbacks 前设置，
+  // onConnect 异步读取。authRecoveryInFlight 会串行化重建调用方，而每次新的
+  // initEnvLessWireCore() 调用都会获得默认值为 'initial' 的新闭包，因此不存在竞争。
   let connectCause: ConnectCause = 'initial'
 
-  // Deadline for onConnect after transport.connect(). Cleared by onConnect
-  // (connected) and onClose (got a close — not silent). If neither fires
-  // before cfg.connect_timeout_ms, onConnectTimeout emits — the only
-  // signal for the `started → (silence)` gap.
+  // transport.connect() 后等待 onConnect 的截止时间。onConnect（已连接）与 onClose（收到关闭，
+  // 并非静默）都会清除。若二者在 cfg.connect_timeout_ms 前均未触发，则发送 onConnectTimeout；
+  // 这是 `started →（静默）` 空档的唯一信号。
   let connectDeadline: ReturnType<typeof setTimeout> | undefined
   function onConnectTimeout(cause: ConnectCause): void {
     if (tornDown) {
@@ -275,19 +257,16 @@ export async function initEnvLessWireCore(
     })
   }
 
-  // ── 5. JWT refresh scheduler ────────────────────────────────────────────
-  // Schedule a callback 5min before expiry (per response.expires_in). On fire,
-  // re-fetch /bridge with OAuth → rebuild transport with fresh credentials.
-  // Each /bridge call bumps epoch server-side, so a JWT-only swap would leave
-  // the old CCRClient heartbeating with a stale epoch → 409 within 20s.
-  // JWT is opaque — do not decode.
+  // ── 5. JWT 刷新调度器 ───────────────────────────────────────────────────
+  // 根据 response.expires_in 在过期前 5 分钟安排 callback。触发时使用 OAuth 重新请求 /bridge，
+  // 再用新凭据重建 transport。每次 /bridge 调用都会在服务端递增 epoch，因此只替换 JWT 会让
+  // 旧 CCRClient 继续用陈旧 epoch 发送心跳，并在 20 秒内收到 409。JWT 是 opaque 数据，不要解码。
   const refresh = createTokenRefreshScheduler({
     refreshBufferMs: cfg.token_refresh_buffer_ms,
     getAccessToken: async () => {
-      // Unconditionally refresh OAuth before calling /bridge — getAccessToken()
-      // returns expired tokens as non-null strings (doesn't check expiresAt),
-      // so truthiness doesn't mean valid. Pass the stale token to onAuth401
-      // so handleOAuth401Error's keychain-comparison can detect parallel refresh.
+      // 调用 /bridge 前无条件刷新 OAuth。getAccessToken() 会把过期 token 作为非 null 字符串返回，
+      // 因为它不检查 expiresAt，所以 truthy 不代表有效。将陈旧 token 传给 onAuth401，使
+      // handleOAuth401Error 的 keychain 比较能检测并行刷新。
       const stale = getAccessToken()
       if (onAuth401) {
         await onAuth401(stale ?? '')
@@ -296,10 +275,9 @@ export async function initEnvLessWireCore(
     },
     onRefresh: (sid, oauthToken) => {
       void (async () => {
-        // Laptop wake: overdue proactive timer + SSE 401 fire ~simultaneously.
-        // Claim the flag BEFORE the /bridge fetch so the other path skips
-        // entirely — prevents double epoch bump (each /bridge call bumps; if
-        // both fetch, the first rebuild gets a stale epoch and 409s).
+        // 笔记本唤醒时，逾期的主动刷新定时器与 SSE 401 会近乎同时触发。在请求 /bridge 前先占用
+        // flag，使另一条路径完全跳过，避免 epoch 递增两次；若两边都请求，第一次重建会拿到陈旧
+        // epoch 并收到 409。
         if (authRecoveryInFlight || tornDown) {
           logForDebugging('[remote-bridge] Recovery already in flight, skipping proactive refresh')
           return
@@ -334,7 +312,7 @@ export async function initEnvLessWireCore(
   })
   refresh.scheduleFromExpiresIn(sessionId, credentials.expires_in)
 
-  // ── 6. Wire callbacks (extracted so transport-rebuild can re-wire) ──────
+  // ── 6. Wire callback（提取后 transport 重建时可重新绑定）────────────────
   function wireTransportCallbacks(): void {
     transport.setOnConnect(() => {
       clearTimeout(connectDeadline)
@@ -347,18 +325,16 @@ export async function initEnvLessWireCore(
 
       if (!initialFlushDone && initialMessages && initialMessages.length > 0) {
         initialFlushDone = true
-        // Capture current transport — if 401/teardown happens mid-flush,
-        // the stale .finally() must not drain the gate or signal connected.
-        // (Same guard pattern as replBridge.ts:1119.)
+        // 捕获当前 transport；若 flush 中途发生 401 或 teardown，陈旧的 .finally() 不能清空 gate
+        // 或发出已连接信号。防护模式与 replBridge.ts:1119 相同。
         const flushTransport = transport
         void flushHistory(initialMessages)
           .catch((e) => logForDebugging(`[remote-bridge] flushHistory failed: ${e}`))
           .finally(() => {
-            // authRecoveryInFlight catches the v1-vs-v2 asymmetry: v1 nulls
-            // transport synchronously in setOnClose (replBridge.ts:1175), so
-            // transport !== flushTransport trips immediately. v2 doesn't null —
-            // transport reassigned only at rebuildTransport:346, 3 awaits deep.
-            // authRecoveryInFlight is set synchronously at rebuildTransport entry.
+            // authRecoveryInFlight 用于处理 v1 与 v2 的不对称：v1 会在 setOnClose 中同步清空
+            // transport（replBridge.ts:1175），因此 transport !== flushTransport 会立即成立。v2 不会
+            // 清空，transport 要到 rebuildTransport:346、经过 3 个 await 后才重新赋值。
+            // authRecoveryInFlight 在进入 rebuildTransport 时同步设置。
             if (transport !== flushTransport || tornDown || authRecoveryInFlight) {
               return
             }
@@ -376,9 +352,8 @@ export async function initEnvLessWireCore(
         recentPostedUUIDs,
         recentInboundUUIDs,
         onInboundMessage,
-        // Remote client answered the permission prompt — the turn resumes.
-        // Without this the server stays on requires_action until the next
-        // user message or turn-end result.
+        // 远程 client 已响应权限 prompt，turn 将继续。缺少此更新时，服务端会一直停留在
+        // requires_action，直到下一条用户消息或 turn 结束结果。
         onPermissionResponse
           ? (res) => {
               transport.reportState('running')
@@ -405,11 +380,9 @@ export async function initEnvLessWireCore(
       }
       logForDebugging(`[remote-bridge] v2 transport closed (code=${code})`)
       logEvent('zy_bridge_repl_ws_closed', { code, v2: true })
-      // onClose fires only for TERMINAL failures: 401 (JWT invalid),
-      // 4090 (CCR epoch mismatch), 4091 (CCR init failed), or SSE 10-min
-      // reconnect budget exhausted. Transient disconnects are handled
-      // transparently inside SSETransport. 401 we can recover from (fetch
-      // fresh JWT, rebuild transport); all other codes are dead-ends.
+      // onClose 只在终态失败时触发：401（JWT 无效）、4090（CCR epoch 不匹配）、4091（CCR 初始化
+      // 失败），或 SSE 的 10 分钟重连预算耗尽。瞬时断开由 SSETransport 内部透明处理。401 可通过
+      // 获取新 JWT 并重建 transport 恢复；其他关闭码均无法恢复。
       if (code === 401 && !authRecoveryInFlight) {
         void recoverFromAuthFailure()
         return
@@ -418,24 +391,20 @@ export async function initEnvLessWireCore(
     })
   }
 
-  // ── 7. Transport rebuild (shared by proactive refresh + 401 recovery) ──
-  // Every /bridge call bumps epoch server-side. Both refresh paths must
-  // rebuild the transport with the new epoch — a JWT-only swap leaves the
-  // old CCRClient heartbeating stale epoch → 409. SSE resumes from the old
-  // transport's high-water-mark seq-num so no server-side replay.
-  // Caller MUST set authRecoveryInFlight = true before calling (synchronously,
-  // before any await) and clear it in a finally. This function doesn't manage
-  // the flag — moving it here would be too late to prevent a double /bridge
-  // fetch, and each fetch bumps epoch.
+  // ── 7. Transport 重建（主动刷新与 401 恢复共用）──────────────────────────
+  // 每次 /bridge 调用都会在服务端递增 epoch。两条刷新路径都必须用新 epoch 重建 transport；
+  // 只替换 JWT 会让旧 CCRClient 继续用陈旧 epoch 发送心跳并收到 409。SSE 从旧 transport 的
+  // seq-num 高水位恢复，因此服务端无需重放。调用方必须在调用前同步设置
+  // authRecoveryInFlight = true（任何 await 之前），并在 finally 中清除。本函数不管理该 flag；
+  // 若移到这里，已来不及阻止两次 /bridge 请求，而每次请求都会递增 epoch。
   async function rebuildTransport(
     fresh: RemoteCredentials,
     cause: Exclude<ConnectCause, 'initial'>,
   ): Promise<void> {
     connectCause = cause
-    // Queue writes during rebuild — once /bridge returns, the old transport's
-    // epoch is stale and its next write/heartbeat 409s. Without this gate,
-    // writeMessages adds UUIDs to recentPostedUUIDs then writeBatch silently
-    // no-ops (closed uploader after 409) → permanent silent message loss.
+    // 重建期间将写入排队；/bridge 返回后旧 transport 的 epoch 已陈旧，下一次写入或心跳会收到
+    // 409。若无此 gate，writeMessages 会先把 UUID 加入 recentPostedUUIDs，随后 writeBatch 因
+    // uploader 在 409 后关闭而静默不操作，导致消息永久静默丢失。
     flushGate.start()
     try {
       const seq = transport.getLastSequenceNum()
@@ -452,9 +421,8 @@ export async function initEnvLessWireCore(
         outboundOnly,
       })
       if (tornDown) {
-        // Teardown fired during the async createV2ReplTransport window.
-        // Don't wire/connect/schedule — we'd re-arm timers after cancelAll()
-        // and fire onInboundMessage into a torn-down bridge.
+        // 异步 createV2ReplTransport 期间触发了 teardown。不要再绑定、连接或调度，否则会在
+        // cancelAll() 后重新启动定时器，并向已拆除的 bridge 触发 onInboundMessage。
         transport.close()
         return
       }
@@ -462,24 +430,22 @@ export async function initEnvLessWireCore(
       transport.connect()
       connectDeadline = setTimeout(onConnectTimeout, cfg.connect_timeout_ms, connectCause)
       refresh.scheduleFromExpiresIn(sessionId, fresh.expires_in)
-      // Drain queued writes into the new uploader. Runs before
-      // ccr.initialize() resolves (transport.connect() is fire-and-forget),
-      // but the uploader serializes behind the initial PUT /worker. If
-      // init fails (4091), events drop — but only recentPostedUUIDs
-      // (per-instance) is populated, so re-enabling the bridge re-flushes.
+      // 将排队写入清空到新 uploader。此操作在 ccr.initialize() 完成前运行，因为
+      // transport.connect() 是 fire-and-forget，但 uploader 会排在初始 PUT /worker 后串行执行。
+      // 若初始化以 4091 失败，事件会丢弃；不过只有各实例的 recentPostedUUIDs 被填充，因此重新
+      // 启用 bridge 时会再次 flush。
       drainFlushGate()
     } finally {
-      // End the gate on failure paths too — drainFlushGate already ended
-      // it on success. Queued messages are dropped (transport still dead).
+      // 失败路径也要结束 gate；成功时 drainFlushGate 已结束。排队消息会被丢弃，因为 transport
+      // 仍不可用。
       flushGate.drop()
     }
   }
 
-  // ── 8. 401 recovery (OAuth refresh + rebuild) ───────────────────────────
+  // ── 8. 401 恢复（OAuth 刷新与重建）─────────────────────────────────────
   async function recoverFromAuthFailure(): Promise<void> {
-    // setOnClose already guards `!authRecoveryInFlight` but that check and
-    // this set must be atomic against onRefresh — claim synchronously before
-    // any await. Laptop wake fires both paths ~simultaneously.
+    // setOnClose 已检查 `!authRecoveryInFlight`，但该检查与此处赋值相对于 onRefresh 必须是
+    // 原子操作；在任何 await 前同步占用。笔记本唤醒会近乎同时触发两条路径。
     if (authRecoveryInFlight) {
       return
     }
@@ -487,10 +453,9 @@ export async function initEnvLessWireCore(
     onStateChange?.('reconnecting', 'JWT expired — refreshing')
     logForDebugging('[remote-bridge] 401 on SSE — attempting JWT refresh')
     try {
-      // Unconditionally try OAuth refresh — getAccessToken() returns expired
-      // tokens as non-null strings, so !oauthToken doesn't catch expiry.
-      // Pass the stale token so handleOAuth401Error's keychain-comparison
-      // can detect if another tab already refreshed.
+      // 无条件尝试刷新 OAuth；getAccessToken() 会把过期 token 作为非 null 字符串返回，因此
+      // !oauthToken 无法发现过期。传入陈旧 token，使 handleOAuth401Error 的 keychain 比较能
+      // 检测其他 tab 是否已刷新。
       const stale = getAccessToken()
       if (onAuth401) {
         await onAuth401(stale ?? '')
@@ -514,11 +479,9 @@ export async function initEnvLessWireCore(
         }
         return
       }
-      // If 401 interrupted the initial flush, writeBatch may have silently
-      // no-op'd on the closed uploader (ccr.close() ran in the SSE wrapper
-      // before our setOnClose callback). Reset so the new onConnect re-flushes.
-      // (v1 scopes initialFlushDone inside the per-transport closure at
-      // replBridge.ts:1027 so it resets naturally; v2 has it at outer scope.)
+      // 若 401 中断初始 flush，writeBatch 可能在已关闭 uploader 上静默不操作；SSE wrapper 会在
+      // 本地 setOnClose callback 前调用 ccr.close()。重置后，新 onConnect 会再次 flush。v1 在
+      // replBridge.ts:1027 将 initialFlushDone 放在各 transport 闭包中，会自然重置；v2 则位于外层。
       initialFlushDone = false
       await rebuildTransport(fresh, 'auth_401_recovery')
       logForDebugging('[remote-bridge] Transport rebuilt after 401')
@@ -537,15 +500,14 @@ export async function initEnvLessWireCore(
 
   wireTransportCallbacks()
 
-  // Start flushGate BEFORE connect so writeMessages() during handshake
-  // queues instead of racing the history POST.
+  // 在 connect 前启动 flushGate，使握手期间的 writeMessages() 排队，而不与历史 POST 竞争。
   if (initialMessages && initialMessages.length > 0) {
     flushGate.start()
   }
   transport.connect()
   connectDeadline = setTimeout(onConnectTimeout, cfg.connect_timeout_ms, connectCause)
 
-  // ── 8. History flush + drain helpers ────────────────────────────────────
+  // ── 8. 历史 flush 与 drain helper ──────────────────────────────────────
   function drainFlushGate(): void {
     const msgs = flushGate.end()
     if (msgs.length === 0) {
@@ -566,10 +528,9 @@ export async function initEnvLessWireCore(
   }
 
   async function flushHistory(msgs: Message[]): Promise<void> {
-    // v2 always creates a fresh server session (unconditional createCodeSession
-    // above) — no session reuse, no double-post risk. Unlike v1, we do NOT
-    // filter by previouslyFlushedUUIDs: that set persists across REPL enable/
-    // disable cycles (useRef), so it would wrongly suppress history on re-enable.
+    // v2 始终创建新的服务端会话（上方无条件调用 createCodeSession），不复用会话，也不存在重复
+    // POST 风险。与 v1 不同，此处不按 previouslyFlushedUUIDs 过滤；该集合通过 useRef 跨 REPL
+    // 启用/禁用周期保留，否则重新启用时会错误抑制历史。
     const eligible = msgs.filter(isEligibleWireMessage)
     const capped =
       initialHistoryCap > 0 && eligible.length > initialHistoryCap
@@ -587,13 +548,11 @@ export async function initEnvLessWireCore(
     if (events.length === 0) {
       return
     }
-    // Mid-turn init: if Remote Control is enabled while a query is running,
-    // the last eligible message is a user prompt or tool_result (both 'user'
-    // type). Without this the init PUT's 'idle' sticks until the next user-
-    // type message forwards via writeMessages — which for a pure-text turn
-    // is never (only assistant chunks stream post-init). Check eligible (pre-
-    // cap), not capped: the cap may truncate to a user message even when the
-    // actual trailing message is assistant.
+    // turn 中途初始化：若查询运行期间启用 Remote Control，最后一条符合条件的消息是用户 prompt
+    // 或 tool_result，二者类型均为 'user'。缺少此处理时，init PUT 的 'idle' 会一直保留到下条
+    // user 类型消息经 writeMessages 转发；纯文本 turn 中永远不会发生，因为初始化后只流式发送
+    // assistant chunk。检查限额前的 eligible，而非 capped；即使真实尾部消息是 assistant，限额
+    // 也可能截断到用户消息。
     if (eligible.at(-1)?.type === 'user') {
       transport.reportState('running')
     }
@@ -601,12 +560,12 @@ export async function initEnvLessWireCore(
     await transport.writeBatch(events)
   }
 
-  // ── 9. Teardown ───────────────────────────────────────────────────────────
-  // On SIGINT/SIGTERM/⁠/exit, gracefulShutdown races runCleanupFunctions()
-  // against a 2s cap before forceExit kills the process. Budget accordingly:
-  //   - archive: teardown_archive_timeout_ms (default 1500, cap 2000)
-  //   - result write: fire-and-forget, archive latency covers the drain
-  //   - 401 retry: only if first archive 401s, shares the same budget
+  // ── 9. Teardown ─────────────────────────────────────────────────────────
+  // SIGINT/SIGTERM/⁠/exit 时，gracefulShutdown 会让 runCleanupFunctions() 与 2 秒上限竞争，
+  // 随后 forceExit 终止进程。预算如下：
+  //   - archive：teardown_archive_timeout_ms（默认 1500，上限 2000）
+  //   - result 写入：fire-and-forget，归档延迟为 drain 留出时间
+  //   - 401 重试：仅当首次归档收到 401，与归档共享预算
   async function teardown(): Promise<void> {
     if (tornDown) {
       return
@@ -616,12 +575,10 @@ export async function initEnvLessWireCore(
     clearTimeout(connectDeadline)
     flushGate.drop()
 
-    // Fire the result message before archive — transport.write() only awaits
-    // enqueue (SerialBatchEventUploader resolves once buffered, drain is
-    // async). Archiving before close() gives the uploader's drain loop a
-    // window (typical archive ≈ 100-500ms) to POST the result without an
-    // explicit sleep. close() sets closed=true which interrupts drain at the
-    // next while-check, so close-before-archive drops the result.
+    // 归档前发送 result 消息。transport.write() 只等待入队；SerialBatchEventUploader 缓冲后即
+    // 完成，drain 异步进行。在 close() 前归档，可借助通常约 100 至 500ms 的归档耗时，为 uploader
+    // drain 循环提供 POST result 的窗口，无需显式 sleep。close() 会设置 closed=true，在下次
+    // while 检查时中断 drain，因此先关闭再归档会丢失 result。
     transport.reportState('idle')
     void transport.write(makeResultMessage(sessionId))
 
@@ -634,14 +591,12 @@ export async function initEnvLessWireCore(
       cfg.teardown_archive_timeout_ms,
     )
 
-    // Token is usually fresh (refresh scheduler runs 5min before expiry) but
-    // laptop-wake past the refresh window leaves getAccessToken() returning a
-    // stale string. Retry once on 401 — onAuth401 (= handleOAuth401Error)
-    // clears keychain cache + force-refreshes. No proactive refresh on the
-    // happy path: handleOAuth401Error force-refreshes even valid tokens,
-    // which would waste budget 99% of the time. try/catch mirrors
-    // recoverFromAuthFailure: keychain reads can throw (macOS locked after
-    // wake); an uncaught throw here would skip transport.close + telemetry.
+    // token 通常是新鲜的，因为刷新调度器会在过期前 5 分钟运行；但笔记本错过刷新窗口后唤醒，
+    // getAccessToken() 仍会返回陈旧字符串。收到 401 时重试一次：onAuth401（即
+    // handleOAuth401Error）会清除 keychain 缓存并强制刷新。正常路径不主动刷新，因为
+    // handleOAuth401Error 即使 token 有效也会强制刷新，99% 的情况下会浪费预算。try/catch 与
+    // recoverFromAuthFailure 一致：keychain 读取可能抛错（例如 macOS 唤醒后仍锁定），若此处
+    // 未捕获，会跳过 transport.close 与 telemetry。
     if (status === 401 && onAuth401) {
       try {
         await onAuth401(token ?? '')
@@ -703,7 +658,7 @@ export async function initEnvLessWireCore(
     })
   }
 
-  // ── 10. Handle ──────────────────────────────────────────────────────────
+  // ── 10. Handle ─────────────────────────────────────────────────────────
   return {
     bridgeSessionId: sessionId,
     environmentId: '',
@@ -719,10 +674,9 @@ export async function initEnvLessWireCore(
         return
       }
 
-      // Fire onUserMessage for title derivation. Scan before the flushGate
-      // check — prompts are title-worthy even if they queue. Keeps calling
-      // on every title-worthy message until the callback returns true; the
-      // caller owns the policy (derive at 1st and 3rd, skip if explicit).
+      // 触发 onUserMessage 以推导标题。在 flushGate 检查前扫描，因为即使 prompt 排队，也适合
+      // 生成标题。每条适合生成标题的消息都会调用，直到 callback 返回 true；策略由调用方负责，
+      // 例如第 1 与第 3 条时推导，显式标题则跳过。
       if (!userMessageCallbackDone) {
         for (const m of filtered) {
           const text = extractTitleText(m)
@@ -745,11 +699,9 @@ export async function initEnvLessWireCore(
         ...m,
         session_id: sessionId,
       }))
-      // v2 does not derive worker_status from events server-side (unlike v1
-      // session-ingress session_status_updater.go). Push it from here so the
-      // CCR web session list shows Running instead of stuck on Idle. A user
-      // message in the batch marks turn start. CCRClient.reportState dedupes
-      // consecutive same-state pushes.
+      // v2 服务端不会像 v1 的 session-ingress session_status_updater.go 那样从事件推导
+      // worker_status。此处主动推送，使 CCR Web 会话列表显示 Running 而非一直停在 Idle。批次中
+      // 存在用户消息表示 turn 开始。CCRClient.reportState 会去重连续的同状态推送。
       if (filtered.some((m) => m.type === 'user')) {
         transport.reportState('running')
       }
@@ -805,9 +757,8 @@ export async function initEnvLessWireCore(
         request_id: requestId,
         session_id: sessionId,
       }
-      // Hook/classifier/channel/recheck resolved the permission locally —
-      // interactiveHandler calls only cancelRequest (no sendResponse) on
-      // those paths, so without this the server stays on requires_action.
+      // hook/classifier/channel/recheck 已在本地解决权限；这些路径中 interactiveHandler 只调用
+      // cancelRequest，不调用 sendResponse，因此缺少此更新会让服务端停留在 requires_action。
       transport.reportState('running')
       void transport.write(event)
       logForDebugging(`[remote-bridge] Sent control_cancel_request request_id=${requestId}`)
@@ -828,9 +779,9 @@ export async function initEnvLessWireCore(
   }
 }
 
-// ─── Session API (v2 /code/sessions, no env) ─────────────────────────────────
+// ─── Session API（v2 /code/sessions，无环境层）──────────────────────────────
 
-/** Retry an async init call with exponential backoff + jitter. */
+/** 以指数退避和随机抖动重试异步初始化调用。 */
 async function withRetry<T>(
   fn: () => Promise<T | null>,
   label: string,
@@ -855,8 +806,8 @@ async function withRetry<T>(
   return null
 }
 
-// Moved to codeSessionApi.ts so the SDK /bridge subpath can bundle them
-// without pulling in this file's heavy CLI tree (analytics, transport).
+// 已移到 codeSessionApi.ts，使 SDK /bridge 子路径可以打包这些函数，而无需引入本文件庞大的
+// CLI 依赖树（analytics、transport）。
 export {
   createCodeSession,
   type RemoteCredentials,
@@ -867,9 +818,8 @@ import {
   type RemoteCredentials,
 } from './codeSessionApi.js'
 import { getWireBaseUrlOverride } from './bridgeConfig.js'
-// CLI-side wrapper that applies the CLAUDE_BRIDGE_BASE_URL dev override and
-// injects the trusted-device token (both are env/GrowthBook reads that the
-// SDK-facing codeSessionApi.ts export must stay free of).
+// CLI 侧 wrapper：应用 CLAUDE_BRIDGE_BASE_URL 开发覆盖项并注入 trusted-device token。二者都会
+// 读取环境或 GrowthBook，而面向 SDK 的 codeSessionApi.ts 导出必须避免这些读取。
 export async function fetchRemoteCredentials(
   sessionId: string,
   baseUrl: string,
@@ -891,10 +841,9 @@ export async function fetchRemoteCredentials(
 
 type ArchiveStatus = number | 'timeout' | 'error' | 'no_token'
 
-// Single categorical for BQ `GROUP BY archive_status`. The booleans on
-// _teardown predate this and are redundant with it (except archive_timeout,
-// which distinguishes ECONNABORTED from other network errors — both map to
-// 'network_error' here since the dominant cause in a 1.5s window is timeout).
+// 供 BQ `GROUP BY archive_status` 使用的单一分类值。_teardown 上的布尔值早于此字段，与其重复；
+// archive_timeout 除外，它区分 ECONNABORTED 与其他网络错误。此处二者都映射为
+// 'network_error'，因为 1.5 秒窗口中的主要原因是超时。
 type ArchiveTelemetryStatus =
   | 'ok'
   | 'skipped_no_token'
@@ -912,17 +861,14 @@ async function archiveSession(
   if (!accessToken) {
     return 'no_token'
   }
-  // Archive lives at the compat layer (/v1/sessions/*, not /v1/code/sessions).
-  // compat.parseSessionID only accepts TagSession (session_*), so retag cse_*.
-  // anthropic-beta + x-organization-uuid are required — without them the
-  // compat gateway 404s before reaching the handler.
+  // 归档接口位于兼容层（/v1/sessions/*，不是 /v1/code/sessions）。compat.parseSessionID 只接受
+  // TagSession（session_*），因此需重新标记 cse_*。必须携带 anthropic-beta 与
+  // x-organization-uuid，否则兼容 gateway 会在到达 handler 前返回 404。
   //
-  // Unlike bridgeMain.ts (which caches compatId in sessionCompatIds to keep
-  // in-memory titledSessions/logger keys consistent across a mid-session
-  // gate flip), this compatId is only a server URL path segment — no
-  // in-memory state. Fresh compute matches whatever the server currently
-  // validates: if the gate is OFF, the server has been updated to accept
-  // cse_* and we correctly send it.
+  // 与 bridgeMain.ts 不同：后者在 sessionCompatIds 中缓存 compatId，以便会话中途切换开关时
+  // 保持内存中的 titledSessions/logger key 一致；这里的 compatId 只是服务端 URL 路径片段，
+  // 不涉及内存状态。每次重新计算可匹配服务端当前校验规则：若开关关闭，服务端已更新为接受
+  // cse_*，此处也会正确发送。
   const compatId = toCompatSessionId(sessionId)
   try {
     const response = await axios.post(

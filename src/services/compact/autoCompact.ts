@@ -171,7 +171,7 @@ export function calculateTokenWarningState(
   const inputBasedLimit = maxInputTokens >= 100_000 ? maxInputTokens : Infinity
   const defaultBlockingLimit = Math.min(contextBasedLimit, inputBasedLimit)
 
-  // Allow override for testing
+  // 允许测试覆盖该值。
   const blockingLimitOverride = process.env.ZY_CODE_BLOCKING_LIMIT_OVERRIDE
   const parsedOverride = blockingLimitOverride ? parseInt(blockingLimitOverride, 10) : NaN
   const blockingLimit =

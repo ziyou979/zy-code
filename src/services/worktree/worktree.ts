@@ -39,19 +39,16 @@ const VALID_WORKTREE_SLUG_SEGMENT = /^[a-zA-Z0-9._-]+$/
 const MAX_WORKTREE_SLUG_LENGTH = 64
 
 /**
- * Validates a worktree slug to prevent path traversal and directory escape.
+ * 校验 worktree slug，防止路径遍历和目录逃逸。
  *
- * The slug is joined into `.zy/worktrees/<slug>` via path.join, which
- * normalizes `..` segments — so `../../../target` would escape the worktrees
- * directory. Similarly, an absolute path (leading `/` or `C:\`) would discard
- * the prefix entirely.
+ * slug 通过 path.join 拼接到 `.zy/worktrees/<slug>`，该函数会规范化 `..` 段，
+ * 因此 `../../../target` 会逃逸 worktrees 目录。同样，绝对路径（以 `/` 或
+ * `C:\` 开头）会完全丢弃前缀。
  *
- * Forward slashes are allowed for nesting (e.g. `asm/feature-foo`); each
- * segment is validated independently against the allowlist, so `.` / `..`
- * segments and drive-spec characters are still rejected.
+ * 允许使用正斜杠嵌套（如 `asm/feature-foo`）；每个路径段都会独立按 allowlist
+ * 校验，因此仍会拒绝 `.`、`..` 路径段和驱动器标识字符。
  *
- * Throws synchronously — callers rely on this running before any side effects
- * (git commands, hook execution, chdir).
+ * 同步抛错；调用方依赖它在任何副作用（git 命令、hook 执行、chdir）前完成。
  */
 export function validateWorktreeSlug(slug: string): void {
   if (slug.length > MAX_WORKTREE_SLUG_LENGTH) {
@@ -59,9 +56,8 @@ export function validateWorktreeSlug(slug: string): void {
       `Invalid worktree name: must be ${MAX_WORKTREE_SLUG_LENGTH} characters or fewer (got ${slug.length})`,
     )
   }
-  // Leading or trailing `/` would make path.join produce an absolute path
-  // or a dangling segment. Splitting and validating each segment rejects
-  // both (empty segments fail the regex) while allowing `user/feature`.
+  // 首尾的 `/` 会使 path.join 生成绝对路径或悬空路径段。拆分后逐段校验可拒绝
+  // 这两种情况（空段无法通过正则），同时允许 `user/feature`。
   for (const segment of slug.split('/')) {
     if (segment === '.' || segment === '..') {
       throw new Error(`Invalid worktree name "${slug}": must not contain "." or ".." path segments`)
@@ -74,18 +70,18 @@ export function validateWorktreeSlug(slug: string): void {
   }
 }
 
-// Helper function to create directories recursively
+// 递归创建目录的辅助函数。
 async function mkdirRecursive(dirPath: string): Promise<void> {
   await mkdir(dirPath, { recursive: true })
 }
 
 /**
- * Symlinks directories from the main repository to avoid duplication.
- * This prevents disk bloat from duplicating node_modules and other large directories.
+ * 将主仓库中的目录符号链接至 worktree，避免复制 node_modules 等大型目录
+ * 导致磁盘占用膨胀。
  *
- * @param repoRootPath - Path to the main repository root
- * @param worktreePath - Path to the worktree directory
- * @param dirsToSymlink - Array of directory names to symlink (e.g., ['node_modules'])
+ * @param repoRootPath 主仓库根目录路径
+ * @param worktreePath worktree 目录路径
+ * @param dirsToSymlink 需要创建符号链接的目录名数组，如 ['node_modules']
  */
 async function symlinkDirectories(
   repoRootPath: string,
@@ -93,7 +89,7 @@ async function symlinkDirectories(
   dirsToSymlink: string[],
 ): Promise<void> {
   for (const dir of dirsToSymlink) {
-    // Validate directory doesn't escape repository boundaries
+    // 校验目录没有逃逸仓库边界。
     if (containsPathTraversal(dir)) {
       logForDebugging(`Skipping symlink for "${dir}": path traversal detected`, { level: 'warn' })
       continue
@@ -107,10 +103,9 @@ async function symlinkDirectories(
       logForDebugging(`Symlinked ${dir} from main repository to worktree to avoid disk bloat`)
     } catch (error) {
       const code = getErrnoCode(error)
-      // ENOENT: source doesn't exist yet (expected - skip silently)
-      // EEXIST: destination already exists (expected - skip silently)
+      // ENOENT：源目录尚不存在；EEXIST：目标已存在。这两种预期情况均静默跳过。
       if (code !== 'ENOENT' && code !== 'EEXIST') {
-        // Unexpected error (e.g., permission denied, unsupported platform)
+        // 非预期错误，如权限不足或平台不支持。
         logForDebugging(`Failed to symlink ${dir} (${code ?? 'unknown'}): ${errorMessage(error)}`, {
           level: 'warn',
         })
@@ -129,9 +124,9 @@ export type WorktreeSession = {
   sessionId: string
   tmuxSessionName?: string
   hookBased?: boolean
-  /** How long worktree creation took (unset when resuming an existing worktree). */
+  /** 创建 worktree 的耗时；恢复已有 worktree 时不设置。 */
   creationDurationMs?: number
-  /** True if git sparse-checkout was applied via settings.worktree.sparsePaths. */
+  /** 是否已通过 settings.worktree.sparsePaths 应用 git sparse-checkout。 */
   usedSparsePaths?: boolean
 }
 
@@ -142,9 +137,8 @@ export function getCurrentWorktreeSession(): WorktreeSession | null {
 }
 
 /**
- * Restore the worktree session on --resume. The caller must have already
- * verified the directory exists (via process.chdir) and set the bootstrap
- * state (cwd, originalCwd).
+ * 在 --resume 时恢复 worktree 会话。调用方必须已通过 process.chdir 验证目录存在，
+ * 并设置 bootstrap 状态（cwd、originalCwd）。
  */
 export function restoreWorktreeSession(session: WorktreeSession | null): void {
   currentWorktreeSession = session
@@ -171,10 +165,9 @@ type WorktreeCreateResult =
       existed: false
     }
 
-// Env vars to prevent git/SSH from prompting for credentials (which hangs the CLI).
-// GIT_TERMINAL_PROMPT=0 prevents git from opening /dev/tty for credential prompts.
-// GIT_ASKPASS='' disables askpass GUI programs.
-// stdin: 'ignore' closes stdin so interactive prompts can't block.
+// 通过环境变量禁止 git/SSH 请求凭据，以免 CLI 挂起。
+// GIT_TERMINAL_PROMPT=0 禁止 git 打开 /dev/tty 请求凭据；GIT_ASKPASS=''
+// 禁用 askpass GUI；stdin: 'ignore' 关闭标准输入，避免交互提示阻塞。
 const GIT_NO_PROMPT_ENV = {
   GIT_TERMINAL_PROMPT: '0',
   GIT_ASKPASS: '',
@@ -184,15 +177,14 @@ function worktreesDir(repoRoot: string): string {
   return join(repoRoot, '.zy', 'worktrees')
 }
 
-// Flatten nested slugs (`user/feature` → `user+feature`) for both the branch
-// name and the directory path. Nesting in either location is unsafe:
-//   - git refs: `worktree-user` (file) vs `worktree-user/feature` (needs dir)
-//     is a D/F conflict that git rejects.
-//   - directory: `.zy/worktrees/user/feature/` lives inside the `user`
-//     worktree; `git worktree remove` on the parent deletes children with
-//     uncommitted work.
-// `+` is valid in git branch names and filesystem paths but NOT in the
-// slug-segment allowlist ([a-zA-Z0-9._-]), so the mapping is injective.
+// 将分支名和目录路径中的嵌套 slug（`user/feature` → `user+feature`）扁平化。
+// 在任一位置嵌套都不安全：
+//   - git ref：`worktree-user`（文件）与 `worktree-user/feature`（需要目录）
+//     构成 git 会拒绝的 D/F 冲突。
+//   - 目录：`.zy/worktrees/user/feature/` 位于 `user` worktree 内；对父级执行
+//     `git worktree remove` 会删除带未提交工作的子级。
+// `+` 可用于 git 分支名和文件系统路径，但不在 slug 路径段 allowlist
+//（[a-zA-Z0-9._-]）中，因此该映射是单射。
 function flattenSlug(slug: string): string {
   return slug.replaceAll('/', '+')
 }
@@ -206,10 +198,9 @@ function worktreePathFor(repoRoot: string, slug: string): string {
 }
 
 /**
- * Creates a new git worktree for the given slug, or resumes it if it already exists.
- * Named worktrees reuse the same path across invocations, so the existence check
- * prevents unconditionally running `git fetch` (which can hang waiting for credentials)
- * on every resume.
+ * 为指定 slug 创建 git worktree；若已存在则恢复。命名 worktree 会在多次调用间
+ * 复用同一路径，因此存在性检查可避免每次恢复都无条件执行可能等待凭据而挂起的
+ * `git fetch`。
  */
 async function getOrCreateWorktree(
   repoRoot: string,
@@ -219,10 +210,9 @@ async function getOrCreateWorktree(
   const worktreePath = worktreePathFor(repoRoot, slug)
   const worktreeBranch = worktreeBranchName(slug)
 
-  // Fast resume path: if the worktree already exists skip fetch and creation.
-  // Read the .git pointer file directly (no subprocess, no upward walk) — a
-  // subprocess `rev-parse HEAD` burns ~15ms on spawn overhead even for a 2ms
-  // task, and the await yield lets background spawnSyncs pile on (seen at 55ms).
+  // 快速恢复路径：worktree 已存在时跳过 fetch 和创建。直接读取 .git 指针文件，
+  // 不启动子进程也不向上遍历。即使任务本身只需 2ms，子进程 `rev-parse HEAD`
+  // 也会产生约 15ms 启动开销，await 让后台 spawnSync 堆积时曾观察到 55ms。
   const existingHead = await readWorktreeHeadSha(worktreePath)
   if (existingHead) {
     return {
@@ -233,7 +223,7 @@ async function getOrCreateWorktree(
     }
   }
 
-  // New worktree: fetch base branch then add
+  // 新 worktree：先 fetch 基础分支，再添加。
   await mkdir(worktreesDir(repoRoot), { recursive: true })
 
   const fetchEnv = { ...process.env, ...GIT_NO_PROMPT_ENV }
@@ -253,12 +243,10 @@ async function getOrCreateWorktree(
     }
     baseBranch = 'FETCH_HEAD'
   } else {
-    // If origin/<branch> already exists locally, skip fetch. In large repos
-    // (210k files, 16M objects) fetch burns ~6-8s on a local commit-graph
-    // scan before even hitting the network. A slightly stale base is fine —
-    // the user can pull in the worktree if they want latest.
-    // resolveRef reads the loose/packed ref directly; when it succeeds we
-    // already have the SHA, so the later rev-parse is skipped entirely.
+    // 本地已有 origin/<branch> 时跳过 fetch。大型仓库（21 万文件、1600 万对象）
+    // 甚至在联网前，仅扫描本地 commit-graph 就会耗时约 6–8 秒。基础分支稍旧可以接受，
+    // 用户需要最新内容时可在 worktree 中 pull。resolveRef 直接读取 loose/packed ref；
+    // 成功时已取得 SHA，因此也可完全跳过后续 rev-parse。
     const [defaultBranch, gitDir] = await Promise.all([getDefaultBranch(), resolveGitDir(repoRoot)])
     const originRef = `origin/${defaultBranch}`
     const originSha = gitDir
@@ -277,8 +265,8 @@ async function getOrCreateWorktree(
     }
   }
 
-  // For the fetch/PR-fetch paths we still need the SHA — the fs-only resolveRef
-  // above only covers the "origin/<branch> already exists locally" case.
+  // fetch/PR-fetch 路径仍需取得 SHA；上方仅访问文件系统的 resolveRef 只覆盖
+  // “origin/<branch> 已存在于本地”的情况。
   if (!baseSha) {
     const { stdout, code: shaCode } = await execFileNoThrowWithCwd(
       gitExe(),
@@ -296,8 +284,8 @@ async function getOrCreateWorktree(
   if (sparsePaths?.length) {
     addArgs.push('--no-checkout')
   }
-  // -B (not -b): reset any orphan branch left behind by a removed worktree dir.
-  // Saves a `git branch -D` subprocess (~15ms spawn overhead) on every create.
+  // 使用 -B 而非 -b，重置已删除 worktree 目录遗留的孤立分支，
+  // 每次创建可省去一次 `git branch -D` 子进程（约 15ms 启动开销）。
   addArgs.push('-B', worktreeBranch, worktreePath, baseBranch)
 
   const { code: createCode, stderr: createStderr } = await execFileNoThrowWithCwd(
@@ -310,10 +298,9 @@ async function getOrCreateWorktree(
   }
 
   if (sparsePaths?.length) {
-    // If sparse-checkout or checkout fail after --no-checkout, the worktree
-    // is registered and HEAD is set but the working tree is empty. Next run's
-    // fast-resume (rev-parse HEAD) would succeed and present a broken worktree
-    // as "resumed". Tear it down before propagating the error.
+    // 若 sparse-checkout 或 checkout 在 --no-checkout 后失败，worktree 已注册且 HEAD
+    // 已设置，但工作树为空。下次运行的快速恢复（rev-parse HEAD）仍会成功，并将损坏的
+    // worktree 视为“已恢复”。因此在继续抛出错误前先将其拆除。
     const tearDown = async (msg: string): Promise<never> => {
       await execFileNoThrowWithCwd(gitExe(), ['worktree', 'remove', '--force', worktreePath], {
         cwd: repoRoot,
@@ -348,18 +335,17 @@ async function getOrCreateWorktree(
 }
 
 /**
- * Copy gitignored files specified in .worktreeinclude from base repo to worktree.
+ * 将 .worktreeinclude 指定且被 gitignore 的文件从基础仓库复制到 worktree。
  *
- * Only copies files that are BOTH:
- * 1. Matched by patterns in .worktreeinclude (uses .gitignore syntax)
- * 2. Gitignored (not tracked by git)
+ * 仅复制同时满足以下条件的文件：
+ * 1. 匹配 .worktreeinclude 中的模式（使用 .gitignore 语法）
+ * 2. 被 gitignore，即不由 git 跟踪
  *
- * Uses `git ls-files --others --ignored --exclude-standard --directory` to list
- * gitignored entries with fully-ignored dirs collapsed to single entries (so large
- * build outputs like node_modules/ don't force a full tree walk), then filters
- * against .worktreeinclude patterns in-process using the `ignore` library. If a
- * .worktreeinclude pattern explicitly targets a path inside a collapsed directory,
- * that directory is expanded with a second scoped `ls-files` call.
+ * 使用 `git ls-files --others --ignored --exclude-standard --directory` 列出
+ * gitignore 条目，并将完全忽略的目录折叠为单项，避免 node_modules/ 等大型构建
+ * 输出迫使程序遍历整棵树；随后在进程内通过 `ignore` 库按 .worktreeinclude
+ * 模式过滤。若模式明确指向折叠目录内部路径，则再次对该目录执行限定范围的
+ * `ls-files` 以展开。
  */
 export async function copyWorktreeIncludeFiles(
   repoRoot: string,
@@ -380,9 +366,9 @@ export async function copyWorktreeIncludeFiles(
     return []
   }
 
-  // Single pass with --directory: collapses fully-gitignored dirs (node_modules/,
-  // .turbo/, etc.) into single entries instead of listing every file inside.
-  // In a large repo this cuts ~500k entries/~7s down to ~hundreds of entries/~100ms.
+  // 单次使用 --directory，将完全忽略的目录（node_modules/、.turbo/ 等）折叠为
+  // 单项，而非列出其中每个文件。大型仓库中可将约 50 万项、约 7 秒降至
+  // 数百项、约 100ms。
   const gitignored = await execFileNoThrowWithCwd(
     gitExe(),
     ['ls-files', '--others', '--ignored', '--exclude-standard', '--directory'],
@@ -395,30 +381,26 @@ export async function copyWorktreeIncludeFiles(
   const entries = gitignored.stdout.trim().split('\n').filter(Boolean)
   const matcher = ignore().add(includeContent)
 
-  // --directory emits collapsed dirs with a trailing slash; everything else is
-  // an individual file.
+  // --directory 输出的折叠目录带尾部斜杠，其余条目均为单个文件。
   const collapsedDirs = entries.filter((e) => e.endsWith('/'))
   const files = entries.filter((e) => !e.endsWith('/') && matcher.ignores(e))
 
-  // Edge case: a .worktreeinclude pattern targets a path inside a collapsed dir
-  // (e.g. pattern `config/secrets/api.key` when all of `config/secrets/` is
-  // gitignored with no tracked siblings). Expand only dirs where a pattern has
-  // that dir as its explicit path prefix (stripping redundant leading `/`), the
-  // dir falls under an anchored glob's literal prefix (e.g. `config/**/*.key`
-  // expands `config/secrets/`), or the dir itself matches a pattern. We don't
-  // expand for `**/` or anchorless patterns -- those match files in tracked dirs
-  // (already listed individually) and expanding every collapsed dir for them
-  // would defeat the perf win.
+  // 边界情况：.worktreeinclude 模式指向折叠目录内部路径，例如整个
+  // `config/secrets/` 均被忽略且没有已跟踪的同级项，而模式为
+  // `config/secrets/api.key`。仅在模式以该目录为显式路径前缀（去掉冗余前导 `/`）、
+  // 目录位于锚定 glob 的字面前缀下（如 `config/**/*.key` 会展开
+  // `config/secrets/`），或目录本身匹配模式时展开。`**/` 或无锚模式会匹配
+  // 已跟踪目录中的文件（已逐项列出），不为其展开所有折叠目录，否则会抵消性能收益。
   const dirsToExpand = collapsedDirs.filter((dir) => {
     if (
       patterns.some((p) => {
         const normalized = p.startsWith('/') ? p.slice(1) : p
-        // Literal prefix match: pattern starts with the collapsed dir path
+        // 字面前缀匹配：模式以折叠目录路径开头。
         if (normalized.startsWith(dir)) {
           return true
         }
-        // Anchored glob: dir falls under the pattern's literal (non-glob) prefix
-        // e.g. `config/**/*.key` has literal prefix `config/` → expand `config/secrets/`
+        // 锚定 glob：目录位于模式的字面（非 glob）前缀下。
+        // 例如 `config/**/*.key` 的字面前缀为 `config/`，因此展开 `config/secrets/`。
         const globIdx = normalized.search(/[*?[]/)
         if (globIdx > 0) {
           const literalPrefix = normalized.slice(0, globIdx)
@@ -474,12 +456,12 @@ export async function copyWorktreeIncludeFiles(
 }
 
 /**
- * Post-creation setup for a newly created worktree.
- * Propagates settings.local.json, configures git hooks, and symlinks directories.
+ * 新 worktree 创建后的设置：传播 settings.local.json、配置 git hook，
+ * 并为目录创建符号链接。
  */
 async function performPostCreationSetup(repoRoot: string, worktreePath: string): Promise<void> {
-  // Copy settings.local.json to the worktree's .zy directory
-  // This propagates local settings (which may contain secrets) to the worktree
+  // 将 settings.local.json 复制到 worktree 的 .zy 目录，
+  // 以传播可能包含 secret 的本地设置。
   const localSettingsRelativePath = getRelativeSettingsFilePathForSource('localSettings')
   const sourceSettingsLocal = join(repoRoot, localSettingsRelativePath)
   try {
@@ -496,8 +478,7 @@ async function performPostCreationSetup(repoRoot: string, worktreePath: string):
     }
   }
 
-  // Configure the worktree to use hooks from the main repository
-  // This solves issues with .husky and other git hooks that use relative paths
+  // 配置 worktree 使用主仓库的 hook，解决 .husky 等 git hook 使用相对路径的问题。
   const huskyPath = join(repoRoot, '.husky')
   const gitHooksPath = join(repoRoot, '.git', 'hooks')
   let hooksPath: string | null = null
@@ -509,13 +490,12 @@ async function performPostCreationSetup(repoRoot: string, worktreePath: string):
         break
       }
     } catch {
-      // Path doesn't exist or can't be accessed
+      // 路径不存在或无法访问。
     }
   }
   if (hooksPath) {
-    // `git config` (no --worktree flag) writes to the main repo's .git/config,
-    // shared by all worktrees. Once set, every subsequent worktree create is a
-    // no-op — skip the subprocess (~14ms spawn) when the value already matches.
+    // 不带 --worktree 的 `git config` 写入主仓库的 .git/config，由所有 worktree
+    // 共享。设置一次后，后续创建均无需修改；值已匹配时跳过子进程，省去约 14ms 启动开销。
     const gitDir = await resolveGitDir(repoRoot)
     const configDir = gitDir ? ((await getCommonDir(gitDir)) ?? gitDir) : null
     const existing = configDir
@@ -537,29 +517,26 @@ async function performPostCreationSetup(repoRoot: string, worktreePath: string):
     }
   }
 
-  // Symlink directories to avoid disk bloat (opt-in via settings)
+  // 按设置选择性为目录创建符号链接，避免磁盘膨胀。
   const settings = getInitialSettings()
   const dirsToSymlink = settings.worktree?.symlinkDirectories ?? []
   if (dirsToSymlink.length > 0) {
     await symlinkDirectories(repoRoot, worktreePath, dirsToSymlink)
   }
 
-  // Copy gitignored files specified in .worktreeinclude (best-effort)
+  // 尽力复制 .worktreeinclude 指定且被 gitignore 的文件。
   await copyWorktreeIncludeFiles(repoRoot, worktreePath)
 
-  // The core.hooksPath config-set above is fragile: husky's prepare script
-  // (`git config core.hooksPath .husky`) runs on every `bun install` and
-  // resets the SHARED .git/config value back to relative, causing each
-  // worktree to resolve to its OWN .husky/ again. The attribution hook
-  // file isn't tracked (it's in .git/info/exclude), so fresh worktrees
-  // don't have it. Install it directly into the worktree's .husky/ —
-  // husky won't delete it (husky install is additive-only), and for
-  // non-husky repos this resolves to the shared .git/hooks/ (idempotent).
+  // 上方设置的 core.hooksPath 较脆弱：husky prepare script 会在每次 `bun install`
+  // 时执行 `git config core.hooksPath .husky`，将共享的 .git/config 重置为相对路径，
+  // 导致各 worktree 再次解析到自己的 .husky/。attribution hook 文件不受跟踪
+  //（位于 .git/info/exclude），新 worktree 中不存在。将其直接安装到 worktree
+  // 的 .husky/；husky 不会删除（其安装仅做追加），非 husky 仓库则解析到共享的
+  // .git/hooks/，操作具有幂等性。
   //
-  // Pass the worktree-local .husky explicitly: getHooksDir would return
-  // the absolute core.hooksPath we just set above (main repo's .husky),
-  // not the worktree's — `git rev-parse --git-path hooks` echoes the config
-  // value verbatim when it's absolute.
+  // 显式传入 worktree 本地 .husky：getHooksDir 会返回上方刚设置的绝对
+  // core.hooksPath（主仓库 .husky），而非 worktree 的路径；当配置为绝对路径时，
+  // `git rev-parse --git-path hooks` 会原样回显配置值。
   if (feature('COMMIT_ATTRIBUTION')) {
     const worktreeHooksDir = hooksPath === huskyPath ? join(worktreePath, '.husky') : undefined
     void import('../../services/attribution/postCommitAttribution.js')
@@ -571,26 +548,25 @@ async function performPostCreationSetup(repoRoot: string, worktreePath: string):
           }),
       )
       .catch((error: unknown) => {
-        // Dynamic import() itself rejected (module load failure). The inner
-        // .catch above only handles installPrepareCommitMsgHook rejection —
-        // without this outer handler an import failure would surface as an
-        // unhandled promise rejection.
+        // dynamic import() 本身拒绝，表示模块加载失败。上方内层 .catch 仅处理
+        // installPrepareCommitMsgHook 拒绝；缺少此外层 handler 时，import 失败会成为
+        // 未处理的 Promise 拒绝。
         logForDebugging(`Failed to load postCommitAttribution module: ${error}`)
       })
   }
 }
 
 /**
- * Parses a PR reference from a string.
- * Accepts GitHub-style PR URLs (e.g., https://github.com/owner/repo/pull/123,
- * or GHE equivalents like https://ghe.example.com/owner/repo/pull/123)
+ * 从字符串解析 PR 引用。
+ * 接受 GitHub 风格 PR URL（如 https://github.com/owner/repo/pull/123，
+ * 或 https://ghe.example.com/owner/repo/pull/123 等 GHE URL）。
  * or `#N` format (e.g., #123).
- * Returns the PR number or null if the string is not a recognized PR reference.
+ * 返回 PR 编号；字符串不是可识别的 PR 引用时返回 null。
  */
 export function parsePRReference(input: string): number | null {
   // GitHub-style PR URL: https://<host>/owner/repo/pull/123 (with optional trailing slash, query, hash)
-  // The /pull/N path shape is specific to GitHub — GitLab uses /-/merge_requests/N,
-  // Bitbucket uses /pull-requests/N — so matching any host here is safe.
+  // /pull/N 路径形态为 GitHub 特有；GitLab 使用 /-/merge_requests/N，Bitbucket
+  // 使用 /pull-requests/N，因此此处匹配任意 host 是安全的。
   const urlMatch = input.match(/^https?:\/\/[^/]+\/[^/]+\/[^/]+\/pull\/(\d+)\/?(?:[?#].*)?$/i)
   if (urlMatch?.[1]) {
     return parseInt(urlMatch[1], 10)
@@ -656,13 +632,13 @@ export async function createWorktreeForSession(
   tmuxSessionName?: string,
   options?: { prNumber?: number },
 ): Promise<WorktreeSession> {
-  // Must run before the hook branch below — hooks receive the raw slug as an
-  // argument, and the git branch builds a path from it via path.join.
+  // 必须在下方 hook 分支前运行；hook 接收原始 slug 参数，git 分支则通过
+  // path.join 从中构造路径。
   validateWorktreeSlug(slug)
 
   const originalCwd = getCwd()
 
-  // Try hook-based worktree creation first (allows user-configured VCS)
+  // 优先尝试基于 hook 创建 worktree，以支持用户配置的 VCS。
   if (hasWorktreeCreateHook()) {
     const hookResult = await executeWorktreeCreateHook(slug)
     logForDebugging(`Created hook-based worktree at: ${hookResult.worktreePath}`)
@@ -676,7 +652,7 @@ export async function createWorktreeForSession(
       hookBased: true,
     }
   } else {
-    // Fall back to git worktree
+    // 退回 git worktree。
     const gitRoot = findGitRoot(getCwd())
     if (!gitRoot) {
       throw new Error(
@@ -717,7 +693,7 @@ export async function createWorktreeForSession(
     }
   }
 
-  // Save to project config for persistence
+  // 保存到项目配置以持久化。
   saveCurrentProjectConfig((current) => ({
     ...current,
     activeWorktreeSession: currentWorktreeSession ?? undefined,
@@ -734,13 +710,13 @@ export async function keepWorktree(): Promise<void> {
   try {
     const { worktreePath, originalCwd, worktreeBranch } = currentWorktreeSession
 
-    // Change back to original directory first
+    // 先切回原始目录。
     process.chdir(originalCwd)
 
-    // Clear the session but keep the worktree intact
+    // 清除会话，但保留 worktree。
     currentWorktreeSession = null
 
-    // Update config
+    // 更新配置。
     saveCurrentProjectConfig((current) => ({
       ...current,
       activeWorktreeSession: undefined,
@@ -833,11 +809,11 @@ export async function cleanupWorktree(): Promise<void> {
     const { worktreePath, originalCwd, worktreeBranch, hookBased, usedSparsePaths } =
       currentWorktreeSession
 
-    // Change back to original directory first
+    // 先切回原始目录。
     process.chdir(originalCwd)
 
     if (hookBased) {
-      // Hook-based worktree: delegate cleanup to WorktreeRemove hook
+      // 基于 hook 的 worktree：委托 WorktreeRemove hook 清理。
       const hookRan = await executeWorktreeRemoveHook(worktreePath)
       if (hookRan) {
         logForDebugging(`Removed hook-based worktree at: ${worktreePath}`)
@@ -848,10 +824,9 @@ export async function cleanupWorktree(): Promise<void> {
         )
       }
     } else {
-      // Git-based worktree: use git worktree remove.
-      // Explicit cwd: process.chdir above does NOT update getCwd() (the state
-      // CWD that execFileNoThrow defaults to). If the model cd'd to a non-repo
-      // dir, the bare execFileNoThrow variant would fail silently here.
+      // 基于 Git 的 worktree：使用 git worktree remove。显式指定 cwd，因为上方
+      // process.chdir 不会更新 getCwd()（execFileNoThrow 默认使用的状态 CWD）。
+      // 若模型 cd 到非仓库目录，不传 cwd 的 execFileNoThrow 会在此静默失败。
       const { code: removeCode, stderr: removeError } = await execFileNoThrowWithCwd(
         gitExe(),
         ['worktree', 'remove', '--force', worktreePath],
@@ -871,18 +846,18 @@ export async function cleanupWorktree(): Promise<void> {
       }
     }
 
-    // Clear the session
+    // 清除会话。
     currentWorktreeSession = null
 
-    // Update config
+    // 更新配置。
     saveCurrentProjectConfig((current) => ({
       ...current,
       activeWorktreeSession: undefined,
     }))
 
-    // Delete the temporary worktree branch (git-based only)
+    // 删除临时 worktree 分支，仅适用于 Git。
     if (!hookBased && worktreeBranch) {
-      // Wait a bit to ensure git has released all locks
+      // 稍作等待，确保 git 已释放全部锁。
       await sleep(100)
 
       const { code: deleteBranchCode, stderr: deleteBranchError } = await execFileNoThrowWithCwd(
@@ -909,10 +884,9 @@ export async function cleanupWorktree(): Promise<void> {
 }
 
 /**
- * Create a lightweight worktree for a subagent.
- * Reuses getOrCreateWorktree/performPostCreationSetup but does NOT touch
- * global session state (currentWorktreeSession, process.chdir, project config).
- * Falls back to hook-based creation if not in a git repository.
+ * 为子代理创建轻量 worktree。复用 getOrCreateWorktree/performPostCreationSetup，
+ * 但不修改全局会话状态（currentWorktreeSession、process.chdir、项目配置）。
+ * 不在 git 仓库中时退回基于 hook 的创建方式。
  */
 export async function createAgentWorktree(slug: string): Promise<{
   worktreePath: string
@@ -923,7 +897,7 @@ export async function createAgentWorktree(slug: string): Promise<{
 }> {
   validateWorktreeSlug(slug)
 
-  // Try hook-based worktree creation first (allows user-configured VCS)
+  // 优先尝试基于 hook 创建 worktree，以支持用户配置的 VCS。
   if (hasWorktreeCreateHook()) {
     const hookResult = await executeWorktreeCreateHook(slug)
     logForDebugging(`Created hook-based agent worktree at: ${hookResult.worktreePath}`)
@@ -931,11 +905,10 @@ export async function createAgentWorktree(slug: string): Promise<{
     return { worktreePath: hookResult.worktreePath, hookBased: true }
   }
 
-  // Fall back to git worktree
-  // findCanonicalGitRoot (not findGitRoot) so agent worktrees always land in
-  // the main repo's .zy/worktrees/ even when spawned from inside a session
-  // worktree — otherwise they nest at <worktree>/.zy/worktrees/ and the
-  // periodic cleanup (which scans the canonical root) never finds them.
+  // 退回 git worktree。
+  // 使用 findCanonicalGitRoot 而非 findGitRoot，使 agent worktree 即使从会话
+  // worktree 内创建，也始终位于主仓库 .zy/worktrees/。否则会嵌套在
+  // <worktree>/.zy/worktrees/，扫描规范根目录的周期清理永远找不到它们。
   const gitRoot = findCanonicalGitRoot(getCwd())
   if (!gitRoot) {
     throw new Error(
@@ -953,9 +926,8 @@ export async function createAgentWorktree(slug: string): Promise<{
     logForDebugging(`Created agent worktree at: ${worktreePath} on branch: ${worktreeBranch}`)
     await performPostCreationSetup(gitRoot, worktreePath)
   } else {
-    // Bump mtime so the periodic stale-worktree cleanup doesn't consider this
-    // worktree stale — the fast-resume path is read-only and leaves the original
-    // creation-time mtime intact, which can be past the 30-day cutoff.
+    // 更新 mtime，防止周期性过期 worktree 清理将其视为陈旧。快速恢复路径只读，
+    // 会保留最初创建时间的 mtime，该时间可能已超过 30 天阈值。
     const now = new Date()
     await utimes(worktreePath, now, now)
     logForDebugging(`Resuming existing agent worktree at: ${worktreePath}`)
@@ -965,11 +937,9 @@ export async function createAgentWorktree(slug: string): Promise<{
 }
 
 /**
- * Remove a worktree created by createAgentWorktree.
- * For git-based worktrees, removes the worktree directory and deletes the temporary branch.
- * For hook-based worktrees, delegates to the WorktreeRemove hook.
- * Must be called with the main repo's git root (for git worktrees), not the worktree path,
- * since the worktree directory is deleted during this operation.
+ * 移除 createAgentWorktree 创建的 worktree。Git worktree 会移除目录并删除临时分支；
+ * 基于 hook 的 worktree 委托 WorktreeRemove hook。Git worktree 必须传入主仓库
+ * git 根目录，而非 worktree 路径，因为操作期间会删除该目录。
  */
 export async function removeAgentWorktree(
   worktreePath: string,
@@ -997,7 +967,7 @@ export async function removeAgentWorktree(
     return false
   }
 
-  // Run from the main repo root, not the worktree (which we're about to delete)
+  // 从主仓库根目录运行，而非即将删除的 worktree。
   const { code: removeCode, stderr: removeError } = await execFileNoThrowWithCwd(
     gitExe(),
     ['worktree', 'remove', '--force', worktreePath],
@@ -1018,7 +988,7 @@ export async function removeAgentWorktree(
     return true
   }
 
-  // Delete the temporary worktree branch from the main repo
+  // 从主仓库删除临时 worktree 分支。
   const { code: deleteBranchCode, stderr: deleteBranchError } = await execFileNoThrowWithCwd(
     gitExe(),
     ['branch', '-D', worktreeBranch],
@@ -1036,40 +1006,38 @@ export async function removeAgentWorktree(
 }
 
 /**
- * Slug patterns for throwaway worktrees created by AgentTool (`agent-a<7hex>`,
- * from earlyAgentId.slice(0,8)), WorkflowTool (`wf_<runId>-<idx>` where runId
- * is randomUUID().slice(0,12) = 8 hex + `-` + 3 hex), and bridgeMain
- * (`bridge-<safeFilenameId>`). These leak when the parent process is killed
- * (Ctrl+C, ESC, crash) before their in-process cleanup runs. Exact-shape
- * patterns avoid sweeping user-named EnterWorktree slugs like `wf-myfeature`.
+ * AgentTool（`agent-a<7hex>`，源自 earlyAgentId.slice(0,8)）、WorkflowTool
+ *（`wf_<runId>-<idx>`，其中 runId 为 randomUUID().slice(0,12)，即 8 位十六进制
+ * + `-` + 3 位十六进制）及 bridgeMain（`bridge-<safeFilenameId>`）创建的一次性
+ * worktree slug 模式。父进程在进程内清理前被终止（Ctrl+C、ESC、崩溃）时会遗留。
+ * 精确形态模式可避免清理 `wf-myfeature` 等用户命名的 EnterWorktree slug。
  */
 const EPHEMERAL_WORKTREE_PATTERNS = [
   /^agent-a[0-9a-f]{7}$/,
   /^wf_[0-9a-f]{8}-[0-9a-f]{3}-\d+$/,
-  // Legacy wf-<idx> slugs from before workflowRunId disambiguation — kept so
-  // the 30-day sweep still cleans up worktrees leaked by older builds.
+  // workflowRunId 消歧前的旧版 wf-<idx> slug；保留以便 30 天扫描仍能清理旧构建遗留项。
   /^wf-\d+$/,
-  // Real bridge slugs are `bridge-${safeFilenameId(sessionId)}`.
+  // 实际 bridge slug 为 `bridge-${safeFilenameId(sessionId)}`。
   /^bridge-[A-Za-z0-9_]+(-[A-Za-z0-9_]+)*$/,
-  // Template job worktrees: job-<templateName>-<8hex>. Prefix distinguishes
-  // from user-named EnterWorktree slugs that happen to end in 8 hex.
+  // 模板 job worktree：job-<templateName>-<8hex>。前缀用于区分碰巧以 8 位十六进制
+  // 结尾的用户命名 EnterWorktree slug。
   /^job-[a-zA-Z0-9._-]{1,55}-[0-9a-f]{8}$/,
 ]
 
 /**
- * Remove stale agent/workflow worktrees older than cutoffDate.
+ * 移除早于 cutoffDate 的陈旧 agent/workflow worktree。
  *
  * Safety:
- * - Only touches slugs matching ephemeral patterns (never user-named worktrees)
- * - Skips the current session's worktree
- * - Fail-closed: skips if git status fails or shows tracked changes
- *   (-uno: untracked files in a 30-day-old crashed agent worktree are build
- *   artifacts; skipping the untracked scan is 5-10× faster on large repos)
- * - Fail-closed: skips if any commits aren't reachable from a remote
+ * - 仅处理匹配临时模式的 slug，绝不处理用户命名 worktree
+ * - 跳过当前会话的 worktree
+ * - 失败关闭：git status 失败或显示已跟踪变更时跳过
+ *   （-uno：崩溃 30 天后的 agent worktree 中，未跟踪文件属于构建产物；
+ *   跳过未跟踪扫描在大型仓库中快 5–10 倍）
+ * - 失败关闭：存在无法从 remote 到达的 commit 时跳过
  *
- * `git worktree remove --force` handles both the directory and git's internal
- * worktree tracking. If git doesn't recognize the path as a worktree (orphaned
- * dir), it's left in place — a later readdir finding it stale again is harmless.
+ * `git worktree remove --force` 同时处理目录和 git 内部 worktree 跟踪。
+ * git 无法将路径识别为 worktree（孤立目录）时保持原样；后续 readdir 再次发现
+ * 其陈旧也无害。
  */
 export async function cleanupStaleAgentWorktrees(cutoffDate: Date): Promise<number> {
   const gitRoot = findCanonicalGitRoot(getCwd())
@@ -1109,8 +1077,8 @@ export async function cleanupStaleAgentWorktrees(cutoffDate: Date): Promise<numb
       continue
     }
 
-    // Both checks must succeed with empty output. Non-zero exit (corrupted
-    // worktree, git not recognizing it, etc.) means skip — we don't know
+    // 两项检查都必须成功且输出为空。非零退出（worktree 损坏、git 无法识别等）
+    // 表示应跳过，因为无法确定状态。
     // what's in there.
     const [status, unpushed] = await Promise.all([
       execFileNoThrowWithCwd(gitExe(), ['--no-optional-locks', 'status', '--porcelain', '-uno'], {
@@ -1144,10 +1112,9 @@ export async function cleanupStaleAgentWorktrees(cutoffDate: Date): Promise<numb
 }
 
 /**
- * Check whether a worktree has uncommitted changes or new commits since creation.
- * Returns true if there are uncommitted changes (dirty working tree), if commits
- * were made on the worktree branch since `headCommit`, or if git commands fail
- * — callers use this to decide whether to remove a worktree, so fail-closed.
+ * 检查 worktree 自创建以来是否有未提交变更或新 commit。工作树脏、worktree 分支
+ * 在 `headCommit` 后产生 commit，或 git 命令失败时返回 true。调用方据此决定是否
+ * 移除 worktree，因此采用失败关闭。
  */
 export async function hasWorktreeChanges(
   worktreePath: string,
@@ -1183,15 +1150,14 @@ export async function hasWorktreeChanges(
 }
 
 /**
- * Fast-path handler for --worktree --tmux.
- * Creates the worktree and execs into tmux running Zy inside.
- * This is called early in cli.tsx before loading the full CLI.
+ * --worktree --tmux 的快速路径 handler。创建 worktree，并 exec 进入其中运行 Zy
+ * 的 tmux。cli.tsx 会在加载完整 CLI 前提前调用。
  */
 export async function execIntoTmuxWorktree(args: string[]): Promise<{
   handled: boolean
   error?: string
 }> {
-  // Check platform - tmux doesn't work on Windows
+  // 检查平台；tmux 无法在 Windows 上运行。
   if (process.platform === 'win32') {
     return {
       handled: false,
@@ -1199,7 +1165,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     }
   }
 
-  // Check if tmux is available
+  // 检查 tmux 是否可用。
   const tmuxCheck = spawnSync('tmux', ['-V'], { encoding: 'utf-8' })
   if (tmuxCheck.status !== 0) {
     const installHint =
@@ -1212,7 +1178,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     }
   }
 
-  // Parse worktree name and tmux mode from args
+  // 从参数解析 worktree 名称和 tmux 模式。
   let worktreeName: string | undefined
   let forceClassicTmux = false
   for (let i = 0; i < args.length; i++) {
@@ -1221,7 +1187,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
       continue
     }
     if (arg === '-w' || arg === '--worktree') {
-      // Check if next arg exists and isn't another flag
+      // 检查下一个参数存在且不是另一 flag。
       const next = args[i + 1]
       if (next && !next.startsWith('-')) {
         worktreeName = next
@@ -1233,7 +1199,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     }
   }
 
-  // Check if worktree name is a PR reference
+  // 检查 worktree 名称是否为 PR 引用。
   let prNumber: number | null = null
   if (worktreeName) {
     prNumber = parsePRReference(worktreeName)
@@ -1242,7 +1208,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     }
   }
 
-  // Generate a slug if no name provided
+  // 未提供名称时生成 slug。
   if (!worktreeName) {
     const adjectives = ['swift', 'bright', 'calm', 'keen', 'bold']
     const nouns = ['fox', 'owl', 'elm', 'oak', 'ray']
@@ -1252,9 +1218,8 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     worktreeName = `${adj}-${noun}-${suffix}`
   }
 
-  // worktreeName is joined into worktreeDir via path.join below; apply the
-  // same allowlist used by the in-session worktree tool so the constraint
-  // holds uniformly regardless of entry point.
+  // 下方通过 path.join 将 worktreeName 拼入 worktreeDir；应用会话内 worktree tool
+  // 使用的同一 allowlist，使约束不受入口差异影响。
   try {
     validateWorktreeSlug(worktreeName)
   } catch (e) {
@@ -1264,9 +1229,9 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     }
   }
 
-  // Mirror createWorktreeForSession(): hook takes precedence over git so the
-  // WorktreeCreate hook substitutes the VCS backend for this fast-path too
-  // (anthropics/zy-code#39281). Git path below runs only when no hook.
+  // 与 createWorktreeForSession() 一致：hook 优先于 git，使 WorktreeCreate hook
+  // 也能为此快速路径替换 VCS 后端（anthropics/zy-code#39281）。仅在无 hook 时
+  // 执行下方 Git 路径。
   let worktreeDir: string
   let repoName: string
   if (hasWorktreeCreateHook()) {
@@ -1283,7 +1248,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     // biome-ignore lint/suspicious/noConsole: intentional console output
     console.log(`Using worktree via hook: ${worktreeDir}`)
   } else {
-    // Get main git repo root (resolves through worktrees)
+    // 获取主 git 仓库根目录，并跨 worktree 解析。
     const repoRoot = findCanonicalGitRoot(getCwd())
     if (!repoRoot) {
       return {
@@ -1295,7 +1260,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     repoName = basename(repoRoot)
     worktreeDir = worktreePathFor(repoRoot, worktreeName)
 
-    // Create or resume worktree
+    // 创建或恢复 worktree。
     try {
       const result = await getOrCreateWorktree(
         repoRoot,
@@ -1315,10 +1280,10 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     }
   }
 
-  // Sanitize for tmux session name (replace / and . with _)
+  // 清理为 tmux session 名称，将 / 和 . 替换为 _。
   const tmuxSessionName = `${repoName}_${worktreeBranchName(worktreeName)}`.replace(/[/.]/g, '_')
 
-  // Build new args without --tmux and --worktree (we're already in the worktree)
+  // 构造不含 --tmux 和 --worktree 的新参数；当前已位于 worktree 中。
   const newArgs: string[] = []
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
@@ -1329,7 +1294,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
       continue
     }
     if (arg === '-w' || arg === '--worktree') {
-      // Skip the flag and its value if present
+      // 跳过 flag 及其存在的值。
       const next = args[i + 1]
       if (next && !next.startsWith('-')) {
         i++ // Skip the value too
@@ -1342,7 +1307,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     newArgs.push(arg)
   }
 
-  // Get tmux prefix for user guidance
+  // 获取 tmux prefix，供用户指引使用。
   let tmuxPrefix = 'C-b' // default
   const prefixResult = spawnSync('tmux', ['show-options', '-g', 'prefix'], {
     encoding: 'utf-8',
@@ -1354,12 +1319,12 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     }
   }
 
-  // Check if tmux prefix conflicts with Zy keybindings
+  // 检查 tmux prefix 是否与 Zy keybinding 冲突。
   // Zy binds: ctrl+b (task:background), ctrl+c, ctrl+d, ctrl+t, ctrl+o, ctrl+r, ctrl+s, ctrl+g, ctrl+e
   const ZyBindings = ['C-b', 'C-c', 'C-d', 'C-t', 'C-o', 'C-r', 'C-s', 'C-g', 'C-e']
   const prefixConflicts = ZyBindings.includes(tmuxPrefix)
 
-  // Set env vars for the inner ZY to display tmux info in welcome message
+  // 设置内部 ZY 的环境变量，以在欢迎消息中显示 tmux 信息。
   const tmuxEnv = {
     ...process.env,
     ZY_CODE_TMUX_SESSION: tmuxSessionName,
@@ -1367,23 +1332,22 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     ZY_CODE_TMUX_PREFIX_CONFLICTS: prefixConflicts ? '1' : '',
   }
 
-  // Check if session already exists
+  // 检查 session 是否已存在。
   const hasSessionResult = spawnSync('tmux', ['has-session', '-t', tmuxSessionName], {
     encoding: 'utf-8',
   })
   const sessionExists = hasSessionResult.status === 0
 
-  // Check if we're already inside a tmux session
+  // 检查当前是否已在 tmux session 内。
   const isAlreadyInTmux = Boolean(process.env.TMUX)
 
-  // Use tmux control mode (-CC) for native iTerm2 tab/pane integration
-  // This lets users use iTerm2's UI instead of learning tmux keybindings
-  // Use --tmux=classic to force traditional tmux even in iTerm2
-  // Control mode doesn't make sense when already in tmux (would need to switch-client)
+  // 使用 tmux control mode（-CC）原生集成 iTerm2 tab/pane，让用户可使用 iTerm2 UI，
+  // 无需学习 tmux keybinding。即使在 iTerm2 中，也可用 --tmux=classic 强制传统
+  // tmux。已位于 tmux 中时 control mode 没有意义，因为需要 switch-client。
   const useControlMode = isInITerm2() && !forceClassicTmux && !isAlreadyInTmux
   const tmuxGlobalArgs = useControlMode ? ['-CC'] : []
 
-  // Print hint about iTerm2 preferences when using control mode
+  // 使用 control mode 时输出 iTerm2 偏好设置提示。
   if (useControlMode && !sessionExists) {
     const y = chalk.yellow
     // biome-ignore lint/suspicious/noConsole: intentional user guidance
@@ -1395,13 +1359,13 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     )
   }
 
-  // For ants in zy-cli-internal, set up dev panes (watch + start)
+  // 为 zy-cli-internal 中的 ant 设置开发 pane（watch + start）。
   const isAnt = isInternalBuild()
   const isZyCliInternal = repoName === 'zy-cli-internal'
   const shouldSetupDevPanes = isAnt && isZyCliInternal && !sessionExists
 
   if (shouldSetupDevPanes) {
-    // Create detached session with Zy in first pane
+    // 创建 detached session，并在第一个 pane 中运行 Zy。
     spawnSync(
       'tmux',
       [
@@ -1418,7 +1382,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
       { cwd: worktreeDir, env: tmuxEnv },
     )
 
-    // Split horizontally and run watch
+    // 水平拆分并运行 watch。
     spawnSync('tmux', ['split-window', '-h', '-t', tmuxSessionName, '-c', worktreeDir], {
       cwd: worktreeDir,
     })
@@ -1426,7 +1390,7 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
       cwd: worktreeDir,
     })
 
-    // Split vertically and run start
+    // 垂直拆分并运行 start。
     spawnSync('tmux', ['split-window', '-v', '-t', tmuxSessionName, '-c', worktreeDir], {
       cwd: worktreeDir,
     })
@@ -1434,36 +1398,36 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
       cwd: worktreeDir,
     })
 
-    // Select the first pane (Zy)
+    // 选择运行 Zy 的第一个 pane。
     spawnSync('tmux', ['select-pane', '-t', `${tmuxSessionName}:0.0`], {
       cwd: worktreeDir,
     })
 
-    // Attach or switch to the session
+    // attach 或切换到 session。
     if (isAlreadyInTmux) {
-      // Switch to sibling session (avoid nesting)
+      // 切换到同级 session，避免嵌套。
       spawnSync('tmux', ['switch-client', '-t', tmuxSessionName], {
         stdio: 'inherit',
       })
     } else {
-      // Attach to the session
+      // attach 到 session。
       spawnSync('tmux', [...tmuxGlobalArgs, 'attach-session', '-t', tmuxSessionName], {
         stdio: 'inherit',
         cwd: worktreeDir,
       })
     }
   } else {
-    // Standard behavior: create or attach
+    // 标准行为：创建或 attach。
     if (isAlreadyInTmux) {
-      // Already in tmux - create detached session, then switch to it (sibling)
-      // Check if session already exists first
+      // 已在 tmux 中：创建 detached session 后切换过去，作为同级 session。
+      // 先检查 session 是否已存在。
       if (sessionExists) {
-        // Just switch to existing session
+        // 直接切换到已有 session。
         spawnSync('tmux', ['switch-client', '-t', tmuxSessionName], {
           stdio: 'inherit',
         })
       } else {
-        // Create new detached session
+        // 创建新的 detached session。
         spawnSync(
           'tmux',
           [
@@ -1480,13 +1444,13 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
           { cwd: worktreeDir, env: tmuxEnv },
         )
 
-        // Switch to the new session
+        // 切换到新 session。
         spawnSync('tmux', ['switch-client', '-t', tmuxSessionName], {
           stdio: 'inherit',
         })
       }
     } else {
-      // Not in tmux - create and attach (original behavior)
+      // 不在 tmux 中：创建并 attach，保持原有行为。
       const tmuxArgs = [
         ...tmuxGlobalArgs,
         'new-session',

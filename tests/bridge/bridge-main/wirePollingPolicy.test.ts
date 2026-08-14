@@ -1,5 +1,5 @@
 /**
- * wirePollingPolicy characterization tests。
+ * wirePollingPolicy 特性测试。
  *
  * 纯退避策略函数。
  */

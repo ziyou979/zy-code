@@ -83,9 +83,8 @@ export function getMcpClientConfig(
 }
 
 /**
- * Safely extracts scope information from AuthorizationServerMetadata.
- * The metadata can be either OAuthMetadata or OpenIdProviderDiscoveryMetadata,
- * and different providers use different fields for scope information.
+ * 从 AuthorizationServerMetadata 中安全提取 scope 信息。metadata 可能是 OAuthMetadata 或
+ * OpenIdProviderDiscoveryMetadata，不同 provider 使用不同字段保存 scope 信息。
  */
 export function getScopeFromMetadata(
   metadata: AuthorizationServerMetadata | undefined,

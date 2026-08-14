@@ -26,12 +26,12 @@ export function renderPlaceholder({
 
   if (placeholder) {
     if (hidePlaceholderText) {
-      // Voice recording: show only the cursor, no placeholder text
+      // 录音时只显示光标，不显示 placeholder 文本
       renderedPlaceholder = showCursor && focus && terminalFocus ? invert(' ') : ''
     } else {
       renderedPlaceholder = chalk.dim(placeholder)
 
-      // Show inverse cursor only when both input and terminal are focused
+      // 仅当输入框和终端都获得焦点时显示反色光标
       if (showCursor && focus && terminalFocus) {
         renderedPlaceholder =
           placeholder.length > 0

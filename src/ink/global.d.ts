@@ -1,4 +1,4 @@
-// Global type declarations for ink components
+// Ink 组件的全局类型声明
 
 import type { Props as BoxProps } from './components/Box.js'
 

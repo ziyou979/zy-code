@@ -41,7 +41,7 @@ export default {
       try {
         rmSync(tmpDir, { recursive: true, force: true })
       } catch {
-        // ignore cleanup errors
+        // 忽略清理错误
       }
     },
   }

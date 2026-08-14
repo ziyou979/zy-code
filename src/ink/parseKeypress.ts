@@ -475,7 +475,7 @@ function keycodeToName(keycode: number): string | undefined {
       return 'space'
     case 127:
       return 'backspace'
-    // Kitty keyboard protocol numpad keys (KP_0 through KP_9)
+    // Kitty keyboard protocol 的数字小键盘按键（KP_0 到 KP_9）
     case 57399:
       return '0'
     case 57400:
@@ -575,8 +575,8 @@ function parseMouseEvent(s: string): ParsedMouse | null {
     return null
   }
   const button = parseInt(match[1]!, 10)
-  // Wheel events (bit 6 set, low bits 0/1 for up/down) stay as ParsedKey
-  // so the keybinding system can route them to scroll handlers.
+  // 滚轮事件（第 6 位为 1，低位 0/1 表示向上/向下）保留为 ParsedKey，
+  // 以便 keybinding 系统将其路由给滚动处理器。
   if ((button & 0x40) !== 0) {
     return null
   }

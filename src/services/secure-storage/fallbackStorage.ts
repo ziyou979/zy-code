@@ -8,8 +8,7 @@ interface SecureStorageWithName extends SecureStorage {
 }
 
 /**
- * Creates a fallback storage that tries to use the primary storage first,
- * and if that fails, falls back to the secondary storage
+ * 创建后备存储：优先使用主存储，失败时回退到次级存储。
  */
 export function createFallbackStorage(
   primary: SecureStorage,

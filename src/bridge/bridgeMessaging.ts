@@ -1,13 +1,11 @@
 /**
- * Shared transport-layer helpers for bridge message handling.
+ * bridge 消息处理共享的 transport 层辅助函数。
  *
- * Extracted from replBridge.ts so both the env-based core (initBridgeCore)
- * and the env-less core (initEnvLessWireCore) can use the same ingress
- * parsing, control-request handling, and echo-dedup machinery.
+ * 从 replBridge.ts 提取，使基于环境的核心 initBridgeCore 与无环境层核心
+ * initEnvLessWireCore 可以共用入站解析、控制请求处理及回显去重机制。
  *
- * Everything here is pure — no closure over bridge-specific state. All
- * collaborators (transport, sessionId, UUID sets, callbacks) are passed
- * as params.
+ * 此处所有逻辑均为纯函数，不闭包捕获 bridge 专属状态。所有协作者（transport、sessionId、UUID
+ * 集合、callback）都通过参数传入。
  */
 
 import { randomUUID } from 'node:crypto'
@@ -23,18 +21,17 @@ import { errorMessage } from '../utils/errors.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
 import { jsonParse } from '../services/infra/slowOperations.js'
 import type { ReplWireTransport } from './replBridgeTransport.js'
-// ─── Type guards ─────────────────────────────────────────────────────────────
+// ─── 类型守卫 ───────────────────────────────────────────────────────────────
 
-/** Type predicate for parsed WebSocket messages. WireMessage is a
- *  discriminated union on `type` — validating the discriminant is
- *  sufficient for the predicate; callers narrow further via the union. */
+/** 已解析 WebSocket 消息的类型谓词。WireMessage 是以 `type` 为判别字段的 union；校验该字段
+ *  足以构成谓词，调用方再通过 union 进一步缩窄。 */
 export function isSDKMessage(value: unknown): value is WireMessage {
   return (
     value !== null && typeof value === 'object' && 'type' in value && typeof value.type === 'string'
   )
 }
 
-/** Type predicate for control_response messages from the server. */
+/** 服务端 control_response 消息的类型谓词。 */
 export function isSDKControlResponse(value: unknown): value is WireControlResponse {
   return (
     value !== null &&
@@ -45,7 +42,7 @@ export function isSDKControlResponse(value: unknown): value is WireControlRespon
   )
 }
 
-/** Type predicate for control_request messages from the server. */
+/** 服务端 control_request 消息的类型谓词。 */
 export function isSDKControlRequest(value: unknown): value is WireControlRequest {
   return (
     value !== null &&
@@ -58,13 +55,11 @@ export function isSDKControlRequest(value: unknown): value is WireControlRequest
 }
 
 /**
- * True for message types that should be forwarded to the bridge transport.
- * The server only wants user/assistant turns and slash-command system events;
- * everything else (tool_result, progress, etc.) is internal REPL chatter.
+ * 对应应转发到 bridge transport 的消息类型时返回 true。服务端只需要 user/assistant turn 与
+ * slash command system 事件；tool_result、progress 等其余内容属于 REPL 内部消息。
  */
 export function isEligibleWireMessage(m: Message): boolean {
-  // Virtual messages (REPL inner calls) are display-only — bridge/SDK
-  // consumers see the REPL tool_use/result which summarizes the work.
+  // 虚拟消息（REPL 内部调用）仅供展示；bridge/SDK 消费方会看到概括任务的 REPL tool_use/result。
   if ((m.type === 'user' || m.type === 'assistant') && m.isVirtual) {
     return false
   }
@@ -76,17 +71,13 @@ export function isEligibleWireMessage(m: Message): boolean {
 }
 
 /**
- * Extract title-worthy text from a Message for onUserMessage. Returns
- * undefined for messages that shouldn't title the session: non-user, meta
- * (nudges), tool results, compact summaries, non-human origins (task
- * notifications, channel messages), or pure display-tag content
- * (<ide_opened_file>, <session-start-hook>, etc.).
+ * 从 Message 中提取适合 onUserMessage 生成标题的文本。以下消息不应作为会话标题，返回
+ * undefined：非用户消息、meta（nudge）、tool result、compact summary、非人工来源（task 通知、
+ * channel 消息），或仅含展示 tag 的内容（<ide_opened_file>、<session-start-hook> 等）。
  *
- * Synthetic interrupts ([Request interrupted by user]) are NOT filtered here —
- * isSyntheticMessage lives in messages.ts (heavy import, pulls command
- * registry). The initialMessages path in initReplBridge checks it; the
- * writeMessages path reaching an interrupt as the *first* message is
- * implausible (an interrupt implies a prior prompt already flowed through).
+ * 此处不筛除合成中断（[Request interrupted by user]），因为 isSyntheticMessage 位于 messages.ts，
+ * import 较重且会引入 command 注册表。initReplBridge 的 initialMessages 路径会检查；
+ * writeMessages 路径几乎不可能将中断作为首条消息，因为中断意味着此前已有 prompt 流过。
  */
 export function extractTitleText(m: Message): string | undefined {
   if (m.type !== 'user' || m.isMeta || m.toolUseResult || m.isCompactSummary) {
@@ -114,13 +105,12 @@ export function extractTitleText(m: Message): string | undefined {
   return clean || undefined
 }
 
-// ─── Ingress routing ─────────────────────────────────────────────────────────
+// ─── 入站路由 ───────────────────────────────────────────────────────────────
 
 /**
- * Parse an ingress WebSocket message and route it to the appropriate handler.
- * Ignores messages whose UUID is in recentPostedUUIDs (echoes of what we sent)
- * or in recentInboundUUIDs (re-deliveries we've already forwarded — e.g.
- * server replayed history after a transport swap lost the seq-num cursor).
+ * 解析入站 WebSocket 消息并路由到合适 handler。忽略 UUID 位于 recentPostedUUIDs（本地发送
+ * 消息的回显）或 recentInboundUUIDs（已转发消息的重新投递）中的消息，例如更换 transport
+ * 丢失 seq-num cursor 后服务端重放历史。
  */
 export function handleIngressMessage(
   data: string,
@@ -133,15 +123,15 @@ export function handleIngressMessage(
   try {
     const parsed: unknown = normalizeControlMessageKeys(jsonParse(data))
 
-    // control_response is not an WireMessage — check before the type guard
+    // control_response 不是 WireMessage，需在类型守卫前检查
     if (isSDKControlResponse(parsed)) {
       logForDebugging('[bridge:repl] Ingress message type=control_response')
       onPermissionResponse?.(parsed)
       return
     }
 
-    // control_request from the server (initialize, set_model, can_use_tool).
-    // Must respond promptly or the server kills the WS (~10-14s timeout).
+    // 服务端发来的 control_request（initialize、set_model、can_use_tool）。必须及时响应，否则
+    // 服务端会在约 10 至 14 秒超时后终止 WS。
     if (isSDKControlRequest(parsed)) {
       logForDebugging(`[bridge:repl] Inbound control_request subtype=${parsed.request.subtype}`)
       onControlRequest?.(parsed)
@@ -152,7 +142,7 @@ export function handleIngressMessage(
       return
     }
 
-    // Check for UUID to detect echoes of our own messages
+    // 检查 UUID，以识别本地消息的回显
     const uuid = 'uuid' in parsed && typeof parsed.uuid === 'string' ? parsed.uuid : undefined
 
     if (uuid && recentPostedUUIDs.has(uuid)) {
@@ -160,11 +150,9 @@ export function handleIngressMessage(
       return
     }
 
-    // Defensive dedup: drop inbound prompts we've already forwarded. The
-    // SSE seq-num carryover (lastTransportSequenceNum) is the primary fix
-    // for history-replay; this catches edge cases where that negotiation
-    // fails (server ignores from_sequence_num, transport died before
-    // receiving any frames, etc).
+    // 防御性去重：丢弃已转发的入站 prompt。延续 SSE seq-num（lastTransportSequenceNum）是解决
+    // 历史重放的主要措施；此处捕获协商失败的边界情况，例如服务端忽略 from_sequence_num、
+    // transport 在收到任何帧前失效等。
     if (uuid && recentInboundUUIDs.has(uuid)) {
       logForDebugging(
         `[bridge:repl] Ignoring re-delivered inbound: type=${parsed.type} uuid=${uuid}`,
@@ -183,7 +171,7 @@ export function handleIngressMessage(
       logEvent('zy_bridge_message_received', {
         is_repl: true,
       })
-      // Fire-and-forget — handler may be async (attachment resolution).
+      // fire-and-forget；handler 可能因解析 attachment 而异步运行。
       void onInboundMessage?.(parsed)
     } else {
       logForDebugging(`[bridge:repl] Ignoring non-user inbound message: type=${parsed.type}`)
@@ -193,17 +181,16 @@ export function handleIngressMessage(
   }
 }
 
-// ─── Server-initiated control requests ───────────────────────────────────────
+// ─── 服务端发起的控制请求 ───────────────────────────────────────────────────
 
 export type ServerControlRequestHandlers = {
   transport: ReplWireTransport | null
   sessionId: string
   /**
-   * When true, all mutable requests (interrupt, set_model, set_permission_mode,
-   * set_max_thinking_tokens) reply with an error instead of false-success.
-   * initialize still replies success — the server kills the connection otherwise.
-   * Used by the outbound-only bridge mode and the SDK's /bridge subpath so zy.ai sees a
-   * proper error instead of "action succeeded but nothing happened locally".
+   * 为 true 时，所有可变请求（interrupt、set_model、set_permission_mode、
+   * set_max_thinking_tokens）都返回错误，而非假成功。initialize 仍返回成功，否则服务端会终止
+   * 连接。用于仅出站 bridge 模式与 SDK 的 /bridge 子路径，使 zy.ai 显示正确错误，而非“操作成功
+   * 但本地没有变化”。
    */
   outboundOnly?: boolean
   onInterrupt?: () => void
@@ -216,13 +203,11 @@ const OUTBOUND_ONLY_ERROR =
   'This session is outbound-only. Enable Remote Control locally to allow inbound control.'
 
 /**
- * Respond to inbound control_request messages from the server. The server
- * sends these for session lifecycle events (initialize, set_model) and
- * for turn-level coordination (interrupt, set_max_thinking_tokens). If we
- * don't respond, the server hangs and kills the WS after ~10-14s.
+ * 响应服务端入站 control_request。服务端会为会话生命周期事件（initialize、set_model）及
+ * turn 级协调（interrupt、set_max_thinking_tokens）发送这些请求。若不响应，服务端会挂起并在
+ * 约 10 至 14 秒后终止 WS。
  *
- * Previously a closure inside initBridgeCore's onWorkReceived; now takes
- * collaborators as params so both cores can use it.
+ * 此前是 initBridgeCore 的 onWorkReceived 内部闭包；现通过参数接收协作者，供两个核心共用。
  */
 export function handleServerControlRequest(
   request: WireControlRequest,
@@ -244,9 +229,8 @@ export function handleServerControlRequest(
 
   let response: WireControlResponse
 
-  // Outbound-only: reply error for mutable requests so zy.ai doesn't show
-  // false success. initialize must still succeed (server kills the connection
-  // if it doesn't — see comment above).
+  // 仅出站模式：可变请求返回错误，避免 zy.ai 显示假成功。initialize 仍必须成功，否则服务端会
+  // 终止连接，参见上方说明。
   if (outboundOnly && request.request.subtype !== 'initialize') {
     response = {
       type: 'control_response',
@@ -266,8 +250,7 @@ export function handleServerControlRequest(
 
   switch (request.request.subtype) {
     case 'initialize':
-      // Respond with minimal capabilities — the REPL handles
-      // commands, models, and account info itself.
+      // 只响应最小能力；command、model 与账户信息由 REPL 自行处理。
       response = {
         type: 'control_response',
         response: {
@@ -308,13 +291,10 @@ export function handleServerControlRequest(
       break
 
     case 'set_permission_mode': {
-      // The callback returns a policy verdict so we can send an error
-      // control_response without importing isAutoModeGateEnabled /
-      // isBypassPermissionsModeDisabled here (bootstrap-isolation). If no
-      // callback is registered (daemon context, which doesn't wire this —
-      // see daemonBridge.ts), return an error verdict rather than a silent
-      // false-success: the mode is never actually applied in that context,
-      // so success would lie to the client.
+      // callback 返回策略 verdict，使此处无需 import isAutoModeGateEnabled /
+      // isBypassPermissionsModeDisabled 即可发送错误 control_response，以保持 bootstrap 隔离。
+      // 若未注册 callback（daemon context 不绑定，参见 daemonBridge.ts），则返回错误 verdict，
+      // 而非静默假成功；该 context 中模式实际不会应用，返回成功会误导 client。
       // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 扩展字段
       const verdict = onSetPermissionMode?.(request.request.mode as PermissionMode) ?? {
         ok: false,
@@ -354,8 +334,7 @@ export function handleServerControlRequest(
       break
 
     default:
-      // Unknown subtype — respond with error so the server doesn't
-      // hang waiting for a reply that never comes.
+      // 未知 subtype 返回错误，避免服务端因等待永远不会到来的响应而挂起。
       response = {
         type: 'control_response',
         response: {
@@ -373,11 +352,11 @@ export function handleServerControlRequest(
   )
 }
 
-// ─── Result message (for session archival on teardown) ───────────────────────
+// ─── Result 消息（供 teardown 时归档会话）───────────────────────────────────
 
 /**
- * Build a minimal `WireResultSuccess` message for session archival.
- * The server needs this event before a WS close to trigger archival.
+ * 构建供会话归档使用的最小 `WireResultSuccess` 消息。服务端需要在 WS 关闭前收到此事件，
+ * 才会触发归档。
  */
 export function makeResultMessage(sessionId: string): WireResultSuccess {
   return {
@@ -398,16 +377,13 @@ export function makeResultMessage(sessionId: string): WireResultSuccess {
   }
 }
 
-// ─── BoundedUUIDSet (echo-dedup ring buffer) ─────────────────────────────────
+// ─── BoundedUUIDSet（回显去重环形缓冲区）────────────────────────────────────
 
 /**
- * FIFO-bounded set backed by a circular buffer. Evicts the oldest entry
- * when capacity is reached, keeping memory usage constant at O(capacity).
+ * 由环形缓冲区实现、采用 FIFO 上限的集合。达到容量时淘汰最早项，使内存占用稳定为 O(capacity)。
  *
- * Messages are added in chronological order, so evicted entries are always
- * the oldest. The caller relies on external ordering (the hook's
- * lastWrittenIndexRef) as the primary dedup — this set is a secondary
- * safety net for echo filtering and race-condition dedup.
+ * 消息按时间顺序加入，因此淘汰项始终最早。调用方以外部顺序（hook 的 lastWrittenIndexRef）作为
+ * 主要去重依据；此集合是回显过滤与竞争去重的第二道安全网。
  */
 export class BoundedUUIDSet {
   private readonly capacity: number
@@ -424,7 +400,7 @@ export class BoundedUUIDSet {
     if (this.set.has(uuid)) {
       return
     }
-    // Evict the entry at the current write position (if occupied)
+    // 淘汰当前写入位置的已有项
     const evicted = this.ring[this.writeIdx]
     if (evicted !== undefined) {
       this.set.delete(evicted)

@@ -96,7 +96,7 @@ describe('toIDEDisplayName', () => {
     expect(toIDEDisplayName('subl')).toBe('Sublime Text')
   })
 
-  // fallback capitalize
+  // 回退为首字母大写
   test('不认识的字符串 fallback 为 capitalize', () => {
     expect(toIDEDisplayName('myeditor')).toBe('Myeditor')
   })

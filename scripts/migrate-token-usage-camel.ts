@@ -268,7 +268,7 @@ async function main(): Promise<void> {
           try {
             unlinkSync(tmp)
           } catch {
-            /* ignore */
+            /* 忽略 */
           }
         }
       }

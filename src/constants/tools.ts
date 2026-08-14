@@ -38,18 +38,18 @@ export const ALL_AGENT_DISALLOWED_TOOLS = new Set([
   TASK_OUTPUT_TOOL_NAME,
   EXIT_PLAN_MODE_TOOL_NAME,
   ENTER_PLAN_MODE_TOOL_NAME,
-  // Allow Agent tool for agents when user is ant (enables nested agents)
+  // 用户为 ant 时允许 agent 使用 Agent 工具，从而支持嵌套 agent。
   ...(isInternalBuild() ? [] : [AGENT_TOOL_NAME]),
   ASK_USER_QUESTION_TOOL_NAME,
   TASK_STOP_TOOL_NAME,
-  // Prevent recursive workflow execution inside subagents.
+  // 防止在子 agent 内递归执行 workflow。
   ...(feature('WORKFLOW_SCRIPTS') ? [WORKFLOW_TOOL_NAME] : []),
 ])
 
 export const CUSTOM_AGENT_DISALLOWED_TOOLS = new Set([...ALL_AGENT_DISALLOWED_TOOLS])
 
 /*
- * Async Agent Tool Availability Status (Source of Truth)
+ * 异步 agent 的工具可用状态（唯一事实来源）。
  */
 export const ASYNC_AGENT_ALLOWED_TOOLS = new Set([
   FILE_READ_TOOL_NAME,
@@ -69,9 +69,9 @@ export const ASYNC_AGENT_ALLOWED_TOOLS = new Set([
   EXIT_WORKTREE_TOOL_NAME,
 ])
 /**
- * Tools allowed only for in-process teammates (not general async agents).
- * These are injected by inProcessRunner.ts and allowed through filterToolsForAgent
- * via isInProcessTeammate() check.
+ * 仅允许进程内 teammate 使用的工具，普通异步 agent 不可使用。
+ * 这些工具由 inProcessRunner.ts 注入，filterToolsForAgent 会通过
+ * isInProcessTeammate() 检查后放行。
  */
 export const IN_PROCESS_TEAMMATE_ALLOWED_TOOLS = new Set([
   TASK_CREATE_TOOL_NAME,
@@ -79,29 +79,29 @@ export const IN_PROCESS_TEAMMATE_ALLOWED_TOOLS = new Set([
   TASK_LIST_TOOL_NAME,
   TASK_UPDATE_TOOL_NAME,
   SEND_MESSAGE_TOOL_NAME,
-  // Teammate-created crons are tagged with the creating agentId and routed to
-  // that teammate's pendingUserMessages queue (see useScheduledTasks.ts).
+  // teammate 创建的 cron 会带有创建者 agentId，并路由到该 teammate 的
+  // pendingUserMessages 队列，参见 useScheduledTasks.ts。
   ...(feature('AGENT_TRIGGERS')
     ? [CRON_CREATE_TOOL_NAME, CRON_DELETE_TOOL_NAME, CRON_LIST_TOOL_NAME]
     : []),
 ])
 
 /*
- * BLOCKED FOR ASYNC AGENTS:
- * - AgentTool: Blocked to prevent recursion
- * - TaskOutputTool: Blocked to prevent recursion
- * - ExitPlanModeTool: Plan mode is a main thread abstraction.
- * - TaskStopTool: Requires access to main thread task state.
- * - TungstenTool: Uses singleton virtual terminal abstraction that conflicts between agents.
+ * 异步 agent 禁用：
+ * - AgentTool：防止递归
+ * - TaskOutputTool：防止递归
+ * - ExitPlanModeTool：Plan mode 是主线程抽象
+ * - TaskStopTool：需要访问主线程任务状态
+ * - TungstenTool：使用单例虚拟终端抽象，会在 agent 之间产生冲突
  *
- * ENABLE LATER (NEED WORK):
- * - MCPTool: TBD
- * - ListMcpResourcesTool: TBD
- * - ReadMcpResourceTool: TBD
+ * 后续启用（仍需完善）：
+ * - MCPTool：待定
+ * - ListMcpResourcesTool：待定
+ * - ReadMcpResourceTool：待定
  */
 
 /**
- * Tools allowed in coordinator mode - only output and agent management tools for the coordinator
+ * coordinator 模式允许的工具：只向 coordinator 提供输出与 agent 管理工具。
  */
 export const COORDINATOR_MODE_ALLOWED_TOOLS = new Set([
   AGENT_TOOL_NAME,

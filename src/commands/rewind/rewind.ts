@@ -5,6 +5,6 @@ export async function call(_args: string, context: ToolUseContext): Promise<Loca
   if (context.openMessageSelector) {
     context.openMessageSelector()
   }
-  // Return a skip message to not append any messages.
+  // 返回 skip 消息，避免追加任何消息。
   return { type: 'skip' }
 }

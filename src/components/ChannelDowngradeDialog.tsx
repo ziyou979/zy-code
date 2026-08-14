@@ -9,8 +9,8 @@ type Props = {
 }
 
 /**
- * Dialog shown when switching from latest to stable channel.
- * Allows user to choose whether to downgrade or stay on current version.
+ * 从 latest channel 切换到 stable channel 时显示的 dialog。
+ * 让用户选择降级或保留当前版本。
  */
 export function ChannelDowngradeDialog({ currentVersion, onChoice }: Props) {
   const handleSelect = function handleSelect(value: string) {

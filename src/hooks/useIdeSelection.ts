@@ -25,7 +25,7 @@ export type IDESelection = {
   filePath?: string
 }
 
-// Define the selection changed notification schema
+// 定义选区变化通知 schema
 const SelectionChangedSchema = lazySchema(() =>
   z.object({
     method: z.literal('selection_changed'),
@@ -50,8 +50,7 @@ const SelectionChangedSchema = lazySchema(() =>
 )
 
 /**
- * A hook that tracks IDE text selection information by directly registering
- * with MCP client notification handlers
+ * 直接向 MCP client 注册通知处理器，用于跟踪 IDE 文本选区信息的 hook。
  */
 export function useIdeSelection(
   mcpClients: MCPServerConnection[],
@@ -61,16 +60,15 @@ export function useIdeSelection(
   const currentIDERef = useRef<ConnectedMCPServer | null>(null)
 
   useEffect(() => {
-    // Find the IDE client from the MCP clients list
+    // 从 MCP client 列表中查找 IDE client
     const ideClient = getConnectedIdeClient(mcpClients)
 
-    // If the IDE client changed, we need to re-register handlers.
-    // Normalize undefined to null so the initial ref value (null) matches
-    // "no IDE found" (undefined), avoiding spurious resets on every MCP update.
+    // IDE client 变化后需要重新注册处理器。将 undefined 规范化为 null，
+    // 使 ref 初始值 null 与“未找到 IDE”的 undefined 对齐，避免每次 MCP 更新都误触发重置。
     if (currentIDERef.current !== (ideClient ?? null)) {
       handlersRegistered.current = false
       currentIDERef.current = ideClient || null
-      // Reset the selection when the IDE client changes.
+      // IDE client 变化时重置选区
       onSelect({
         lineCount: 0,
         lineStart: undefined,
@@ -79,18 +77,17 @@ export function useIdeSelection(
       })
     }
 
-    // Skip if we've already registered handlers for the current IDE or if there's no IDE client
+    // 已为当前 IDE 注册处理器，或没有 IDE client 时跳过
     if (handlersRegistered.current || !ideClient) {
       return
     }
 
-    // Handler function for selection changes
+    // 选区变化处理函数
     const selectionChangeHandler = (data: SelectionData) => {
       if (data.selection?.start && data.selection?.end) {
         const { start, end } = data.selection
         let lineCount = end.line - start.line + 1
-        // If on the first character of the line, do not count the line
-        // as being selected.
+        // 位于行首字符时，不将该行计为选中
         if (end.character === 0) {
           lineCount--
         }
@@ -105,22 +102,22 @@ export function useIdeSelection(
       }
     }
 
-    // Register notification handler for selection_changed events
+    // 为 selection_changed 事件注册通知处理器
     ideClient.client.setNotificationHandler(SelectionChangedSchema(), (notification) => {
       if (currentIDERef.current !== ideClient) {
         return
       }
 
       try {
-        // Get the selection data from the notification params
+        // 从通知参数中获取选区数据
         const selectionData = notification.params
 
-        // Process selection data - validate it has required properties
+        // 处理选区数据，校验必需属性
         if (selectionData.selection?.start && selectionData.selection.end) {
-          // Handle selection changes
+          // 处理选区变化
           selectionChangeHandler(selectionData as SelectionData)
         } else if (selectionData.text !== undefined) {
-          // Handle empty selection (when text is empty string)
+          // 处理空选区（text 为空字符串）
           selectionChangeHandler({
             selection: null,
             text: selectionData.text,
@@ -132,9 +129,9 @@ export function useIdeSelection(
       }
     })
 
-    // Mark that we've registered handlers
+    // 标记处理器已注册
     handlersRegistered.current = true
 
-    // No cleanup needed as MCP clients manage their own lifecycle
+    // MCP client 会管理自身生命周期，此处无需清理
   }, [mcpClients, onSelect])
 }

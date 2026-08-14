@@ -48,7 +48,7 @@ import { resolveUiLanguage, type UiLanguage } from '../i18n/types.js'
 import { en as enMessages } from '../i18n/locales/en.js'
 import { zhCN as zhCNMessages } from '../i18n/locales/zh-CN.js'
 
-// Dead code elimination: conditional imports for feature-gated modules
+// DCE：对 feature gate 模块使用条件导入
 /* eslint-disable @typescript-eslint/no-require-imports */
 const getCachedMCConfigForFRC = feature('CACHED_MICROCOMPACT')
   ? (
@@ -72,11 +72,10 @@ import type { OutputStyleConfig } from './outputStyles.js'
 import { CYBER_RISK_INSTRUCTION } from './cyberRiskInstruction.js'
 
 /**
- * Boundary marker separating static (cacheable) content from dynamic content.
- * Everything BEFORE this marker in the system prompt array will be marked as cacheable.
- * Everything AFTER contains user/session-specific content and should not be cached.
+ * 分隔静态可缓存内容与动态内容的边界标记。system prompt 数组中此标记之前的内容
+ * 会标记为可缓存；之后包含用户/session 特定内容，不应缓存。
  *
- * WARNING: Do not remove or reorder this marker without updating cache logic in:
+ * 警告：未同步更新下列位置的缓存逻辑前，不得移除或调整此标记顺序：
  * - src/utils/api.ts (splitSysPromptPrefix)
  * - src/services/api/cacheControl.ts (buildSystemPromptBlocks)
  */
@@ -160,13 +159,11 @@ function getAgentToolSection(): string {
 }
 
 /**
- * Session-variant guidance that would fragment the cacheable prefix if placed
- * before SYSTEM_PROMPT_DYNAMIC_BOUNDARY. Each conditional here is a runtime bit
- * that would otherwise multiply the cache key variants (2^N).
- * See PR #24490, #24171 for the same bug class.
+ * 随 session 变化的指导内容；若放在 SYSTEM_PROMPT_DYNAMIC_BOUNDARY 之前，
+ * 会切碎可缓存前缀。这里每个条件都是一个 runtime bit，否则会使缓存键变体
+ * 按 2^N 增长。同类问题见 PR #24490、#24171。
  *
- * outputStyleConfig intentionally NOT moved here — identity framing lives
- * in the static intro pending eval.
+ * outputStyleConfig 有意不移到这里；identity framing 在静态引言中，仍待评估。
  */
 function getSessionSpecificGuidanceSection(
   enabledTools: Set<string>,
@@ -273,8 +270,8 @@ ${CYBER_RISK_INSTRUCTION}`,
       await loadMemoryPrompt(),
       envInfo,
       getLanguageSection(settings.language),
-      // When delta enabled, instructions are announced via persisted
-      // mcp_instructions_delta attachments (attachments.ts) instead.
+      // 启用 delta 后，instruction 改由持久化的 mcp_instructions_delta attachment
+      //（attachments.ts）发布
       isMcpInstructionsDeltaEnabled() ? null : getMcpInstructionsSection(mcpClients),
       getScratchpadInstructions(),
       getFunctionResultClearingSection(model),
@@ -292,11 +289,10 @@ ${CYBER_RISK_INSTRUCTION}`,
       computeSimpleEnvInfo(model, additionalWorkingDirectories),
     ),
     systemPromptSection('output_style', () => getOutputStyleSection(outputStyleConfig)),
-    // When delta enabled, instructions are announced via persisted
-    // mcp_instructions_delta attachments (attachments.ts) instead of this
-    // per-turn recompute, which busts the prompt cache on late MCP connect.
-    // Gate check inside compute (not selecting between section variants)
-    // so a mid-session gate flip doesn't read a stale cached value.
+    // 启用 delta 后，instruction 改由持久化的 mcp_instructions_delta attachment
+    //（attachments.ts）发布，不再每 turn 重算；后者会在 MCP 延迟连接时破坏 prompt cache。
+    // gate 在 compute 内检查，而不是在 section 变体间选择，避免 session 中途切换 gate
+    // 时读取过期缓存值。
     DANGEROUS_uncachedSystemPromptSection(
       'mcp_instructions',
       () => (isMcpInstructionsDeltaEnabled() ? null : getMcpInstructionsSection(mcpClients)),
@@ -307,11 +303,11 @@ ${CYBER_RISK_INSTRUCTION}`,
     systemPromptSection('summarize_tool_results', () => SUMMARIZE_TOOL_RESULTS_SECTION),
     ...(feature('TOKEN_BUDGET')
       ? [
-          // Cached unconditionally — the "When the user specifies..." phrasing
-          // makes it a no-op with no budget active. Was DANGEROUS_uncached
+          // 无条件缓存；“When the user specifies...”的措辞使其在未启用预算时不产生效果。
+          // 此处原为 DANGEROUS_uncached
           // (toggled on getCurrentTurnTokenBudget()), busting ~20K tokens per
-          // budget flip. Not moved to a tail attachment: first-response and
-          // budget-continuation paths don't see attachments (#21577).
+          // budget 切换。未移到尾部 attachment，因为首次响应与预算续接路径看不到
+          // attachment（#21577）。
           systemPromptSection(
             'token_budget',
             () =>
@@ -373,17 +369,15 @@ export async function computeEnvInfo(
 ): Promise<string> {
   const [isGit, unameSR] = await Promise.all([getIsGit(), getUnameSR()])
 
-  // Undercover: keep ALL model names/IDs out of the system prompt so nothing
-  // internal can leak into public commits/PRs. This includes the public
-  // FRONTIER_MODEL_* constants — if those ever point at an unannounced model,
-  // we don't want them in context. Go fully dark.
+  // Undercover：从 system prompt 移除所有模型名称和 ID，防止内部信息泄漏到公开
+  // commit/PR。这也包括公开的 FRONTIER_MODEL_* 常量；若它们指向尚未公布的模型，
+  // 也不能进入 context。这里彻底隐藏。
   //
-  // DCE: `process.env.USER_TYPE === 'zy-super'` is build-time --define. It MUST be
-  // inlined at each callsite (not hoisted to a const) so the bundler can
-  // constant-fold it to `false` in external builds and eliminate the branch.
+  // DCE：`process.env.USER_TYPE === 'zy-super'` 是构建期 --define。必须在每个调用点
+  // 内联，不能提升为 const，使 bundler 能在外部构建中常量折叠为 `false` 并删除分支。
   let modelDescription = ''
   if (isInternalBuild() && isUndercover()) {
-    // suppress
+    // 抑制输出
   } else {
     const marketingName = getMarketingNameForModel(modelId)
     modelDescription = marketingName
@@ -416,11 +410,11 @@ export async function computeSimpleEnvInfo(
 ): Promise<string> {
   const [isGit, unameSR] = await Promise.all([getIsGit(), getUnameSR()])
 
-  // Undercover: strip all model name/ID references. See computeEnvInfo.
-  // DCE: inline the USER_TYPE check at each site — do NOT hoist to a const.
+  // Undercover：移除所有模型名称和 ID 引用，见 computeEnvInfo。
+  // DCE：在每处内联 USER_TYPE 检查，不得提升为 const。
   let modelDescription: string | null = null
   if (isInternalBuild() && isUndercover()) {
-    // suppress
+    // 抑制输出
   } else {
     const marketingName = getMarketingNameForModel(modelId)
     modelDescription = marketingName
@@ -509,12 +503,11 @@ function getShellInfoLine(): string {
 }
 
 export function getUnameSR(): string {
-  // os.type() and os.release() both wrap uname(3) on POSIX, producing output
-  // byte-identical to `uname -sr`: "Darwin 25.3.0", "Linux 6.6.4", etc.
-  // Windows has no uname(3); os.type() returns "Windows_NT" there, but
-  // os.version() gives the friendlier "Windows 11 Pro" (via GetVersionExW /
-  // RtlGetVersion) so use that instead. Feeds the OS Version line in the
-  // system prompt env section.
+  // POSIX 上 os.type() 与 os.release() 都封装 uname(3)，组合输出与 `uname -sr`
+  // 字节一致，如 "Darwin 25.3.0"、"Linux 6.6.4"。Windows 没有 uname(3)，
+  // os.type() 会返回 "Windows_NT"；os.version() 通过 GetVersionExW/RtlGetVersion
+  // 提供更友好的 "Windows 11 Pro"，因此改用后者。结果用于 system prompt 环境区的
+  // OS Version 行。
   if (env.platform === 'win32') {
     return `${osVersion()} ${osRelease()}`
   }
@@ -544,8 +537,8 @@ export async function enhanceSystemPromptWithEnvDetails(
 }
 
 /**
- * Returns instructions for using the scratchpad directory if enabled.
- * The scratchpad is a per-session directory where Zy can write temporary files.
+ * 启用时返回 scratchpad 目录使用说明。scratchpad 是按 session 隔离的目录，
+ * Zy 可在其中写入临时文件。
  */
 export function getScratchpadInstructions(): string | null {
   if (!isScratchpadEnabled()) {
@@ -594,14 +587,14 @@ function getBriefSection(): string | null {
   if (!BRIEF_PROACTIVE_SECTION) {
     return null
   }
-  // Whenever the tool is available, the model is told to use it. The
+  // tool 可用时始终告知模型使用。下方的
   // /brief toggle and --brief flag now only control the isBriefOnly
-  // display filter — they no longer gate model-facing behavior.
+  // display filter；它们不再控制面向模型的行为。
   if (!briefToolModule?.isBriefEnabled()) {
     return null
   }
-  // When proactive is active, getProactiveSection() already appends the
-  // section inline. Skip here to avoid duplicating it in the system prompt.
+  // proactive 启用时，getProactiveSection() 已内联追加该 section；这里跳过，
+  // 避免在 system prompt 中重复。
   if ((feature('PROACTIVE') || feature('KAIROS')) && proactiveModule?.isProactiveActive()) {
     return null
   }

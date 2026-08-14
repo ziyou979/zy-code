@@ -6,7 +6,7 @@ import { useStartupNotification } from './useStartupNotification.js'
 const MAX_SHOW_COUNT = 3
 
 /**
- * Hook to check if the user has a subscription on Console but isn't logged into it.
+ * 检查用户是否在 Console 中拥有订阅，但尚未登录该订阅。
  *
  * 多 Provider OAuth 模式下不再通过 zy.ai profile API 检查订阅状态。
  */

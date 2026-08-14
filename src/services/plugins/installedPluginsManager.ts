@@ -1,16 +1,15 @@
 /**
- * Manages plugin installation metadata stored in installed_plugins.json
+ * 管理存储在 installed_plugins.json 中的插件安装元数据。
  *
- * This module separates plugin installation state (global) from enabled/disabled
- * state (per-repository). The installed_plugins.json file tracks:
- * - Which plugins are installed globally
- * - Installation metadata (version, timestamps, paths)
+ * 本模块将插件安装状态（全局）与启用/禁用状态（每个仓库）分离。
+ * installed_plugins.json 文件记录：
+ * - 全局安装了哪些插件
+ * - 安装元数据（版本、时间戳、路径）
  *
- * The enabled/disabled state remains in .zy/settings.json for per-repo control.
+ * 启用/禁用状态仍保存在 .zy/settings.json 中，以便按仓库控制。
  *
- * Rationale: Installation is global (a plugin is either on disk or not), while
- * enabled/disabled state is per-repository (different projects may want different
- * plugins active).
+ * 原因：安装是全局的（插件要么位于磁盘上，要么不在），而启用/禁用状态按仓库
+ * 区分（不同项目可能希望启用不同插件）。
  */
 
 import { dirname, join } from 'node:path'
@@ -32,10 +31,10 @@ import {
   type PluginScope,
 } from './schemas.js'
 
-// Type alias for V2 plugins map
+// V2 插件映射的类型别名
 type InstalledPluginsMap = Record<string, PluginInstallationEntry[]>
 
-// Type for persistable scopes (excludes 'flag' which is session-only)
+// 可持久化作用域的类型（不包括仅在会话中生效的 'flag'）
 export type PersistableScope = Exclude<PluginScope, never> // All scopes are persistable in the schema
 
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
@@ -47,46 +46,45 @@ import { getPluginById } from './marketplaceManager.js'
 import { parsePluginIdentifier, settingSourceToScope } from './pluginIdentifier.js'
 import { getPluginCachePath, getVersionedCachePath } from './pluginLoader.js'
 
-// Migration state to prevent running migration multiple times per session
+// 用于防止每个会话重复执行迁移的状态
 let migrationCompleted = false
 
 /**
- * Memoized cache of installed plugins data (V2 format)
- * Cleared by clearInstalledPluginsCache() when file is modified.
- * Prevents repeated filesystem reads within a single CLI session.
+ * 已安装插件数据的记忆化缓存（V2 格式）。
+ * 文件修改时由 clearInstalledPluginsCache() 清除。
+ * 防止在单个 CLI 会话中重复读取文件系统。
  */
 let installedPluginsCacheV2: InstalledPluginsFileV2 | null = null
 
 /**
- * Session-level snapshot of installed plugins at startup.
- * This is what the running session uses - it's NOT updated by background operations.
- * Background updates modify the disk file only.
+ * 启动时已安装插件的会话级快照。
+ * 运行中的会话使用该快照，后台操作不会更新它。
+ * 后台更新仅修改磁盘文件。
  */
 let inMemoryInstalledPlugins: InstalledPluginsFileV2 | null = null
 
 /**
- * Get the path to the installed_plugins.json file
+ * 获取 installed_plugins.json 文件路径。
  */
 export function getInstalledPluginsFilePath(): string {
   return join(getPluginsDirectory(), 'installed_plugins.json')
 }
 
 /**
- * Get the path to the legacy installed_plugins_v2.json file.
- * Used only during migration to consolidate into single file.
+ * 获取旧版 installed_plugins_v2.json 文件路径。
+ * 仅在迁移时使用，以合并为单个文件。
  */
 export function getInstalledPluginsV2FilePath(): string {
   return join(getPluginsDirectory(), 'installed_plugins_v2.json')
 }
 
 /**
- * Clear the installed plugins cache
- * Call this when the file is modified to force a reload
+ * 清除已安装插件缓存。
+ * 文件修改后调用此函数以强制重新加载。
  *
- * Note: This also clears the in-memory session state (inMemoryInstalledPlugins).
- * In most cases, this is only called during initialization or testing.
- * For background updates, use updateInstallationPathOnDisk() which preserves
- * the in-memory state.
+ * 注意：这也会清除内存中的会话状态（inMemoryInstalledPlugins）。
+ * 大多数情况下，仅在初始化或测试期间调用此函数。
+ * 后台更新请使用会保留内存状态的 updateInstallationPathOnDisk()。
  */
 export function clearInstalledPluginsCache(): void {
   installedPluginsCacheV2 = null
@@ -95,8 +93,8 @@ export function clearInstalledPluginsCache(): void {
 }
 
 /**
- * Ensure installed_plugins.json is valid V2 format.
- * Runs once per session at startup.
+ * 确保 installed_plugins.json 为有效的 V2 格式。
+ * 每个会话启动时运行一次。
  */
 export function migrateToSinglePluginFile(): void {
   if (migrationCompleted) {
@@ -137,18 +135,18 @@ export function migrateToSinglePluginFile(): void {
 }
 
 /**
- * Clean up legacy non-versioned cache directories.
+ * 清理旧版非版本化缓存目录。
  *
- * Legacy cache structure: ~/.zy/plugins/cache/{plugin-name}/
- * Versioned cache structure: ~/.zy/plugins/cache/{marketplace}/{plugin}/{version}/
+ * 旧版缓存结构：~/.zy/plugins/cache/{plugin-name}/
+ * 版本化缓存结构：~/.zy/plugins/cache/{marketplace}/{plugin}/{version}/
  *
- * This function removes legacy directories that are not referenced by any installation.
+ * 此函数移除未被任何安装记录引用的旧版目录。
  */
 function cleanupLegacyCache(v2Data: InstalledPluginsFileV2): void {
   const fs = getFsImplementation()
   const cachePath = getPluginCachePath()
   try {
-    // Collect all install paths that are referenced
+    // 收集所有被引用的安装路径
     const referencedPaths = new Set<string>()
     for (const installations of Object.values(v2Data.plugins)) {
       for (const entry of installations) {
@@ -156,7 +154,7 @@ function cleanupLegacyCache(v2Data: InstalledPluginsFileV2): void {
       }
     }
 
-    // List top-level directories in cache
+    // 列出缓存中的顶级目录
     const entries = fs.readdirSync(cachePath)
 
     for (const dirent of entries) {
@@ -167,28 +165,28 @@ function cleanupLegacyCache(v2Data: InstalledPluginsFileV2): void {
       const entry = dirent.name
       const entryPath = join(cachePath, entry)
 
-      // Check if this is a versioned cache (marketplace dir with plugin/version subdirs)
-      // or a legacy cache (flat plugin directory)
+      // 检查这是版本化缓存（marketplace 目录下包含插件/版本子目录）
+      // 还是旧版缓存（扁平的插件目录）
       const subEntries = fs.readdirSync(entryPath)
       const hasVersionedStructure = subEntries.some((subDirent) => {
         if (!subDirent.isDirectory()) {
           return false
         }
         const subPath = join(entryPath, subDirent.name)
-        // Check if subdir contains version directories (semver-like or hash)
+        // 检查子目录是否包含版本目录（类似 semver 或 hash）
         const versionEntries = fs.readdirSync(subPath)
         return versionEntries.some((vDirent) => vDirent.isDirectory())
       })
 
       if (hasVersionedStructure) {
-        // This is a marketplace directory with versioned structure - skip
+        // 这是具有版本化结构的 marketplace 目录，跳过
         continue
       }
 
-      // This is a legacy flat cache directory
-      // Check if it's referenced by any installation
+      // 这是旧版扁平缓存目录
+      // 检查它是否被任何安装记录引用
       if (!referencedPaths.has(entryPath)) {
-        // Not referenced - safe to delete
+        // 未被引用，可以安全删除
         fs.rmSync(entryPath, { recursive: true, force: true })
         logForDebugging(`Cleaned up legacy cache directory: ${entry}`)
       }
@@ -202,16 +200,16 @@ function cleanupLegacyCache(v2Data: InstalledPluginsFileV2): void {
 }
 
 /**
- * Reset migration state (for testing)
+ * 重置迁移状态（用于测试）。
  */
 export function resetMigrationState(): void {
   migrationCompleted = false
 }
 
 /**
- * Read raw file data from installed_plugins.json
- * Returns null if file doesn't exist.
- * Throws error if file exists but can't be parsed.
+ * 读取 installed_plugins.json 的原始文件数据。
+ * 文件不存在时返回 null。
+ * 文件存在但无法解析时抛出错误。
  */
 function readInstalledPluginsFileRaw(): {
   version: number
@@ -235,12 +233,12 @@ function readInstalledPluginsFileRaw(): {
 }
 
 /**
- * Load installed plugins.
+ * 加载已安装插件。
  *
- * @returns V2 format data with array-per-plugin structure
+ * @returns 采用每个插件一个数组结构的 V2 格式数据
  */
 export function loadInstalledPlugins(): InstalledPluginsFileV2 {
-  // Return cached data if available
+  // 如有可用缓存则返回缓存数据
   if (installedPluginsCacheV2 !== null) {
     return installedPluginsCacheV2
   }
@@ -259,7 +257,7 @@ export function loadInstalledPlugins(): InstalledPluginsFileV2 {
       return validated
     }
 
-    // File doesn't exist - return empty
+    // 文件不存在，返回空数据
     logForDebugging(`installed_plugins.json doesn't exist, returning empty`)
     installedPluginsCacheV2 = { version: 2, plugins: {} }
     return installedPluginsCacheV2
@@ -277,8 +275,8 @@ export function loadInstalledPlugins(): InstalledPluginsFileV2 {
 }
 
 /**
- * Save installed plugins in V2 format to installed_plugins.json.
- * This is the single source of truth after V1/V2 consolidation.
+ * 将已安装插件以 V2 格式保存到 installed_plugins.json。
+ * 这是合并 V1/V2 后的唯一事实来源。
  */
 function saveInstalledPluginsV2(data: InstalledPluginsFileV2): void {
   const fs = getFsImplementation()
@@ -293,7 +291,7 @@ function saveInstalledPluginsV2(data: InstalledPluginsFileV2): void {
       flush: true,
     })
 
-    // Update cache
+    // 更新缓存
     installedPluginsCacheV2 = data
 
     logForDebugging(`Saved ${Object.keys(data.plugins).length} installed plugins to ${filePath}`)
@@ -305,14 +303,14 @@ function saveInstalledPluginsV2(data: InstalledPluginsFileV2): void {
 }
 
 /**
- * Add or update a plugin installation entry at a specific scope.
- * Used for V2 format where each plugin has an array of installations.
+ * 在指定作用域添加或更新插件安装记录。
+ * 用于每个插件拥有安装记录数组的 V2 格式。
  *
- * @param pluginId - Plugin ID in "plugin@marketplace" format
- * @param scope - Installation scope (managed/user/project/local)
- * @param installPath - Path to versioned plugin directory
- * @param metadata - Additional installation metadata
- * @param projectPath - Project path (required for project/local scopes)
+ * @param pluginId - "plugin@marketplace" 格式的插件 ID
+ * @param scope - 安装作用域（managed/user/project/local）
+ * @param installPath - 版本化插件目录路径
+ * @param metadata - 附加安装元数据
+ * @param projectPath - 项目路径（project/local 作用域必填）
  */
 export function addPluginInstallation(
   pluginId: string,
@@ -323,10 +321,10 @@ export function addPluginInstallation(
 ): void {
   const data = loadInstalledPluginsFromDisk()
 
-  // Get or create array for this plugin
+  // 获取或创建该插件的数组
   const installations = data.plugins[pluginId] || []
 
-  // Find existing entry for this scope+projectPath
+  // 查找此 scope+projectPath 的现有记录
   const existingIndex = installations.findIndex(
     (entry) => entry.scope === scope && entry.projectPath === projectPath,
   )
@@ -354,11 +352,11 @@ export function addPluginInstallation(
 }
 
 /**
- * Remove a plugin installation entry from a specific scope.
+ * 从指定作用域移除插件安装记录。
  *
- * @param pluginId - Plugin ID in "plugin@marketplace" format
- * @param scope - Installation scope to remove
- * @param projectPath - Project path (for project/local scopes)
+ * @param pluginId - "plugin@marketplace" 格式的插件 ID
+ * @param scope - 要移除的安装作用域
+ * @param projectPath - 项目路径（用于 project/local 作用域）
  */
 export function removePluginInstallation(
   pluginId: string,
@@ -376,7 +374,7 @@ export function removePluginInstallation(
     (entry) => !(entry.scope === scope && entry.projectPath === projectPath),
   )
 
-  // Remove plugin entirely if no installations left
+  // 没有剩余安装记录时完全移除插件
   if (data.plugins[pluginId].length === 0) {
     delete data.plugins[pluginId]
   }
@@ -386,15 +384,15 @@ export function removePluginInstallation(
 }
 
 // =============================================================================
-// In-Memory vs Disk State Management (for non-in-place updates)
+// 内存与磁盘状态管理（用于非原地更新）
 // =============================================================================
 
 /**
- * Get the in-memory installed plugins (session state).
- * This snapshot is loaded at startup and used for the entire session.
- * It is NOT updated by background operations.
+ * 获取内存中的已安装插件（会话状态）。
+ * 此快照在启动时加载，并在整个会话期间使用。
+ * 后台操作不会更新它。
  *
- * @returns V2 format data representing the session's view of installed plugins
+ * @returns 表示会话中已安装插件视图的 V2 格式数据
  */
 export function getInMemoryInstalledPlugins(): InstalledPluginsFileV2 {
   if (inMemoryInstalledPlugins === null) {
@@ -404,11 +402,10 @@ export function getInMemoryInstalledPlugins(): InstalledPluginsFileV2 {
 }
 
 /**
- * Load installed plugins directly from disk, bypassing all caches.
- * Used by background updater to check for changes without affecting
- * the running session's view.
+ * 直接从磁盘加载已安装插件，绕过所有缓存。
+ * 后台更新器用它检查变更，且不影响运行中会话的视图。
  *
- * @returns V2 format data read fresh from disk
+ * @returns 从磁盘新鲜读取的 V2 格式数据
  */
 export function loadInstalledPluginsFromDisk(): InstalledPluginsFileV2 {
   try {
@@ -429,15 +426,14 @@ export function loadInstalledPluginsFromDisk(): InstalledPluginsFileV2 {
 }
 
 /**
- * Update a plugin's install path on disk only, without modifying in-memory state.
- * Used by background updater to record new version on disk while session
- * continues using the old version.
+ * 仅更新磁盘上的插件安装路径，不修改内存状态。
+ * 后台更新器用它在磁盘记录新版本，而会话继续使用旧版本。
  *
- * @param pluginId - Plugin ID in "plugin@marketplace" format
- * @param scope - Installation scope
- * @param projectPath - Project path (for project/local scopes)
- * @param newPath - New install path (to new version directory)
- * @param newVersion - New version string
+ * @param pluginId - "plugin@marketplace" 格式的插件 ID
+ * @param scope - 安装作用域
+ * @param projectPath - 项目路径（用于 project/local 作用域）
+ * @param newPath - 新安装路径（指向新版本目录）
+ * @param newVersion - 新版本字符串
  */
 export function updateInstallationPathOnDisk(
   pluginId: string,
@@ -467,27 +463,27 @@ export function updateInstallationPathOnDisk(
 
     const filePath = getInstalledPluginsFilePath()
 
-    // Write to single file (V2 format with version=2)
+    // 写入单个文件（version=2 的 V2 格式）
     writeFileSync_DEPRECATED(filePath, jsonStringify(diskData, null, 2), {
       encoding: 'utf-8',
       flush: true,
     })
 
-    // Clear cache since disk changed, but do NOT update inMemoryInstalledPlugins
+    // 磁盘已变更，清除缓存，但不要更新 inMemoryInstalledPlugins
     installedPluginsCacheV2 = null
 
     logForDebugging(`Updated ${pluginId} on disk to version ${newVersion} at ${newPath}`)
   } else {
     logForDebugging(`Cannot update ${pluginId} on disk: no installation for scope ${scope}`)
   }
-  // Note: inMemoryInstalledPlugins is NOT updated
+  // 注意：inMemoryInstalledPlugins 不会更新
 }
 
 /**
- * Check if there are pending updates (disk differs from memory).
- * This happens when background updater has downloaded new versions.
+ * 检查是否存在待处理更新（磁盘与内存不同）。
+ * 后台更新器下载新版本时会出现此情况。
  *
- * @returns true if any plugin has a different install path on disk vs memory
+ * @returns 如果任一插件在磁盘与内存中的安装路径不同，则返回 true
  */
 export function hasPendingUpdates(): boolean {
   const memoryState = getInMemoryInstalledPlugins()
@@ -513,9 +509,9 @@ export function hasPendingUpdates(): boolean {
 }
 
 /**
- * Get the count of pending updates (installations where disk differs from memory).
+ * 获取待处理更新数量（磁盘与内存不同的安装记录）。
  *
- * @returns Number of installations with pending updates
+ * @returns 存在待处理更新的安装记录数量
  */
 export function getPendingUpdateCount(): number {
   let count = 0
@@ -542,9 +538,9 @@ export function getPendingUpdateCount(): number {
 }
 
 /**
- * Get details about pending updates for display.
+ * 获取用于展示的待处理更新详情。
  *
- * @returns Array of objects with pluginId, scope, oldVersion, newVersion
+ * @returns 包含 pluginId、scope、oldVersion、newVersion 的对象数组
  */
 export function getPendingUpdatesDetails(): Array<{
   pluginId: string
@@ -587,37 +583,37 @@ export function getPendingUpdatesDetails(): Array<{
 }
 
 /**
- * Reset the in-memory session state.
- * This should only be called at startup or for testing.
+ * 重置内存中的会话状态。
+ * 仅应在启动或测试时调用。
  */
 export function resetInMemoryState(): void {
   inMemoryInstalledPlugins = null
 }
 
 /**
- * Initialize the versioned plugins system.
- * This triggers V1→V2 migration and initializes the in-memory session state.
+ * 初始化版本化插件系统。
+ * 这会触发 V1→V2 迁移并初始化内存会话状态。
  *
- * This should be called early during startup in all modes (REPL and headless).
+ * 应在所有模式（REPL 和 headless）启动的早期调用。
  *
- * @returns Promise that resolves when initialization is complete
+ * @returns 初始化完成时兑现的 Promise
  */
 export async function initializeVersionedPlugins(): Promise<void> {
-  // Step 1: Migrate to single file format (consolidates V1/V2 files, cleans up legacy cache)
+  // 第 1 步：迁移到单文件格式（合并 V1/V2 文件、清理旧版缓存）
   migrateToSinglePluginFile()
 
-  // Step 2: Sync enabledPlugins from settings.json to installed_plugins.json
-  // This must complete before CLI exits (especially in headless mode)
+  // 第 2 步：将 settings.json 中的 enabledPlugins 同步到 installed_plugins.json
+  // 此操作必须在 CLI 退出前完成（尤其在 headless 模式）
   try {
     await migrateFromEnabledPlugins()
   } catch (error) {
     logError(error)
   }
 
-  // Step 3: Initialize in-memory session state
-  // Calling getInMemoryInstalledPlugins triggers:
-  // 1. Loading from disk
-  // 2. Caching in inMemoryInstalledPlugins for session state
+  // 第 3 步：初始化内存会话状态
+  // 调用 getInMemoryInstalledPlugins 会触发：
+  // 1. 从磁盘加载
+  // 2. 缓存在 inMemoryInstalledPlugins 中作为会话状态
   const data = getInMemoryInstalledPlugins()
   logForDebugging(
     `Initialized versioned plugins system with ${Object.keys(data.plugins).length} plugins`,
@@ -625,14 +621,14 @@ export async function initializeVersionedPlugins(): Promise<void> {
 }
 
 /**
- * Remove all plugin entries belonging to a specific marketplace from installed_plugins.json.
+ * 从 installed_plugins.json 移除属于指定 marketplace 的所有插件记录。
  *
- * Loads V2 data once, finds all plugin IDs matching the `@{marketplaceName}` suffix,
- * collects their install paths, removes the entries, and saves once.
+ * 一次加载 V2 数据，查找所有匹配 `@{marketplaceName}` 后缀的插件 ID，
+ * 收集其安装路径、移除记录，并保存一次。
  *
- * @param marketplaceName - The marketplace name (matched against `@{name}` suffix)
- * @returns orphanedPaths (for markPluginVersionOrphaned) and removedPluginIds
- *   (for deletePluginOptions) from the removed entries
+ * @param marketplaceName - marketplace 名称（与 `@{name}` 后缀匹配）
+ * @returns 已移除记录的 orphanedPaths（供 markPluginVersionOrphaned 使用）和
+ *   removedPluginIds（供 deletePluginOptions 使用）
  */
 export function removeAllPluginsForMarketplace(marketplaceName: string): {
   orphanedPaths: string[]
@@ -671,32 +667,29 @@ export function removeAllPluginsForMarketplace(marketplaceName: string): {
 }
 
 /**
- * Predicate: is this installation relevant to the current project context?
+ * 谓词：此安装记录是否与当前项目上下文相关？
  *
- * V2 installed_plugins.json may contain project-scoped entries from OTHER
- * projects (a single user-level file tracks all scopes). Callers asking
- * "is this plugin installed" almost always mean "installed in a way that's
- * active here" — not "installed anywhere on this machine". See #29608:
- * DiscoverPlugins.tsx was hiding plugins that were only installed in an
- * unrelated project.
+ * V2 installed_plugins.json 可能包含其他项目的项目作用域记录（单个用户级文件
+ * 跟踪所有作用域）。调用者询问“此插件是否已安装”时，几乎总是指“以在这里生效
+ * 的方式安装”，而非“安装在此机器任意位置”。见 #29608：DiscoverPlugins.tsx
+ * 会隐藏仅安装在无关项目中的插件。
  *
- * - user/managed scopes: always relevant (global)
- * - project/local scopes: only if projectPath matches the current project
+ * - user/managed 作用域：始终相关（全局）
+ * - project/local 作用域：仅 projectPath 与当前项目匹配时相关
  *
- * getOriginalCwd() (not getCwd()) because "current project" is where ZY Code
- * Code was launched from, not wherever the working directory has drifted to.
+ * 使用 getOriginalCwd()（而非 getCwd()），因为“当前项目”是启动 ZY Code 的
+ * 位置，而不是工作目录后来漂移到的位置。
  */
 export function isInstallationRelevantToCurrentProject(inst: PluginInstallationEntry): boolean {
   return inst.scope === 'user' || inst.scope === 'managed' || inst.projectPath === getOriginalCwd()
 }
 
 /**
- * Check if a plugin is installed in a way relevant to the current project.
+ * 检查插件是否以与当前项目相关的方式安装。
  *
- * @param pluginId - Plugin ID in "plugin@marketplace" format
- * @returns True if the plugin has a user/managed-scoped installation, OR a
- *   project/local-scoped installation whose projectPath matches the current
- *   project. Returns false for plugins only installed in other projects.
+ * @param pluginId - "plugin@marketplace" 格式的插件 ID
+ * @returns 插件存在 user/managed 作用域安装记录，或 projectPath 与当前项目匹配的
+ *   project/local 作用域安装记录时返回 true。仅安装在其他项目中的插件返回 false。
  */
 export function isPluginInstalled(pluginId: string): boolean {
   const v2Data = loadInstalledPlugins()
@@ -707,27 +700,25 @@ export function isPluginInstalled(pluginId: string): boolean {
   if (!installations.some(isInstallationRelevantToCurrentProject)) {
     return false
   }
-  // Plugins are loaded from settings.enabledPlugins
-  // If settings.enabledPlugins and installed_plugins.json diverge
-  // (via settings.json clobber), return false
+  // 插件从 settings.enabledPlugins 加载
+  // 如果 settings.enabledPlugins 与 installed_plugins.json 不一致
+  // （因 settings.json 被覆盖），则返回 false
   return getInitialSettings().enabledPlugins?.[pluginId] !== undefined
 }
 
 /**
- * True only if the plugin has a USER or MANAGED scope installation.
+ * 仅当插件具有 USER 或 MANAGED 作用域安装记录时返回 true。
  *
- * Use this in UI flows that decide whether to offer installation at all.
- * A user/managed-scope install means the plugin is available everywhere —
- * there's nothing the user can add. A project/local-scope install means the
- * user might still want to install at user scope to make it global.
+ * 在 UI 判断是否应提供安装选项的流程中使用此函数。user/managed 作用域安装意味着
+ * 插件处处可用，用户无需添加任何内容。project/local 作用域安装意味着用户可能仍想
+ * 在 user 作用域安装，以使其全局可用。
  *
- * gh-29997 / gh-29240 / gh-29392: the browse UI was blocking on
- * isPluginInstalled() which returns true for project-scope installs,
- * preventing users from adding a user-scope entry for the same plugin.
- * The backend (installPluginOp → addInstalledPlugin) already supports
- * multiple scope entries per plugin — only the UI gate was wrong.
+ * gh-29997 / gh-29240 / gh-29392：浏览 UI 依赖 isPluginInstalled() 阻止操作，
+ * 该函数对项目作用域安装返回 true，导致用户无法为同一插件添加 user 作用域记录。
+ * 后端（installPluginOp → addInstalledPlugin）已经支持每个插件有多个作用域记录，
+ * 出错的只有 UI 守卫。
  *
- * @param pluginId - Plugin ID in "plugin@marketplace" format
+ * @param pluginId - "plugin@marketplace" 格式的插件 ID
  */
 export function isPluginGloballyInstalled(pluginId: string): boolean {
   const v2Data = loadInstalledPlugins()
@@ -741,20 +732,20 @@ export function isPluginGloballyInstalled(pluginId: string): boolean {
   if (!hasGlobalEntry) {
     return false
   }
-  // Same settings divergence guard as isPluginInstalled — if enabledPlugins
-  // was clobbered, treat as not-installed so the user can re-enable.
+  // 与 isPluginInstalled 相同的设置不一致守卫：如果 enabledPlugins 被覆盖，
+  // 则视为未安装，使用户可以重新启用。
   return getInitialSettings().enabledPlugins?.[pluginId] !== undefined
 }
 
 /**
- * Add or update a plugin's installation metadata
+ * 添加或更新插件的安装元数据。
  *
- * Implements double-write: updates both V1 and V2 files.
+ * 实现双写：同时更新 V1 和 V2 文件。
  *
- * @param pluginId - Plugin ID in "plugin@marketplace" format
- * @param metadata - Installation metadata
- * @param scope - Installation scope (defaults to 'user' for backward compatibility)
- * @param projectPath - Project path (for project/local scopes)
+ * @param pluginId - "plugin@marketplace" 格式的插件 ID
+ * @param metadata - 安装元数据
+ * @param scope - 安装作用域（为向后兼容默认为 'user'）
+ * @param projectPath - 项目路径（用于 project/local 作用域）
  */
 export function addInstalledPlugin(
   pluginId: string,
@@ -773,10 +764,10 @@ export function addInstalledPlugin(
     ...(projectPath && { projectPath }),
   }
 
-  // Get or create array for this plugin (preserves other scope installations)
+  // 获取或创建该插件的数组（保留其他作用域的安装记录）
   const installations = v2Data.plugins[pluginId] || []
 
-  // Find existing entry for this scope+projectPath
+  // 查找此 scope+projectPath 的现有记录
   const existingIndex = installations.findIndex(
     (entry) => entry.scope === scope && entry.projectPath === projectPath,
   )
@@ -797,14 +788,14 @@ export function addInstalledPlugin(
 }
 
 /**
- * Remove a plugin from the installed plugins registry
- * This should be called when a plugin is uninstalled.
+ * 从已安装插件注册表中移除插件。
+ * 插件卸载时应调用此函数。
  *
- * Note: This function only updates the registry file. To fully uninstall,
- * call deletePluginCache() afterward to remove the physical files.
+ * 注意：此函数只更新注册表文件。要完全卸载，请随后调用 deletePluginCache()
+ * 移除物理文件。
  *
- * @param pluginId - Plugin ID in "plugin@marketplace" format
- * @returns The removed plugin metadata, or undefined if it wasn't installed
+ * @param pluginId - "plugin@marketplace" 格式的插件 ID
+ * @returns 已移除的插件元数据，若未安装则返回 undefined
  */
 export function removeInstalledPlugin(pluginId: string): InstalledPlugin | undefined {
   const v2Data = loadInstalledPluginsFromDisk()
@@ -814,7 +805,7 @@ export function removeInstalledPlugin(pluginId: string): InstalledPlugin | undef
     return undefined
   }
 
-  // Extract V1-compatible metadata from first installation for return value
+  // 从第一条安装记录提取 V1 兼容的元数据作为返回值
   const firstInstall = installations[0]
   const metadata: InstalledPlugin | undefined = firstInstall
     ? {
@@ -835,13 +826,13 @@ export function removeInstalledPlugin(pluginId: string): InstalledPlugin | undef
 }
 
 /**
- * Delete a plugin's cache directory
- * This physically removes the plugin files from disk
+ * 删除插件的缓存目录。
+ * 这会从磁盘物理移除插件文件。
  *
- * @param installPath - Absolute path to the plugin's cache directory
+ * @param installPath - 插件缓存目录的绝对路径
  */
 /**
- * Export getGitCommitSha for use by pluginInstallationHelpers
+ * 导出 getGitCommitSha 供 pluginInstallationHelpers 使用。
  */
 export { getGitCommitSha }
 
@@ -852,8 +843,8 @@ export function deletePluginCache(installPath: string): void {
     fs.rmSync(installPath, { recursive: true, force: true })
     logForDebugging(`Deleted plugin cache at ${installPath}`)
 
-    // Clean up empty parent plugin directory (cache/{marketplace}/{plugin})
-    // Versioned paths have structure: cache/{marketplace}/{plugin}/{version}
+    // 清理空的父插件目录（cache/{marketplace}/{plugin}）
+    // 版本化路径结构为：cache/{marketplace}/{plugin}/{version}
     const cachePath = getPluginCachePath()
     if (installPath.includes('/cache/') && installPath.startsWith(cachePath)) {
       const pluginDir = dirname(installPath) // e.g., cache/{marketplace}/{plugin}
@@ -865,7 +856,7 @@ export function deletePluginCache(installPath: string): void {
             logForDebugging(`Deleted empty plugin directory at ${pluginDir}`)
           }
         } catch {
-          // Parent dir doesn't exist or isn't readable — skip cleanup
+          // 父目录不存在或不可读，跳过清理
         }
       }
     }
@@ -877,8 +868,8 @@ export function deletePluginCache(installPath: string): void {
 }
 
 /**
- * Get the git commit SHA from a git repository directory
- * Returns undefined if not a git repo or if operation fails
+ * 从 git 仓库目录获取提交 SHA。
+ * 不是 git 仓库或操作失败时返回 undefined。
  */
 async function getGitCommitSha(dirPath: string): Promise<string | undefined> {
   const sha = await getHeadForDir(dirPath)
@@ -886,7 +877,7 @@ async function getGitCommitSha(dirPath: string): Promise<string | undefined> {
 }
 
 /**
- * Try to read version from plugin manifest
+ * 尝试从插件 manifest 读取版本。
  */
 function getPluginVersionFromManifest(pluginCachePath: string, pluginId: string): string {
   const fs = getFsImplementation()
@@ -903,45 +894,45 @@ function getPluginVersionFromManifest(pluginCachePath: string, pluginId: string)
 }
 
 /**
- * Sync installed_plugins.json with enabledPlugins from settings
+ * 将 installed_plugins.json 与设置中的 enabledPlugins 同步。
  *
- * Checks the schema version and only updates if:
- * - File doesn't exist (version 0 → current)
- * - Schema version is outdated (old version → current)
- * - New plugins appear in enabledPlugins
+ * 检查 schema 版本，仅在以下情况更新：
+ * - 文件不存在（版本 0 → 当前版本）
+ * - schema 版本已过期（旧版本 → 当前版本）
+ * - enabledPlugins 中出现新插件
  *
- * This version-based approach makes it easy to add new fields in the future:
- * 1. Increment CURRENT_SCHEMA_VERSION
- * 2. Add migration logic for the new version
- * 3. File is automatically updated on next startup
+ * 基于版本的方法便于未来添加新字段：
+ * 1. 递增 CURRENT_SCHEMA_VERSION
+ * 2. 为新版本添加迁移逻辑
+ * 3. 下次启动时自动更新文件
  *
- * For each plugin in enabledPlugins that's not in installed_plugins.json:
- * - Queries marketplace to get actual install path
- * - Extracts version from manifest if available
- * - Captures git commit SHA for git-based plugins
+ * 对 enabledPlugins 中不在 installed_plugins.json 的每个插件：
+ * - 查询 marketplace 以获取实际安装路径
+ * - 如果可用，从 manifest 提取版本
+ * - 为基于 git 的插件捕获提交 SHA
  *
- * Being present in enabledPlugins (whether true or false) indicates the plugin
- * has been installed. The enabled/disabled state remains in settings.json.
+ * 出现在 enabledPlugins 中（无论为 true 或 false）表示插件已经安装。
+ * 启用/禁用状态仍保留在 settings.json 中。
  */
 export async function migrateFromEnabledPlugins(): Promise<void> {
-  // Use merged settings for shouldSkipSync check
+  // 使用合并后的设置进行 shouldSkipSync 检查
   const settings = getInitialSettings()
   const enabledPlugins = settings.enabledPlugins || {}
 
-  // No plugins in settings = nothing to sync
+  // 设置中没有插件，无需同步
   if (Object.keys(enabledPlugins).length === 0) {
     return
   }
 
-  // Check if main file exists and has V2 format
+  // 检查主文件是否存在且为 V2 格式
   const rawFileData = readInstalledPluginsFileRaw()
   const fileExists = rawFileData !== null
   const isV2Format = fileExists && rawFileData?.version === 2
 
-  // If file exists with V2 format, check if we can skip the expensive migration
+  // 如果文件存在且为 V2 格式，检查能否跳过昂贵的迁移
   if (isV2Format && rawFileData) {
-    // Check if all plugins from settings already exist
-    // (The expensive getPluginById/getGitCommitSha only runs for missing plugins)
+    // 检查设置中的所有插件是否均已存在
+    // （昂贵的 getPluginById/getGitCommitSha 只针对缺失插件运行）
     const existingData = InstalledPluginsFileSchemaV2().safeParse(rawFileData.data)
 
     if (existingData?.success) {
@@ -969,8 +960,8 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
   const now = new Date().toISOString()
   const projectPath = getCwd()
 
-  // Step 1: Build a map of pluginId -> scope from all settings.json files
-  // Settings.json is the source of truth for scope
+  // 第 1 步：从所有 settings.json 文件构建 pluginId -> scope 映射
+  // Settings.json 是作用域的事实来源
   const pluginScopeFromSettings = new Map<
     string,
     {
@@ -979,7 +970,7 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
     }
   >()
 
-  // Iterate through each editable settings source (order matters: user first)
+  // 遍历每个可编辑设置来源（顺序重要：user 在前）
   const settingSources: EditableSettingSource[] = [
     'userSettings',
     'projectSettings',
@@ -991,13 +982,13 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
     const sourceEnabledPlugins = sourceSettings?.enabledPlugins || {}
 
     for (const pluginId of Object.keys(sourceEnabledPlugins)) {
-      // Skip non-standard plugin IDs
+      // 跳过非标准插件 ID
       if (!pluginId.includes('@')) {
         continue
       }
 
-      // Settings.json is source of truth - always update scope
-      // Use the most specific scope (last one wins: local > project > user)
+      // Settings.json 是事实来源，始终更新作用域
+      // 使用最具体作用域（最后一个胜出：local > project > user）
       const scope = settingSourceToScope(source)
       pluginScopeFromSettings.set(pluginId, {
         scope,
@@ -1006,16 +997,16 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
     }
   }
 
-  // Step 2: Start with existing data (or start empty if no file exists)
+  // 第 2 步：从现有数据开始（文件不存在则从空数据开始）
   let pluginsMap: InstalledPluginsMap = {}
 
   if (fileExists) {
-    // File exists - load existing data
+    // 文件存在，加载现有数据
     const existingData = loadInstalledPlugins()
     pluginsMap = { ...existingData.plugins }
   }
 
-  // Step 3: Update V2 scopes based on settings.json (settings is source of truth)
+  // 第 3 步：根据 settings.json 更新 V2 作用域（设置是事实来源）
   let updatedCount = 0
   let addedCount = 0
 
@@ -1023,7 +1014,7 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
     const existingInstallations = pluginsMap[pluginId]
 
     if (existingInstallations && existingInstallations.length > 0) {
-      // Plugin exists in V2 - update scope if different (settings is source of truth)
+      // 插件存在于 V2 中：如果作用域不同则更新（设置是事实来源）
       const existingEntry = existingInstallations[0]
       if (
         existingEntry &&
@@ -1043,7 +1034,7 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
         )
       }
     } else {
-      // Plugin not in V2 - try to add it by looking up in marketplace
+      // 插件不在 V2 中：尝试通过查询 marketplace 添加它
       const { name: pluginName, marketplace } = parsePluginIdentifier(pluginId)
 
       if (!pluginName || !marketplace) {
@@ -1073,12 +1064,10 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
           const sanitizedName = pluginName.replace(/[^a-zA-Z0-9-_]/g, '-')
           const pluginCachePath = join(cachePath, sanitizedName)
 
-          // Read the cache directory directly — readdir is the first real
-          // operation, not a pre-check. Its ENOENT tells us the cache
-          // doesn't exist; its result gates the manifest read below.
-          // Not a TOCTOU — downstream operations handle ENOENT gracefully,
-          // so a race (dir removed between readdir and read) degrades to
-          // version='unknown', not a crash.
+          // 直接读取缓存目录：readdir 是第一个实际操作，而非预检查。它的 ENOENT
+          // 表明缓存不存在；其结果决定是否进行下方的 manifest 读取。这不是 TOCTOU，
+          // 下游操作会妥善处理 ENOENT，因此竞争情况（在 readdir 和 read 之间删除
+          // 目录）只会降级为 version='unknown'，而不会崩溃。
           let dirEntries: string[]
           try {
             dirEntries = (await getFsImplementation().readdir(pluginCachePath)).map((e) =>
@@ -1094,7 +1083,7 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
 
           installPath = pluginCachePath
 
-          // Only read manifest if the .zy-plugin dir is present
+          // 仅在 .zy-plugin 目录存在时读取 manifest
           if (dirEntries.includes('.zy-plugin')) {
             version = getPluginVersionFromManifest(pluginCachePath, pluginId)
           }
@@ -1131,7 +1120,7 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
     }
   }
 
-  // Step 4: Save to single file (V2 format)
+  // 第 4 步：保存到单个文件（V2 格式）
   if (!fileExists || updatedCount > 0 || addedCount > 0) {
     const v2Data: InstalledPluginsFileV2 = { version: 2, plugins: pluginsMap }
     saveInstalledPluginsV2(v2Data)

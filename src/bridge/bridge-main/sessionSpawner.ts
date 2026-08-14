@@ -4,12 +4,10 @@ import { logError } from '../../services/infra/log.js'
 import type { SessionHandle, SessionSpawner, SessionSpawnOpts } from '../types.js'
 
 /**
- * Returns the args that must precede CLI flags when spawning a child zy
- * process. In compiled binaries, process.execPath is the zy binary itself
- * and args go directly to it. In npm installs (node running cli.js),
- * process.execPath is the node runtime — the child spawn must pass the script
- * path as the first arg, otherwise node interprets --sdk-url as a node option
- * and exits with "bad option: --sdk-url". See anthropics/zy-code#28334.
+ * 返回启动 zy 子进程时必须放在 CLI 参数之前的参数。对于编译后的二进制，process.execPath
+ * 就是 zy 本身，参数可直接传入；通过 npm 安装时由 node 运行 cli.js，process.execPath 指向
+ * node 运行时，因而必须把脚本路径作为子进程的第一个参数。否则 node 会把 --sdk-url 当作
+ * 自身选项，并以 "bad option: --sdk-url" 退出。参见 anthropics/zy-code#28334。
  */
 export function spawnScriptArgs(): string[] {
   if (isInBundledMode() || !process.argv[1]) {
@@ -18,7 +16,7 @@ export function spawnScriptArgs(): string[] {
   return [process.argv[1]]
 }
 
-/** Attempt to spawn a session; returns error string if spawn throws. */
+/** 尝试启动会话；spawn 抛出异常时返回错误字符串。 */
 export function safeSpawn(
   spawner: SessionSpawner,
   opts: SessionSpawnOpts,

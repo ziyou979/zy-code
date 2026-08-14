@@ -134,12 +134,12 @@ const log = createDebugLog('query')
 // ── QueryFlowContext ──
 
 export type QueryFlowContext = {
-  // ── stores ──
+  // ── store ──
   replStore: ReplStoreInstance
   appStore: AppStateStore
   setAppState: (updater: (prev: AppState) => AppState) => void
 
-  // ── props / config (stable across renders) ──
+  // ── props / 配置（跨渲染保持稳定）──
   debug: boolean
   customSystemPrompt: string | undefined
   appendSystemPrompt: string | undefined
@@ -149,7 +149,7 @@ export type QueryFlowContext = {
   onTurnComplete: ((messages: MessageType[]) => void | Promise<void>) | undefined
   onBeforeQuery: ((input: string, newMessages: MessageType[]) => Promise<boolean>) | undefined
 
-  // ── derived / memo'd values ──
+  // ── 派生值 / memo 缓存值 ──
   commands: Command[]
   combinedInitialTools: Tool[]
   theme: ThemeName
@@ -159,7 +159,7 @@ export type QueryFlowContext = {
   proactiveActive: boolean
   mainLoopModel: string
 
-  // ── callbacks (from hooks / useCallback in REPL) ──
+  // ── callback（来自 REPL 中的 hook / useCallback）──
   setToolJSX: (args: (ToolJSXState & { clearLocalJSX?: boolean }) | null) => void
   setResponseLength: (f: (prev: number) => number) => void
   addNotification: (content: Notification) => void
@@ -183,7 +183,7 @@ export type QueryFlowContext = {
   mrOnBeforeQuery: (input: string, messages: MessageType[], count: number) => Promise<boolean>
   mrOnTurnComplete: (messages: MessageType[], aborted: boolean) => Promise<void>
 
-  // ── refs (read in async callbacks) ──
+  // ── ref（在异步 callback 中读取）──
   terminalFocusRef: { current: boolean }
   sendWireResultRef: { current: () => void }
   restoreMessageSyncRef: { current: (m: UserMessage) => void }
@@ -198,7 +198,7 @@ export type QueryFlowContext = {
 }
 
 /**
- * Superset of QueryFlowContext with additional deps needed only by onSubmit.
+ * QueryFlowContext 的超集，增加仅 onSubmit 需要的依赖。
  */
 export type SubmitFlowContext = QueryFlowContext & {
   isLoading: boolean
@@ -212,7 +212,7 @@ export type SubmitFlowContext = QueryFlowContext & {
   abortController: AbortController | null
   activeRemote: ActiveRemote
 
-  // callbacks
+  // callback
   setInputValue: (v: string) => void
   setInputMode: (v: PromptInputMode) => void
   setPastedContents: (v: Record<number, PastedContent>) => void

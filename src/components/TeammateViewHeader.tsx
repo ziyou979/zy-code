@@ -7,8 +7,8 @@ import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { OffscreenFreeze } from './OffscreenFreeze.js'
 
 /**
- * Header shown when viewing a teammate's transcript.
- * Displays teammate name (colored), task description, and exit hint.
+ * 查看 teammate transcript 时显示的 header。
+ * 显示带颜色的 teammate 名称、任务说明和退出提示。
  */
 export function TeammateViewHeader() {
   const viewedTeammate = useAppState((s) => getViewedTeammateTask(s))

@@ -7,18 +7,16 @@ type Priority = 'low' | 'medium' | 'high' | 'immediate'
 type BaseNotification = {
   key: string
   /**
-   * Keys of notifications that this notification invalidates.
-   * If a notification is invalidated, it will be removed from the queue
-   * and, if currently displayed, cleared immediately.
+   * 此通知会使哪些 key 对应的通知失效。
+   * 失效的通知会从队列移除；若正在显示，则立即清除。
    */
   invalidates?: string[]
   priority: Priority
   timeoutMs?: number
   /**
-   * Combine notifications with the same key, like Array.reduce().
-   * Called as fold(accumulator, incoming) when a notification with a matching
-   * key already exists in the queue or is currently displayed.
-   * Returns the merged notification (should carry fold forward for future merges).
+   * 像 Array.reduce() 一样合并具有相同 key 的通知。
+   * 队列中已有相同 key 的通知或该通知正在显示时，以 fold(accumulator, incoming) 调用。
+   * 返回合并后的通知；返回值应继续携带 fold，以便后续合并。
    */
   fold?: (accumulator: Notification, incoming: Notification) => Notification
 }
@@ -34,7 +32,7 @@ type RemoveNotificationFn = (key: string) => void
 export type Notification = TextNotification | JSXNotification
 const DEFAULT_TIMEOUT_MS = 8000
 
-// Track current timeout to clear it when immediate notifications arrive
+// 跟踪当前 timeout，以便即时通知到达时将其清除。
 let currentTimeoutId: NodeJS.Timeout | null = null
 export function useNotifications(): {
   addNotification: AddNotificationFn
@@ -43,7 +41,7 @@ export function useNotifications(): {
   const store = useAppStateStore()
   const setAppState = useSetAppState()
 
-  // Process queue when current notification finishes or queue changes
+  // 当前通知结束或队列变化时处理队列。
   const processQueue = useCallback(() => {
     setAppState((prev) => {
       const next = getNext(prev.notifications.queue)
@@ -54,7 +52,7 @@ export function useNotifications(): {
         (setAppState, nextKey, processQueue) => {
           currentTimeoutId = null
           setAppState((prev) => {
-            // Compare by key instead of reference to handle re-created notifications
+            // 按 key 而非引用比较，以支持重新创建的通知。
             if (prev.notifications.current?.key !== nextKey) {
               return prev
             }
@@ -84,20 +82,20 @@ export function useNotifications(): {
   }, [setAppState])
   const addNotification = useCallback<AddNotificationFn>(
     (notif: Notification) => {
-      // Handle immediate priority notifications
+      // 处理即时优先级通知。
       if (notif.priority === 'immediate') {
-        // Clear any existing timeout since we're showing a new immediate notification
+        // 即将显示新的即时通知，因此清除已有 timeout。
         if (currentTimeoutId) {
           clearTimeout(currentTimeoutId)
           currentTimeoutId = null
         }
 
-        // Set up timeout for the immediate notification
+        // 为即时通知设置 timeout。
         currentTimeoutId = setTimeout(
           (setAppState, notif, processQueue) => {
             currentTimeoutId = null
             setAppState((prev) => {
-              // Compare by key instead of reference to handle re-created notifications
+              // 按 key 而非引用比较，以支持重新创建的通知。
               if (prev.notifications.current?.key !== notif.key) {
                 return prev
               }
@@ -119,13 +117,13 @@ export function useNotifications(): {
           processQueue,
         )
 
-        // Show the immediate notification right away
+        // 立即显示即时通知。
         setAppState((prev) => ({
           ...prev,
           notifications: {
             current: notif,
             queue:
-              // Only re-queue the current notification if it's not immediate
+              // 当前通知不是即时通知时才重新入队。
               [
                 ...(prev.notifications.current ? [prev.notifications.current] : []),
                 ...prev.notifications.queue,
@@ -135,14 +133,14 @@ export function useNotifications(): {
         return // IMPORTANT: Exit addNotification for immediate notifications
       }
 
-      // Handle non-immediate notifications
+      // 处理非即时通知。
       setAppState((prev) => {
-        // Check if we can fold into an existing notification with the same key
+        // 检查能否折叠到具有相同 key 的已有通知。
         if (notif.fold) {
-          // Fold into current notification if keys match
+          // key 匹配时折叠到当前通知。
           if (prev.notifications.current?.key === notif.key) {
             const folded = notif.fold(prev.notifications.current, notif)
-            // Reset timeout for the folded notification
+            // 重置折叠后通知的 timeout。
             if (currentTimeoutId) {
               clearTimeout(currentTimeoutId)
               currentTimeoutId = null
@@ -178,7 +176,7 @@ export function useNotifications(): {
             }
           }
 
-          // Fold into queued notification if keys match
+          // key 匹配时折叠到队列中的通知。
           const queueIdx = prev.notifications.queue.findIndex((_) => _.key === notif.key)
           if (queueIdx !== -1) {
             const folded = notif.fold(prev.notifications.queue[queueIdx]!, notif)
@@ -194,7 +192,7 @@ export function useNotifications(): {
           }
         }
 
-        // Only add to queue if not already present (prevent duplicates)
+        // 不存在时才加入队列，防止重复。
         const queuedKeys = new Set(prev.notifications.queue.map((_) => _.key))
         const shouldAdd =
           !queuedKeys.has(notif.key) && prev.notifications.current?.key !== notif.key
@@ -222,7 +220,7 @@ export function useNotifications(): {
         }
       })
 
-      // Process queue after adding the notification
+      // 加入通知后处理队列。
       processQueue()
     },
     [setAppState, processQueue],
@@ -252,9 +250,8 @@ export function useNotifications(): {
     [setAppState, processQueue],
   )
 
-  // Process queue on mount if there are notifications in the initial state.
-  // Imperative read (not useAppState) — a subscription in a mount-only
-  // effect would be vestigial and make every caller re-render on queue changes.
+  // 挂载时若初始状态中有通知，则处理队列。这里使用命令式读取而非 useAppState；
+  // 只在挂载时运行的 effect 若建立订阅会变成无用负担，并使所有调用方在队列变化时重渲染。
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only effect, store is a stable context ref
   useEffect(() => {

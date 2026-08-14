@@ -22,7 +22,7 @@ export function startCapturingEarlyInput(): void {
     try {
       stdinHandle.setRawMode(true)
     } catch {
-      // Not a TTY
+      // 不是 TTY
     }
     stdinHandle.on('data', onStdinData)
   }
@@ -48,7 +48,7 @@ function cleanupStdin(): void {
       try {
         stdinHandle.setRawMode(false)
       } catch {
-        // ignore
+        // 忽略读取错误
       }
     }
     stdinHandle = null

@@ -1,8 +1,8 @@
 /**
- * InProcessTeammateTask - Manages in-process teammate lifecycle
+ * InProcessTeammateTask：管理进程内 teammate 的生命周期。
  *
- * This component implements the Task interface for in-process teammates.
- * Unlike LocalAgentTask (background agents), in-process teammates:
+ * 此组件为进程内 teammate 实现 Task 接口。与 LocalAgentTask（后台 agent）不同，
+ * 进程内 teammate：
  * 1. Run in the same Node.js process using AsyncLocalStorage for isolation
  * 2. Have team-aware identity (agentName@teamName)
  * 3. Support plan mode approval flow
@@ -24,7 +24,7 @@ import type { InProcessTeammateTaskState } from './types.js'
 import { appendCappedMessage, isInProcessTeammateTask } from './types.js'
 
 /**
- * InProcessTeammateTask - Handles in-process teammate execution.
+ * InProcessTeammateTask：处理进程内 teammate 的执行。
  */
 export const InProcessTeammateTask: Task = {
   name: 'InProcessTeammateTask',
@@ -35,7 +35,7 @@ export const InProcessTeammateTask: Task = {
 }
 
 /**
- * Request shutdown for a teammate.
+ * 请求关闭 teammate。
  */
 export function requestTeammateShutdown(taskId: string, setAppState: SetAppState): void {
   updateTaskState<InProcessTeammateTaskState>(taskId, setAppState, (task) => {
@@ -50,8 +50,7 @@ export function requestTeammateShutdown(taskId: string, setAppState: SetAppState
 }
 
 /**
- * Append a message to a teammate's conversation history.
- * Used for zoomed view to show the teammate's conversation.
+ * 向 teammate 的对话历史追加消息，供放大视图显示其对话。
  */
 export function appendTeammateMessage(
   taskId: string,
@@ -70,9 +69,8 @@ export function appendTeammateMessage(
 }
 
 /**
- * Inject a user message to a teammate's pending queue.
- * Used when viewing a teammate's transcript to send typed messages to them.
- * Also adds the message to task.messages so it appears immediately in the transcript.
+ * 向 teammate 的待处理队列注入用户消息。查看 teammate transcript 时，
+ * 用于向其发送输入的消息；同时把消息加入 task.messages，使其立即出现在 transcript 中。
  */
 export function injectUserMessageToTeammate(
   taskId: string,
@@ -80,8 +78,7 @@ export function injectUserMessageToTeammate(
   setAppState: SetAppState,
 ): void {
   updateTaskState<InProcessTeammateTaskState>(taskId, setAppState, (task) => {
-    // Allow message injection when teammate is running or idle (waiting for input)
-    // Only reject if teammate is in a terminal state
+    // teammate 正在运行或空闲等待输入时允许注入消息，仅在终态时拒绝
     if (isTerminalTaskStatus(task.status)) {
       logForDebugging(
         `Dropping message for teammate task ${taskId}: task status is "${task.status}"`,
@@ -102,10 +99,8 @@ export function injectUserMessageToTeammate(
 }
 
 /**
- * Get teammate task by agent ID from AppState.
- * Prefers running tasks over killed/completed ones in case multiple tasks
- * with the same agentId exist.
- * Returns undefined if not found.
+ * 按 agent ID 从 AppState 获取 teammate task。存在多个相同 agentId 的 task 时，
+ * 优先返回运行中的 task，而非已终止或已完成者；找不到时返回 undefined。
  */
 export function findTeammateTaskByAgentId(
   agentId: string,
@@ -114,12 +109,11 @@ export function findTeammateTaskByAgentId(
   let fallback: InProcessTeammateTaskState | undefined
   for (const task of Object.values(tasks)) {
     if (isInProcessTeammateTask(task) && task.identity.agentId === agentId) {
-      // Prefer running tasks in case old killed tasks still exist in AppState
-      // alongside new running ones with the same agentId
+      // 若 AppState 中仍保留旧的已终止 task，且存在相同 agentId 的新运行 task，优先后者
       if (task.status === 'running') {
         return task
       }
-      // Keep first match as fallback in case no running task exists
+      // 保留首个匹配项，在没有运行中 task 时作为回退
       if (!fallback) {
         fallback = task
       }
@@ -129,7 +123,7 @@ export function findTeammateTaskByAgentId(
 }
 
 /**
- * Get all in-process teammate tasks from AppState.
+ * 从 AppState 获取全部进程内 teammate task。
  */
 export function getAllInProcessTeammateTasks(
   tasks: Record<string, TaskStateBase>,
@@ -138,10 +132,9 @@ export function getAllInProcessTeammateTasks(
 }
 
 /**
- * Get running in-process teammates sorted alphabetically by agentName.
- * Shared between TeammateSpinnerTree display, PromptInput footer selector,
- * and useBackgroundTaskNavigation — selectedIPAgentIndex maps into this
- * array, so all three must agree on sort order.
+ * 获取运行中的进程内 teammate，并按 agentName 字母顺序排序。
+ * TeammateSpinnerTree 展示、PromptInput 页脚选择器与 useBackgroundTaskNavigation
+ * 共享此结果；selectedIPAgentIndex 会映射到该数组，因此三者必须采用相同排序。
  */
 export function getRunningTeammatesSorted(
   tasks: Record<string, TaskStateBase>,

@@ -37,34 +37,34 @@ import { estimateMessageTokens } from './microCompact.js'
 import { getCompactUserSummaryMessage } from './prompt.js'
 
 /**
- * Configuration for session memory compaction thresholds
+ * session memory 压缩阈值配置。
  */
 export type SessionMemoryCompactConfig = {
-  /** Minimum tokens to preserve after compaction */
+  /** 压缩后至少保留的 token 数量。 */
   minTokens: number
-  /** Minimum number of messages with text blocks to keep */
+  /** 至少保留多少条包含文本块的消息。 */
   minTextBlockMessages: number
-  /** Maximum tokens to preserve after compaction (hard cap) */
+  /** 压缩后最多保留的 token 数量（硬上限）。 */
   maxTokens: number
 }
 
-// Default configuration values (exported for use in tests)
+// 默认配置值，导出供测试使用。
 export const DEFAULT_SM_COMPACT_CONFIG: SessionMemoryCompactConfig = {
   minTokens: 10_000,
   minTextBlockMessages: 5,
   maxTokens: 40_000,
 }
 
-// Current configuration (starts with defaults)
+// 当前配置，初始采用默认值。
 let smCompactConfig: SessionMemoryCompactConfig = {
   ...DEFAULT_SM_COMPACT_CONFIG,
 }
 
-// Track whether config has been initialized from remote
+// 记录是否已通过远程配置完成初始化。
 let configInitialized = false
 
 /**
- * Set the session memory compact configuration
+ * 设置 session memory 压缩配置。
  */
 export function setSessionMemoryCompactConfig(config: Partial<SessionMemoryCompactConfig>): void {
   smCompactConfig = {
@@ -74,14 +74,14 @@ export function setSessionMemoryCompactConfig(config: Partial<SessionMemoryCompa
 }
 
 /**
- * Get the current session memory compact configuration
+ * 获取当前 session memory 压缩配置。
  */
 export function getSessionMemoryCompactConfig(): SessionMemoryCompactConfig {
   return { ...smCompactConfig }
 }
 
 /**
- * Reset config state (useful for testing)
+ * 重置配置状态，主要供测试使用。
  */
 export function resetSessionMemoryCompactConfig(): void {
   smCompactConfig = { ...DEFAULT_SM_COMPACT_CONFIG }
@@ -89,8 +89,8 @@ export function resetSessionMemoryCompactConfig(): void {
 }
 
 /**
- * Initialize configuration from remote config (GrowthBook).
- * Only fetches once per session - subsequent calls return immediately.
+ * 从远程配置（GrowthBook）初始化。
+ * 每个会话只获取一次，后续调用会立即返回。
  */
 async function initSessionMemoryCompactConfig(): Promise<void> {
   if (configInitialized) {
@@ -98,14 +98,13 @@ async function initSessionMemoryCompactConfig(): Promise<void> {
   }
   configInitialized = true
 
-  // Load config from GrowthBook, merging with defaults
+  // 从 GrowthBook 加载配置，并与默认值合并。
   const remoteConfig = await getDynamicConfig_BLOCKS_ON_INIT<Partial<SessionMemoryCompactConfig>>(
     'zy_sm_compact_config',
     {},
   )
 
-  // Only use remote values if they are explicitly set (positive numbers)
-  // This ensures sensible defaults aren't overridden by zero values
+  // 仅采用显式设置为正数的远程值，避免零值覆盖合理的默认值。
   const config: SessionMemoryCompactConfig = {
     minTokens:
       remoteConfig.minTokens && remoteConfig.minTokens > 0
@@ -124,7 +123,7 @@ async function initSessionMemoryCompactConfig(): Promise<void> {
 }
 
 /**
- * Check if a message contains text blocks (text content for user/assistant interaction)
+ * 检查消息是否包含文本块（用于 user/assistant 交互的文本内容）。
  */
 export function hasTextBlocks(message: Message): boolean {
   if (message.type === 'assistant') {
@@ -139,7 +138,7 @@ export function hasTextBlocks(message: Message): boolean {
 }
 
 /**
- * Check if a message contains tool_result blocks and return their tool_use_ids
+ * 检查消息中的 tool_result 块并返回对应的 tool_use_id。
  */
 function getToolResultIds(message: Message): string[] {
   if (message.type !== 'user') {
@@ -159,7 +158,7 @@ function getToolResultIds(message: Message): string[] {
 }
 
 /**
- * Check if a message contains tool_use blocks with any of the given ids
+ * 检查消息是否包含任一指定 id 对应的 tool_use 块。
  */
 function hasToolUseWithIds(message: Message, toolUseIds: Set<string>): boolean {
   if (message.type !== 'assistant') {
@@ -173,22 +172,21 @@ function hasToolUseWithIds(message: Message, toolUseIds: Set<string>): boolean {
 }
 
 /**
- * Adjust the start index to ensure we don't split tool_use/tool_result pairs
- * or thinking blocks that share the same message.id with kept assistant messages.
+ * 调整起始索引，确保不会拆开 tool_use/tool_result 对，也不会遗漏与保留的
+ * assistant 消息共用同一 message.id 的 thinking 块。
  *
- * If ANY message we're keeping contains tool_result blocks, we need to
- * include the preceding assistant message(s) that contain the matching tool_use blocks.
+ * 只要任一保留消息包含 tool_result 块，就必须一并保留此前包含匹配
+ * tool_use 块的 assistant 消息。
  *
- * Additionally, if ANY assistant message in the kept range has the same message.id
- * as a preceding assistant message (which may contain thinking blocks), we need to
- * include those messages so they can be properly merged by normalizeMessagesForAPI.
+ * 此外，只要保留范围内任一 assistant 消息与此前的 assistant 消息共用
+ * message.id（后者可能包含 thinking 块），就必须一并保留此前消息，
+ * 以便 normalizeMessagesForAPI 正确合并。
  *
- * This handles the case where streaming yields separate messages per content block
- * (thinking, tool_use, etc.) with the same message.id but different uuids. If the
- * startIndex lands on one of these streaming messages, we need to look at ALL kept
- * messages for tool_results, not just the first one.
+ * 这用于处理流式输出将同一 message.id 下的各内容块（thinking、tool_use 等）
+ * 拆成不同 uuid 消息的情况。若 startIndex 落在其中一条流式消息上，
+ * 就需要检查所有保留消息中的 tool_result，而不能只检查第一条。
  *
- * Example bug scenarios this fixes:
+ * 以下代码示例展示了所修复的问题：
  *
  * Tool pair scenario:
  *   Session storage (before compaction):
@@ -226,15 +224,15 @@ export function adjustIndexToPreserveAPIInvariants(
 
   let adjustedIndex = startIndex
 
-  // Step 1: Handle tool_use/tool_result pairs
-  // Collect tool_result IDs from ALL messages in the kept range
+  // 第 1 步：处理 tool_use/tool_result 对。
+  // 收集保留范围内所有消息的 tool_result ID。
   const allToolResultIds: string[] = []
   for (let i = startIndex; i < messages.length; i++) {
     allToolResultIds.push(...getToolResultIds(messages[i]!))
   }
 
   if (allToolResultIds.length > 0) {
-    // Collect tool_use IDs already in the kept range
+    // 收集保留范围内已有的 tool_use ID。
     const toolUseIdsInKeptRange = new Set<string>()
     for (let i = adjustedIndex; i < messages.length; i++) {
       const msg = messages[i]!
@@ -247,17 +245,17 @@ export function adjustIndexToPreserveAPIInvariants(
       }
     }
 
-    // Only look for tool_uses that are NOT already in the kept range
+    // 仅查找尚未包含在保留范围内的 tool_use。
     const neededToolUseIds = new Set(
       allToolResultIds.filter((id) => !toolUseIdsInKeptRange.has(id)),
     )
 
-    // Find the assistant message(s) with matching tool_use blocks
+    // 查找包含匹配 tool_use 块的 assistant 消息。
     for (let i = adjustedIndex - 1; i >= 0 && neededToolUseIds.size > 0; i--) {
       const message = messages[i]!
       if (hasToolUseWithIds(message, neededToolUseIds)) {
         adjustedIndex = i
-        // Remove found tool_use_ids from the set
+        // 从集合中移除已找到的 tool_use_id。
         if (message.type === 'assistant' && Array.isArray(message.message.content)) {
           for (const block of message.message.content) {
             if (block.type === 'tool_call' && neededToolUseIds.has(block.id)) {
@@ -269,8 +267,8 @@ export function adjustIndexToPreserveAPIInvariants(
     }
   }
 
-  // Step 2: Handle thinking blocks that share message.id with kept assistant messages
-  // Collect all message.ids from assistant messages in the kept range
+  // 第 2 步：处理与保留的 assistant 消息共用 message.id 的 thinking 块。
+  // 收集保留范围内所有 assistant 消息的 message.id。
   const messageIdsInKeptRange = new Set<string>()
   for (let i = adjustedIndex; i < messages.length; i++) {
     const msg = messages[i]!
@@ -279,8 +277,8 @@ export function adjustIndexToPreserveAPIInvariants(
     }
   }
 
-  // Look backwards for assistant messages with the same message.id that are not in the kept range
-  // These may contain thinking blocks that need to be merged by normalizeMessagesForAPI
+  // 向前查找不在保留范围内、但具有相同 message.id 的 assistant 消息；
+  // 这些消息可能含有需要由 normalizeMessagesForAPI 合并的 thinking 块。
   for (let i = adjustedIndex - 1; i >= 0; i--) {
     const message = messages[i]!
     if (
@@ -288,8 +286,7 @@ export function adjustIndexToPreserveAPIInvariants(
       message.message.id &&
       messageIdsInKeptRange.has(message.message.id)
     ) {
-      // This message has the same message.id as one in the kept range
-      // Include it so thinking blocks can be properly merged
+      // 此消息与保留范围内的消息共用 message.id，将其纳入以正确合并 thinking 块。
       adjustedIndex = i
     }
   }
@@ -298,12 +295,11 @@ export function adjustIndexToPreserveAPIInvariants(
 }
 
 /**
- * Calculate the starting index for messages to keep after compaction.
- * Starts from lastSummarizedMessageId, then expands backwards to meet minimums:
- * - At least config.minTokens tokens
- * - At least config.minTextBlockMessages messages with text blocks
- * Stops expanding if config.maxTokens is reached.
- * Also ensures tool_use/tool_result pairs are not split.
+ * 计算压缩后保留消息的起始索引。
+ * 从 lastSummarizedMessageId 开始向前扩展，直至达到以下下限：
+ * - 至少保留 config.minTokens 个 token
+ * - 至少保留 config.minTextBlockMessages 条包含文本块的消息
+ * 达到 config.maxTokens 时停止扩展，同时确保不会拆开 tool_use/tool_result 对。
  */
 export function calculateMessagesToKeepIndex(
   messages: Message[],
@@ -315,12 +311,11 @@ export function calculateMessagesToKeepIndex(
 
   const config = getSessionMemoryCompactConfig()
 
-  // Start from the message after lastSummarizedIndex
-  // If lastSummarizedIndex is -1 (not found) or messages.length (no summarized id),
-  // we start with no messages kept
+  // 从 lastSummarizedIndex 的下一条消息开始。若其为 -1（未找到）或
+  // messages.length（没有摘要 id），则初始不保留任何消息。
   let startIndex = lastSummarizedIndex >= 0 ? lastSummarizedIndex + 1 : messages.length
 
-  // Calculate current tokens and text-block message count from startIndex to end
+  // 计算 startIndex 至末尾的 token 数和文本块消息数。
   let totalTokens = 0
   let textBlockMessageCount = 0
   for (let i = startIndex; i < messages.length; i++) {
@@ -331,22 +326,21 @@ export function calculateMessagesToKeepIndex(
     }
   }
 
-  // Check if we already hit the max cap
+  // 检查是否已达到硬上限。
   if (totalTokens >= config.maxTokens) {
     return adjustIndexToPreserveAPIInvariants(messages, startIndex)
   }
 
-  // Check if we already meet both minimums
+  // 检查是否已同时满足两个下限。
   if (totalTokens >= config.minTokens && textBlockMessageCount >= config.minTextBlockMessages) {
     return adjustIndexToPreserveAPIInvariants(messages, startIndex)
   }
 
-  // Expand backwards until we meet both minimums or hit max cap.
-  // Floor at the last boundary: the preserved-segment chain has a disk
-  // discontinuity there (att[0]→summary shortcut from dedup-skip), which
-  // would let the loader's tail→head walk bypass inner preserved messages
-  // and then prune them. Reactive compact already slices at the boundary
-  // via getHotContextMessages; this is the same invariant.
+  // 向前扩展，直至同时满足两个下限或达到硬上限。不得越过最后一个 boundary：
+  // 保留片段链在该处存在磁盘断点（dedup-skip 产生的 att[0]→summary 捷径），
+  // 否则 loader 从尾到头遍历时会跳过内部保留消息，随后将其裁剪。
+  // Reactive compact 已通过 getHotContextMessages 在 boundary 处切分，
+  // 此处遵循同一不变量。
   const idx = messages.findLastIndex((m) => isCompactBoundaryMessage(m))
   const floor = idx === -1 ? 0 : idx + 1
   for (let i = startIndex - 1; i >= floor; i--) {
@@ -358,27 +352,27 @@ export function calculateMessagesToKeepIndex(
     }
     startIndex = i
 
-    // Stop if we hit the max cap
+    // 达到硬上限时停止。
     if (totalTokens >= config.maxTokens) {
       break
     }
 
-    // Stop if we meet both minimums
+    // 同时满足两个下限时停止。
     if (totalTokens >= config.minTokens && textBlockMessageCount >= config.minTextBlockMessages) {
       break
     }
   }
 
-  // Adjust for tool pairs
+  // 根据 tool 对调整边界。
   return adjustIndexToPreserveAPIInvariants(messages, startIndex)
 }
 
 /**
- * Check if we should use session memory for compaction
- * Uses cached gate values to avoid blocking on Statsig initialization
+ * 检查是否应使用 session memory 进行压缩。
+ * 使用缓存的 gate 值，避免等待 Statsig 初始化。
  */
 export function shouldUseSessionMemoryCompaction(): boolean {
-  // Allow env var override for eval runs and testing
+  // 允许 eval 运行和测试通过环境变量覆盖。
   if (isEnvTruthy(process.env.ENABLE_ZY_CODE_SM_COMPACT)) {
     return true
   }
@@ -390,7 +384,7 @@ export function shouldUseSessionMemoryCompaction(): boolean {
   const smCompactFlag = getFeatureValue_CACHED_MAY_BE_STALE('zy_sm_compact', false)
   const shouldUse = sessionMemoryFlag && smCompactFlag
 
-  // Log flag states for debugging (ant-only to avoid noise in external logs)
+  // 记录功能开关状态以便调试；仅限 ant，避免污染外部日志。
   if (isInternalBuild()) {
     logEvent('zy_sm_compact_flag_check', {
       zy_session_memory: sessionMemoryFlag,
@@ -403,7 +397,7 @@ export function shouldUseSessionMemoryCompaction(): boolean {
 }
 
 /**
- * Create a CompactionResult from session memory
+ * 根据 session memory 创建 CompactionResult。
  */
 function createCompactionResultFromSessionMemory(
   messages: Message[],
@@ -425,8 +419,7 @@ function createCompactionResultFromSessionMemory(
     boundaryMarker.compactMetadata.preCompactDiscoveredTools = [...preCompactDiscovered].sort()
   }
 
-  // Truncate oversized sections to prevent session memory from consuming
-  // the entire post-compact token budget
+  // 截断过大的区段，避免 session memory 占满压缩后的 token 预算。
   const { truncatedContent, wasTruncated } = truncateSessionMemoryForCompact(sessionMemory)
 
   let summaryContent = getCompactUserSummaryMessage(truncatedContent, true, transcriptPath, true)
@@ -447,8 +440,8 @@ function createCompactionResultFromSessionMemory(
   const planAttachment = createPlanAttachmentIfNeeded(agentId)
   const attachments = planAttachment ? [planAttachment] : []
 
-  // SM-compact has no compact-API-call, so postCompactTokenCount (kept for
-  // event continuity) and truePostCompactTokenCount converge to the same value.
+  // SM-compact 不会调用 compact API，因此为保持事件连续性而保留的
+  // postCompactTokenCount 与 truePostCompactTokenCount 最终取相同值。
   // 含 messagesToKeep：statusline 需要反映「摘要 + 保留尾部」的真实占用
   const truePostCompactTokenCount = estimateMessageTokens([
     ...summaryMessages,
@@ -474,13 +467,12 @@ function createCompactionResultFromSessionMemory(
 }
 
 /**
- * Try to use session memory for compaction instead of traditional compaction.
- * Returns null if session memory compaction cannot be used.
+ * 尝试使用 session memory 代替传统压缩；无法使用时返回 null。
  *
- * Handles two scenarios:
- * 1. Normal case: lastSummarizedMessageId is set, keep only messages after that ID
- * 2. Resumed session: lastSummarizedMessageId is not set but session memory has content,
- *    keep all messages but use session memory as the summary
+ * 处理两种情况：
+ * 1. 常规情况：已设置 lastSummarizedMessageId，仅保留该 ID 之后的消息
+ * 2. 恢复的会话：未设置 lastSummarizedMessageId，但 session memory 有内容；
+ *    保留全部消息，并将 session memory 用作摘要
  */
 export async function trySessionMemoryCompaction(
   messages: Message[],
@@ -491,23 +483,23 @@ export async function trySessionMemoryCompaction(
     return null
   }
 
-  // Initialize config from remote (only fetches once)
+  // 从远程初始化配置，只获取一次。
   await initSessionMemoryCompactConfig()
 
-  // Wait for any in-progress session memory extraction to complete (with timeout)
+  // 等待正在进行的 session memory 提取完成，并设有超时。
   await waitForSessionMemoryExtraction()
 
   const lastSummarizedMessageId = getLastSummarizedMessageId()
   const sessionMemory = await getSessionMemoryContent()
 
-  // No session memory file exists at all
+  // session memory 文件不存在。
   if (!sessionMemory) {
     logEvent('zy_sm_compact_no_session_memory', {})
     return null
   }
 
-  // Session memory exists but matches the template (no actual content extracted)
-  // Fall back to legacy compact behavior
+  // session memory 存在但仍与模板一致，说明尚未提取实际内容；
+  // 退回旧版 compact 行为。
   if (await isSessionMemoryEmpty(sessionMemory)) {
     logEvent('zy_sm_compact_empty_template', {})
     return null
@@ -517,39 +509,36 @@ export async function trySessionMemoryCompaction(
     let lastSummarizedIndex: number
 
     if (lastSummarizedMessageId) {
-      // Normal case: we know exactly which messages have been summarized
+      // 常规情况：可以准确确定哪些消息已纳入摘要。
       lastSummarizedIndex = messages.findIndex((msg) => msg.uuid === lastSummarizedMessageId)
 
       if (lastSummarizedIndex === -1) {
-        // The summarized message ID doesn't exist in current messages
-        // This can happen if messages were modified - fall back to legacy compact
-        // since we can't determine the boundary between summarized and unsummarized messages
+        // 当前消息中不存在摘要消息 ID，可能是消息已被修改。由于无法确定已摘要与
+        // 未摘要消息的边界，退回旧版 compact。
         logEvent('zy_sm_compact_summarized_id_not_found', {})
         return null
       }
     } else {
-      // Resumed session case: session memory has content but we don't know the boundary
-      // Set lastSummarizedIndex to last message so startIndex becomes messages.length (no messages kept initially)
+      // 恢复的会话：session memory 有内容，但边界未知。将 lastSummarizedIndex
+      // 指向最后一条消息，使 startIndex 等于 messages.length，初始不保留消息。
       lastSummarizedIndex = messages.length - 1
       logEvent('zy_sm_compact_resumed_session', {})
     }
 
-    // Calculate the starting index for messages to keep
-    // This starts from lastSummarizedIndex, expands to meet minimums,
-    // and adjusts to not split tool_use/tool_result pairs
+    // 计算保留消息的起始索引：从 lastSummarizedIndex 开始扩展至满足下限，
+    // 并调整边界以免拆开 tool_use/tool_result 对。
     const startIndex = calculateMessagesToKeepIndex(messages, lastSummarizedIndex)
-    // Filter out old compact boundary messages from messagesToKeep.
-    // After REPL pruning, old boundaries re-yielded from messagesToKeep would
-    // trigger an unwanted second prune (isCompactBoundaryMessage returns true),
-    // discarding the new boundary and summary.
+    // 从 messagesToKeep 中过滤旧 compact boundary。REPL 裁剪后，若再次产出
+    // 保留消息中的旧 boundary，会触发意外的二次裁剪
+    //（isCompactBoundaryMessage 返回 true），从而丢弃新 boundary 和摘要。
     const messagesToKeep = messages.slice(startIndex).filter((m) => !isCompactBoundaryMessage(m))
 
-    // Run session start hooks to restore AGENTS.md and other context
+    // 运行 session start hook，以恢复 AGENTS.md 和其他上下文。
     const hookResults = await processSessionStartHooks('compact', {
       model: getMainLoopModel(),
     })
 
-    // Get transcript path for the summary message
+    // 获取摘要消息对应的 transcript 路径。
     const transcriptPath = getTranscriptPath()
 
     const compactionResult = createCompactionResultFromSessionMemory(
@@ -565,7 +554,7 @@ export async function trySessionMemoryCompaction(
 
     const postCompactTokenCount = estimateMessageTokens(postCompactMessages)
 
-    // Only check threshold if one was provided (for autocompact)
+    // 仅在提供阈值时检查，供 autocompact 使用。
     if (autoCompactThreshold !== undefined && postCompactTokenCount >= autoCompactThreshold) {
       logEvent('zy_sm_compact_threshold_exceeded', {
         postCompactTokenCount,
@@ -588,8 +577,8 @@ export async function trySessionMemoryCompaction(
       truePostCompactTokenCount: postCompactTokenCount,
     }
   } catch (error) {
-    // Use logEvent instead of logError since errors here are expected
-    // (e.g., file not found, path issues) and shouldn't go to error logs
+    // 此处的错误（如文件不存在、路径问题）属于预期情况，不应写入错误日志，
+    // 因此使用 logEvent 而非 logError。
     logEvent('zy_sm_compact_error', {})
     if (isInternalBuild()) {
       logForDebugging(`Session memory compaction error: ${errorMessage(error)}`)

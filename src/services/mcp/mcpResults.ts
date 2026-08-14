@@ -42,7 +42,7 @@ const SECRET_REDACTION_PATTERNS: ReadonlyArray<RegExp> = [
   /\b(?:AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16})\b/g,
   // GitHub/GitLab 个人访问令牌
   /\b(?:ghp_|gho_|ghu_|ghs_|ghr_|glpat-)[a-zA-Z0-9_]{36,}\b/g,
-  // Slack Bot/Webhook token
+  // Slack Bot/Webhook token 模式
   /\b(?:xoxb-|xoxa-|xoxr-|xapp-|hooks\.slack\.com\/services\/)[a-zA-Z0-9/_-]{20,}\b/g,
   // JWT-like token（base64url 三段落）
   /\beyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\b/g,
@@ -123,7 +123,7 @@ export function redactSensitiveFields(value: unknown): unknown {
 }
 
 /**
- * Transform result content from an MCP tool or MCP prompt into message blocks
+ * 将 MCP tool 或 MCP prompt 的结果内容转换为 message block。
  */
 export async function transformResultContent(
   resultContent: PromptMessage['content'],
@@ -233,8 +233,7 @@ export async function transformResultContent(
 }
 
 /**
- * Decode base64 binary content, write it to disk with the proper extension,
- * and return a small text block with the file path.
+ * 解码 base64 二进制内容，以适当扩展名写入磁盘，并返回包含文件路径的小型 text block。
  */
 async function persistBlobToTextBlock(
   bytes: Buffer,
@@ -263,7 +262,7 @@ async function persistBlobToTextBlock(
 }
 
 /**
- * Processes MCP tool result into a normalized format.
+ * 将 MCP tool 结果处理为规范格式。
  */
 export type MCPResultType = 'toolResult' | 'structuredContent' | 'contentArray'
 
@@ -274,7 +273,7 @@ export type TransformedMCPResult = {
 }
 
 /**
- * Generates a compact, jq-friendly type signature for a value.
+ * 为值生成紧凑且便于 jq 处理的类型签名。
  * e.g. "{title: string, items: [{id: number, name: string}]}"
  */
 export function inferCompactSchema(value: unknown, depth = 2): string {
@@ -341,7 +340,7 @@ export async function transformMCPResult(
 }
 
 /**
- * Check if MCP content contains any image blocks.
+ * 检查 MCP 内容是否包含 image block。
  */
 function contentContainsImages(content: MCPToolResult): boolean {
   if (!content || typeof content === 'string') {

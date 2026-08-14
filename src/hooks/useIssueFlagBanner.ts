@@ -26,19 +26,19 @@ const EXTERNAL_COMMAND_PATTERNS = [
 ]
 
 const FRICTION_PATTERNS = [
-  // "No," or "No!" at start — comma/exclamation implies correction tone
-  // (avoids "No problem", "No thanks", "No I think we should...")
+  // 以 "No," 或 "No!" 开头：逗号或感叹号表示纠正语气，
+  // 避免误判 "No problem"、"No thanks"、"No I think we should..."
   /^no[,!]\s/i,
-  // Direct corrections about Zy's output
+  // 直接纠正 Zy 的输出
   /\bthat'?s (wrong|incorrect|not (what|right|correct))\b/i,
   /\bnot what I (asked|wanted|meant|said)\b/i,
-  // Referencing prior instructions Zy missed
+  // 提及 Zy 遗漏的先前指令
   /\bI (said|asked|wanted|told you|already said)\b/i,
-  // Questioning Zy's actions
+  // 质疑 Zy 的操作
   /\bwhy did you\b/i,
   /\byou should(n'?t| not)? have\b/i,
   /\byou were supposed to\b/i,
-  // Explicit retry/revert of Zy's work
+  // 明确要求重试或撤销 Zy 的工作
   /\btry again\b/i,
   /\b(undo|revert) (that|this|it|what you)\b/i,
 ]
@@ -100,17 +100,16 @@ export function useIssueFlagBanner(messages: Message[], submitCount: number): bo
   // biome-ignore lint/correctness/useHookAtTopLevel: process.env.USER_TYPE is a compile-time constant
   const activeForSubmitRef = useRef(-1)
 
-  // Memoize the O(messages) scans. This hook runs on every REPL render
-  // (including every keystroke), but messages is stable during typing.
-  // isSessionContainerCompatible walks all messages + regex-tests each
-  // bash command — by far the heaviest work here.
+  // 缓存 O(messages) 扫描。此 hook 会在每次 REPL 渲染时运行，包括每次按键，
+  // 但输入期间 messages 保持稳定。isSessionContainerCompatible 会遍历所有消息，
+  // 并对每条 bash 命令运行 regex，是此处最重的工作。
   // biome-ignore lint/correctness/useHookAtTopLevel: process.env.USER_TYPE is a compile-time constant
   const shouldTrigger = useMemo(
     () => isSessionContainerCompatible(messages) && hasFrictionSignal(messages),
     [messages],
   )
 
-  // Keep showing the banner until the user submits another message
+  // 持续显示 banner，直到用户提交下一条消息
   if (activeForSubmitRef.current === submitCount) {
     return true
   }

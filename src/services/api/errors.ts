@@ -26,7 +26,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { shouldProcessRateLimits } from '../rateLimitMocking.js' // Used for /mock-limits command
+import { shouldProcessRateLimits } from '../rateLimitMocking.js' // 供 /mock-limits 命令使用
 import {
   getRateLimitErrorMessage,
   type OverageDisabledReason,

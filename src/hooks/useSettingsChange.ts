@@ -9,9 +9,9 @@ export function useSettingsChange(
 ): void {
   const handleChange = useCallback(
     (source: SettingSource) => {
-      // Cache is already reset by the notifier (changeDetector.fanOut) —
-      // resetting here caused N-way thrashing with N subscribers: each
-      // cleared the cache, re-read from disk, then the next cleared again.
+      // notifier（changeDetector.fanOut）已重置 cache。若在此再次重置，
+      // N 个订阅者会造成 N 路抖动：每个订阅者都清除 cache、重新读盘，
+      // 然后下一个订阅者再次清除。
       const newSettings = getInitialSettings()
       onChange(source, newSettings)
     },

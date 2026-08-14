@@ -41,10 +41,9 @@ export function isCoordinatorMode(): boolean {
 }
 
 /**
- * Checks if the current coordinator mode matches the session's stored mode.
- * If mismatched, flips the environment variable so isCoordinatorMode() returns
- * the correct value for the resumed session. Returns a warning message if
- * the mode was switched, or undefined if no switch was needed.
+ * 检查当前 coordinator 模式是否与会话中保存的模式一致。
+ * 若不一致，则切换环境变量，使 isCoordinatorMode() 为恢复后的会话返回正确结果。
+ * 如果发生切换则返回警告消息，否则返回 undefined。
  */
 export function matchSessionMode(
   sessionMode: 'coordinator' | 'normal' | undefined,

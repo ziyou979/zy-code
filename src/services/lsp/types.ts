@@ -1,4 +1,4 @@
-// LSP Types
+// LSP 类型
 
 export interface LSPDiagnostic {
   message: string
@@ -12,7 +12,7 @@ export interface LSPServerConfig {
   env?: Record<string, string>
 }
 
-// Alias for lowercase import
+// 供小写形式导入使用的别名
 export type LspServerConfig = LSPServerConfig
 
 export interface ScopedLspServerConfig extends LSPServerConfig {

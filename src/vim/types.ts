@@ -37,14 +37,14 @@ export type FindType = 'f' | 'F' | 't' | 'T'
 export type TextObjScope = 'inner' | 'around'
 
 // ============================================================================
-// State Machine Types
+// 状态机类型
 // ============================================================================
 
 /**
- * Complete vim state. Mode determines what data is tracked.
+ * 完整 Vim 状态，由 mode 决定跟踪哪些数据。
  *
- * INSERT mode: Track text being typed (for dot-repeat)
- * NORMAL mode: Track command being parsed (state machine)
+ * INSERT 模式：跟踪正在输入的文本，供 dot-repeat 使用。
+ * NORMAL 模式：通过状态机跟踪正在解析的命令。
  */
 export type VimState =
   | { mode: 'INSERT'; insertedText: string }
@@ -52,10 +52,9 @@ export type VimState =
   | { mode: 'VISUAL'; anchor: number }
 
 /**
- * Command state machine for NORMAL mode.
+ * NORMAL 模式的命令状态机。
  *
- * Each state knows exactly what input it's waiting for.
- * TypeScript ensures exhaustive handling in switches.
+ * 每个状态都明确知道自己等待什么输入，TypeScript 确保 switch 穷尽处理。
  */
 export type CommandState =
   | { type: 'idle' }
@@ -76,8 +75,7 @@ export type CommandState =
   | { type: 'indent'; dir: '>' | '<'; count: number }
 
 /**
- * Persistent state that survives across commands.
- * This is the "memory" of vim - what gets recalled for repeats and pastes.
+ * 跨命令保留的持久状态，相当于 Vim 的“记忆”，供重复操作和粘贴调用。
  */
 export type PersistentState = {
   lastChange: RecordedChange | null
@@ -87,8 +85,7 @@ export type PersistentState = {
 }
 
 /**
- * Recorded change for dot-repeat.
- * Captures everything needed to replay a command.
+ * 为 dot-repeat 记录的变更，包含重放命令所需的全部信息。
  */
 export type RecordedChange =
   | { type: 'insert'; text: string }
@@ -120,7 +117,7 @@ export type RecordedChange =
   | { type: 'join'; count: number }
 
 // ============================================================================
-// Key Groups - Named constants, no magic strings
+// 按键分组——使用命名常量，避免魔法字符串。
 // ============================================================================
 
 export const OPERATORS = {
@@ -181,7 +178,7 @@ export const TEXT_OBJ_TYPES = new Set([
 export const MAX_VIM_COUNT = 10000
 
 // ============================================================================
-// State Factories
+// 状态工厂
 // ============================================================================
 
 export function createInitialVimState(): VimState {

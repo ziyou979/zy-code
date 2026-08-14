@@ -52,6 +52,6 @@ export class LocalFileExporter implements LogRecordExporter {
   }
 
   async forceFlush(): Promise<void> {
-    // No-op for file-based exporter
+    // 文件 exporter 无需执行操作
   }
 }

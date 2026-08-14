@@ -1,15 +1,15 @@
 /**
- * Core plugin operations (install, uninstall, enable, disable, update)
+ * 插件核心操作（安装、卸载、启用、禁用、更新）
  *
- * This module provides pure library functions that can be used by both:
- * - CLI commands (`zy plugin install/uninstall/enable/disable/update`)
- * - Interactive UI (ManagePlugins.tsx)
+ * 本模块提供可供以下两者使用的纯库函数：
+ * - CLI 命令（`zy plugin install/uninstall/enable/disable/update`）
+ * - 交互式 UI（ManagePlugins.tsx）
  *
- * Functions in this module:
- * - Do NOT call process.exit()
- * - Do NOT write to console
- * - Return result objects indicating success/failure with messages
- * - Can throw errors for unexpected failures
+ * 本模块中的函数：
+ * - 不调用 process.exit()
+ * - 不向控制台写入内容
+ * - 返回包含成功/失败状态和消息的结果对象
+ * - 遇到意外失败时可抛出错误
  */
 import { dirname, join } from 'node:path'
 import { getOriginalCwd } from '../../bootstrap/runtime/runtimeContext.js'
@@ -46,13 +46,13 @@ import type { PluginMarketplaceEntry, PluginScope } from './schemas.js'
 import { getSettingsForSource, updateSettingsForSource } from '../settings/settings.js'
 import { plural } from '../../utils/stringUtils.js'
 
-/** Valid installable scopes (excludes 'managed' which can only be installed from managed-settings.json) */
+/** 有效的可安装作用域（不包括只能从 managed-settings.json 安装的 'managed'） */
 export const VALID_INSTALLABLE_SCOPES = ['user', 'project', 'local'] as const
 
-/** Installation scope type derived from VALID_INSTALLABLE_SCOPES */
+/** 从 VALID_INSTALLABLE_SCOPES 派生的安装作用域类型 */
 export type InstallableScope = (typeof VALID_INSTALLABLE_SCOPES)[number]
 
-/** Valid scopes for update operations (includes 'managed' since managed plugins can be updated) */
+/** 更新操作的有效作用域（包括 'managed'，因为托管插件可以更新） */
 export const VALID_UPDATE_SCOPES: readonly PluginScope[] = [
   'user',
   'project',
@@ -61,9 +61,9 @@ export const VALID_UPDATE_SCOPES: readonly PluginScope[] = [
 ] as const
 
 /**
- * Assert that a scope is a valid installable scope at runtime
- * @param scope The scope to validate
- * @throws Error if scope is not a valid installable scope
+ * 在运行时断言作用域是有效的可安装作用域。
+ * @param scope 要验证的作用域
+ * @throws 如果作用域不是有效的可安装作用域则抛出 Error
  */
 export function assertInstallableScope(scope: string): asserts scope is InstallableScope {
   if (!VALID_INSTALLABLE_SCOPES.includes(scope as InstallableScope)) {
@@ -74,41 +74,39 @@ export function assertInstallableScope(scope: string): asserts scope is Installa
 }
 
 /**
- * Type guard to check if a scope is an installable scope (not 'managed').
- * Use this for type narrowing in conditional blocks.
+ * 用于检查作用域是否为可安装作用域（非 'managed'）的类型守卫。
+ * 在条件块中使用它缩窄类型。
  */
 export function isInstallableScope(scope: PluginScope): scope is InstallableScope {
   return VALID_INSTALLABLE_SCOPES.includes(scope as InstallableScope)
 }
 
 /**
- * Get the project path for scopes that are project-specific.
- * Returns the original cwd for 'project' and 'local' scopes, undefined otherwise.
+ * 获取项目专属作用域的项目路径。
+ * 对 'project' 和 'local' 作用域返回原始 cwd，否则返回 undefined。
  */
 export function getProjectPathForScope(scope: PluginScope): string | undefined {
   return scope === 'project' || scope === 'local' ? getOriginalCwd() : undefined
 }
 
 /**
- * Is this plugin enabled (value === true) in .zy/settings.json?
+ * 此插件在 .zy/settings.json 中是否已启用（value === true）？
  *
- * Distinct from V2 installed_plugins.json scope: that file tracks where a
- * plugin was *installed from*, but the same plugin can also be enabled at
- * project scope via settings. The uninstall UI needs to check THIS, because
- * a user-scope install with a project-scope enablement means "uninstall"
- * would succeed at removing the user install while leaving the project
- * enablement active — the plugin keeps running.
+ * 这不同于 V2 installed_plugins.json 中的作用域：该文件记录插件*从何处安装*，
+ * 但同一插件也可以通过设置在项目作用域启用。卸载 UI 需要检查这里，因为用户
+ * 作用域安装加上项目作用域启用时，“卸载”会成功移除用户安装，却保留项目作用域
+ * 的启用状态，插件仍会运行。
  */
 export function isPluginEnabledAtProjectScope(pluginId: string): boolean {
   return getSettingsForSource('projectSettings')?.enabledPlugins?.[pluginId] === true
 }
 
 // ============================================================================
-// Result Types
+// 结果类型
 // ============================================================================
 
 /**
- * Result of a plugin operation
+ * 插件操作的结果
  */
 export type PluginOperationResult = {
   success: boolean
@@ -116,12 +114,12 @@ export type PluginOperationResult = {
   pluginId?: string
   pluginName?: string
   scope?: PluginScope
-  /** Plugins that declare this plugin as a dependency (warning on uninstall/disable) */
+  /** 将此插件声明为依赖项的插件（卸载/禁用时警告） */
   reverseDependents?: string[]
 }
 
 /**
- * Result of a plugin update operation
+ * 插件更新操作的结果
  */
 export type PluginUpdateResult = {
   success: boolean
@@ -134,27 +132,25 @@ export type PluginUpdateResult = {
 }
 
 // ============================================================================
-// Helper Functions
+// 辅助函数
 // ============================================================================
 
 /**
- * Search all editable settings scopes for a plugin ID matching the given input.
+ * 在所有可编辑设置作用域中搜索与给定输入匹配的插件 ID。
  *
- * If `plugin` contains `@`, it's treated as a full pluginId and returned if
- * found in any scope. If `plugin` is a bare name, searches for any key
- * starting with `{plugin}@` in any scope.
+ * 如果 `plugin` 包含 `@`，则将其视为完整 pluginId，并在任一作用域找到时返回。
+ * 如果 `plugin` 是裸名称，则搜索任一作用域中以 `{plugin}@` 开头的键。
  *
- * Returns the most specific scope where the plugin is mentioned (regardless
- * of enabled/disabled state) plus the resolved full pluginId.
+ * 返回提及该插件的最具体作用域（不论启用/禁用状态）及解析出的完整 pluginId。
  *
- * Precedence: local > project > user (most specific wins).
+ * 优先级：local > project > user（最具体者优先）。
  */
 function findPluginInSettings(plugin: string): {
   pluginId: string
   scope: InstallableScope
 } | null {
   const hasMarketplace = plugin.includes('@')
-  // Most specific first — first match wins
+  // 最具体者优先，第一个匹配项胜出
   const searchOrder: InstallableScope[] = ['local', 'project', 'user']
 
   for (const scope of searchOrder) {
@@ -173,18 +169,18 @@ function findPluginInSettings(plugin: string): {
 }
 
 /**
- * Helper function to find a plugin from loaded plugins
+ * 从已加载插件中查找插件的辅助函数
  */
 function findPluginByIdentifier(plugin: string, plugins: LoadedPlugin[]): LoadedPlugin | undefined {
   const { name, marketplace } = parsePluginIdentifier(plugin)
 
   return plugins.find((p) => {
-    // Check exact name match
+    // 检查名称是否精确匹配
     if (p.name === plugin || p.name === name) {
       return true
     }
 
-    // If marketplace specified, check if it matches the source
+    // 如果指定了 marketplace，检查其是否与来源匹配
     if (marketplace && p.source) {
       return p.name === name && p.source.includes(`@${marketplace}`)
     }
@@ -194,15 +190,14 @@ function findPluginByIdentifier(plugin: string, plugins: LoadedPlugin[]): Loaded
 }
 
 /**
- * Resolve a plugin ID from V2 installed plugins data for a plugin that may
- * have been delisted from its marketplace. Returns null if the plugin is not
- * found in V2 data.
+ * 为可能已从其 marketplace 下架的插件，从 V2 已安装插件数据中解析插件 ID。
+ * 如果未在 V2 数据中找到该插件则返回 null。
  */
 function resolveDelistedPluginId(plugin: string): { pluginId: string; pluginName: string } | null {
   const { name } = parsePluginIdentifier(plugin)
   const installedData = loadInstalledPlugins()
 
-  // Try exact match first, then search by name
+  // 先尝试精确匹配，再按名称搜索
   if (installedData.plugins[plugin]?.length) {
     return { pluginId: plugin, pluginName: name }
   }
@@ -220,9 +215,9 @@ function resolveDelistedPluginId(plugin: string): { pluginId: string; pluginName
 }
 
 /**
- * Get the most relevant installation for a plugin from V2 data.
- * For project/local scoped plugins, prioritizes installations matching the current project.
- * Priority order: local (matching project) > project (matching project) > user > first available
+ * 从 V2 数据中获取插件最相关的安装记录。
+ * 对项目/local 作用域插件，优先选择与当前项目匹配的安装记录。
+ * 优先级：local（匹配项目）> project（匹配项目）> user > 第一个可用记录
  */
 export function getPluginInstallationFromV2(pluginId: string): {
   scope: PluginScope
@@ -237,7 +232,7 @@ export function getPluginInstallationFromV2(pluginId: string): {
 
   const currentProjectPath = getOriginalCwd()
 
-  // Find installations by priority: local > project > user > managed
+  // 按优先级查找安装记录：local > project > user > managed
   const localInstall = installations.find(
     (inst) => inst.scope === 'local' && inst.projectPath === currentProjectPath,
   )
@@ -260,7 +255,7 @@ export function getPluginInstallationFromV2(pluginId: string): {
     return { scope: userInstall.scope }
   }
 
-  // Fall back to first installation (could be managed)
+  // 回退到第一个安装记录（可能为 managed）
   return {
     scope: installations[0]!.scope,
     projectPath: installations[0]!.projectPath,
@@ -268,24 +263,23 @@ export function getPluginInstallationFromV2(pluginId: string): {
 }
 
 // ============================================================================
-// Core Operations
+// 核心操作
 // ============================================================================
 
 /**
- * Install a plugin (settings-first).
+ * 安装插件（设置优先）。
  *
- * Order of operations:
- *   1. Search materialized marketplaces for the plugin
- *   2. Write settings (THE ACTION — declares intent)
- *   3. Cache plugin + record version hint (materialization)
+ * 操作顺序：
+ *   1. 在已物化的 marketplace 中搜索插件
+ *   2. 写入设置（实际操作：声明意图）
+ *   3. 缓存插件并记录版本提示（物化）
  *
- * Marketplace reconciliation is NOT this function's responsibility — startup
- * reconcile handles declared-but-not-materialized marketplaces. If the
- * marketplace isn't found, "not found" is the correct error.
+ * marketplace 对账不属于此函数职责；启动时的 reconcile 会处理已声明但尚未物化
+ * 的 marketplace。如果找不到 marketplace，返回“未找到”就是正确的错误。
  *
- * @param plugin Plugin identifier (name or plugin@marketplace)
- * @param scope Installation scope: user, project, or local (defaults to 'user')
- * @returns Result indicating success/failure
+ * @param plugin 插件标识符（名称或 plugin@marketplace）
+ * @param scope 安装作用域：user、project 或 local（默认为 'user'）
+ * @returns 表示成功/失败的结果
  */
 export async function installPluginOp(
   plugin: string,
@@ -295,7 +289,7 @@ export async function installPluginOp(
 
   const { name: pluginName, marketplace: marketplaceName } = parsePluginIdentifier(plugin)
 
-  // ── Search materialized marketplaces for the plugin ──
+  // ── 在已物化的 marketplace 中搜索插件 ──
   let foundPlugin: PluginMarketplaceEntry | undefined
   let foundMarketplace: string | undefined
   let marketplaceInstallLocation: string | undefined
@@ -385,24 +379,24 @@ export async function installPluginOp(
 }
 
 /**
- * Uninstall a plugin
+ * 卸载插件
  *
- * @param plugin Plugin name or plugin@marketplace identifier
- * @param scope Uninstall from scope: user, project, or local (defaults to 'user')
- * @returns Result indicating success/failure
+ * @param plugin 插件名称或 plugin@marketplace 标识符
+ * @param scope 要卸载的作用域：user、project 或 local（默认为 'user'）
+ * @returns 表示成功/失败的结果
  */
 export async function uninstallPluginOp(
   plugin: string,
   scope: InstallableScope = 'user',
   deleteDataDir = true,
 ): Promise<PluginOperationResult> {
-  // Validate scope at runtime for early error detection
+  // 在运行时验证作用域，以便尽早发现错误
   assertInstallableScope(scope)
 
   const { enabled, disabled } = await loadAllPlugins()
   const allPlugins = [...enabled, ...disabled]
 
-  // Find the plugin
+  // 查找插件
   const foundPlugin = findPluginByIdentifier(plugin, allPlugins)
 
   const settingSource = scopeToSettingSource(scope)
@@ -412,17 +406,16 @@ export async function uninstallPluginOp(
   let pluginName: string
 
   if (foundPlugin) {
-    // Find the matching settings key for this plugin (may differ from `plugin`
-    // if user gave short name but settings has plugin@marketplace)
+    // 查找此插件对应的设置键（若用户提供短名称而设置使用 plugin@marketplace，
+    // 则可能与 `plugin` 不同）
     pluginId =
       Object.keys(settings?.enabledPlugins ?? {}).find(
         (k) => k === plugin || k === foundPlugin.name || k.startsWith(`${foundPlugin.name}@`),
       ) ?? (plugin.includes('@') ? plugin : foundPlugin.name)
     pluginName = foundPlugin.name
   } else {
-    // Plugin not found via marketplace lookup — it may have been delisted.
-    // Fall back to installed_plugins.json (V2) which tracks installations
-    // independently of marketplace state.
+    // 无法通过 marketplace 查找插件，它可能已下架。
+    // 回退到独立于 marketplace 状态跟踪安装记录的 installed_plugins.json（V2）。
     const resolved = resolveDelistedPluginId(plugin)
     if (!resolved) {
       return {
@@ -434,7 +427,7 @@ export async function uninstallPluginOp(
     pluginName = resolved.pluginName
   }
 
-  // Check if the plugin is installed in this scope (in V2 file)
+  // 检查该插件是否已安装在此作用域（V2 文件中）
   const projectPath = getProjectPathForScope(scope)
   const installedData = loadInstalledPlugins()
   const installations = installedData.plugins[pluginId]
@@ -443,11 +436,11 @@ export async function uninstallPluginOp(
   )
 
   if (!scopeInstallation) {
-    // Try to find where the plugin is actually installed to provide a helpful error
+    // 尝试找到插件实际安装的位置，以提供有帮助的错误信息
     const { scope: actualScope } = getPluginInstallationFromV2(pluginId)
     if (actualScope !== scope && installations && installations.length > 0) {
-      // Project scope is special: .zy/settings.json is shared with the team.
-      // Point users at the local-override escape hatch instead of --scope project.
+      // 项目作用域较特殊：.zy/settings.json 与团队共享。
+      // 引导用户使用本地覆盖方案，而不是 --scope project。
       if (actualScope === 'project') {
         return {
           success: false,
@@ -467,8 +460,8 @@ export async function uninstallPluginOp(
 
   const installPath = scopeInstallation.installPath
 
-  // Remove the plugin from the appropriate settings file (delete key entirely)
-  // Use undefined to signal deletion via mergeWith in updateSettingsForSource
+  // 从相应设置文件中移除插件（完全删除键）
+  // 通过 undefined 向 updateSettingsForSource 中的 mergeWith 表示删除
   const newEnabledPlugins: Record<string, boolean | string[] | undefined> = {
     ...settings?.enabledPlugins,
   }
@@ -479,7 +472,7 @@ export async function uninstallPluginOp(
 
   clearAllCaches()
 
-  // Remove from installed_plugins_v2.json for this scope
+  // 从此作用域的 installed_plugins_v2.json 中移除
   removePluginInstallation(pluginId, scope, projectPath)
 
   const updatedData = loadInstalledPlugins()
@@ -488,14 +481,12 @@ export async function uninstallPluginOp(
   if (isLastScope && installPath) {
     await markPluginVersionOrphaned(installPath)
   }
-  // Separate from the `&& installPath` guard above — deletePluginOptions only
-  // needs pluginId, not installPath. Last scope removed → wipe stored options
-  // and secrets. Before this, uninstalling left orphaned entries in
-  // settings.pluginConfigs (including the legacy ungated mcpServers sub-key
-  // from the MCPB Configure flow) and keychain pluginSecrets forever. No
-  // feature gate: deletePluginOptions no-ops when nothing is stored, and
-  // pluginConfigs.mcpServers is written ungated so its cleanup must run
-  // ungated too.
+  // 此逻辑独立于上方的 `&& installPath` 守卫：deletePluginOptions 只需要
+  // pluginId，而不需要 installPath。移除最后一个作用域后，清除保存的选项和
+  // 密钥。此前卸载会永久遗留 settings.pluginConfigs 中的孤立条目（包括 MCPB
+  // Configure 流程的旧版未门控 mcpServers 子键）及 keychain pluginSecrets。
+  // 无需功能开关：未保存内容时 deletePluginOptions 不执行操作，且
+  // pluginConfigs.mcpServers 的写入未受门控，因此清理也必须未受门控。
   if (isLastScope) {
     deletePluginOptions(pluginId)
     if (deleteDataDir) {
@@ -503,9 +494,9 @@ export async function uninstallPluginOp(
     }
   }
 
-  // Warn (don't block) if other enabled plugins depend on this one.
-  // Blocking creates tombstones — can't tear down a graph with a delisted
-  // plugin. Load-time verifyAndDemote catches the fallout.
+  // 如果其他已启用插件依赖此插件，则警告（但不阻止操作）。
+  // 阻止操作会产生墓碑记录，无法拆除含有已下架插件的图。加载时的
+  // verifyAndDemote 会处理后续影响。
   const reverseDependents = findReverseDependents(pluginId, allPlugins)
   const depWarn = formatReverseDependentsSuffix(reverseDependents)
 
@@ -520,17 +511,15 @@ export async function uninstallPluginOp(
 }
 
 /**
- * Set plugin enabled/disabled status (settings-first).
+ * 设置插件启用/禁用状态（设置优先）。
  *
- * Resolves the plugin ID and scope from settings — does NOT pre-gate on
- * installed_plugins.json. Settings declares intent; if the plugin isn't
- * cached yet, the next load will cache it.
+ * 从设置解析插件 ID 和作用域，不会预先依赖 installed_plugins.json 进行判断。
+ * 设置声明意图；如果插件尚未缓存，下一次加载会将其缓存。
  *
- * @param plugin Plugin name or plugin@marketplace identifier
- * @param enabled true to enable, false to disable
- * @param scope Optional scope. If not provided, auto-detects the most specific
- *   scope where the plugin is mentioned in settings.
- * @returns Result indicating success/failure
+ * @param plugin 插件名称或 plugin@marketplace 标识符
+ * @param enabled true 表示启用，false 表示禁用
+ * @param scope 可选作用域。未提供时，自动检测设置中提及该插件的最具体作用域。
+ * @returns 表示成功/失败的结果
  */
 export async function setPluginEnabledOp(
   plugin: string,
@@ -539,8 +528,8 @@ export async function setPluginEnabledOp(
 ): Promise<PluginOperationResult> {
   const operation = enabled ? 'enable' : 'disable'
 
-  // Built-in plugins: always use user-scope settings, bypass the normal
-  // scope-resolution + installed_plugins lookup (they're not installed).
+  // 内置插件始终使用用户作用域设置，跳过常规的作用域解析和
+  // installed_plugins 查找（它们无需安装）。
   if (isBuiltinPluginId(plugin)) {
     const { error } = updateSettingsForSource('userSettings', {
       enabledPlugins: {
@@ -569,17 +558,17 @@ export async function setPluginEnabledOp(
     assertInstallableScope(scope)
   }
 
-  // ── Resolve pluginId and scope from settings ──
-  // Search across editable scopes for any mention (enabled or disabled) of
-  // this plugin. Does NOT pre-gate on installed_plugins.json.
+  // ── 从设置解析 pluginId 和作用域 ──
+  // 在可编辑作用域中搜索对此插件的任意提及（启用或禁用）。不预先依赖
+  // installed_plugins.json 进行判断。
   let pluginId: string
   let resolvedScope: InstallableScope
 
   const found = findPluginInSettings(plugin)
 
   if (scope) {
-    // Explicit scope: use it. Resolve pluginId from settings if possible,
-    // otherwise require a full plugin@marketplace identifier.
+    // 显式作用域：直接使用它。尽可能从设置解析 pluginId，否则要求提供完整的
+    // plugin@marketplace 标识符。
     resolvedScope = scope
     if (found) {
       pluginId = found.pluginId
@@ -592,14 +581,12 @@ export async function setPluginEnabledOp(
       }
     }
   } else if (found) {
-    // Auto-detect scope: use the most specific scope where the plugin is
-    // mentioned in settings.
+    // 自动检测作用域：使用设置中提及该插件的最具体作用域。
     pluginId = found.pluginId
     resolvedScope = found.scope
   } else if (plugin.includes('@')) {
-    // Not in any settings scope, but full pluginId given — default to user
-    // scope (matches install default). This allows enabling a plugin that
-    // was cached but never declared.
+    // 不在任何设置作用域中，但提供了完整 pluginId：默认使用用户作用域（与安装
+    // 默认值一致）。这允许启用已缓存但从未声明的插件。
     pluginId = plugin
     resolvedScope = 'user'
   } else {
@@ -609,9 +596,9 @@ export async function setPluginEnabledOp(
     }
   }
 
-  // ── Policy guard ──
-  // Org-blocked plugins cannot be enabled at any scope. Check after pluginId
-  // is resolved so we catch both full identifiers and bare-name lookups.
+  // ── 策略守卫 ──
+  // 被组织策略阻止的插件不能在任何作用域启用。解析 pluginId 后再检查，以覆盖
+  // 完整标识符和裸名称查找。
   if (enabled && isPluginBlockedByPolicy(pluginId)) {
     return {
       success: false,
@@ -622,12 +609,11 @@ export async function setPluginEnabledOp(
   const settingSource = scopeToSettingSource(resolvedScope)
   const scopeSettingsValue = getSettingsForSource(settingSource)?.enabledPlugins?.[pluginId]
 
-  // ── Cross-scope hint: explicit scope given but plugin is elsewhere ──
-  // If the plugin is absent from the requested scope but present at a
-  // different scope, guide the user to the right --scope — UNLESS they're
-  // writing to a higher-precedence scope to override a lower one
-  // (e.g. `disable --scope local` to override a project-enabled plugin
-  // without touching the shared .zy/settings.json).
+  // ── 跨作用域提示：已指定作用域但插件位于其他作用域 ──
+  // 如果请求作用域中没有插件、但其他作用域中存在，则引导用户使用正确的 --scope；
+  // 但写入更高优先级作用域以覆盖较低优先级作用域时除外（例如，使用
+  // `disable --scope local` 覆盖项目作用域已启用的插件，而不修改共享的
+  // .zy/settings.json）。
   const SCOPE_PRECEDENCE: Record<InstallableScope, number> = {
     user: 0,
     project: 1,
@@ -641,14 +627,12 @@ export async function setPluginEnabledOp(
     }
   }
 
-  // ── Check current state (for idempotency messaging) ──
-  // When explicit scope given: check that scope's settings value directly
-  // (merged state can be wrong if plugin is enabled elsewhere but disabled here).
-  // When auto-detected: use merged effective state.
-  // When overriding a lower scope: check merged state — scopeSettingsValue is
-  // undefined (plugin not in this scope yet), which would read as "already
-  // disabled", but the whole point of the override is to write an explicit
-  // `false` that masks the lower scope's `true`.
+  // ── 检查当前状态（用于幂等性消息） ──
+  // 指定显式作用域时：直接检查该作用域的设置值（如果插件在其他作用域启用、此处
+  // 禁用，合并状态可能不正确）。自动检测时：使用合并后的有效状态。覆盖较低
+  // 作用域时：检查合并状态；此时 scopeSettingsValue 为 undefined（插件尚未位于
+  // 此作用域），会被视为“已禁用”，但覆盖的目的正是写入显式 `false` 来遮蔽较低
+  // 作用域的 `true`。
   const isCurrentlyEnabled =
     scope && !isOverride ? scopeSettingsValue === true : getPluginEditableScopes().has(pluginId)
   if (enabled === isCurrentlyEnabled) {
@@ -658,8 +642,7 @@ export async function setPluginEnabledOp(
     }
   }
 
-  // On disable: capture reverse dependents from the PRE-disable snapshot,
-  // before we write settings and clear the memoized plugin cache.
+  // 禁用时：在写入设置并清除记忆化插件缓存前，从禁用前快照捕获反向依赖项。
   let reverseDependents: string[] | undefined
   if (!enabled) {
     const { enabled: loadedEnabled, disabled } = await loadAllPlugins()
@@ -669,7 +652,7 @@ export async function setPluginEnabledOp(
     }
   }
 
-  // ── ACTION: write settings ──
+  // ── 操作：写入设置 ──
   const { error } = updateSettingsForSource(settingSource, {
     enabledPlugins: {
       ...getSettingsForSource(settingSource)?.enabledPlugins,
@@ -698,11 +681,11 @@ export async function setPluginEnabledOp(
 }
 
 /**
- * Enable a plugin
+ * 启用插件
  *
- * @param plugin Plugin name or plugin@marketplace identifier
- * @param scope Optional scope. If not provided, finds the most specific scope for the current project.
- * @returns Result indicating success/failure
+ * @param plugin 插件名称或 plugin@marketplace 标识符
+ * @param scope 可选作用域。未提供时，查找当前项目的最具体作用域。
+ * @returns 表示成功/失败的结果
  */
 export async function enablePluginOp(
   plugin: string,
@@ -712,11 +695,11 @@ export async function enablePluginOp(
 }
 
 /**
- * Disable a plugin
+ * 禁用插件
  *
- * @param plugin Plugin name or plugin@marketplace identifier
- * @param scope Optional scope. If not provided, finds the most specific scope for the current project.
- * @returns Result indicating success/failure
+ * @param plugin 插件名称或 plugin@marketplace 标识符
+ * @param scope 可选作用域。未提供时，查找当前项目的最具体作用域。
+ * @returns 表示成功/失败的结果
  */
 export async function disablePluginOp(
   plugin: string,
@@ -726,9 +709,9 @@ export async function disablePluginOp(
 }
 
 /**
- * Disable all enabled plugins
+ * 禁用全部已启用插件
  *
- * @returns Result indicating success/failure with count of disabled plugins
+ * @returns 包含已禁用插件数量的成功/失败结果
  */
 export async function disableAllPluginsOp(): Promise<PluginOperationResult> {
   const enabledPlugins = getPluginEditableScopes()
@@ -763,29 +746,29 @@ export async function disableAllPluginsOp(): Promise<PluginOperationResult> {
 }
 
 /**
- * Update a plugin to the latest version.
+ * 将插件更新到最新版本。
  *
- * This function performs a NON-INPLACE update:
- * 1. Gets the plugin info from the marketplace
- * 2. For remote plugins: downloads to temp dir and calculates version
- * 3. For local plugins: calculates version from marketplace source
- * 4. If version differs from currently installed, copies to new versioned cache directory
- * 5. Updates installation in V2 file (memory stays unchanged until restart)
- * 6. Cleans up old version if no longer referenced by any installation
+ * 此函数执行非原地更新：
+ * 1. 从 marketplace 获取插件信息
+ * 2. 对远程插件：下载到临时目录并计算版本
+ * 3. 对本地插件：根据 marketplace 来源计算版本
+ * 4. 若版本不同于当前安装版本，复制到新的版本化缓存目录
+ * 5. 更新 V2 文件中的安装记录（内存在重启前保持不变）
+ * 6. 若旧版本不再被任何安装记录引用，则清理它
  *
- * @param plugin Plugin name or plugin@marketplace identifier
- * @param scope Scope to update. Unlike install/uninstall/enable/disable, managed scope IS allowed.
- * @returns Result indicating success/failure with version info
+ * @param plugin 插件名称或 plugin@marketplace 标识符
+ * @param scope 要更新的作用域。不同于安装/卸载/启用/禁用，允许 managed 作用域。
+ * @returns 包含版本信息的成功/失败结果
  */
 export async function updatePluginOp(
   plugin: string,
   scope: PluginScope,
 ): Promise<PluginUpdateResult> {
-  // Parse the plugin identifier to get the full plugin ID
+  // 解析插件标识符以获取完整插件 ID
   const { name: pluginName, marketplace: marketplaceName } = parsePluginIdentifier(plugin)
   const pluginId = marketplaceName ? `${pluginName}@${marketplaceName}` : plugin
 
-  // Get plugin info from marketplace
+  // 从 marketplace 获取插件信息
   const pluginInfo = await getPluginById(plugin)
   if (!pluginInfo) {
     return {
@@ -798,7 +781,7 @@ export async function updatePluginOp(
 
   const { entry, marketplaceInstallLocation } = pluginInfo
 
-  // Get installations from disk
+  // 从磁盘获取安装记录
   const diskData = loadInstalledPluginsFromDisk()
   const installations = diskData.plugins[pluginId]
 
@@ -811,10 +794,10 @@ export async function updatePluginOp(
     }
   }
 
-  // Determine projectPath based on scope
+  // 根据作用域确定 projectPath
   const projectPath = getProjectPathForScope(scope)
 
-  // Find the installation for this scope
+  // 查找此作用域的安装记录
   const installation = installations.find(
     (inst) => inst.scope === scope && inst.projectPath === projectPath,
   )
@@ -840,8 +823,8 @@ export async function updatePluginOp(
 }
 
 /**
- * Perform the actual plugin update: fetch source, calculate version, copy to cache, update disk.
- * This is the core update execution extracted from updatePluginOp.
+ * 执行实际插件更新：获取来源、计算版本、复制到缓存、更新磁盘。
+ * 这是从 updatePluginOp 提取出的核心更新执行逻辑。
  */
 async function performPluginUpdate({
   pluginId,
@@ -868,9 +851,9 @@ async function performPluginUpdate({
   let shouldCleanupSource = false
   let gitCommitSha: string | undefined
 
-  // Handle remote vs local plugins
+  // 处理远程与本地插件
   if (typeof entry.source !== 'string') {
-    // Remote plugin: download to temp directory first
+    // 远程插件：先下载到临时目录
     const cacheResult = await cachePlugin(entry.source, {
       manifest: { name: entry.name },
     })
@@ -878,10 +861,9 @@ async function performPluginUpdate({
     shouldCleanupSource = true
     gitCommitSha = cacheResult.gitCommitSha
 
-    // Calculate version from downloaded plugin. For git-subdir sources,
-    // cachePlugin captured the commit SHA before discarding the ephemeral
-    // clone (the extracted subdir has no .git, so the installPath-based
-    // fallback in calculatePluginVersion can't recover it).
+    // 根据下载的插件计算版本。对 git-subdir 来源，cachePlugin 会在丢弃临时 clone
+    // 前捕获提交 SHA（提取的子目录没有 .git，因此 calculatePluginVersion 中基于
+    // installPath 的回退方案无法恢复它）。
     newVersion = await calculatePluginVersion(
       pluginId,
       entry.source,
@@ -891,8 +873,8 @@ async function performPluginUpdate({
       cacheResult.gitCommitSha,
     )
   } else {
-    // Local plugin: use path from marketplace
-    // Stat directly — handle ENOENT inline rather than pre-checking existence
+    // 本地插件：使用 marketplace 中的路径
+    // 直接 stat：内联处理 ENOENT，而不是预先检查是否存在
     let marketplaceStats
     try {
       marketplaceStats = await fs.stat(marketplaceInstallLocation)
@@ -912,14 +894,12 @@ async function performPluginUpdate({
       : dirname(marketplaceInstallLocation)
     sourcePath = join(marketplaceDir, entry.source)
 
-    // Verify sourcePath exists. This stat is required — neither downstream
-    // op reliably surfaces ENOENT:
-    //   1. calculatePluginVersion → findGitRoot walks UP past a missing dir
-    //      to the marketplace .git, returning the same SHA as install-time →
-    //      silent false-positive {success: true, alreadyUpToDate: true}.
-    //   2. copyPluginToVersionedCache (when versions differ) throws a raw
-    //      ENOENT with no friendly message.
-    // TOCTOU is negligible for a user-managed local dir.
+    // 验证 sourcePath 是否存在。必须执行此 stat，因为下游操作均不能可靠地暴露
+    // ENOENT：1. calculatePluginVersion → findGitRoot 会越过不存在的目录向上查找
+    // marketplace .git，返回与安装时相同的 SHA，导致静默误报
+    // {success: true, alreadyUpToDate: true}；2. copyPluginToVersionedCache
+    // （版本不同时）会抛出没有友好消息的原始 ENOENT。对于用户管理的本地目录，
+    // TOCTOU 的影响可以忽略。
     try {
       await fs.stat(sourcePath)
     } catch (e: unknown) {
@@ -934,16 +914,16 @@ async function performPluginUpdate({
       throw e
     }
 
-    // Try to load manifest from plugin directory (for version info)
+    // 尝试从插件目录加载 manifest（用于获取版本信息）
     let pluginManifest: PluginManifest | undefined
     const manifestPath = join(sourcePath, '.zy-plugin', 'plugin.json')
     try {
       pluginManifest = await loadPluginManifest(manifestPath, entry.name, entry.source)
     } catch {
-      // Failed to load - will use other version sources
+      // 加载失败，改用其他版本来源
     }
 
-    // Calculate version from plugin source path
+    // 根据插件源路径计算版本
     newVersion = await calculatePluginVersion(
       pluginId,
       entry.source,
@@ -953,12 +933,12 @@ async function performPluginUpdate({
     )
   }
 
-  // Use try/finally to ensure temp directory cleanup on any error
+  // 使用 try/finally 确保发生任何错误时都清理临时目录
   try {
-    // Check if this version already exists in cache
+    // 检查缓存中是否已存在此版本
     let versionedPath = getVersionedCachePath(pluginId, newVersion)
 
-    // Check if installation is already at the new version
+    // 检查安装记录是否已经是新版本
     const zipPath = getVersionedZipCachePath(pluginId, newVersion)
     const isUpToDate =
       installation.version === newVersion ||
@@ -976,14 +956,13 @@ async function performPluginUpdate({
       }
     }
 
-    // Copy to versioned cache (returns actual path, which may be .zip)
+    // 复制到版本化缓存（返回实际路径，可能是 .zip）
     versionedPath = await copyPluginToVersionedCache(sourcePath, pluginId, newVersion, entry)
 
-    // Store old version path for potential cleanup
+    // 保存旧版本路径，以备后续清理
     const oldVersionPath = installation.installPath
 
-    // Update disk JSON file for this installation
-    // (memory stays unchanged until restart)
+    // 更新此安装记录的磁盘 JSON 文件（内存在重启前保持不变）
     updateInstallationPathOnDisk(
       pluginId,
       scope,
@@ -1017,7 +996,7 @@ async function performPluginUpdate({
       scope,
     }
   } finally {
-    // Clean up temp source if it was a remote download
+    // 如果来源是远程下载，则清理临时来源目录
     if (shouldCleanupSource && sourcePath !== getVersionedCachePath(pluginId, newVersion)) {
       await fs.rm(sourcePath, { recursive: true, force: true })
     }

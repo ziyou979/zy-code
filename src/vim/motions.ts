@@ -23,7 +23,7 @@ export function resolveMotion(key: string, cursor: Cursor, count: number): Curso
 }
 
 /**
- * Apply a single motion step.
+ * 执行单步 motion。
  */
 function applySingleMotion(key: string, cursor: Cursor): Cursor {
   switch (key) {
@@ -65,15 +65,15 @@ function applySingleMotion(key: string, cursor: Cursor): Cursor {
 }
 
 /**
- * Check if a motion is inclusive (includes character at destination).
+ * 检查 motion 是否包含目标位置的字符。
  */
 export function isInclusiveMotion(key: string): boolean {
   return 'eE$'.includes(key)
 }
 
 /**
- * Check if a motion is linewise (operates on full lines when used with operators).
- * Note: gj/gk are characterwise exclusive per `:help gj`, not linewise.
+ * 检查 motion 与 operator 配合时是否按整行操作。
+ * 注意：根据 `:help gj`，gj/gk 是按字符且不含目标位置的操作，并非 linewise。
  */
 export function isLinewiseMotion(key: string): boolean {
   return 'jkG'.includes(key) || key === 'gg'

@@ -19,9 +19,8 @@ const TerminalFocusContext = createContext<TerminalFocusContextProps>({
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 TerminalFocusContext.displayName = 'TerminalFocusContext'
 
-// Separate component so App.tsx doesn't re-render on focus changes.
-// Children are a stable prop reference, so they don't re-render either —
-// only components that consume the context will re-render.
+// 单独封装为组件，避免 App.tsx 随焦点变化重新渲染。
+// children 的 prop 引用稳定，因此也不会重新渲染；只有使用该 context 的组件会重新渲染。
 export function TerminalFocusProvider({
   children,
   ...props

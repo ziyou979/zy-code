@@ -20,7 +20,7 @@ export function isSinkKilled(sink: SinkName): boolean {
     SINK_KILLSWITCH_CONFIG_NAME,
     {},
   )
-  // getFeatureValue_CACHED_MAY_BE_STALE guards on `!== undefined`, so a
-  // cached JSON null leaks through instead of falling back to {}.
+  // getFeatureValue_CACHED_MAY_BE_STALE 只用 `!== undefined` 判断，因此缓存的 JSON null
+  // 会直接透传，而不会回退到 {}。
   return config?.[sink] === true
 }

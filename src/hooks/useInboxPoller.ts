@@ -64,11 +64,11 @@ import {
 } from './useSwarmPermissionPoller.js'
 
 /**
- * Get the agent name to poll for messages.
- * - In-process teammates return undefined (they use waitForNextPromptOrShutdown instead)
- * - Process-based teammates use their ZY_CODE_AGENT_NAME
- * - Team leads use their name from teamContext.teammates
- * - Standalone sessions return undefined
+ * 获取用于轮询消息的 agent 名称。
+ * - 进程内 teammate 返回 undefined（改用 waitForNextPromptOrShutdown）
+ * - 基于进程的 teammate 使用其 ZY_CODE_AGENT_NAME
+ * - team lead 使用 teamContext.teammates 中的名称
+ * - 独立会话返回 undefined
  */
 function getAgentNameToPoll(appState: AppState): string | undefined {
   // In-process teammates should NOT use useInboxPoller - they have their own
@@ -86,10 +86,10 @@ function getAgentNameToPoll(appState: AppState): string | undefined {
   if (isTeammate()) {
     return getAgentName()
   }
-  // Team lead polls using their agent name (not ID)
+  // team lead 使用 agent 名称而非 ID 轮询
   if (isTeamLead(appState.teamContext)) {
     const leadAgentId = appState.teamContext!.leadAgentId
-    // Look up the lead's name from teammates map
+    // 从 teammates map 查找 lead 名称
     const leadName = appState.teamContext!.teammates[leadAgentId]?.name
     return leadName || 'team-lead'
   }
@@ -102,18 +102,18 @@ type Props = {
   enabled: boolean
   isLoading: boolean
   focusedInputDialog: string | undefined
-  // Returns true if submission succeeded, false if rejected (e.g., query already running)
-  // Dead code elimination: parameter named onSubmitMessage to avoid "teammate" string in external builds
+  // 提交成功返回 true，被拒绝（如 query 已在运行）时返回 false
+  // dead code elimination：参数命名为 onSubmitMessage，避免外部构建中出现 "teammate" 字符串
   onSubmitMessage: (formatted: string) => boolean
 }
 
 /**
- * Polls the teammate inbox for new messages and submits them as turns.
+ * 轮询 teammate inbox 中的新消息，并将其作为轮次提交。
  *
- * This hook:
- * 1. Polls every 1s for unread messages (teammates or team leads)
- * 2. When idle: submits messages immediately as a new turn
- * 3. When busy: queues messages in AppState.inbox for UI display, delivers when turn ends
+ * 此 hook：
+ * 1. 每秒轮询 teammate 或 team lead 的未读消息
+ * 2. 空闲时立即将消息作为新轮次提交
+ * 3. 忙碌时将消息放入 AppState.inbox 供 UI 显示，并在轮次结束后投递
  */
 export function useInboxPoller({
   enabled,
@@ -121,7 +121,7 @@ export function useInboxPoller({
   focusedInputDialog,
   onSubmitMessage,
 }: Props): void {
-  // Assign to original name for clarity within the function
+  // 赋给原名称，使函数内部语义更清晰
   const onSubmitTeammateMessage = onSubmitMessage
   const store = useAppStateStore()
   const setAppState = useSetAppState()
@@ -133,7 +133,7 @@ export function useInboxPoller({
       return
     }
 
-    // Use ref to avoid dependency on appState object (prevents infinite loop)
+    // 使用 ref 避免依赖 appState 对象，防止无限循环
     const currentAppState = store.getState()
     const agentName = getAgentNameToPoll(currentAppState)
     if (!agentName) {
@@ -148,8 +148,8 @@ export function useInboxPoller({
 
     logForDebugging(`[InboxPoller] Found ${unread.length} unread message(s)`)
 
-    // Check for plan approval responses and transition out of plan mode if approved
-    // Security: Only accept approval responses from the team lead
+    // 检查 plan approval 响应；获批后退出 plan 模式
+    // 安全要求：只接受 team lead 的 approval 响应
     if (isTeammate() && isPlanModeRequired()) {
       for (const msg of unread) {
         const approvalResponse = isPlanApprovalResponse(msg.text)
@@ -187,13 +187,13 @@ export function useInboxPoller({
       }
     }
 
-    // Helper to mark messages as read in the inbox file.
-    // Called after messages are successfully delivered or reliably queued.
+    // 在 inbox 文件中将消息标记为已读的辅助函数。
+    // 消息成功投递或可靠入队后调用。
     const markRead = () => {
       void markMessagesAsRead(agentName, currentAppState.teamContext?.teamName)
     }
 
-    // Separate permission messages from regular teammate messages
+    // 将权限消息与普通 teammate 消息分开
     const permissionRequests: TeammateMessage[] = []
     const permissionResponses: TeammateMessage[] = []
     const sandboxPermissionRequests: TeammateMessage[] = []
@@ -239,7 +239,7 @@ export function useInboxPoller({
       }
     }
 
-    // Handle permission requests (leader side) - route to ToolUseConfirmQueue
+    // 处理权限请求（leader 侧），路由到 ToolUseConfirmQueue
     if (permissionRequests.length > 0 && isTeamLead(currentAppState.teamContext)) {
       logForDebugging(`[InboxPoller] Found ${permissionRequests.length} permission request(s)`)
 
@@ -281,7 +281,7 @@ export function useInboxPoller({
               color: 'cyan',
             },
             onUserInteraction() {
-              // No-op for tmux workers (no classifier auto-approval)
+              // tmux worker 无需处理（没有 classifier 自动批准）
             },
             onAbort() {
               void sendPermissionResponseViaMailbox(
@@ -317,7 +317,7 @@ export function useInboxPoller({
               )
             },
             async recheckPermission() {
-              // No-op for tmux workers — permission state is on the worker side
+              // tmux worker 无需处理，权限状态位于 worker 侧
             },
           }
 
@@ -336,7 +336,7 @@ export function useInboxPoller({
         }
       }
 
-      // Send desktop notification for the first request
+      // 为首个请求发送桌面通知
       const firstParsed = isPermissionRequest(permissionRequests[0]?.text ?? '')
       if (firstParsed && !isLoading && !focusedInputDialog) {
         void sendNotification(
@@ -349,7 +349,7 @@ export function useInboxPoller({
       }
     }
 
-    // Handle permission responses (worker side) - invoke registered callbacks
+    // 处理权限响应（worker 侧），调用已注册 callback
     if (permissionResponses.length > 0 && isTeammate()) {
       logForDebugging(`[InboxPoller] Found ${permissionResponses.length} permission response(s)`)
 
@@ -382,7 +382,7 @@ export function useInboxPoller({
       }
     }
 
-    // Handle sandbox permission requests (leader side) - add to workerSandboxPermissions queue
+    // 处理 sandbox 权限请求（leader 侧），加入 workerSandboxPermissions 队列
     if (sandboxPermissionRequests.length > 0 && isTeamLead(currentAppState.teamContext)) {
       logForDebugging(
         `[InboxPoller] Found ${sandboxPermissionRequests.length} sandbox permission request(s)`,
@@ -403,7 +403,7 @@ export function useInboxPoller({
           continue
         }
 
-        // Validate required nested fields to prevent crashes from malformed messages
+        // 校验必需的嵌套字段，避免畸形消息导致崩溃
         if (!parsed.hostPattern?.host) {
           logForDebugging(
             `[InboxPoller] Invalid sandbox permission request: missing hostPattern.host`,
@@ -430,7 +430,7 @@ export function useInboxPoller({
           },
         }))
 
-        // Send desktop notification for the first new request
+        // 为首个新请求发送桌面通知
         const firstRequest = newSandboxRequests[0]
         if (firstRequest && !isLoading && !focusedInputDialog) {
           void sendNotification(
@@ -444,7 +444,7 @@ export function useInboxPoller({
       }
     }
 
-    // Handle sandbox permission responses (worker side) - invoke registered callbacks
+    // 处理 sandbox 权限响应（worker 侧），调用已注册 callback
     if (sandboxPermissionResponses.length > 0 && isTeammate()) {
       logForDebugging(
         `[InboxPoller] Found ${sandboxPermissionResponses.length} sandbox permission response(s)`,
@@ -478,7 +478,7 @@ export function useInboxPoller({
       }
     }
 
-    // Handle team permission updates (teammate side) - apply permission to context
+    // 处理 team 权限更新（teammate 侧），将权限应用到 context
     if (teamPermissionUpdates.length > 0 && isTeammate()) {
       logForDebugging(
         `[InboxPoller] Found ${teamPermissionUpdates.length} team permission update(s)`,
@@ -493,7 +493,7 @@ export function useInboxPoller({
           continue
         }
 
-        // Validate required nested fields to prevent crashes from malformed messages
+        // 校验必需的嵌套字段，避免畸形消息导致崩溃
         if (!parsed.permissionUpdate?.rules || !parsed.permissionUpdate?.behavior) {
           logForDebugging(
             `[InboxPoller] Invalid team permission update: missing permissionUpdate.rules or permissionUpdate.behavior`,
@@ -527,12 +527,12 @@ export function useInboxPoller({
       }
     }
 
-    // Handle mode set requests (teammate side) - team lead changing teammate's mode
+    // 处理模式设置请求（teammate 侧），即 team lead 修改 teammate 模式
     if (modeSetRequests.length > 0 && isTeammate()) {
       logForDebugging(`[InboxPoller] Found ${modeSetRequests.length} mode set request(s)`)
 
       for (const m of modeSetRequests) {
-        // Only accept mode changes from team-lead
+        // 只接受来自 team lead 的模式变化
         if (m.from !== 'team-lead') {
           logForDebugging(`[InboxPoller] Ignoring mode set request from non-team-lead: ${m.from}`)
           continue
@@ -549,7 +549,7 @@ export function useInboxPoller({
         const targetMode = permissionModeFromString(parsed.mode)
         logForDebugging(`[InboxPoller] Applying mode change from team-lead: ${targetMode}`)
 
-        // Update local permission context
+        // 更新本地权限 context
         setAppState((prev) => ({
           ...prev,
           toolPermissionContext: applyPermissionUpdate(prev.toolPermissionContext, {
@@ -559,7 +559,7 @@ export function useInboxPoller({
           }),
         }))
 
-        // Update config.json so team lead can see the new mode
+        // 更新 config.json，使 team lead 能看到新模式
         const teamName = currentAppState.teamContext?.teamName
         const agentName = getAgentName()
         if (teamName && agentName) {
@@ -568,7 +568,7 @@ export function useInboxPoller({
       }
     }
 
-    // Handle plan approval requests (leader side) - auto-approve and write response to teammate inbox
+    // 处理 plan approval 请求（leader 侧），自动批准并将响应写入 teammate inbox
     if (planApprovalRequests.length > 0 && isTeamLead(currentAppState.teamContext)) {
       logForDebugging(
         `[InboxPoller] Found ${planApprovalRequests.length} plan approval request(s), auto-approving`,
@@ -586,7 +586,7 @@ export function useInboxPoller({
           continue
         }
 
-        // Write approval response to teammate's inbox
+        // 将 approval 响应写入 teammate inbox
         const approvalResponse = {
           type: 'plan_approval_response',
           requestId: parsed.requestId,
@@ -605,7 +605,7 @@ export function useInboxPoller({
           teamName,
         )
 
-        // Update in-process teammate task state if applicable
+        // 适用时更新进程内 teammate 的任务状态
         const taskId = findInProcessTeammateTaskId(m.from, currentAppState)
         if (taskId) {
           handlePlanApprovalResponse(
@@ -631,18 +631,17 @@ export function useInboxPoller({
       }
     }
 
-    // Handle shutdown requests (teammate side) - preserve JSON for UI rendering
+    // 处理 shutdown 请求（teammate 侧），保留 JSON 供 UI 渲染
     if (shutdownRequests.length > 0 && isTeammate()) {
       logForDebugging(`[InboxPoller] Found ${shutdownRequests.length} shutdown request(s)`)
 
-      // Pass through shutdown requests - the UI component will render them nicely
-      // and the model will receive instructions via the tool prompt documentation
+      // 透传 shutdown 请求，由 UI 组件友好渲染，模型则通过 tool prompt 文档接收指令
       for (const m of shutdownRequests) {
         regularMessages.push(m)
       }
     }
 
-    // Handle shutdown approvals (leader side) - kill the teammate's pane
+    // 处理 shutdown approval（leader 侧），终止 teammate pane
     if (shutdownApprovals.length > 0 && isTeamLead(currentAppState.teamContext)) {
       logForDebugging(`[InboxPoller] Found ${shutdownApprovals.length} shutdown approval(s)`)
 
@@ -652,11 +651,11 @@ export function useInboxPoller({
           continue
         }
 
-        // Kill the pane if we have the info (pane-based teammates)
+        // 若有相关信息，则终止 pane（基于 pane 的 teammate）
         if (parsed.paneId && parsed.backendType) {
           void (async () => {
             try {
-              // Ensure backend classes are imported (no subprocess probes)
+              // 确保 backend class 已导入（不探测 subprocess）
               await ensureBackendsRegistered()
               const insideTmux = await isInsideTmux()
               const backend = getBackendByType(parsed.backendType as PaneBackendType)
@@ -670,16 +669,16 @@ export function useInboxPoller({
           })()
         }
 
-        // Remove the teammate from teamContext.teammates so the count is accurate
+        // 从 teamContext.teammates 移除 teammate，确保计数准确
         const teammateToRemove = parsed.from
         if (teammateToRemove && currentAppState.teamContext?.teammates) {
-          // Find the teammate ID by name
+          // 按名称查找 teammate ID
           const teammateId = Object.entries(currentAppState.teamContext.teammates).find(
             ([, t]) => t.name === teammateToRemove,
           )?.[0]
 
           if (teammateId) {
-            // Remove from team file (leader owns team file mutations)
+            // 从 team 文件移除（team 文件仅由 leader 修改）
             const teamName = currentAppState.teamContext?.teamName
             if (teamName) {
               removeTeammateFromTeamFile(teamName, {
@@ -688,7 +687,7 @@ export function useInboxPoller({
               })
             }
 
-            // Unassign tasks and build notification message
+            // 取消任务分配并构造通知消息
             const { notificationMessage } = teamName
               ? await unassignTeammateTasks(teamName, teammateId, teammateToRemove, 'shutdown')
               : { notificationMessage: `${teammateToRemove} has shut down.` }
@@ -747,21 +746,20 @@ export function useInboxPoller({
           }
         }
 
-        // Pass through for UI rendering - the component will render it nicely
+        // 透传给 UI 渲染，由组件友好展示
         regularMessages.push(m)
       }
     }
 
-    // Process regular teammate messages (existing logic)
+    // 处理普通 teammate 消息（现有逻辑）
     if (regularMessages.length === 0) {
-      // No regular messages, but we may have processed non-regular messages
-      // (permissions, shutdown requests, etc.) above — mark those as read.
+      // 没有普通消息，但上方可能已处理权限、shutdown 请求等特殊消息；将其标记为已读。
       markRead()
       return
     }
 
-    // Format messages with XML wrapper for ZY (include color if available)
-    // Transform plan approval requests to include instructions for ZY
+    // 用 XML wrapper 格式化发给 ZY 的消息，并在可用时包含颜色
+    // 转换 plan approval 请求，使其包含给 ZY 的指令
     const formatted = regularMessages
       .map((m) => {
         const colorAttr = m.color ? ` color="${m.color}"` : ''
@@ -772,7 +770,7 @@ export function useInboxPoller({
       })
       .join('\n\n')
 
-    // Helper to queue messages in AppState for later delivery
+    // 将消息放入 AppState 队列、供稍后投递的辅助函数
     const queueMessages = () => {
       setAppState((prev) => ({
         ...prev,
@@ -794,16 +792,16 @@ export function useInboxPoller({
     }
 
     if (!isLoading && !focusedInputDialog) {
-      // IDLE: Submit as new turn immediately
+      // 空闲：立即作为新轮次提交
       logForDebugging(`[InboxPoller] Session idle, submitting immediately`)
       const submitted = onSubmitTeammateMessage(formatted)
       if (!submitted) {
-        // Submission rejected (query already running), queue for later
+        // 提交被拒（query 已在运行），放入队列稍后处理
         logForDebugging(`[InboxPoller] Submission rejected, queuing for later delivery`)
         queueMessages()
       }
     } else {
-      // BUSY: Add to inbox queue for UI display + later delivery
+      // 忙碌：加入 inbox 队列，供 UI 显示和稍后投递
       logForDebugging(`[InboxPoller] Session busy, queuing for later delivery`)
       queueMessages()
     }
@@ -823,18 +821,18 @@ export function useInboxPoller({
     store,
   ])
 
-  // When session becomes idle, deliver any pending messages and clean up processed ones
+  // 会话变为空闲时，投递待处理消息并清理已处理消息
   useEffect(() => {
     if (!enabled) {
       return
     }
 
-    // Skip if busy or in a dialog
+    // 忙碌或处于 dialog 中时跳过
     if (isLoading || focusedInputDialog) {
       return
     }
 
-    // Use ref to avoid dependency on appState object (prevents infinite loop)
+    // 使用 ref 避免依赖 appState 对象，防止无限循环
     const currentAppState = store.getState()
     const agentName = getAgentNameToPoll(currentAppState)
     if (!agentName) {
@@ -844,7 +842,7 @@ export function useInboxPoller({
     const pendingMessages = currentAppState.inbox.messages.filter((m) => m.status === 'pending')
     const processedMessages = currentAppState.inbox.messages.filter((m) => m.status === 'processed')
 
-    // Clean up processed messages (they were already delivered mid-turn as attachments)
+    // 清理已处理消息（已在轮次中途作为 attachment 投递）
     if (processedMessages.length > 0) {
       logForDebugging(
         `[InboxPoller] Cleaning up ${processedMessages.length} processed message(s) that were delivered mid-turn`,
@@ -858,7 +856,7 @@ export function useInboxPoller({
       }))
     }
 
-    // No pending messages to deliver
+    // 没有待投递消息
     if (pendingMessages.length === 0) {
       return
     }
@@ -867,7 +865,7 @@ export function useInboxPoller({
       `[InboxPoller] Session idle, delivering ${pendingMessages.length} pending message(s)`,
     )
 
-    // Format messages with XML wrapper for Zy (include color if available)
+    // 用 XML wrapper 格式化发给 Zy 的消息，并在可用时包含颜色
     const formatted = pendingMessages
       .map((m) => {
         const colorAttr = m.color ? ` color="${m.color}"` : ''
@@ -876,10 +874,10 @@ export function useInboxPoller({
       })
       .join('\n\n')
 
-    // Try to submit - only clear messages if successful
+    // 尝试提交，仅在成功后清除消息
     const submitted = onSubmitTeammateMessage(formatted)
     if (submitted) {
-      // Clear the specific messages we just submitted by their IDs
+      // 按 ID 清除刚提交的特定消息
       const submittedIds = new Set(pendingMessages.map((m) => m.id))
       setAppState((prev) => ({
         ...prev,
@@ -892,11 +890,11 @@ export function useInboxPoller({
     }
   }, [enabled, isLoading, focusedInputDialog, onSubmitTeammateMessage, setAppState, store])
 
-  // Poll if running as a teammate or as a team lead
+  // 作为 teammate 或 team lead 运行时轮询
   const shouldPoll = enabled && !!getAgentNameToPoll(store.getState())
   useInterval(() => void poll(), shouldPoll ? INBOX_POLL_INTERVAL_MS : null)
 
-  // Initial poll on mount (only once)
+  // 挂载时进行一次初始轮询
   const hasDoneInitialPollRef = useRef(false)
   useEffect(() => {
     if (!enabled) {
@@ -905,7 +903,7 @@ export function useInboxPoller({
     if (hasDoneInitialPollRef.current) {
       return
     }
-    // Use store.getState() to avoid dependency on appState object
+    // 使用 store.getState() 避免依赖 appState 对象
     if (getAgentNameToPoll(store.getState())) {
       hasDoneInitialPollRef.current = true
       void poll()

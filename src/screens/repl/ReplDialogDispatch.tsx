@@ -121,7 +121,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
   const ultraplanPendingChoice = useAppState((s) => s.ultraplanPendingChoice)
   const ultraplanLaunchPending = useAppState((s) => s.ultraplanLaunchPending)
 
-  // ── handler: sandbox permission ──
+  // ── 处理器：sandbox 权限 ──
   const handleSandboxResponse = React.useCallback(
     (response: { allow: boolean; persistToSettings: boolean }) => {
       const { allow, persistToSettings } = response
@@ -167,7 +167,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
     [sandboxPermissionRequestQueue, replStore, sandboxWireCleanupRef, setAppState],
   )
 
-  // ── handler: worker sandbox permission ──
+  // ── 处理器：worker sandbox 权限 ──
   const handleWorkerSandboxResponse = React.useCallback(
     (response: { allow: boolean; persistToSettings: boolean }) => {
       const { allow, persistToSettings } = response
@@ -208,7 +208,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
     [workerSandboxPermissions, teamContext, setAppState],
   )
 
-  // ── handler: idle-return ──
+  // ── 处理器：idle-return ──
   const handleIdleReturnDone = React.useCallback(
     async (action: string) => {
       const pending = idleReturnPending
@@ -266,7 +266,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
     ],
   )
 
-  // ── handler: resume-return ──
+  // ── 处理器：resume-return ──
   const handleResumeReturnDone = React.useCallback(
     (action: ResumeReturnAction) => {
       const pending = resumeReturnPending
@@ -297,7 +297,7 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
     [onSubmitRef, replStore, resumeReturnPending],
   )
 
-  // ── handler: ultraplan launch ──
+  // ── 处理器：启动 ultraplan ──
   const handleUltraplanChoice = React.useCallback(
     (choice: string, opts?: { disconnectedBridge?: boolean }) => {
       const blurb = ultraplanLaunchPending?.blurb

@@ -182,7 +182,7 @@ export default class Ink {
   private scheduleRender: (() => void) & {
     cancel?: () => void
   }
-  // Ignore last render after unmounting a tree to prevent empty output before exit
+  // 忽略树卸载后的最后一次渲染，避免退出前输出空内容
   private isUnmounted = false
   private isPaused = false
   private readonly container: FiberRoot
@@ -220,43 +220,37 @@ export default class Ink {
     type: 'stdout'
     content: string
   }>
-  // Text selection state (alt-screen only). Owned here so the overlay
-  // pass in onRender can read it and App.tsx can update it from mouse
-  // events. Public so instances.get() callers can access.
+  // 文本选择状态（仅 alt screen）。由此处持有，以便 onRender 的 overlay 阶段读取，
+  // App.tsx 也可根据鼠标事件更新。保持 public，供 instances.get() 调用方访问。
   readonly selection: SelectionState = createSelectionState()
-  // Search highlight query (alt-screen only). Setter below triggers
-  // scheduleRender; applySearchHighlight in onRender inverts matching cells.
+  // 搜索高亮 query（仅 alt screen）。下方 setter 会触发 scheduleRender，
+  // onRender 中的 applySearchHighlight 会反转匹配 cell 的颜色。
   private searchHighlightQuery = ''
-  // Position-based highlight. VML scans positions ONCE (via
-  // scanElementSubtree, when the target message is mounted), stores them
-  // message-relative, sets this for every-frame apply. rowOffset =
-  // message's current screen-top. currentIdx = which position is
-  // "current" (yellow). null clears. Positions are known upfront —
-  // navigation is index arithmetic, no scan-feedback loop.
+  // 基于位置的高亮。目标消息挂载时，VML 通过 scanElementSubtree 只扫描一次位置，
+  // 按消息相对坐标保存，并在每帧应用时设置此字段。rowOffset 是消息当前的屏幕顶部；
+  // currentIdx 指定哪个位置是黄色的“当前项”；null 表示清除。
+  // 所有位置预先已知，导航只需索引运算，不存在扫描反馈循环。
   private searchPositions: {
     positions: MatchPosition[]
     rowOffset: number
     currentIdx: number
   } | null = null
-  // React-land subscribers for selection state changes (useHasSelection).
-  // Fired alongside the terminal repaint whenever the selection mutates
-  // so UI (e.g. footer hints) can react to selection appearing/clearing.
+  // React 侧的选区状态变化订阅者（useHasSelection）。每次选区变化时与终端重绘一起触发，
+  // 让 UI（例如 footer 提示）能响应选区出现或清除。
   private readonly selectionListeners = new Set<() => void>()
   /** VtPlusPlus 帧拦截器。返回 true 跳过 log.render diff。 */
   frameSink: ((frame: Frame, stylePool: StylePool) => boolean) | null = null
   /** VtPlusPlus 渲染器重置回调。外部编辑器退出后调用。 */
   vtppReset: (() => void) | null = null
-  // DOM nodes currently under the pointer (mode-1003 motion). Held here
-  // so App.tsx's handleMouseEvent is stateless — dispatchHover diffs
-  // against this set and mutates it in place.
+  // 当前位于指针下方的 DOM 节点（mode-1003 motion）。在此持有，
+  // 使 App.tsx 的 handleMouseEvent 保持无状态；dispatchHover 会与该集合比较并原地修改。
   private readonly hoveredNodes = new Set<dom.DOMElement>()
-  // Set by <AlternateScreen> via setAltScreenActive(). Controls the
-  // renderer's cursor.y clamping (keeps cursor in-viewport to avoid
-  // LF-induced scroll when screen.height === terminalRows) and gates
-  // alt-screen-aware SIGCONT/resize/unmount handling.
+  // 由 <AlternateScreen> 通过 setAltScreenActive() 设置。控制 renderer 对 cursor.y 的钳制，
+  // 使光标留在 viewport 内，避免 screen.height === terminalRows 时 LF 引发滚动；
+  // 同时门控感知 alt screen 的 SIGCONT、resize 和 unmount 处理。
   private altScreenActive = false
-  // Set alongside altScreenActive so SIGCONT resume knows whether to
-  // re-enable mouse tracking (not all <AlternateScreen> uses want it).
+  // 与 altScreenActive 一起设置，让 SIGCONT 恢复时知道是否要重新启用鼠标跟踪；
+  // 并非所有 <AlternateScreen> 用法都需要鼠标跟踪。
   private altScreenMouseTracking = false
   // JediTerm（JetBrains IDE 内置终端）将每个 CJK 宽字符计为 1 列而非 2 列，
   // 导致鼠标列坐标系统性偏小。缓存检测结果以避免每次事件查询环境变量。
@@ -275,11 +269,10 @@ export default class Ink {
    *  的 blit 条件中：不与 prevOverlayRect 相交的节点可以安全地从 prevScreen
    *  blit，相交的节点跳过后重新渲染。在每帧 overlay 写入后更新。 */
   private prevOverlayRect: Rectangle | null = null
-  // Set by handleResize: prepend ERASE_SCREEN to the next onRender's patches
-  // INSIDE the BSU/ESU block so clear+paint is atomic. Writing ERASE_SCREEN
-  // synchronously in handleResize would leave the screen blank for the ~80ms
-  // render() takes; deferring into the atomic block means old content stays
-  // visible until the new frame is fully ready.
+  // 由 handleResize 设置：在 BSU/ESU 块内部将 ERASE_SCREEN 加到下一次 onRender patch 前，
+  // 使清除和绘制成为原子操作。若在 handleResize 中同步写入 ERASE_SCREEN，
+  // render() 所需约 80 毫秒内屏幕会保持空白；延后到原子块中可让旧内容持续可见，
+  // 直到新帧完全就绪。
   private needsEraseBeforePaint = false
   // Native cursor positioning: a component (via useDeclaredCursor) declares
   // where the terminal cursor should be parked after each frame. Terminal
@@ -362,10 +355,10 @@ export default class Ink {
       trailing: true,
     })
 
-    // Ignore last render after unmounting a tree to prevent empty output before exit
+    // 忽略树卸载后的最后一次渲染，避免退出前输出空内容
     this.isUnmounted = false
 
-    // Unmount when process exits
+    // 进程退出时卸载
     this.unsubscribeExit = onExit(this.unmount, {
       alwaysLast: false,
     })
@@ -386,9 +379,8 @@ export default class Ink {
     this.rootNode.onRender = this.scheduleRender
     this.rootNode.onImmediateRender = this.onRender
     this.rootNode.onComputeLayout = () => {
-      // Calculate layout during React's commit phase so useLayoutEffect hooks
-      // have access to fresh layout data
-      // Guard against accessing freed Yoga nodes after unmount
+      // 在 React commit 阶段计算布局，使 useLayoutEffect hook 能访问最新布局数据
+      // 防止卸载后访问已释放的 Yoga 节点
       if (this.isUnmounted) {
         return
       }
@@ -420,7 +412,7 @@ export default class Ink {
       }
     }
 
-    // react-reconciler runtime accepts 10 args but @types declares fewer
+    // react-reconciler runtime 接受 10 个参数，但 @types 声明的参数更少
     this.container = reconciler.createContainer(
       this.rootNode,
       ConcurrentRoot,
@@ -439,7 +431,7 @@ export default class Ink {
     if (isDevEnv()) {
       reconciler.injectIntoDevTools({
         bundleType: 0,
-        // Reporting React DOM's version, not Ink's
+        // 报告 React DOM 版本，而非 Ink 版本
         // See https://github.com/facebook/react/issues/16666#issuecomment-532639905
         version: '16.13.1',
         rendererPackageName: 'ink',
@@ -451,15 +443,14 @@ export default class Ink {
       return
     }
 
-    // Alt screen: after SIGCONT, content is stale (shell may have written
-    // to main screen, switching focus away) and mouse tracking was
-    // disabled by handleSuspend.
+    // alt screen：SIGCONT 后内容已过期，shell 可能已写入 main screen 并切走焦点，
+    // 鼠标跟踪也已被 handleSuspend 禁用。
     if (this.altScreenActive) {
       this.reenterAltScreen()
       return
     }
 
-    // Main screen: start fresh to prevent clobbering terminal content
+    // main screen：从空白状态开始，避免覆盖终端现有内容
     this.frontFrame = emptyFrame(
       this.frontFrame.viewport.height,
       this.frontFrame.viewport.width,
@@ -522,24 +513,21 @@ export default class Ink {
     return true
   }
 
-  // NOT debounced. A debounce opens a window where stdout.columns is NEW
-  // but this.terminalColumns/Yoga are OLD — any scheduleRender during that
-  // window (spinner, clock) makes log-update detect a width change and
-  // clear the screen, then the debounce fires and clears again (double
-  // blank→paint flicker). useVirtualScroll's height scaling already bounds
-  // the per-resize cost; synchronous handling keeps dimensions consistent.
+  // 此处不做 debounce。否则会出现 stdout.columns 已更新、this.terminalColumns/Yoga
+  // 仍为旧值的时间窗；期间任何 scheduleRender（spinner、clock）都会让 log-update
+  // 检测到宽度变化并清屏，debounce 随后再次清屏，造成两次空白→绘制闪烁。
+  // useVirtualScroll 的高度缩放已限制单次 resize 成本，同步处理可保持尺寸一致。
   private handleResize = () => {
-    // Terminals often emit 2+ resize events for one user action (window
-    // settling). Same-dimension and transient invalid events are no-ops.
+    // 终端常会为一次用户操作发出至少两个 resize 事件（窗口稳定过程）。
+    // 尺寸相同或瞬时无效的事件无需处理。
     if (!this.syncTerminalSize()) {
       return
     }
 
-    // Re-render the React tree with updated props so the context value changes.
-    // React's commit phase will call onComputeLayout() to recalculate yoga layout
-    // with the new dimensions, then call onRender() to render the updated frame.
-    // We don't call scheduleRender() here because that would render before the
-    // layout is updated, causing a mismatch between viewport and content dimensions.
+    // 用更新后的 props 重新渲染 React 树，使 context 值发生变化。
+    // React commit 阶段会调用 onComputeLayout()，按新尺寸重新计算 Yoga 布局，
+    // 再调用 onRender() 渲染更新后的帧。此处不调用 scheduleRender()，
+    // 否则会在布局更新前渲染，导致 viewport 与内容尺寸不匹配。
     if (this.currentNode !== null) {
       this.render(this.currentNode)
     }
@@ -549,10 +537,9 @@ export default class Ink {
   unsubscribeExit: () => void = () => {}
 
   /**
-   * Pause Ink and hand the terminal over to an external TUI (e.g. git
-   * commit editor). In non-fullscreen mode this enters the alt screen;
-   * in fullscreen mode we're already in alt so we just clear it.
-   * Call `exitAlternateScreen()` when done to restore Ink.
+   * 暂停 Ink 并将终端交给外部 TUI（如 git commit editor）。非 fullscreen 模式下
+   * 会进入 alt screen；fullscreen 模式已经处于 alt screen，只需清屏。
+   * 完成后调用 `exitAlternateScreen()` 恢复 Ink。
    */
   enterAlternateScreen(): void {
     this.pause()
@@ -564,25 +551,25 @@ export default class Ink {
       DISABLE_KITTY_KEYBOARD +
         DISABLE_MODIFY_OTHER_KEYS +
         (this.altScreenMouseTracking ? DISABLE_MOUSE_TRACKING : '') +
-        // disable mouse (no-op if off)
+        // 禁用鼠标（已关闭时不执行操作）
         (this.altScreenActive ? '' : '\x1b[?1049h') +
-        // enter alt (already in alt if fullscreen)
+        // 进入 alt screen（fullscreen 时已经处于其中）
         '\x1b[?1004l' +
-        // disable focus reporting
+        // 禁用焦点报告
         '\x1b[0m' +
-        // reset attributes
+        // 重置 attributes
         '\x1b[?25h' +
-        // show cursor
+        // 显示光标
         '\x1b[2J' +
-        // clear screen
+        // 清屏
         '\x1b[H', // cursor home
     )
   }
 
   /**
-   * Resume Ink after an external TUI handoff with a full repaint.
-   * In non-fullscreen mode this exits the alt screen back to main;
-   * in fullscreen mode we re-enter alt and clear + repaint.
+   * 外部 TUI 交还终端后恢复 Ink，并完整重绘。
+   * 非 fullscreen 模式下退出 alt screen 回到 main screen；
+   * fullscreen 模式下重新进入 alt screen，并清除后重绘。
    *
    * The re-enter matters: terminal editors (vim, nano, less) write
    * smcup/rmcup (?1049h/?1049l), so even though we started in alt,
@@ -594,15 +581,15 @@ export default class Ink {
   exitAlternateScreen(): void {
     this.options.stdout.write(
       (this.altScreenActive ? ENTER_ALT_SCREEN : '') +
-        // re-enter alt — vim's rmcup dropped us to main
+        // 重新进入 alt screen；vim 的 rmcup 已使终端回到 main screen
         '\x1b[2J' +
-        // clear screen (now alt if fullscreen)
+        // 清屏（fullscreen 时现在处于 alt screen）
         '\x1b[H' +
-        // cursor home
+        // 光标归位
         (this.altScreenMouseTracking ? ENABLE_MOUSE_TRACKING : '') +
-        // re-enable mouse (skip if ZY_CODE_DISABLE_MOUSE)
+        // 重新启用鼠标（设置 ZY_CODE_DISABLE_MOUSE 时跳过）
         (this.altScreenActive ? '' : '\x1b[?1049l') +
-        // exit alt (non-fullscreen only)
+        // 退出 alt screen（仅非 fullscreen）
         '\x1b[?25l', // hide cursor (Ink manages)
     )
     this.resumeStdin()
@@ -739,9 +726,8 @@ export default class Ink {
       }
     }
 
-    // Selection overlay: invert cell styles in the screen buffer itself,
-    // so the diff picks up selection as ordinary cell changes and
-    // LogUpdate remains a pure diff engine.
+    // selection overlay：直接反转 screen buffer 中的 cell 样式，
+    // 使 diff 将选区识别为普通 cell 变化，让 LogUpdate 保持为纯 diff 引擎。
     //
     // Full-screen damage (PR #20120) is a correctness backstop for the
     // sibling-resize bleed: when flexbox siblings resize between frames
@@ -773,8 +759,8 @@ export default class Ink {
           overlayMaxRow = Math.max(overlayMaxRow, b.end.row)
         }
       }
-      // Scan-highlight: inverse on ALL visible matches (less/vim style).
-      // Position-highlight (below) overlays CURRENT (yellow) on top.
+      // scan highlight：反转所有可见匹配项（less/vim 风格）。
+      // 下方的 position highlight 会在其上叠加 CURRENT（黄色）。
       const searchResult = applySearchHighlight(
         frame.screen,
         this.searchHighlightQuery,
@@ -785,9 +771,9 @@ export default class Ink {
         overlayMinRow = Math.min(overlayMinRow, searchResult.minRow)
         overlayMaxRow = Math.max(overlayMaxRow, searchResult.maxRow)
       }
-      // Position-based CURRENT: write yellow at positions[currentIdx] +
-      // rowOffset. No scanning — positions came from a prior scan when
-      // the message first mounted. Message-relative + rowOffset = screen.
+      // 基于位置的 CURRENT：在 positions[currentIdx] + rowOffset 处写入黄色。
+      // 无需扫描；positions 来自消息首次挂载时的先前扫描。
+      // 消息相对位置 + rowOffset = 屏幕位置。
       if (this.searchPositions) {
         const sp = this.searchPositions
         const posBounds = applyPositionedHighlight(
@@ -870,13 +856,12 @@ export default class Ink {
         : undefined,
     )
     const diffMs = performance.now() - tDiff
-    // Swap buffers
+    // 交换 buffer
     this.backFrame = previousFrame
     this.frontFrame = frame
 
-    // Periodically reset char/hyperlink pools to prevent unbounded growth
-    // during long sessions. 5 minutes is infrequent enough that the O(cells)
-    // migration cost is negligible. Reuses renderStart to avoid extra clock call.
+    // 定期重置 char/hyperlink pool，防止长会话中无限增长。
+    // 5 分钟一次足够稀疏，O(cells) 的迁移成本可以忽略；复用 renderStart 避免额外读取时钟。
     if (renderStart - this.lastPoolResetTime > 5 * 60 * 1000) {
       this.resetPools()
       this.lastPoolResetTime = renderStart
@@ -954,8 +939,7 @@ export default class Ink {
         : null
     const parked = this.displayCursor
 
-    // Preserve the empty-diff zero-write fast path: skip all cursor writes
-    // when nothing rendered AND the park target is unchanged.
+    // 保留空 diff 的零写入快速路径：没有渲染内容且停放目标未变化时，跳过所有光标写入。
     const targetMoved =
       target !== null && (parked === null || parked.x !== target.x || parked.y !== target.y)
     const nativeCursorChanged =
@@ -980,8 +964,8 @@ export default class Ink {
       }
       if (target !== null) {
         if (this.altScreenActive) {
-          // Absolute CUP (1-indexed); next frame's CSI H resets regardless.
-          // Emitted after altScreenParkPatch so the declared position wins.
+          // 绝对 CUP（从 1 开始）；无论如何下一帧都会由 CSI H 重置。
+          // 在 altScreenParkPatch 后发出，确保声明的位置生效。
           const row = Math.min(Math.max(target.y + 1, 1), terminalRows)
           const col = Math.min(Math.max(target.x + 1, 1), terminalWidth)
           optimized.push({
@@ -1070,8 +1054,8 @@ export default class Ink {
     // and NOT by overlay — overlay uses prevOverlayRect for per-node blit
     // exclusion instead, so non-overlay nodes can safely blit from prevScreen.
     this.prevFrameContaminated = false
-    // Track overlay rect for per-node blit exclusion in next frame.
-    // Only matters when overlay spans < full screen; null = no overlay.
+    // 跟踪 overlay rect，供下一帧逐节点排除 blit。
+    // 仅当 overlay 未覆盖全屏时有意义；null 表示没有 overlay。
     this.prevOverlayRect =
       (selActive || hlActive) && overlayMinRow <= overlayMaxRow
         ? {
@@ -1100,7 +1084,7 @@ export default class Ink {
     const yogaMs = getLastYogaMs()
     const commitMs = getLastCommitMs()
     const yc = this.lastYogaCounters
-    // Reset so drain-only frames (no React commit) don't repeat stale values.
+    // 重置该值，避免仅执行 drain、没有 React commit 的帧重复使用旧值。
     resetProfileCounters()
     this.lastYogaCounters = {
       ms: 0,
@@ -1128,7 +1112,7 @@ export default class Ink {
     })
   }
   pause(): void {
-    // Flush pending React updates and render before pausing.
+    // 暂停前刷新待处理的 React 更新并渲染。
     reconciler.flushSyncFromReconciler()
     this.onRender()
     this.isPaused = true
@@ -1139,9 +1123,9 @@ export default class Ink {
   }
 
   /**
-   * Reset frame buffers so the next render writes the full screen from scratch.
-   * Call this before resume() when the terminal content has been corrupted by
-   * an external process (e.g. tmux, shell, full-screen TUI).
+   * 重置 frame buffer，使下一次渲染从头写入整个屏幕。
+   * 终端内容被外部进程（如 tmux、shell、fullscreen TUI）破坏时，
+   * 应在 resume() 前调用此方法。
    */
   repaint(): void {
     this.frontFrame = emptyFrame(
@@ -1166,12 +1150,11 @@ export default class Ink {
   }
 
   /**
-   * Clear the physical terminal and force a full redraw.
+   * 清除物理终端并强制完整重绘。
    *
-   * The traditional readline ctrl+l — clears the visible screen and
-   * redraws the current content. Also the recovery path when the terminal
-   * was cleared externally (macOS Cmd+K) and Ink's diff engine thinks
-   * unchanged cells don't need repainting. Scrollback is preserved.
+   * 实现传统 readline ctrl+l 行为：清除可见屏幕并重绘当前内容。
+   * 当终端被外部操作（macOS Cmd+K）清除，而 Ink diff 引擎认为未变化的 cell
+   * 无需重绘时，也用作恢复路径。scrollback 会保留。
    */
   forceRedraw(): void {
     if (!this.options.stdout.isTTY || this.isUnmounted || this.isPaused) {
@@ -1191,25 +1174,23 @@ export default class Ink {
   }
 
   /**
-   * Mark the previous frame as untrustworthy for blit, forcing the next
-   * render to do a full-damage diff instead of the per-node fast path.
+   * 将前一帧标记为不可信，禁止用于 blit，迫使下一次渲染执行 full-damage diff，
+   * 而不是逐节点快速路径。
    *
-   * Lighter than forceRedraw() — no screen clear, no extra write. Call
-   * from a useLayoutEffect cleanup when unmounting a tall overlay: the
-   * blit fast path can copy stale cells from the overlay frame into rows
-   * the shrunken layout no longer reaches, leaving a ghost title/divider.
-   * onRender resets the flag at frame end so it's one-shot.
+   * 比 forceRedraw() 更轻量：不清屏，也不额外写入。卸载较高的 overlay 时，
+   * 应从 useLayoutEffect cleanup 调用；blit 快速路径可能把 overlay 帧中的旧 cell
+   * 复制到收缩后布局无法覆盖的行，留下标题或 divider 残影。
+   * onRender 会在帧结束时重置标志，因此只生效一次。
    */
   invalidatePrevFrame(): void {
     this.prevFrameContaminated = true
   }
 
   /**
-   * Called by the <AlternateScreen> component on mount/unmount.
-   * Controls cursor.y clamping in the renderer and gates alt-screen-aware
-   * behavior in SIGCONT/resize/unmount handlers. Repaints on change so
-   * the first alt-screen frame (and first main-screen frame on exit) is
-   * a full redraw with no stale diff state.
+   * 由 <AlternateScreen> 组件在挂载和卸载时调用。
+   * 控制 renderer 对 cursor.y 的钳制，并门控 SIGCONT/resize/unmount 处理器中
+   * 感知 alt screen 的行为。状态变化时重绘，确保 alt screen 首帧以及退出后的
+   * main screen 首帧都是完整重绘，不带旧 diff 状态。
    */
   setAltScreenActive(active: boolean, mouseTracking = false): void {
     if (this.altScreenActive === active) {
@@ -1228,33 +1209,28 @@ export default class Ink {
   }
 
   /**
-   * Re-assert terminal modes after a gap (>5s stdin silence or event-loop
-   * stall). Catches tmux detach→attach, ssh reconnect, and laptop
-   * sleep/wake — none of which send SIGCONT. The terminal may reset DEC
-   * private modes on reconnect; this method restores them.
+   * 出现间隔（stdin 静默超过 5 秒或 event loop 停顿）后重新声明终端模式。
+   * 用于捕获 tmux detach→attach、ssh 重连和笔记本睡眠/唤醒；这些情况都不会发送 SIGCONT。
+   * 终端可能在重连时重置 DEC private mode，此方法负责恢复。
    *
-   * Always re-asserts extended key reporting and mouse tracking. Mouse
-   * tracking is idempotent (DEC private mode set-when-set is a no-op). The
-   * Kitty keyboard protocol is NOT — CSI >1u is a stack push, so we pop
-   * first to keep depth balanced (pop on empty stack is a no-op per spec,
-   * so after a terminal reset this still restores depth 0→1). Without the
-   * pop, each >5s idle gap adds a stack entry, and the single pop on exit
-   * or suspend can't drain them — the shell is left in CSI u mode where
-   * Ctrl+C/Ctrl+D leak as escape sequences. The alt-screen
-   * re-entry (ERASE_SCREEN + frame reset) is NOT idempotent — it blanks the
-   * screen — so it's opt-in via includeAltScreen. The stdin-gap caller fires
-   * on ordinary >5s idle + keypress and must not erase; the event-loop stall
-   * detector fires on genuine sleep/wake and opts in. tmux attach / ssh
-   * reconnect typically send a resize, which already covers alt-screen via
-   * handleResize.
+   * 始终重新声明扩展按键报告和鼠标跟踪。鼠标跟踪是幂等的：已设置 DEC private mode
+   * 时再次设置不会产生效果；Kitty keyboard protocol 则不是，CSI >1u 会压栈，
+   * 因此先 pop 以保持深度平衡。按规范，对空栈 pop 不执行操作，所以终端重置后仍能
+   * 将深度从 0 恢复到 1。若不 pop，每次超过 5 秒的空闲间隔都会增加一个栈项，
+   * 退出或 suspend 时的一次 pop 无法清空，shell 会留在 CSI u 模式，
+   * Ctrl+C/Ctrl+D 会泄漏为 escape sequence。
+   *
+   * 重新进入 alt screen（ERASE_SCREEN + frame reset）不具幂等性，会清空屏幕，
+   * 因此需通过 includeAltScreen 显式启用。stdin-gap 调用方会在普通的 5 秒以上空闲
+   * 加按键后触发，不得清屏；event loop 停顿检测器只在真实的睡眠/唤醒时触发并启用它。
+   * tmux attach / ssh 重连通常会发送 resize，handleResize 已覆盖其 alt screen 处理。
    */
   reassertTerminalModes = (includeAltScreen = false): void => {
     if (!this.options.stdout.isTTY) {
       return
     }
-    // Don't touch the terminal during an editor handoff — re-enabling kitty
-    // keyboard here would undo enterAlternateScreen's disable and nano would
-    // start seeing CSI-u sequences again.
+    // editor 交接期间不要修改终端；此处重新启用 Kitty keyboard 会抵消
+    // enterAlternateScreen 的禁用操作，使 nano 再次收到 CSI-u sequence。
     if (this.isPaused) {
       return
     }
@@ -1270,21 +1246,21 @@ export default class Ink {
     if (!this.altScreenActive) {
       return
     }
-    // Mouse tracking — idempotent, safe to re-assert on every stdin gap.
+    // 鼠标跟踪是幂等的，可在每次 stdin 间隔后安全地重新声明。
     if (this.altScreenMouseTracking) {
       this.options.stdout.write(ENABLE_MOUSE_TRACKING)
     }
-    // Alt-screen re-entry — destructive (ERASE_SCREEN). Only for callers that
-    // have a strong signal the terminal actually dropped mode 1049.
+    // 重新进入 alt screen 是破坏性操作（ERASE_SCREEN），仅供有充分信号确认终端
+    // 确实退出 mode 1049 的调用方使用。
     if (includeAltScreen) {
       this.reenterAltScreen()
     }
   }
 
   /**
-   * Mark this instance as unmounted so future unmount() calls early-return.
-   * Called by gracefulShutdown's cleanupTerminalModes() after it has sent
-   * EXIT_ALT_SCREEN but before the remaining terminal-reset sequences.
+   * 将此实例标记为已卸载，使后续 unmount() 调用直接返回。
+   * gracefulShutdown 的 cleanupTerminalModes() 在发送 EXIT_ALT_SCREEN 后、
+   * 其余终端重置序列之前调用此方法。
    * Without this, signal-exit's deferred ink.unmount() (triggered by
    * process.exit()) runs the full unmount path: onRender() + writeSync
    * cleanup block + updateContainerSync → AlternateScreen unmount cleanup.
@@ -1294,8 +1270,8 @@ export default class Ink {
    */
   detachForShutdown(): void {
     this.isUnmounted = true
-    // Cancel any pending throttled render so it doesn't fire between
-    // cleanupTerminalModes() and process.exit() and write to main screen.
+    // 取消待执行的 throttled render，避免它在 cleanupTerminalModes() 与 process.exit()
+    // 之间触发并写入 main screen。
     this.scheduleRender.cancel?.()
     // Restore stdin from raw mode. unmount() used to do this via React
     // unmount (App.componentWillUnmount → handleSetRawMode(false)) but we're
@@ -1318,11 +1294,10 @@ export default class Ink {
   }
 
   /**
-   * Re-enter alt-screen, clear, home, re-enable mouse tracking, and reset
-   * frame buffers so the next render repaints from scratch. Self-heal for
-   * SIGCONT, resize, and stdin-gap/event-loop-stall (sleep/wake) — any of
-   * which can leave the terminal in main-screen mode while altScreenActive
-   * stays true. ENTER_ALT_SCREEN is a terminal-side no-op if already in alt.
+   * 重新进入 alt screen、清屏、光标归位、重新启用鼠标跟踪并重置 frame buffer，
+   * 使下一次渲染从头重绘。用于从 SIGCONT、resize、stdin 间隔或 event loop 停顿
+   *（睡眠/唤醒）中自愈；这些情况都可能让终端回到 main screen，
+   * 而 altScreenActive 仍为 true。已在 alt screen 时，ENTER_ALT_SCREEN 在终端侧无效果。
    */
   private reenterAltScreen(): void {
     if (isAlternateScreenDisabled()) {
@@ -1385,9 +1360,8 @@ export default class Ink {
   }
 
   /**
-   * Copy the current selection to the clipboard without clearing the
-   * highlight. Matches iTerm2's copy-on-select behavior where the selected
-   * region stays visible after the automatic copy.
+   * 将当前选区复制到剪贴板，但不清除高亮。
+   * 与 iTerm2 的 copy-on-select 行为一致：自动复制后选中区域仍然可见。
    */
   copySelectionNoClear(): string {
     if (!hasSelection(this.selection)) {
@@ -1407,8 +1381,8 @@ export default class Ink {
   }
 
   /**
-   * Copy the current text selection to the system clipboard via OSC 52
-   * and clear the selection. Returns the copied text (empty if no selection).
+   * 通过 OSC 52 将当前文本选区复制到系统剪贴板并清除选区。
+   * 返回复制的文本；没有选区时返回空字符串。
    */
   copySelection(): string {
     if (!hasSelection(this.selection)) {
@@ -1420,7 +1394,7 @@ export default class Ink {
     return text
   }
 
-  /** Clear the current text selection without copying. */
+  /** 清除当前文本选区，但不复制。 */
   clearTextSelection(): void {
     if (!hasSelection(this.selection)) {
       return
@@ -1638,14 +1612,14 @@ export default class Ink {
     this.notifySelectionChange()
   }
 
-  /** Whether there is an active text selection. */
+  /** 是否存在活动文本选区。 */
   hasTextSelection(): boolean {
     return hasSelection(this.selection)
   }
 
   /**
-   * Subscribe to selection state changes. Fires whenever the selection
-   * is started, updated, cleared, or copied. Returns an unsubscribe fn.
+   * 订阅选区状态变化。开始、更新、清除或复制选区时触发。
+   * 返回 unsubscribe 函数。
    */
   subscribeToSelectionChange(cb: () => void): () => void {
     this.selectionListeners.add(cb)
@@ -1728,8 +1702,8 @@ export default class Ink {
     const event = new KeyboardEvent(parsedKey)
     dispatcher.dispatchDiscrete(target, event)
 
-    // Tab cycling is the default action — only fires if no handler
-    // called preventDefault(). Mirrors browser behavior.
+    // Tab 循环是默认动作，仅在没有处理器调用 preventDefault() 时触发。
+    // 与浏览器行为一致。
     if (!event.defaultPrevented && parsedKey.name === 'tab' && !parsedKey.ctrl && !parsedKey.meta) {
       if (parsedKey.shift) {
         this.focusManager.focusPrevious(this.rootNode)
@@ -1755,8 +1729,7 @@ export default class Ink {
     const screen = this.frontFrame.screen
     const cell = cellAt(screen, col, row)
     let url = cell?.hyperlink
-    // SpacerTail cells (right half of wide/CJK/emoji chars) store the
-    // hyperlink on the head cell at col-1.
+    // SpacerTail cell（宽字符/CJK/Emoji 的右半部分）将 hyperlink 存在 col-1 的头部 cell 上。
     if (!url && cell?.width === CellWidth.SpacerTail && col > 0) {
       url = cellAt(screen, col - 1, row)?.hyperlink
     }
@@ -1822,11 +1795,9 @@ export default class Ink {
   }
 
   /**
-   * Handle a double- or triple-click at (col, row): select the word or
-   * line under the cursor by reading the current screen buffer. Called on
-   * PRESS (not release) so the highlight appears immediately and drag can
-   * extend the selection word-by-word / line-by-line. Falls back to
-   * char-mode startSelection if the click lands on a noSelect cell.
+   * 处理 (col, row) 处的双击或三击：读取当前 screen buffer，选中光标下的 word 或 line。
+   * 在 PRESS 而非 release 时调用，使高亮立即出现，拖动也能逐 word/line 扩展选区。
+   * 点击落在 noSelect cell 上时，回退到 char 模式的 startSelection。
    *
    * 双击：业务 onDoubleClickAt 返回 true 时才让权（如 sticky 头部跳转）；
    * 返回 false/未挂载 → 默认选词。三击永不让权。
@@ -1863,10 +1834,9 @@ export default class Ink {
   }
 
   /**
-   * Handle a drag-motion at (col, row). In char mode updates focus to the
-   * exact cell. In word/line mode snaps to word/line boundaries so the
-   * selection extends by word/line like native macOS. Gated on
-   * altScreenActive for the same reason as dispatchClick.
+   * 处理 (col, row) 处的拖动。在 char 模式下将 focus 更新到准确 cell；
+   * 在 word/line 模式下吸附到 word/line 边界，使选区像 macOS 原生行为一样逐单位扩展。
+   * 与 dispatchClick 原因相同，受 altScreenActive 门控。
    */
   handleSelectionDrag(col: number, row: number): void {
     if (!this.altScreenActive) {
@@ -1882,8 +1852,8 @@ export default class Ink {
     this.notifySelectionChange()
   }
 
-  // Methods to properly suspend stdin for external editor usage
-  // This is needed to prevent Ink from swallowing keystrokes when an external editor is active
+  // 为外部 editor 正确暂停 stdin 的方法
+  // 防止外部 editor 活跃时 Ink 吞掉按键
   private stdinListeners: Array<{
     event: string
     listener: (...args: unknown[]) => void
@@ -1895,8 +1865,7 @@ export default class Ink {
       return
     }
 
-    // Store and remove all 'readable' event listeners temporarily
-    // This prevents Ink from consuming stdin while the editor is active
+    // 暂存并移除所有 'readable' 事件监听器，防止 editor 活跃时 Ink 消费 stdin
     const readableListeners = stdin.listeners('readable')
     logForDebugging(
       `[stdin] suspendStdin: removing ${readableListeners.length} readable listener(s), wasRawMode=${
@@ -1915,7 +1884,7 @@ export default class Ink {
       stdin.removeListener('readable', listener as (...args: unknown[]) => void)
     })
 
-    // If raw mode is enabled, disable it temporarily
+    // raw mode 已启用时暂时关闭
     const stdinWithRaw = stdin as NodeJS.ReadStream & {
       isRaw?: boolean
       setRawMode?: (mode: boolean) => void
@@ -1931,7 +1900,7 @@ export default class Ink {
       return
     }
 
-    // Re-attach all the stored listeners
+    // 重新挂载所有已保存的监听器
     if (this.stdinListeners.length === 0 && !this.wasRawMode) {
       logForDebugging(
         '[stdin] resumeStdin: called with no stored listeners and wasRawMode=false (possible desync)',
@@ -1948,7 +1917,7 @@ export default class Ink {
     })
     this.stdinListeners = []
 
-    // Re-enable raw mode if it was enabled before
+    // 若 raw mode 之前已启用，则重新启用
     if (this.wasRawMode) {
       const stdinWithRaw = stdin as NodeJS.ReadStream & {
         setRawMode?: (mode: boolean) => void
@@ -2021,8 +1990,7 @@ export default class Ink {
     this.restoreStderr?.()
     this.unsubscribeTTYHandlers?.()
 
-    // Non-TTY environments don't handle erasing ansi escapes well, so it's better to
-    // only render last frame of non-static output
+    // 非 TTY 环境无法妥善处理擦除 ANSI escape，因此非静态输出最好只渲染最后一帧
     const diff = this.log.renderPreviousOutput_DEPRECATED(this.frontFrame)
     writeDiffToTerminal(this.terminal, optimize(diff))
 
@@ -2066,7 +2034,7 @@ export default class Ink {
 
     this.isUnmounted = true
 
-    // Cancel any pending throttled renders to prevent accessing freed Yoga nodes
+    // 取消待执行的 throttled render，避免访问已释放的 Yoga 节点
     this.scheduleRender.cancel?.()
     if (this.drainTimer !== null) {
       clearTimeout(this.drainTimer)
@@ -2097,7 +2065,7 @@ export default class Ink {
   }
   resetLineCount(): void {
     if (this.options.stdout.isTTY) {
-      // Swap so old front becomes back (for screen reuse), then reset front
+      // 交换 buffer，使旧 front 成为可复用的 back，再重置 front
       this.backFrame = this.frontFrame
       this.frontFrame = emptyFrame(
         this.frontFrame.viewport.height,
@@ -2114,12 +2082,11 @@ export default class Ink {
   }
 
   /**
-   * Replace char/hyperlink pools with fresh instances to prevent unbounded
-   * growth during long sessions. Migrates the front frame's screen IDs into
-   * the new pools so diffing remains correct. The back frame doesn't need
-   * migration — resetScreen zeros it before any reads.
+   * 用新实例替换 char/hyperlink pool，防止长会话中无限增长。
+   * 将 front frame 的 screen ID 迁移到新 pool，保证 diff 正确。
+   * back frame 无需迁移；resetScreen 会在读取前将其清零。
    *
-   * Call between conversation turns or periodically.
+   * 在对话轮次之间或定期调用。
    */
   resetPools(): void {
     this.charPool = new CharPool()
@@ -2130,8 +2097,8 @@ export default class Ink {
     // backFrame 的 TypedArray 在下一帧会被 resetScreen 整缓冲归零，
     // 缩容安全且不丢失数据。
     shrinkScreenIfOversized(this.backFrame.screen)
-    // Back frame pool refs must point to new pools so the renderer interns
-    // characters/hyperlinks into the same pools as front frame.
+    // back frame 的 pool ref 必须指向新 pool，使 renderer 将字符/hyperlink
+    // intern 到与 front frame 相同的 pool 中。
     this.backFrame.screen.charPool = this.charPool
     this.backFrame.screen.hyperlinkPool = this.hyperlinkPool
 
@@ -2236,10 +2203,10 @@ export default class Ink {
 }
 
 /**
- * Discard pending stdin bytes so in-flight escape sequences (mouse tracking
- * reports, bracketed-paste markers) don't leak to the shell after exit.
+ * 丢弃待处理的 stdin 字节，避免正在传输的 escape sequence（鼠标跟踪报告、
+ * bracketed-paste 标记）在退出后泄漏到 shell。
  *
- * Two layers of trickiness:
+ * 此处有两层复杂性：
  *
  * 1. setRawMode is termios, not fcntl — the stdin fd stays blocking, so
  *    readSync on it would hang forever. Node doesn't expose fcntl, so we
@@ -2252,40 +2219,36 @@ export default class Ink {
  *    mouse bytes are sitting in the buffer. We briefly re-enter raw mode
  *    so reads return any available bytes, then restore cooked mode.
  *
- * Safe to call multiple times. Call as LATE as possible in the exit path:
- * DISABLE_MOUSE_TRACKING has terminal round-trip latency, so events can
- * arrive for a few ms after it's written.
+ * 可安全地多次调用。应在退出路径中尽可能晚地调用：DISABLE_MOUSE_TRACKING
+ * 存在终端往返延迟，写入后几毫秒内仍可能有事件到达。
  */
 /* eslint-disable custom-rules/no-sync-fs -- must be sync; called from signal handler / unmount */
 export function drainStdin(stdin: NodeJS.ReadStream = process.stdin): void {
   if (!stdin.isTTY) {
     return
   }
-  // Drain Node's stream buffer (bytes libuv already pulled in). read()
-  // returns null when empty — never blocks.
+  // 排空 Node stream buffer（libuv 已读入的字节）。为空时 read() 返回 null，不会阻塞。
   try {
     while (stdin.read() !== null) {
-      /* discard */
+      /* 丢弃 */
     }
   } catch {
-    /* stream may be destroyed */
+    /* stream 可能已销毁 */
   }
-  // No /dev/tty on Windows; CONIN$ doesn't support O_NONBLOCK semantics.
-  // Windows Terminal also doesn't buffer mouse reports the same way.
+  // Windows 没有 /dev/tty，CONIN$ 不支持 O_NONBLOCK 语义；
+  // Windows Terminal 缓冲鼠标报告的方式也不同。
   if (process.platform === 'win32') {
     return
   }
-  // termios is per-device: flip stdin to raw so canonical-mode line
-  // buffering doesn't hide partial input from the non-blocking read.
-  // Restored in the finally block.
+  // termios 按设备生效：将 stdin 切为 raw，避免 canonical mode 的行缓冲
+  // 对非阻塞读取隐藏部分输入；在 finally 块中恢复。
   const tty = stdin as NodeJS.ReadStream & {
     isRaw?: boolean
     setRawMode?: (raw: boolean) => void
   }
   const wasRaw = tty.isRaw === true
-  // Drain the kernel TTY buffer via a fresh O_NONBLOCK fd. Bounded at 64
-  // reads (64KB) — a real mouse burst is a few hundred bytes; the cap
-  // guards against a terminal that ignores O_NONBLOCK.
+  // 通过新的 O_NONBLOCK fd 排空内核 TTY buffer。最多读取 64 次（64KB）；
+  // 真实的鼠标事件突发只有几百字节，此上限用于防范忽略 O_NONBLOCK 的终端。
   let fd = -1
   try {
     // setRawMode inside try: on revoked TTY (SIGHUP/SSH disconnect) the
@@ -2301,21 +2264,21 @@ export function drainStdin(stdin: NodeJS.ReadStream = process.stdin): void {
       }
     }
   } catch {
-    // EAGAIN (buffer empty — expected), ENXIO/ENOENT (no controlling tty),
-    // EBADF/EIO (TTY revoked — SIGHUP, SSH disconnect)
+    // EAGAIN（buffer 为空，符合预期）、ENXIO/ENOENT（没有 controlling tty）、
+    // EBADF/EIO（TTY 被撤销，如 SIGHUP、SSH 断开）
   } finally {
     if (fd >= 0) {
       try {
         closeSync(fd)
       } catch {
-        /* ignore */
+        /* 忽略 */
       }
     }
     if (!wasRaw) {
       try {
         tty.setRawMode?.(false)
       } catch {
-        /* TTY may be gone */
+        /* TTY 可能已消失 */
       }
     }
   }

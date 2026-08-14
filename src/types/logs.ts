@@ -320,13 +320,13 @@ export type Entry =
 
 export function sortLogs(logs: LogOption[]): LogOption[] {
   return logs.sort((a, b) => {
-    // Sort by modified date (newest first)
+    // 按修改日期降序排列
     const modifiedDiff = b.modified.getTime() - a.modified.getTime()
     if (modifiedDiff !== 0) {
       return modifiedDiff
     }
 
-    // If modified dates are equal, sort by created date (newest first)
+    // 修改日期相同时，再按创建日期降序排列
     return b.created.getTime() - a.created.getTime()
   })
 }

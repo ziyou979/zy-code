@@ -7,8 +7,8 @@ type Props = {
 }
 
 /**
- * Footer status indicator showing teammate count
- * Similar to BackgroundTaskStatus but for teammates
+ * 显示 teammate 数量的 footer 状态指示器。
+ * 与 BackgroundTaskStatus 类似，但用于 teammate。
  */
 export function TeamStatus({ teamsSelected, showHint }: Props) {
   const teamContext = useAppState((s) => s.teamContext)

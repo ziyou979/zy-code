@@ -3,18 +3,18 @@ import { wrapAnsi } from '../ink/wrapAnsi.js'
 import { firstGrapheme, getGraphemeSegmenter, getWordSegmenter } from '../utils/intl.js'
 
 /**
- * Kill ring for storing killed (cut) text that can be yanked (pasted) with Ctrl+Y.
- * This is global state that shares one kill ring across all input fields.
+ * Kill ring 用于保存被 kill（剪切）的文本，可通过 Ctrl+Y yank（粘贴）。
+ * 这是全局状态，所有输入框共享同一个 kill ring。
  *
- * Consecutive kills accumulate in the kill ring until the user types some
- * other key. Alt+Y cycles through previous kills after a yank.
+ * 连续 kill 会累积到 kill ring 中，直到用户输入其他按键。yank 后可用 Alt+Y
+ * 循环切换此前 kill 的内容。
  */
 const KILL_RING_MAX_SIZE = 10
 let killRing: string[] = []
 let killRingIndex = 0
 let lastActionWasKill = false
 
-// Track yank state for yank-pop (alt-y)
+// 跟踪 yank-pop（Alt+Y）状态。
 let lastYankStart = 0
 let lastYankLength = 0
 let lastActionWasYank = false
@@ -22,21 +22,21 @@ let lastActionWasYank = false
 export function pushToKillRing(text: string, direction: 'prepend' | 'append' = 'append'): void {
   if (text.length > 0) {
     if (lastActionWasKill && killRing.length > 0) {
-      // Accumulate with the most recent kill
+      // 与最近一次 kill 的内容合并。
       if (direction === 'prepend') {
         killRing[0] = text + killRing[0]
       } else {
         killRing[0] = killRing[0] + text
       }
     } else {
-      // Add new entry to front of ring
+      // 在 ring 前端加入新条目。
       killRing.unshift(text)
       if (killRing.length > KILL_RING_MAX_SIZE) {
         killRing.pop()
       }
     }
     lastActionWasKill = true
-    // Reset yank state when killing new text
+    // kill 新文本时重置 yank 状态。
     lastActionWasYank = false
   }
 }
@@ -70,7 +70,7 @@ export function resetKillAccumulation(): void {
   lastActionWasKill = false
 }
 
-// Yank tracking for yank-pop
+// yank-pop 使用的 yank 状态跟踪。
 export function recordYank(start: number, length: number): void {
   lastYankStart = start
   lastYankLength = length
@@ -90,7 +90,7 @@ export function yankPop(): {
   if (!lastActionWasYank || killRing.length <= 1) {
     return null
   }
-  // Cycle to next item in kill ring
+  // 循环切换到 kill ring 的下一项。
   killRingIndex = (killRingIndex + 1) % killRing.length
   const text = killRing[killRingIndex] ?? ''
   return { text, start: lastYankStart, length: lastYankLength }
@@ -105,30 +105,29 @@ export function resetYankState(): void {
 }
 
 /**
- * Text Processing Flow for Unicode Normalization:
+ * Unicode 规范化的文本处理流程：
  *
- * User Input (raw text, potentially mixed NFD/NFC)
+ * 用户输入（可能混合 NFD/NFC 的原始文本）
  *     ↓
- * MeasuredText (normalizes to NFC + builds grapheme info)
+ * MeasuredText（规范化为 NFC，并构建 grapheme 信息）
  *     ↓
- * All cursor operations use normalized text/offsets
+ * 所有光标操作都使用规范化后的文本与 offset
  *     ↓
- * Display uses normalized text from wrappedLines
+ * 显示时使用 wrappedLines 中的规范化文本
  *
- * This flow ensures consistent Unicode handling:
- * - NFD/NFC normalization differences don't break cursor movement
- * - Grapheme clusters (like 👨‍👩‍👧‍👦) are treated as single units
- * - Display width calculations are accurate for CJK characters
+ * 此流程确保 Unicode 处理保持一致：
+ * - NFD/NFC 规范化差异不会破坏光标移动
+ * - grapheme cluster（如 👨‍👩‍👧‍👦）被视为单个单元
+ * - CJK 字符的显示宽度计算准确
  *
- * RULE: Once text enters MeasuredText, all operations
- * work on the normalized version.
+ * 规则：文本进入 MeasuredText 后，所有操作都基于规范化版本。
  */
 
-// Pre-compiled regex patterns for Vim word detection (avoid creating in hot loops)
+// 预编译 Vim 单词检测 regex，避免在热点循环中反复创建。
 export const VIM_WORD_CHAR_REGEX = /^[\p{L}\p{N}\p{M}_]$/u
 export const WHITESPACE_REGEX = /\s/
 
-// Exported helper functions for Vim character classification
+// 导出的 Vim 字符分类辅助函数。
 export const isVimWordChar = (ch: string): boolean => VIM_WORD_CHAR_REGEX.test(ch)
 export const isVimWhitespace = (ch: string): boolean => WHITESPACE_REGEX.test(ch)
 export const isVimPunctuation = (ch: string): boolean =>
@@ -147,7 +146,7 @@ export class Cursor {
     offset: number = 0,
     readonly selection: number = 0,
   ) {
-    // it's ok for the cursor to be 1 char beyond the end of the string
+    // 允许光标位于字符串末尾后一位。
     this.offset = Math.max(0, Math.min(this.text.length, offset))
   }
 
@@ -157,7 +156,7 @@ export class Cursor {
     offset: number = 0,
     selection: number = 0,
   ): Cursor {
-    // make MeasuredText on less than columns width, to account for cursor
+    // 创建 MeasuredText 时宽度比 columns 少一列，为光标留出空间。
     return new Cursor(new MeasuredText(text, columns - 1), offset, selection)
   }
 
@@ -225,30 +224,27 @@ export class Cursor {
         if (mask) {
           const graphemes = Array.from(getGraphemeSegmenter().segment(text))
           if (currentLine === allLines.length - 1) {
-            // Last line: mask all but the trailing 6 chars so the user can
-            // confirm they pasted the right thing without exposing the full token
+            // 最后一行：除末尾 6 个字符外全部遮蔽，使用户能确认粘贴内容是否正确，
+            // 同时不暴露完整 token
             const visibleCount = Math.min(6, graphemes.length)
             const maskCount = graphemes.length - visibleCount
             const splitOffset = graphemes.length > visibleCount ? graphemes[maskCount]!.index : 0
             displayText = mask.repeat(maskCount) + text.slice(splitOffset)
           } else {
-            // Earlier wrapped lines: fully mask. Previously only the last line
-            // was masked, leaking the start of the token on narrow terminals
-            // where the pasted OAuth code wraps across multiple lines.
+            // 前面的折行全部遮蔽。此前只遮蔽最后一行，窄终端中 OAuth code 跨多行折行时，
+            // 会泄漏 token 开头。
             displayText = mask.repeat(graphemes.length)
           }
         }
-        // looking for the line with the cursor
+        // 查找光标所在行
         if (line !== currentLine) {
           return displayText.trimEnd()
         }
 
-        // Split the line into before/at/after cursor in a single pass over the
-        // graphemes, accumulating display width until we reach the cursor column.
-        // This replaces a two-pass approach (displayWidthToStringIndex + a second
-        // segmenter pass) — the intermediate stringIndex from that approach is
-        // always a grapheme boundary, so the "cursor in the middle of a
-        // multi-codepoint character" branch was unreachable.
+        // 单次遍历 grapheme，把行拆成光标前、光标处和光标后三部分，并累积显示宽度，
+        // 直到抵达光标列。替代原先两次遍历的方式（displayWidthToStringIndex 加第二次
+        // segmenter 遍历）；旧方式产生的中间 stringIndex 始终位于 grapheme 边界，
+        // 因此“光标处于多 codepoint 字符中间”的分支永远无法到达。
         let beforeCursor = ''
         let atCursor = cursorChar
         let afterCursor = ''
@@ -270,8 +266,8 @@ export class Cursor {
           }
         }
 
-        // Only invert the cursor if we have a cursor character to show
-        // When ghost text is present and cursor is at end, show first ghost char in cursor
+        // 只有存在可显示的光标字符时才反色；有 ghost text 且光标在末尾时，
+        // 在光标中显示首个 ghost 字符
         let renderedCursor: string
         let ghostSuffix = ''
         if (
@@ -280,10 +276,10 @@ export class Cursor {
           this.isAtEnd() &&
           ghostText.text.length > 0
         ) {
-          // First ghost character goes in the inverted cursor (grapheme-safe)
+          // 首个 ghost 字符放入反色光标，且保持 grapheme 安全
           const firstGhostChar = firstGrapheme(ghostText.text) || ghostText.text[0]!
           renderedCursor = cursorChar ? invert(firstGhostChar) : firstGhostChar
-          // Rest of ghost text is dimmed after cursor
+          // 剩余 ghost text 在光标后以暗色显示
           const ghostRest = ghostText.text.slice(firstGhostChar.length)
           if (ghostRest.length > 0) {
             ghostSuffix = ghostText.dim(ghostRest)
@@ -326,8 +322,8 @@ export class Cursor {
   }
 
   /**
-   * If an [Image #N] chip ends at `offset`, return its bounds. Used by left()
-   * to hop the cursor over the chip instead of stepping into it.
+   * 若某个 [Image #N] chip 在 `offset` 结束，则返回其边界。供 left() 让光标跨过
+   * 整个 chip，而不是进入内部。
    */
   imageRefEndingAt(offset: number): { start: number; end: number } | null {
     const m = this.text.slice(0, offset).match(/\[Image #\d+\]$/)
@@ -340,9 +336,8 @@ export class Cursor {
   }
 
   /**
-   * If offset lands strictly inside an [Image #N] chip, snap it to the given
-   * boundary. Used by word-movement methods so Ctrl+W / Alt+D never leave a
-   * partial chip.
+   * offset 严格落在 [Image #N] chip 内部时，将其吸附到指定边界。
+   * 供单词移动方法使用，确保 Ctrl+W / Alt+D 不会留下残缺 chip。
    */
   snapOutOfImageRef(offset: number, toward: 'start' | 'end'): number {
     const re = /\[Image #\d+\]/g
@@ -387,16 +382,13 @@ export class Cursor {
       return this
     }
 
-    // If there is no next line, stay on the current line,
-    // and let the caller handle it (e.g. for prompt input,
-    // we move to the next history entry)
+    // 没有下一行时停留在当前行，由调用方处理；例如 prompt 输入会移到下一条历史记录
     const nextLine = this.measuredText.getWrappedText()[line + 1]
     if (nextLine === undefined) {
       return this
     }
 
-    // If the current column is past the end of the next line,
-    // move to the end of the next line
+    // 当前列超过下一行末尾时，移动到下一行末尾
     const nextLineDisplayWidth = stringWidth(nextLine)
     if (column > nextLineDisplayWidth) {
       const newOffset = this.getOffset({
@@ -406,7 +398,7 @@ export class Cursor {
       return new Cursor(this.measuredText, newOffset, 0)
     }
 
-    // Otherwise, move to the same column on the next line
+    // 否则移动到下一行的相同列
     const newOffset = this.getOffset({
       line: line + 1,
       column,
@@ -415,8 +407,7 @@ export class Cursor {
   }
 
   /**
-   * Move to the start of the current line (column 0).
-   * This is the raw version used internally by startOfLine.
+   * 移动到当前行开头（第 0 列），这是 startOfLine 内部使用的原始版本。
    */
   private startOfCurrentLine(): Cursor {
     const { line } = this.getPosition()
@@ -433,7 +424,7 @@ export class Cursor {
   startOfLine(): Cursor {
     const { line, column } = this.getPosition()
 
-    // If already at start of line and not at first line, move to previous line
+    // 已在行首且不是第一行时，移动到上一行
     if (column === 0 && line > 0) {
       return new Cursor(
         this.measuredText,
@@ -466,7 +457,7 @@ export class Cursor {
     return new Cursor(this.measuredText, offset, 0)
   }
 
-  // Helper methods for finding logical line boundaries
+  // 查找逻辑行边界的辅助方法
   private findLogicalLineStart(fromOffset: number = this.offset): number {
     const prevNewline = this.text.lastIndexOf('\n', fromOffset - 1)
     return prevNewline === -1 ? 0 : prevNewline + 1
@@ -477,7 +468,7 @@ export class Cursor {
     return nextNewline === -1 ? this.text.length : nextNewline
   }
 
-  // Helper to get logical line bounds for current position
+  // 获取当前位置逻辑行边界的 helper
   private getLogicalLineBounds(): { start: number; end: number } {
     return {
       start: this.findLogicalLineStart(),
@@ -485,8 +476,8 @@ export class Cursor {
     }
   }
 
-  // Helper to create cursor with preserved column, clamped to line length
-  // Snaps to grapheme boundary to avoid landing mid-grapheme
+  // 创建保留列位置且限制在线长范围内的光标，并吸附到 grapheme 边界，
+  // 避免落在 grapheme 中间
   private createCursorWithColumn(lineStart: number, lineEnd: number, targetColumn: number): Cursor {
     const lineLength = lineEnd - lineStart
     const clampedColumn = Math.min(targetColumn, lineLength)
@@ -514,15 +505,15 @@ export class Cursor {
   upLogicalLine(): Cursor {
     const { start: currentStart } = this.getLogicalLineBounds()
 
-    // At first line - stay at beginning
+    // 位于第一行时停在开头
     if (currentStart === 0) {
       return new Cursor(this.measuredText, 0, 0)
     }
 
-    // Calculate target column position
+    // 计算目标列位置
     const currentColumn = this.offset - currentStart
 
-    // Find previous line bounds
+    // 查找上一行边界
     const prevLineEnd = currentStart - 1
     const prevLineStart = this.findLogicalLineStart(prevLineEnd)
 
@@ -532,43 +523,43 @@ export class Cursor {
   downLogicalLine(): Cursor {
     const { start: currentStart, end: currentEnd } = this.getLogicalLineBounds()
 
-    // At last line - stay at end
+    // 位于最后一行时停在末尾
     if (currentEnd >= this.text.length) {
       return new Cursor(this.measuredText, this.text.length, 0)
     }
 
-    // Calculate target column position
+    // 计算目标列位置
     const currentColumn = this.offset - currentStart
 
-    // Find next line bounds
+    // 查找下一行边界
     const nextLineStart = currentEnd + 1
     const nextLineEnd = this.findLogicalLineEnd(nextLineStart)
 
     return this.createCursorWithColumn(nextLineStart, nextLineEnd, currentColumn)
   }
 
-  // Vim word vs WORD movements:
+  // Vim 的 word 与 WORD 移动：
   // - word (lowercase w/b/e): sequences of letters, digits, and underscores
   // - WORD (uppercase W/B/E): sequences of non-whitespace characters
-  // For example, in "hello-world!", word movements see 3 words: "hello", "world", and nothing
-  // But WORD movements see 1 WORD: "hello-world!"
+  // 例如在 "hello-world!" 中，word 移动会识别 "hello"、"world" 等独立部分，
+  // 而 WORD 移动把整个 "hello-world!" 视为一个 WORD
 
   nextWord(): Cursor {
     if (this.isAtEnd()) {
       return this
     }
 
-    // Use Intl.Segmenter for proper word boundary detection (including CJK)
+    // 使用 Intl.Segmenter 正确检测包括 CJK 在内的单词边界
     const wordBoundaries = this.measuredText.getWordBoundaries()
 
-    // Find the next word start boundary after current position
+    // 查找当前位置之后的下一个单词起始边界
     for (const boundary of wordBoundaries) {
       if (boundary.isWordLike && boundary.start > this.offset) {
         return new Cursor(this.measuredText, boundary.start)
       }
     }
 
-    // If no next word found, go to end
+    // 找不到下一个单词时移到末尾
     return new Cursor(this.measuredText, this.text.length)
   }
 
@@ -577,24 +568,24 @@ export class Cursor {
       return this
     }
 
-    // Use Intl.Segmenter for proper word boundary detection (including CJK)
+    // 使用 Intl.Segmenter 正确检测包括 CJK 在内的单词边界
     const wordBoundaries = this.measuredText.getWordBoundaries()
 
-    // Find the current word boundary we're in
+    // 查找当前所在的单词边界
     for (const boundary of wordBoundaries) {
       if (!boundary.isWordLike) {
         continue
       }
 
-      // If we're inside this word but NOT at the last character
+      // 位于此单词内部但不在最后一个字符时
       if (this.offset >= boundary.start && this.offset < boundary.end - 1) {
-        // Move to end of this word (last character position)
+        // 移到此单词末尾，即最后一个字符位置
         return new Cursor(this.measuredText, boundary.end - 1)
       }
 
-      // If we're at the last character of a word (end - 1), find the next word's end
+      // 位于单词最后一个字符（end - 1）时，查找下一个单词末尾
       if (this.offset === boundary.end - 1) {
-        // Find next word
+        // 查找下一个单词
         for (const nextBoundary of wordBoundaries) {
           if (nextBoundary.isWordLike && nextBoundary.start > this.offset) {
             return new Cursor(this.measuredText, nextBoundary.end - 1)
@@ -604,7 +595,7 @@ export class Cursor {
       }
     }
 
-    // If not in a word, find the next word and go to its end
+    // 不在单词中时，查找下一个单词并移到其末尾
     for (const boundary of wordBoundaries) {
       if (boundary.isWordLike && boundary.start > this.offset) {
         return new Cursor(this.measuredText, boundary.end - 1)
@@ -619,11 +610,10 @@ export class Cursor {
       return this
     }
 
-    // Use Intl.Segmenter for proper word boundary detection (including CJK)
+    // 使用 Intl.Segmenter 正确检测包括 CJK 在内的单词边界
     const wordBoundaries = this.measuredText.getWordBoundaries()
 
-    // Find the previous word start boundary before current position
-    // We need to iterate in reverse to find the previous word
+    // 查找当前位置之前的上一个单词起始边界，需要反向迭代
     let prevWordStart: number | null = null
 
     for (const boundary of wordBoundaries) {
@@ -631,13 +621,13 @@ export class Cursor {
         continue
       }
 
-      // If we're at or after the start of this word, but this word starts before us
+      // 位于此单词开头或之后，且该单词起点在当前位置之前时
       if (boundary.start < this.offset) {
-        // If we're inside this word (not at the start), go to its start
+        // 位于此单词内部而非开头时，移到其开头
         if (this.offset > boundary.start && this.offset <= boundary.end) {
           return new Cursor(this.measuredText, boundary.start)
         }
-        // Otherwise, remember this as a candidate for previous word
+        // 否则将其记为上一个单词候选
         prevWordStart = boundary.start
       }
     }
@@ -649,8 +639,8 @@ export class Cursor {
     return new Cursor(this.measuredText, 0)
   }
 
-  // Vim-specific word methods
-  // In Vim, a "word" is either:
+  // Vim 专用单词方法
+  // Vim 中的“word”可以是：
   // 1. A sequence of word characters (letters, digits, underscore) - including Unicode
   // 2. A sequence of non-blank, non-word characters (punctuation/symbols)
 
@@ -743,7 +733,7 @@ export class Cursor {
       pos = retreat(pos)
     }
 
-    // At position 0 with whitespace means no previous word exists, go to start
+    // 在位置 0 遇到空白表示不存在上一个单词，移到开头
     if (pos === 0 && WHITESPACE_REGEX.test(this.graphemeAt(0))) {
       return new Cursor(this.measuredText, 0)
     }
@@ -773,11 +763,11 @@ export class Cursor {
   nextWORD(): Cursor {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let nextCursor: Cursor = this
-    // If we're on a non-whitespace character, move to the next whitespace
+    // 当前位于非空白字符时，移到下一个空白字符
     while (!nextCursor.isOverWhitespace() && !nextCursor.isAtEnd()) {
       nextCursor = nextCursor.right()
     }
-    // now move to the next non-whitespace character
+    // 再移到下一个非空白字符
     while (nextCursor.isOverWhitespace() && !nextCursor.isAtEnd()) {
       nextCursor = nextCursor.right()
     }
@@ -792,23 +782,23 @@ export class Cursor {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let cursor: Cursor = this
 
-    // Check if we're already at the end of a WORD
+    // 检查是否已经位于 WORD 末尾
     // (current character is non-whitespace, but next character is whitespace or we're at the end)
     const atEndOfWORD =
       !cursor.isOverWhitespace() && (cursor.right().isOverWhitespace() || cursor.right().isAtEnd())
 
     if (atEndOfWORD) {
-      // We're already at the end of a WORD, move to the next WORD
+      // 已位于 WORD 末尾，移到下一个 WORD
       cursor = cursor.right()
       return cursor.endOfWORD()
     }
 
-    // If we're on a whitespace character, find the next WORD
+    // 当前位于空白字符时，查找下一个 WORD
     if (cursor.isOverWhitespace()) {
       cursor = cursor.nextWORD()
     }
 
-    // Now move to the end of the current WORD
+    // 移到当前 WORD 末尾
     while (!cursor.right().isOverWhitespace() && !cursor.isAtEnd()) {
       cursor = cursor.right()
     }
@@ -820,17 +810,17 @@ export class Cursor {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let cursor: Cursor = this
 
-    // if we are already at the beginning of a WORD, step off it
+    // 已位于 WORD 开头时，先向左移出该 WORD
     if (cursor.left().isOverWhitespace()) {
       cursor = cursor.left()
     }
 
-    // Move left over any whitespace characters
+    // 向左越过所有空白字符
     while (cursor.isOverWhitespace() && !cursor.isAtStart()) {
       cursor = cursor.left()
     }
 
-    // If we're over a non-whitespace character, move to the start of this WORD
+    // 位于非空白字符时，移到此 WORD 开头
     if (!cursor.isOverWhitespace()) {
       while (!cursor.left().isOverWhitespace() && !cursor.isAtStart()) {
         cursor = cursor.left()
@@ -873,23 +863,21 @@ export class Cursor {
   }
 
   deleteToLineStart(): { cursor: Cursor; killed: string } {
-    // If cursor is right after a newline (at start of line), delete just that
-    // newline — symmetric with deleteToLineEnd's newline handling. This lets
-    // repeated ctrl+u clear across lines.
+    // 光标紧跟换行符（位于行首）时只删除该换行符，与 deleteToLineEnd 对换行的处理对称，
+    // 使重复 ctrl+u 能跨行清除。
     if (this.offset > 0 && this.text[this.offset - 1] === '\n') {
       return { cursor: this.left().modifyText(this), killed: '\n' }
     }
 
-    // Use startOfLine() so that at column 0 of a wrapped visual line,
-    // the cursor moves to the previous visual line's start instead of
-    // getting stuck.
+    // 使用 startOfLine()，使光标位于折行后视觉行的第 0 列时，能移到上一视觉行开头，
+    // 而不是卡住。
     const startCursor = this.startOfLine()
     const killed = this.text.slice(startCursor.offset, this.offset)
     return { cursor: startCursor.modifyText(this), killed }
   }
 
   deleteToLineEnd(): { cursor: Cursor; killed: string } {
-    // If cursor is on a newline character, delete just that character
+    // 光标位于换行符时只删除该字符
     if (this.text[this.offset] === '\n') {
       return { cursor: this.modifyText(this.right()), killed: '\n' }
     }
@@ -900,7 +888,7 @@ export class Cursor {
   }
 
   deleteToLogicalLineEnd(): Cursor {
-    // If cursor is on a newline character, delete just that character
+    // 光标位于换行符时只删除该字符
     if (this.text[this.offset] === '\n') {
       return this.modifyText(this.right())
     }
@@ -919,19 +907,18 @@ export class Cursor {
   }
 
   /**
-   * Deletes a token before the cursor if one exists.
-   * Supports pasted text refs: [Pasted text #1], [Pasted text #1 +10 lines],
+   * 删除光标前存在的 token。支持粘贴文本引用：[Pasted text #1]、
+   * [Pasted text #1 +10 lines]、
    * [...Truncated text #1 +10 lines...]
    *
-   * Note: @mentions are NOT tokenized since users may want to correct typos
-   * in file paths. Use Ctrl/Cmd+backspace for word-deletion on mentions.
+   * 注意：@mention 不会 token 化，因为用户可能需要修正文件路径中的拼写错误。
+   * 对 mention 使用 Ctrl/Cmd+Backspace 进行单词删除。
    *
-   * Returns null if no token found at cursor position.
-   * Only triggers when cursor is at end of token (followed by whitespace or EOL).
+   * 光标位置找不到 token 时返回 null。仅当光标位于 token 末尾，且后接空白或 EOL 时触发。
    */
   deleteTokenBefore(): Cursor | null {
-    // Cursor at chip.start is the "selected" state — backspace deletes the
-    // chip forward, not the char before it.
+    // 光标位于 chip.start 表示“已选中”状态；Backspace 会向前删除整个 chip，
+    // 而非删除它之前的字符。
     const chipAfter = this.imageRefStartingAt(this.offset)
     if (chipAfter) {
       const end = this.text[chipAfter.end] === ' ' ? chipAfter.end + 1 : chipAfter.end
@@ -942,7 +929,7 @@ export class Cursor {
       return null
     }
 
-    // Only trigger if cursor is at a word boundary (whitespace or end of string after cursor)
+    // 仅当光标位于单词边界（光标后为空白或字符串末尾）时触发
     const charAfter = this.text[this.offset]
     if (charAfter !== undefined && !/\s/.test(charAfter)) {
       return null
@@ -950,7 +937,7 @@ export class Cursor {
 
     const textBefore = this.text.slice(0, this.offset)
 
-    // Check for pasted/truncated text refs: [Pasted text #1] or [...Truncated text #1 +50 lines...]
+    // 检查粘贴/截断文本引用：[Pasted text #1] 或 [...Truncated text #1 +50 lines...]
     const pasteMatch = textBefore.match(
       /(^|\s)\[(Pasted text #\d+(?: \+\d+ lines)?|Image #\d+|\.\.\.Truncated text #\d+ \+\d+ lines\.\.\.)\]$/,
     )
@@ -996,26 +983,26 @@ export class Cursor {
   }
 
   startOfFirstLine(): Cursor {
-    // Go to the very beginning of the text (first character of first line)
+    // 移到文本最开头，即第一行首字符
     return new Cursor(this.measuredText, 0, 0)
   }
 
   startOfLastLine(): Cursor {
-    // Go to the beginning of the last line
+    // 移到最后一行开头
     const lastNewlineIndex = this.text.lastIndexOf('\n')
 
     if (lastNewlineIndex === -1) {
-      // If there are no newlines, the text is a single line
+      // 没有换行符时，文本只有一行
       return this.startOfLine()
     }
 
-    // Position after the last newline character
+    // 定位到最后一个换行符之后
     return new Cursor(this.measuredText, lastNewlineIndex + 1, 0)
   }
 
   goToLine(lineNumber: number): Cursor {
-    // Go to the beginning of the specified logical line (1-indexed, like vim)
-    // Uses logical lines (separated by \n), not wrapped display lines
+    // 移到指定逻辑行开头，行号从 1 开始，与 vim 相同；使用由 \n 分隔的逻辑行，
+    // 而非折行后的显示行
     const lines = this.text.split('\n')
     const targetLine = Math.min(Math.max(0, lineNumber - 1), lines.length - 1)
     let offset = 0
@@ -1046,7 +1033,7 @@ export class Cursor {
   }
 
   /**
-   * Find a character using vim f/F/t/T semantics.
+   * 使用 vim f/F/t/T 语义查找字符。
    *
    * @param char - The character to find
    * @param type - 'f' (forward to), 'F' (backward to), 't' (forward till), 'T' (backward till)
@@ -1127,8 +1114,7 @@ export class MeasuredText {
   }
 
   /**
-   * Lazily computes and caches wrapped lines.
-   * This expensive operation is deferred until actually needed.
+   * 延迟计算并缓存折行；仅在实际需要时执行这项高成本操作。
    */
   private get wrappedLines(): WrappedLine[] {
     if (!this._wrappedLines) {
@@ -1143,7 +1129,7 @@ export class MeasuredText {
       for (const { index } of getGraphemeSegmenter().segment(this.text)) {
         this.graphemeBoundaries.push(index)
       }
-      // Add the end of text as a boundary
+      // 将文本末尾加入边界
       this.graphemeBoundaries.push(this.text.length)
     }
     return this.graphemeBoundaries
@@ -1156,9 +1142,8 @@ export class MeasuredText {
   }>
 
   /**
-   * Get word boundaries using Intl.Segmenter for proper Unicode word segmentation.
-   * This correctly handles CJK (Chinese, Japanese, Korean) text where each character
-   * is typically its own word, as well as scripts that use spaces between words.
+   * 使用 Intl.Segmenter 获取单词边界，正确进行 Unicode 单词分段。
+   * 既能处理每个字符通常各自成词的 CJK（中文、日文、韩文），也能处理以空格分词的文字。
    */
   public getWordBoundaries(): Array<{
     start: number
@@ -1179,7 +1164,7 @@ export class MeasuredText {
   }
 
   /**
-   * Binary search for boundaries.
+   * 二分查找边界。
    * @param boundaries: Sorted array of boundaries
    * @param target: Target offset
    * @param findNext: If true, finds first boundary > target. If false, finds last boundary < target.
@@ -1217,7 +1202,7 @@ export class MeasuredText {
     return result
   }
 
-  // Convert string index to display width
+  // 将字符串索引转换为显示宽度
   public stringIndexToDisplayWidth(text: string, index: number): number {
     if (index <= 0) {
       return 0
@@ -1228,7 +1213,7 @@ export class MeasuredText {
     return stringWidth(text.substring(0, index))
   }
 
-  // Convert display width to string index
+  // 将显示宽度转换为字符串索引
   public displayWidthToStringIndex(text: string, targetWidth: number): number {
     if (targetWidth <= 0) {
       return 0
@@ -1237,12 +1222,12 @@ export class MeasuredText {
       return 0
     }
 
-    // If the text matches our text, use the precomputed graphemes
+    // 文本与当前文本相同时使用预计算的 grapheme
     if (text === this.text) {
       return this.offsetAtDisplayWidth(targetWidth)
     }
 
-    // Otherwise compute on the fly
+    // 否则即时计算
     let currentWidth = 0
     let currentOffset = 0
 
@@ -1265,7 +1250,7 @@ export class MeasuredText {
   }
 
   /**
-   * Find the string offset that corresponds to a target display width.
+   * 查找目标显示宽度对应的字符串 offset。
    */
   private offsetAtDisplayWidth(targetWidth: number): number {
     if (targetWidth <= 0) {
@@ -1275,7 +1260,7 @@ export class MeasuredText {
     let currentWidth = 0
     const boundaries = this.getGraphemeBoundaries()
 
-    // Iterate through grapheme boundaries
+    // 遍历 grapheme 边界
     for (let i = 0; i < boundaries.length - 1; i++) {
       const start = boundaries[i]
       const end = boundaries[i + 1]
@@ -1318,7 +1303,7 @@ export class MeasuredText {
         i === 0 || (startOffset > 0 && this.text[startOffset - 1] === '\n')
 
       if (text.length === 0) {
-        // For blank lines, find the next newline character after the last one
+        // 对空行查找上一个换行符之后的下一个换行符
         lastNewLinePos = this.text.indexOf('\n', lastNewLinePos + 1)
 
         if (lastNewLinePos !== -1) {
@@ -1329,14 +1314,14 @@ export class MeasuredText {
             new WrappedLine(text, startOffset, isPrecededByNewline(startOffset), endsWithNewline),
           )
         } else {
-          // If we can't find another newline, this must be the end of text
+          // 找不到下一个换行符时，这里必定是文本末尾
           const startOffset = this.text.length
           wrappedLines.push(
             new WrappedLine(text, startOffset, isPrecededByNewline(startOffset), false),
           )
         }
       } else {
-        // For non-blank lines, find the text in this.text
+        // 对非空行，在 this.text 中查找文本
         const startOffset = this.text.indexOf(text, searchOffset)
 
         if (startOffset === -1) {
@@ -1345,7 +1330,7 @@ export class MeasuredText {
 
         searchOffset = startOffset + text.length
 
-        // Check if this line ends with a newline in this.text
+        // 检查此行在 this.text 中是否以换行符结束
         const potentialNewlinePos = startOffset + text.length
         const endsWithNewline =
           potentialNewlinePos < this.text.length && this.text[potentialNewlinePos] === '\n'
@@ -1381,32 +1366,31 @@ export class MeasuredText {
   public getOffsetFromPosition(position: Position): number {
     const wrappedLine = this.getLine(position.line)
 
-    // Handle blank lines specially
+    // 特殊处理空行
     if (wrappedLine.text.length === 0 && wrappedLine.endsWithNewline) {
       return wrappedLine.startOffset
     }
 
-    // Account for leading whitespace
+    // 计入前导空白
     const leadingWhitespace = wrappedLine.isPrecededByNewline
       ? 0
       : wrappedLine.text.length - wrappedLine.text.trimStart().length
 
-    // Convert display column to string index
+    // 将显示列转换为字符串索引
     const displayColumnWithLeading = position.column + leadingWhitespace
     const stringIndex = this.displayWidthToStringIndex(wrappedLine.text, displayColumnWithLeading)
 
-    // Calculate the actual offset
+    // 计算实际 offset
     const offset = wrappedLine.startOffset + stringIndex
 
-    // For normal lines
+    // 普通行
     const lineEnd = wrappedLine.startOffset + wrappedLine.text.length
 
-    // Don't allow going past the end of the current line into the next line
-    // unless we're at the very end of the text
+    // 除非位于整个文本末尾，否则不允许越过当前行末进入下一行
     let maxOffset = lineEnd
     const lineDisplayWidth = stringWidth(wrappedLine.text)
     if (wrappedLine.endsWithNewline && position.column > lineDisplayWidth) {
-      // Allow positioning after the newline
+      // 允许定位到换行符之后
       maxOffset = lineEnd + 1
     }
 
@@ -1424,22 +1408,22 @@ export class MeasuredText {
       const currentLine = lines[line]!
       const nextLine = lines[line + 1]
       if (offset >= currentLine.startOffset && (!nextLine || offset < nextLine.startOffset)) {
-        // Calculate string position within the line
+        // 计算行内字符串位置
         const stringPosInLine = offset - currentLine.startOffset
 
-        // Handle leading whitespace for wrapped lines
+        // 处理折行的前导空白
         let displayColumn: number
         if (currentLine.isPrecededByNewline) {
-          // For lines preceded by newline, calculate display width directly
+          // 前面是换行符的行直接计算显示宽度
           displayColumn = this.stringIndexToDisplayWidth(currentLine.text, stringPosInLine)
         } else {
-          // For wrapped lines, we need to account for trimmed whitespace
+          // 折行需要计入被裁掉的空白
           const leadingWhitespace = currentLine.text.length - currentLine.text.trimStart().length
           if (stringPosInLine < leadingWhitespace) {
-            // Cursor is in the trimmed whitespace area, position at start
+            // 光标位于被裁掉的空白区域，定位到开头
             displayColumn = 0
           } else {
-            // Calculate display width from the trimmed text
+            // 根据裁剪后的文本计算显示宽度
             const trimmedText = currentLine.text.trimStart()
             const posInTrimmed = stringPosInLine - leadingWhitespace
             displayColumn = this.stringIndexToDisplayWidth(trimmedText, posInTrimmed)
@@ -1453,7 +1437,7 @@ export class MeasuredText {
       }
     }
 
-    // If we're past the last character, return the end of the last line
+    // 超过最后一个字符时返回最后一行末尾
     const line = lines.length - 1
     const lastLine = this.wrappedLines[line]!
     return {
@@ -1496,8 +1480,7 @@ export class MeasuredText {
   }
 
   /**
-   * Snap an arbitrary code-unit offset to the start of the containing grapheme.
-   * If offset is already on a boundary, returns it unchanged.
+   * 将任意 code-unit offset 吸附到其所在 grapheme 的起点；offset 已在边界时原样返回。
    */
   snapToGraphemeBoundary(offset: number): number {
     if (offset <= 0) {
@@ -1507,7 +1490,7 @@ export class MeasuredText {
       return this.text.length
     }
     const boundaries = this.getGraphemeBoundaries()
-    // Binary search for largest boundary <= offset
+    // 二分查找不大于 offset 的最大边界
     let lo = 0
     let hi = boundaries.length - 1
     while (lo < hi) {

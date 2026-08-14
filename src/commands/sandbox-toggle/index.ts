@@ -11,7 +11,7 @@ const command = {
     const isLocked = SandboxManager.areSandboxSettingsLockedByPolicy()
     const hasDeps = SandboxManager.checkDependencies().errors.length === 0
 
-    // Show warning icon if dependencies missing, otherwise enabled/disabled status
+    // 缺少依赖时显示警告图标，否则显示启用/禁用状态
     let icon: string
     if (!hasDeps) {
       icon = WARNING
@@ -23,7 +23,7 @@ const command = {
     if (currentlyEnabled) {
       statusText = autoAllow ? 'sandbox enabled (auto-allow)' : 'sandbox enabled'
 
-      // Add unsandboxed fallback status
+      // 添加 unsandboxed fallback 状态
       statusText += allowUnsandboxed ? ', fallback allowed' : ''
     }
 

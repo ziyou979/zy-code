@@ -1,7 +1,7 @@
 import type { Command } from '../../commands/index.js'
 import { env } from '../../services/environment/env.js'
 
-// Terminals that natively support CSI u / Kitty keyboard protocol
+// 原生支持 CSI u / Kitty keyboard protocol 的终端
 const NATIVE_CSIU_TERMINALS: Record<string, string> = {
   ghostty: 'Ghostty',
   kitty: 'Kitty',

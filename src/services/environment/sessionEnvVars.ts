@@ -1,7 +1,6 @@
 /**
- * Session-scoped environment variables set via /env.
- * Applied only to spawned child processes (via bash provider env overrides),
- * not to the REPL process itself.
+ * 通过 /env 设置的会话级环境变量。
+ * 仅通过 bash provider 的环境覆盖应用于启动的子进程，不影响 REPL 进程本身。
  */
 const sessionEnvVars = new Map<string, string>()
 

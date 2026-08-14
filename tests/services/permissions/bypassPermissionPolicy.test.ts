@@ -16,14 +16,14 @@ mock.module('src/services/analytics/growthbook.js', () => ({
   checkSecurityRestrictionGate: mockCheckSecurityGate,
 }))
 
-// mock: settings
+// mock settings
 let mockSettings: { permissions?: { disableBypassPermissionsMode?: string } } | null = {}
 const mockGetInitialSettings = mock(() => mockSettings)
 mock.module('../../../src/services/settings/settings.js', () => ({
   getInitialSettings: mockGetInitialSettings,
 }))
 
-// mock: permissionUpdate
+// mock permissionUpdate
 const mockApplyUpdate = mock<
   (ctx: ToolPermissionContext, update: unknown) => ToolPermissionContext
 >((ctx, _update) => ctx)
@@ -31,7 +31,7 @@ mock.module('../../../src/services/permissions/permissionUpdate.js', () => ({
   applyPermissionUpdate: mockApplyUpdate,
 }))
 
-// mock: gracefulShutdown
+// mock gracefulShutdown
 const mockGracefulShutdown = mock<(code: number, reason: string) => void>(() => {})
 mock.module('../../../src/bootstrap/lifecycle/gracefulShutdown.js', () => ({
   gracefulShutdown: mockGracefulShutdown,
@@ -77,7 +77,7 @@ describe('isBypassPermissionsModeDisabled', () => {
 
   test('settings 为 null 时不崩溃', () => {
     mockSettings = null
-    // Statsig false + settings null → false
+    // Statsig 为 false 且 settings 为 null 时返回 false
     expect(isBypassPermissionsModeDisabled()).toBe(false)
   })
 

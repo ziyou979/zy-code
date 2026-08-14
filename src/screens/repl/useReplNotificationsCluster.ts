@@ -109,7 +109,7 @@ export function useReplNotificationsCluster({
   isSurveyOpen,
   hasRunningTeammates,
 }: UseReplNotificationsClusterParams): ReplNotificationsCluster {
-  // ── 14 fire-and-forget notifications ──
+  // ── 14 个即发即弃通知 ──
   useCanSwitchToExistingSubscription()
   useAutoModeUnavailableNotification()
   usePluginInstallationStatus()
@@ -128,7 +128,7 @@ export function useReplNotificationsCluster({
   const { recommendation: hintRecommendation, handleResponse: handleHintResponse } =
     useZyCodeHintRecommendation()
 
-  // ── callouts ──
+  // ── callout ──
   const [showEffortCallout, setShowEffortCallout] = useState(() => {
     const settings = getSettingsForSource('userSettings')
     return !settings?.effortLevel
@@ -141,7 +141,7 @@ export function useReplNotificationsCluster({
     shouldShowFullscreenUpsell(),
   )
 
-  // ── system hints: swarm turn-duration ──
+  // ── 系统提示：swarm 轮次时长 ──
   const toolPermissionMode = useAppState((s) => s.toolPermissionContext.mode)
   const swarmStartTimeRef = useRef<number | null>(null)
   const swarmBudgetInfoRef = useRef<{ tokens: number; limit: number; nudges: number } | undefined>(
@@ -219,7 +219,7 @@ export function useReplNotificationsCluster({
     ])
   }, [setMessages])
 
-  // ── frustration detection ──
+  // ── 挫败感检测 ──
   const frustrationDetection = useFrustrationDetectionLazy(
     messages,
     isLoading,

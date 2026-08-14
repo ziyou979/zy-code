@@ -11,17 +11,16 @@ import {
 import { clearPluginOutputStyleCache } from '../services/plugins/loadPluginOutputStyles.js'
 
 /**
- * Loads markdown files from .zy/output-styles directories throughout the project
- * and from ~/.zy/output-styles directory and converts them to output styles.
+ * 从项目各级 .zy/output-styles 目录及 ~/.zy/output-styles 目录加载 Markdown 文件，
+ * 并将其转换为输出样式。
  *
- * Each filename becomes a style name, and the file content becomes the style prompt.
- * The frontmatter provides name and description.
+ * 文件名作为样式名称，文件内容作为样式 prompt，frontmatter 提供名称和说明。
  *
- * Structure:
- * - Project .zy/output-styles/*.md -> project styles
- * - User ~/.zy/output-styles/*.md -> user styles (overridden by project styles)
+ * 目录结构：
+ * - 项目 .zy/output-styles/*.md -> 项目样式
+ * - 用户 ~/.zy/output-styles/*.md -> 用户样式（同名时由项目样式覆盖）
  *
- * @param cwd Current working directory for project directory traversal
+ * @param cwd 遍历项目目录时使用的当前工作目录
  */
 export const getOutputStyleDirStyles = memoize(
   async (cwd: string): Promise<OutputStyleConfig[]> => {

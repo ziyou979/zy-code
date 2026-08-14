@@ -14,8 +14,8 @@ type Props = {
 }
 
 /**
- * Top-level wrapper for interactive sessions.
- * Provides FPS metrics, stats context, and app state to the component tree.
+ * 交互式会话的顶层 wrapper。
+ * 向组件树提供 FPS 指标、stats context 和应用状态。
  */
 export function App({ getFpsMetrics, stats, initialState, children }: Props) {
   return (

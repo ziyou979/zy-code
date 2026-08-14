@@ -13,7 +13,7 @@ type Props = {
   fileContent?: string
 }
 
-/** Renders a list of diff hunks with ellipsis separators between them. */
+/** 渲染 diff hunk 列表，并用省略号分隔。 */
 export function StructuredDiffList({
   hunks,
   dim,

@@ -2,18 +2,18 @@ import type { DOMElement } from './dom.js'
 
 type Output = {
   /**
-   * Element width.
+   * 元素宽度。
    */
   width: number
 
   /**
-   * Element height.
+   * 元素高度。
    */
   height: number
 }
 
 /**
- * Measure the dimensions of a particular `<Box>` element.
+ * 测量指定 `<Box>` 元素的尺寸。
  */
 const measureElement = (node: DOMElement): Output => ({
   width: node.yogaNode?.getComputedWidth() ?? 0,

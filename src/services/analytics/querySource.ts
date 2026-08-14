@@ -15,7 +15,7 @@ export function getQuerySourceForAgent(
   isBuiltInAgent: boolean,
 ): QuerySource {
   if (isBuiltInAgent) {
-    // TODO: avoid this cast
+    // TODO：移除此类型断言
     return agentType ? (`agent:builtin:${agentType}` as QuerySource) : 'agent:default'
   } else {
     return 'agent:custom'
@@ -36,7 +36,7 @@ export function getQuerySourceForREPL(): QuerySource {
     return 'repl_main_thread'
   }
 
-  // All styles in OUTPUT_STYLE_CONFIG are built-in
+  // OUTPUT_STYLE_CONFIG 中的所有样式都是内置样式
   const isBuiltIn = style in OUTPUT_STYLE_CONFIG
   return isBuiltIn
     ? (`repl_main_thread:outputStyle:${style}` as QuerySource)

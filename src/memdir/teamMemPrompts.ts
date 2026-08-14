@@ -15,9 +15,9 @@ import { getAutoMemPath } from './paths.js'
 import { getTeamMemPath } from './teamMemPaths.js'
 
 /**
- * Build the combined prompt when both auto memory and team memory are enabled.
- * Closed four-type taxonomy (user / feedback / project / reference) with
- * per-type <scope> guidance embedded in XML-style <type> blocks.
+ * auto memory 和 team memory 同时启用时构建组合 prompt。
+ * 使用封闭的四类分类（user / feedback / project / reference），
+ * 并在 XML 形式的 <type> block 中嵌入每种类型的 <scope> 指引。
  */
 export function buildCombinedMemoryPrompt(extraGuidelines?: string[], skipIndex = false): string {
   const autoDir = getAutoMemPath()

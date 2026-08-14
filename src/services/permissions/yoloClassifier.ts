@@ -91,7 +91,7 @@ async function maybeDumpAutoMode(
     )
     permLog(`Dumped auto mode req/res to ${getAutoModeDumpDir()}/${base}.{req,res}.json`)
   } catch {
-    // Ignore errors
+    // 忽略错误
   }
 }
 
@@ -452,7 +452,7 @@ async function classifyYoloActionXml(
             stage1MsgId,
           }
         }
-        // stage1Block === true
+        // stage1Block 为 true
         logAutoModeOutcome('success', model, {
           classifierType,
           durationMs: stage1DurationMs,
@@ -866,8 +866,8 @@ export async function classifyYoloAction(
         action: actionCompact,
         model,
       })) ?? undefined
-    // No API usage on error — use classifierTokensEst / mainLoopTokens
-    // for the ratio. Overflow errors are the critical divergence signal.
+    // 出错时没有 API usage，比例改用 classifierTokensEst / mainLoopTokens。溢出错误是关键的
+    // 偏差信号。
     logAutoModeOutcome(tooLong ? 'transcript_too_long' : 'error', model, {
       mainLoopTokens,
       classifierTokensEst,

@@ -231,7 +231,7 @@ export function eraseScreen(): string {
 /** 擦除整个屏幕 - 常量形式 */
 export const ERASE_SCREEN = csi(2, 'J')
 
-/** Erase scrollback buffer (CSI 3 J) */
+/** 清除 scrollback buffer（CSI 3 J） */
 export const ERASE_SCROLLBACK = csi(3, 'J')
 
 /**

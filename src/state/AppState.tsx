@@ -10,7 +10,7 @@ import {
 import { applySettingsChange } from '../services/settings/applySettingsChange.js'
 import { createStore } from './store.js'
 
-// DCE: voice context is ant-only. External builds get a passthrough.
+// DCE：语音 context 仅供 ant 使用，外部构建直接透传。
 /* eslint-disable @typescript-eslint/no-require-imports */
 const VoiceProvider: (props: { children: React.ReactNode }) => React.ReactNode = feature(
   'VOICE_MODE',

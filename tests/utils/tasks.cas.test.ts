@@ -195,7 +195,7 @@ describe('Task revision + CAS', () => {
       blocks: [],
       blockedBy: [],
     })
-    // claim task
+    // 领取任务
     await claimTask(testListId, taskId, 'agent-token')
     // 使用错误的 claimToken 尝试 CAS 更新
     const result = await updateTaskCAS({

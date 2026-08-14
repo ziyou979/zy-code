@@ -1,5 +1,5 @@
 /**
- * internalPaths characterization tests。
+ * internalPaths 特性测试。
  *
  * 纯路径操作函数，不涉及 IO / 设置 / 功能标记。
  */

@@ -2,11 +2,10 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 
 /**
- * In-process linked transport pair for running an MCP server and client
- * in the same process without spawning a subprocess.
+ * 进程内关联 transport 对，用于在同一进程中运行 MCP server 和 client，无需启动子进程。
  *
- * `send()` on one side delivers to `onmessage` on the other.
- * `close()` on either side calls `onclose` on both.
+ * 任一端调用 `send()` 会投递到另一端的 `onmessage`；任一端调用 `close()` 会触发两端的
+ * `onclose`。
  */
 class InProcessTransport implements Transport {
   private peer: InProcessTransport | undefined
@@ -27,8 +26,7 @@ class InProcessTransport implements Transport {
     if (this.closed) {
       throw new Error('Transport is closed')
     }
-    // Deliver to the other side asynchronously to avoid stack depth issues
-    // with synchronous request/response cycles
+    // 异步投递到另一端，避免同步请求/响应循环导致调用栈过深
     queueMicrotask(() => {
       this.peer?.onmessage?.(message)
     })
@@ -40,7 +38,7 @@ class InProcessTransport implements Transport {
     }
     this.closed = true
     this.onclose?.()
-    // Close the peer if it hasn't already closed
+    // peer 尚未关闭时将其关闭
     if (this.peer && !this.peer.closed) {
       this.peer.closed = true
       this.peer.onclose?.()
@@ -49,10 +47,10 @@ class InProcessTransport implements Transport {
 }
 
 /**
- * Creates a pair of linked transports for in-process MCP communication.
- * Messages sent on one transport are delivered to the other's `onmessage`.
+ * 创建一对关联 transport，用于进程内 MCP 通信。一端发送的消息会投递到另一端的
+ * `onmessage`。
  *
- * @returns [clientTransport, serverTransport]
+ * @returns `[clientTransport, serverTransport]`
  */
 export function createLinkedTransportPair(): [Transport, Transport] {
   const a = new InProcessTransport()

@@ -12,13 +12,13 @@ import { isEnvTruthy } from '../../services/infra/envUtils.js'
 const LSP_POLL_INTERVAL_MS = 5000
 
 /**
- * Hook that polls LSP status and shows a notification when:
- * 1. Manager initialization fails
- * 2. Any LSP server enters an error state
+ * 轮询 LSP 状态，并在以下情况显示通知：
+ * 1. manager 初始化失败
+ * 2. 任一 LSP server 进入错误状态
  *
- * Also adds errors to appState.plugins.errors for /doctor display.
+ * 同时将错误加入 appState.plugins.errors，供 /doctor 显示。
  *
- * Only active when ENABLE_LSP_TOOL is set.
+ * 仅在设置 ENABLE_LSP_TOOL 时生效。
  */
 export function useLspInitializationNotification() {
   const { addNotification } = useNotifications()

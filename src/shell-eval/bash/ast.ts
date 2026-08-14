@@ -1,21 +1,17 @@
 /**
- * AST-based bash command analysis using tree-sitter.
+ * 使用 tree-sitter、基于 AST 的 bash 命令分析。
  *
- * This module replaces the shell-quote + hand-rolled char-walker approach in
- * bashSecurity.ts / commands.ts. Instead of detecting parser differentials
- * one-by-one, we parse with tree-sitter-bash and walk the tree with an
- * EXPLICIT allowlist of node types. Any node type not in the allowlist causes
- * the entire command to be classified as 'too-complex', which means it goes
- * through the normal permission prompt flow.
+ * 本模块替代 bashSecurity.ts/commands.ts 中 shell-quote 加手写字符遍历器的方案。
+ * 不再逐个检测 parser 差异，而是用 tree-sitter-bash 解析，再使用显式节点类型 allowlist
+ * 遍历 AST。任何不在 allowlist 中的节点类型都会使整条命令归类为 'too-complex'，
+ * 从而进入常规 permission prompt 流程。
  *
- * The key design property is FAIL-CLOSED: we never interpret structure we
- * don't understand. If tree-sitter produces a node we haven't explicitly
- * allowlisted, we refuse to extract argv and the caller must ask the user.
+ * 核心设计属性是关闭失败：绝不解释无法理解的结构。tree-sitter 若产生未显式加入
+ * allowlist 的节点，便拒绝提取 argv，调用方必须询问用户。
  *
- * This is NOT a sandbox. It does not prevent dangerous commands from running.
- * It answers exactly one question: "Can we produce a trustworthy argv[] for
- * each simple command in this string?" If yes, downstream code can match
- * argv[0] against permission rules and flag allowlists. If no, ask the user.
+ * 这不是 sandbox，也不会阻止危险命令执行。它只回答一个问题：“能否为该字符串中的
+ * 每条简单命令生成可信 argv[]？”若可以，下游代码便能让 argv[0] 匹配 permission rule
+ * 与 flag allowlist；否则询问用户。
  */
 
 import { SHELL_KEYWORDS } from './bashParser.js'
@@ -29,13 +25,13 @@ export type Redirect = {
 }
 
 export type SimpleCommand = {
-  /** argv[0] is the command name, rest are arguments with quotes already resolved */
+  /** argv[0] 是命令名，其余参数已解析引号。 */
   argv: string[]
-  /** Leading VAR=val assignments */
+  /** 前导 VAR=val 赋值。 */
   envVars: { name: string; value: string }[]
-  /** Output/input redirects */
+  /** 输出/输入重定向。 */
   redirects: Redirect[]
-  /** Original source span for this command (for UI display) */
+  /** 此命令的原始 source span，供 UI 展示。 */
   text: string
 }
 
@@ -45,39 +41,34 @@ export type ParseForSecurityResult =
   | { kind: 'parse-unavailable' }
 
 /**
- * Structural node types that represent composition of commands. We recurse
- * through these to find the leaf `command` nodes. `program` is the root;
- * `list` is `a && b || c`; `pipeline` is `a | b`; `redirected_statement`
- * wraps a command with its redirects. Semicolon-separated commands appear
- * as direct siblings under `program` (no wrapper node).
+ * 表示命令组合的结构节点类型。递归遍历它们以寻找叶级 `command` 节点：`program` 是根；
+ * `list` 表示 `a && b || c`；`pipeline` 表示 `a | b`；`redirected_statement`
+ * 包装命令及其重定向。分号分隔的命令直接作为 `program` 下的 sibling，不含包装节点。
  */
 const STRUCTURAL_TYPES = new Set(['program', 'list', 'pipeline', 'redirected_statement'])
 
 /**
- * Operator tokens that separate commands. These are leaf nodes that appear
- * between commands in `list`/`pipeline`/`program` and carry no payload.
+ * 分隔命令的 operator token。它们是出现在 `list`/`pipeline`/`program` 命令之间的
+ * 叶节点，不携带 payload。
  */
 const SEPARATOR_TYPES = new Set(['&&', '||', '|', ';', '&', '|&', '\n'])
 
 /**
- * Placeholder string used in outer argv when a $() is recursively extracted.
- * The actual $() output is runtime-determined; the inner command(s) are
- * checked against permission rules separately. Using a placeholder keeps
- * the outer argv clean (no multi-line heredoc bodies polluting path
- * extraction or triggering newline checks).
+ * 递归提取 $() 时在外层 argv 使用的 placeholder。$() 的实际输出由 runtime 决定，
+ * 内部命令会单独接受 permission rule 检查。placeholder 可保持外层 argv 干净，
+ * 避免多行 heredoc 正文污染路径提取或触发换行检查。
  */
 const CMDSUB_PLACEHOLDER = '__CMDSUB_OUTPUT__'
 
 /**
- * Placeholder for simple_expansion ($VAR) references to variables set earlier
- * in the same command via variable_assignment. Since we tracked the assignment,
- * we know the var exists and its value is either a static string or
- * __CMDSUB_OUTPUT__ (if set via $()). Either way, safe to substitute.
+ * simple_expansion（$VAR）引用同一命令中先前经 variable_assignment 设置的变量时使用的
+ * placeholder。由于已跟踪赋值，可确定变量存在，其值要么是静态字符串，要么是经 $()
+ * 设置的 __CMDSUB_OUTPUT__；两种情况都可安全替换。
  */
 const VAR_PLACEHOLDER = '__TRACKED_VAR__'
 
 /**
- * All placeholder strings. Used for defense-in-depth: if a varScope value
+ * 所有 placeholder 字符串。用于纵深防御：若 varScope 值
  * contains ANY placeholder (exact or embedded), the value is NOT a pure
  * literal and cannot be trusted as a bare argument. Covers composites like
  * `VAR="prefix$(cmd)"` → `"prefix__CMDSUB_OUTPUT__"` — the substring check

@@ -15,9 +15,9 @@ export type TerminalNotification = {
   notifyGhostty: (opts: { message: string; title: string }) => void
   notifyBell: () => void
   /**
-   * Report progress to the terminal via OSC 9;4 sequences.
-   * Supported terminals: ConEmu, Ghostty 1.2.0+, iTerm2 3.6.6+
-   * Pass state=null to clear progress.
+   * 通过 OSC 9;4 sequence 向终端报告进度。
+   * 支持的终端：ConEmu、Ghostty 1.2.0+、iTerm2 3.6.6+。
+   * 传入 state=null 可清除进度。
    */
   progress: (state: Progress['state'] | null, percentage?: number) => void
 }
@@ -53,8 +53,8 @@ export function useTerminalNotification(): TerminalNotification {
   )
 
   const notifyBell = useCallback(() => {
-    // Raw BEL — inside tmux this triggers tmux's bell-action (window flag).
-    // Wrapping would make it opaque DCS payload and lose that fallback.
+    // 原始 BEL 在 tmux 内会触发 tmux 的 bell-action（窗口标记）。
+    // 包装后会成为不透明的 DCS payload，从而失去这个 fallback。
     writeRaw(BEL)
   }, [writeRaw])
 
@@ -82,7 +82,7 @@ export function useTerminalNotification(): TerminalNotification {
           writeRaw(wrapForMultiplexer(osc(OSC.ITERM2, ITERM2.PROGRESS, PROGRESS.SET, pct)))
           break
         case null:
-          // Handled by the if guard above
+          // 已由上方的 if guard 处理
           break
       }
     },

@@ -1,5 +1,5 @@
 /**
- * useReplInput -- input value / mode / vim / history-search state extracted from REPL.tsx.
+ * useReplInput：从 REPL.tsx 提取的输入值、模式、vim 和历史搜索状态。
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -51,7 +51,7 @@ export function useReplInput(params: UseReplInputParams) {
     [repinScroll, trySuggestBgPRIntercept, lastUserScrollTsRef.current],
   )
 
-  // Clear suppression after user stops typing
+  // 用户停止输入后解除抑制
   useEffect(() => {
     if (inputValue.trim().length === 0) {
       return

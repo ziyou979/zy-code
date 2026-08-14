@@ -100,11 +100,9 @@ const refreshed = createSignal()
 // 使用同步抛出和异步拒绝均路由到 logError 的方式调用监听器。
 function callSafe(listener: GrowthBookRefreshListener): void {
   try {
-    // Promise.resolve() normalizes sync returns and Promises so both
-    // sync throws (caught by outer try) and async rejections (caught
-    // by .catch) hit logError. Without the .catch, an async listener
-    // that rejects becomes an unhandled rejection — the try/catch
-    // only sees the Promise, not its eventual rejection.
+    // Promise.resolve() 将同步返回值和 Promise 统一处理，使同步抛错（由外层 try 捕获）
+    // 与异步拒绝（由 .catch 捕获）都会进入 logError。若缺少 .catch，异步 listener
+    // 的拒绝会成为未处理拒绝，因为 try/catch 只能看到 Promise，无法看到其最终拒绝。
     void Promise.resolve(listener()).catch((e) => {
       logError(e)
     })
@@ -114,26 +112,23 @@ function callSafe(listener: GrowthBookRefreshListener): void {
 }
 
 /**
- * Register a callback to fire when GrowthBook feature values refresh.
- * Returns an unsubscribe function.
+ * 注册 GrowthBook 功能值刷新时触发的 callback，并返回取消订阅函数。
  *
- * If init has already completed with features by the time this is called
- * (remoteEvalFeatureValues is populated), the listener fires once on the
- * next microtask. This catch-up handles the race where GB's network response
- * lands before the REPL's useEffect commits — on external builds with fast
- * networks and MCP-heavy configs, init can finish in ~100ms while REPL mount
- * takes ~600ms (see #20951 external-build trace at 30.540 vs 31.046).
+ * 调用时若 init 已完成且取得功能值（remoteEvalFeatureValues 已填充），listener
+ * 会在下一个微任务中触发一次。此补偿用于处理 GB 网络响应早于 REPL useEffect
+ * 提交的竞态：在网络较快且 MCP 配置较重的外部构建中，init 约 100ms 即可完成，
+ * 而 REPL 挂载约需 600ms（见 #20951 external-build trace 30.540 与 31.046）。
  *
- * Change detection is on the subscriber: the callback fires on every refresh;
- * use isEqual against your last-seen config to decide whether to act.
+ * 变更检测由订阅方负责：每次刷新都会触发 callback；应使用 isEqual 与上次所见
+ * 配置比较，以决定是否执行操作。
  */
 export function onGrowthBookRefresh(listener: GrowthBookRefreshListener): () => void {
   let subscribed = true
   const unsubscribe = refreshed.subscribe(() => callSafe(listener))
   if (remoteEvalFeatureValues.size > 0) {
     queueMicrotask(() => {
-      // Re-check: listener may have been removed, or resetGrowthBook may have
-      // cleared the Map, between registration and this microtask running.
+      // 再次检查：从注册到此微任务执行之间，listener 可能已被移除，
+      // 或 resetGrowthBook 已清空 Map。
       if (subscribed && remoteEvalFeatureValues.size > 0) {
         callSafe(listener)
       }
@@ -146,10 +141,10 @@ export function onGrowthBookRefresh(listener: GrowthBookRefreshListener): () => 
 }
 
 /**
- * Parse env var overrides for GrowthBook features.
- * Set CLAUDE_INTERNAL_FC_OVERRIDES to a JSON object mapping feature keys to values
- * to bypass remote eval and disk cache. Useful for eval harnesses that need to
- * test specific feature flag configurations. Only active when USER_TYPE is 'ant'.
+ * 解析 GrowthBook 功能的环境变量覆盖值。
+ * 将 CLAUDE_INTERNAL_FC_OVERRIDES 设置为功能键到值的 JSON 映射，即可绕过远程
+ * 评估和磁盘缓存。适用于需要测试特定 feature flag 配置的 eval harness。
+ * 仅在 USER_TYPE 为 'ant' 时生效。
  *
  * Example: CLAUDE_INTERNAL_FC_OVERRIDES='{"my_feature": true, "my_config": {"key": "val"}}'
  */
@@ -177,9 +172,9 @@ function getEnvOverrides(): Record<string, unknown> | null {
 }
 
 /**
- * Check if a feature has an env-var override (CLAUDE_INTERNAL_FC_OVERRIDES).
- * When true, _CACHED_MAY_BE_STALE will return the override without touching
- * disk or network — callers can skip awaiting init for that feature.
+ * 检查功能是否有环境变量覆盖值（CLAUDE_INTERNAL_FC_OVERRIDES）。
+ * 若有，_CACHED_MAY_BE_STALE 会直接返回覆盖值而不访问磁盘或网络；
+ * 调用方可跳过等待该功能初始化。
  */
 export function hasGrowthBookEnvOverride(feature: string): boolean {
   const overrides = getEnvOverrides()
@@ -187,11 +182,10 @@ export function hasGrowthBookEnvOverride(feature: string): boolean {
 }
 
 /**
- * Local config overrides set via /config Gates tab (ant-only). Checked after
- * env-var overrides — env wins so eval harnesses remain deterministic. Unlike
- * getEnvOverrides this is not memoized: the user can change overrides at
- * runtime, and getGlobalConfig() is already memory-cached (pointer-chase)
- * until the next saveGlobalConfig() invalidates it.
+ * 通过 /config 的 Gates 标签设置本地配置覆盖值（仅限 ant）。其优先级低于环境
+ * 变量覆盖值，确保 eval harness 结果可复现。与 getEnvOverrides 不同，此处不做
+ * memoize：用户可在运行时修改覆盖值，且 getGlobalConfig() 已在内存中缓存
+ *（指针读取），直至下次 saveGlobalConfig() 使其失效。
  */
 function getConfigOverrides(): Record<string, unknown> | undefined {
   if (!isInternalBuild()) {
@@ -200,16 +194,15 @@ function getConfigOverrides(): Record<string, unknown> | undefined {
   try {
     return getGlobalConfig().growthBookOverrides
   } catch {
-    // getGlobalConfig() throws before configReadingAllowed is set (early
-    // main.tsx startup path). Same degrade as the disk-cache fallback below.
+    // 在 configReadingAllowed 设置前（main.tsx 启动早期路径），
+    // getGlobalConfig() 会抛错；此处采用与下方磁盘缓存 fallback 相同的降级方式。
     return undefined
   }
 }
 
 /**
- * Enumerate all known GrowthBook features and their current resolved values
- * (not including overrides). In-memory payload first, disk cache fallback —
- * same priority as the getters. Used by the /config Gates tab.
+ * 枚举所有已知 GrowthBook 功能及当前解析值（不含覆盖值）。优先使用内存 payload，
+ * 再退回磁盘缓存，与 getter 的优先级一致。供 /config 的 Gates 标签使用。
  */
 export function getAllGrowthBookFeatures(): Record<string, unknown> {
   if (remoteEvalFeatureValues.size > 0) {
@@ -223,11 +216,10 @@ export function getGrowthBookConfigOverrides(): Record<string, unknown> {
 }
 
 /**
- * Set or clear a single config override. Pass undefined to clear.
- * Fires onGrowthBookRefresh listeners so systems that bake gate values into
- * long-lived objects (useMainLoopModel, useSkillsChange, etc.) rebuild —
- * otherwise overriding e.g. zy_ant_model_override wouldn't actually
- * change the model until the next periodic refresh.
+ * 设置或清除单个配置覆盖值；传入 undefined 表示清除。
+ * 触发 onGrowthBookRefresh listener，使将 gate 值固化到长生命周期对象中的系统
+ *（useMainLoopModel、useSkillsChange 等）重新构建；否则覆盖
+ * zy_ant_model_override 等值后，要到下次周期刷新才会真正更换模型。
  */
 export function setGrowthBookConfigOverride(feature: string, value: unknown): void {
   if (!isInternalBuild()) {
@@ -252,8 +244,8 @@ export function setGrowthBookConfigOverride(feature: string, value: unknown): vo
       }
       return { ...c, growthBookOverrides: { ...current, [feature]: value } }
     })
-    // Subscribers do their own change detection (see onGrowthBookRefresh docs),
-    // so firing on a no-op write is fine.
+    // 订阅方自行执行变更检测（见 onGrowthBookRefresh 文档），
+    // 因此写入未改变值时触发也没有问题。
     refreshed.emit()
   } catch (e) {
     logError(e)
@@ -279,11 +271,10 @@ export function clearGrowthBookConfigOverrides(): void {
 }
 
 /**
- * Log experiment exposure for a feature if it has experiment data.
- * Deduplicates within a session - each feature is logged at most once.
+ * 功能包含实验数据时记录实验曝光。同一会话内去重，每项功能最多记录一次。
  */
 function logExposureForFeature(feature: string): void {
-  // Skip if already logged this session (dedup)
+  // 本会话已记录时跳过，以实现去重。
   if (loggedExposures.has(feature)) {
     return
   }
@@ -303,31 +294,28 @@ function logExposureForFeature(feature: string): void {
 }
 
 /**
- * Process a remote eval payload from the GrowthBook server and populate
- * local caches. Called after both initial client.init() and after
- * client.refreshFeatures() so that _BLOCKS_ON_INIT callers see fresh values
- * across the process lifetime, not just init-time snapshots.
+ * 处理 GrowthBook 服务器的远程评估 payload 并填充本地缓存。在初始
+ * client.init() 和 client.refreshFeatures() 后都会调用，使 _BLOCKS_ON_INIT
+ * 调用方在整个进程生命周期内都能取得新值，而非仅看到初始化快照。
  *
- * Without this running on refresh, remoteEvalFeatureValues freezes at its
- * init-time snapshot and getDynamicConfig_BLOCKS_ON_INIT returns stale values
- * for the entire process lifetime — which broke the zy_max_version_config
- * kill switch for long-running sessions.
+ * 若刷新时不执行，remoteEvalFeatureValues 会冻结在初始化快照，
+ * getDynamicConfig_BLOCKS_ON_INIT 会在整个进程生命周期返回陈旧值，
+ * 导致 zy_max_version_config kill switch 对长时间会话失效。
  */
 async function _processRemoteEvalPayload(gbClient: GrowthBook): Promise<boolean> {
-  // WORKAROUND: Transform remote eval response format
-  // The API returns { "value": ... } but SDK expects { "defaultValue": ... }
-  // TODO: Remove this once the API is fixed to return correct format
+  // WORKAROUND：转换远程评估响应格式。API 返回 { "value": ... }，
+  // 但 SDK 需要 { "defaultValue": ... }。
+  // TODO：API 修复为返回正确格式后移除此逻辑。
   const payload = gbClient.getPayload()
-  // Empty object is truthy — without the length check, `{features: {}}`
-  // (transient server bug, truncated response) would pass, clear the maps
-  // below, return true, and syncRemoteEvalToDisk would wholesale-write `{}`
-  // to disk: total flag blackout for every process sharing ~/.zy.json.
+  // 空对象为 truthy；若没有长度检查，`{features: {}}`（服务器临时故障或响应被截断）
+  // 会通过校验、清空下方 Map 并返回 true，随后 syncRemoteEvalToDisk 会将 `{}`
+  // 整体写入磁盘，使所有共享 ~/.zy.json 的进程丢失全部 flag。
   if (!payload?.features || Object.keys(payload.features).length === 0) {
     return false
   }
 
-  // Clear before rebuild so features removed between refreshes don't
-  // leave stale ghost entries that short-circuit getFeatureValueInternal.
+  // 重建前先清空，避免两次刷新间删除的功能留下陈旧幽灵条目，
+  // 导致 getFeatureValueInternal 提前返回。
   experimentDataByFeature.clear()
 
   const transformedFeatures: Record<string, MalformedFeatureDefinition> = {}
@@ -342,7 +330,7 @@ async function _processRemoteEvalPayload(gbClient: GrowthBook): Promise<boolean>
       transformedFeatures[key] = f
     }
 
-    // Store experiment data for later logging when feature is accessed
+    // 保存实验数据，待功能被访问时记录。
     if (f.source === 'experiment' && f.experimentResult) {
       const expResult = f.experimentResult as {
         variationId?: number
@@ -356,22 +344,20 @@ async function _processRemoteEvalPayload(gbClient: GrowthBook): Promise<boolean>
       }
     }
   }
-  // Re-set the payload with transformed features
+  // 使用转换后的功能重新设置 payload。
   await gbClient.setPayload({
     ...payload,
     features: transformedFeatures,
   })
 
-  // WORKAROUND: Cache the evaluated values directly from remote eval response.
-  // The SDK's evalFeature() tries to re-evaluate rules locally, ignoring the
-  // pre-evaluated 'value' from remoteEval. setForcedFeatures also doesn't work
-  // reliably. So we cache values ourselves and use them in getFeatureValueInternal.
+  // WORKAROUND：直接缓存远程评估响应中的已评估值。SDK 的 evalFeature() 会尝试
+  // 在本地重新评估规则，忽略 remoteEval 预评估的 'value'；setForcedFeatures
+  // 也不可靠。因此自行缓存值，并在 getFeatureValueInternal 中使用。
   remoteEvalFeatureValues.clear()
   for (const [key, feature] of Object.entries(transformedFeatures)) {
-    // Under remoteEval:true the server pre-evaluates. Whether the answer
-    // lands in `value` (current API) or `defaultValue` (post-TODO API shape),
-    // it's the authoritative value for this user. Guarding on both keeps
-    // syncRemoteEvalToDisk correct across a partial or full API migration.
+    // remoteEval:true 时由服务器预评估。无论结果位于 `value`（当前 API）还是
+    // `defaultValue`（TODO 完成后的 API 形态），它都是该用户的权威值。
+    // 同时兼容两者，可确保 API 部分或完整迁移期间 syncRemoteEvalToDisk 都正确。
     const v = 'value' in feature ? feature.value : feature.defaultValue
     if (v !== undefined) {
       remoteEvalFeatureValues.set(key, v)
@@ -381,15 +367,13 @@ async function _processRemoteEvalPayload(gbClient: GrowthBook): Promise<boolean>
 }
 
 /**
- * Write the complete remoteEvalFeatureValues map to disk. Called exactly
- * once per successful processRemoteEvalPayload — never from a failure path,
- * so init-timeout poisoning is structurally impossible (the .catch() at init
- * never reaches here).
+ * 将完整 remoteEvalFeatureValues Map 写入磁盘。每次
+ * processRemoteEvalPayload 成功后恰好调用一次，失败路径不会调用，
+ * 因而从结构上避免 init 超时污染（init 的 .catch() 不会到达此处）。
  *
- * Wholesale replace (not merge): features deleted server-side are dropped
- * from disk on the next successful payload. Ant builds ⊇ external, so
- * switching builds is safe — the write is always a complete answer for this
- * process's SDK key.
+ * 整体替换而非合并：服务端删除的功能会在下次成功 payload 后从磁盘移除。
+ * Ant 构建包含 external 构建的功能集合，因此切换构建安全；写入内容始终是
+ * 当前进程 SDK key 对应的完整结果。
  */
 function _syncRemoteEvalToDisk(): void {
   const fresh = Object.fromEntries(remoteEvalFeatureValues)
@@ -404,24 +388,23 @@ function _syncRemoteEvalToDisk(): void {
 }
 
 /**
- * Check if GrowthBook operations should be enabled
+ * 检查是否应启用 GrowthBook 操作。
  */
 function isGrowthBookEnabled(): boolean {
-  // GrowthBook depends on direct API event logging.
+  // GrowthBook 依赖直接 API 事件日志。
   return isZyEventLoggingEnabled()
 }
 
 /**
- * Hostname of ZY_CODE_BASE_URL when it points at a non-Anthropic proxy.
+ * ZY_CODE_BASE_URL 指向非 Anthropic proxy 时的 hostname。
  *
- * Enterprise-proxy deployments (Epic, Marble, etc.) typically use
- * apiKeyHelper auth, which means isAuthEnabled() returns false and
- * organizationUUID/accountUUID/email are all absent from GrowthBook
- * attributes. Without this, there's no stable attribute to target them on
- * — only per-device IDs. See src/utils/auth.ts isAuthEnabled().
+ * 企业 proxy 部署（Epic、Marble 等）通常使用 apiKeyHelper 鉴权，因此
+ * isAuthEnabled() 返回 false，GrowthBook 属性中也没有
+ * organizationUUID/accountUUID/email。若不补充此值，就只剩每设备 ID，
+ * 无法使用稳定属性进行定向。参见 src/utils/auth.ts 的 isAuthEnabled()。
  *
- * Returns undefined for unset/default (api.anthropic.com) so the attribute
- * is absent for direct-API users. Hostname only — no path/query/creds.
+ * 未设置或采用默认值 api.anthropic.com 时返回 undefined，使直接 API 用户不带该属性。
+ * 仅返回 hostname，不含 path、query 或凭据。
  */
 export function getApiBaseUrlHost(): string | undefined {
   const baseUrl = process.env.ZY_CODE_BASE_URL
@@ -440,13 +423,13 @@ export function getApiBaseUrlHost(): string | undefined {
 }
 
 /**
- * Get user attributes for GrowthBook from CoreUserData
+ * 从 CoreUserData 获取 GrowthBook 用户属性。
  */
 function getUserAttributes(): GrowthBookUserAttributes {
   const user = getUserForGrowthBook()
 
-  // For ants, always try to include email from OAuth config even if a custom API key is set.
-  // This ensures GrowthBook targeting by email works regardless of auth method.
+  // 对 ant 而言，即使设置了自定义 API key，也始终尝试包含 OAuth 配置中的 email，
+  // 确保无论采用哪种鉴权方式，GrowthBook 都能按 email 定向。
   let email = user.email
   if (!email && isInternalBuild()) {
     email = getGlobalConfig().oauthAccount?.emailAddress
@@ -476,7 +459,7 @@ function getUserAttributes(): GrowthBookUserAttributes {
 }
 
 /**
- * Get or create the GrowthBook client instance
+ * 获取或创建 GrowthBook client 实例。
  */
 const getGrowthBookClient = memoize(
   (): { client: GrowthBook; initialized: Promise<void> } | null => {
@@ -505,18 +488,18 @@ const getGrowthBookClient = memoize(
     const hasAuth = !authHeaders.error
     clientCreatedWithAuth = hasAuth
 
-    // Capture in local variable so the init callback operates on THIS client,
-    // not a later client if reinitialization happens before init completes
+    // 保存到局部变量，确保 init callback 操作的是当前 client，而非 init 完成前
+    // 发生重新初始化后创建的新 client。
     const thisClient = new GrowthBook({
       apiHost: baseUrl,
       clientKey,
       attributes,
       remoteEval: true,
-      // Re-fetch when user ID or org changes (org change = login to different org)
+      // user ID 或组织变化时重新获取；组织变化表示登录了其他组织。
       cacheKeyAttributes: ['id', 'organizationUUID'],
-      // Add auth headers if available
+      // 有可用鉴权 header 时添加。
       ...(authHeaders.error ? {} : { apiHostRequestHeaders: authHeaders.headers }),
-      // Debug logging for Ants
+      // 供 Ant 调试的日志。
       ...(isInternalBuild()
         ? {
             log: (msg: string, ctx: Record<string, unknown>) => {
@@ -528,8 +511,8 @@ const getGrowthBookClient = memoize(
     client = thisClient
 
     if (!hasAuth) {
-      // No auth available yet — skip HTTP init, rely on disk-cached values.
-      // initializeGrowthBook() will reset and re-create with auth when available.
+      // 尚无可用鉴权，跳过 HTTP init 并使用磁盘缓存值。鉴权可用后，
+      // initializeGrowthBook() 会重置并带鉴权重新创建。
       return { client: thisClient, initialized: Promise.resolve() }
     }
 
@@ -588,7 +571,7 @@ const getGrowthBookClient = memoize(
     //   })
     const initialized = Promise.resolve()
 
-    // Register cleanup handlers for graceful shutdown (named refs so resetGrowthBook can remove them)
+    // 注册用于优雅关闭的 cleanup handler；使用具名引用，以便 resetGrowthBook 移除。
     currentBeforeExitHandler = () => client?.destroy()
     currentExitHandler = () => client?.destroy()
     process.on('beforeExit', currentBeforeExitHandler)
@@ -599,7 +582,7 @@ const getGrowthBookClient = memoize(
 )
 
 /**
- * Initialize GrowthBook client (blocks until ready)
+ * 初始化 GrowthBook client，并阻塞至就绪。
  */
 export const initializeGrowthBook = memoize(async (): Promise<GrowthBook | null> => {
   let clientWrapper = getGrowthBookClient()
@@ -618,8 +601,8 @@ export const initializeGrowthBook = memoize(async (): Promise<GrowthBook | null>
         if (isInternalBuild()) {
           logForDebugging('GrowthBook: Auth became available after client creation, reinitializing')
         }
-        // Use resetGrowthBook to properly destroy old client and stop periodic refresh
-        // This prevents double-init where old client's init promise continues running
+        // 使用 resetGrowthBook 正确销毁旧 client 并停止周期刷新，
+        // 避免旧 client 的 init Promise 仍在运行而导致重复初始化。
         resetGrowthBook()
         clientWrapper = getGrowthBookClient()
         if (!clientWrapper) {
@@ -631,23 +614,22 @@ export const initializeGrowthBook = memoize(async (): Promise<GrowthBook | null>
 
   await clientWrapper.initialized
 
-  // Set up periodic refresh after successful initialization
-  // This is called here (not separately) so it's always re-established after any reinit
+  // 初始化成功后设置周期刷新。此处统一调用，确保每次重新初始化后都会恢复。
   setupPeriodicGrowthBookRefresh()
 
   return clientWrapper.client
 })
 
 /**
- * Get a feature value with a default fallback - blocks until initialized.
- * @internal Used by both deprecated and cached functions.
+ * 获取功能值，并以默认值 fallback；阻塞至初始化完成。
+ * @internal 由 deprecated 函数和缓存函数共同使用。
  */
 async function getFeatureValueInternal<T>(
   feature: string,
   defaultValue: T,
   logExposure: boolean,
 ): Promise<T> {
-  // Check env var overrides first (for eval harnesses)
+  // 优先检查环境变量覆盖值，供 eval harness 使用。
   const overrides = getEnvOverrides()
   if (overrides && feature in overrides) {
     return overrides[feature] as T
@@ -666,7 +648,7 @@ async function getFeatureValueInternal<T>(
     return defaultValue
   }
 
-  // Use cached remote eval values if available (workaround for SDK bug)
+  // 有缓存的远程评估值时优先使用，以规避 SDK bug。
   let result: T
   if (remoteEvalFeatureValues.has(feature)) {
     result = remoteEvalFeatureValues.get(feature) as T
@@ -674,7 +656,7 @@ async function getFeatureValueInternal<T>(
     result = growthBookClient.getFeatureValue(feature, defaultValue) as T
   }
 
-  // Log experiment exposure using stored experiment data
+  // 使用已保存的实验数据记录实验曝光。
   if (logExposure) {
     logExposureForFeature(feature)
   }
@@ -686,23 +668,21 @@ async function getFeatureValueInternal<T>(
 }
 
 /**
- * @deprecated Use getFeatureValue_CACHED_MAY_BE_STALE instead, which is non-blocking.
- * This function blocks on GrowthBook initialization which can slow down startup.
+ * @deprecated 请改用非阻塞的 getFeatureValue_CACHED_MAY_BE_STALE。
+ * 此函数会等待 GrowthBook 初始化，可能拖慢启动。
  */
 export async function getFeatureValue_DEPRECATED<T>(feature: string, defaultValue: T): Promise<T> {
   return getFeatureValueInternal(feature, defaultValue, true)
 }
 
 /**
- * Get a feature value from disk cache immediately. Pure read — disk is
- * populated by syncRemoteEvalToDisk on every successful payload (init +
- * periodic refresh), not by this function.
+ * 立即从磁盘缓存获取功能值。此函数只读；每次 payload 成功（init 和周期刷新）时，
+ * 磁盘由 syncRemoteEvalToDisk 填充。
  *
- * This is the preferred method for startup-critical paths and sync contexts.
- * The value may be stale if the cache was written by a previous process.
+ * 这是启动关键路径和同步上下文的首选方式。若缓存由此前进程写入，值可能已过期。
  */
 export function getFeatureValue_CACHED_MAY_BE_STALE<T>(feature: string, defaultValue: T): T {
-  // Check env var overrides first (for eval harnesses)
+  // 优先检查环境变量覆盖值，供 eval harness 使用。
   const overrides = getEnvOverrides()
   if (overrides && feature in overrides) {
     return overrides[feature] as T
@@ -716,23 +696,22 @@ export function getFeatureValue_CACHED_MAY_BE_STALE<T>(feature: string, defaultV
     return defaultValue
   }
 
-  // Log experiment exposure if data is available, otherwise defer until after init
+  // 有数据时记录实验曝光，否则延迟到 init 后处理。
   if (experimentDataByFeature.has(feature)) {
     logExposureForFeature(feature)
   } else {
     pendingExposures.add(feature)
   }
 
-  // In-memory payload is authoritative once processRemoteEvalPayload has run.
-  // Disk is also fresh by then (syncRemoteEvalToDisk runs synchronously inside
-  // init), so this is correctness-equivalent to the disk read below — but it
-  // skips the config JSON parse and is what onGrowthBookRefresh subscribers
-  // depend on to read fresh values the instant they're notified.
+  // processRemoteEvalPayload 运行后，内存 payload 即为权威值。此时磁盘也已更新
+  //（syncRemoteEvalToDisk 在 init 内同步运行），因此正确性等同于下方磁盘读取，
+  // 但可跳过配置 JSON 解析；onGrowthBookRefresh 订阅方依靠此路径在收到通知时
+  // 立即读取新值。
   if (remoteEvalFeatureValues.has(feature)) {
     return remoteEvalFeatureValues.get(feature) as T
   }
 
-  // Fall back to disk cache (survives across process restarts)
+  // 退回可跨进程重启保留的磁盘缓存。
   try {
     const cached = getGlobalConfig().cachedGrowthBookFeatures?.[feature]
     return cached !== undefined ? (cached as T) : defaultValue
@@ -742,20 +721,20 @@ export function getFeatureValue_CACHED_MAY_BE_STALE<T>(feature: string, defaultV
 }
 
 /**
- * Check a Statsig feature gate value via GrowthBook, with fallback to Statsig cache.
+ * 通过 GrowthBook 检查 Statsig feature gate，并可退回 Statsig 缓存。
  *
- * **MIGRATION ONLY**: This function is for migrating existing Statsig gates to GrowthBook.
- * For new features, use `getFeatureValue_CACHED_MAY_BE_STALE()` instead.
+ * **仅用于迁移**：此函数用于将已有 Statsig gate 迁移到 GrowthBook。
+ * 新功能请使用 `getFeatureValue_CACHED_MAY_BE_STALE()`。
  *
- * - Checks GrowthBook disk cache first
- * - Falls back to Statsig's cachedStatsigGates during migration
- * - The value may be stale if the cache hasn't been updated recently
+ * - 优先检查 GrowthBook 磁盘缓存
+ * - 迁移期间退回 Statsig 的 cachedStatsigGates
+ * - 缓存近期未更新时，值可能已过期
  *
- * @deprecated Use getFeatureValue_CACHED_MAY_BE_STALE() for new code. This function
- * exists only to support migration of existing Statsig gates.
+ * @deprecated 新代码请使用 getFeatureValue_CACHED_MAY_BE_STALE()。
+ * 此函数仅用于支持已有 Statsig gate 的迁移。
  */
 export function checkStatsigFeatureGate_CACHED_MAY_BE_STALE(gate: string): boolean {
-  // Check env var overrides first (for eval harnesses)
+  // 优先检查环境变量覆盖值，供 eval harness 使用。
   const overrides = getEnvOverrides()
   if (overrides && gate in overrides) {
     return Boolean(overrides[gate])
@@ -769,38 +748,36 @@ export function checkStatsigFeatureGate_CACHED_MAY_BE_STALE(gate: string): boole
     return false
   }
 
-  // Log experiment exposure if data is available, otherwise defer until after init
+  // 有数据时记录实验曝光，否则延迟到 init 后处理。
   if (experimentDataByFeature.has(gate)) {
     logExposureForFeature(gate)
   } else {
     pendingExposures.add(gate)
   }
 
-  // Return cached value immediately from disk
-  // First check GrowthBook cache, then fall back to Statsig cache for migration
+  // 立即返回磁盘缓存值：先检查 GrowthBook 缓存，再在迁移期间退回 Statsig 缓存。
   const config = getGlobalConfig()
   const gbCached = config.cachedGrowthBookFeatures?.[gate]
   if (gbCached !== undefined) {
     return Boolean(gbCached)
   }
-  // Fallback to Statsig cache for migration period
+  // 迁移期间退回 Statsig 缓存。
   return config.cachedStatsigGates?.[gate] ?? false
 }
 
 /**
- * Check a security restriction gate, waiting for re-init if in progress.
+ * 检查安全限制 gate；正在重新初始化时等待完成。
  *
- * Use this for security-critical gates where we need fresh values after auth changes.
+ * 用于鉴权变化后必须取得新值的安全关键 gate。
  *
  * Behavior:
- * - If GrowthBook is re-initializing (e.g., after login), waits for it to complete
- * - Otherwise, returns cached value immediately (Statsig cache first, then GrowthBook)
+ * - GrowthBook 正在重新初始化（如登录后）时等待完成
+ * - 否则立即返回缓存值，先查 Statsig，再查 GrowthBook
  *
- * Statsig cache is checked first as a safety measure for security-related checks:
- * if the Statsig cache indicates the gate is enabled, we honor it.
+ * 出于安全考虑，相关检查优先查看 Statsig 缓存；若其中表明 gate 已启用，则予以采用。
  */
 export async function checkSecurityRestrictionGate(gate: string): Promise<boolean> {
-  // Check env var overrides first (for eval harnesses)
+  // 优先检查环境变量覆盖值，供 eval harness 使用。
   const overrides = getEnvOverrides()
   if (overrides && gate in overrides) {
     return Boolean(overrides[gate])
@@ -814,44 +791,42 @@ export async function checkSecurityRestrictionGate(gate: string): Promise<boolea
     return false
   }
 
-  // If re-initialization is in progress, wait for it to complete
-  // This ensures we get fresh values after auth changes
+  // 正在重新初始化时等待完成，确保鉴权变化后取得新值。
   if (reinitializingPromise) {
     await reinitializingPromise
   }
 
-  // Check Statsig cache first - it may have correct value from previous logged-in session
+  // 优先检查 Statsig 缓存，其中可能保留上次登录会话的正确值。
   const config = getGlobalConfig()
   const statsigCached = config.cachedStatsigGates?.[gate]
   if (statsigCached !== undefined) {
     return Boolean(statsigCached)
   }
 
-  // Then check GrowthBook cache
+  // 随后检查 GrowthBook 缓存。
   const gbCached = config.cachedGrowthBookFeatures?.[gate]
   if (gbCached !== undefined) {
     return Boolean(gbCached)
   }
 
-  // No cache - return false (don't block on init for uncached gates)
+  // 无缓存时返回 false，不为未缓存 gate 阻塞等待 init。
   return false
 }
 
 /**
- * Check a boolean entitlement gate with fallback-to-blocking semantics.
+ * 以 fallback-to-blocking 语义检查布尔 entitlement gate。
  *
- * Fast path: if the disk cache already says `true`, return it immediately.
- * Slow path: if disk says `false`/missing, await GrowthBook init and fetch the
- * fresh server value (max ~5s). Disk is populated by syncRemoteEvalToDisk
- * inside init, so by the time the slow path returns, disk already has the
- * fresh value — no write needed here.
+ * 快速路径：磁盘缓存为 `true` 时立即返回。慢速路径：磁盘为 `false` 或缺失时，
+ * 等待 GrowthBook init 并获取服务端新值（最多约 5 秒）。init 内的
+ * syncRemoteEvalToDisk 会填充磁盘，因此慢速路径返回时磁盘已有新值，
+ * 此处无需再写入。
  *
- * Use for user-invoked features (e.g. /remote-control) that are gated on
- * subscription/org, where a stale `false` would unfairly block access but a
- * stale `true` is acceptable (the server is the real gatekeeper).
+ * 用于受订阅或组织限制、由用户主动调用的功能（如 /remote-control）。
+ * 陈旧的 `false` 会不合理地阻止访问，而陈旧的 `true` 可以接受，
+ * 因为服务端才是实际 gatekeeper。
  */
 export async function checkGate_CACHED_OR_BLOCKING(gate: string): Promise<boolean> {
-  // Check env var overrides first (for eval harnesses)
+  // 优先检查环境变量覆盖值，供 eval harness 使用。
   const overrides = getEnvOverrides()
   if (overrides && gate in overrides) {
     return Boolean(overrides[gate])
@@ -865,10 +840,10 @@ export async function checkGate_CACHED_OR_BLOCKING(gate: string): Promise<boolea
     return false
   }
 
-  // Fast path: disk cache already says true — trust it
+  // 快速路径：磁盘缓存已为 true，直接信任。
   const cached = getGlobalConfig().cachedGrowthBookFeatures?.[gate]
   if (cached === true) {
-    // Log experiment exposure if data is available, otherwise defer
+    // 有数据时记录实验曝光，否则延迟处理。
     if (experimentDataByFeature.has(gate)) {
       logExposureForFeature(gate)
     } else {
@@ -877,15 +852,15 @@ export async function checkGate_CACHED_OR_BLOCKING(gate: string): Promise<boolea
     return true
   }
 
-  // Slow path: disk says false/missing — may be stale, fetch fresh
+  // 慢速路径：磁盘值为 false 或缺失，可能已过期，获取新值。
   return getFeatureValueInternal(gate, false, true)
 }
 
 /**
- * Refresh GrowthBook after auth changes (login/logout).
+ * 鉴权变化（登录或登出）后刷新 GrowthBook。
  *
- * NOTE: This must destroy and recreate the client because GrowthBook's
- * apiHostRequestHeaders cannot be updated after client creation.
+ * 注意：必须销毁并重建 client，因为 GrowthBook 的 apiHostRequestHeaders
+ * 无法在 client 创建后更新。
  */
 export function refreshGrowthBookAfterAuthChange(): void {
   if (!isGrowthBookEnabled()) {
@@ -893,25 +868,21 @@ export function refreshGrowthBookAfterAuthChange(): void {
   }
 
   try {
-    // Reset the client completely to get fresh auth headers
-    // This is necessary because apiHostRequestHeaders can't be updated after creation
+    // 完全重置 client 以取得新鉴权 header；apiHostRequestHeaders 创建后无法更新。
     resetGrowthBook()
 
-    // resetGrowthBook cleared remoteEvalFeatureValues. If re-init below
-    // times out (hadFeatures=false) or short-circuits on !hasAuth (logout),
-    // the init-callback notify never fires — subscribers stay synced to the
-    // previous account's memoized state. Notify here so they re-read now
-    // (falls to disk cache). If re-init succeeds, they'll notify again with
-    // fresh values; if not, at least they're synced to the post-reset state.
+    // resetGrowthBook 已清空 remoteEvalFeatureValues。若下方重新初始化超时
+    //（hadFeatures=false）或因 !hasAuth（登出）而提前结束，init callback 的通知
+    // 永远不会触发，订阅方会继续同步到上一账号的 memoize 状态。此处主动通知，
+    // 让其立即重读（退回磁盘缓存）。重新初始化成功时会再次以新值通知；
+    // 即使失败，至少也会同步到重置后的状态。
     refreshed.emit()
 
-    // Reinitialize with fresh auth headers and attributes
-    // Track this promise so security gate checks can wait for it.
-    // .catch before .finally: initializeGrowthBook can reject if its sync
-    // helpers throw (getGrowthBookClient, getAuthHeaders, resetGrowthBook —
-    // clientWrapper.initialized itself has its own .catch so never rejects),
-    // and .finally re-settles with the original rejection — the sync
-    // try/catch below cannot catch async rejections.
+    // 使用新鉴权 header 和属性重新初始化，并跟踪此 Promise，供安全 gate 检查等待。
+    // .catch 必须放在 .finally 前：同步辅助函数（getGrowthBookClient、
+    // getAuthHeaders、resetGrowthBook）抛错时 initializeGrowthBook 可能拒绝；
+    // clientWrapper.initialized 自带 .catch，因此不会拒绝。finally 会按原拒绝状态
+    // 重新 settled，而下方同步 try/catch 无法捕获异步拒绝。
     reinitializingPromise = initializeGrowthBook()
       .catch((error) => {
         logError(toError(error))
@@ -929,11 +900,11 @@ export function refreshGrowthBookAfterAuthChange(): void {
 }
 
 /**
- * Reset GrowthBook client state (primarily for testing)
+ * 重置 GrowthBook client 状态，主要供测试使用。
  */
 export function resetGrowthBook(): void {
   stopPeriodicGrowthBookRefresh()
-  // Remove process handlers before destroying client to prevent accumulation
+  // 销毁 client 前移除进程 handler，防止累积。
   if (currentBeforeExitHandler) {
     process.off('beforeExit', currentBeforeExitHandler)
     currentBeforeExitHandler = null
@@ -956,7 +927,7 @@ export function resetGrowthBook(): void {
   envOverridesParsed = false
 }
 
-// Periodic refresh interval (matches Statsig's 6-hour interval)
+// 周期刷新间隔，与 Statsig 的 6 小时间隔一致。
 const GROWTHBOOK_REFRESH_INTERVAL_MS = !isInternalBuild()
   ? 6 * 60 * 60 * 1000 // 6 hours
   : 20 * 60 * 1000 // 20 min (for ants)
@@ -964,11 +935,11 @@ let refreshInterval: ReturnType<typeof setInterval> | null = null
 let beforeExitListener: (() => void) | null = null
 
 /**
- * Light refresh - re-fetch features from server without recreating client.
- * Use this for periodic refresh when auth headers haven't changed.
+ * 轻量刷新：不重建 client，直接从服务器重新获取功能。
+ * 鉴权 header 未变化时用于周期刷新。
  *
- * Unlike refreshGrowthBookAfterAuthChange() which destroys and recreates the client,
- * this preserves client state and just fetches fresh feature values.
+ * 与销毁并重建 client 的 refreshGrowthBookAfterAuthChange() 不同，
+ * 此函数保留 client 状态，只获取新的功能值。
  */
 export async function refreshGrowthBookFeatures(): Promise<void> {
   if (!isGrowthBookEnabled()) {
@@ -1024,18 +995,17 @@ export async function refreshGrowthBookFeatures(): Promise<void> {
 }
 
 /**
- * Set up periodic refresh of GrowthBook features.
- * Uses light refresh (refreshGrowthBookFeatures) to re-fetch without recreating client.
+ * 设置 GrowthBook 功能的周期刷新。使用轻量刷新 refreshGrowthBookFeatures，
+ * 无需重建 client 即可重新获取。
  *
- * Call this after initialization for long-running sessions to ensure
- * feature values stay fresh. Matches Statsig's 6-hour refresh interval.
+ * 长时间会话应在初始化后调用，确保功能值保持最新。间隔与 Statsig 的 6 小时一致。
  */
 export function setupPeriodicGrowthBookRefresh(): void {
   if (!isGrowthBookEnabled()) {
     return
   }
 
-  // Clear any existing interval to avoid duplicates
+  // 清除已有 interval，避免重复。
   if (refreshInterval) {
     clearInterval(refreshInterval)
   }
@@ -1043,10 +1013,10 @@ export function setupPeriodicGrowthBookRefresh(): void {
   refreshInterval = setInterval(() => {
     void refreshGrowthBookFeatures()
   }, GROWTHBOOK_REFRESH_INTERVAL_MS)
-  // Allow process to exit naturally - this timer shouldn't keep the process alive
+  // 允许进程自然退出，此计时器不应阻止进程结束。
   refreshInterval.unref?.()
 
-  // Register cleanup listener only once
+  // cleanup listener 只注册一次。
   if (!beforeExitListener) {
     beforeExitListener = () => {
       stopPeriodicGrowthBookRefresh()
@@ -1056,7 +1026,7 @@ export function setupPeriodicGrowthBookRefresh(): void {
 }
 
 /**
- * Stop periodic refresh (for testing or cleanup)
+ * 停止周期刷新，供测试或清理使用。
  */
 export function stopPeriodicGrowthBookRefresh(): void {
   if (refreshInterval) {
@@ -1070,14 +1040,13 @@ export function stopPeriodicGrowthBookRefresh(): void {
 }
 
 // ============================================================================
-// Dynamic Config Functions
-// These are semantic wrappers around feature functions for Statsig API parity.
-// In GrowthBook, dynamic configs are just features with object values.
+// Dynamic Config 函数。这些是对功能函数的语义包装，用于与 Statsig API 对齐。
+// 在 GrowthBook 中，dynamic config 就是值为对象的功能。
 // ============================================================================
 
 /**
- * Get a dynamic config value - blocks until GrowthBook is initialized.
- * Prefer getFeatureValue_CACHED_MAY_BE_STALE for startup-critical paths.
+ * 获取 dynamic config 值，并阻塞至 GrowthBook 初始化完成。
+ * 启动关键路径优先使用 getFeatureValue_CACHED_MAY_BE_STALE。
  */
 export async function getDynamicConfig_BLOCKS_ON_INIT<T>(
   configName: string,
@@ -1087,11 +1056,11 @@ export async function getDynamicConfig_BLOCKS_ON_INIT<T>(
 }
 
 /**
- * Get a dynamic config value from disk cache immediately. Pure read — see
+ * 立即从磁盘缓存读取 dynamic config 值。此函数只读，另见
  * getFeatureValue_CACHED_MAY_BE_STALE.
- * This is the preferred method for startup-critical paths and sync contexts.
+ * 这是启动关键路径和同步上下文的首选方式。
  *
- * In GrowthBook, dynamic configs are just features with object values.
+ * 在 GrowthBook 中，dynamic config 就是值为对象的功能。
  */
 export function getDynamicConfig_CACHED_MAY_BE_STALE<T>(configName: string, defaultValue: T): T {
   return getFeatureValue_CACHED_MAY_BE_STALE(configName, defaultValue)

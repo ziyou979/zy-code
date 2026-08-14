@@ -116,7 +116,7 @@ function flushLogs(): void {
     const line = logsToWrite.map((entry) => JSON.stringify(entry)).join('\n')
     appendFileSync(TELEMETRY_LOG_FILE, `${line}\n`, 'utf8')
   } catch {
-    // If we can't write to the local file, silently drop the events.
+    // 无法写入本地文件时静默丢弃事件。
   }
 }
 
@@ -290,7 +290,7 @@ getUserBucket = memoize((): number => {
 })
 
 function getFlushIntervalMs(): number {
-  // Allow tests to override to not block on the default flush interval.
+  // 允许测试覆盖此值，避免等待默认刷新间隔。
   return (
     parseInt(process.env.ZY_CODE_DATADOG_FLUSH_INTERVAL_MS || '', 10) || DEFAULT_FLUSH_INTERVAL_MS
   )

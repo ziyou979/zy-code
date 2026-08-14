@@ -6,11 +6,10 @@ import { getPlatform } from '../services/shell/platform.js'
 import { posixPathToWindowsPath } from '../services/shell/windowsPaths.js'
 
 /**
- * Expands a path that may contain tilde notation (~) to an absolute path.
+ * 将可能含波浪号（~）的路径展开为绝对路径。
  *
- * On Windows, POSIX-style paths (e.g., `/c/Users/...`) are automatically converted
- * to Windows format (e.g., `C:\Users\...`). The function always returns paths in
- * the native format for the current platform.
+ * 在 Windows 上，POSIX 风格路径（如 `/c/Users/...`）会自动转换为 Windows 格式
+ *（如 `C:\Users\...`）。函数始终返回当前平台的原生路径格式。
  *
  * @param path - The path to expand, may contain:
  *   - `~` - expands to user's home directory
@@ -30,10 +29,10 @@ import { posixPathToWindowsPath } from '../services/shell/windowsPaths.js'
  * expandPath('/absolute/path') // '/absolute/path'
  */
 export function expandPath(path: string, baseDir?: string): string {
-  // Set default baseDir to getCwd() if not provided
+  // 未提供 baseDir 时默认使用 getCwd()
   const actualBaseDir = baseDir ?? getCwd() ?? getFsImplementation().cwd()
 
-  // Input validation
+  // 输入校验
   if (typeof path !== 'string') {
     throw new TypeError(`Path must be a string, received ${typeof path}`)
   }
@@ -42,18 +41,18 @@ export function expandPath(path: string, baseDir?: string): string {
     throw new TypeError(`Base directory must be a string, received ${typeof actualBaseDir}`)
   }
 
-  // Security: Check for null bytes
+  // 安全检查：拒绝 null byte
   if (path.includes('\0') || actualBaseDir.includes('\0')) {
     throw new Error('Path contains null bytes')
   }
 
-  // Handle empty or whitespace-only paths
+  // 处理空路径或仅含空白的路径
   const trimmedPath = path.trim()
   if (!trimmedPath) {
     return normalize(actualBaseDir).normalize('NFC')
   }
 
-  // Handle home directory notation
+  // 处理 home 目录表示法
   if (trimmedPath === '~') {
     return homedir().normalize('NFC')
   }
@@ -62,51 +61,49 @@ export function expandPath(path: string, baseDir?: string): string {
     return join(homedir(), trimmedPath.slice(2)).normalize('NFC')
   }
 
-  // On Windows, convert POSIX-style paths (e.g., /c/Users/...) to Windows format
+  // Windows 上将 POSIX 风格路径（如 /c/Users/...）转换为 Windows 格式
   let processedPath = trimmedPath
   if (getPlatform() === 'windows' && trimmedPath.match(/^\/[a-z]\//i)) {
     try {
       processedPath = posixPathToWindowsPath(trimmedPath)
     } catch {
-      // If conversion fails, use original path
+      // 转换失败时使用原始路径
       processedPath = trimmedPath
     }
   }
 
-  // Handle absolute paths
+  // 处理绝对路径
   if (isAbsolute(processedPath)) {
     return normalize(processedPath).normalize('NFC')
   }
 
-  // Handle relative paths
+  // 处理相对路径
   return resolve(actualBaseDir, processedPath).normalize('NFC')
 }
 
 /**
- * Converts an absolute path to a relative path from cwd, to save tokens in
- * tool output. If the path is outside cwd (relative path would start with ..),
- * returns the absolute path unchanged so it stays unambiguous.
+ * 将绝对路径转换为相对于 cwd 的路径，以节省 tool 输出 token。
+ * 路径位于 cwd 外部（相对路径会以 .. 开头）时原样返回绝对路径，避免歧义。
  *
  * @param absolutePath - The absolute path to relativize
  * @returns Relative path if under cwd, otherwise the original absolute path
  */
 export function toRelativePath(absolutePath: string): string {
   const relativePath = relative(getCwd(), absolutePath)
-  // If the relative path would go outside cwd (starts with ..), keep absolute
+  // 相对路径会越出 cwd（以 .. 开头）时保留绝对路径
   return relativePath.startsWith('..') ? absolutePath : relativePath
 }
 
 /**
- * Gets the directory path for a given file or directory path.
- * If the path is a directory, returns the path itself.
- * If the path is a file or doesn't exist, returns the parent directory.
+ * 获取给定文件或目录路径对应的目录。路径本身是目录时原样返回；
+ * 路径是文件或不存在时返回其父目录。
  *
  * @param path - The file or directory path
  * @returns The directory path
  */
 export function getDirectoryForPath(path: string): string {
   const absolutePath = expandPath(path)
-  // SECURITY: Skip filesystem operations for UNC paths to prevent NTLM credential leaks.
+  // 安全边界：跳过 UNC 路径的文件系统操作，防止 NTLM 凭据泄漏。
   if (absolutePath.startsWith('\\\\') || absolutePath.startsWith('//')) {
     return dirname(absolutePath)
   }
@@ -116,14 +113,14 @@ export function getDirectoryForPath(path: string): string {
       return absolutePath
     }
   } catch {
-    // Path doesn't exist or can't be accessed
+    // 路径不存在或无法访问
   }
-  // If it's not a directory or doesn't exist, return the parent directory
+  // 路径不是目录或不存在时返回父目录
   return dirname(absolutePath)
 }
 
 /**
- * Checks if a path contains directory traversal patterns that navigate to parent directories.
+ * 检查路径是否包含向父目录跳转的目录遍历模式。
  *
  * @param path - The path to check for traversal patterns
  * @returns true if the path contains traversal (e.g., '../', '..\', or ends with '..')
@@ -132,22 +129,21 @@ export function containsPathTraversal(path: string): boolean {
   return /(?:^|[\\/])\.\.(?:[\\/]|$)/.test(path)
 }
 
-// Re-export from the shared zero-dep source.
+// 从共享的零依赖来源重新导出。
 export { sanitizePath } from '../services/session-storage/sessionStoragePortable.js'
 
 /**
- * Normalizes a path for use as a JSON config key.
- * On Windows, paths can have inconsistent separators (C:\path vs C:/path)
- * depending on whether they come from git, Node.js APIs, or user input.
- * This normalizes to forward slashes for consistent JSON serialization.
+ * 归一化路径以用作 JSON 配置键。Windows 路径可能因来自 git、Node.js API
+ * 或用户输入而使用不同分隔符（C:\path 或 C:/path）；这里统一为正斜杠，
+ * 确保 JSON 序列化结果一致。
  *
  * @param path - The path to normalize
  * @returns The normalized path with consistent forward slashes
  */
 export function normalizePathForConfigKey(path: string): string {
-  // First use Node's normalize to resolve . and .. segments
+  // 先用 Node 的 normalize 解析 . 和 .. 段
   const normalized = normalize(path)
-  // Then convert all backslashes to forward slashes for consistent JSON keys
-  // This is safe because forward slashes work in Windows paths for most operations
+  // 再把所有反斜杠转换为正斜杠，以保持 JSON 键一致；Windows 上多数路径操作
+  // 也接受正斜杠，因此这样转换是安全的
   return normalized.replace(/\\/g, '/')
 }

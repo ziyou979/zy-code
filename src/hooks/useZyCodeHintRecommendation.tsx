@@ -1,11 +1,10 @@
 /**
- * Surfaces plugin-install prompts driven by `<zy-code-hint />` tags
- * that CLIs/SDKs emit to stderr. See docs/zy-code-hints.md.
+ * 展示由 CLI/SDK 写入 stderr 的 `<zy-code-hint />` 标签所触发的插件安装提示。
+ * 详见 docs/zy-code-hints.md。
  *
- * Show-once semantics: each plugin is prompted for at most once ever,
- * recorded in config regardless of yes/no. The pre-store gate in
- * maybeRecordPluginHint already dropped installed/shown/capped hints, so
- * anything that reaches this hook is worth resolving.
+ * 每个插件最多提示一次，无论用户选择 yes 还是 no 都会记入配置。
+ * maybeRecordPluginHint 在写入前已经滤掉已安装、已展示或超过上限的提示，
+ * 因此传到此 hook 的提示都值得继续解析。
  */
 
 import * as React from 'react'

@@ -247,7 +247,7 @@ export async function* queryModel(
 
     startSessionActivity('api_call')
     try {
-      // stream in and accumulate state
+      // 接收 stream 并累积状态
       let isFirstChunk = true
       let streamEventCount = 0
       let lastStreamEventType = 'none'
@@ -380,7 +380,7 @@ export async function* queryModel(
             } else {
               switch ((delta as { type: string }).type) {
                 case 'citations_delta':
-                  // TODO: handle citations
+                  // TODO：处理 citation
                   break
                 case 'input_json_delta':
                   if (contentBlock.type !== 'tool_call') {
@@ -476,7 +476,7 @@ export async function* queryModel(
           case 'chunk_stop': {
             const chunkStopEvent = part as unknown as ChunkStopEvent
             const streamExtras = chunkStopEvent.extras
-            // Always overwrite with the latest value.
+            // 始终用最新值覆盖。
             if (isInternalBuild() && 'research' in part) {
               research = (part as { research: unknown }).research
             }

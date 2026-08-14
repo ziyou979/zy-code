@@ -43,7 +43,7 @@ export function hasConsoleBillingAccess(): boolean {
   )
 }
 
-// Mock billing access for /mock-limits testing (set by mockRateLimits.ts)
+// 用于 /mock-limits 测试的模拟 billing 权限，由 mockRateLimits.ts 设置
 let mockBillingAccessOverride: boolean | null = null
 
 export function setMockBillingAccessOverride(value: boolean | null): void {
@@ -51,7 +51,7 @@ export function setMockBillingAccessOverride(value: boolean | null): void {
 }
 
 export function hasZyAiBillingAccess(): boolean {
-  // Check for mock billing access first (for /mock-limits testing)
+  // 优先检查模拟 billing 权限，供 /mock-limits 测试使用
   if (mockBillingAccessOverride !== null) {
     return mockBillingAccessOverride
   }

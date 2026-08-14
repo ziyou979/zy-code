@@ -1,13 +1,13 @@
 /**
- * Hook for LSP plugin recommendations
+ * 用于推荐 LSP 插件的 hook
  *
- * Detects file edits and recommends LSP plugins when:
- * - File extension matches an LSP plugin
- * - LSP binary is already installed on the system
- * - Plugin is not already installed
- * - User hasn't disabled recommendations
+ * 检测文件编辑，并在满足以下条件时推荐 LSP 插件：
+ * - 文件扩展名与某个 LSP 插件匹配
+ * - 系统中已安装对应的 LSP binary
+ * - 插件尚未安装
+ * - 用户未关闭推荐
  *
- * Only shows one recommendation per session.
+ * 每个会话只显示一次推荐。
  */
 
 import { extname, join } from 'node:path'
@@ -33,8 +33,8 @@ import {
   usePluginRecommendationBase,
 } from './usePluginRecommendationBase.js'
 
-// Threshold for detecting timeout vs explicit dismiss (ms)
-// Menu auto-dismisses at 30s, so anything over 28s is likely timeout
+// 区分超时和用户主动关闭的阈值（毫秒）
+// 菜单会在 30 秒时自动关闭，因此超过 28 秒基本可视为超时
 const TIMEOUT_THRESHOLD_MS = 28_000
 export type LspRecommendationState = {
   pluginId: string

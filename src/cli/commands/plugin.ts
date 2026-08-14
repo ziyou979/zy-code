@@ -16,7 +16,7 @@ export function registerPluginCommands(program: Command<any, any, any>): void {
   // 在所有插件/市场子命令上的隐藏标志，以 targeting cowork_plugins。
   const coworkOption = () => new Option('--cowork', 'Use cowork_plugins directory').hideHelp()
 
-  // Plugin validate command
+  // Plugin 校验命令
   const pluginCmd = program
     .command('plugin')
     .alias('plugins')
@@ -38,7 +38,7 @@ export function registerPluginCommands(program: Command<any, any, any>): void {
       },
     )
 
-  // Plugin list command
+  // Plugin 列表命令
   pluginCmd
     .command('list')
     .description('List installed plugins')
@@ -50,7 +50,7 @@ export function registerPluginCommands(program: Command<any, any, any>): void {
       await pluginListHandler(options)
     })
 
-  // Marketplace subcommands
+  // Marketplace 子命令
   const marketplaceCmd = pluginCmd
     .command('marketplace')
     .description('Manage ZY Code marketplaces')
@@ -121,7 +121,7 @@ export function registerPluginCommands(program: Command<any, any, any>): void {
       },
     )
 
-  // Plugin install command
+  // Plugin 安装命令
   pluginCmd
     .command('install <plugin>')
     .alias('i')
@@ -143,7 +143,7 @@ export function registerPluginCommands(program: Command<any, any, any>): void {
       },
     )
 
-  // Plugin uninstall command
+  // Plugin 卸载命令
   pluginCmd
     .command('uninstall <plugin>')
     .alias('remove')
@@ -169,7 +169,7 @@ export function registerPluginCommands(program: Command<any, any, any>): void {
       },
     )
 
-  // Plugin enable command
+  // Plugin 启用命令
   pluginCmd
     .command('enable <plugin>')
     .description('Enable a disabled plugin')
@@ -191,7 +191,7 @@ export function registerPluginCommands(program: Command<any, any, any>): void {
       },
     )
 
-  // Plugin disable command
+  // Plugin 禁用命令
   pluginCmd
     .command('disable [plugin]')
     .description('Disable an enabled plugin')
@@ -215,7 +215,7 @@ export function registerPluginCommands(program: Command<any, any, any>): void {
       },
     )
 
-  // Plugin update command
+  // Plugin 更新命令
   pluginCmd
     .command('update <plugin>')
     .description('Update a plugin to the latest version (restart required to apply)')

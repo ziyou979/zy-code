@@ -6,11 +6,11 @@ import { logForDebugging } from '../services/infra/debug.js'
 export const HISTORY_PAGE_SIZE = 100
 
 export type HistoryPage = {
-  /** Chronological order within the page. */
+  /** 当前页内按时间先后排列。 */
   events: WireMessage[]
-  /** Oldest event ID in this page → before_id cursor for next-older page. */
+  /** 当前页最早的事件 ID，作为查询更早一页时的 before_id 游标。 */
   firstId: string | null
-  /** true = older events exist. */
+  /** 为 true 时表示仍有更早的事件。 */
   hasMore: boolean
 }
 
@@ -26,7 +26,7 @@ export type HistoryAuthCtx = {
   headers: Record<string, string>
 }
 
-/** Prepare auth + headers + base URL once, reuse across pages. */
+/** 一次性准备认证信息、headers 和 base URL，供各页复用。 */
 export async function createHistoryAuthCtx(sessionId: string): Promise<HistoryAuthCtx> {
   const { accessToken, orgUUID } = await prepareApiRequest()
   return {
@@ -64,8 +64,8 @@ async function fetchPage(
 }
 
 /**
- * Newest page: last `limit` events, chronological, via anchor_to_latest.
- * has_more=true means older events exist.
+ * 通过 anchor_to_latest 获取最新一页，即最后 `limit` 个事件，并按时间先后排列。
+ * has_more=true 表示仍有更早的事件。
  */
 export async function fetchLatestEvents(
   ctx: HistoryAuthCtx,
@@ -74,7 +74,7 @@ export async function fetchLatestEvents(
   return fetchPage(ctx, { limit, anchor_to_latest: true }, 'fetchLatestEvents')
 }
 
-/** Older page: events immediately before `beforeId` cursor. */
+/** 获取 `beforeId` 游标之前紧邻的一页事件。 */
 export async function fetchOlderEvents(
   ctx: HistoryAuthCtx,
   beforeId: string,

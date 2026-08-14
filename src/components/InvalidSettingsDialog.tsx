@@ -11,8 +11,8 @@ type Props = {
 }
 
 /**
- * Dialog shown when settings files have validation errors.
- * User must choose to continue (skipping invalid files) or exit to fix them.
+ * settings 文件存在校验错误时显示的 dialog。
+ * 用户必须选择继续（跳过无效文件）或退出并修复。
  */
 export function InvalidSettingsDialog({ settingsErrors, onContinue, onExit }: Props) {
   const handleSelect = function handleSelect(value: string) {

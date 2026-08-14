@@ -27,11 +27,11 @@ type LRUMemoizedFunction<Args extends unknown[], Result> = {
 }
 
 /**
- * Creates a memoized function that returns cached values while refreshing in parallel.
- * This implements a write-through cache pattern:
- * - If cache is fresh, return immediately
- * - If cache is stale, return the stale value but refresh it in the background
- * - If no cache exists, block and compute the value
+ * 创建在并行刷新期间返回缓存值的 memoized 函数。
+ * 实现 write-through cache 模式：
+ * - 缓存新鲜时立即返回
+ * - 缓存过期时返回旧值，同时在后台刷新
+ * - 没有缓存时阻塞并计算值
  *
  * @param f The function to memoize
  * @param cacheLifetimeMs The lifetime of cached values in milliseconds
@@ -39,7 +39,7 @@ type LRUMemoizedFunction<Args extends unknown[], Result> = {
  */
 export function memoizeWithTTL<Args extends unknown[], Result>(
   f: (...args: Args) => Result,
-  cacheLifetimeMs: number = 5 * 60 * 1000, // Default 5 minutes
+  cacheLifetimeMs: number = 5 * 60 * 1000, // 默认 5 分钟
 ): MemoizedFunction<Args, Result> {
   const cache = new Map<string, CacheEntry<Result>>()
 
@@ -48,7 +48,7 @@ export function memoizeWithTTL<Args extends unknown[], Result>(
     const cached = cache.get(key)
     const now = Date.now()
 
-    // Populate cache
+    // 填充缓存
     if (!cached) {
       const value = f(...args)
       cache.set(key, {
@@ -59,9 +59,9 @@ export function memoizeWithTTL<Args extends unknown[], Result>(
       return value
     }
 
-    // If we have a stale cache entry and it's not already refreshing
+    // 缓存项已过期且尚未刷新时
     if (cached && now - cached.timestamp > cacheLifetimeMs && !cached.refreshing) {
-      // Mark as refreshing to prevent multiple parallel refreshes
+      // 标记为刷新中，避免多次并行刷新
       cached.refreshing = true
 
       // Schedule async refresh (non-blocking). Both .then and .catch are
@@ -87,14 +87,14 @@ export function memoizeWithTTL<Args extends unknown[], Result>(
           }
         })
 
-      // Return the stale value immediately
+      // 立即返回旧值
       return cached.value
     }
 
     return cache.get(key)!.value
   }
 
-  // Add cache clear method
+  // 添加缓存清理方法
   memoized.cache = {
     clear: () => cache.clear(),
   }
@@ -103,11 +103,11 @@ export function memoizeWithTTL<Args extends unknown[], Result>(
 }
 
 /**
- * Creates a memoized async function that returns cached values while refreshing in parallel.
- * This implements a write-through cache pattern for async functions:
- * - If cache is fresh, return immediately
- * - If cache is stale, return the stale value but refresh it in the background
- * - If no cache exists, block and compute the value
+ * 创建在并行刷新期间返回缓存值的异步 memoized 函数。
+ * 为异步函数实现 write-through cache 模式：
+ * - 缓存新鲜时立即返回
+ * - 缓存过期时返回旧值，同时在后台刷新
+ * - 没有缓存时阻塞并计算值
  *
  * @param f The async function to memoize
  * @param cacheLifetimeMs The lifetime of cached values in milliseconds
@@ -115,7 +115,7 @@ export function memoizeWithTTL<Args extends unknown[], Result>(
  */
 export function memoizeWithTTLAsync<Args extends unknown[], Result>(
   f: (...args: Args) => Promise<Result>,
-  cacheLifetimeMs: number = 5 * 60 * 1000, // Default 5 minutes
+  cacheLifetimeMs: number = 5 * 60 * 1000, // 默认 5 分钟
 ): ((...args: Args) => Promise<Result>) & { cache: { clear: () => void } } {
   const cache = new Map<string, CacheEntry<Result>>()
   // In-flight cold-miss dedup. The old memoizeWithTTL (sync) accidentally
@@ -132,7 +132,7 @@ export function memoizeWithTTLAsync<Args extends unknown[], Result>(
     const cached = cache.get(key)
     const now = Date.now()
 
-    // Populate cache - if this throws, nothing gets cached
+    // 填充缓存；如果抛错，不缓存任何内容
     if (!cached) {
       const pending = inFlight.get(key)
       if (pending) {
@@ -160,9 +160,9 @@ export function memoizeWithTTLAsync<Args extends unknown[], Result>(
       }
     }
 
-    // If we have a stale cache entry and it's not already refreshing
+    // 缓存项已过期且尚未刷新时
     if (cached && now - cached.timestamp > cacheLifetimeMs && !cached.refreshing) {
-      // Mark as refreshing to prevent multiple parallel refreshes
+      // 标记为刷新中，避免多次并行刷新
       cached.refreshing = true
 
       // Schedule async refresh (non-blocking). Both .then and .catch are
@@ -189,7 +189,7 @@ export function memoizeWithTTLAsync<Args extends unknown[], Result>(
           }
         })
 
-      // Return the stale value immediately
+      // 立即返回旧值
       return cached.value
     }
 
@@ -214,9 +214,8 @@ export function memoizeWithTTLAsync<Args extends unknown[], Result>(
 }
 
 /**
- * Creates a memoized function with LRU (Least Recently Used) eviction policy.
- * This prevents unbounded memory growth by evicting the least recently used entries
- * when the cache reaches its maximum size.
+ * 创建使用 LRU（最近最少使用）淘汰策略的 memoized 函数。
+ * 缓存达到最大容量时淘汰最近最少使用的条目，避免内存无限增长。
  *
  * Note: Cache size for memoized message processing functions
  * Chosen to prevent unbounded memory growth (was 300MB+ with lodash memoize)
@@ -246,12 +245,12 @@ export function memoizeWithLRU<Args extends unknown[], Result extends NonNullabl
     return result
   }
 
-  // Add cache management methods
+  // 添加缓存管理方法
   memoized.cache = {
     clear: () => cache.clear(),
     size: () => cache.size,
     delete: (key: string) => cache.delete(key),
-    // peek() avoids updating recency — we only want to observe, not promote
+    // peek() 不更新最近使用顺序：此处只观察，不提升优先级
     get: (key: string) => cache.peek(key),
     has: (key: string) => cache.has(key),
   }

@@ -43,7 +43,7 @@ export type MCPToolCallResult = {
 }
 
 /**
- * Call an IDE tool directly as an RPC
+ * 以 RPC 形式直接调用 IDE tool。
  */
 export async function callIdeRpc(
   toolName: string,
@@ -59,7 +59,7 @@ export async function callIdeRpc(
   return result.content
 }
 
-/** @internal Exported for testing. */
+/** @internal 为测试而导出。 */
 export async function callMCPToolWithUrlElicitationRetry({
   client: connectedClient,
   clientConnection,

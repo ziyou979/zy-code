@@ -7,12 +7,10 @@ import type { PermissionMode } from './permissionMode.js'
 import { getAutoModeUnavailableReason, isAutoModeGateEnabled } from './autoModePolicy.js'
 import { transitionPermissionMode } from './permissionModeTransitions.js'
 
-// Checks both the cached isAutoModeAvailable (set at startup by
-// verifyAutoModeGateAccess) and the live isAutoModeGateEnabled() — these can
-// diverge if the circuit breaker or settings change mid-session. The
-// live check prevents transitionPermissionMode from throwing
-// (permissionSetup.ts:~559), which would silently crash the shift+tab handler
-// and leave the user stuck at the current mode.
+// 同时检查启动时由 verifyAutoModeGateAccess 设置的缓存值 isAutoModeAvailable 和实时值
+// isAutoModeGateEnabled()；会话中途 circuit breaker 或 settings 变化时二者可能不同。实时
+// 检查可防止 transitionPermissionMode 抛出异常（permissionSetup.ts:~559），否则会静默
+// 终止 shift+tab handler，使用户卡在当前模式。
 function canCycleToAuto(ctx: ToolPermissionContext): boolean {
   const gateEnabled = isAutoModeGateEnabled()
   const can = !!ctx.isAutoModeAvailable && gateEnabled
@@ -25,7 +23,7 @@ function canCycleToAuto(ctx: ToolPermissionContext): boolean {
 }
 
 /**
- * Determines the next permission mode when cycling through modes with Shift+Tab.
+ * 确定通过 Shift+Tab 循环切换时的下一个权限模式。
  */
 export function getNextPermissionMode(
   toolPermissionContext: ToolPermissionContext,
@@ -62,21 +60,20 @@ export function getNextPermissionMode(
       return 'default'
 
     case 'dontAsk':
-      // Not exposed in UI cycle yet, but return default if somehow reached
+      // 尚未暴露在 UI 循环中；若意外到达则返回 default
       return 'default'
 
     default:
-      // Any future modes — always fall back to default
+      // 未来新增模式一律回退到 default
       return 'default'
   }
 }
 
 /**
- * Computes the next permission mode and prepares the context for it.
- * Handles any context cleanup needed for the target mode (e.g., stripping
- * dangerous permissions when entering auto mode).
+ * 计算下一个权限模式并准备对应 context，同时完成目标模式所需的 context 清理，例如进入
+ * auto mode 时移除危险权限。
  *
- * @returns The next mode and the context to use (with dangerous permissions stripped if needed)
+ * @returns 下一个模式及其 context；必要时已移除危险权限
  */
 export function cyclePermissionMode(
   toolPermissionContext: ToolPermissionContext,

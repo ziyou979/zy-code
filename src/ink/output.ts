@@ -454,13 +454,13 @@ export default class Output {
 
           let row0 = fy
           let row1 = fy + fh
-          // Vertical clip
+          // 垂直裁剪
           if (clip && typeof clip.y1 === 'number' && row0 < clip.y1) row0 = clip.y1
           if (clip && typeof clip.y2 === 'number' && row1 > clip.y2) row1 = clip.y2
           if (row0 >= row1 || row0 >= screenHeight) continue
           const rowLimit = Math.min(row1, screenHeight)
 
-          // Horizontal clip — slice fillLine once before the loop
+          // 水平裁剪：在循环前只对 fillLine 切片一次
           let displayLine = fillLine
           if (clip && typeof clip.x1 === 'number' && fx < clip.x1) {
             const skip = clip.x1 - fx

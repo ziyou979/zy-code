@@ -4,15 +4,14 @@ import { exitTeammateView } from '../state/teammateViewHelpers.js'
 import { isInProcessTeammateTask } from '../tasks/in-process-teammate-task/types.js'
 
 /**
- * Auto-exits teammate viewing mode when the viewed teammate
- * is killed or encounters an error. Users stay viewing completed
- * teammates so they can review the full transcript.
+ * 正在查看的 teammate 被终止或遇到错误时，自动退出 teammate 查看模式。
+ * teammate 正常完成后仍保留查看状态，便于用户审阅完整 transcript。
  */
 export function useTeammateViewAutoExit(): void {
   const setAppState = useSetAppState()
   const viewingAgentTaskId = useAppState((s) => s.viewingAgentTaskId)
-  // Select only the viewed task, not the full tasks map — otherwise every
-  // streaming update from any teammate re-renders this hook.
+  // 只选择正在查看的任务，而非完整 tasks map；否则任一 teammate 的流式更新
+  // 都会让此 hook 重新渲染。
   const task = useAppState((s) =>
     s.viewingAgentTaskId ? s.tasks[s.viewingAgentTaskId] : undefined,
   )
@@ -23,26 +22,25 @@ export function useTeammateViewAutoExit(): void {
   const taskExists = task !== undefined
 
   useEffect(() => {
-    // Not viewing any teammate
+    // 当前未查看任何 teammate
     if (!viewingAgentTaskId) {
       return
     }
 
-    // Task no longer exists in the map — evicted out from under us.
-    // Check raw `task` not teammate-narrowed `viewedTask`; local_agent
-    // tasks exist but narrow to undefined, which would eject immediately.
+    // 任务已从 map 中移除。检查原始 `task`，而不是缩窄为 teammate 的 `viewedTask`；
+    // local_agent 任务虽存在，但缩窄后为 undefined，会导致立即退出。
     if (!taskExists) {
       exitTeammateView(setAppState)
       return
     }
-    // Status checks below are teammate-only (viewedTask is teammate-narrowed).
-    // For local_agent, viewedStatus is undefined → all checks falsy → no eject.
+    // 下方状态检查仅适用于 teammate（viewedTask 已缩窄）。local_agent 的 viewedStatus
+    // 为 undefined，所有检查均为 false，因此不会退出。
     if (!viewedTask) {
       return
     }
 
-    // Auto-exit if teammate is killed, stopped, has error, or is no longer running
-    // This handles shutdown scenarios where teammate becomes inactive
+    // teammate 被终止、停止、出错或不再运行时自动退出，
+    // 覆盖 teammate 在 shutdown 后变为 inactive 的情况
     if (
       viewedStatus === 'killed' ||
       viewedStatus === 'failed' ||

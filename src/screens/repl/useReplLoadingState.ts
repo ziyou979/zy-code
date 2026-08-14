@@ -34,7 +34,7 @@ import type { Theme, ThemeName } from '../../services/environment/theme.js'
 // ── 公共类型 ──────────────────────────────────────────────
 
 export type ReplLoadingState = {
-  // loading
+  // 加载
   isQueryActive: boolean
   isLoading: boolean
   isExternalLoading: boolean
@@ -43,22 +43,22 @@ export type ReplLoadingState = {
   loadingStartTimeRef: React.RefObject<number>
   totalPausedMsRef: React.RefObject<number>
   pauseStartTimeRef: React.RefObject<number | null>
-  // spinner override
+  // spinner 覆盖
   spinnerMessage: string | null
   spinnerColor: keyof Theme | null
   spinnerShimmerColor: keyof Theme | null
   onCompactProgress: (event: CompactProgressEvent) => void
-  // spinner tip
+  // spinner 提示
   ingestBashToolsFromMessages: (messages: MessageType[]) => void
   clearBashToolsTracking: () => void
   resetTipPickedThisTurn: () => void
-  // streaming text
+  // 流式文本
   streamingText: string | null
   setStreamingText: React.Dispatch<React.SetStateAction<string | null>>
   onStreamingText: (f: (current: string | null) => string | null) => void
   visibleStreamingText: string | null
   showStreamingText: boolean
-  // streaming thinking
+  // 流式思考
   streamingThinking: StreamingThinking | null
   setStreamingThinking: React.Dispatch<React.SetStateAction<StreamingThinking | null>>
   // 核心收益：resetLoadingState 内化
@@ -85,7 +85,7 @@ export function useReplLoadingState({
   replStore,
   onResetAdditional,
 }: UseReplLoadingStateParams): ReplLoadingState {
-  // ── loading ──
+  // ── 加载 ──
   const isQueryActive = useSyncExternalStore(queryGuard.subscribe, queryGuard.getSnapshot)
   const [isExternalLoading, setIsExternalLoadingRaw] = useState(initialExternalLoading)
   const isLoading = isQueryActive || isExternalLoading
@@ -116,7 +116,7 @@ export function useReplLoadingState({
     [resetTimingRefs],
   )
 
-  // ── spinner override ──
+  // ── spinner 覆盖 ──
   const [spinnerMessage, setSpinnerMessage] = useState<string | null>(null)
   const [spinnerColor, setSpinnerColor] = useState<keyof Theme | null>(null)
   const [spinnerShimmerColor, setSpinnerShimmerColor] = useState<keyof Theme | null>(null)
@@ -193,7 +193,7 @@ export function useReplLoadingState({
     [applyCompactStagePct, resetSpinnerOverride],
   )
 
-  // ── spinner tip ──
+  // ── spinner 提示 ──
   const setAppState = useSetAppState()
   const bashToolsRef = useRef(new Set<string>())
   const bashToolsProcessedIdxRef = useRef(0)
@@ -245,7 +245,7 @@ export function useReplLoadingState({
     tipPickedThisTurnRef.current = false
   }, [])
 
-  // ── streaming text ──
+  // ── 流式文本 ──
   const [streamingText, setStreamingText] = useState<string | null>(null)
   const reducedMotion = useAppState((s) => s.settings.prefersReducedMotion) ?? false
   const showStreamingText = !reducedMotion && !hasCursorUpViewportYankBug()
@@ -265,7 +265,7 @@ export function useReplLoadingState({
       ? streamingText.substring(0, streamingText.lastIndexOf('\n') + 1) || null
       : null
 
-  // ── streaming thinking ──
+  // ── 流式思考 ──
   const [streamingThinking, setStreamingThinking] = useState<StreamingThinking | null>(null)
 
   useEffect(() => {

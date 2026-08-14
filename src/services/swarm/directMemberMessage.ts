@@ -1,7 +1,7 @@
 import type { AppState } from '../../state/AppStateStore.js'
 
 /**
- * Parse `@agent-name message` syntax for direct team member messaging.
+ * 解析用于直接联系团队成员的 `@agent-name message` 语法。
  */
 export function parseDirectMemberMessage(input: string): {
   recipientName: string
@@ -40,7 +40,7 @@ type WriteToMailboxFn = (
 ) => Promise<void>
 
 /**
- * Send a direct message to a team member, bypassing the model.
+ * 绕过模型，直接向团队成员发送消息。
  */
 export async function sendDirectMemberMessage(
   recipientName: string,
@@ -52,7 +52,7 @@ export async function sendDirectMemberMessage(
     return { success: false, error: 'no_team_context' }
   }
 
-  // Find team member by name
+  // 按名称查找团队成员
   const member = Object.values(teamContext.teammates ?? {}).find((t) => t.name === recipientName)
 
   if (!member) {

@@ -1,7 +1,6 @@
 /**
- * Denial tracking infrastructure for permission classifiers.
- * Tracks consecutive denials and total denials to determine
- * when to fall back to prompting.
+ * 权限分类器的拒绝跟踪基础设施。
+ * 跟踪连续拒绝次数和总拒绝次数，以判断何时回退为询问用户。
  */
 
 export type DenialTrackingState = {

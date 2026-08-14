@@ -12,7 +12,7 @@ import { toIDEDisplayName } from '../services/ide/ideCatalog.js'
 import { writeFileSync_DEPRECATED } from '../services/infra/slowOperations.js'
 import { generateTempFilePath } from '../services/file-persistence/tempfile.js'
 
-// Map of editor command overrides (e.g., to add wait flags)
+// editor 命令覆盖表（例如补充等待参数）
 const EDITOR_OVERRIDES: Record<string, string> = {
   code: 'code -w', // VS Code: wait for file to be closed
   subl: 'subl --wait', // Sublime Text: wait for file to be closed
@@ -27,7 +27,7 @@ export type EditorResult = {
   error?: string
 }
 
-// sync IO: called from sync context (React components, sync command handlers)
+// 同步 IO：由同步 context（React 组件、同步命令 handler）调用
 export function editFileInEditor(filePath: string): EditorResult {
   const fs = getFsImplementation()
   const inkInstance = instances.get(process.stdout)
@@ -52,28 +52,25 @@ export function editFileInEditor(filePath: string): EditorResult {
   const useAlternateScreen = !isGuiEditor(editor) && !editor.startsWith('start')
 
   if (useAlternateScreen) {
-    // Terminal editors (vi, nano, etc.) take over the terminal. Delegate to
-    // Ink's alt-screen-aware handoff so fullscreen mode (where <AlternateScreen>
-    // already entered alt screen) doesn't get knocked back to the main buffer
-    // by a hardcoded ?1049l. enterAlternateScreen() internally calls pause()
-    // and suspendStdin(); exitAlternateScreen() undoes both and resets frame
-    // state so the next render writes from scratch.
+    // 终端 editor（vi、nano 等）会接管终端。交给 Ink 感知 alt-screen 的交接逻辑，
+    // 避免全屏模式（<AlternateScreen> 已进入 alt screen）被硬编码的 ?1049l 打回主缓冲区。
+    // enterAlternateScreen() 内部调用 pause() 和 suspendStdin()；exitAlternateScreen()
+    // 会撤销两者并重置帧状态，使下次渲染从头写入。
     inkInstance.enterAlternateScreen()
   } else {
-    // GUI editors (code, subl, etc.) open in a separate window — just pause
-    // Ink and release stdin while they're open.
+    // GUI editor（code、subl 等）在独立窗口打开，运行期间只需暂停 Ink 并释放 stdin。
     inkInstance.pause()
     inkInstance.suspendStdin()
   }
 
   try {
-    // Use override command if available, otherwise use the editor as-is
+    // 有覆盖命令时优先使用，否则原样使用 editor
     const editorCommand = EDITOR_OVERRIDES[editor] ?? editor
     execSync_DEPRECATED(`${editorCommand} "${filePath}"`, {
       stdio: 'inherit',
     })
 
-    // Read the edited content
+    // 读取编辑后的内容
     const editedContent = fs.readFileSync(filePath, { encoding: 'utf-8' })
     return { content: editedContent }
   } catch (err) {
@@ -104,8 +101,7 @@ export function editFileInEditor(filePath: string): EditorResult {
 }
 
 /**
- * Re-collapse expanded pasted text by finding content that matches
- * pastedContents and replacing it with references.
+ * 查找与 pastedContents 匹配的内容并替换为引用，重新折叠已经展开的粘贴文本。
  */
 function recollapsePastedContent(
   editedPrompt: string,
@@ -114,16 +110,16 @@ function recollapsePastedContent(
 ): string {
   let collapsed = editedPrompt
 
-  // Find pasted content in the edited text and re-collapse it
+  // 在编辑后的文本中查找粘贴内容并重新折叠
   for (const [id, content] of Object.entries(pastedContents)) {
     if (content.type === 'text') {
       const pasteId = parseInt(id, 10)
       const contentStr = content.content
 
-      // Check if this exact content exists in the edited prompt
+      // 检查编辑后的 prompt 是否仍包含完全相同的内容
       const contentIndex = collapsed.indexOf(contentStr)
       if (contentIndex !== -1) {
-        // Replace with reference
+        // 替换为引用
         const numLines = getPastedTextRefNumLines(contentStr)
         const ref = formatPastedTextRef(pasteId, numLines)
         collapsed =
@@ -135,7 +131,7 @@ function recollapsePastedContent(
   return collapsed
 }
 
-// sync IO: called from sync context (React components, sync command handlers)
+// 同步 IO：由同步 context（React 组件、同步命令 handler）调用
 export function editPromptInEditor(
   currentPrompt: string,
   pastedContents?: Record<number, PastedContent>,
@@ -144,42 +140,42 @@ export function editPromptInEditor(
   const tempFile = generateTempFilePath()
 
   try {
-    // Expand any pasted text references before editing
+    // 编辑前展开所有粘贴文本引用
     const expandedPrompt = pastedContents
       ? expandPastedTextRefs(currentPrompt, pastedContents)
       : currentPrompt
 
-    // Write expanded prompt to temp file
+    // 将展开后的 prompt 写入临时文件
     writeFileSync_DEPRECATED(tempFile, expandedPrompt, {
       encoding: 'utf-8',
       flush: true,
     })
 
-    // Delegate to editFileInEditor
+    // 交给 editFileInEditor 处理
     const result = editFileInEditor(tempFile)
 
     if (result.content === null) {
       return result
     }
 
-    // Trim a single trailing newline if present (common editor behavior)
+    // 若末尾只有一个换行则移除，这是 editor 的常见行为
     let finalContent = result.content
     if (finalContent.endsWith('\n') && !finalContent.endsWith('\n\n')) {
       finalContent = finalContent.slice(0, -1)
     }
 
-    // Re-collapse pasted content if it wasn't edited
+    // 粘贴内容未被修改时重新折叠
     if (pastedContents) {
       finalContent = recollapsePastedContent(finalContent, currentPrompt, pastedContents)
     }
 
     return { content: finalContent }
   } finally {
-    // Clean up temp file
+    // 清理临时文件
     try {
       fs.unlinkSync(tempFile)
     } catch {
-      // Ignore cleanup errors
+      // 忽略清理错误
     }
   }
 }

@@ -5,21 +5,21 @@ import { jsonParse } from '../../services/infra/slowOperations.js'
 import { getCachedPowerShellPath } from '../shared/powershellDetection.js'
 
 // ---------------------------------------------------------------------------
-// Public types describing the parsed output returned to callers.
-// These map to System.Management.Automation.Language AST classes.
-// Raw internal types (RawParsedOutput etc.) are defined further below.
+// 描述返回给调用方的解析结果的公共类型。
+// 这些类型映射到 System.Management.Automation.Language AST 类。
+// 原始内部类型（RawParsedOutput 等）在下文定义。
 // ---------------------------------------------------------------------------
 
 /**
- * The PowerShell AST element type for pipeline elements.
- * Maps directly to CommandBaseAst derivatives in System.Management.Automation.Language.
+ * 管道元素对应的 PowerShell AST 元素类型。
+ * 直接映射到 System.Management.Automation.Language 中 CommandBaseAst 的派生类。
  */
 type PipelineElementType = 'CommandAst' | 'CommandExpressionAst' | 'ParenExpressionAst'
 
 /**
- * The AST node type for individual command elements (arguments, expressions).
- * Used to classify each element during the AST walk so TypeScript can derive
- * security flags without extra Find-AstNodes calls in PowerShell.
+ * 单个命令元素（参数、表达式）的 AST 节点类型。
+ * 在遍历 AST 时用于分类各元素，使 TypeScript 无需在 PowerShell 中额外调用
+ * Find-AstNodes 即可推导安全 flag。
  */
 type CommandElementType =
   | 'ScriptBlock'
@@ -32,10 +32,9 @@ type CommandElementType =
   | 'Other'
 
 /**
- * A child node of a command element (one level deep). Populated for
- * CommandParameterAst → .Argument (colon-bound parameters like
- * `-InputObject:$env:SECRET`). Consumers check `child.type` to classify
- * the bound value (Variable, StringConstant, Other) without parsing text.
+ * 命令元素的一层子节点。针对 CommandParameterAst → .Argument 填充
+ *（如 `-InputObject:$env:SECRET` 这种冒号绑定参数）。consumer 可检查
+ * `child.type` 来分类绑定值（Variable、StringConstant、Other），无需解析文本。
  */
 export type CommandElementChild = {
   type: CommandElementType
@@ -43,8 +42,8 @@ export type CommandElementChild = {
 }
 
 /**
- * The PowerShell AST statement type.
- * Maps directly to StatementAst derivatives in System.Management.Automation.Language.
+ * PowerShell AST 语句类型。
+ * 直接映射到 System.Management.Automation.Language 中 StatementAst 的派生类。
  */
 type StatementType =
   | 'PipelineAst'
@@ -64,70 +63,65 @@ type StatementType =
   | 'UnknownStatementAst'
 
 /**
- * A command invocation within a pipeline segment.
+ * 管道分段中的一次命令调用。
  */
 export type ParsedCommandElement = {
-  /** The command/cmdlet name (e.g., "Get-ChildItem", "git") */
+  /** command/cmdlet 名称（如 "Get-ChildItem"、"git"） */
   name: string
-  /** The command name type: cmdlet, application (exe), or unknown */
+  /** 命令名称类型：cmdlet、application（exe）或 unknown */
   nameType: 'cmdlet' | 'application' | 'unknown'
-  /** The AST element type from PowerShell's parser */
+  /** PowerShell parser 返回的 AST 元素类型 */
   elementType: PipelineElementType
-  /** All arguments as strings (includes flags like "-Recurse") */
+  /** 字符串形式的全部参数（包括 "-Recurse" 等 flag） */
   args: string[]
-  /** The full text of this command element */
+  /** 此命令元素的完整文本 */
   text: string
-  /** AST node types for each element in this command (arguments, expressions, etc.) */
+  /** 此命令中各元素（参数、表达式等）的 AST 节点类型 */
   elementTypes?: CommandElementType[]
   /**
-   * Child nodes of each argument, aligned with `args[]` (so
-   * `children[i]` ↔ `args[i]` ↔ `elementTypes[i+1]`). Only populated for
-   * Parameter elements with a colon-bound argument. Undefined for elements
-   * with no children. Lets consumers check `children[i].some(c => c.type
-   * !== 'StringConstant')` instead of parsing the arg text for `:` + `$`.
+   * 各参数的子节点，与 `args[]` 对齐，即
+   * `children[i]` ↔ `args[i]` ↔ `elementTypes[i+1]`。只为带冒号绑定参数的
+   * Parameter 元素填充；没有子节点的元素为 undefined。consumer 可直接检查
+   * `children[i].some(c => c.type !== 'StringConstant')`，无需从参数文本解析 `:` 和 `$`。
    */
   children?: (CommandElementChild[] | undefined)[]
-  /** Redirections on this command element (from nested commands in && / || chains) */
+  /** 此命令元素上的重定向（来自 && / || 链中的嵌套命令） */
   redirections?: ParsedRedirection[]
 }
 
 /**
- * A redirection found in the command.
+ * 命令中发现的重定向。
  */
 type ParsedRedirection = {
-  /** The redirection operator */
+  /** 重定向运算符 */
   operator: '>' | '>>' | '2>' | '2>>' | '*>' | '*>>' | '2>&1'
-  /** The target (file path or stream number) */
+  /** 目标（文件路径或 stream 编号） */
   target: string
-  /** Whether this is a merging redirection like 2>&1 */
+  /** 是否为 2>&1 这类合并重定向 */
   isMerging: boolean
 }
 
 /**
- * A parsed statement from PowerShell.
- * Can be a pipeline, assignment, control flow statement, etc.
+ * 从 PowerShell 解析出的语句，可以是管道、赋值、控制流语句等。
  */
 type ParsedStatement = {
-  /** The AST statement type from PowerShell's parser */
+  /** PowerShell parser 返回的 AST 语句类型 */
   statementType: StatementType
-  /** Individual commands in this statement (for pipelines) */
+  /** 此语句中的各条命令（用于管道） */
   commands: ParsedCommandElement[]
-  /** Redirections on this statement */
+  /** 此语句上的重定向 */
   redirections: ParsedRedirection[]
-  /** Full text of the statement */
+  /** 语句完整文本 */
   text: string
   /**
-   * For control flow statements (if, for, foreach, while, try, etc.),
-   * commands found recursively inside the body blocks.
-   * Uses FindAll() to extract ALL nested CommandAst nodes at any depth.
+   * 对 if、for、foreach、while、try 等控制流语句，递归查找其 body block 内的命令。
+   * 使用 FindAll() 提取任意深度的全部嵌套 CommandAst 节点。
    */
   nestedCommands?: ParsedCommandElement[]
   /**
-   * Security-relevant AST patterns found via FindAll() on the entire statement,
-   * regardless of statement type. This catches patterns that elementTypes may
-   * miss (e.g. member invocations inside assignments, subexpressions in
-   * non-pipeline statements). Computed in the PS1 script using instanceof
-   * checks against the PowerShell AST type system.
+   * 无论语句类型如何，均通过对完整语句调用 FindAll() 查找与安全相关的 AST 模式。
+   * 这可捕获 elementTypes 可能漏掉的模式，例如赋值内的成员调用、非管道语句中的
+   * 子表达式。该值在 PS1 脚本中通过 PowerShell AST 类型系统的 instanceof 检查计算。
    */
   securityPatterns?: {
     hasMemberInvocations?: boolean
@@ -138,17 +132,17 @@ type ParsedStatement = {
 }
 
 /**
- * A variable reference found in the command.
+ * 命令中发现的变量引用。
  */
 type ParsedVariable = {
-  /** The variable path (e.g., "HOME", "env:PATH", "global:x") */
+  /** 变量路径（如 "HOME"、"env:PATH"、"global:x"） */
   path: string
-  /** Whether this variable uses splatting (@var instead of $var) */
+  /** 此变量是否使用 splatting（@var，而非 $var） */
   isSplatted: boolean
 }
 
 /**
- * A parse error from PowerShell's parser.
+ * PowerShell parser 返回的解析错误。
  */
 type ParseError = {
   message: string
@@ -156,51 +150,50 @@ type ParseError = {
 }
 
 /**
- * The complete parsed result from the PowerShell AST parser.
+ * PowerShell AST parser 返回的完整解析结果。
  */
 export type ParsedPowerShellCommand = {
-  /** Whether the command parsed successfully (no syntax errors) */
+  /** 命令是否解析成功（无语法错误） */
   valid: boolean
-  /** Parse errors, if any */
+  /** 解析错误（如有） */
   errors: ParseError[]
-  /** Top-level statements, separated by ; or newlines */
+  /** 以 ; 或换行分隔的顶层语句 */
   statements: ParsedStatement[]
-  /** All variable references found */
+  /** 找到的全部变量引用 */
   variables: ParsedVariable[]
-  /** Whether the token stream contains a stop-parsing (--%) token */
+  /** token stream 是否含 stop-parsing（--%）token */
   hasStopParsing: boolean
-  /** The original command text */
+  /** 原始命令文本 */
   originalCommand: string
   /**
-   * All .NET type literals found anywhere in the AST (TypeExpressionAst +
-   * TypeConstraintAst). TypeName.FullName — the literal text as written, NOT
-   * the resolved .NET type (e.g. [int] → "int", not "System.Int32").
-   * Consumed by the CLM-allowlist check in powershellSecurity.ts.
+   * 在 AST 任意位置发现的全部 .NET 类型字面量（TypeExpressionAst 和
+   * TypeConstraintAst）。TypeName.FullName 是原样书写的字面文本，而非解析后的
+   * .NET 类型（如 [int] → "int"，而非 "System.Int32"）。
+   * 由 powershellSecurity.ts 的 CLM allowlist 检查使用。
    */
   typeLiterals?: string[]
   /**
-   * Whether the command contains `using module` or `using assembly` statements.
-   * These load external code (modules/assemblies) and execute their top-level
-   * script body or module initializers. The using statement is a sibling of
-   * the named blocks on ScriptBlockAst, not a child, so it is not visible
-   * to Process-BlockStatements or any downstream command walker.
+   * 命令是否包含 `using module` 或 `using assembly` 语句。它们会加载外部代码
+   *（module/assembly），并执行其顶层脚本体或模块 initializer。using 语句是
+   * ScriptBlockAst 上各命名 block 的同级节点而非子节点，因此 Process-BlockStatements
+   * 和下游命令遍历器都无法看到它。
    */
   hasUsingStatements?: boolean
   /**
-   * Whether the command contains `#Requires` directives (ScriptRequirements).
-   * `#Requires -Modules <name>` triggers module loading from PSModulePath.
+   * 命令是否包含 `#Requires` 指令（ScriptRequirements）。
+   * `#Requires -Modules <name>` 会触发从 PSModulePath 加载模块。
    */
   hasScriptRequirements?: boolean
 }
 
 // ---------------------------------------------------------------------------
 
-// Default 5s is fine for interactive use (warm pwsh spawn is ~450ms). Windows
-// CI under Defender/AMSI load can exceed 5s on consecutive spawns even after
-// CAN_SPAWN_PARSE_SCRIPT() warms the JIT (run 23574701241 windows-shard-5:
-// attackVectors F1 hit 2×5s timeout → valid:false → 'ask' instead of 'deny').
-// Override via env for tests. Read inside parsePowerShellCommandImpl, not
-// top-level, per AGENTS.md (globalSettings.env ordering).
+// 默认 5 秒足以满足交互使用（预热后的 pwsh 启动约 450ms）。Windows CI 在
+// Defender/AMSI 负载下，即使 CAN_SPAWN_PARSE_SCRIPT() 已预热 JIT，连续启动仍可能
+// 超过 5 秒（run 23574701241 windows-shard-5：attackVectors F1 连续两次 5 秒超时，
+// 导致 valid:false，结果从 'deny' 降级为 'ask'）。测试可通过 env 覆盖。
+// 根据 AGENTS.md 的 globalSettings.env 顺序要求，应在 parsePowerShellCommandImpl 内读取，
+// 不能在顶层读取。
 const DEFAULT_PARSE_TIMEOUT_MS = 5_000
 function getParseTimeoutMs(): number {
   const env = process.env.ZY_CODE_PWSH_PARSE_TIMEOUT_MS
@@ -212,16 +205,15 @@ function getParseTimeoutMs(): number {
   }
   return DEFAULT_PARSE_TIMEOUT_MS
 }
-// MAX_COMMAND_LENGTH is derived from PARSE_SCRIPT_BODY.length below (after the
-// script body is defined) so it cannot go stale as the script grows.
+// MAX_COMMAND_LENGTH 在下方脚本体定义后由 PARSE_SCRIPT_BODY.length 推导，
+// 从而不会随脚本增长而失准。
 
 /**
- * The PowerShell parse script inlined as a string constant.
- * This avoids needing to read from disk at runtime (the file may not exist
- * in bundled builds). The script uses the native PowerShell AST parser to
- * analyze a command and output structured JSON.
+ * 以内联字符串常量保存的 PowerShell 解析脚本。
+ * 这样运行时无需从磁盘读取文件，因为 bundled build 中该文件可能不存在。
+ * 脚本使用原生 PowerShell AST parser 分析命令并输出结构化 JSON。
  */
-// Raw types describing PS script JSON output (exported for testing)
+// 描述 PS 脚本 JSON 输出的原始类型（导出供测试使用）。
 export type RawCommandElement = {
   type: string // .GetType().Name e.g. "StringConstantExpressionAst"
   text: string // .Extent.Text
@@ -252,7 +244,7 @@ export type RawStatement = {
   nestedCommands?: RawPipelineElement[] // commands found via FindAll (all statement types)
   redirections?: RawRedirection[] // FileRedirectionAst found via FindAll (non-PipelineAst only)
   securityPatterns?: {
-    // Security-relevant AST node types found via FindAll on the statement
+    // 通过对语句调用 FindAll 找到的安全相关 AST 节点类型。
     hasMemberInvocations?: boolean
     hasSubExpressions?: boolean
     hasExpandableStrings?: boolean
@@ -272,45 +264,40 @@ type RawParsedOutput = {
   hasScriptRequirements?: boolean
 }
 
-// This is the canonical copy of the parse script. There is no separate .ps1 file.
+// 这是解析脚本的唯一正式副本，不另设 .ps1 文件。
 /**
- * The core parse logic.
- * The command is passed via Base64-encoded $EncodedCommand variable
- * to avoid here-string injection attacks.
+ * 核心解析逻辑。命令通过 Base64 编码的 $EncodedCommand 变量传入，
+ * 以避免 here-string 注入攻击。
  *
- * SECURITY — top-level ParamBlock: ScriptBlockAst.ParamBlock is a SIBLING of
- * the named blocks (Begin/Process/End/Clean/DynamicParam), not nested inside
- * them, so Process-BlockStatements never reaches it. Commands inside param()
- * default-value expressions and attribute arguments (e.g. [ValidateScript({...})])
- * were invisible to every downstream check. PoC:
+ * 安全要求——顶层 ParamBlock：ScriptBlockAst.ParamBlock 与命名 block
+ *（Begin/Process/End/Clean/DynamicParam）同级，并未嵌套其中，因此
+ * Process-BlockStatements 永远无法访问它。param() 默认值表达式和 attribute 参数
+ *（如 [ValidateScript({...})]）内的命令此前对所有下游检查都不可见。PoC：
  *   param($x = (Remove-Item /)); Get-Process   → only Get-Process surfaced
  *   param([ValidateScript({rm /;$true})]$x='t') → rm invisible, runs on bind
- * Function-level param() IS covered: FindAll on the FunctionDefinitionAst
- * statement recurses into its descendants. The gap was only the script-level
- * ParamBlock. ParamBlockAst has .Parameters (not .Statements) so we FindAll
- * on it directly rather than reusing Process-BlockStatements. We only emit a
- * statement if there is something to report, to avoid noise for plain
- * param($x) declarations. (Kept compact in-script to preserve argv budget.)
+ * 函数级 param() 已覆盖：对 FunctionDefinitionAst 语句调用 FindAll 会递归遍历其后代。
+ * 缺口只存在于脚本级 ParamBlock。ParamBlockAst 提供 .Parameters 而非 .Statements，
+ * 因此直接对它调用 FindAll，不复用 Process-BlockStatements。只有发现需报告的内容时
+ * 才生成语句，以免普通 param($x) 声明产生噪声。脚本内实现保持紧凑以节省 argv 预算。
  */
 /**
- * PS1 parse script. Comments live here (not inline) — every char inside the
- * backticks eats into WINDOWS_MAX_COMMAND_LENGTH (argv budget).
+ * PS1 解析脚本。注释放在这里而非内联；反引号内的每个字符都会占用
+ * WINDOWS_MAX_COMMAND_LENGTH（argv 预算）。
  *
- * Structure:
- * - Get-RawCommandElements: extract CommandAst element data (type, text, value,
- *   expressionType, children for colon-bound param .Argument)
- * - Get-RawRedirections: extract FileRedirectionAst operator+target
- * - Get-SecurityPatterns: FindAll for security flags (hasSubExpressions via
- *   Sub/Array/ParenExpressionAst, hasScriptBlocks, etc.)
- * - Type literals: emit TypeExpressionAst names for CLM allowlist check
- * - --% token: PS7 MinusMinus, PS5.1 Generic kind
- * - CommandExpressionAst.Redirections: inherits from CommandBaseAst —
- *   `1 > /tmp/x` statement has FileRedirectionAst that element-iteration misses
- * - Nested commands: FindAll for ALL statement types (if/for/foreach/while/
- *   switch/try/function/assignment/PipelineChainAst) — skip direct pipeline
- *   elements already in the loop
+ * 结构：
+ * - Get-RawCommandElements：提取 CommandAst 元素数据（type、text、value、
+ *   expressionType，以及冒号绑定参数 .Argument 的 children）；
+ * - Get-RawRedirections：提取 FileRedirectionAst 的 operator 和 target；
+ * - Get-SecurityPatterns：用 FindAll 获取安全 flag（通过 Sub/Array/ParenExpressionAst
+ *   得到 hasSubExpressions，以及 hasScriptBlocks 等）；
+ * - 类型字面量：生成 TypeExpressionAst 名称供 CLM allowlist 检查；
+ * - --% token：PS7 为 MinusMinus，PS5.1 为 Generic kind；
+ * - CommandExpressionAst.Redirections：继承自 CommandBaseAst；`1 > /tmp/x` 语句
+ *   带有元素遍历会漏掉的 FileRedirectionAst；
+ * - 嵌套命令：对所有语句类型（if/for/foreach/while/switch/try/function/assignment/
+ *   PipelineChainAst）调用 FindAll，并跳过循环中已处理的直接管道元素。
  */
-// exported for testing
+// 导出供测试使用。
 export const PARSE_SCRIPT_BODY = `
 if (-not $EncodedCommand) {
     Write-Output '{"valid":false,"errors":[{"message":"No command provided","errorId":"NoInput"}],"statements":[],"variables":[],"hasStopParsing":false,"originalCommand":""}'
@@ -567,72 +554,64 @@ $output | ConvertTo-Json -Depth 10 -Compress
 `
 
 // ---------------------------------------------------------------------------
-// Windows CreateProcess has a 32,767 char command-line limit. The encoding
-// chain is:
+// Windows CreateProcess 的命令行上限为 32,767 个字符。编码链如下：
 //   command (N UTF-8 bytes) → Base64 (~4N/3 chars) → $EncodedCommand = '...'\n
 //   → full script (wrapper + PARSE_SCRIPT_BODY) → UTF-16LE (2× bytes)
 //   → Base64 (4/3× chars) → -EncodedCommand argv
-// Final cmdline ≈ argv_overhead + (wrapper + 4N/3 + body) × 8/3
+// 最终 cmdline ≈ argv_overhead + (wrapper + 4N/3 + body) × 8/3
 //
-// Solving for N (UTF-8 bytes) with a 32,767 cap:
+// 在 32,767 上限下求解 N（UTF-8 字节数）：
 //   script_budget   = (32767 - argv_overhead) × 3/8
 //   cmd_b64_budget  = script_budget - PARSE_SCRIPT_BODY.length - wrapper
 //   N               = cmd_b64_budget × 3/4 - safety_margin
 //
-// SECURITY: N is a UTF-8 BYTE budget, not a UTF-16 code-unit budget. The
-// length gate MUST measure Buffer.byteLength(command, 'utf8'), not
-// command.length. A BMP character in U+0800–U+FFFF (CJK ideographs, most
-// non-Latin scripts) is 1 UTF-16 code unit but 3 UTF-8 bytes. With
-// PARSE_SCRIPT_BODY ≈ 10.6K, N ≈ 1,092 bytes. Comparing against .length
-// permits a 1,092-code-unit pure-CJK command (≈3,276 UTF-8 bytes) → inner
-// base64 ≈ 4,368 chars → final argv ≈ 40K chars, overflowing 32,767 by
-// ~7.4K. CreateProcess fails → valid:false → parse-fail degradation (deny
-// rules silently downgrade to ask). Finding #36.
+// 安全要求：N 是 UTF-8 字节预算，而非 UTF-16 code unit 预算。长度关卡必须使用
+// Buffer.byteLength(command, 'utf8')，不能使用 command.length。U+0800–U+FFFF
+// 范围内的 BMP 字符（CJK 字符及大多数非拉丁文字）只占 1 个 UTF-16 code unit，
+// 却占 3 个 UTF-8 字节。当 PARSE_SCRIPT_BODY ≈ 10.6K 时，N ≈ 1,092 字节。
+// 若与 .length 比较，会允许含 1,092 个 code unit 的纯 CJK 命令（约 3,276 UTF-8
+// 字节），使内层 base64 约 4,368 字符，最终 argv 约 40K 字符，超限约 7.4K。
+// CreateProcess 随即失败并返回 valid:false，导致解析失败降级，deny 规则被悄然降为 ask。
+// Finding #36。
 //
-// COMPUTED from PARSE_SCRIPT_BODY.length so it cannot drift. The prior
-// hardcoded value (4,500) was derived from a ~6K body estimate; the body is
-// actually ~11K chars, so the real ceiling was ~1,850. Commands in the
-// 1,850–4,500 range passed this gate but then failed CreateProcess on
-// Windows, returning valid=false and skipping all AST-based security checks.
+// 此值由 PARSE_SCRIPT_BODY.length 计算，避免失准。此前硬编码的 4,500 基于约 6K 的
+//脚本体估算，但实际脚本体约 11K 字符，因此真实上限约为 1,850。长度在 1,850–4,500
+// 之间的命令能通过此关卡，却会在 Windows 上启动 CreateProcess 失败，返回
+// valid=false，并跳过所有基于 AST 的安全检查。
 //
-// Unix argv limits are typically 2MB+ (ARG_MAX) with ~128KB per-argument
-// limit (MAX_ARG_STRLEN on Linux; macOS has no per-arg limit below ARG_MAX).
-// At MAX=4,500 the -EncodedCommand argument is ~45KB — well under either.
-// Applying the Windows-derived limit on Unix would REGRESS: commands in the
-// ~1K–4.5K range previously parsed successfully and reached the sub-command
-// deny loop at powershellPermissions.ts; rejecting them pre-spawn degrades
-// user-configured deny rules from deny→ask for compound commands with a
-// denied cmdlet buried mid-script. So the Windows limit is platform-gated.
+// Unix 的 argv 上限通常为 2MB 以上（ARG_MAX），单参数上限约 128KB
+//（Linux 的 MAX_ARG_STRLEN；macOS 在 ARG_MAX 以下没有单参数上限）。MAX=4,500 时，
+// -EncodedCommand 参数约 45KB，远低于这些限制。在 Unix 套用 Windows 推导出的上限会
+// 造成回归：约 1K–4.5K 的命令此前可以成功解析，并进入 powershellPermissions.ts 的
+// 子命令 deny 循环；若在启动前拒绝，脚本中部藏有被 deny cmdlet 的复合命令会使用户配置的
+// deny 规则降级为 ask。因此 Windows 上限必须按平台启用。
 //
-// If the Windows limit becomes too restrictive, switch to -File with a temp
-// file for large inputs.
+// 如果 Windows 上限过于严格，可对大输入改用 -File 和临时文件。
 // ---------------------------------------------------------------------------
 const WINDOWS_ARGV_CAP = 32_767
 // pwsh path + " -NoProfile -NonInteractive -NoLogo -EncodedCommand " +
-// argv quoting. A long Windows pwsh path (C:\Program Files\PowerShell\7\
-// pwsh.exe) + flags is ~95 chars; 200 leaves headroom for unusual installs.
+// argv 引号。较长的 Windows pwsh 路径（C:\Program Files\PowerShell\7\pwsh.exe）
+// 加 flag 约 95 字符；预留 200 可兼容非常规安装路径。
 const FIXED_ARGV_OVERHEAD = 200
 // "$EncodedCommand = '" + "'\n" wrapper around the user command's base64
 const ENCODED_CMD_WRAPPER = `$EncodedCommand = ''\n`.length
-// Margin for base64 padding rounding (≤4 chars at each of 2 levels) and minor
-// estimation drift. Multibyte expansion is NOT absorbed here — the gate
-// measures actual UTF-8 bytes (Buffer.byteLength), not code units.
+// 为两层 base64 padding 舍入（每层不超过 4 字符）和少量估算偏差预留空间。
+// 此处不吸收多字节膨胀；关卡通过 Buffer.byteLength 测量实际 UTF-8 字节，
+// 而非 code unit。
 const SAFETY_MARGIN = 100
 const SCRIPT_CHARS_BUDGET = ((WINDOWS_ARGV_CAP - FIXED_ARGV_OVERHEAD) * 3) / 8
 const CMD_B64_BUDGET = SCRIPT_CHARS_BUDGET - PARSE_SCRIPT_BODY.length - ENCODED_CMD_WRAPPER
-// Exported for drift-guard tests (the drift-prone value is the Windows one).
-// Unit: UTF-8 BYTES. Compare against Buffer.byteLength, not .length.
+// 导出供防失准测试使用（容易失准的是 Windows 值）。单位为 UTF-8 字节，
+// 应与 Buffer.byteLength 比较，而非 .length。
 export const WINDOWS_MAX_COMMAND_LENGTH = Math.max(
   0,
   Math.floor((CMD_B64_BUDGET * 3) / 4) - SAFETY_MARGIN,
 )
-// Pre-existing value, known to work on Unix. See comment above re: why the
-// Windows derivation must NOT be applied here. Unit: UTF-8 BYTES — for ASCII
-// commands (the common case) bytes==chars so no regression; for multibyte
-// commands this is slightly tighter but still far below Unix ARG_MAX (~128KB
-// per-arg), so the argv spawn cannot overflow.
+// 这是已知可在 Unix 工作的既有值。为何不能在此套用 Windows 推导值，参见上文。
+// 单位为 UTF-8 字节；常见的 ASCII 命令满足 bytes==chars，因此无回归；多字节命令的
+// 限制略严，但仍远低于 Unix ARG_MAX（单参数约 128KB），不会导致 argv 启动溢出。
 const UNIX_MAX_COMMAND_LENGTH = 4_500
-// Unit: UTF-8 BYTES (see SECURITY note above).
+// 单位：UTF-8 字节（参见上方安全说明）。
 export const MAX_COMMAND_LENGTH =
   process.platform === 'win32' ? WINDOWS_MAX_COMMAND_LENGTH : UNIX_MAX_COMMAND_LENGTH
 
@@ -656,14 +635,13 @@ function makeInvalidResult(
 }
 
 /**
- * Base64-encode a string as UTF-16LE, which is the encoding required by
- * PowerShell's -EncodedCommand parameter.
+ * 将字符串按 UTF-16LE 编码为 Base64；PowerShell 的 -EncodedCommand 参数要求此编码。
  */
 function toUtf16LeBase64(text: string): string {
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(text, 'utf16le').toString('base64')
   }
-  // Fallback for non-Node environments
+  // 非 Node 环境的回退实现。
   const bytes: number[] = []
   for (let i = 0; i < text.length; i++) {
     const code = text.charCodeAt(i)
@@ -673,9 +651,8 @@ function toUtf16LeBase64(text: string): string {
 }
 
 /**
- * Build the full PowerShell script that parses a command.
- * The user command is Base64-encoded (UTF-8) and embedded in a variable
- * to prevent injection attacks.
+ * 构建用于解析命令的完整 PowerShell 脚本。用户命令先以 UTF-8 做 Base64 编码，
+ * 再嵌入变量，以防止注入攻击。
  */
 function buildParseScript(command: string): string {
   const encoded =
@@ -686,8 +663,7 @@ function buildParseScript(command: string): string {
 }
 
 /**
- * Ensure a value is an array. PowerShell 5.1's ConvertTo-Json may unwrap
- * single-element arrays into plain objects.
+ * 确保值为数组。PowerShell 5.1 的 ConvertTo-Json 可能把单元素数组展开成普通对象。
  */
 function ensureArray<T>(value: T | T[] | undefined | null): T[] {
   if (value === undefined || value === null) {
@@ -696,8 +672,8 @@ function ensureArray<T>(value: T | T[] | undefined | null): T[] {
   return Array.isArray(value) ? value : [value]
 }
 
-/** Map raw .NET AST type name to our StatementType union */
-// exported for testing
+/** 将原始 .NET AST 类型名映射到 StatementType 联合类型。 */
+// 导出供测试使用。
 export function mapStatementType(rawType: string): StatementType {
   switch (rawType) {
     case 'PipelineAst':
@@ -733,19 +709,19 @@ export function mapStatementType(rawType: string): StatementType {
   }
 }
 
-/** Map raw .NET AST type name to our CommandElementType union */
-// exported for testing
+/** 将原始 .NET AST 类型名映射到 CommandElementType 联合类型。 */
+// 导出供测试使用。
 export function mapElementType(rawType: string, expressionType?: string): CommandElementType {
   switch (rawType) {
     case 'ScriptBlockExpressionAst':
       return 'ScriptBlock'
     case 'SubExpressionAst':
     case 'ArrayExpressionAst':
-      // SECURITY: ArrayExpressionAst (@()) is a sibling of SubExpressionAst,
-      // not a subclass. Both evaluate arbitrary pipelines with side effects:
-      // Get-ChildItem @(Remove-Item ./data) runs Remove-Item inside @().
-      // Map both to SubExpression so hasSubExpressions fires and isReadOnlyCommand
-      // rejects (it doesn't check nestedCommands, only pipeline.commands[]).
+      // 安全要求：ArrayExpressionAst（@()）与 SubExpressionAst 同级，并非其子类。
+      // 二者都会求值可能带副作用的任意管道：Get-ChildItem @(Remove-Item ./data)
+      // 会在 @() 中运行 Remove-Item。将二者都映射为 SubExpression，使
+      // hasSubExpressions 生效并由 isReadOnlyCommand 拒绝；后者只检查
+      // pipeline.commands[]，不检查 nestedCommands。
       return 'SubExpression'
     case 'ExpandableStringExpressionAst':
       return 'ExpandableString'
@@ -756,22 +732,19 @@ export function mapElementType(rawType: string, expressionType?: string): Comman
       return 'Variable'
     case 'StringConstantExpressionAst':
     case 'ConstantExpressionAst':
-      // ConstantExpressionAst covers numeric literals (5, 3.14). For
-      // permission purposes a numeric literal is as safe as a string
-      // literal — it's an inert value, not code. Without this mapping,
-      // `-Seconds:5` produced children[0].type='Other' and consumers
-      // checking `children.some(c => c.type !== 'StringConstant')` would
-      // false-positive ask on harmless numeric args.
+      // ConstantExpressionAst 涵盖数字字面量（5、3.14）。就权限而言，数字字面量
+      // 与字符串字面量同样安全：它是不执行的值，不是代码。缺少此映射时，
+      // `-Seconds:5` 会生成 children[0].type='Other'，consumer 检查
+      // `children.some(c => c.type !== 'StringConstant')` 时会把无害数字参数误报为 ask。
       return 'StringConstant'
     case 'CommandParameterAst':
       return 'Parameter'
     case 'ParenExpressionAst':
       return 'SubExpression'
     case 'CommandExpressionAst':
-      // Delegate to the wrapped expression type so we catch SubExpressionAst,
-      // ExpandableStringExpressionAst, ScriptBlockExpressionAst, etc.
-      // without maintaining a manual list. Falls through to 'Other' if the
-      // inner type is unrecognised.
+      // 委托给被包装的表达式类型，以捕获 SubExpressionAst、
+      // ExpandableStringExpressionAst、ScriptBlockExpressionAst 等，
+      // 无需维护手工列表。内部类型无法识别时落到 'Other'。
       if (expressionType) {
         return mapElementType(expressionType)
       }
@@ -781,8 +754,8 @@ export function mapElementType(rawType: string, expressionType?: string): Comman
   }
 }
 
-/** Classify command name as cmdlet, application, or unknown */
-// exported for testing
+/** 将命令名称分类为 cmdlet、application 或 unknown。 */
+// 导出供测试使用。
 export function classifyCommandName(name: string): 'cmdlet' | 'application' | 'unknown' {
   if (/^[A-Za-z]+-[A-Za-z][A-Za-z0-9_]*$/.test(name)) {
     return 'cmdlet'
@@ -793,14 +766,14 @@ export function classifyCommandName(name: string): 'cmdlet' | 'application' | 'u
   return 'unknown'
 }
 
-/** Strip module prefix from command name (e.g. "Microsoft.PowerShell.Utility\\Invoke-Expression" -> "Invoke-Expression") */
-// exported for testing
+/** 从命令名剥离模块前缀（如 "Microsoft.PowerShell.Utility\\Invoke-Expression" -> "Invoke-Expression"）。 */
+// 导出供测试使用。
 export function stripModulePrefix(name: string): string {
   const idx = name.lastIndexOf('\\')
   if (idx < 0) {
     return name
   }
-  // Don't strip file paths: drive letters (C:\...), UNC paths (\\server\...), or relative paths (.\, ..\)
+  // 不剥离文件路径：盘符（C:\...）、UNC 路径（\\server\...）或相对路径（.\、..\）。
   if (
     /^[A-Za-z]:/.test(name) ||
     name.startsWith('\\\\') ||
@@ -812,8 +785,8 @@ export function stripModulePrefix(name: string): string {
   return name.substring(idx + 1)
 }
 
-/** Transform a raw CommandAst pipeline element into ParsedCommandElement */
-// exported for testing
+/** 将原始 CommandAst 管道元素转换为 ParsedCommandElement。 */
+// 导出供测试使用。
 export function transformCommandAst(raw: RawPipelineElement): ParsedCommandElement {
   const cmdElements = ensureArray(raw.commandElements)
   let name = ''
@@ -822,45 +795,39 @@ export function transformCommandAst(raw: RawPipelineElement): ParsedCommandEleme
   const children: (CommandElementChild[] | undefined)[] = []
   let hasChildren = false
 
-  // SECURITY: nameType MUST be computed from the raw name (before
-  // stripModulePrefix). classifyCommandName('scripts\\Get-Process') returns
-  // 'application' (contains \\) — the correct answer, since PowerShell resolves
-  // this as a file path. After stripping it becomes 'Get-Process' which
-  // classifies as 'cmdlet' — wrong, and allowlist checks would trust it.
-  // Auto-allow paths gate on nameType !== 'application' to catch this.
-  // name (stripped) is still used for deny-rule matching symmetry, which is
-  // fail-safe: deny rules over-match (Module\\Remove-Item still hits a
-  // Remove-Item deny), allow rules are separately gated by nameType.
+  // 安全要求：nameType 必须根据 stripModulePrefix 之前的原始名称计算。
+  // classifyCommandName('scripts\\Get-Process') 会返回 'application'（含 \\），这是正确结果，
+  // 因为 PowerShell 会把它解析为文件路径。剥离后会变成 'Get-Process' 并归类为 'cmdlet'，
+  // 这是错误的，且会被 allowlist 检查信任。自动允许路径通过
+  // nameType !== 'application' 关卡捕获此情况。剥离后的 name 仍用于对称的 deny 规则匹配，
+  // 这是关闭失败的：deny 规则只会过度匹配（Module\\Remove-Item 仍命中 Remove-Item deny），
+  // allow 规则则另由 nameType 设防。
   let nameType: 'cmdlet' | 'application' | 'unknown' = 'unknown'
   if (cmdElements.length > 0) {
     const first = cmdElements[0]!
-    // SECURITY: only trust .value for string-literal element types with a
-    // string-typed value. Numeric ConstantExpressionAst (e.g. `& 1`) emits an
-    // integer .value that crashes stripModulePrefix() → parser falls through
-    // to passthrough. For non-string-literal or non-string .value, use .text.
+    // 安全要求：只有字符串字面量元素且 .value 也是字符串时才信任 .value。
+    // 数字 ConstantExpressionAst（如 `& 1`）会生成整数 .value，使
+    // stripModulePrefix() 崩溃，parser 随后落到 passthrough。非字符串字面量或
+    // 非字符串 .value 应使用 .text。
     const isFirstStringLiteral =
       first.type === 'StringConstantExpressionAst' || first.type === 'ExpandableStringExpressionAst'
     const rawNameUnstripped =
       isFirstStringLiteral && typeof first.value === 'string' ? first.value : first.text
-    // SECURITY: strip surrounding quotes from the command name. When .value is
-    // unavailable (no StaticType on the raw node), .text preserves quotes —
-    // `& 'Invoke-Expression' 'x'` yields "'Invoke-Expression'". Stripping here
-    // at the source means every downstream reader of element.name (deny-rule
-    // matching, GIT_SAFETY_WRITE_CMDLETS lookup, resolveToCanonical, etc.)
-    // sees the bare cmdlet name. No-op when .value already stripped.
+    // 安全要求：剥离命令名外围引号。当 .value 不可用（原始节点无 StaticType）时，
+    // .text 会保留引号；`& 'Invoke-Expression' 'x'` 将得到 "'Invoke-Expression'"。
+    // 在源头剥离后，所有读取 element.name 的下游逻辑（deny 规则匹配、
+    // GIT_SAFETY_WRITE_CMDLETS 查询、resolveToCanonical 等）都能看到裸 cmdlet 名。
+    // .value 已剥离时此操作无影响。
     const rawName = rawNameUnstripped.replace(/^['"]|['"]$/g, '')
-    // SECURITY: PowerShell built-in cmdlet names are ASCII-only. Non-ASCII
-    // characters in cmdlet position are inherently suspicious — .NET
-    // OrdinalIgnoreCase folds U+017F (ſ) → S and U+0131 (ı) → I per
-    // UnicodeData.txt SimpleUppercaseMapping, so PowerShell resolves
-    // `ſtart-proceſſ` → Start-Process at runtime. JS .toLowerCase() does NOT
-    // fold these (ſ is already lowercase), so every downstream name
-    // comparison (NEVER_SUGGEST, deny-rule strEquals, resolveToCanonical,
-    // security validators) misses. Force 'application' to gate auto-allow
-    // (blocks at the nameType !== 'application' checks). Finding #31.
-    // Verified on Windows (pwsh 7.x, 2026-03): ſtart-proceſſ does NOT resolve.
-    // Retained as defense-in-depth against future .NET/PS behavior changes
-    // or module-provided command resolution hooks.
+    // 安全要求：PowerShell 内置 cmdlet 名只含 ASCII。cmdlet 位置出现非 ASCII 字符
+    // 本身就可疑；根据 UnicodeData.txt SimpleUppercaseMapping，.NET OrdinalIgnoreCase
+    // 会把 U+017F（ſ）折叠为 S、U+0131（ı）折叠为 I，因此 PowerShell 运行时可能把
+    // `ſtart-proceſſ` 解析为 Start-Process。JS .toLowerCase() 不会折叠这些字符
+    //（ſ 已是小写），导致所有下游名称比较（NEVER_SUGGEST、deny 规则 strEquals、
+    // resolveToCanonical、安全 validator）漏判。强制归类为 'application'，由
+    // nameType !== 'application' 检查阻止自动允许。Finding #31。
+    // 已在 Windows（pwsh 7.x，2026-03）验证：ſtart-proceſſ 当前无法解析。
+    // 仍保留此纵深防御，以应对未来 .NET/PS 行为变化或模块提供的命令解析 hook。
     if (/[\u0080-\uFFFF]/.test(rawName)) {
       nameType = 'application'
     } else {
@@ -871,16 +838,15 @@ export function transformCommandAst(raw: RawPipelineElement): ParsedCommandEleme
 
     for (let i = 1; i < cmdElements.length; i++) {
       const ce = cmdElements[i]!
-      // Use resolved .value for string constants (strips quotes, resolves
-      // backtick escapes like `n -> newline) but keep raw .text for parameters
-      // (where .value loses the dash prefix, e.g. '-Path' -> 'Path'),
-      // variables, and other non-string types.
+      // 字符串常量使用解析后的 .value（剥离引号并解析 `n 等反引号转义为换行），
+      // 参数、变量和其他非字符串类型则保留原始 .text；参数的 .value 会丢失短横线前缀，
+      // 如 '-Path' -> 'Path'。
       const isStringLiteral =
         ce.type === 'StringConstantExpressionAst' || ce.type === 'ExpandableStringExpressionAst'
       args.push(isStringLiteral && ce.value != null ? ce.value : ce.text)
       elementTypes.push(mapElementType(ce.type, ce.expressionType))
-      // Map raw children (CommandParameterAst.Argument) through
-      // mapElementType so consumers see 'Variable', 'StringConstant', etc.
+      // 通过 mapElementType 映射原始 children（CommandParameterAst.Argument），
+      // 让 consumer 看到 'Variable'、'StringConstant' 等类型。
       const rawChildren = ensureArray(ce.children)
       if (rawChildren.length > 0) {
         hasChildren = true
@@ -906,7 +872,7 @@ export function transformCommandAst(raw: RawPipelineElement): ParsedCommandEleme
     ...(hasChildren ? { children } : {}),
   }
 
-  // Preserve redirections from nested commands (e.g., in && / || chains)
+  // 保留嵌套命令中的重定向（如 && / || 链）。
   const rawRedirs = ensureArray(raw.redirections)
   if (rawRedirs.length > 0) {
     result.redirections = rawRedirs.map(transformRedirection)
@@ -915,8 +881,8 @@ export function transformCommandAst(raw: RawPipelineElement): ParsedCommandEleme
   return result
 }
 
-/** Transform a non-CommandAst pipeline element into ParsedCommandElement */
-// exported for testing
+/** 将非 CommandAst 管道元素转换为 ParsedCommandElement。 */
+// 导出供测试使用。
 export function transformExpressionElement(raw: RawPipelineElement): ParsedCommandElement {
   const elementType: PipelineElementType =
     raw.type === 'ParenExpressionAst' ? 'ParenExpressionAst' : 'CommandExpressionAst'
@@ -932,8 +898,8 @@ export function transformExpressionElement(raw: RawPipelineElement): ParsedComma
   }
 }
 
-/** Map raw redirection to ParsedRedirection */
-// exported for testing
+/** 将原始重定向映射为 ParsedRedirection。 */
+// 导出供测试使用。
 export function transformRedirection(raw: RawRedirection): ParsedRedirection {
   if (raw.type === 'MergingRedirectionAst') {
     return { operator: '2>&1', target: '', isMerging: true }
@@ -972,15 +938,15 @@ export function transformRedirection(raw: RawRedirection): ParsedRedirection {
   return { operator, target: raw.locationText ?? '', isMerging: false }
 }
 
-/** Transform a raw statement into ParsedStatement */
-// exported for testing
+/** 将原始语句转换为 ParsedStatement。 */
+// 导出供测试使用。
 export function transformStatement(raw: RawStatement): ParsedStatement {
   const statementType = mapStatementType(raw.type)
   const commands: ParsedCommandElement[] = []
   const redirections: ParsedRedirection[] = []
 
   if (raw.elements) {
-    // PipelineAst: walk pipeline elements
+    // PipelineAst：遍历管道元素。
     for (const elem of ensureArray(raw.elements)) {
       if (elem.type === 'CommandAst') {
         commands.push(transformCommandAst(elem))
@@ -989,27 +955,25 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
         }
       } else {
         commands.push(transformExpressionElement(elem))
-        // SECURITY: CommandExpressionAst also carries .Redirections (inherited
-        // from CommandBaseAst). `1 > /tmp/evil.txt` is a CommandExpressionAst
-        // with a FileRedirectionAst. Must extract here or getFileRedirections()
-        // misses it and compound commands like `Get-ChildItem; 1 > /tmp/x`
-        // auto-allow at step 5 (only Get-ChildItem is checked).
+        // 安全要求：CommandExpressionAst 也带有从 CommandBaseAst 继承的 .Redirections。
+        // `1 > /tmp/evil.txt` 是带 FileRedirectionAst 的 CommandExpressionAst。
+        // 必须在此提取，否则 getFileRedirections() 会漏掉它，使
+        // `Get-ChildItem; 1 > /tmp/x` 等复合命令在第 5 步被自动允许，因为只检查了
+        // Get-ChildItem。
         for (const redir of ensureArray(elem.redirections)) {
           redirections.push(transformRedirection(redir))
         }
       }
     }
-    // SECURITY: The PS1 PipelineAst branch does a deep FindAll for
-    // FileRedirectionAst to catch redirections hidden inside:
+    // 安全要求：PS1 的 PipelineAst 分支会深度 FindAll FileRedirectionAst，
+    // 以捕获隐藏在以下位置的重定向：
     //  - colon-bound ParenExpressionAst args: -Name:('payload' > file)
     //  - hashtable value statements: @{k='payload' > ~/.bashrc}
-    // Both are invisible at the element level — the redirection's parent
-    // is a child of CommandParameterAst / CommandExpressionAst, not a
-    // separate pipeline element. Merge into statement-level redirections.
+    // 二者在元素级都不可见，因为重定向的 parent 是 CommandParameterAst /
+    // CommandExpressionAst 的子节点，而非独立管道元素。因此合并到语句级重定向。
     //
-    // The FindAll ALSO re-discovers direct-element redirections already
-    // captured in the per-element loop above. Dedupe by (operator, target)
-    // so tests and consumers see the real count.
+    // FindAll 还会再次发现上方逐元素循环已捕获的直接元素重定向。
+    // 按（operator、target）去重，让测试和 consumer 看到真实数量。
     const seen = new Set(redirections.map((r) => `${r.operator}\0${r.target}`))
     for (const redir of ensureArray(raw.redirections)) {
       const r = transformRedirection(redir)
@@ -1020,7 +984,7 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
       }
     }
   } else {
-    // Non-pipeline statement: add synthetic command entry with full text
+    // 非管道语句：添加包含完整文本的合成命令条目。
     commands.push({
       name: raw.text,
       nameType: 'unknown',
@@ -1028,29 +992,24 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
       args: [],
       text: raw.text,
     })
-    // SECURITY: The PS1 else-branch does a direct recursive FindAll on
-    // FileRedirectionAst to catch expression redirections inside control flow
-    // (if/for/foreach/while/switch/try/trap/&& and ||). The CommandAst FindAll
-    // above CANNOT see these: in if ($x) { 1 > /tmp/evil }, the literal 1 with
-    // its attached redirection is a CommandExpressionAst — a SIBLING of
-    // CommandAst in the type hierarchy, not a subclass. So nestedCommands never
-    // contains it, and without this hoist the redirection is invisible to
-    // getFileRedirections → step 4.6 misses it → compound commands like
-    // `Get-Process && 1 > /tmp/evil` auto-allow at step 5 (only Get-Process
-    // is checked, allowlisted).
+    // 安全要求：PS1 的 else 分支会直接递归 FindAll FileRedirectionAst，以捕获控制流
+    //（if/for/foreach/while/switch/try/trap/&& 和 ||）中的表达式重定向。上方针对
+    // CommandAst 的 FindAll 无法看到它们：在 if ($x) { 1 > /tmp/evil } 中，带重定向的
+    // 字面量 1 是 CommandExpressionAst；它在类型层级中与 CommandAst 同级，并非其子类。
+    // 因此 nestedCommands 永远不会包含它。若不提升，getFileRedirections 看不到该重定向，
+    // 第 4.6 步会漏判，使 `Get-Process && 1 > /tmp/evil` 等复合命令在第 5 步自动允许，
+    // 因为只检查且 allowlist 允许了 Get-Process。
     //
-    // Finding FileRedirectionAst DIRECTLY (rather than finding CommandExpressionAst
-    // and extracting .Redirections) is both simpler and more robust: it catches
-    // redirections on any node type, including ones we don't know about yet.
+    // 直接查找 FileRedirectionAst，而非查找 CommandExpressionAst 后提取 .Redirections，
+    // 既更简单也更稳健；它能捕获任何节点类型上的重定向，包括尚未知晓的类型。
     //
-    // Double-counts redirections already on nested CommandAst commands (those are
-    // extracted at line ~395 into nestedCommands[i].redirections AND found again
-    // here). Harmless: step 4.6 only checks fileRedirections.length > 0, not
-    // the exact count. No code does arithmetic on redirection counts.
+    // 这会重复计算嵌套 CommandAst 命令上已有的重定向；它们约在 395 行提取到
+    // nestedCommands[i].redirections，并在此再次发现。该重复无害：第 4.6 步只检查
+    // fileRedirections.length > 0，不依赖精确数量，也没有代码会对重定向数量做运算。
     //
-    // PS1 SIZE NOTE: The full rationale lives here (TS), not in the PS1 script,
-    // because PS1 comments bloat the -EncodedCommand payload and push the
-    // Windows CreateProcess 32K limit. Keep PS1 comments terse; point them here.
+    // PS1 大小说明：完整理由放在这里（TS），而非 PS1 脚本中，因为 PS1 注释会增大
+    // -EncodedCommand payload，逼近 Windows CreateProcess 的 32K 上限。
+    // PS1 注释应保持简短并指向此处。
     for (const redir of ensureArray(raw.redirections)) {
       redirections.push(transformRedirection(redir))
     }
@@ -1077,7 +1036,7 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
   return result
 }
 
-/** Transform the complete raw PS output into ParsedPowerShellCommand */
+/** 将完整的原始 PS 输出转换为 ParsedPowerShellCommand。 */
 function transformRawOutput(raw: RawParsedOutput): ParsedPowerShellCommand {
   const result: ParsedPowerShellCommand = {
     valid: raw.valid,
@@ -1101,12 +1060,11 @@ function transformRawOutput(raw: RawParsedOutput): ParsedPowerShellCommand {
 }
 
 /**
- * Parse a PowerShell command using the native AST parser.
- * Spawns pwsh to parse the command and returns structured results.
- * Results are memoized by command string.
+ * 使用原生 AST parser 解析 PowerShell 命令。启动 pwsh 解析命令并返回结构化结果。
+ * 结果按命令字符串 memoize。
  *
- * @param command - The PowerShell command to parse
- * @returns Parsed command structure, or a result with valid=false on failure
+ * @param command - 要解析的 PowerShell 命令
+ * @returns 解析后的命令结构；失败时返回 valid=false 的结果
  */
 async function parsePowerShellCommandImpl(command: string): Promise<ParsedPowerShellCommand> {
   // SECURITY: MAX_COMMAND_LENGTH is a UTF-8 BYTE budget (see derivation at the
@@ -1133,12 +1091,10 @@ async function parsePowerShellCommandImpl(command: string): Promise<ParsedPowerS
 
   const script = buildParseScript(command)
 
-  // Pass the script to PowerShell via -EncodedCommand.
-  // -EncodedCommand takes a Base64-encoded UTF-16LE string and executes it,
-  // which avoids: (1) stdin interactive-mode issues where -File - produces
-  // PS prompts and ANSI escapes in stdout, (2) command-line escaping issues,
-  // (3) temp files. The script itself is large but well within OS arg limits
-  // (Windows: 32K chars, Unix: typically 2MB+).
+  // 通过 -EncodedCommand 将脚本传给 PowerShell。-EncodedCommand 接收以 UTF-16LE
+  // 做 Base64 编码的字符串并执行，可避免：(1) -File - 在 stdin 交互模式下向 stdout
+  // 输出 PS prompt 和 ANSI 转义；(2) 命令行转义问题；(3) 临时文件。脚本虽大，
+  // 仍远低于 OS 参数上限（Windows 为 32K 字符，Unix 通常为 2MB 以上）。
   const encodedScript = toUtf16LeBase64(script)
   const args = ['-NoProfile', '-NonInteractive', '-NoLogo', '-EncodedCommand', encodedScript]
 
@@ -1209,10 +1165,9 @@ async function parsePowerShellCommandImpl(command: string): Promise<ParsedPowerS
   }
 }
 
-// Error IDs from makeInvalidResult that represent transient process failures.
-// These should be evicted from the cache so subsequent calls can retry.
-// Deterministic failures (CommandTooLong, syntax errors from successful parses)
-// should stay cached since retrying would produce the same result.
+// makeInvalidResult 中表示瞬时进程失败的错误 ID。应将其从 cache 移除，
+// 让后续调用可以重试。确定性失败（CommandTooLong、成功解析后发现的语法错误）
+// 应继续缓存，因为重试会得到相同结果。
 const TRANSIENT_ERROR_IDS = new Set([
   'PwshSpawnError',
   'PwshError',
@@ -1224,9 +1179,8 @@ const TRANSIENT_ERROR_IDS = new Set([
 const parsePowerShellCommandCached = memoizeWithLRU(
   (command: string) => {
     const promise = parsePowerShellCommandImpl(command)
-    // Evict transient failures after resolution so they can be retried.
-    // The current caller still receives the cached promise for this call,
-    // ensuring concurrent callers share the same result.
+    // 解析完成后移除瞬时失败，以便重试。本次调用方仍收到已缓存的 Promise，
+    // 确保并发调用方共享同一结果。
     void promise.then((result) => {
       if (!result.valid && TRANSIENT_ERROR_IDS.has(result.errors[0]?.errorId ?? '')) {
         parsePowerShellCommandCached.cache.delete(command)
@@ -1241,47 +1195,46 @@ const parsePowerShellCommandCached = memoizeWithLRU(
 export { parsePowerShellCommandCached as parsePowerShellCommand }
 
 // ---------------------------------------------------------------------------
-// Analysis helpers — derived from the parsed AST structure.
+// 从已解析 AST 结构推导的分析 helper。
 // ---------------------------------------------------------------------------
 
 /**
- * Security-relevant flags derived from the parsed AST.
+ * 从已解析 AST 推导的安全相关 flag。
  */
 type SecurityFlags = {
-  /** Contains $(...) subexpression */
+  /** 包含 $(...) 子表达式 */
   hasSubExpressions: boolean
-  /** Contains { ... } script block expressions */
+  /** 包含 { ... } script block 表达式 */
   hasScriptBlocks: boolean
-  /** Contains @variable splatting */
+  /** 包含 @variable splatting */
   hasSplatting: boolean
-  /** Contains expandable strings with embedded expressions ("...$()...") */
+  /** 包含嵌入表达式的可展开字符串（"...$()..."） */
   hasExpandableStrings: boolean
-  /** Contains .NET method invocations ([Type]::Method or $obj.Method()) */
+  /** 包含 .NET 方法调用（[Type]::Method 或 $obj.Method()） */
   hasMemberInvocations: boolean
-  /** Contains variable assignments ($x = ...) */
+  /** 包含变量赋值（$x = ...） */
   hasAssignments: boolean
-  /** Uses stop-parsing token (--%) */
+  /** 使用 stop-parsing token（--%） */
   hasStopParsing: boolean
 }
 
 /**
- * Common PowerShell aliases mapped to their canonical cmdlet names.
- * Uses Object.create(null) to prevent prototype-chain pollution — attacker-controlled
- * command names like 'constructor' or '__proto__' must return undefined, not inherited
- * Object.prototype properties.
+ * 将常见 PowerShell alias 映射到规范 cmdlet 名称。
+ * 使用 Object.create(null) 防止原型链污染；攻击者可控的 'constructor' 或
+ * '__proto__' 等命令名必须返回 undefined，不能取得继承自 Object.prototype 的属性。
  */
 export const COMMON_ALIASES: Record<string, string> = Object.assign(
   Object.create(null) as Record<string, string>,
   {
-    // Directory listing
+    // 目录列表。
     ls: 'Get-ChildItem',
     dir: 'Get-ChildItem',
     gci: 'Get-ChildItem',
-    // Content
+    // 内容读取。
     cat: 'Get-Content',
     type: 'Get-Content',
     gc: 'Get-Content',
-    // Navigation
+    // 目录导航。
     cd: 'Set-Location',
     sl: 'Set-Location',
     chdir: 'Set-Location',
@@ -1289,7 +1242,7 @@ export const COMMON_ALIASES: Record<string, string> = Object.assign(
     popd: 'Pop-Location',
     pwd: 'Get-Location',
     gl: 'Get-Location',
-    // Items
+    // Item 操作。
     gi: 'Get-Item',
     gp: 'Get-ItemProperty',
     ni: 'New-Item',
@@ -1314,7 +1267,7 @@ export const COMMON_ALIASES: Record<string, string> = Object.assign(
     si: 'Set-Item',
     rni: 'Rename-Item',
     ren: 'Rename-Item',
-    // Process
+    // 进程。
     ps: 'Get-Process',
     gps: 'Get-Process',
     kill: 'Stop-Process',
@@ -1323,35 +1276,35 @@ export const COMMON_ALIASES: Record<string, string> = Object.assign(
     saps: 'Start-Process',
     sajb: 'Start-Job',
     ipmo: 'Import-Module',
-    // Output
+    // 输出。
     echo: 'Write-Output',
     write: 'Write-Output',
     sleep: 'Start-Sleep',
-    // Help
+    // 帮助。
     help: 'Get-Help',
     man: 'Get-Help',
     gcm: 'Get-Command',
-    // Service
+    // 服务。
     gsv: 'Get-Service',
-    // Variables
+    // 变量。
     gv: 'Get-Variable',
     sv: 'Set-Variable',
-    // History
+    // 历史记录。
     h: 'Get-History',
     history: 'Get-History',
-    // Invoke
+    // 调用。
     iex: 'Invoke-Expression',
     iwr: 'Invoke-WebRequest',
     irm: 'Invoke-RestMethod',
     icm: 'Invoke-Command',
     ii: 'Invoke-Item',
-    // PSSession — remote code execution surface
+    // PSSession——远程代码执行面。
     nsn: 'New-PSSession',
     etsn: 'Enter-PSSession',
     exsn: 'Exit-PSSession',
     gsn: 'Get-PSSession',
     rsn: 'Remove-PSSession',
-    // Misc
+    // 其他。
     cls: 'Clear-Host',
     clear: 'Clear-Host',
     select: 'Select-Object',
@@ -1393,7 +1346,7 @@ export const COMMON_ALIASES: Record<string, string> = Object.assign(
     rp: 'Remove-ItemProperty',
     cli: 'Clear-Item',
     epal: 'Export-Alias',
-    // Text search
+    // 文本搜索。
     sls: 'Select-String',
   },
 )
@@ -1403,10 +1356,10 @@ const DIRECTORY_CHANGE_CMDLETS = new Set(['set-location', 'push-location', 'pop-
 const DIRECTORY_CHANGE_ALIASES = new Set(['cd', 'sl', 'chdir', 'pushd', 'popd'])
 
 /**
- * Get all command names across all statements, pipeline segments, and nested commands.
- * Returns lowercased names for case-insensitive comparison.
+ * 获取所有语句、管道分段和嵌套命令中的全部命令名。
+ * 返回小写名称，以便不区分大小写地比较。
  */
-// exported for testing
+// 导出供测试使用。
 export function getAllCommandNames(parsed: ParsedPowerShellCommand): string[] {
   const names: string[] = []
   for (const statement of parsed.statements) {
@@ -1423,8 +1376,7 @@ export function getAllCommandNames(parsed: ParsedPowerShellCommand): string[] {
 }
 
 /**
- * Get all pipeline segments as flat list of commands.
- * Useful for checking each command independently.
+ * 将所有管道分段展开为扁平命令列表，便于逐条独立检查。
  */
 export function getAllCommands(parsed: ParsedPowerShellCommand): ParsedCommandElement[] {
   const commands: ParsedCommandElement[] = []
@@ -1442,16 +1394,16 @@ export function getAllCommands(parsed: ParsedPowerShellCommand): ParsedCommandEl
 }
 
 /**
- * Get all redirections across all statements.
+ * 获取所有语句中的全部重定向。
  */
-// exported for testing
+// 导出供测试使用。
 export function getAllRedirections(parsed: ParsedPowerShellCommand): ParsedRedirection[] {
   const redirections: ParsedRedirection[] = []
   for (const statement of parsed.statements) {
     for (const redir of statement.redirections) {
       redirections.push(redir)
     }
-    // Include redirections from nested commands (e.g., from && / || chains)
+    // 包含嵌套命令中的重定向（如来自 && / || 链）。
     if (statement.nestedCommands) {
       for (const cmd of statement.nestedCommands) {
         if (cmd.redirections) {
@@ -1466,8 +1418,8 @@ export function getAllRedirections(parsed: ParsedPowerShellCommand): ParsedRedir
 }
 
 /**
- * Get all variables, optionally filtered by scope (e.g., 'env').
- * Variable paths in PowerShell can have scopes like "env:PATH", "global:x".
+ * 获取全部变量，可选择按 scope（如 'env'）过滤。
+ * PowerShell 变量路径可带 "env:PATH"、"global:x" 等 scope。
  */
 export function getVariablesByScope(
   parsed: ParsedPowerShellCommand,
@@ -1478,8 +1430,7 @@ export function getVariablesByScope(
 }
 
 /**
- * Check if any command in the parsed result matches a given name (case-insensitive).
- * Handles common aliases too.
+ * 检查解析结果中是否有命令与给定名称匹配（不区分大小写），同时处理常见 alias。
  */
 export function hasCommandNamed(parsed: ParsedPowerShellCommand, name: string): boolean {
   const lowerName = name.toLowerCase()
@@ -1489,16 +1440,16 @@ export function hasCommandNamed(parsed: ParsedPowerShellCommand, name: string): 
     if (cmdName === lowerName) {
       return true
     }
-    // Check if the command is an alias that resolves to the requested name
+    // 检查命令是否为解析后等于目标名称的 alias。
     const canonical = COMMON_ALIASES[cmdName]?.toLowerCase()
     if (canonical === lowerName) {
       return true
     }
-    // Check if the requested name is an alias and the command is its canonical form
+    // 检查目标名称是否为 alias，且命令是否为其规范形式。
     if (canonicalFromAlias && cmdName === canonicalFromAlias) {
       return true
     }
-    // Check if both resolve to the same canonical cmdlet (alias-to-alias match)
+    // 检查二者是否解析到同一规范 cmdlet（alias 对 alias 匹配）。
     if (canonical && canonicalFromAlias && canonical === canonicalFromAlias) {
       return true
     }
@@ -1507,10 +1458,10 @@ export function hasCommandNamed(parsed: ParsedPowerShellCommand, name: string): 
 }
 
 /**
- * Check if the command contains any directory-changing commands.
+ * 检查命令是否包含任何切换目录的命令。
  * (Set-Location, cd, sl, chdir, Push-Location, pushd, Pop-Location, popd)
  */
-// exported for testing
+// 导出供测试使用。
 export function hasDirectoryChange(parsed: ParsedPowerShellCommand): boolean {
   for (const cmdName of getAllCommandNames(parsed)) {
     if (DIRECTORY_CHANGE_CMDLETS.has(cmdName) || DIRECTORY_CHANGE_ALIASES.has(cmdName)) {
@@ -1521,9 +1472,9 @@ export function hasDirectoryChange(parsed: ParsedPowerShellCommand): boolean {
 }
 
 /**
- * Check if the command is a single simple command (no pipes, no semicolons, no operators).
+ * 检查命令是否为单一简单命令（无管道、分号或运算符）。
  */
-// exported for testing
+// 导出供测试使用。
 export function isSingleCommand(parsed: ParsedPowerShellCommand): boolean {
   const stmt = parsed.statements[0]
   return (
@@ -1535,8 +1486,8 @@ export function isSingleCommand(parsed: ParsedPowerShellCommand): boolean {
 }
 
 /**
- * Check if a specific command has a given argument/flag (case-insensitive).
- * Useful for checking "-EncodedCommand", "-Recurse", etc.
+ * 检查特定命令是否带给定参数或 flag（不区分大小写），
+ * 适合检查 "-EncodedCommand"、"-Recurse" 等。
  */
 export function commandHasArg(command: ParsedCommandElement, arg: string): boolean {
   const lowerArg = arg.toLowerCase()
@@ -1609,19 +1560,17 @@ export function commandHasArgAbbreviation(
 }
 
 /**
- * Split a parsed command into its pipeline segments for per-segment permission checking.
- * Returns each pipeline's commands separately.
+ * 将已解析命令拆成管道分段，以逐段检查权限；分别返回各管道的命令。
  */
 export function getPipelineSegments(parsed: ParsedPowerShellCommand): ParsedStatement[] {
   return parsed.statements
 }
 
 /**
- * True if a redirection target is PowerShell's `$null` automatic variable.
- * `> $null` discards output (like /dev/null) — not a filesystem write.
- * `$null` cannot be reassigned, so this is safe to treat as a no-op sink.
- * `${null}` is the same automatic variable via curly-brace syntax. Spaces
- * inside the braces (`${ null }`) name a different variable, so no regex.
+ * 重定向目标为 PowerShell 自动变量 `$null` 时返回 true。
+ * `> $null` 会丢弃输出（类似 /dev/null），并非文件系统写入。`$null` 无法重新赋值，
+ * 因此可安全地视为 no-op sink。`${null}` 是花括号语法下的同一自动变量；
+ * 花括号内带空格的 `${ null }` 表示另一变量，因此 regex 不匹配它。
  */
 export function isNullRedirectionTarget(target: string): boolean {
   const t = target.trim().toLowerCase()
@@ -1629,10 +1578,9 @@ export function isNullRedirectionTarget(target: string): boolean {
 }
 
 /**
- * Get output redirections (file redirections, not merging redirections).
- * Returns only redirections that write to files.
+ * 获取输出重定向（文件重定向，不含合并重定向），只返回会写入文件的重定向。
  */
-// exported for testing
+// 导出供测试使用。
 export function getFileRedirections(parsed: ParsedPowerShellCommand): ParsedRedirection[] {
   return getAllRedirections(parsed).filter(
     (r) => !r.isMerging && !isNullRedirectionTarget(r.target),
@@ -1640,12 +1588,11 @@ export function getFileRedirections(parsed: ParsedPowerShellCommand): ParsedRedi
 }
 
 /**
- * Derive security-relevant flags from the parsed command structure.
- * This replaces the previous approach of computing flags in PowerShell via
- * separate Find-AstNodes calls. Instead, the PS1 script tags each element
- * with its AST node type, and this function walks those types.
+ * 从已解析命令结构推导安全相关 flag。它取代此前在 PowerShell 中分别调用
+ * Find-AstNodes 计算 flag 的方式；PS1 脚本会给各元素标记 AST 节点类型，
+ * 此函数再遍历这些类型。
  */
-// exported for testing
+// 导出供测试使用。
 export function deriveSecurityFlags(parsed: ParsedPowerShellCommand): SecurityFlags {
   const flags: SecurityFlags = {
     hasSubExpressions: false,
@@ -1720,4 +1667,4 @@ export function deriveSecurityFlags(parsed: ParsedPowerShellCommand): SecurityFl
   return flags
 }
 
-// Raw types exported for testing (function exports are inline above)
+// 导出供测试使用的原始类型（函数已在上方内联导出）。

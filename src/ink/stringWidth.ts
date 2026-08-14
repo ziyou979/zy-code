@@ -91,7 +91,7 @@ function stringWidthJavaScript(str: string): number {
 function needsSegmentation(str: string): boolean {
   for (const char of str) {
     const cp = char.codePointAt(0)!
-    // Emoji ranges
+    // Emoji 范围
     if (cp >= 0x1f300 && cp <= 0x1faff) {
       return true
     }
@@ -101,7 +101,7 @@ function needsSegmentation(str: string): boolean {
     if (cp >= 0x1f1e6 && cp <= 0x1f1ff) {
       return true
     }
-    // Variation selectors, ZWJ
+    // 变体选择符、ZWJ
     if (cp >= 0xfe00 && cp <= 0xfe0f) {
       return true
     }

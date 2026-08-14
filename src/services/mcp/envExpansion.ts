@@ -1,11 +1,10 @@
 /**
- * Shared utilities for expanding environment variables in MCP server configurations
+ * 展开 MCP server 配置中环境变量的共享工具。
  */
 
 /**
- * Expand environment variables in a string value
- * Handles ${VAR} and ${VAR:-default} syntax
- * @returns Object with expanded string and list of missing variables
+ * 展开字符串中的环境变量，支持 ${VAR} 和 ${VAR:-default} 语法。
+ * @returns 包含展开后字符串及缺失变量列表的对象
  */
 export function expandEnvVarsInString(value: string): {
   expanded: string
@@ -14,7 +13,7 @@ export function expandEnvVarsInString(value: string): {
   const missingVars: string[] = []
 
   const expanded = value.replace(/\$\{([^}]+)\}/g, (match, varContent) => {
-    // Split on :- to support default values (limit to 2 parts to preserve :- in defaults)
+    // 按 :- 拆分以支持默认值；最多拆成两段，从而保留默认值中的 :-
     const [varName, defaultValue] = varContent.split(':-', 2)
     const envValue = process.env[varName]
 
@@ -25,9 +24,9 @@ export function expandEnvVarsInString(value: string): {
       return defaultValue
     }
 
-    // Track missing variable for error reporting
+    // 记录缺失变量，供错误报告使用
     missingVars.push(varName)
-    // Return original if not found (allows debugging but will be reported as error)
+    // 找不到变量时返回原值，便于调试，同时仍会报告错误
     return match
   })
 

@@ -1,9 +1,8 @@
 /**
- * Tool Search utilities for dynamically discovering deferred tools.
+ * 用于动态发现延迟加载工具的 Tool Search 工具函数。
  *
- * When enabled, deferred tools (MCP and shouldDefer tools) are sent with
- * defer_loading: true and discovered via ToolSearchTool rather than being
- * loaded upfront.
+ * 启用后，延迟工具（MCP 和 shouldDefer 工具）会携带 defer_loading: true 发送，
+ * 并通过 ToolSearchTool 发现，而非预先加载。
  */
 
 import memoize from 'lodash-es/memoize.js'
@@ -39,15 +38,14 @@ import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { zodToJsonSchema } from '../api/zodToJsonSchema.js'
 
 /**
- * Default percentage of context window at which to auto-enable tool search.
- * When MCP tool descriptions exceed this percentage (in tokens), tool search is enabled.
- * Can be overridden via ENABLE_TOOL_SEARCH=auto:N where N is 0-100.
+ * 自动启用 tool search 的默认上下文窗口百分比。MCP 工具描述超过此百分比（按 token 计）时，
+ * 启用 tool search。可通过 ENABLE_TOOL_SEARCH=auto:N 覆盖，其中 N 为 0-100。
  */
 const DEFAULT_AUTO_TOOL_SEARCH_PERCENTAGE = 10 // 10%
 
 /**
- * Parse auto:N syntax from ENABLE_TOOL_SEARCH env var.
- * Returns the percentage clamped to 0-100, or null if not auto:N format or not a number.
+ * 解析 ENABLE_TOOL_SEARCH 环境变量中的 auto:N 语法。
+ * 返回限制在 0-100 的百分比；如果不是 auto:N 格式或不是数字，则返回 null。
  */
 function parseAutoPercentage(value: string): number | null {
   if (!value.startsWith('auto:')) {
@@ -64,12 +62,12 @@ function parseAutoPercentage(value: string): number | null {
     return null
   }
 
-  // Clamp to valid range
+  // 限制到有效范围
   return Math.max(0, Math.min(100, percent))
 }
 
 /**
- * Check if ENABLE_TOOL_SEARCH is set to auto mode (auto or auto:N).
+ * 检查 ENABLE_TOOL_SEARCH 是否设置为自动模式（auto 或 auto:N）。
  */
 function isAutoToolSearchMode(value: string | undefined): boolean {
   if (!value) {
@@ -79,7 +77,7 @@ function isAutoToolSearchMode(value: string | undefined): boolean {
 }
 
 /**
- * Get the auto-enable percentage from env var or default.
+ * 从环境变量或默认值获取自动启用百分比。
  */
 function getAutoToolSearchPercentage(): number {
   const value = process.env.ENABLE_TOOL_SEARCH
@@ -100,13 +98,13 @@ function getAutoToolSearchPercentage(): number {
 }
 
 /**
- * Approximate chars per token for MCP tool definitions (name + description + input schema).
- * Used as fallback when the token counting API is unavailable.
+ * MCP 工具定义（名称、描述和输入 schema）的近似每 token 字符数。
+ * token 计数 API 不可用时作为回退方案。
  */
 const CHARS_PER_TOKEN = 2.5
 
 /**
- * Get the token threshold for auto-enabling tool search for a given model.
+ * 获取给定模型自动启用 tool search 的 token 阈值。
  */
 function getAutoToolSearchTokenThreshold(model: string): number {
   const contextWindow = getContextWindowForModel(model)
@@ -115,17 +113,17 @@ function getAutoToolSearchTokenThreshold(model: string): number {
 }
 
 /**
- * Get the character threshold for auto-enabling tool search for a given model.
- * Used as fallback when the token counting API is unavailable.
+ * 获取给定模型自动启用 tool search 的字符阈值。
+ * token 计数 API 不可用时作为回退方案。
  */
 export function getAutoToolSearchCharThreshold(model: string): number {
   return Math.floor(getAutoToolSearchTokenThreshold(model) * CHARS_PER_TOKEN)
 }
 
 /**
- * Get the total token count for all deferred tools using the token counting API.
- * Memoized by deferred tool names — cache is invalidated when MCP servers connect/disconnect.
- * Returns null if the API is unavailable (caller should fall back to char heuristic).
+ * 使用 token 计数 API 获取所有延迟工具的 token 总数。
+ * 按延迟工具名称记忆化；MCP 服务器连接/断开时缓存失效。
+ * API 不可用时返回 null（调用方应回退到字符启发式）。
  */
 const getDeferredToolTokenCount = memoize(
   async (
@@ -162,8 +160,7 @@ const getDeferredToolTokenCount = memoize(
 )
 
 /**
- * Tool search mode. Determines how deferrable tools (MCP + shouldDefer) are
- * surfaced:
+ * Tool search 模式。决定如何呈现可延迟工具（MCP + shouldDefer）：
  *   - 'tst': Tool Search Tool — deferred tools discovered via ToolSearchTool (always enabled)
  *   - 'tst-auto': auto — tools deferred only when they exceed threshold
  *   - 'standard': tool search disabled — all tools exposed inline
@@ -171,7 +168,7 @@ const getDeferredToolTokenCount = memoize(
 export type ToolSearchMode = 'tst' | 'tst-auto' | 'standard'
 
 /**
- * Determines the tool search mode from ENABLE_TOOL_SEARCH.
+ * 根据 ENABLE_TOOL_SEARCH 确定 tool search 模式。
  *
  *   ENABLE_TOOL_SEARCH    Mode
  *   auto / auto:1-99      tst-auto
@@ -180,13 +177,11 @@ export type ToolSearchMode = 'tst' | 'tst-auto' | 'standard'
  *   (unset)               tst (default: always defer MCP and shouldDefer tools)
  */
 export function getToolSearchMode(model: string = getMainLoopModel() ?? ''): ToolSearchMode {
-  // ZY_CODE_DISABLE_EXPERIMENTAL_BETAS is a kill switch for beta API
-  // features. Tool search emits defer_loading on tool definitions and
-  // tool_reference content blocks — both require the API to accept a beta
-  // header. When the kill switch is set, force 'standard' so no beta shapes
-  // reach the wire, even if ENABLE_TOOL_SEARCH is also set. This is the
-  // explicit escape hatch for proxy gateways that the heuristic in
-  // isToolSearchEnabledOptimistic doesn't cover.
+  // ZY_CODE_DISABLE_EXPERIMENTAL_BETAS 是 beta API 功能的紧急开关。Tool search 在
+  // 工具定义和 tool_reference 内容块中发送 defer_loading，二者均要求 API 接受 beta
+  // header。设置该开关后强制使用 'standard'，以确保没有 beta 结构进入网络，即使同时
+  // 设置了 ENABLE_TOOL_SEARCH 也是如此。这为 isToolSearchEnabledOptimistic 启发式未
+  // 覆盖的代理网关提供了显式逃生出口。
   // github.com/anthropics/zy-code/issues/20031
   if (isEnvTruthy(process.env.ZY_CODE_DISABLE_EXPERIMENTAL_BETAS)) {
     return 'standard'
@@ -201,7 +196,7 @@ export function getToolSearchMode(model: string = getMainLoopModel() ?? ''): Too
 
   const value = process.env.ENABLE_TOOL_SEARCH
 
-  // Handle auto:N syntax - check edge cases first
+  // 处理 auto:N 语法，先检查边界情况
   const autoPercent = value ? parseAutoPercentage(value) : null
   if (autoPercent === 0) {
     return 'tst' // auto:0 = always enabled
@@ -223,18 +218,18 @@ export function getToolSearchMode(model: string = getMainLoopModel() ?? ''): Too
 }
 
 /**
- * Default patterns for models that do NOT support tool_reference.
- * New models are assumed to support tool_reference unless explicitly listed here.
+ * 不支持 tool_reference 的模型的默认模式。
+ * 除非在此显式列出，否则假定新模型支持 tool_reference。
  */
 const DEFAULT_UNSUPPORTED_MODEL_PATTERNS = ['haiku']
 
 /**
- * Get the list of model patterns that do NOT support tool_reference.
- * Can be configured via GrowthBook for live updates without code changes.
+ * 获取不支持 tool_reference 的模型模式列表。
+ * 可通过 GrowthBook 配置，以便无需改代码即可实时更新。
  */
 function getUnsupportedToolReferencePatterns(): string[] {
   try {
-    // Try to get from GrowthBook for live configuration
+    // 尝试从 GrowthBook 获取实时配置
     const patterns = getFeatureValue_CACHED_MAY_BE_STALE<string[] | null>(
       'zy_tool_search_unsupported_models',
       null,
@@ -243,20 +238,19 @@ function getUnsupportedToolReferencePatterns(): string[] {
       return patterns
     }
   } catch {
-    // GrowthBook not ready, use defaults
+    // GrowthBook 尚未就绪，使用默认值
   }
   return DEFAULT_UNSUPPORTED_MODEL_PATTERNS
 }
 
 /**
- * Check if a model supports tool_reference blocks (required for tool search).
+ * 检查模型是否支持 tool_reference 块（tool search 所需）。
  *
- * This uses a negative test: models are assumed to support tool_reference
- * UNLESS they match a pattern in the unsupported list. This ensures new
- * models work by default without code changes.
+ * 这里使用负向测试：除非模型匹配不支持列表中的模式，否则假定其支持 tool_reference。
+ * 这确保新模型默认可用，无需代码更改。
  *
- * Currently, Haiku models do NOT support tool_reference. This can be
- * updated via GrowthBook feature 'zy_tool_search_unsupported_models'.
+ * 当前 Haiku 模型不支持 tool_reference。可通过 GrowthBook feature
+ * 'zy_tool_search_unsupported_models' 更新。
  *
  * @param model The model name to check
  * @returns true if the model supports tool_reference, false otherwise
@@ -265,30 +259,28 @@ export function modelSupportsToolReference(model: string): boolean {
   const normalizedModel = model.toLowerCase()
   const unsupportedPatterns = getUnsupportedToolReferencePatterns()
 
-  // Check if model matches any unsupported pattern
+  // 检查模型是否匹配任一不支持模式
   for (const pattern of unsupportedPatterns) {
     if (normalizedModel.includes(pattern.toLowerCase())) {
       return false
     }
   }
 
-  // New models are assumed to support tool_reference
+  // 假定新模型支持 tool_reference
   return true
 }
 
 /**
- * Check if tool search *might* be enabled (optimistic check).
+ * 检查 tool search 是否*可能*启用（乐观检查）。
  *
- * Returns true if tool search could potentially be enabled, without checking
- * dynamic factors like model support or threshold. Use this for:
+ * 若 tool search 可能启用则返回 true，不检查模型支持或阈值等动态因素。用于：
  * - Including ToolSearchTool in base tools (so it's available if needed)
  * - Preserving tool_reference fields in messages (can be stripped later)
  * - Checking if ToolSearchTool should report itself as enabled
  *
- * Returns false only when tool search is definitively disabled (standard mode).
+ * 仅在 tool search 确定禁用（standard 模式）时返回 false。
  *
- * For the definitive check that includes model support and threshold,
- * use isToolSearchEnabled().
+ * 对包含模型支持和阈值的确定性检查，请使用 isToolSearchEnabled()。
  */
 let loggedOptimistic = false
 
@@ -304,23 +296,20 @@ export function isToolSearchEnabledOptimistic(): boolean {
     return false
   }
 
-  // tool_reference is a beta content type that third-party API gateways
+  // tool_reference 是 beta 内容类型，第三方 API 网关
   // (ZY_CODE_BASE_URL proxies) typically don't support. When the provider
-  // is 'anthropic' but the base URL points elsewhere, the proxy will reject
-  // tool_reference blocks with a 400. Vertex/Bedrock/Foundry are unaffected —
-  // they have their own endpoints and beta headers.
+  // 为 'anthropic' 但 base URL 指向其他位置时，代理会拒绝
+  // tool_reference 块并返回 400。Vertex/Bedrock/Foundry 不受影响，
+  // 因为它们有自己的 endpoints 和 beta headers。
   // https://github.com/anthropics/zy-code/issues/30912
   //
-  // HOWEVER: some proxies DO support tool_reference (LiteLLM passthrough,
-  // Cloudflare AI Gateway, corp gateways that forward beta headers). The
-  // blanket disable breaks defer_loading for those users — all MCP tools
-  // loaded into main context instead of on-demand (gh-31936 / CC-457,
-  // likely the real cause of CC-330 "v2.1.70 defer_loading regression").
-  // This gate only applies when ENABLE_TOOL_SEARCH is unset/empty (default
-  // behavior). Setting any non-empty value — 'true', 'auto', 'auto:N' —
-  // means the user is explicitly configuring tool search and asserts their
-  // setup supports it. The falsy check (rather than === undefined) aligns
-  // with getToolSearchMode(), which also treats "" as unset.
+  // 但某些代理确实支持 tool_reference（LiteLLM passthrough、Cloudflare AI Gateway、
+  // 转发 beta headers 的企业网关）。一刀切禁用会破坏这些用户的 defer_loading：所有 MCP
+  // 工具都会加载进主上下文而非按需加载（gh-31936 / CC-457，可能是 CC-330
+  // “v2.1.70 defer_loading regression”的真正原因）。此守卫仅在 ENABLE_TOOL_SEARCH
+  // 未设置/为空（默认行为）时适用。设置任意非空值（'true'、'auto'、'auto:N'）表示用户
+  // 显式配置了 tool search，并断言其配置支持它。falsy 检查（而非 === undefined）与
+  // getToolSearchMode() 一致，后者也把 "" 视为未设置。
   if (
     !process.env.ENABLE_TOOL_SEARCH &&
     getAPIProvider() === 'anthropic' &&
@@ -345,9 +334,9 @@ export function isToolSearchEnabledOptimistic(): boolean {
 }
 
 /**
- * Check if ToolSearchTool is available in the provided tools list.
- * If ToolSearchTool is not available (e.g., disallowed via disallowedTools),
- * tool search cannot function and should be disabled.
+ * 检查提供的工具列表中是否存在 ToolSearchTool。
+ * ToolSearchTool 不可用时（例如通过 disallowedTools 禁用），tool search 无法工作，
+ * 应被禁用。
  *
  * @param tools Array of tools with a 'name' property
  * @returns true if ToolSearchTool is in the tools list, false otherwise
@@ -357,8 +346,8 @@ export function isToolSearchToolAvailable(tools: readonly { name: string }[]): b
 }
 
 /**
- * Calculate total deferred tool description size in characters.
- * Includes name, description text, and input schema to match what's actually sent to the API.
+ * 按字符数计算延迟工具描述的总大小。
+ * 包含名称、描述文本和输入 schema，以匹配实际发送给 API 的内容。
  */
 async function calculateDeferredToolDescriptionChars(
   tools: Tools,
@@ -390,15 +379,15 @@ async function calculateDeferredToolDescriptionChars(
 }
 
 /**
- * Check if tool search (MCP tool deferral with tool_reference) is enabled for a specific request.
+ * 检查特定请求是否启用了 tool search（带 tool_reference 的 MCP 工具延迟加载）。
  *
- * This is the definitive check that includes:
+ * 这是包含以下内容的确定性检查：
  * - MCP mode (Tst, TstAuto, McpCli, Standard)
  * - Model compatibility (haiku doesn't support tool_reference)
  * - ToolSearchTool availability (must be in tools list)
  * - Threshold check for TstAuto mode
  *
- * Use this when making actual API calls where all context is available.
+ * 在所有上下文均可用的实际 API 调用中使用此函数。
  *
  * @param model The model to check for tool_reference support
  * @param tools Array of available tools (including MCP tools)
@@ -416,7 +405,7 @@ export async function isToolSearchEnabled(
 ): Promise<boolean> {
   const mcpToolCount = count(tools, (t) => t.isMcp)
 
-  // Helper to log the mode decision event
+  // 用于记录模式决策事件的辅助函数
   function logModeDecision(
     enabled: boolean,
     mode: ToolSearchMode,
@@ -427,9 +416,8 @@ export async function isToolSearchEnabled(
       enabled,
       mode: mode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       reason: reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      // Log the actual model being checked, not the session's main model.
-      // This is important for debugging subagent tool search decisions where
-      // the subagent model (e.g., haiku) differs from the session model (e.g., opus).
+      // 记录实际被检查的模型，而非会话主模型。这对调试子代理 tool search 决策很重要，
+      // 因为子代理模型（例如 haiku）可能不同于会话模型（例如 opus）。
       checkedModel: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       mcpToolCount,
       userType: (process.env.USER_TYPE ??
@@ -438,7 +426,7 @@ export async function isToolSearchEnabled(
     })
   }
 
-  // Check if model supports tool_reference
+  // 检查模型是否支持 tool_reference
   if (!modelSupportsToolReference(model)) {
     logForDebugging(
       `Tool search disabled for model '${model}': model does not support tool_reference blocks. ` +
@@ -448,7 +436,7 @@ export async function isToolSearchEnabled(
     return false
   }
 
-  // Check if ToolSearchTool is available (respects disallowedTools)
+  // 检查 ToolSearchTool 是否可用（遵循 disallowedTools）
   if (!isToolSearchToolAvailable(tools)) {
     logForDebugging(
       `Tool search disabled: ToolSearchTool is not available (may have been disallowed via disallowedTools).`,

@@ -1,10 +1,9 @@
 import { getSettingsForSource } from '../settings/settings.js'
 
 /**
- * Plugin names locked by org policy (policySettings.enabledPlugins).
+ * 受组织策略（policySettings.enabledPlugins）锁定的插件名称。
  *
- * Returns null when managed settings declare no plugin entries (common
- * case — no policy in effect).
+ * 托管设置未声明插件条目时返回 null；这是未启用策略时的常见情况。
  */
 export function getManagedPluginNames(): Set<string> | null {
   const enabledPlugins = getSettingsForSource('policySettings')?.enabledPlugins
@@ -13,8 +12,8 @@ export function getManagedPluginNames(): Set<string> | null {
   }
   const names = new Set<string>()
   for (const [pluginId, value] of Object.entries(enabledPlugins)) {
-    // Only plugin@marketplace boolean entries (true OR false) are
-    // protected. Legacy owner/repo array form is not.
+    // 仅保护 plugin@marketplace 的布尔条目（true 或 false），
+    // 不保护旧版 owner/repo 数组形式。
     if (typeof value !== 'boolean' || !pluginId.includes('@')) {
       continue
     }

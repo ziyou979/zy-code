@@ -107,9 +107,9 @@ export async function getAnthropicClient({
     defaultHeaders['x-anthropic-additional-protection'] = 'true'
   }
 
-  // ── Registry-driven providers ──────────────────────────────────────────
-  // Handles env-or-default (dashscope, zhipu, kimi), preconfigured (deepseek,
-  // siliconflow, etc.), and generic — all share the same client creation logic.
+  // ── Registry 驱动的 provider ──────────────────────────────────────────
+  // 处理 env-or-default（dashscope、zhipu、kimi）、预配置（deepseek、siliconflow 等）和
+  // generic provider；它们共享同一套 client 创建逻辑。
   const apiProvider = getProviderForModel(model)
   const authProfile = getAuthProfileForModel(model)
   const authProvider = authProfile ?? apiProvider
@@ -138,11 +138,11 @@ export async function getAnthropicClient({
     const resolvedApiKey = getApiKey(authProvider)
     let resolvedBaseURL: string | undefined
 
-    // 1. Provider-specific env var (e.g. DASHSCOPE_BASE_URL)
+    // 1. provider 专用环境变量，例如 DASHSCOPE_BASE_URL
     if (registryEntry.baseUrlEnvVar && process.env[registryEntry.baseUrlEnvVar]) {
       resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar]
     }
-    // 2. Generic env vars
+    // 2. 通用环境变量
     if (!resolvedBaseURL && process.env.ZY_CODE_BASE_URL) {
       resolvedBaseURL = process.env.ZY_CODE_BASE_URL
     }
@@ -298,11 +298,11 @@ export async function getOpenAIClient(options?: {
   // ── Base URL（与 getAnthropicClient registry-driven 段保持一致）──────────────
   let resolvedBaseURL = options?.baseURL
   if (!resolvedBaseURL) {
-    // 1. Provider-specific env var (e.g. DASHSCOPE_BASE_URL)
+    // 1. provider 专用环境变量，例如 DASHSCOPE_BASE_URL
     if (registryEntry?.baseUrlEnvVar && process.env[registryEntry.baseUrlEnvVar]) {
       resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar]
     }
-    // 2. OpenAI / Generic env vars
+    // 2. OpenAI / Generic 环境变量
     if (!resolvedBaseURL && process.env.OPENAI_BASE_URL) {
       resolvedBaseURL = process.env.OPENAI_BASE_URL
     }
@@ -320,7 +320,7 @@ export async function getOpenAIClient(options?: {
         registryEntry.defaultBaseUrls['openai-chat'] ??
         registryEntry.defaultBaseUrls['openai-responses']
     }
-    // 5. Fallback
+    // 5. 后备值
     if (!resolvedBaseURL) {
       resolvedBaseURL = 'https://api.openai.com/v1'
     }
@@ -383,11 +383,11 @@ export async function getGoogleClient(options?: {
   // ── Base URL ───────────────────────────────────────────────────────────
   let resolvedBaseURL = options?.baseURL
   if (!resolvedBaseURL) {
-    // 1. Provider-specific env var
+    // 1. provider 专用环境变量
     if (registryEntry?.baseUrlEnvVar && process.env[registryEntry.baseUrlEnvVar]) {
       resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar]
     }
-    // 2. Generic env vars
+    // 2. 通用环境变量
     if (!resolvedBaseURL && process.env.GOOGLE_BASE_URL) {
       resolvedBaseURL = process.env.GOOGLE_BASE_URL
     }
@@ -399,11 +399,11 @@ export async function getGoogleClient(options?: {
       resolvedBaseURL =
         getAuthConfigBaseUrl(authProfile) ?? getSettingsBaseUrl(apiProvider) ?? undefined
     }
-    // 4. Registry defaults
+    // 4. Registry 默认值
     if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
       resolvedBaseURL = registryEntry.defaultBaseUrls.google
     }
-    // 5. Fallback
+    // 5. 后备值
     if (!resolvedBaseURL) {
       resolvedBaseURL = 'https://generativelanguage.googleapis.com/v1beta'
     }

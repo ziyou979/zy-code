@@ -1,4 +1,4 @@
-// Secure Storage Types
+// Secure Storage 类型
 
 export interface SecureStorage {
   read(): SecureStorageData | null

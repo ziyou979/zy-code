@@ -741,7 +741,7 @@ function printResult(result: CompactResult) {
  */
 function simulateCacheImpact(messages: Message[]) {
   const totalTokens = estimateTokens(messages.map((m) => m.content).join('\n'))
-  // Anthropic pricing: input $3/MTok, cache_read $0.30/MTok, cache_creation $3.75/MTok
+  // Anthropic 定价：input $3/MTok、cache_read $0.30/MTok、cache_creation $3.75/MTok
   const INPUT_PRICE = 3.0 // $/MTok
   const CACHE_READ_PRICE = 0.3 // $/MTok (90% discount)
   const CACHE_CREATION_PRICE = 3.75 // $/MTok

@@ -2,21 +2,17 @@ import { createContext, type RefObject, useContext } from 'react'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 
 /**
- * Set by FullscreenLayout when rendering content in its `modal` slot —
- * the absolute-positioned bottom-anchored pane for slash-command dialogs.
- * Consumers use this to:
+ * FullscreenLayout 在 `modal` 插槽中渲染内容时设置此上下文；该插槽是用于
+ * slash command 对话框、绝对定位并锚定底部的面板。消费者用它来：
  *
- * - Suppress top-level framing — `Pane` skips its full-terminal-width
- *   `Divider` (FullscreenLayout already draws the ▔ divider).
- * - Size Select pagination to the available rows — the modal's inner
- *   area is smaller than the terminal (rows minus transcript peek minus
- *   divider), so components that cap their visible option count from
- *   `useTerminalSize().rows` would overflow without this context.
- * - Reset scroll on tab switch — Tabs keys its ScrollBox by
- *   `selectedTabIndex`, remounting on tab switch so scrollTop resets to 0
- *   without scrollTo() timing games.
+ * - 避免重复绘制顶层边框：`Pane` 跳过横跨终端宽度的 `Divider`
+ *   （FullscreenLayout 已绘制 ▔ 分隔线）。
+ * - 按可用行数计算 Select 分页：modal 内部区域小于终端高度（终端行数减去
+ *   transcript 预览和分隔线），若仍按 `useTerminalSize().rows` 限制可见选项数就会溢出。
+ * - 切换 tab 时重置滚动：Tabs 以 `selectedTabIndex` 作为 ScrollBox 的 key，
+ *   切换时重新挂载，让 scrollTop 自然归零，避免依赖 scrollTo() 的调用时机。
  *
- * null = not inside the modal slot.
+ * null 表示当前不在 modal 插槽内。
  */
 type ModalCtx = {
   rows: number
@@ -29,10 +25,9 @@ export function useIsInsideModal() {
 }
 
 /**
- * Available content rows/columns when inside a Modal, else falls back to
- * the provided terminal size. Use instead of `useTerminalSize()` when a
- * component caps its visible content height — the modal's inner area is
- * smaller than the terminal.
+ * 位于 Modal 内时返回内容区域可用的行列数，否则回退到传入的终端尺寸。
+ * 组件需要限制可见内容高度时应使用它，而不是 `useTerminalSize()`，因为 modal
+ * 的内部区域小于整个终端。
  */
 export function useModalOrTerminalSize(fallback: { rows: number; columns: number }) {
   const ctx = useContext(ModalContext)

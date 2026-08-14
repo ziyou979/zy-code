@@ -46,7 +46,7 @@ export function useDirectConnect({
   const hasReceivedInitRef = useRef(false)
   const isConnectedRef = useRef(false)
 
-  // Keep a ref to tools so the WebSocket callback doesn't go stale
+  // 用 ref 保存 tools，避免 WebSocket 回调捕获旧值
   const toolsRef = useRef(tools)
   useEffect(() => {
     toolsRef.current = tools
@@ -66,7 +66,7 @@ export function useDirectConnect({
           setIsLoading(false)
         }
 
-        // Skip duplicate init messages (server sends one per turn)
+        // 跳过重复的 init 消息（服务端每轮都会发送一条）
         if (sdkMessage.type === 'system' && sdkMessage.subtype === 'init') {
           if (hasReceivedInitRef.current) {
             return
@@ -107,7 +107,7 @@ export function useDirectConnect({
           permissionResult,
           permissionPromptStartTimeMs: Date.now(),
           onUserInteraction() {
-            // No-op for remote
+            // remote 模式无需处理
           },
           onAbort() {
             const response: RemotePermissionResponse = {
@@ -145,7 +145,7 @@ export function useDirectConnect({
             )
           },
           async recheckPermission() {
-            // No-op for remote
+            // remote 模式无需处理
           },
         }
 
@@ -159,10 +159,10 @@ export function useDirectConnect({
       onDisconnected: () => {
         logForDebugging('[useDirectConnect] Disconnected')
         if (!isConnectedRef.current) {
-          // Never connected — connection failure (e.g. auth rejected)
+          // 从未连接成功，说明连接失败（例如认证被拒）
           process.stderr.write(`\nFailed to connect to server at ${config.wsUrl}\n`)
         } else {
-          // Was connected then lost — server process exited or network dropped
+          // 连接成功后又断开，说明服务端进程已退出或网络中断
           process.stderr.write('\nServer disconnected.\n')
         }
         isConnectedRef.current = false
@@ -198,9 +198,9 @@ export function useDirectConnect({
     [setIsLoading],
   )
 
-  // Cancel the current request
+  // 取消当前请求
   const cancelRequest = useCallback(() => {
-    // Send interrupt signal to the server
+    // 向服务端发送中断信号
     managerRef.current?.sendInterrupt()
 
     setIsLoading(false)
@@ -212,8 +212,8 @@ export function useDirectConnect({
     isConnectedRef.current = false
   }, [])
 
-  // Same stability concern as useRemoteSession — memoize so consumers
-  // that depend on the result object don't see a fresh reference per render.
+  // 与 useRemoteSession 一样需要保持引用稳定：用 memo 缓存结果，
+  // 避免依赖该对象的调用方每次渲染都看到新引用。
   return useMemo(
     () => ({ isRemoteMode, sendMessage, cancelRequest, disconnect }),
     [isRemoteMode, sendMessage, cancelRequest, disconnect],

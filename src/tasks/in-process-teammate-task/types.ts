@@ -6,11 +6,9 @@ import type { PermissionMode } from '../../services/permissions/permissionMode.j
 import type { AgentProgress } from '../local-agent-task/LocalAgentTask.js'
 
 /**
- * Teammate identity stored in task state.
- * Same shape as TeammateContext (runtime) but stored as plain data.
- * TeammateContext is for AsyncLocalStorage; this is for AppState persistence.
- */
-/**
+ * 任务状态中保存的 teammate 身份。其结构与运行时 TeammateContext 相同，但这里只存储普通数据；
+ * TeammateContext 供 AsyncLocalStorage 使用，此类型则用于 AppState 持久化。
+ *
  * Agent 生命周期模式
  * - ephemeral: 完成当前 assignment 后终止，不进入 idle 等待
  * - persistent: 作为团队成员保持存活，支持 idle/hibernate
@@ -18,60 +16,60 @@ import type { AgentProgress } from '../local-agent-task/LocalAgentTask.js'
 export type AgentLifecycleMode = 'ephemeral' | 'persistent'
 
 export type TeammateIdentity = {
-  agentId: string // e.g., "researcher@my-team"
-  agentName: string // e.g., "researcher"
+  agentId: string // 例如 "researcher@my-team"
+  agentName: string // 例如 "researcher"
   teamName: string
   color?: string
   planModeRequired: boolean
-  parentSessionId: string // Leader's session ID
+  parentSessionId: string // leader 的会话 ID
 }
 
 export type InProcessTeammateTaskState = TaskStateBase & {
   type: 'in_process_teammate'
 
-  // Identity as sub-object (matches TeammateContext shape for consistency)
-  // Stored as plain data in AppState, NOT a reference to AsyncLocalStorage
+  // 将身份保存为子对象，以便与 TeammateContext 的结构保持一致。
+  // AppState 中存储的是普通数据，不是对 AsyncLocalStorage 的引用。
   identity: TeammateIdentity
 
-  // Execution
+  // 执行信息
   prompt: string
-  // Optional model override for this teammate
+  // 可选的 teammate 模型覆盖值
   model?: string
-  // Optional: Only set if teammate uses a specific agent definition
-  // Many teammates run as General agents without a predefined definition
+  // 可选：仅在 teammate 使用特定 agent 定义时设置。
+  // 许多 teammate 会作为 General agent 运行，没有预定义配置。
   selectedAgent?: AgentDefinition
-  abortController?: AbortController // Runtime only, not serialized to disk - kills WHOLE teammate
-  currentWorkAbortController?: AbortController // Runtime only - aborts current turn without killing teammate
-  unregisterCleanup?: () => void // Runtime only
+  abortController?: AbortController // 仅用于运行时，不写入磁盘；终止整个 teammate
+  currentWorkAbortController?: AbortController // 仅用于运行时；中止当前轮次但不终止 teammate
+  unregisterCleanup?: () => void // 仅用于运行时
 
-  // Plan mode approval tracking (planModeRequired is in identity)
+  // 跟踪 Plan mode 审批状态；planModeRequired 位于 identity 中
   awaitingPlanApproval: boolean
 
-  // Permission mode for this teammate (cycled independently via Shift+Tab when viewing)
+  // 此 teammate 的权限模式；查看时可通过 Shift+Tab 独立切换
   permissionMode: PermissionMode
 
-  // State
+  // 状态
   error?: string
-  result?: AgentToolResult // Reuse existing type since teammates run via runAgent()
+  result?: AgentToolResult // teammate 通过 runAgent() 运行，因此复用现有类型
   progress?: AgentProgress
 
-  // Conversation history for zoomed view (NOT mailbox messages)
-  // Mailbox messages are stored separately in teamContext.inProcessMailboxes
+  // 放大视图中的对话历史，不包含 mailbox 消息。
+  // mailbox 消息另存于 teamContext.inProcessMailboxes。
   messages?: Message[]
 
-  // Tool use IDs currently being executed (for animation in transcript view)
+  // 当前正在执行的工具调用 ID，用于 transcript 视图动画
   inProgressToolUseIDs?: Set<string>
 
-  // Queue of user messages to deliver when viewing teammate transcript
+  // 查看 teammate transcript 时待投递的用户消息队列
   pendingUserMessages: string[]
 
-  // UI: random spinner verbs (stable across re-renders, shared between components)
+  // UI 使用的随机 spinner 动词；重新渲染时保持稳定，并由组件共享
   spinnerVerb?: string
   pastTenseVerb?: string
 
   // 当前领取的 task assignment（用于 idle reconciliation）
   currentAssignment?: ClaimedTaskAssignment
-  // Lifecycle
+  // 生命周期
   lifecycleMode: AgentLifecycleMode
   isIdle: boolean
   /** 进入 idle 状态的时间戳（用于 TTL 计算） */
@@ -84,11 +82,11 @@ export type InProcessTeammateTaskState = TaskStateBase & {
   hibernationSnapshotPath?: string
   shutdownRequested: boolean
 
-  // Callbacks to notify when teammate becomes idle (runtime only)
-  // Used by leader to efficiently wait without polling
+  // teammate 进入 idle 时触发的回调，仅用于运行时。
+  // leader 借此高效等待，无需轮询。
   onIdleCallbacks?: Array<() => void>
 
-  // Progress tracking (for computing deltas in notifications)
+  // 跟踪进度，用于计算通知中的增量
   lastReportedToolCount: number
   lastReportedTokenCount: number
 }
@@ -103,16 +101,14 @@ export function isInProcessTeammateTask(task: unknown): task is InProcessTeammat
 }
 
 /**
- * Cap on the number of messages kept in task.messages (the AppState UI mirror).
+ * task.messages（AppState 的 UI 镜像）所保留的消息数上限。
  *
- * task.messages exists purely for the zoomed transcript dialog, which only
- * needs recent context. The full conversation lives in the local allMessages
- * array (inProcessRunner) and on disk at the agent transcript path.
+ * task.messages 仅供放大的 transcript 对话框使用，只需保留近期上下文。完整对话保存在
+ * inProcessRunner 的本地 allMessages 数组以及 agent transcript 对应的磁盘文件中。
  *
- * BQ analysis (round 9, 2026-03-20) showed ~20MB RSS per agent at 500+ turn
- * sessions and ~125MB per concurrent agent in swarm bursts. Whale session
- * 9a990de8 launched 292 agents in 2 minutes and reached 36.8GB. The dominant
- * cost is this array holding a second full copy of every message.
+ * BQ 第 9 轮分析（2026-03-20）显示，超过 500 轮的会话中每个 agent 约占 20MB RSS，swarm
+ * 突发并发时每个 agent 约占 125MB。超大会话 9a990de8 在 2 分钟内启动 292 个 agent，内存
+ * 达到 36.8GB；主要开销正是该数组为每条消息保留了第二份完整副本。
  */
 export const TEAMMATE_MESSAGES_UI_CAP = 50
 
@@ -140,7 +136,7 @@ export const TOOL_RESULT_EXTERNAL_THRESHOLD_BYTES = 512 * 1024 // 512 KB
  * idle 分层 TTL
  */
 export const IDLE_HOT_MS = 60_000
-export const IDLE_COMPACT_MS = 10 * 60_000 // 10 min -> hibernate
+export const IDLE_COMPACT_MS = 10 * 60_000 // 10 分钟后进入 hibernate
 
 /**
  * Agent history 预算配置
@@ -162,12 +158,7 @@ export type AgentHistoryState = {
   rawToolResultBytes: number
 }
 
-/**
- * Stored tool result reference（工具结果外置时使用）
- */
-/**
- * 结构化 task assignment（runner 在当前轮次中领取的任务）
- */
+/** 结构化 task assignment（runner 在当前轮次中领取的任务）。 */
 export type ClaimedTaskAssignment = {
   taskListId: string
   taskId: string
@@ -177,6 +168,7 @@ export type ClaimedTaskAssignment = {
   version: number
 }
 
+/** Stored tool result reference（工具结果外置时使用）。 */
 export type StoredToolResultReference = {
   type: 'stored_tool_result'
   toolCallId: string
@@ -209,9 +201,8 @@ export type HibernatedAgentSnapshot = {
 }
 
 /**
- * Append an item to a message array, capping the result at
- * TEAMMATE_MESSAGES_UI_CAP entries by dropping the oldest. Always returns
- * a new array (AppState immutability).
+ * 向消息数组追加一项；超过 TEAMMATE_MESSAGES_UI_CAP 时丢弃最旧项。始终返回新数组，
+ * 以保持 AppState 不可变。
  */
 export function appendCappedMessage<T>(prev: readonly T[] | undefined, item: T): T[] {
   if (prev === undefined || prev.length === 0) {

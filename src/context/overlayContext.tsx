@@ -1,16 +1,15 @@
 /**
- * Overlay tracking for Escape key coordination.
+ * 跟踪 Overlay，用于协调 Escape 键的处理。
  *
- * This solves the problem of escape key handling when overlays (like Select with onCancel)
- * are open. The CancelRequestHandler needs to know when an overlay is active so it doesn't
- * cancel requests when the user just wants to dismiss the overlay.
+ * 这用于解决 Overlay（例如带 onCancel 的 Select）打开时 Escape 键的归属问题。
+ * CancelRequestHandler 需要知道当前是否存在活跃 Overlay，以免用户只想关闭 Overlay
+ * 时误取消请求。
  *
- * Usage:
- * 1. Call useRegisterOverlay() in any overlay component to automatically register it
- * 2. Call useIsOverlayActive() to check if any overlay is currently active
+ * 用法：
+ * 1. 在任意 Overlay 组件中调用 useRegisterOverlay() 自动注册
+ * 2. 调用 useIsOverlayActive() 检查当前是否存在活跃 Overlay
  *
- * The hook automatically registers on mount and unregisters on unmount,
- * so no manual cleanup or state management is needed.
+ * Hook 会在挂载时自动注册、卸载时自动注销，无需手动清理或管理状态。
  */
 import { useContext, useEffect, useLayoutEffect } from 'react'
 import instances from '../ink/instances.js'
@@ -20,15 +19,14 @@ import { AppStoreContext, useAppState } from '../state/AppState.js'
 const NON_MODAL_OVERLAYS = new Set(['autocomplete'])
 
 /**
- * Hook to register a component as an active overlay.
- * Automatically registers on mount and unregisters on unmount.
+ * 将组件注册为活跃 Overlay 的 Hook。
+ * 挂载时自动注册，卸载时自动注销。
  *
- * @param id - Unique identifier for this overlay (e.g., 'select', 'multi-select')
- * @param enabled - Whether to register (default: true). Use this to conditionally register
- *                  based on component props, e.g., only register when onCancel is provided.
+ * @param id Overlay 的唯一标识，例如 'select'、'multi-select'
+ * @param enabled 是否注册，默认为 true。可根据组件属性有条件注册，例如仅在提供 onCancel 时注册
  *
  * @example
- * // Conditional registration based on whether cancel is supported
+ * // 根据是否支持取消操作决定是否注册
  * function useSelectInput({ state }) {
  *   useRegisterOverlay('select', !!state.onCancel)
  *   // ...
@@ -76,10 +74,10 @@ export function useRegisterOverlay(id: string, enabledParam?: boolean) {
 }
 
 /**
- * Hook to check if any overlay is currently active.
- * This is reactive - the component will re-render when the overlay state changes.
+ * 检查当前是否存在活跃 Overlay 的 Hook。
+ * 此 Hook 具有响应性，Overlay 状态变化时组件会重新渲染。
  *
- * @returns true if any overlay is currently active
+ * @returns 存在活跃 Overlay 时返回 true
  *
  * @example
  * function CancelRequestHandler() {
@@ -94,14 +92,14 @@ export function useIsOverlayActive() {
 }
 
 /**
- * Hook to check if any modal overlay is currently active.
- * Modal overlays are overlays that should capture all input (like Select dialogs).
- * Non-modal overlays (like autocomplete) don't disable TextInput focus.
+ * 检查当前是否存在活跃模态 Overlay 的 Hook。
+ * 模态 Overlay（如 Select 对话框）会捕获全部输入；非模态 Overlay（如自动补全）
+ * 不会禁用 TextInput 焦点。
  *
- * @returns true if any modal overlay is currently active
+ * @returns 存在活跃模态 Overlay 时返回 true
  *
  * @example
- * // Use for TextInput focus - allows typing during autocomplete
+ * // 用于控制 TextInput 焦点，允许在自动补全期间继续输入
  * focus: !isSearchingHistory && !isModalOverlayActive
  */
 

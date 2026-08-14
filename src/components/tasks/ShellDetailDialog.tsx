@@ -31,8 +31,7 @@ type TaskOutputResult = {
 }
 
 /**
- * Read the tail of the task output file. Only reads the last few KB,
- * not the entire file.
+ * 读取任务输出文件末尾，仅读取最后几 KB，而不是整个文件。
  */
 async function getTaskOutput(shell: DeepImmutable<LocalShellTaskState>): Promise<TaskOutputResult> {
   const path = getTaskOutputPath(shell.id)

@@ -22,8 +22,8 @@ const VISIBLE_RESULTS = 8
 const PREVIEW_LINES = 20
 
 /**
- * Quick Open dialog (ctrl+shift+p / cmd+shift+p).
- * Fuzzy file finder with a syntax-highlighted preview of the focused file.
+ * Quick Open dialog（ctrl+shift+p / cmd+shift+p）。
+ * 提供模糊文件查找，并以语法高亮方式预览当前聚焦文件。
  */
 export function QuickOpenDialog({ onDone, onInsert }: Props) {
   useRegisterOverlay('quick-open')

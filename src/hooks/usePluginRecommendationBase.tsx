@@ -1,7 +1,6 @@
 /**
- * Shared state machine + install helper for plugin-recommendation hooks
- * (LSP, zy-code-hint). Centralizes the gate chain, async-guard,
- * and success/failure notification JSX so new sources stay small.
+ * 插件推荐 hook（LSP、zy-code-hint）共用的状态机和安装辅助逻辑。
+ * 集中处理门控链、异步保护以及成功/失败通知 JSX，让新增推荐来源保持精简。
  */
 
 import * as React from 'react'
@@ -16,10 +15,9 @@ type AddNotification = ReturnType<typeof useNotifications>['addNotification']
 type PluginData = NonNullable<Awaited<ReturnType<typeof getPluginById>>>
 
 /**
- * Call tryResolve inside a useEffect; it applies standard gates (remote
- * mode, already-showing, in-flight) then runs resolve(). Non-null return
- * becomes the recommendation. Include tryResolve in effect deps — its
- * identity tracks recommendation, so clearing re-triggers resolution.
+ * 在 useEffect 内调用 tryResolve；它先应用标准门控（remote 模式、已有展示、正在处理），
+ * 再运行 resolve()，非 null 返回值会成为推荐项。effect 依赖中需包含 tryResolve；
+ * 它的引用会随 recommendation 变化，因此清除推荐后会重新触发解析。
  */
 export function usePluginRecommendationBase<T>() {
   const [recommendation, setRecommendation] = React.useState<T | null>(null)
@@ -54,7 +52,7 @@ export function usePluginRecommendationBase<T>() {
   }
 }
 
-/** Look up plugin, run install(), emit standard success/failure notification. */
+/** 查找插件、运行 install()，并发出标准的成功或失败通知。 */
 export async function installPluginAndNotify(
   pluginId: string,
   pluginName: string,

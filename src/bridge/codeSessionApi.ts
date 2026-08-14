@@ -1,10 +1,9 @@
 /**
- * Thin HTTP wrappers for the CCR v2 code-session API.
+ * CCR v2 code-session API 的轻量 HTTP wrapper。
  *
- * Separate file from remoteBridgeCore.ts so the SDK /bridge subpath can
- * export createCodeSession + fetchRemoteCredentials without bundling the
- * heavy CLI tree (analytics, transport, etc.). Callers supply explicit
- * accessToken + baseUrl — no implicit auth or config reads.
+ * 与 remoteBridgeCore.ts 分文件存放，使 SDK /bridge 子路径可以导出 createCodeSession
+ * 和 fetchRemoteCredentials，而无需打包庞大的 CLI 依赖树（analytics、transport 等）。
+ * 调用方显式提供 accessToken 和 baseUrl，不会隐式读取认证或配置。
  */
 
 import axios from 'axios'
@@ -34,9 +33,8 @@ export async function createCodeSession(
   try {
     response = await axios.post(
       url,
-      // bridge: {} is the positive signal for the oneof runner — omitting it
-      // (or sending environment_id: "") now 400s. WireRunner is an empty
-      // message today; it's a placeholder for future bridge-specific options.
+      // bridge: {} 是 oneof runner 的正向信号；省略它或发送 environment_id: "" 目前
+      // 会得到 400。WireRunner 当前是空消息，为以后 bridge 专属选项预留。
       { title, bridge: {}, ...(tags?.length ? { tags } : {}) },
       {
         headers: oauthHeaders(accessToken),
@@ -77,8 +75,8 @@ export async function createCodeSession(
 }
 
 /**
- * Credentials from POST /bridge. JWT is opaque — do not decode.
- * Each /bridge call bumps worker_epoch server-side (it IS the register).
+ * POST /bridge 返回的凭据。JWT 是 opaque 数据，不要解码。
+ * 每次 /bridge 调用都会在服务端递增 worker_epoch，该调用本身就是注册操作。
  */
 export type RemoteCredentials = {
   worker_jwt: string
@@ -140,8 +138,8 @@ export async function fetchRemoteCredentials(
     )
     return null
   }
-  // protojson serializes int64 as a string to avoid JS precision loss;
-  // Go may also return a number depending on encoder settings.
+  // protojson 为避免 JS 精度损失，会把 int64 序列化为字符串；
+  // Go 也可能根据 encoder 设置返回数字。
   const rawEpoch = data.worker_epoch
   const epoch = typeof rawEpoch === 'string' ? Number(rawEpoch) : rawEpoch
   if (typeof epoch !== 'number' || !Number.isFinite(epoch) || !Number.isSafeInteger(epoch)) {

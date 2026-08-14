@@ -18,13 +18,13 @@ type ToolLookup = ReadonlyMap<string, Tool>
 type AutoModeConfig = {
   model?: string
   /**
-   * Enable XML classifier. `true` runs both stages; `'fast'` and `'thinking'`
-   * run only that stage; `false`/undefined uses the tool_use classifier.
+   * 启用 XML classifier。true 运行两个阶段；fast 和 thinking 仅运行对应阶段；
+   * false/undefined 使用 tool_use classifier。
    */
   twoStageClassifier?: boolean | 'fast' | 'thinking'
   /**
-   * Gate the JSONL transcript format ({"Bash":"ls"} vs `Bash ls`).
-   * Default false (old text-prefix format) for slow rollout / quick rollback.
+   * 控制 JSONL transcript 格式（{"Bash":"ls"} 与 `Bash ls`）。默认为 false，即旧文本前缀
+   * 格式，以便缓慢发布和快速回滚。
    */
   jsonlTranscript?: boolean
 }

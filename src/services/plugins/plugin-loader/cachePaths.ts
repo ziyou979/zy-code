@@ -47,7 +47,7 @@ import { validatePathWithinBase } from '../pluginInstallationHelpers.js'
 import { type PluginMarketplaceEntry, type PluginSource } from '../schemas.js'
 import { convertDirectoryToZipInPlace, isPluginZipCacheEnabled } from '../zipCache.js'
 /**
- * Get the path where plugin cache is stored
+ * 获取插件缓存的存储路径。
  */
 export function getPluginCachePath(): string {
   return join(getPluginsDirectory(), 'cache')

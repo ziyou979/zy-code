@@ -1,5 +1,5 @@
-// Shared logic for stopping a running task.
-// Used by TaskStopTool (LLM-invoked) and SDK stop_task control request.
+// 停止运行中 task 的共享逻辑，供 TaskStopTool（由 LLM 调用）和 SDK stop_task
+// 控制请求使用。
 
 import type { AppState } from '../state/AppStateStore.js'
 import type { TaskStateBase } from '../tasks/task.js'
@@ -29,11 +29,10 @@ type StopTaskResult = {
 }
 
 /**
- * Look up a task by ID, validate it is running, kill it, and mark it as notified.
+ * 按 ID 查找 task，确认它正在运行后终止，并标记为已通知。
  *
- * Throws {@link StopTaskError} when the task cannot be stopped (not found,
- * not running, or unsupported type). Callers can inspect `error.code` to
- * distinguish the failure reason.
+ * task 无法停止（不存在、未运行或类型不受支持）时抛出 {@link StopTaskError}。
+ * 调用方可检查 `error.code` 区分失败原因。
  */
 export async function stopTask(taskId: string, context: StopTaskContext): Promise<StopTaskResult> {
   const { getAppState, setAppState } = context
@@ -55,9 +54,8 @@ export async function stopTask(taskId: string, context: StopTaskContext): Promis
 
   await taskImpl.kill(taskId, setAppState)
 
-  // Bash: suppress the "exit code 137" notification (noise). Agent tasks: don't
-  // suppress — the AbortError catch sends a notification carrying
-  // extractPartialResult(agentMessages), which is the payload not noise.
+  // Bash：抑制属于噪声的“exit code 137”通知。agent task 不应抑制；AbortError catch
+  // 会发送包含 extractPartialResult(agentMessages) 的通知，这是有效载荷而非噪声。
   if (isLocalShellTask(task)) {
     let suppressed = false
     setAppState((prev) => {
@@ -74,9 +72,8 @@ export async function stopTask(taskId: string, context: StopTaskContext): Promis
         },
       }
     })
-    // Suppressing the XML notification also suppresses print.ts's parsed
-    // task_notification SDK event — emit it directly so SDK consumers see
-    // the task close.
+    // 抑制 XML 通知也会抑制 print.ts 解析出的 task_notification SDK 事件，
+    // 因此这里直接发出，使 SDK consumer 能看到 task 关闭。
     if (suppressed) {
       emitTaskTerminatedBridge(taskId, 'stopped', {
         toolUseId: task.toolUseId,

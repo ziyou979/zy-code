@@ -1,10 +1,9 @@
 /**
- * Singleton manager for cloud-provider authentication status (AWS Bedrock,
- * GCP Vertex). Communicates auth refresh state between auth utilities and
- * React components / SDK output. The SDK 'auth_status' message shape is
- * provider-agnostic, so a single manager serves all providers.
+ * 云 provider 认证状态（AWS Bedrock、GCP Vertex）的单例管理器。在认证工具与 React 组件或
+ * SDK 输出之间传递认证刷新状态。SDK 的 auth_status 消息结构与 provider 无关，因此所有
+ * provider 共用一个管理器。
  *
- * Legacy name: originally AWS-only; now used by all cloud auth refresh flows.
+ * 名称为历史遗留：最初仅用于 AWS，现在用于所有云认证刷新流程。
  */
 
 import { createSignal } from '../../utils/signal.js'
@@ -57,13 +56,13 @@ export class AwsAuthStatusManager {
 
   endAuthentication(success: boolean): void {
     if (success) {
-      // Clear the status completely on success
+      // 成功时彻底清除状态
       this.status = {
         isAuthenticating: false,
         output: [],
       }
     } else {
-      // Keep the output visible on failure
+      // 失败时保留输出以供查看
       this.status.isAuthenticating = false
     }
     this.changed.emit(this.getStatus())
@@ -71,7 +70,7 @@ export class AwsAuthStatusManager {
 
   subscribe = this.changed.subscribe
 
-  // Clean up for testing
+  // 供测试清理状态
   static reset(): void {
     if (AwsAuthStatusManager.instance) {
       AwsAuthStatusManager.instance.changed.clear()

@@ -1,13 +1,12 @@
-// Note: Backtick pattern is handled separately in validateDangerousPatterns
-// to distinguish between escaped and unescaped backticks
+// 注意：反引号模式由 validateDangerousPatterns 单独处理，
+// 以区分已转义和未转义的反引号
 export const HEREDOC_IN_SUBSTITUTION = /\$\(.*<</
 
 export type QuoteExtraction = {
   withDoubleQuotes: string
   fullyUnquoted: string
-  /** Like fullyUnquoted but preserves quote characters ('/"): strips quoted
-   * content while keeping the delimiters. Used by validateMidWordHash to detect
-   * quote-adjacent # (e.g., 'x'# where quote stripping would hide adjacency). */
+  /** 与 fullyUnquoted 类似，但保留引号字符 ('/")：移除引号内容但保留定界符。
+   * validateMidWordHash 用它检测与引号相邻的 #（如 'x'#，移除引号会隐藏这种相邻关系）。 */
   unquotedKeepQuoteChars: string
 }
 
@@ -59,7 +58,7 @@ export function extractQuotedContent(command: string, isJq = false): QuoteExtrac
     if (char === '"' && !inSingleQuote) {
       inDoubleQuote = !inDoubleQuote
       unquotedKeepQuoteChars += char
-      // For jq, include quotes in extraction to ensure content is properly analyzed
+      // 对 jq，提取时保留引号，确保正确分析内容
       if (!isJq) {
         continue
       }
@@ -80,13 +79,12 @@ export function extractQuotedContent(command: string, isJq = false): QuoteExtrac
 }
 
 export function stripSafeRedirections(content: string): string {
-  // SECURITY: All three patterns MUST have a trailing boundary (?=\s|$).
-  // Without it, `> /dev/nullo` matches `/dev/null` as a PREFIX, strips
-  // `> /dev/null` leaving `o`, so `echo hi > /dev/nullo` becomes `echo hi o`.
-  // validateRedirections then sees no `>` and passes. The file write to
-  // /dev/nullo is auto-allowed via the read-only path (checkReadOnlyConstraints).
-  // Main bashPermissions flow is protected (checkPathConstraints validates the
-  // original command), but speculation.ts uses checkReadOnlyConstraints alone.
+  // 安全：三个模式都必须带末尾边界 (?=\s|$)。
+  // 否则 `> /dev/nullo` 会以前缀形式匹配 `/dev/null`，移除 `> /dev/null` 后留下 `o`，
+  // 使 `echo hi > /dev/nullo` 变为 `echo hi o`。validateRedirections 随后看不到 `>` 并通过。
+  // 通过只读路径 checkReadOnlyConstraints，对 /dev/nullo 的文件写入会被自动允许。
+  // 主 bashPermissions 流程受到保护（checkPathConstraints 校验原始命令），
+  // 但 speculation.ts 仅使用 checkReadOnlyConstraints。
   return content
     .replace(/\s+2\s*>&\s*1(?=\s|$)/g, '')
     .replace(/[012]?\s*>\s*\/dev\/null(?=\s|$)/g, '')
@@ -94,8 +92,8 @@ export function stripSafeRedirections(content: string): string {
 }
 
 /**
- * Checks if content contains an unescaped occurrence of a single character.
- * Handles bash escape sequences correctly where a backslash escapes the following character.
+ * 检查内容中是否存在未转义的单字符。
+ * 正确处理 bash 中反斜杠转义后续字符的序列。
  *
  * IMPORTANT: This function only handles single characters, not strings. If you need to extend
  * this to handle multi-character strings, be EXTREMELY CAREFUL about shell ANSI-C quoting
@@ -136,9 +134,9 @@ export function hasUnescapedChar(content: string, char: string): boolean {
 }
 
 /**
- * Detects well-formed $(cat <<'DELIM'...DELIM) heredoc substitution patterns.
- * Returns the command with matched heredocs stripped, or null if none found.
- * Used by the pre-split gate to strip safe heredocs and re-check the remainder.
+ * 检测格式正确的 $(cat <<'DELIM'...DELIM) heredoc 替换模式。
+ * 返回移除已匹配 heredoc 的命令；未找到时返回 null。
+ * pre-split gate 用它移除安全 heredoc，并重新检查剩余内容。
  */
 export function stripSafeHeredocSubstitutions(command: string): string | null {
   if (!HEREDOC_IN_SUBSTITUTION.test(command)) {
@@ -206,14 +204,13 @@ export function stripSafeHeredocSubstitutions(command: string): string | null {
   return result
 }
 
-/** Detection-only check: does the command contain a safe heredoc substitution? */
+/** 仅用于检测：命令是否包含安全 heredoc 替换？ */
 export function hasSafeHeredocSubstitution(command: string): boolean {
   return stripSafeHeredocSubstitutions(command) !== null
 }
 
 /**
- * Checks if a command is a "safe" heredoc-in-substitution pattern that can
- * bypass the generic $() validator.
+ * 检查命令是否为可绕过通用 $() validator 的“安全” heredoc-in-substitution 模式。
  */
 export function isSafeHeredoc(
   command: string,

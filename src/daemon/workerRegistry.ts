@@ -1,5 +1,5 @@
 /**
- * Worker registry for daemon workers.
+ * 守护进程的 Worker 注册表。
  *
  * 每个 worker 子进程在启动时调用 runDaemonWorker()，
  * 向 daemon 的 roster 注册自身，执行工作，然后注销。

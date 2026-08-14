@@ -4,9 +4,8 @@ import { count } from '../utils/array.js'
 import type { BackgroundTaskState } from './types.js'
 
 /**
- * Produces the compact footer-pill label for a set of background tasks.
- * Used by both the footer pill and the turn-duration transcript line so the
- * two surfaces agree on terminology.
+ * 为一组后台 task 生成紧凑的页脚 pill 标签。
+ * 页脚 pill 与 turn-duration transcript 行共同使用，确保两处术语一致。
  */
 export function getPillLabel(tasks: BackgroundTaskState[]): string {
   const n = tasks.length
@@ -65,9 +64,9 @@ export function getPillLabel(tasks: BackgroundTaskState[]): string {
 }
 
 /**
- * True when the pill should show the dimmed " · ↓ to view" call-to-action.
- * Per the state diagram: only the two attention states (needs_input,
- * plan_ready) surface the CTA; plain running shows just the diamond + label.
+ * pill 应显示弱化的“ · ↓ to view”操作提示时返回 true。
+ * 按状态图，只有 needs_input、plan_ready 两种需关注状态显示 CTA；
+ * 普通 running 状态只显示菱形和标签。
  */
 export function pillNeedsCta(tasks: BackgroundTaskState[]): boolean {
   if (tasks.length !== 1) {

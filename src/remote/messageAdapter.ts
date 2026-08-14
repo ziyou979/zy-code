@@ -22,14 +22,14 @@ import { fromSDKCompactMetadata } from '../services/messages/mappers.js'
 import { createUserMessage } from '../services/messages/./constructors.js'
 
 /**
- * Converts WireMessage from CCR to REPL Message types.
+ * 将 CCR 的 WireMessage 转换为 REPL Message 类型。
  *
- * The CCR backend sends SDK-format messages via WebSocket. The REPL expects
- * internal Message types for rendering. This adapter bridges the two.
+ * CCR 后端通过 WebSocket 发送 SDK 格式消息，而 REPL 渲染时需要内部 Message 类型；
+ * 此适配器负责衔接两者。
  */
 
 /**
- * Convert an WireAssistantMessage to an AssistantMessage
+ * 将 WireAssistantMessage 转换为 AssistantMessage。
  */
 function convertAssistantMessage(msg: WireAssistantMessage): AssistantMessage {
   return {
@@ -43,7 +43,7 @@ function convertAssistantMessage(msg: WireAssistantMessage): AssistantMessage {
 }
 
 /**
- * Convert an WirePartialAssistantMessage (streaming) to a StreamEvent
+ * 将流式 WirePartialAssistantMessage 转换为 StreamEvent。
  */
 function convertStreamEvent(msg: WirePartialAssistantMessage): StreamEvent {
   return {
@@ -55,7 +55,7 @@ function convertStreamEvent(msg: WirePartialAssistantMessage): StreamEvent {
 }
 
 /**
- * Convert an WireResultMessage to a SystemMessage
+ * 将 WireResultMessage 转换为 SystemMessage。
  */
 function convertResultMessage(msg: WireResultMessage): SystemMessage {
   const isError = msg.subtype !== 'success'
@@ -74,7 +74,7 @@ function convertResultMessage(msg: WireResultMessage): SystemMessage {
 }
 
 /**
- * Convert an WireSystemMessage (init) to a SystemMessage
+ * 将初始化 WireSystemMessage 转换为 SystemMessage。
  */
 function convertInitMessage(msg: WireSystemMessage): SystemMessage {
   return {
@@ -88,7 +88,7 @@ function convertInitMessage(msg: WireSystemMessage): SystemMessage {
 }
 
 /**
- * Convert an WireStatusMessage to a SystemMessage
+ * 将 WireStatusMessage 转换为 SystemMessage。
  */
 function convertStatusMessage(msg: WireStatusMessage): SystemMessage | null {
   if (!msg.status) {
@@ -106,9 +106,8 @@ function convertStatusMessage(msg: WireStatusMessage): SystemMessage | null {
 }
 
 /**
- * Convert an WireToolProgressMessage to a SystemMessage.
- * We use a system message instead of ProgressMessage since the Progress type
- * is a complex union that requires tool-specific data we don't have from CCR.
+ * 将 WireToolProgressMessage 转换为 SystemMessage。
+ * 这里不用 ProgressMessage，因为 Progress 是复杂联合类型，需要 CCR 未提供的工具专属数据。
  */
 function convertToolProgressMessage(msg: WireToolProgressMessage): SystemMessage {
   return {
@@ -123,7 +122,7 @@ function convertToolProgressMessage(msg: WireToolProgressMessage): SystemMessage
 }
 
 /**
- * Convert an WireCompactBoundaryMessage to a SystemMessage
+ * 将 WireCompactBoundaryMessage 转换为 SystemMessage。
  */
 function convertCompactBoundaryMessage(msg: WireCompactBoundaryMessage): SystemMessage {
   return {
@@ -138,7 +137,7 @@ function convertCompactBoundaryMessage(msg: WireCompactBoundaryMessage): SystemM
 }
 
 /**
- * Result of converting an WireMessage
+ * WireMessage 的转换结果。
  */
 export type ConvertedMessage =
   | { type: 'message'; message: Message }
@@ -146,22 +145,19 @@ export type ConvertedMessage =
   | { type: 'ignored' }
 
 type ConvertOptions = {
-  /** Convert user messages containing tool_result content blocks into UserMessages.
-   * Used by direct connect mode where tool results come from the remote server
-   * and need to be rendered locally. CCR mode ignores user messages since they
-   * are handled differently. */
+  /** 将包含 tool_result 内容块的 user 消息转换为 UserMessage。
+   * 用于直连模式：工具结果来自远程服务器，需要在本地渲染。
+   * CCR 模式会忽略用户消息，因为该模式采用另一套处理方式。 */
   convertToolResults?: boolean
   /**
-   * Convert user text messages into UserMessages for display. Used when
-   * converting historical events where user-typed messages need to be shown.
-   * In live WS mode these are already added locally by the REPL so they're
-   * ignored by default.
+   * 将用户文本消息转换为用于展示的 UserMessage。转换历史事件时，用户输入的消息需要显示，
+   * 因此会启用此选项。实时 WebSocket 模式下 REPL 已在本地加入这些消息，默认忽略即可。
    */
   convertUserTextMessages?: boolean
 }
 
 /**
- * Convert an WireMessage to REPL message format
+ * 将 WireMessage 转换为 REPL 消息格式。
  */
 export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): ConvertedMessage {
   switch (msg.type) {
@@ -170,11 +166,10 @@ export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): Conv
 
     case 'user': {
       const content = msg.message?.content
-      // Tool result messages from the remote server need to be converted so
-      // they render and collapse like local tool results. Detect via content
-      // shape (tool_result blocks) — parent_tool_use_id is NOT reliable: the
-      // agent-side normalizeMessage() hardcodes it to null for top-level
-      // tool results, so it can't distinguish tool results from prompt echoes.
+      // 远程服务器返回的 tool result 消息需要转换，才能像本地结果一样渲染和折叠。
+      // 通过内容形态（tool_result 块）判断；parent_tool_use_id 并不可靠：
+      // agent 侧 normalizeMessage() 会将顶层 tool result 的该字段固定为 null，
+      // 因此无法借此区分 tool result 与 prompt 回显。
       const isToolResult = Array.isArray(content) && content.some((b) => b.type === 'tool_result')
       if (opts?.convertToolResults && isToolResult) {
         return {
@@ -187,9 +182,8 @@ export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): Conv
           }),
         }
       }
-      // When converting historical events, user-typed messages need to be
-      // rendered (they weren't added locally by the REPL). Skip tool_results
-      // here — already handled above.
+      // 转换历史事件时，需要渲染用户输入的消息（REPL 并未在本地添加这些消息）。
+      // 此处跳过已在上方处理的 tool_result。
       if (opts?.convertUserTextMessages && !isToolResult) {
         if (typeof content === 'string' || Array.isArray(content)) {
           return {
@@ -204,8 +198,8 @@ export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): Conv
           }
         }
       }
-      // User-typed messages (string content) are already added locally by REPL.
-      // In CCR mode, all user messages are ignored (tool results handled differently).
+      // REPL 已在本地添加用户输入的消息（字符串内容）。CCR 模式会忽略全部
+      // user 消息，因为该模式对 tool result 另有处理方式。
       return { type: 'ignored' }
     }
 
@@ -213,8 +207,8 @@ export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): Conv
       return { type: 'stream_event', event: convertStreamEvent(msg) }
 
     case 'result':
-      // Only show result messages for errors. Success results are noise
-      // in multi-turn sessions (isLoading=false is sufficient signal).
+      // 仅显示错误 result 消息；多轮会话中的成功结果属于冗余信息，
+      // isLoading=false 已足以表明成功。
       if (msg.subtype !== 'success') {
         return { type: 'message', message: convertResultMessage(msg) }
       }
@@ -234,7 +228,7 @@ export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): Conv
           message: convertCompactBoundaryMessage(msg),
         }
       }
-      // hook_response and other subtypes
+      // hook_response 及其他 subtype。
       logForDebugging(`[messageAdapter] Ignoring system message subtype: ${msg.subtype}`)
       return { type: 'ignored' }
 
@@ -242,24 +236,23 @@ export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): Conv
       return { type: 'message', message: convertToolProgressMessage(msg) }
 
     case 'auth_status':
-      // Auth status is handled separately, not converted to a display message
+      // auth status 单独处理，不转换为展示消息。
       logForDebugging('[messageAdapter] Ignoring auth_status message')
       return { type: 'ignored' }
 
     case 'tool_use_summary':
-      // Tool use summaries are SDK-only events, not displayed in REPL
+      // tool use 摘要仅供 SDK 使用，不在 REPL 中显示。
       logForDebugging('[messageAdapter] Ignoring tool_use_summary message')
       return { type: 'ignored' }
 
     case 'rate_limit_event':
-      // Rate limit events are SDK-only events, not displayed in REPL
+      // 限流事件仅供 SDK 使用，不在 REPL 中显示。
       logForDebugging('[messageAdapter] Ignoring rate_limit_event message')
       return { type: 'ignored' }
 
     default: {
-      // Gracefully ignore unknown message types. The backend may send new
-      // types before the client is updated; logging helps with debugging
-      // without crashing or losing the session.
+      // 平稳忽略未知消息类型。后端可能先于客户端更新发送新类型；记录日志便于调试，
+      // 同时避免崩溃或丢失会话。
       logForDebugging(`[messageAdapter] Unknown message type: ${(msg as { type: string }).type}`)
       return { type: 'ignored' }
     }
@@ -267,21 +260,21 @@ export function convertSDKMessage(msg: WireMessage, opts?: ConvertOptions): Conv
 }
 
 /**
- * Check if an WireMessage indicates the session has ended
+ * 检查 WireMessage 是否表示会话已结束。
  */
 export function isSessionEndMessage(msg: WireMessage): boolean {
   return msg.type === 'result'
 }
 
 /**
- * Check if an WireResultMessage indicates success
+ * 检查 WireResultMessage 是否表示执行成功。
  */
 export function isSuccessResult(msg: WireResultMessage): boolean {
   return msg.subtype === 'success'
 }
 
 /**
- * Extract the result text from a successful WireResultMessage
+ * 从成功的 WireResultMessage 中提取结果文本。
  */
 export function getResultText(msg: WireResultMessage): string | null {
   if (msg.subtype === 'success') {

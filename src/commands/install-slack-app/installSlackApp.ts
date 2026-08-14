@@ -8,7 +8,7 @@ const SLACK_APP_URL = 'https://slack.com/marketplace/A08SF47R6P4-zy'
 export async function call(): Promise<LocalCommandResult> {
   logEvent('zy_install_slack_app_clicked', {})
 
-  // Track that user has clicked to install
+  // 记录用户已点击安装
   saveGlobalConfig((current) => ({
     ...current,
     slackAppInstallCount: (current.slackAppInstallCount ?? 0) + 1,

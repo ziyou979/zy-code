@@ -15,9 +15,8 @@ const MonitorMcpTask: Task | null = feature('MONITOR_TOOL')
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
- * Get all tasks.
- * Mirrors the pattern from tools.ts
- * Note: Returns array inline to avoid circular dependency issues with top-level const
+ * 获取全部 task。
+ * 沿用 tools.ts 的模式；直接返回内联数组，避免顶层 const 引发循环依赖问题。
  */
 export function getAllTasks(): Task[] {
   const tasks: Task[] = [LocalShellTask, LocalAgentTask, RemoteAgentTask, DreamTask]
@@ -31,7 +30,7 @@ export function getAllTasks(): Task[] {
 }
 
 /**
- * Get a task by its type.
+ * 按类型获取 task。
  */
 export function getTaskByType(type: TaskType): Task | undefined {
   return getAllTasks().find((t) => t.type === type)

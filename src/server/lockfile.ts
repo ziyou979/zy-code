@@ -1,5 +1,5 @@
 /**
- * Server lockfile utilities
+ * 服务器锁文件工具。
  */
 
 export interface ServerLockInfo {

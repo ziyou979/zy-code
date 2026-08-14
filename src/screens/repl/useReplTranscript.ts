@@ -40,12 +40,12 @@ export type UseReplTranscriptParams = {
 }
 
 export type ReplTranscriptApi = {
-  // frozen
+  // 冻结状态
   handleEnterTranscript: () => void
   handleExitTranscript: () => void
   transcriptMessages: Message[]
   transcriptStreamingToolUses: StreamingToolUse[]
-  // search
+  // 搜索
   jumpRef: React.RefObject<JumpHandle | null>
   searchOpen: boolean
   setSearchOpen: React.Dispatch<React.SetStateAction<boolean>>
@@ -119,7 +119,7 @@ export function useReplTranscript({
     })()
   }, [viewingAgentTaskId, needsBootstrap, setAppState, viewedLocalAgent])
 
-  // ── frozen transcript ──
+  // ── 冻结的 transcript ──
   const [frozenTranscriptState, setFrozenTranscriptState] = useState<{
     messagesLength: number
     streamingToolUsesLength: number
@@ -147,7 +147,7 @@ export function useReplTranscript({
   const [dumpMode, setDumpMode] = useState(false)
   const [editorStatus, setEditorStatus] = useState('')
 
-  // ── search ──
+  // ── 搜索 ──
   const jumpRef = useRef<JumpHandle | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')

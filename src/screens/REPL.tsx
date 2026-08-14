@@ -490,7 +490,7 @@ export function REPL({
     [updateToolJSX],
   )
 
-  // ── Terminal title ──
+  // ── 终端标题 ──
   const terminalTitleFromRename = useAppState((s) => s.settings.terminalTitleFromRename) !== false
   const sessionTitle = terminalTitleFromRename ? getCurrentSessionTitle(getSessionId()) : undefined
   const [, forceRenderTitle] = useState(0)
@@ -547,7 +547,7 @@ export function REPL({
     [tasks],
   )
 
-  // ── Scroll / unseen divider ──
+  // ── 滚动 / 未读 divider ──
   const { dividerIndex, dividerYRef, onScrollAway, onRepin, jumpToNew, shiftDivider } =
     useUnseenDivider(messages.length)
   const unseenDivider = useMemo(
@@ -645,7 +645,7 @@ export function REPL({
     }
   }, [ultraplanPendingChoice, showBashesDialog, setShowBashesDialog])
 
-  // ── Remote / response length ──
+  // ── remote / 响应长度 ──
   const activeRemote = useReplActiveRemote({
     remoteSessionConfig,
     directConnectConfig,
@@ -704,7 +704,7 @@ export function REPL({
     setToolJSX,
   })
 
-  // ── Notifications cluster (needed by queryFlowCtx for swarmStartTimeRef/swarmBudgetInfoRef) ──
+  // ── 通知集合（queryFlowCtx 的 swarmStartTimeRef/swarmBudgetInfoRef 需要）──
   const hasActivePrompt =
     toolUseConfirmQueue.length > 0 ||
     promptQueue.length > 0 ||
@@ -815,7 +815,7 @@ export function REPL({
     prevDialogRef.current = focusedInputDialog
   }, [focusedInputDialog, repinScroll])
 
-  // ── Cancel ──
+  // ── 取消 ──
   const {
     onCancel,
     handleQueuedCommandOnCancel,

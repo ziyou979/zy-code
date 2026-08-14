@@ -68,10 +68,9 @@ export type ReplWireHandle = {
 export type WireState = 'ready' | 'connected' | 'reconnecting' | 'failed'
 
 /**
- * Explicit-param input to initBridgeCore. Everything initReplBridge reads
- * from bootstrap state (cwd, session ID, git, OAuth) becomes a field here.
- * A daemon caller (Agent SDK, PR 4) that never runs main.tsx fills these
- * in itself.
+ * initBridgeCore 的显式参数输入。initReplBridge 从 bootstrap 状态读取的所有内容（cwd、
+ * session ID、git、OAuth）都成为此处字段。从不运行 main.tsx 的 daemon 调用方
+ *（Agent SDK，PR 4）自行填充。
  */
 export type WireCoreParams = {
   dir: string
@@ -82,24 +81,22 @@ export type WireCoreParams = {
   baseUrl: string
   sessionIngressUrl: string
   /**
-   * Opaque string sent as metadata.worker_type. Use WireWorkerType for
-   * the two CLI-originated values; daemon callers may send any string the
-   * backend recognizes (it's just a filter key on the web side).
+   * 作为 metadata.worker_type 发送的 opaque 字符串。CLI 产生的两个值使用 WireWorkerType；
+   * daemon 调用方可发送后端识别的任意字符串，它在 Web 侧只是过滤 key。
    */
   workerType: string
   getAccessToken: () => string | undefined
   /**
-   * POST /v1/sessions. Injected because `createSession.ts` lazy-loads
-   * `auth.ts`/`model.ts`/`oauth/client.ts` and `bun --outfile` inlines
-   * dynamic imports — the lazy-load doesn't help, the whole REPL tree ends
-   * up in the Agent SDK bundle.
+   * POST /v1/sessions。采用注入是因为 `createSession.ts` 会延迟加载
+   * `auth.ts`/`model.ts`/`oauth/client.ts`，而 `bun --outfile` 会内联动态 import；延迟加载无济
+   * 于事，最终整个 REPL 依赖树都会进入 Agent SDK bundle。
    *
-   * REPL wrapper passes `createWireSession` from `createSession.ts`.
-   * Daemon wrapper passes `createWireSessionLean` from `sessionApi.ts`
-   * (HTTP-only, orgUUID+model supplied by the daemon caller).
+   * REPL wrapper 传入 `createSession.ts` 的 `createWireSession`。Daemon wrapper 传入
+   * `sessionApi.ts` 的 `createWireSessionLean`，它只使用 HTTP，orgUUID 与 model 由 daemon
+   * 调用方提供。
    *
-   * Receives `gitRepoUrl`+`branch` so the REPL wrapper can build the git
-   * source/outcome for zy.ai's session card. Daemon ignores them.
+   * 接收 `gitRepoUrl` 与 `branch`，使 REPL wrapper 能为 zy.ai 会话卡片构建 git
+   * source/outcome。Daemon 会忽略。
    */
   createSession: (opts: {
     environmentId: string
@@ -109,50 +106,40 @@ export type WireCoreParams = {
     signal: AbortSignal
   }) => Promise<string | null>
   /**
-   * POST /v1/sessions/{id}/archive. Same injection rationale. Best-effort;
-   * the callback MUST NOT throw.
+   * POST /v1/sessions/{id}/archive。注入原因相同。尽力执行；callback 不得抛错。
    */
   archiveSession: (sessionId: string) => Promise<void>
   /**
-   * Invoked on reconnect-after-env-lost to refresh the title. REPL wrapper
-   * reads session storage (picks up /rename); daemon returns the static
-   * title. Defaults to () => title.
+   * 环境丢失后重连时调用以刷新标题。REPL wrapper 读取 session storage，可获取 /rename；daemon
+   * 返回静态标题。默认为 () => title。
    */
   getCurrentTitle?: () => string
   /**
-   * Converts internal Message[] → WireMessage[] for writeMessages() and the
-   * initial-flush/drain paths. REPL wrapper passes the real toSDKMessages
-   * from services/messages/mappers.ts. Daemon callers that only use
-   * writeSdkMessages() and pass no initialMessages can omit this — those
-   * code paths are unreachable.
+   * 为 writeMessages() 与初始 flush/drain 路径将内部 Message[] 转为 WireMessage[]。REPL wrapper
+   * 传入 services/messages/mappers.ts 中真正的 toSDKMessages。只使用 writeSdkMessages() 且不
+   * 传 initialMessages 的 daemon 调用方可省略，因为相关代码路径不可达。
    *
-   * Injected rather than imported because mappers.ts transitively pulls in
-   * src/commands.ts via messages.ts → api.ts → prompts.ts, dragging the
-   * entire command registry + React tree into the Agent SDK bundle.
+   * 通过注入而非 import 提供，因为 mappers.ts 会经 messages.ts → api.ts → prompts.ts 间接引入
+   * src/commands.ts，将完整 command 注册表与 React 树拖入 Agent SDK bundle。
    */
   toSDKMessages?: (messages: Message[]) => WireMessage[]
   /**
-   * OAuth 401 refresh handler passed to createWireApiClient. REPL wrapper
-   * passes handleOAuth401Error; daemon passes its AuthManager's handler.
-   * Injected because utils/auth.ts transitively pulls in the command
-   * registry via config.ts → file.ts → permissions/filesystem.ts →
-   * sessionStorage.ts → commands.ts.
+   * 传给 createWireApiClient 的 OAuth 401 刷新 handler。REPL wrapper 传入
+   * handleOAuth401Error，daemon 传入其 AuthManager handler。采用注入是因为 utils/auth.ts 会经
+   * config.ts → file.ts → permissions/filesystem.ts → sessionStorage.ts → commands.ts 间接引入
+   * command 注册表。
    */
   onAuth401?: (staleAccessToken: string) => Promise<boolean>
   /**
-   * Poll interval config getter for the work-poll heartbeat loop. REPL
-   * wrapper passes the GrowthBook-backed getPollIntervalConfig (allows ops
-   * to live-tune poll rates fleet-wide). Daemon passes a static config
-   * with a 60s heartbeat (5× headroom under the 300s work-lease TTL).
-   * Injected because growthbook.ts transitively pulls in the command
-   * registry via the same config.ts chain.
+   * 工作轮询心跳循环的轮询间隔配置 getter。REPL wrapper 传入由 GrowthBook 支持的
+   * getPollIntervalConfig，使运维能实时调整整个 fleet 的轮询频率。Daemon 传入 60 秒心跳的
+   * 静态配置，相对 300 秒 work lease TTL 留有 5 倍余量。采用注入是因为 growthbook.ts 会经
+   * 同一 config.ts 依赖链间接引入 command 注册表。
    */
   getPollIntervalConfig?: () => PollIntervalConfig
   /**
-   * Max initial messages to replay on connect. REPL wrapper reads from the
-   * zy_bridge_initial_history_cap GrowthBook flag. Daemon passes no
-   * initialMessages so this is never read. Default 200 matches the flag
-   * default.
+   * 连接时最多重放的初始消息数。REPL wrapper 从 zy_bridge_initial_history_cap GrowthBook
+   * 开关读取。Daemon 不传 initialMessages，因此不会读取。默认 200 与开关默认值一致。
    */
   initialHistoryCap?: number
   // 与 InitWireOptions 相同的 REPL 刷新机制 — daemon 省略这些。
@@ -164,55 +151,44 @@ export type WireCoreParams = {
   onSetModel?: (model: string | undefined) => void
   onSetMaxThinkingTokens?: (maxTokens: number | null) => void
   /**
-   * Returns a policy verdict so this module can emit an error control_response
-   * without importing the policy checks itself (bootstrap-isolation constraint).
-   * The callback must guard `auto` (isAutoModeGateEnabled) and
-   * `bypassPermissions` (isBypassPermissionsModeDisabled AND
-   * isBypassPermissionsModeAvailable) BEFORE calling transitionPermissionMode —
-   * that function's internal auto-gate check is a defensive throw, not a
-   * graceful guard, and its side-effect order is setAutoModeActive(true) then
-   * throw, which corrupts the 3-way invariant documented in src/AGENTS.md if
-   * the callback lets the throw escape here.
+   * 返回策略 verdict，使本模块无需自行 import 策略检查即可发送错误 control_response，以满足
+   * bootstrap 隔离约束。callback 在调用 transitionPermissionMode 前必须检查 `auto`
+   *（isAutoModeGateEnabled）与 `bypassPermissions`（isBypassPermissionsModeDisabled 且
+   * isBypassPermissionsModeAvailable）。该函数内部的 auto 开关检查是防御性 throw，并非平稳
+   * 防护；其副作用顺序是先 setAutoModeActive(true) 再抛错。若 callback 让错误在此逸出，会
+   * 破坏 src/AGENTS.md 记录的三方不变量。
    */
   onSetPermissionMode?: (mode: PermissionMode) => { ok: true } | { ok: false; error: string }
   onStateChange?: (state: WireState, detail?: string) => void
   /**
-   * Fires on each real user message to flow through writeMessages() until
-   * the callback returns true (done). Mirrors remoteBridgeCore.ts's
-   * onUserMessage so the REPL bridge can derive a session title from early
-   * prompts when none was set at init time (e.g. user runs /remote-control
-   * on an empty conversation, then types). Tool-result wrappers, meta
-   * messages, and display-tag-only messages are skipped. Receives
-   * currentSessionId so the wrapper can PATCH the title without a closure
-   * dance to reach the not-yet-returned handle. The caller owns the
-   * derive-at-count-1-and-3 policy; the transport just keeps calling until
-   * told to stop. Not fired for the writeSdkMessages daemon path (daemon
-   * sets its own title at init). Distinct from SessionSpawnOpts's
-   * onFirstUserMessage (spawn-bridge, PR #21250), which stays fire-once.
+   * 每条经 writeMessages() 流过的真实用户消息都会触发，直到 callback 返回 true（完成）。与
+   * remoteBridgeCore.ts 的 onUserMessage 一致，使 REPL bridge 在初始化时未设置标题的情况下，
+   * 可根据早期 prompt 推导会话标题，例如用户在空对话中运行 /remote-control 后再输入。跳过
+   * tool result wrapper、meta 消息与仅含展示 tag 的消息。接收 currentSessionId，使 wrapper 能
+   * PATCH 标题，无需通过闭包访问尚未返回的 handle。调用方负责第 1 与第 3 条时推导的策略；
+   * transport 只持续调用到收到停止信号。writeSdkMessages daemon 路径不触发，因为 daemon 在
+   * 初始化时自行设置标题。不同于 SessionSpawnOpts 的 onFirstUserMessage（spawn bridge，
+   * PR #21250），后者仍只触发一次。
    */
   onUserMessage?: (text: string, sessionId: string) => boolean
-  /** See InitWireOptions.perpetual. */
+  /** 参见 InitWireOptions.perpetual。 */
   perpetual?: boolean
   /**
-   * Seeds lastTransportSequenceNum — the SSE event-stream high-water mark
-   * that's carried across transport swaps within one process. Daemon callers
-   * pass the value they persisted at shutdown so the FIRST SSE connect of a
-   * fresh process sends from_sequence_num and the server doesn't replay full
-   * history. REPL callers omit (fresh session each run → 0 is correct).
+   * 设置 lastTransportSequenceNum 初值，即同一进程中跨 transport 更换延续的 SSE 事件流高水位。
+   * Daemon 调用方传入关停时持久化的值，使新进程首次 SSE 连接便发送 from_sequence_num，避免
+   * 服务端重放完整历史。REPL 每次运行都是新会话，省略即可，0 是正确值。
    */
   initialSSESequenceNum?: number
 }
 
 /**
- * Superset of ReplWireHandle. Adds getSSESequenceNum for daemon callers
- * that persist the SSE seq-num across process restarts and pass it back as
- * initialSSESequenceNum on the next start.
+ * ReplWireHandle 的超集。为 daemon 调用方增加 getSSESequenceNum，使其跨进程重启持久化 SSE
+ * seq-num，并在下次启动时作为 initialSSESequenceNum 传回。
  */
 export type WireCoreHandle = ReplWireHandle & {
   /**
-   * Current SSE sequence-number high-water mark. Updates as transports
-   * swap. Daemon callers persist this on shutdown and pass it back as
-   * initialSSESequenceNum on next start.
+   * 当前 SSE sequence number 高水位，随 transport 更换更新。Daemon 调用方在关停时持久化，
+   * 并在下次启动时作为 initialSSESequenceNum 传回。
    */
   getSSESequenceNum(): number
 }
@@ -674,8 +650,8 @@ export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHa
       environmentRecreations = 0
       return true
     }
-    // Env differs → TTL-expired/reaped; or reconnect failed.
-    // Don't deregister — we have a fresh secret for this env either way.
+    // 环境不同表示 TTL 已过期或被回收，也可能是重连失败。不要注销；无论哪种情况都已获得
+    // 该环境的新 secret。
     if (environmentId !== requestedEnvId) {
       logEvent('zy_bridge_repl_env_expired_fresh_session', {})
     }
@@ -765,9 +741,8 @@ export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHa
     return getAccessToken()
   }
 
-  // Drain any messages that were queued during the initial flush.
-  // Called after writeBatch completes (or fails) so queued messages
-  // are sent in order after the historical messages.
+  // 清空初始 flush 期间排队的消息。在 writeBatch 完成或失败后调用，使排队消息按顺序位于
+  // 历史消息之后发送。
   function drainFlushGate(): void {
     const msgs = flushGate.end()
     if (msgs.length === 0) {
@@ -861,12 +836,9 @@ export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHa
       if (pollController.signal.aborted) {
         return
       }
-      // doReconnect returns false (never throws) on genuine failure.
-      // The dangerous case: registerWireEnvironment succeeded (so
-      // environmentId now points at a fresh valid env) but
-      // createSession failed — poll loop would poll a sessionless
-      // env getting null work with no errors, never hitting any
-      // give-up path. Tear down explicitly.
+      // doReconnect 真正失败时返回 false，绝不抛错。危险情况是 registerWireEnvironment 成功，
+      // environmentId 已指向新的有效环境，但 createSession 失败；轮询循环会一直轮询无会话环境，
+      // 得到 null work 且没有错误，永远不会进入放弃路径。因此需显式拆除。
       logForDebugging('[bridge:repl] reconnectEnvironmentWithSession resolved false — tearing down')
       logEvent('zy_bridge_repl_reconnect_failed', {
         close_code: closeCode,
@@ -1185,12 +1157,9 @@ export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHa
                   onStateChange?.('connected')
                 })
             } else {
-              // All initial messages were already flushed (filtered by
-              // previouslyFlushedUUIDs). No flush POST needed — clear
-              // the flag and signal connected immediately. This is the
-              // first connect for this transport (inside !initialFlushDone),
-              // so no flush POST is in-flight — the flag was set before
-              // connect() and must be cleared here.
+              // 所有初始消息此前均已 flush，并被 previouslyFlushedUUIDs 过滤。无需 flush POST，立即
+              // 清除 flag 并发出已连接信号。这是当前 transport 的首次连接，位于
+              // !initialFlushDone 内，没有正在进行的 flush POST；flag 在 connect() 前设置，必须在此清除。
               drainFlushGate()
               onStateChange?.('connected')
             }
@@ -1242,10 +1211,9 @@ export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHa
       v2Generation++
 
       if (useCcrV2) {
-        // workSessionId is the cse_* form (infrastructure-layer ID from the
-        // work queue), which is what /v1/code/sessions/{id}/worker/* wants.
-        // The session_* form (currentSessionId) is NOT usable here —
-        // handler/convert.go:30 validates TagCodeSession.
+        // workSessionId 是工作队列提供的基础设施层 ID，即 cse_* 形式，符合
+        // /v1/code/sessions/{id}/worker/* 要求。此处不能使用 session_* 形式的 currentSessionId，
+        // 因为 handler/convert.go:30 校验 TagCodeSession。
         const sessionUrl = buildCCRv2SdkUrl(baseUrl, workSessionId)
         const thisGen = v2Generation
         logForDebugging(
@@ -1355,8 +1323,7 @@ export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHa
   // 永久模式：每小时刷新崩溃恢复指针的 mtime。
   // onWorkReceived 刷新仅在用户提示时触发——
   // 空闲超过 4 小时的 daemon 会有陈旧的指针，下次重启会清除它
-  // would clear it (readWirePointer TTL check) → fresh session. The
-  // standalone bridge (bridgeMain.ts) has an identical hourly timer.
+  //（readWirePointer TTL 检查）并创建新会话。独立 bridge（bridgeMain.ts）使用相同的每小时定时器。
   const pointerRefreshTimer = perpetual
     ? setInterval(() => {
         // doReconnect() 非原子地重新赋值 currentSessionId/environmentId
@@ -1784,21 +1751,19 @@ async function startWorkPollLoop({
         suspensionDetected = false
         if (isAtCapacity?.() && capacitySignal && !skipAtCapacityOnce) {
           const atCapMs = pollConfig.poll_interval_ms_at_capacity
-          // Heartbeat loops WITHOUT polling. When at-capacity polling is also
-          // enabled (atCapMs > 0), the loop tracks a deadline and breaks out
-          // to poll at that interval — heartbeat and poll compose instead of
-          // one suppressing the other. Breaks out when:
-          //   - Poll deadline reached (atCapMs > 0 only)
-          //   - Auth fails (JWT expired → poll refreshes tokens)
-          //   - Capacity wake fires (transport lost → poll for new work)
-          //   - Heartbeat config disabled (GrowthBook update)
-          //   - Loop aborted (shutdown)
+          // 心跳循环本身不轮询。若同时启用容量已满轮询（atCapMs > 0），循环会跟踪截止时间，到期
+          // 后退出并轮询，使心跳与轮询组合运行而非彼此抑制。以下情况会退出：
+          //   - 到达轮询截止时间（仅 atCapMs > 0）
+          //   - 认证失败（JWT 过期，由轮询刷新 token）
+          //   - 容量唤醒触发（transport 丢失，轮询新任务）
+          //   - 心跳配置被禁用（GrowthBook 更新）
+          //   - 循环被 abort（关停）
           if (pollConfig.non_exclusive_heartbeat_interval_ms > 0 && getHeartbeatInfo) {
             logEvent('zy_bridge_heartbeat_mode_entered', {
               heartbeat_interval_ms: pollConfig.non_exclusive_heartbeat_interval_ms,
             })
-            // Deadline computed once at entry — GB updates to atCapMs don't
-            // shift an in-flight deadline (next entry picks up the new value).
+            // 截止时间只在进入时计算一次；GB 对 atCapMs 的更新不会改变进行中的截止时间，下次进入
+            // 时才采用新值。
             const pollDeadline = atCapMs > 0 ? Date.now() + atCapMs : null
             let needsBackoff = false
             let hbCycles = 0
@@ -2037,7 +2002,7 @@ async function startWorkPollLoop({
         break
       }
 
-      // Fatal errors (401/403/404/410) — no point retrying
+      // 致命错误（401/403/404/410）无需重试
       if (err instanceof WireFatalError) {
         const isExpiry = isExpiredErrorType(err.errorType)
         const isSuppressible = isSuppressible403(err)

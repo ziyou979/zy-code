@@ -69,7 +69,7 @@ export type UseReplSessionRestoreParams = {
   initialMessages: MessageType[] | undefined
   initialMainThreadAgentDefinition: AgentDefinition | undefined
   replStore: ReplStoreInstance
-  // REPL local state / callbacks
+  // REPL 局部状态 / callback
   setInputValue: (value: string) => void
   setToolJSX: (jsx: null) => void
   setAbortController: React.Dispatch<React.SetStateAction<AbortController | null>>

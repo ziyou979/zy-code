@@ -14,11 +14,11 @@ type ClickEventHandler = (event: ClickEvent) => void
 type HoverEventHandler = () => void
 
 /**
- * Props for event handlers on Box and other host components.
+ * Box 和其他 host 组件的事件处理器 props。
  *
- * Follows the React/DOM naming convention:
- * - onEventName: handler for bubble phase
- * - onEventNameCapture: handler for capture phase
+ * 遵循 React/DOM 命名约定：
+ * - onEventName：冒泡阶段的处理器
+ * - onEventNameCapture：捕获阶段的处理器
  */
 export type EventHandlerProps = {
   onKeyDown?: KeyboardEventHandler
@@ -41,8 +41,8 @@ export type EventHandlerProps = {
 }
 
 /**
- * Reverse lookup: event type string → handler prop names.
- * Used by the dispatcher for O(1) handler lookup per node.
+ * 反向查找：事件类型字符串 → 处理器 prop 名称。
+ * dispatcher 用它以 O(1) 复杂度查找每个节点的处理器。
  */
 export const HANDLER_FOR_EVENT: Record<
   string,
@@ -57,8 +57,8 @@ export const HANDLER_FOR_EVENT: Record<
 }
 
 /**
- * Set of all event handler prop names, for the reconciler to detect
- * event props and store them in _eventHandlers instead of attributes.
+ * 所有事件处理器 prop 名称的集合，供 reconciler 识别事件 prop，
+ * 并将其存入 _eventHandlers 而不是 attributes。
  */
 export const EVENT_HANDLER_PROPS = new Set<string>([
   'onKeyDown',

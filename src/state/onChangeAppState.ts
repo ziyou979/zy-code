@@ -19,7 +19,7 @@ import { getInitialSettings, updateSettingsForSource } from '../services/setting
 import { savePermissionMode } from '../services/session-storage/sessionMetadata.js'
 import type { AppState } from './AppStateStore.js'
 
-// Inverse of the push below — restore on worker restart.
+// 与下方 push 相反，worker 重启时恢复。
 export function externalMetadataToAppState(
   metadata: SessionExternalMetadata,
 ): (prev: AppState) => AppState {
@@ -46,36 +46,30 @@ export function onChangeAppState({
   newState: AppState
   oldState: AppState
 }) {
-  // toolPermissionContext.mode — single choke point for CCR/SDK mode sync.
+  // toolPermissionContext.mode——CCR/SDK 模式同步的唯一入口。
   //
-  // Prior to this block, mode changes were relayed to CCR by only 2 of 8+
-  // mutation paths: a bespoke setAppState wrapper in print.ts (headless/SDK
-  // mode only) and a manual notify in the set_permission_mode handler.
-  // Every other path — Shift+Tab cycling, ExitPlanModePermissionRequest
-  // dialog options, the /plan slash command, rewind, the REPL bridge's
-  // onSetPermissionMode — mutated AppState without telling
-  // CCR, leaving external_metadata.permission_mode stale and the web UI out
-  // of sync with the CLI's actual mode.
+  // 此逻辑加入前，8 条以上的修改路径中只有 2 条会把模式变化转发给 CCR：
+  // print.ts 的专用 setAppState wrapper（仅 headless/SDK 模式）和
+  // set_permission_mode handler 中的手动通知。其他路径——Shift+Tab 循环、
+  // ExitPlanModePermissionRequest 对话框选项、/plan、rewind、REPL bridge 的
+  // onSetPermissionMode——只修改 AppState 而不通知 CCR，导致
+  // external_metadata.permission_mode 过期，Web UI 与 CLI 实际模式不同步。
   //
-  // Hooking the diff here means ANY setAppState call that changes the mode
-  // notifies CCR (via notifySessionMetadataChanged → ccrClient.reportMetadata)
-  // and the SDK status stream (via notifyPermissionModeChanged → registered
-  // in print.ts). The scattered callsites above need zero changes.
+  // 在这里监听差异后，任何改变模式的 setAppState 调用都会通知 CCR
+  //（notifySessionMetadataChanged → ccrClient.reportMetadata）和 SDK 状态流
+  //（notifyPermissionModeChanged → print.ts 中注册的处理器），无需修改上述分散调用点。
   const prevMode = oldState.toolPermissionContext.mode
   const newMode = newState.toolPermissionContext.mode
   if (prevMode !== newMode) {
-    // CCR external_metadata must not receive internal-only mode names
-    // (bubble, ungated auto). Externalize first — and skip
-    // the CCR notify if the EXTERNAL mode didn't change (e.g.,
-    // default→bubble→default is noise from CCR's POV since both
-    // externalize to 'default'). The SDK channel (notifyPermissionModeChanged)
-    // passes raw mode; its listener in print.ts applies its own filter.
+    // CCR external_metadata 不得收到仅内部使用的模式名（bubble、未门控 auto）。
+    // 先外部化；若外部模式未改变则跳过 CCR 通知，例如 default→bubble→default
+    // 在 CCR 看来都是 default，只是噪声。SDK channel（notifyPermissionModeChanged）
+    // 传递原始模式，由 print.ts 的 listener 自行过滤。
     const prevExternal = toExternalPermissionMode(prevMode)
     const newExternal = toExternalPermissionMode(newMode)
     if (prevExternal !== newExternal) {
-      // Ultraplan = first plan cycle only. The initial control_request
-      // sets mode and isUltraplanMode atomically, so the flag's
-      // transition gates it. null per RFC 7396 (removes the key).
+      // Ultraplan 只适用于首轮 plan。初始 control_request 会原子设置 mode 与
+      // isUltraplanMode，因此用 flag 的变化门控。按 RFC 7396 使用 null 删除 key。
       const isUltraplan =
         newExternal === 'plan' && newState.isUltraplanMode && !oldState.isUltraplanMode
           ? true
@@ -91,7 +85,7 @@ export function onChangeAppState({
     savePermissionMode(newMode)
   }
 
-  // mainLoopModel: persist to settings
+  // mainLoopModel：持久化到 settings。
   // 如果值是 tier 名（advanced/standard/compact），写入 mainLoopModel 字段
   // 否则写入 model 字段并清除 mainLoopModel（覆盖模式）
   if (newState.mainLoopModel !== oldState.mainLoopModel) {
@@ -142,7 +136,7 @@ export function onChangeAppState({
     }
   }
 
-  // expandedView → persist as showExpandedTodos + showSpinnerTree for backwards compat
+  // expandedView：为向后兼容，持久化为 showExpandedTodos + showSpinnerTree。
   if (newState.expandedView !== oldState.expandedView) {
     const showExpandedTodos = newState.expandedView === 'tasks'
     const showSpinnerTree = newState.expandedView === 'teammates'
@@ -167,7 +161,7 @@ export function onChangeAppState({
     }))
   }
 
-  // tungstenPanelVisible (ant-only tmux panel sticky toggle)
+  // tungstenPanelVisible（仅供 ant 使用的 tmux 面板粘性开关）。
   if (isInternalBuild()) {
     if (
       newState.tungstenPanelVisible !== oldState.tungstenPanelVisible &&
@@ -179,14 +173,13 @@ export function onChangeAppState({
     }
   }
 
-  // settings: clear auth-related caches when settings change
-  // This ensures apiKeyHelper and AWS/GCP credential changes take effect immediately
+  // settings：发生变化时清除认证相关缓存，确保 apiKeyHelper 与 AWS/GCP 凭据修改立即生效。
   if (newState.settings !== oldState.settings) {
     try {
       clearApiKeyHelperCache()
 
-      // Re-apply environment variables when settings.env changes
-      // This is additive-only: new vars are added, existing may be overwritten, nothing is deleted
+      // settings.env 变化时重新应用环境变量。此操作只增不减：加入新变量，
+      // 可能覆盖已有变量，但不会删除任何变量。
       if (newState.settings.env !== oldState.settings.env) {
         applyConfigEnvironmentVariables()
       }

@@ -11,160 +11,129 @@ import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import type { DOMElement } from '../ink/dom.js'
 
 /**
- * Estimated height (rows) for items not yet measured. Intentionally LOW:
- * overestimating causes blank space (we stop mounting too early and the
- * viewport bottom shows empty spacer), while underestimating just mounts
- * a few extra items into overscan. The asymmetry means we'd rather err low.
+ * 尚未测量 item 的估算高度（行数），有意取较低值。
+ * 高估会产生空白：过早停止挂载，viewport 底部显示空 spacer；
+ * 低估只会在 overscan 中多挂载少量 item。由于这种不对称，宁可低估。
  */
 const DEFAULT_ESTIMATE = 3
 /**
- * Extra rows rendered above and below the viewport. Generous because real
- * heights can be 10x the estimate for long tool results.
+ * viewport 上下额外渲染的行数。取值较宽裕，因为长 tool result 的实际高度
+ * 可能达到估算值的 10 倍。
  */
 const OVERSCAN_ROWS = 80
-/** Items rendered before the ScrollBox has laid out (viewportHeight=0). */
+/** ScrollBox 完成布局前（viewportHeight=0）渲染的 item 数量。 */
 const COLD_START_COUNT = 30
 /**
- * scrollTop quantization for the useSyncExternalStore snapshot. Without
- * this, every wheel tick (3-5 per notch) triggers a full React commit +
- * Yoga calculateLayout() + Ink diff cycle — the CPU spike. Visual scroll
- * stays smooth regardless: ScrollBox.forceRender fires on every scrollBy
- * and Ink reads the REAL scrollTop from the DOM node, independent of what
- * React thinks. React only needs to re-render when the mounted range must
- * shift; half of OVERSCAN_ROWS is the tightest safe bin (guarantees ≥40
- * rows of overscan remain before the new range is needed).
+ * useSyncExternalStore snapshot 的 scrollTop 量化步长。若不量化，每格滚轮产生的
+ * 3-5 个 tick 都会触发完整 React commit、Yoga calculateLayout() 和 Ink diff，造成 CPU 峰值。
+ * 视觉滚动不受影响：每次 scrollBy 都会触发 ScrollBox.forceRender，Ink 从 DOM node
+ * 读取真实 scrollTop。React 只需在挂载范围需要移动时重渲染；OVERSCAN_ROWS 的一半
+ * 是最小安全分箱，可保证切换范围前至少还剩 40 行 overscan。
  */
 const SCROLL_QUANTUM = OVERSCAN_ROWS >> 1
 /**
- * Worst-case height assumed for unmeasured items when computing coverage.
- * A MessageRow can be as small as 1 row (single-line tool call). Using 1
- * here guarantees the mounted span physically reaches the viewport bottom
- * regardless of how small items actually are — at the cost of over-mounting
- * when items are larger (which is fine, overscan absorbs it).
+ * 计算覆盖范围时为未测量 item 假定的最坏高度。MessageRow 最小可为 1 行
+ *（单行 tool call）。此处使用 1，可保证无论 item 实际多小，挂载区间都能覆盖
+ * viewport 底部；item 较大时会多挂载，但可由 overscan 吸收。
  */
 const PESSIMISTIC_HEIGHT = 1
-/** Cap on mounted items to bound fiber allocation even in degenerate cases. */
+/** 挂载 item 数量上限，即使在退化情况下也限制 fiber 分配。 */
 const MAX_MOUNTED_ITEMS = 300
 /**
- * Max NEW items to mount in a single commit. Scrolling into a fresh range
- * with PESSIMISTIC_HEIGHT=1 would mount 194 items at once (OVERSCAN_ROWS*2+
- * viewportH = 194); each fresh MessageRow render costs ~1.5ms (marked lexer
- * + formatToken + ~11 createInstance) = ~290ms sync block. Sliding the range
- * toward the target over multiple commits keeps per-commit mount cost
- * bounded. The render-time clamp (scrollClampMin/Max) holds the viewport at
- * the edge of mounted content so there's no blank during catch-up.
+ * 单次 commit 最多挂载的新 item 数。PESSIMISTIC_HEIGHT=1 时滚入新范围会一次挂载
+ * 194 个 item，每个新 MessageRow 约耗时 1.5ms，总计约 290ms 同步阻塞。
+ * 通过多次 commit 将范围滑向目标，可限制单次挂载成本；render 阶段的
+ * scrollClampMin/Max 会将 viewport 固定在已挂载内容边缘，追赶期间不会出现空白。
  */
 const SLIDE_STEP = 25
 
 const NOOP_UNSUB = () => {}
 
 export type VirtualScrollResult = {
-  /** [startIndex, endIndex) half-open slice of items to render. */
+  /** 要渲染的 item 半开区间 [startIndex, endIndex)。 */
   range: readonly [number, number]
-  /** Height (rows) of spacer before the first rendered item. */
+  /** 首个渲染 item 之前 spacer 的高度（行数）。 */
   topSpacer: number
-  /** Height (rows) of spacer after the last rendered item. */
+  /** 最后一个渲染 item 之后 spacer 的高度（行数）。 */
   bottomSpacer: number
   /**
-   * Callback ref factory. Attach `measureRef(itemKey)` to each rendered
-   * item's root Box; after Yoga layout, the computed height is cached.
+   * callback ref factory。将 `measureRef(itemKey)` 绑定到每个渲染 item 的根 Box；
+   * Yoga 布局后缓存计算高度。
    */
   measureRef: (key: string) => (el: DOMElement | null) => void
   /**
-   * Attach to the topSpacer Box. Its Yoga computedTop IS listOrigin
-   * (first child of the virtualized region, so its top = cumulative
-   * height of everything rendered before the list in the ScrollBox).
-   * Drift-free: no subtraction of offsets, no dependence on item
-   * heights that change between renders (tmux resize).
+   * 绑定到 topSpacer Box。其 Yoga computedTop 就是 listOrigin：它是虚拟区域首个 child，
+   * top 等于 ScrollBox 中列表前全部内容的累计高度。无需减 offset，也不依赖渲染间
+   * 可能因 tmux resize 改变的 item 高度，因此不会漂移。
    */
   spacerRef: RefObject<DOMElement | null>
   /**
-   * Cumulative y-offset of each item in list-wrapper coords (NOT scrollbox
-   * coords — logo/siblings before this list shift the origin).
-   * offsets[i] = rows above item i; offsets[n] = totalHeight.
-   * Recomputed every render — don't memo on identity.
+   * 每个 item 在 list-wrapper 坐标中的累计 y-offset，而非 scrollbox 坐标；
+   * 列表前的 logo/sibling 会移动原点。offsets[i] 是 item i 上方行数，
+   * offsets[n] 是总高度。每次渲染重新计算，不按 identity 缓存。
    */
   offsets: ArrayLike<number>
   /**
-   * Read Yoga computedTop for item at index. Returns -1 if the item isn't
-   * mounted or hasn't been laid out. Item Boxes are direct Yoga children
-   * of the ScrollBox content wrapper (fragments collapse in the Ink DOM),
-   * so this is content-wrapper-relative — same coordinate space as
-   * scrollTop. Yoga layout is scroll-independent (translation happens
-   * later in renderNodeToOutput), so positions stay valid across scrolls
-   * without waiting for Ink to re-render. StickyTracker walks the mount
-   * range with this to find the viewport boundary at per-scroll-tick
-   * granularity (finer than the 40-row quantum this hook re-renders at).
+   * 读取指定索引 item 的 Yoga computedTop；item 未挂载或未布局时返回 -1。
+   * item Box 是 ScrollBox content wrapper 的直接 Yoga child，因此返回值相对 content wrapper，
+   * 与 scrollTop 处于同一坐标系。Yoga 布局与滚动无关，位置可跨滚动保持有效。
+   * StickyTracker 用它逐个 scroll tick 查找 viewport 边界，精度高于此 hook 的 40 行重渲染步长。
    */
   getItemTop: (index: number) => number
   /**
-   * Get the mounted DOMElement for item at index, or null. For
-   * ScrollBox.scrollToElement — anchoring by element ref defers the
-   * Yoga-position read to render time (deterministic; no throttle race).
+   * 获取指定索引已挂载的 DOMElement，否则返回 null。供 ScrollBox.scrollToElement 使用；
+   * 以 element ref 锚定会将 Yoga 位置读取延迟到 render 阶段，结果确定且无 throttle 竞态。
    */
   getItemElement: (index: number) => DOMElement | null
-  /** Measured Yoga height. undefined = not yet measured; 0 = rendered nothing. */
+  /** 测得的 Yoga 高度。undefined 表示尚未测量，0 表示未渲染内容。 */
   getItemHeight: (index: number) => number | undefined
   /**
-   * Scroll so item `i` is in the mounted range. Sets scrollTop =
-   * offsets[i] + listOrigin. The range logic finds start from
-   * scrollTop vs offsets[] — BOTH use the same offsets value, so they
-   * agree by construction regardless of whether offsets[i] is the
-   * "true" position. Item i mounts; its screen position may be off by
-   * a few-dozen rows (overscan-worth of estimate drift), but it's in
-   * the DOM. Follow with getItemTop(i) for the precise position.
+   * 滚动使 item `i` 进入挂载范围，并设置 scrollTop = offsets[i] + listOrigin。
+   * 范围逻辑与滚动使用同一 offsets 值，因此无论估算位置是否精确都能保持一致并挂载 item。
+   * 屏幕位置可能有几十行估算漂移，但 item 已进入 DOM；随后用 getItemTop(i) 获取精确位置。
    */
   scrollToIndex: (i: number) => void
 }
 
 /**
- * React-level virtualization for items inside a ScrollBox.
+ * ScrollBox 内 item 的 React 层虚拟化。
  *
- * The ScrollBox already does Ink-output-level viewport culling
- * (render-node-to-output.ts:617 skips children outside the visible window),
- * but all React fibers + Yoga nodes are still allocated. At ~250 KB RSS per
- * MessageRow, a 1000-message session costs ~250 MB of grow-only memory
- * (Ink screen buffer, WASM linear memory, JSC page retention all grow-only).
+ * ScrollBox 已在 Ink 输出层进行 viewport 剔除：render-node-to-output.ts:617
+ * 会跳过可见窗口外的 child，但仍会分配所有 React fiber 和 Yoga node。
+ * 每个 MessageRow 约占 250 KB RSS，1000 条消息的会话会消耗约 250 MB
+ * 只增不减的内存；Ink screen buffer、WASM linear memory 和 JSC page retention
+ * 都只会增长。
  *
- * This hook mounts only items in viewport + overscan. Spacer boxes hold the
- * scroll height constant for the rest at O(1) fiber cost each.
+ * 此 hook 只挂载 viewport + overscan 中的 item，其余部分由 spacer box
+ * 保持滚动高度，每个 spacer 的 fiber 成本为 O(1)。
  *
- * Height estimation: fixed DEFAULT_ESTIMATE for unmeasured items, replaced
- * by real Yoga heights after first layout. No scroll anchoring — overscan
- * absorbs estimate errors. If drift is noticeable in practice, anchoring
- * (scrollBy(delta) when topSpacer changes) is a straightforward followup.
+ * 高度估算：未测量 item 使用固定 DEFAULT_ESTIMATE，首次布局后替换为真实 Yoga 高度。
+ * 不做滚动锚定，由 overscan 吸收估算误差；若实际漂移明显，可在 topSpacer 变化时
+ * scrollBy(delta) 实现锚定。
  *
- * stickyScroll caveat: render-node-to-output.ts:450 sets scrollTop=maxScroll
- * during Ink's render phase, which does NOT fire ScrollBox.subscribe. The
- * at-bottom check below handles this — when pinned to the bottom, we render
- * the last N items regardless of what scrollTop claims.
+ * stickyScroll 注意事项：render-node-to-output.ts:450 会在 Ink render 阶段设置
+ * scrollTop=maxScroll，但不会触发 ScrollBox.subscribe。下方 at-bottom 检查会处理：
+ * 固定到底部时，无论 scrollTop 值如何都渲染最后 N 个 item。
  */
 export function useVirtualScroll(
   scrollRef: RefObject<ScrollBoxHandle | null>,
   itemKeys: readonly string[],
   /**
-   * Terminal column count. On change, cached heights are stale (text
-   * rewraps) — SCALED by oldCols/newCols rather than cleared. Clearing
-   * made the pessimistic coverage back-walk mount ~190 items (every
-   * uncached item → PESSIMISTIC_HEIGHT=1 → walk 190 to reach
-   * viewport+2×overscan). Each fresh mount runs marked.lexer + syntax
-   * highlighting ≈ 3ms; ~600ms React reconcile on first resize with a
-   * long conversation. Scaling keeps heightCache populated → back-walk
-   * uses real-ish heights → mount range stays tight. Scaled estimates
-   * are overwritten by real Yoga heights on next useLayoutEffect.
+   * 终端列数。变化时文本会重新换行，缓存高度已过期，但按 oldCols/newCols 缩放而非清空。
+   * 清空会让悲观覆盖回溯挂载约 190 个 item，每个新挂载约 3ms，长会话首次 resize
+   * 会造成约 600ms reconcile。缩放可保留近似真实高度并维持紧凑挂载范围，
+   * 下一次 useLayoutEffect 再用真实 Yoga 高度覆盖。
    *
-   * Scaled heights are close enough that the black-screen-on-widen bug
-   * (inflated pre-resize offsets overshoot post-resize scrollTop → end
-   * loop stops short of tail) doesn't trigger: ratio<1 on widen scales
-   * heights DOWN, keeping offsets roughly aligned with post-resize Yoga.
+   * 缩放高度足够接近真实值，可避免拓宽时旧 offsets 超过新 scrollTop、end 循环提前停止
+   * 导致黑屏。拓宽时 ratio<1 会向下缩放，使 offsets 与 resize 后 Yoga 大致对齐。
    */
   columns: number,
 ): VirtualScrollResult {
   const heightCache = useRef(new Map<string, number>())
-  // Bump whenever heightCache mutates so offsets rebuild on next read. Ref
-  // (not state) — checked during render phase, zero extra commits.
+  // heightCache 每次变化时递增，使 offsets 下次读取时重建。使用 ref 而非 state，
+  // 在 render 阶段检查，不增加 commit。
   const offsetVersionRef = useRef(0)
-  // scrollTop at last commit, for detecting fast-scroll mode (slide cap gate).
+  // 上次 commit 时的 scrollTop，用于检测快速滚动模式（slide cap gate）。
   const lastScrollTopRef = useRef(0)
   const offsetsRef = useRef<{ arr: Float64Array; version: number; n: number }>({
     arr: new Float64Array(0),
@@ -173,21 +142,15 @@ export function useVirtualScroll(
   })
   const itemRefs = useRef(new Map<string, DOMElement>())
   const refCache = useRef(new Map<string, (el: DOMElement | null) => void>())
-  // Inline ref-compare: must run before offsets is computed below. The
-  // skip-flag guards useLayoutEffect from re-populating heightCache with
-  // PRE-resize Yoga heights (useLayoutEffect reads Yoga from the frame
-  // BEFORE this render's calculateLayout — the one that had the old width).
-  // Next render's useLayoutEffect reads post-resize Yoga → correct.
+  // 内联比较 ref，必须在下方计算 offsets 前运行。skip flag 防止 useLayoutEffect
+  // 用 resize 前的 Yoga 高度重新填充 heightCache；该 effect 读取的是本次
+  // calculateLayout 前、仍使用旧宽度的帧。下一次渲染的 effect 才会读取 resize 后高度。
   const prevColumns = useRef(columns)
   const skipMeasurementRef = useRef(false)
-  // Freeze the mount range for the resize-settling cycle. Already-mounted
-  // items have warm useMemo (marked.lexer, highlighting); recomputing range
-  // from scaled/pessimistic estimates causes mount/unmount churn (~3ms per
-  // fresh mount = ~150ms visible as a second flash). The pre-resize range is
-  // as good as any — items visible at old width are what the user wants at
-  // new width. Frozen for 2 renders: render #1 has skipMeasurement (Yoga
-  // still pre-resize), render #2's useLayoutEffect reads post-resize Yoga
-  // into heightCache. Render #3 has accurate heights → normal recompute.
+  // resize 稳定期间冻结挂载范围。已挂载 item 的 useMemo 已预热；按缩放或悲观估算
+  // 重算范围会造成 mount/unmount 抖动，每个新挂载约 3ms，总计约 150ms 的二次闪烁。
+  // 冻结两次渲染：第 1 次跳过测量，第 2 次 effect 写入 resize 后 Yoga 高度，
+  // 第 3 次已有准确高度，再恢复正常重算。
   const prevRangeRef = useRef<readonly [number, number] | null>(null)
   const freezeRendersRef = useRef(0)
   if (prevColumns.current !== columns) {
@@ -207,30 +170,18 @@ export function useVirtualScroll(
     freezeRendersRef.current = 2
   }
   const frozenRange = freezeRendersRef.current > 0 ? prevRangeRef.current : null
-  // List origin in content-wrapper coords. scrollTop is content-wrapper-
-  // relative, but offsets[] are list-local (0 = first virtualized item).
-  // Siblings that render BEFORE this list inside the ScrollBox — Logo,
-  // StatusNotices, truncation divider in Messages.tsx — shift item Yoga
-  // positions by their cumulative height. Without subtracting this, the
-  // non-sticky branch's effLo/effHi are inflated and start advances past
-  // items that are actually in view (blank viewport on click/scroll when
-  // sticky breaks while scrollTop is near max). Read from the topSpacer's
-  // Yoga computedTop — it's the first child of the virtualized region, so
-  // its top IS listOrigin. No subtraction of offsets → no drift when item
-  // heights change between renders (tmux resize: columns change → re-wrap
-  // → heights shrink → the old item-sample subtraction went negative →
-  // effLo inflated → black screen). One-frame lag like heightCache.
+  // listOrigin 使用 content-wrapper 坐标；scrollTop 相对 content wrapper，offsets[] 则相对列表。
+  // ScrollBox 中位于列表前的 Logo、StatusNotices 和截断 divider 会按累计高度移动 item。
+  // 从虚拟区域首个 child topSpacer 的 Yoga computedTop 读取 listOrigin，可避免 sticky 断开时
+  // effLo/effHi 被抬高并越过可见 item，也避免 tmux resize 后按旧 item 样本相减造成漂移和黑屏。
+  // 与 heightCache 一样会滞后一帧。
   const listOriginRef = useRef(0)
   const spacerRef = useRef<DOMElement | null>(null)
 
-  // useSyncExternalStore ties re-renders to imperative scroll. Snapshot is
-  // scrollTop QUANTIZED to SCROLL_QUANTUM bins — Object.is sees no change
-  // for small scrolls (most wheel ticks), so React skips the commit + Yoga
-  // + Ink cycle entirely until the accumulated delta crosses a bin.
-  // Sticky is folded into the snapshot (sign bit) so sticky→broken also
-  // triggers: scrollToBottom sets sticky=true without moving scrollTop
-  // (Ink moves it later), and the first scrollBy after may land in the
-  // same bin. NaN sentinel = ref not attached.
+  // useSyncExternalStore 将重渲染绑定到命令式滚动。snapshot 把 scrollTop 量化到
+  // SCROLL_QUANTUM 分箱，小幅滚动时 Object.is 不变，React 会跳过 commit + Yoga + Ink
+  // 周期，直到累计 delta 跨箱。sticky 通过符号位并入 snapshot，使 sticky→broken
+  // 也能触发；NaN sentinel 表示 ref 尚未绑定。
   const subscribe = useCallback(
     (listener: () => void) => scrollRef.current?.subscribe(listener) ?? NOOP_UNSUB,
     [scrollRef],
@@ -240,41 +191,29 @@ export function useVirtualScroll(
     if (!s) {
       return NaN
     }
-    // Snapshot uses the TARGET (scrollTop + pendingDelta), not committed
-    // scrollTop. scrollBy only mutates pendingDelta (renderer drains it
-    // across frames); committed scrollTop lags. Using target means
-    // notify() on scrollBy actually changes the snapshot → React remounts
-    // children for the destination before Ink's drain frames need them.
+    // snapshot 使用目标值 scrollTop + pendingDelta，而非已 commit 的 scrollTop。
+    // scrollBy 只修改 pendingDelta，renderer 会跨帧排空，因此 commit 值滞后。
+    // 使用目标值可让 notify() 真正改变 snapshot，使 React 在 Ink drain 帧需要前
+    // 就为目标位置重新挂载 child。
     const target = s.getScrollTop() + s.getPendingDelta()
     const bin = Math.floor(target / SCROLL_QUANTUM)
     return s.isSticky() ? ~bin : bin
   })
-  // Read the REAL committed scrollTop (not quantized) for range math —
-  // quantization is only the re-render gate, not the position.
+  // 范围计算读取真实已 commit 的 scrollTop；量化只用于重渲染门控，不代表位置。
   const scrollTop = scrollRef.current?.getScrollTop() ?? -1
-  // Range must span BOTH committed scrollTop (where Ink is rendering NOW)
-  // and target (where pending will drain to). During drain, intermediate
-  // frames render at scrollTops between the two — if we only mount for
-  // the target, those frames find no children (blank rows).
+  // 范围必须同时覆盖已 commit 的 scrollTop 和 pending 将排空到的目标位置。
+  // drain 期间的中间帧会在两者之间渲染；若只为目标挂载，中间帧会找不到 child 而留白。
   const pendingDelta = scrollRef.current?.getPendingDelta() ?? 0
   const viewportH = scrollRef.current?.getViewportHeight() ?? 0
-  // True means the ScrollBox is pinned to the bottom. This is the ONLY
-  // stable "at bottom" signal: scrollTop/scrollHeight both reflect the
-  // PREVIOUS render's layout, which depends on what WE rendered (topSpacer +
-  // items), creating a feedback loop (range → layout → atBottom → range).
-  // stickyScroll is set by user action (scrollToBottom/scrollBy), the initial
-  // attribute, AND by render-node-to-output when its positional follow fires
-  // (scrollTop>=prevMax → pin to new max → set flag). The renderer write is
-  // feedback-safe: it only flips false→true, only when already at the
-  // positional bottom, and the flag being true here just means "tail-walk,
-  // clear clamp" — the same behavior as if we'd read scrollTop==maxScroll
-  // directly, minus the instability. Default true: before the ref attaches,
-  // assume bottom (sticky will pin us there on first Ink render).
+  // true 表示 ScrollBox 固定到底部，这是唯一稳定的“位于底部”信号。
+  // scrollTop/scrollHeight 都反映前一帧且依赖本次渲染范围，会形成反馈循环。
+  // stickyScroll 由用户操作、初始属性或 render-node-to-output 的位置跟随设置；renderer
+  // 只会在已位于底部时将 false 改为 true，因此不会产生反馈。默认 true，使 ref 绑定前
+  // 先假定在底部，首次 Ink render 会实际固定到底部。
   const isSticky = scrollRef.current?.isSticky() ?? true
 
-  // GC stale cache entries (compaction, /clear, screenToggleId bump). Only
-  // runs when itemKeys identity changes — scrolling doesn't touch keys.
-  // itemRefs self-cleans via ref(null) on unmount.
+  // GC 过期 cache entry（compaction、/clear、screenToggleId 递增）。
+  // 仅在 itemKeys identity 变化时运行，滚动不会触碰 key；itemRefs 卸载时通过 ref(null) 自清理。
   // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable
   useMemo(() => {
     const live = new Set(itemKeys)
@@ -295,14 +234,10 @@ export function useVirtualScroll(
     }
   }, [itemKeys])
 
-  // Offsets cached across renders, invalidated by offsetVersion ref bump.
-  // The previous approach allocated new Array(n+1) + ran n Map.get per
-  // render; for n≈27k at key-repeat scroll rate (~11 commits/sec) that's
-  // ~300k lookups/sec on a freshly-allocated array → GC churn + ~2ms/render.
-  // Version bumped by heightCache writers (measureRef, resize-scale, GC).
-  // No setState — the rebuild is read-side-lazy via ref version check during
-  // render (same commit, zero extra schedule). The flicker that forced
-  // inline-recompute came from setState-driven invalidation.
+  // offsets 跨渲染缓存，通过递增 offsetVersion ref 失效。旧方案每次渲染分配
+  // Array(n+1) 并执行 n 次 Map.get；n≈27k、每秒约 11 次 commit 时会达到每秒 30 万次
+  // lookup，造成 GC 抖动并增加约 2ms/render。heightCache writer 负责递增版本；
+  // 不使用 setState，而是在 render 阶段按 ref 版本惰性重建，同一 commit 内完成且不额外调度。
   const n = itemKeys.length
   if (offsetsRef.current.version !== offsetVersionRef.current || offsetsRef.current.n !== n) {
     const arr =
@@ -320,23 +255,21 @@ export function useVirtualScroll(
   let end: number
 
   if (frozenRange) {
-    // Column just changed. Keep the pre-resize range to avoid mount churn.
-    // Clamp to n in case messages were removed (/clear, compaction).
+    // column 刚变化时保留 resize 前范围，避免挂载抖动；若消息被 /clear 或 compaction
+    // 移除，则将范围钳制到 n。
     ;[start, end] = frozenRange
     start = Math.min(start, n)
     end = Math.min(end, n)
   } else if (viewportH === 0 || scrollTop < 0) {
-    // Cold start: ScrollBox hasn't laid out yet. Render the tail — sticky
-    // scroll pins to the bottom on first Ink render, so these are the items
-    // the user actually sees. Any scroll-up after that goes through
-    // scrollBy → subscribe fires → we re-render with real values.
+    // 冷启动时 ScrollBox 尚未布局，先渲染尾部。首次 Ink render 会通过 sticky scroll
+    // 固定到底部，这些正是用户会看到的 item；之后上滚会触发 scrollBy → subscribe，
+    // 再用真实值重渲染。
     start = Math.max(0, n - COLD_START_COUNT)
     end = n
   } else {
     if (isSticky) {
-      // Sticky-scroll fallback. render-node-to-output may have moved scrollTop
-      // without notifying us, so trust "at bottom" over the stale snapshot.
-      // Walk back from the tail until we've covered viewport + overscan.
+      // sticky-scroll fallback。render-node-to-output 可能移动 scrollTop 却未通知，
+      // 因此优先信任“位于底部”而非旧 snapshot；从尾部向前遍历直到覆盖 viewport + overscan。
       //
       const budget = viewportH + OVERSCAN_ROWS
       start = n
@@ -350,49 +283,23 @@ export function useVirtualScroll(
       prevRangeRef.current = null
       lastScrollTopRef.current = scrollTop
     } else {
-      // User has scrolled up. Compute start from offsets (estimate-based:
-      // may undershoot which is fine — we just start mounting a bit early).
-      // Then extend end by CUMULATIVE BEST-KNOWN HEIGHT, not estimated
-      // offsets. The invariant is:
+      // 用户已上滚。根据估算 offsets 计算 start；低估只会稍早开始挂载。
+      // 再按累计的最佳已知高度而非估算 offsets 扩展 end。不变量为：
       //   topSpacer + sum(real_heights[start..end]) >= scrollTop + viewportH + overscan
-      // Since topSpacer = offsets[start] ≤ scrollTop - overscan, we need:
+      // 因为 topSpacer = offsets[start] ≤ scrollTop - overscan，所以需要：
       //   sum(real_heights) >= viewportH + 2*overscan
-      // For unmeasured items, assume PESSIMISTIC_HEIGHT=1 — the smallest a
-      // MessageRow can be. This over-mounts when items are large, but NEVER
-      // leaves the viewport showing empty spacer during fast scroll through
-      // unmeasured territory. Once heights are cached (next render),
-      // coverage is computed with real values and the range tightens.
-      // Advance start past item K only if K is safe to fold into topSpacer
-      // without a visible jump. Two cases are safe:
-      //   (a) K is NOT currently mounted (itemRefs has no entry). Its
-      //       contribution to offsets has ALWAYS been the estimate — the
-      //       spacer already matches what was there. No layout change.
-      //   (b) K is mounted AND its height is cached. offsets[start+1] uses
-      //       the real height, so topSpacer = offsets[start+1] exactly
-      //       equals the Yoga span K occupied. Seamless unmount.
-      // The unsafe case — K is mounted but uncached — is the one-render
-      // window between mount and useLayoutEffect measurement. Keeping K
-      // mounted that one extra render lets the measurement land.
-      // Mount range spans [committed, target] so every drain frame is
-      // covered. Clamp at 0: aggressive wheel-up can push pendingDelta
-      // far past zero (MX Master free-spin), but scrollTop never goes
-      // negative. Without the clamp, effLo drags start to 0 while effHi
-      // stays at the current (high) scrollTop — span exceeds what
-      // MAX_MOUNTED_ITEMS can cover and early drain frames see blank.
-      // listOrigin translates scrollTop (content-wrapper coords) into
-      // list-local coords before comparing against offsets[]. Without
-      // this, pre-list siblings (Logo+notices in Messages.tsx) inflate
-      // scrollTop by their height and start over-advances — eats overscan
-      // first, then visible rows once the inflation exceeds OVERSCAN_ROWS.
+      // 未测量 item 按最小可能值 PESSIMISTIC_HEIGHT=1 计算；item 较大时会多挂载，
+      // 但快速滚过未测区域时绝不会让 viewport 显示空 spacer。下一帧缓存真实高度后范围会收紧。
+      // 仅当 item K 未挂载，或已挂载且高度已缓存时，才可将其折入 topSpacer 并推进 start，
+      // 两种情况都不会改变现有布局。已挂载但未缓存的 item 需多保留一帧，让 effect 完成测量。
+      // 挂载范围覆盖 [committed, target]，确保每个 drain 帧都有内容。将目标下限钳为 0，
+      // 防止自由滚轮使 pendingDelta 远低于零并把范围拉宽到 MAX_MOUNTED_ITEMS 无法覆盖。
+      // 比较 offsets[] 前用 listOrigin 将 content-wrapper 坐标转为列表局部坐标，
+      // 避免列表前 sibling 的高度抬高 scrollTop，导致 start 过度前移并吃掉 overscan/可见行。
       const listOrigin = listOriginRef.current
-      // Cap the [committed..target] span. When input outpaces render,
-      // pendingDelta grows unbounded → effLo..effHi covers hundreds of
-      // unmounted rows → one commit mounts 194 fresh MessageRows → 3s+
-      // sync block → more input queues → bigger delta next time. Death
-      // spiral. Capping the span bounds fresh mounts per commit; the
-      // clamp (setClampBounds) shows edge-of-mounted during catch-up so
-      // there's no blank screen — scroll reaches target over a few
-      // frames instead of freezing once for seconds.
+      // 限制 [committed..target] 跨度，阻止输入快于渲染时 pendingDelta 无界增长、
+      // 单次挂载 194 个新 MessageRow 并同步阻塞数秒的恶性循环。
+      // setClampBounds 在追赶期间显示已挂载边缘，滚动会跨数帧到达目标而不留白。
       const MAX_SPAN_ROWS = viewportH * 3
       const rawLo = Math.min(scrollTop, scrollTop + pendingDelta)
       const rawHi = Math.max(scrollTop, scrollTop + pendingDelta)
@@ -407,9 +314,8 @@ export function useVirtualScroll(
       const effLo = Math.max(0, clampedLo - listOrigin)
       const effHi = clampedHi - listOrigin
       const lo = effLo - OVERSCAN_ROWS
-      // Binary search for start — offsets is monotone-increasing. The
-      // linear while(start++) scan iterated ~27k times per render for the
-      // 27k-msg session (scrolling from bottom, start≈27200). O(log n).
+      // offsets 单调递增，使用二分查找 start。27k 消息会话中线性扫描每帧约 27k 次，
+      // 此处降为 O(log n)。
       {
         let l = 0
         let r = n
@@ -423,11 +329,9 @@ export function useVirtualScroll(
         }
         start = l
       }
-      // Guard: don't advance past mounted-but-unmeasured items. During the
-      // one-render window between mount and useLayoutEffect measurement,
-      // unmounting such items would use DEFAULT_ESTIMATE in topSpacer,
-      // which doesn't match their (unknown) real span → flicker. Mounted
-      // items are in [prevStart, prevEnd); scan that, not all n.
+      // 不越过已挂载但未测量的 item。挂载到 useLayoutEffect 测量之间有一帧窗口；
+      // 此时卸载会让 topSpacer 使用与真实跨度不符的 DEFAULT_ESTIMATE，造成闪烁。
+      // 只扫描已挂载范围 [prevStart, prevEnd)，而非全部 n 个 item。
       {
         const p = prevRangeRef.current
         if (p && p[0] < start) {
@@ -453,8 +357,7 @@ export function useVirtualScroll(
         end++
       }
     }
-    // Same coverage guarantee for the atBottom path (it walked start back
-    // by estimated offsets, which can undershoot if items are small).
+    // atBottom 路径也保证同样覆盖；它按估算 offsets 回退 start，item 较小时可能低估。
     const needed = viewportH + 2 * OVERSCAN_ROWS
     const minStart = Math.max(0, end - MAX_MOUNTED_ITEMS)
     let coverage = 0
@@ -465,15 +368,10 @@ export function useVirtualScroll(
       start--
       coverage += heightCache.current.get(itemKeys[start]!) ?? PESSIMISTIC_HEIGHT
     }
-    // Slide cap: limit how many NEW items mount this commit. Scrolling into
-    // a fresh range would otherwise mount 194 items at PESSIMISTIC_HEIGHT=1
-    // coverage — ~290ms React render block. Gates on scroll VELOCITY
-    // (|scrollTop delta since last commit| > 2×viewportH — key-repeat PageUp
-    // moves ~viewportH/2 per press, 3+ presses batched = fast mode). Covers
-    // both scrollBy (pendingDelta) and scrollTo (direct write). Normal
-    // single-PageUp or sticky-break jumps skip this. The clamp
-    // (setClampBounds) holds the viewport at the mounted edge during
-    // catch-up. Only caps range GROWTH; shrinking is unbounded.
+    // slide cap 限制本次 commit 新挂载的 item 数，否则新范围在 PESSIMISTIC_HEIGHT=1
+    // 下会挂载 194 个 item，阻塞 React 约 290ms。仅在滚动速度超过 2×viewportH 时启用，
+    // 同时覆盖 scrollBy 和 scrollTo；普通单次 PageUp 或 sticky-break 跳转不启用。
+    // 追赶期间 setClampBounds 将 viewport 固定在已挂载边缘；只限制范围增长，不限制收缩。
     const prev = prevRangeRef.current
     const scrollVelocity = Math.abs(scrollTop - lastScrollTopRef.current) + Math.abs(pendingDelta)
     if (prev && scrollVelocity > viewportH * 2) {
@@ -484,10 +382,8 @@ export function useVirtualScroll(
       if (end > pE + SLIDE_STEP) {
         end = pE + SLIDE_STEP
       }
-      // A large forward jump can push start past the capped end (start
-      // advances via binary search while end is capped at pE + SLIDE_STEP).
-      // Mount SLIDE_STEP items from the new start so the viewport isn't
-      // blank during catch-up.
+      // 大幅前跳可能使 start 越过受限 end；从新 start 挂载 SLIDE_STEP 个 item，
+      // 避免追赶期间 viewport 留白。
       if (start > end) {
         end = Math.min(start + SLIDE_STEP, n)
       }
@@ -495,71 +391,42 @@ export function useVirtualScroll(
     lastScrollTopRef.current = scrollTop
   }
 
-  // Decrement freeze AFTER range is computed. Don't update prevRangeRef
-  // during freeze so both frozen renders reuse the ORIGINAL pre-resize
-  // range (not the clamped-to-n version if messages changed mid-freeze).
+  // 计算范围后再递减 freeze。冻结期间不更新 prevRangeRef，使两次冻结渲染都复用
+  // resize 前的原始范围，而非消息变化时钳制到 n 的版本。
   if (freezeRendersRef.current > 0) {
     freezeRendersRef.current--
   } else {
     prevRangeRef.current = [start, end]
   }
-  // useDeferredValue lets React render with the OLD range first (cheap —
-  // all memo hits) then transition to the NEW range (expensive — fresh
-  // mounts with marked.lexer + formatToken). The urgent render keeps Ink
-  // painting at input rate; fresh mounts happen in a non-blocking
-  // background render. This is React's native time-slicing: the 62ms
-  // fresh-mount block becomes interruptible. The clamp (setClampBounds)
-  // already handles viewport pinning so there's no visual artifact from
-  // the deferred range lagging briefly behind scrollTop.
+  // useDeferredValue 让 React 先用旧范围低成本渲染，再过渡到包含新挂载的高成本新范围。
+  // 紧急渲染维持 Ink 输入帧率，新挂载在可中断的后台渲染中完成；setClampBounds
+  // 已负责固定 viewport，因此 deferred 范围短暂落后于 scrollTop 不会产生视觉伪影。
   //
-  // Only defer range GROWTH (start moving earlier / end moving later adds
-  // fresh mounts). Shrinking is cheap (unmount = remove fiber, no parse)
-  // and the deferred value lagging shrink causes stale overscan to stay
-  // mounted one extra tick — harmless but fails tests checking exact
-  // range after measurement-driven tightening.
+  // 只延迟范围增长，因为增长会新增挂载；收缩只移除 fiber、无需解析，成本较低。
+  // 延迟收缩会让旧 overscan 多挂载一个 tick，虽无害但会破坏测量收紧后检查精确范围的测试。
   const dStart = useDeferredValue(start)
   const dEnd = useDeferredValue(end)
   let effStart = start < dStart ? dStart : start
   let effEnd = end > dEnd ? dEnd : end
-  // A large jump can make effStart > effEnd (start jumps forward while dEnd
-  // still holds the old range's end). Skip deferral to avoid an inverted
-  // range. Also skip when sticky — scrollToBottom needs the tail mounted
-  // NOW so scrollTop=maxScroll lands on content, not bottomSpacer. The
-  // deferred dEnd (still at old range) would render an incomplete tail,
-  // maxScroll stays at the old content height, and "jump to bottom" stops
-  // short. Sticky snap is a single frame, not continuous scroll — the
-  // time-slicing benefit doesn't apply.
+  // 大幅跳转可能使 effStart > effEnd，此时跳过延迟以避免反向范围。sticky 时也跳过，
+  // 因为 scrollToBottom 必须立即挂载尾部，使 scrollTop=maxScroll 落在内容而非 bottomSpacer。
+  // sticky snap 只有一帧，不会受益于 time-slicing。
   if (effStart > effEnd || isSticky) {
     effStart = start
     effEnd = end
   }
-  // Scrolling DOWN (pendingDelta > 0): bypass effEnd deferral so the tail
-  // mounts immediately. Without this, the clamp (based on effEnd) holds
-  // scrollTop short of the real bottom — user scrolls down, hits clampMax,
-  // stops, React catches up effEnd, clampMax widens, but the user already
-  // released. Feels stuck-before-bottom. effStart stays deferred so
-  // scroll-UP keeps time-slicing (older messages parse on mount — the
-  // expensive direction).
+  // 向下滚动时绕过 effEnd 延迟并立即挂载尾部，否则基于 effEnd 的 clamp 会让 scrollTop
+  // 停在真实底部之前，表现为卡住。effStart 仍保持延迟，使高成本的向上滚动继续 time-slicing。
   if (pendingDelta > 0) {
     effEnd = end
   }
-  // Final O(viewport) enforcement. The intermediate caps (maxEnd=start+
-  // MAX_MOUNTED_ITEMS, slide cap, deferred-intersection) bound [start,end]
-  // but the deferred+bypass combinations above can let [effStart,effEnd]
-  // slip: e.g. during sustained PageUp when concurrent mode interleaves
-  // dStart updates with effEnd=end bypasses across commits, the effective
-  // window can drift wider than either immediate or deferred alone. On a
-  // 10K-line resumed session this showed as +270MB RSS during PageUp spam
-  // (yoga Node constructor + createWorkInProgress fiber alloc proportional
-  // to scroll distance). Trim the far edge — by viewport position — to keep
-  // fiber count O(viewport) regardless of deferred-value scheduling.
+  // 最终强制 O(viewport)。中间上限虽约束 [start,end]，deferred 与 bypass 组合仍可能
+  // 让 [effStart,effEnd] 漂宽；10K 行恢复会话连续 PageUp 时曾额外占用 270MB RSS。
+  // 按 viewport 位置裁剪远端，使 fiber 数量不受 deferred 调度影响，始终为 O(viewport)。
   if (effEnd - effStart > MAX_MOUNTED_ITEMS) {
-    // Trim side is decided by viewport POSITION, not pendingDelta direction.
-    // pendingDelta drains to 0 between frames while dStart/dEnd lag under
-    // concurrent scheduling; a direction-based trim then flips from "trim
-    // tail" to "trim head" mid-settle, bumping effStart → effTopSpacer →
-    // clampMin → setClampBounds yanks scrollTop down → scrollback vanishes.
-    // Position-based: keep whichever end the viewport is closer to.
+    // 根据 viewport 位置而非 pendingDelta 方向决定裁剪侧。pendingDelta 会在帧间归零，
+    // 而 dStart/dEnd 在 concurrent 调度下滞后；按方向裁剪会在稳定途中翻转，拉动 scrollTop
+    // 并使 scrollback 消失。按位置则保留 viewport 更接近的一端。
     const mid = (offsets[effStart]! + offsets[effEnd]!) / 2
     if (scrollTop - listOriginRef.current < mid) {
       effEnd = effStart + MAX_MOUNTED_ITEMS
@@ -568,39 +435,24 @@ export function useVirtualScroll(
     }
   }
 
-  // Write render-time clamp bounds in a layout effect (not during render —
-  // mutating DOM during React render violates purity). render-node-to-output
-  // clamps scrollTop to this span so burst scrollTo calls that race past
-  // React's async re-render show the EDGE of mounted content (the last/first
-  // visible message) instead of blank spacer.
+  // 在 layout effect 中写入 render 阶段 clamp 边界；不能在 render 中修改 DOM。
+  // render-node-to-output 将 scrollTop 钳在该范围，使快于 React 异步重渲染的连续
+  // scrollTo 调用显示已挂载内容边缘，而不是空 spacer。
   //
-  // Clamp MUST use the EFFECTIVE (deferred) range, not the immediate one.
-  // During fast scroll, immediate [start,end] may already cover the new
-  // scrollTop position, but the children still render at the deferred
-  // (older) range. If clamp uses immediate bounds, the drain-gate in
-  // render-node-to-output sees scrollTop within clamp → drains past the
-  // deferred children's span → viewport lands in spacer → white flash.
-  // Using effStart/effEnd keeps clamp synced with what's actually mounted.
+  // clamp 必须使用实际的 deferred 范围，而非即时范围。快速滚动时即时范围可能已覆盖
+  // 新 scrollTop，但 child 仍按旧 deferred 范围渲染；若使用即时边界，drain 会越过
+  // 已渲染 child 落入 spacer，造成白闪。effStart/effEnd 与实际挂载内容保持同步。
   //
-  // Skip clamp when sticky — render-node-to-output pins scrollTop=maxScroll
-  // authoritatively. Clamping during cold-start/load causes flicker: first
-  // render uses estimate-based offsets, clamp set, sticky-follow moves
-  // scrollTop, measurement fires, offsets rebuild with real heights, second
-  // render's clamp differs → scrollTop clamp-adjusts → content shifts.
+  // sticky 时跳过 clamp，由 render-node-to-output 权威设置 scrollTop=maxScroll。
+  // 冷启动/加载期间 clamp 会因估算 offsets 与下一帧真实高度不一致而调整 scrollTop，造成闪烁。
   const listOrigin = listOriginRef.current
   const effTopSpacer = offsets[effStart]!
-  // At effStart=0 there's no unmounted content above — the clamp must allow
-  // scrolling past listOrigin to see pre-list content (logo, header) that
-  // sits in the ScrollBox but outside VirtualMessageList. Only clamp when
-  // the topSpacer is nonzero (there ARE unmounted items above).
+  // effStart=0 时上方没有未挂载内容，必须允许越过 listOrigin 查看 ScrollBox 中列表外的
+  // logo/header；只有 topSpacer 非零、确有未挂载 item 时才钳制。
   const clampMin = effStart === 0 ? 0 : effTopSpacer + listOrigin
-  // At effEnd=n there's no bottomSpacer — nothing to avoid racing past. Using
-  // offsets[n] here would bake in heightCache (one render behind Yoga), and
-  // when the tail item is STREAMING its cached height lags its real height by
-  // however much arrived since last measure. Sticky-break then clamps
-  // scrollTop below the real max, pushing the streaming text off-viewport
-  // (the "scrolled up, response disappeared" bug). Infinity = unbounded:
-  // render-node-to-output's own Math.min(cur, maxScroll) governs instead.
+  // effEnd=n 时没有 bottomSpacer，无需防止越界。不能使用滞后 Yoga 一帧的 offsets[n]：
+  // 尾部 item 流式增长时缓存高度落后，会在 sticky-break 后把 scrollTop 钳在真实最大值下方，
+  // 使流式文本移出 viewport。用 Infinity 表示不设上限，交给 render-node-to-output 自行约束。
   const clampMax =
     effEnd === n ? Infinity : Math.max(effTopSpacer, offsets[effEnd]! - viewportH) + listOrigin
   useLayoutEffect(() => {
@@ -611,26 +463,17 @@ export function useVirtualScroll(
     }
   })
 
-  // Measure heights from the PREVIOUS Ink render. Runs every commit (no
-  // deps) because Yoga recomputes layout without React knowing. yogaNode
-  // heights for items mounted ≥1 frame ago are valid; brand-new items
-  // haven't been laid out yet (that happens in resetAfterCommit → onRender,
-  // after this effect).
+  // 从前一次 Ink render 测量高度。每次 commit 都运行，因为 Yoga 会在 React 不知情时重算布局。
+  // 已挂载至少一帧的 yogaNode 高度有效；全新 item 要到此 effect 之后的
+  // resetAfterCommit → onRender 才会布局。
   //
-  // Distinguishing "h=0: Yoga hasn't run" (transient, skip) from "h=0:
-  // MessageRow rendered null" (permanent, cache it): getComputedWidth() > 0
-  // proves Yoga HAS laid out this node (width comes from the container,
-  // always non-zero for a Box in a column). If width is set and height is
-  // 0, the item is genuinely empty — cache 0 so the start-advance gate
-  // doesn't block on it forever. Without this, a null-rendering message
-  // at the start boundary freezes the range (seen as blank viewport when
-  // scrolling down after scrolling up).
+  // 用 getComputedWidth() > 0 区分“Yoga 尚未运行导致 h=0”和“MessageRow 渲染 null 导致 h=0”。
+  // column 中 Box 的容器宽度始终非零，因此宽度已设置就证明布局完成；此时高度为 0
+  // 表示 item 确实为空，应缓存 0，避免 start 推进门控永久阻塞并冻结范围。
   //
-  // NO setState. A setState here would schedule a second commit with
-  // shifted offsets, and since Ink writes stdout on every commit
-  // (reconciler.resetAfterCommit → onRender), that's two writes with
-  // different spacer heights → visible flicker. Heights propagate to
-  // offsets on the next natural render. One-frame lag, absorbed by overscan.
+  // 此处不调用 setState，否则会按变化后的 offsets 调度第二次 commit；Ink 每次 commit
+  // 都写 stdout，两次不同 spacer 高度的写入会造成可见闪烁。高度在下一次自然渲染时
+  // 传播到 offsets，一帧延迟由 overscan 吸收。
   useLayoutEffect(() => {
     const spacerYoga = spacerRef.current?.yogaNode
     if (spacerYoga && spacerYoga.getComputedWidth() > 0) {
@@ -663,12 +506,9 @@ export function useVirtualScroll(
     }
   })
 
-  // Stable per-key callback refs. React's ref-swap dance (old(null) then
-  // new(el)) is a no-op when the callback is identity-stable, avoiding
-  // itemRefs churn on every render. GC'd alongside heightCache above.
-  // The ref(null) path also captures height at unmount — the yogaNode is
-  // still valid then (reconciler calls ref(null) before removeChild →
-  // freeRecursive), so we get the final measurement before WASM release.
+  // 每个 key 使用 identity 稳定的 callback ref，使 React 的 ref 交换不会造成 itemRefs
+  // 每帧抖动，并与 heightCache 一起 GC。ref(null) 路径还会在卸载时捕获最终高度；
+  // reconciler 会先调用 ref(null)，再 removeChild → freeRecursive，此时 yogaNode 仍有效。
   const measureRef = useCallback((key: string) => {
     let fn = refCache.current.get(key)
     if (!fn) {
@@ -713,8 +553,8 @@ export function useVirtualScroll(
   )
   const scrollToIndex = useCallback(
     (i: number) => {
-      // offsetsRef.current holds latest cached offsets (event handlers run
-      // between renders; a render-time closure would be stale).
+      // offsetsRef.current 保存最新缓存 offsets；event handler 在渲染之间运行，
+      // render 阶段 closure 会过期。
       const o = offsetsRef.current
       if (i < 0 || i >= o.n) {
         return

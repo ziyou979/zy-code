@@ -7,8 +7,7 @@ import { logForDebugging } from '../../services/infra/debug.js'
 import { onPluginsAutoUpdated } from '../../services/plugins/pluginAutoupdate.js'
 
 /**
- * Hook that displays a notification when plugins have been auto-updated.
- * The notification tells the user to run /reload-plugins to apply the updates.
+ * 插件自动更新后显示通知，并提示用户运行 /reload-plugins 应用更新。
  */
 export function usePluginAutoupdateNotification() {
   const { addNotification } = useNotifications()

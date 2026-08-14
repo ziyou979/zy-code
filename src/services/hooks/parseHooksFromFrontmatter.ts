@@ -2,8 +2,8 @@ import { logForDebugging } from '../infra/debug.js'
 import { HooksSchema, type HooksSettings } from '../settings/types.js'
 
 /**
- * Parse hooks from frontmatter using the HooksSchema.
- * Shared between skills and agent loaders.
+ * 使用 HooksSchema 解析 frontmatter 中的 hook。
+ * 由 skill 和 agent 加载器共享。
  */
 export function parseHooksFromFrontmatter(
   frontmatter: Record<string, unknown>,

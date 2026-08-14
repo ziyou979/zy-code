@@ -1,14 +1,13 @@
 import { setMaxListeners } from 'node:events'
 
 /**
- * Default max listeners for standard operations
+ * 常规操作的默认最大监听器数量。
  */
 const DEFAULT_MAX_LISTENERS = 50
 
 /**
- * Creates an AbortController with proper event listener limits set.
- * This prevents MaxListenersExceededWarning when multiple listeners
- * are attached to the abort signal.
+ * 创建设置了合理事件监听器上限的 AbortController。
+ * 避免 abort signal 挂载多个监听器时出现 MaxListenersExceededWarning。
  *
  * @param maxListeners - Maximum number of listeners (default: 50)
  * @returns AbortController with configured listener limit
@@ -22,10 +21,9 @@ export function createAbortController(
 }
 
 /**
- * Propagates abort from a parent to a weakly-referenced child controller.
- * Both parent and child are weakly held — neither direction creates a
- * strong reference that could prevent GC.
- * Module-scope function avoids per-call closure allocation.
+ * 将父 signal 的 abort 传播给弱引用的子 controller。
+ * 父子双方均通过弱引用持有，两个方向都不会形成阻止 GC 的强引用。
+ * 使用模块级函数，避免每次调用都分配闭包。
  */
 function propagateAbort(this: WeakRef<AbortController>, weakChild: WeakRef<AbortController>): void {
   const parent = this.deref()
@@ -33,10 +31,9 @@ function propagateAbort(this: WeakRef<AbortController>, weakChild: WeakRef<Abort
 }
 
 /**
- * Removes an abort handler from a weakly-referenced parent signal.
- * Both parent and handler are weakly held — if either has been GC'd
- * or the parent already aborted ({once: true}), this is a no-op.
- * Module-scope function avoids per-call closure allocation.
+ * 从弱引用的父 signal 中移除 abort handler。
+ * 父 signal 和 handler 均为弱引用；任一对象已被 GC，或父 signal 已 abort
+ *（{once: true}）时，此操作不产生效果。使用模块级函数避免每次调用分配闭包。
  */
 function removeAbortHandler(
   this: WeakRef<AbortController>,
@@ -50,13 +47,10 @@ function removeAbortHandler(
 }
 
 /**
- * Creates a child AbortController that aborts when its parent aborts.
- * Aborting the child does NOT affect the parent.
+ * 创建随父级 abort 的子 AbortController；子级 abort 不会影响父级。
  *
- * Memory-safe: Uses WeakRef so the parent doesn't retain abandoned children.
- * If the child is dropped without being aborted, it can still be GC'd.
- * When the child IS aborted, the parent listener is removed to prevent
- * accumulation of dead handlers.
+ * 内存安全：使用 WeakRef，避免父级保留已弃用的子级。子级即使未 abort 就被丢弃，
+ * 仍可被 GC；子级确实 abort 时会移除父级监听器，防止无效 handler 累积。
  *
  * @param parent - The parent AbortController
  * @param maxListeners - Maximum number of listeners (default: 50)
@@ -68,24 +62,22 @@ export function createChildAbortController(
 ): AbortController {
   const child = createAbortController(maxListeners)
 
-  // Fast path: parent already aborted, no listener setup needed
+  // 快速路径：父级已 abort，无需设置监听器
   if (parent.signal.aborted) {
     child.abort(parent.signal.reason)
     return child
   }
 
-  // WeakRef prevents the parent from keeping an abandoned child alive.
-  // If all strong references to child are dropped without aborting it,
-  // the child can still be GC'd — the parent only holds a dead WeakRef.
+  // WeakRef 防止父级维持已弃用子级的存活。即使子级未 abort 就失去全部强引用，
+  // 仍可被 GC；父级最终只会持有失效的 WeakRef。
   const weakChild = new WeakRef(child)
   const weakParent = new WeakRef(parent)
   const handler = propagateAbort.bind(weakParent, weakChild)
 
   parent.signal.addEventListener('abort', handler, { once: true })
 
-  // Auto-cleanup: remove parent listener when child is aborted (from any source).
-  // Both parent and handler are weakly held — if either has been GC'd or the
-  // parent already aborted ({once: true}), the cleanup is a harmless no-op.
+  // 自动清理：子级因任意来源 abort 时移除父级监听器。父级和 handler 均为弱引用；
+  // 任一对象已被 GC，或父级已 abort（{once: true}）时，清理不产生效果且没有风险。
   child.signal.addEventListener(
     'abort',
     removeAbortHandler.bind(weakParent, new WeakRef(handler)),
@@ -96,16 +88,13 @@ export function createChildAbortController(
 }
 
 /**
- * Creates a combined AbortSignal that aborts when the input signal aborts,
- * an optional second signal aborts, or an optional timeout elapses.
- * Returns both the signal and a cleanup function that removes event listeners
- * and clears the internal timeout timer.
+ * 创建组合 AbortSignal：输入 signal、可选的第二个 signal abort，或可选超时到期时，
+ * 组合 signal 随之 abort。返回 signal 以及用于移除事件监听器和内部定时器的清理函数。
  *
- * Use `timeoutMs` instead of passing `AbortSignal.timeout(ms)` as a signal —
- * under Bun, `AbortSignal.timeout` timers are finalized lazily and accumulate
- * in native memory until they fire (measured ~2.4KB/call held for the full
- * timeout duration). This implementation uses `setTimeout` + `clearTimeout`
- * so the timer is freed immediately on cleanup.
+ * 应使用 `timeoutMs`，不要把 `AbortSignal.timeout(ms)` 作为 signal 传入。
+ * Bun 会延迟终结 `AbortSignal.timeout` 定时器，使其在触发前持续占用 native 内存
+ *（实测每次调用约 2.4KB，并在整个超时期间保留）。此实现采用 `setTimeout` 与
+ * `clearTimeout`，清理时可立即释放定时器。
  */
 export function createCombinedAbortSignal(
   signal: AbortSignal | undefined,

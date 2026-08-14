@@ -47,7 +47,7 @@ function parseKey(keypress: ParsedKey): [Key, string] {
     // `parseKeypress` 将 \u001B\u001B[A（meta + 上箭头）解析为 meta = false
     // 但 option = true，因此这里需要特别处理
     // 以避免在 Ink 中引入破坏性变更。
-    // TODO(vadimdemedes): consider removing this in the next major version.
+    // TODO(vadimdemedes)：考虑在下一个 major 版本中移除。
     meta: keypress.meta || keypress.name === 'escape' || keypress.option,
     // Super（macOS 上的 Cmd / Windows 键）—— 仅通过 kitty keyboard
     // 协议的 CSI u 序列传入。与 meta（Alt/Option）不同，
@@ -93,7 +93,7 @@ function parseKey(keypress: ParsedKey): [Key, string] {
   }
 
   // 如果 `parseKeypress` 之后 meta 仍然存在，则将其剥离
-  // TODO(vadimdemedes): remove this in the next major version.
+  // TODO(vadimdemedes)：在下一个 major 版本中移除。
   if (input.startsWith('\u001B')) {
     input = input.slice(1)
   }

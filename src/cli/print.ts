@@ -211,7 +211,7 @@ import { createMcpRuntime, type DynamicMcpState } from './headless/mcpRuntime.js
 import { runTurnLoop, type TurnLoopDeps, type LoopState } from './headless/turnLoop.js'
 import { runControlLoop } from './headless/controlLoop.js'
 
-// Dead code elimination: conditional imports
+// 死代码消除：条件 import
 /* eslint-disable @typescript-eslint/no-require-imports */
 const coordinatorModeModule = feature('COORDINATOR_MODE')
   ? (require('../coordinator/coordinatorMode.js') as typeof import('../coordinator/coordinatorMode.js'))
@@ -248,7 +248,7 @@ The user cannot receive your response until the team is completely shut down.
 
 Shut down your team and prepare your final response for the user.`
 
-// Track message UUIDs received during the current session runtime
+// 跟踪当前会话运行期间收到的消息 UUID
 const MAX_RECEIVED_UUIDS = 10_000
 export const receivedMessageUuids = new Set<UUID>()
 const receivedMessageUuidsOrder: UUID[] = []
@@ -259,7 +259,7 @@ export function trackReceivedMessageUuid(uuid: UUID): boolean {
   }
   receivedMessageUuids.add(uuid)
   receivedMessageUuidsOrder.push(uuid)
-  // Evict oldest entries when at capacity
+    // 达到容量时淘汰最早项
   if (receivedMessageUuidsOrder.length > MAX_RECEIVED_UUIDS) {
     const toEvict = receivedMessageUuidsOrder.splice(
       0,
@@ -279,9 +279,8 @@ function toBlocks(v: PromptValue): UserContentBlock[] {
 }
 
 /**
- * Join prompt values from multiple queued commands into one. Strings are
- * newline-joined; if any value is a block array, all values are normalized
- * to blocks and concatenated.
+ * 将多个排队 command 的 prompt 值合并为一个。字符串以换行连接；若任一值为 block 数组，
+ * 则将所有值规范为 block 后连接。
  */
 export function joinPromptValues(values: PromptValue[]): PromptValue {
   if (values.length === 1) {
@@ -294,11 +293,9 @@ export function joinPromptValues(values: PromptValue[]): PromptValue {
 }
 
 /**
- * Whether `next` can be batched into the same ask() call as `head`. Only
- * prompt-mode commands batch, and only when the workload tag matches (so the
- * combined turn is attributed correctly) and the isMeta flag matches (so a
- * proactive tick can't merge into a user prompt and lose its hidden-in-
- * transcript marking when the head is spread over the merged command).
+ * `next` 能否与 `head` 批量合并到同一次 ask()。只有 prompt 模式 command 才能批处理，并且要求
+ * workload tag 相同，以正确归因合并后的 turn；isMeta flag 也必须相同，避免 proactive tick
+ * 合并进用户 prompt 后，在 head 展开到合并 command 时丢失 transcript 隐藏标记。
  */
 export function canBatchWith(head: QueuedCommand, next: QueuedCommand | undefined): boolean {
   return (
@@ -354,11 +351,9 @@ export async function runHeadless(
     process.exit(0)
   }
 
-  // Fire user settings download now so it overlaps with the MCP/tool setup
-  // below. Managed settings already started in main.tsx preAction; this gives
-  // user settings a similar head start. The cached promise is joined in
-  // installPluginsAndApplyMcpInBackground before plugin install reads
-  // enabledPlugins.
+  // 立即启动用户 settings 下载，使其与下方 MCP/tool 设置重叠。managed settings 已在 main.tsx
+  // preAction 中启动；此处给用户 settings 类似的提前量。plugin 安装读取 enabledPlugins 前，
+  // installPluginsAndApplyMcpInBackground 会等待缓存的 promise。
   if (
     feature('DOWNLOAD_USER_SETTINGS') &&
     (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode())
@@ -366,17 +361,15 @@ export async function runHeadless(
     void downloadUserSettings()
   }
 
-  // In headless mode there is no React tree, so the useSettingsChange hook
-  // never runs. Subscribe directly so that settings changes (including
-  // managed-settings / policy updates) are fully applied.
+  // headless 模式没有 React 树，因此 useSettingsChange hook 不会运行。直接订阅，使 settings
+  // 变化（包括 managed settings 与策略更新）得到完整应用。
   settingsChangeDetector.subscribe((source) => {
     applySettingsChange(source, setAppState)
   })
 
-  // Proactive activation is now handled in main.tsx before getTools() so
-  // SleepTool passes isEnabled() filtering. This fallback covers the case
-  // where ZY_CODE_PROACTIVE is set but main.tsx's check didn't fire
-  // (e.g. env was injected by the SDK transport after argv parsing).
+  // proactive 激活现由 main.tsx 在 getTools() 前处理，使 SleepTool 能通过 isEnabled() 过滤。
+  // 此回退覆盖已设置 ZY_CODE_PROACTIVE 但 main.tsx 检查未触发的情况，例如 SDK transport 在
+  // argv 解析后才注入环境变量。
   if (
     (feature('PROACTIVE') || feature('KAIROS')) &&
     proactiveModule &&
@@ -386,12 +379,12 @@ export async function runHeadless(
     proactiveModule.activateProactive('command')
   }
 
-  // Start headless profiler for first turn
+  // 为首个 turn 启动 headless profiler
   headlessProfilerStartTurn()
   headlessProfilerCheckpoint('runHeadless_entry')
 
-  // Initialize GrowthBook so feature flags take effect in headless mode.
-  // Without this, the disk cache is empty and all flags fall back to defaults.
+  // 初始化 GrowthBook，使功能开关在 headless 模式生效。否则磁盘缓存为空，所有开关都会回退到
+  // 默认值。
   void initializeGrowthBook()
 
   if (options.resumeSessionAt && !options.resume) {
@@ -416,18 +409,15 @@ export async function runHeadless(
 
   const structuredIO = getStructuredIO(inputPrompt, options)
 
-  // When emitting NDJSON for SDK clients, any stray write to stdout (debug
-  // prints, dependency console.log, library banners) breaks the client's
-  // line-by-line JSON parser. Install a guard that diverts non-JSON lines to
-  // stderr so the stream stays clean. Must run before the first
-  // structuredIO.write below.
+  // 为 SDK client 输出 NDJSON 时，任何意外写入 stdout 的内容（debug 输出、依赖 console.log、
+  // 库 banner）都会破坏 client 的逐行 JSON parser。安装防护，将非 JSON 行转到 stderr，保持流
+  // 干净。必须在下方首次 structuredIO.write 前运行。
   if (options.outputFormat === 'stream-json') {
     installStreamJsonStdoutGuard()
   }
 
-  // #34044: if user explicitly set sandbox.enabled=true but deps are missing,
-  // isSandboxingEnabled() returns false silently. Surface the reason so users
-  // know their security config isn't being enforced.
+  // #34044：用户显式设置 sandbox.enabled=true 但缺少依赖时，isSandboxingEnabled() 会静默返回
+  // false。展示原因，使用户知道安全配置并未生效。
   const sandboxUnavailableReason = SandboxManager.getSandboxUnavailableReason()
   if (sandboxUnavailableReason) {
     if (SandboxManager.isSandboxRequired()) {
@@ -443,9 +433,8 @@ export async function runHeadless(
         `  Commands will run WITHOUT sandboxing. Network and filesystem restrictions will NOT be enforced.\n\n`,
     )
   } else if (SandboxManager.isSandboxingEnabled()) {
-    // Initialize sandbox with a callback that forwards network permission
-    // requests to the SDK host via the can_use_tool control_request protocol.
-    // This must happen after structuredIO is created so we can send requests.
+  // 初始化 sandbox，并提供 callback，通过 can_use_tool control_request 协议将网络权限请求转发到
+  // SDK host。必须在 structuredIO 创建后执行，才能发送请求。
     try {
       await SandboxManager.initialize(structuredIO.createSandboxAskCallback())
     } catch (err) {
@@ -524,18 +513,16 @@ export async function runHeadless(
     restoredWorkerState: structuredIO.restoredWorkerState,
   })
 
-  // SessionStart hooks can emit initialUserMessage — the first user turn for
-  // headless orchestrator sessions where stdin is empty and additionalContext
-  // alone (an attachment, not a turn) would leave the REPL with nothing to
-  // respond to. The hook promise is awaited inside loadInitialMessages, so the
-  // module-level pending value is set by the time we get here.
+  // SessionStart hook 可发送 initialUserMessage，作为 headless orchestrator 会话的首个用户 turn。
+  // 此类会话 stdin 为空，只有 additionalContext（attachment 而非 turn）会使 REPL 无内容可响应。
+  // hook promise 已在 loadInitialMessages 内等待，因此执行到此处时模块级 pending 值已设置。
   const hookInitialUserMessage = takeInitialUserMessage()
   if (hookInitialUserMessage) {
     structuredIO.prependUserMessage(hookInitialUserMessage)
   }
 
-  // Restore agent setting from the resumed session (if not overridden by current --agent flag
-  // or settings-based agent, which would already have set mainThreadAgentType in main.tsx)
+    // 从恢复的会话还原 agent 设置；若当前 --agent 参数或 settings agent 已覆盖，则 main.tsx
+    // 已设置 mainThreadAgentType。
   if (!options.agent && !getMainThreadAgentType() && resumedAgentSetting) {
     const { agentDefinition: restoredAgent } = restoreAgentFromSession(
       resumedAgentSetting,
@@ -544,29 +531,27 @@ export async function runHeadless(
     )
     if (restoredAgent) {
       setAppState((prev) => ({ ...prev, agent: restoredAgent.agentType }))
-      // Apply the agent's system prompt for non-built-in agents (mirrors main.tsx initial --agent path)
+      // 为非内置 agent 应用其 system prompt，与 main.tsx 初始 --agent 路径一致
       if (!options.systemPrompt && !isBuiltInAgent(restoredAgent)) {
         const agentSystemPrompt = restoredAgent.getSystemPrompt()
         if (agentSystemPrompt) {
           options.systemPrompt = agentSystemPrompt
         }
       }
-      // Re-persist agent setting so future resumes maintain the agent
+      // 再次持久化 agent 设置，使以后恢复时保持该 agent
       saveAgentSetting(restoredAgent.agentType)
     }
   }
 
-  // gracefulShutdownSync schedules an async shutdown and sets process.exitCode.
-  // If a loadInitialMessages error path triggered it, bail early to avoid
-  // unnecessary work while the process winds down.
+  // gracefulShutdownSync 会安排异步关停并设置 process.exitCode。若由 loadInitialMessages 错误
+  // 路径触发，则提前返回，避免进程退出期间继续执行无用工作。
   if (initialMessages.length === 0 && process.exitCode !== undefined) {
     return
   }
 
-  // Handle --rewind-files: restore filesystem and exit immediately
+  // 处理 --rewind-files：还原文件系统并立即退出
   if (options.rewindFiles) {
-    // File history snapshots are only created for user messages,
-    // so we require the target to be a user message
+    // 文件历史快照只为用户消息创建，因此目标必须是用户消息
     const targetMessage = initialMessages.find((m) => m.uuid === options.rewindFiles)
 
     if (!targetMessage || targetMessage.type !== 'user') {
@@ -590,13 +575,13 @@ export async function runHeadless(
       return
     }
 
-    // Rewind complete - exit successfully
+    // rewind 完成，成功退出
     process.stdout.write(`Files rewound to state at message ${options.rewindFiles}\n`)
     gracefulShutdownSync(0)
     return
   }
 
-  // Check if we need input prompt - skip if we're resuming with a valid session ID/JSONL file or using SDK URL
+  // 检查是否需要输入 prompt；使用有效 session ID/JSONL 文件恢复或使用 SDK URL 时跳过
   const hasValidResumeSessionId =
     typeof options.resume === 'string' &&
     (Boolean(validateUuid(options.resume)) || options.resume.endsWith('.jsonl'))
@@ -618,16 +603,16 @@ export async function runHeadless(
     return
   }
 
-  // Filter out MCP tools that are in the deny list
+  // 过滤 deny list 中的 MCP tool
   const allowedMcpTools = filterToolsByDenyRules(appState.mcp.tools, appState.toolPermissionContext)
   let filteredTools = [...tools, ...allowedMcpTools]
 
-  // When using SDK URL, always use stdio permission prompting to delegate to the SDK
+  // 使用 SDK URL 时始终通过 stdio 权限 prompt 委托给 SDK
   const effectivePermissionPromptToolName = options.sdkUrl
     ? 'stdio'
     : options.permissionPromptToolName
 
-  // Callback for when a permission prompt is shown
+  // 权限 prompt 显示时的 callback
   const onPermissionPrompt = (details: RequiresActionDetails) => {
     if (feature('COMMIT_ATTRIBUTION')) {
       setAppState((prev) => ({
@@ -648,34 +633,32 @@ export async function runHeadless(
     onPermissionPrompt,
   )
   if (options.permissionPromptToolName) {
-    // Remove the permission prompt tool from the list of available tools.
+  // 从可用 tool 列表中移除权限 prompt tool。
     filteredTools = filteredTools.filter(
       (tool) => !toolMatchesName(tool, options.permissionPromptToolName!),
     )
   }
 
-  // Install errors handlers to gracefully handle broken pipes (e.g., when parent process dies)
+  // 安装错误 handler，平稳处理 broken pipe，例如父进程退出
   registerProcessOutputErrorHandlers()
 
   headlessProfilerCheckpoint('after_loadInitialMessages')
 
-  // Ensure model strings are initialized before generating model options.
-  // For Bedrock users, this waits for the profile fetch to get correct region strings.
+  // 生成 model 选项前确保 model 字符串已初始化。对 Bedrock 用户，会等待 profile 请求以获得正确
+  // region 字符串。
   await ensureModelStringsInitialized()
   headlessProfilerCheckpoint('after_modelStrings')
 
-  // UDS inbox store registration is deferred until after `run` is defined
-  // so we can pass `run` as the onEnqueue callback (see below).
+  // UDS inbox store 注册延迟到定义 `run` 后，以便将 `run` 作为 onEnqueue callback 传入。
 
-  // Only `json` + `verbose` needs the full array (jsonStringify(messages) below).
-  // For stream-json (SDK/CCR) and default text output, only the last message is
-  // read for the exit code / final result. Avoid accumulating every message in
-  // memory for the entire session.
+  // 只有 `json` + `verbose` 需要完整数组（见下方 jsonStringify(messages)）。stream-json
+  //（SDK/CCR）与默认文本输出只读取最后一条消息以确定退出码或最终结果，避免整个会话都在内存中
+  // 累积每条消息。
   const needsFullArray = options.outputFormat === 'json' && options.verbose
   const messages: WireMessage[] = []
   let lastMessage: WireMessage | undefined
-  // Streamlined mode transforms messages when ZY_CODE_STREAMLINED_OUTPUT=true and using stream-json
-  // Build flag gates this out of external builds; env var is the runtime opt-in for ant builds
+  // 使用 stream-json 且 ZY_CODE_STREAMLINED_OUTPUT=true 时，streamlined 模式会转换消息。构建
+  // flag 将其排除在外部构建外，环境变量则供 ant 构建在运行时选择启用。
   const transformToStreamlined =
     feature('STREAMLINED_OUTPUT') &&
     isEnvTruthy(process.env.ZY_CODE_STREAMLINED_OUTPUT) &&
@@ -699,7 +682,7 @@ export async function runHeadless(
     turnInterruptionState,
   )) {
     if (transformToStreamlined) {
-      // Streamlined mode: transform messages and stream immediately
+      // streamlined 模式：转换消息并立即流式发送
       const transformed = transformToStreamlined(message)
       if (transformed) {
         await structuredIO.write(transformed)
@@ -707,11 +690,9 @@ export async function runHeadless(
     } else if (options.outputFormat === 'stream-json' && options.verbose) {
       await structuredIO.write(message)
     }
-    // Should not be getting control messages or stream events in non-stream mode.
-    // Also filter out streamlined types since they're only produced by the transformer.
-    // SDK-only system events are excluded so lastMessage stays at the result
-    // (session_state_changed(idle) and any late task_notification drain after
-    // result in the finally block).
+      // 非流模式不应收到控制消息或流事件。也过滤 streamlined 类型，因为它们只由 transformer
+      // 产生。排除 SDK 专用 system 事件，使 lastMessage 保持为 result；finally 块中 result 后的
+      // session_state_changed(idle) 与迟到 task_notification drain 不会覆盖它。
     if (
       message.type !== 'control_response' &&
       message.type !== 'control_request' &&
@@ -749,7 +730,7 @@ export async function runHeadless(
       writeToStdout(`${jsonStringify(lastMessage)}\n`)
       break
     case 'stream-json':
-      // already logged above
+      // 上方已记录
       break
     default:
       if (!lastMessage || lastMessage.type !== 'result') {
@@ -775,16 +756,14 @@ export async function runHeadless(
       }
   }
 
-  // Log headless latency metrics for the final turn
+  // 记录最终 turn 的 headless 延迟指标
   // 内存优化：采样最终 turn 的内存使用，便于发现长会话退化
   headlessProfilerMemorySample()
   logHeadlessProfilerTurn()
 
-  // Drain any in-flight memory extraction before shutdown. The response is
-  // already flushed above, so this adds no user-visible latency — it just
-  // delays process exit so gracefulShutdownSync's 5s failsafe doesn't kill
-  // the forked agent mid-flight. Gated by isExtractModeActive so the
-  // zy_slate_thimble flag controls non-interactive extraction end-to-end.
+  // 关停前等待正在进行的 memory extraction。响应已在上方 flush，因此不会增加用户可见延迟，
+  // 只会推迟进程退出，避免 gracefulShutdownSync 的 5 秒 failsafe 在执行中途终止 fork agent。
+  // 由 isExtractModeActive 控制，使 zy_slate_thimble 开关端到端控制非交互式提取。
   if (feature('EXTRACT_MEMORIES') && isExtractModeActive()) {
     await extractMemoriesModule!.drainPendingExtraction()
   }
@@ -841,12 +820,11 @@ function runHeadlessStreaming(
     readFileState: extractReadFilesFromMessages(initialMessages, cwd(), READ_FILE_STATE_CACHE_SIZE),
     activeUserSpecifiedModel: options.userSpecifiedModel,
   }
-  // Same queue sendRequest() enqueues to — one FIFO for everything.
+  // 与 sendRequest() 使用同一队列，所有内容共用一个 FIFO。
   const output = structuredIO.outbound
 
-  // Ctrl+C in -p mode: abort the in-flight query, then shut down gracefully.
-  // gracefulShutdown persists session state and flushes analytics, with a
-  // failsafe timer that force-exits if cleanup hangs.
+  // -p 模式下按 Ctrl+C：中止正在执行的查询，再优雅关停。gracefulShutdown 会持久化会话状态并
+  // flush analytics，同时设置 failsafe 定时器，在清理挂起时强制退出。
   const sigintHandler = () => {
     logForDiagnosticsNoPII('info', 'shutdown_signal', { signal: 'SIGINT' })
     if (loopState.abortController && !loopState.abortController.signal.aborted) {
@@ -858,8 +836,8 @@ function runHeadlessStreaming(
   }
   process.on('SIGINT', sigintHandler)
 
-  // Dump run()'s state at SIGTERM so a stuck session's healthsweep can name
-  // the do/while(waitingForAgents) poll without reading the transcript.
+  // SIGTERM 时输出 run() 状态，使卡住会话的 healthsweep 无需读取 transcript 即可识别
+  // do/while(waitingForAgents) 轮询。
   registerCleanup(async () => {
     const bg: Record<string, number> = {}
     for (const t of getRunningTasks(getAppState())) {
@@ -876,16 +854,13 @@ function runHeadlessStreaming(
     })
   })
 
-  // Wire the central onChangeAppState mode-diff hook to the SDK output stream.
-  // This fires whenever ANY code path mutates toolPermissionContext.mode —
-  // Shift+Tab, ExitPlanMode dialog, /plan slash command, rewind, bridge
-  // set_permission_mode, the query loop, stop_task — rather than the two
-  // paths that previously went through a bespoke wrapper.
-  // The wrapper's body was fully redundant (it enqueued here AND called
-  // notifySessionMetadataChanged, both of which onChangeAppState now covers);
-  // keeping it would double-emit status messages.
+  // 将中心 onChangeAppState 模式差异 hook 绑定到 SDK 输出流。任何修改
+  // toolPermissionContext.mode 的代码路径都会触发，包括 Shift+Tab、ExitPlanMode 对话框、/plan
+  // slash command、rewind、bridge set_permission_mode、query 循环、stop_task，而非仅限此前经过
+  // 专用 wrapper 的两条路径。wrapper 函数体完全重复：既在此入队又调用
+  // notifySessionMetadataChanged，而 onChangeAppState 现已覆盖两者；保留会导致状态消息发送两次。
   setPermissionModeChangedListener((newMode) => {
-    // Only emit for SDK-exposed modes.
+      // 只为 SDK 暴露的模式发送。
     if (
       newMode === 'default' ||
       newMode === 'acceptEdits' ||
@@ -905,7 +880,7 @@ function runHeadlessStreaming(
     }
   })
 
-  // Prompt suggestion tracking (push model)
+  // prompt 建议跟踪（push model）
   const suggestionState: {
     abortController: AbortController | null
     inflightPromise: Promise<void> | null
@@ -934,7 +909,7 @@ function runHeadlessStreaming(
     pendingLastEmittedEntry: null,
   }
 
-  // Set up AWS auth status listener if enabled
+  // 启用时设置 AWS 认证状态 listener
   let unsubscribeAuthStatus: (() => void) | undefined
   if (options.enableAuthStatus) {
     const authStatusManager = AwsAuthStatusManager.getInstance()
@@ -950,9 +925,9 @@ function runHeadlessStreaming(
     })
   }
 
-  // Set up rate limit status listener to emit WireRateLimitEvent for all status changes.
-  // Emitting for all statuses (including 'allowed') ensures consumers can clear warnings
-  // when rate limits reset. The upstream emitStatusChange already deduplicates via isEqual.
+  // 设置 rate limit 状态 listener，为所有状态变化发送 WireRateLimitEvent。发送包括 'allowed'
+  // 在内的所有状态，确保 rate limit 重置时消费方能清除警告。上游 emitStatusChange 已通过
+  // isEqual 去重。
   const rateLimitListener = (limits: ZyAILimits) => {
     const rateLimitInfo = toSDKRateLimitInfo(limits)
     if (rateLimitInfo) {
@@ -971,28 +946,24 @@ function runHeadlessStreaming(
   // 完整封闭 mutable-array(改 ask() 契约)留待后续 Phase。
   const session = createHeadlessSession({ initialMessages })
 
-  // Client-supplied readFileState seeds (via seed_read_state control request).
-  // The stdin IIFE runs concurrently with ask() — a seed arriving mid-turn
-  // would be lost to ask()'s clone-then-replace (QueryEngine.ts finally block)
-  // if written directly into readFileState. Instead, seeds land here, merge
-  // into getReadFileCache's view (readFileState-wins-ties: seeds fill gaps),
-  // and are re-applied then CLEARED in setReadFileCache. One-shot: each seed
-  // survives exactly one clone-replace cycle, then becomes a regular
-  // readFileState entry subject to compact's clear like everything else.
+  // client 通过 seed_read_state control request 提供的 readFileState 种子。stdin IIFE 与 ask()
+  // 并发运行；turn 中途到达的种子会因 ask() 的先 clone 后 replace（QueryEngine.ts finally 块）
+  // 而丢失。
+  // 因此不能直接写入 readFileState。种子先存入此处，再合并进 getReadFileCache 的视图
+  //（冲突时以 readFileState 为准，种子只填补空缺），随后在 setReadFileCache 中重新应用并清空。
+  // 每个种子只生效一次：仅跨过一次克隆替换周期，之后成为普通 readFileState 条目，
+  // 与其他条目一样会在 compact 时被清除。
   const pendingSeeds = createFileStateCacheWithSizeLimit(READ_FILE_STATE_CACHE_SIZE)
 
-  // Auto-resume interrupted turns on restart so CC continues from where it
-  // left off without requiring the SDK to re-send the prompt.
+  // 重启时自动恢复被中断的轮次，让 CC 从断点继续，无需 SDK 重发提示词。
   const resumeInterruptedTurnEnv = process.env.ZY_CODE_RESUME_INTERRUPTED_TURN
   if (turnInterruptionState && turnInterruptionState.kind !== 'none' && resumeInterruptedTurnEnv) {
     logForDebugging(
       `[print.ts] Auto-resuming interrupted turn (kind: ${turnInterruptionState.kind})`,
     )
 
-    // Remove the interrupted message and its sentinel, then re-enqueue so
-    // the model sees it exactly once. For mid-turn interruptions, the
-    // deserialization layer transforms them into interrupted_prompt by
-    // appending a synthetic "Continue from where you left off." message.
+    // 移除中断消息及其哨兵后重新入队，确保模型恰好看到一次。若在轮次中途被中断，
+    // 反序列化层会追加一条合成的“从中断处继续”消息，将其转换为 interrupted_prompt。
     removeInterruptedMessage(session.messages, turnInterruptionState.message)
     enqueue({
       mode: 'prompt',
@@ -1061,9 +1032,8 @@ function runHeadlessStreaming(
 
   void mcp.updateSdkMcp()
 
-  // Shared tool assembly for ask() and the get_context_usage control request.
-  // Closes over mcp.sdkTools/mcp.dynamicMcpState so both call sites see
-  // late-connecting servers.
+  // ask() 与 get_context_usage 控制请求共用的工具组装逻辑。
+  // 通过闭包读取 mcp.sdkTools/mcp.dynamicMcpState，让两处调用都能看到稍后接入的服务器。
   const buildAllTools = (appState: AppState): Tools => {
     const assembledTools = assembleToolPool(appState.toolPermissionContext, appState.mcp.tools)
     let allTools = uniqBy(
@@ -1089,31 +1059,28 @@ function runHeadlessStreaming(
     return allTools
   }
 
-  // Bridge handle for remote-control (SDK control message).
-  // Mirrors the REPL's useReplBridge hook: the handle is created when
-  // `remote_control` is enabled and torn down when disabled.
+  // 远程控制（SDK 控制消息）所用的桥接句柄。
+  // 与 REPL 的 useReplBridge hook 一致：启用 `remote_control` 时创建，禁用时销毁。
   // 桥接句柄与转发游标收进共享容器(Phase 5a):controlLoop(写)、turnLoop(经
   // getBridgeHandle 读)、forwardMessagesToBridge(读写)三处共享同一引用,外提后
   // 值拷贝会读到陈旧值。
-  // lastForwardedIndex: cursor into session.messages — tracks how far we've
-  // forwarded (same index-based diff as useReplBridge's lastWrittenIndexRef).
+  // lastForwardedIndex 是 session.messages 的游标，用于记录已转发的位置；
+  // 差量算法与 useReplBridge 的 lastWrittenIndexRef 相同。
   const bridgeState = {
     handle: null as ReplWireHandle | null,
     lastForwardedIndex: 0,
   }
 
-  // Forward new messages from session.messages to the bridge.
-  // Called incrementally during each turn (so zy.ai sees progress
-  // and stays alive during permission waits) and again after the turn.
+  // 将 session.messages 中的新消息转发至桥接。
+  // 每轮执行期间会增量调用（使 zy.ai 能看到进度，并在等待权限时保持活跃），轮次结束后再调用一次。
   //
-  // writeMessages has its own UUID-based dedup (initialMessageUUIDs,
-  // recentPostedUUIDs) — the index cursor here is a pre-filter to avoid
-  // O(n) re-scanning of already-sent messages on every call.
+  // writeMessages 自带基于 UUID 的去重（initialMessageUUIDs、recentPostedUUIDs）；
+  // 此处的索引游标作为前置过滤，避免每次调用都以 O(n) 复杂度重扫已发送消息。
   function forwardMessagesToBridge(): void {
     if (!bridgeState.handle) {
       return
     }
-    // Guard against session.messages shrinking (compaction truncates it).
+    // 防止 session.messages 因 compact 截断而缩短。
     const startIndex = Math.min(bridgeState.lastForwardedIndex, session.messages.length)
     const newMessages = session.messages
       .slice(startIndex)
@@ -1124,12 +1091,12 @@ function runHeadlessStreaming(
     }
   }
 
-  // Background plugin installation for all headless users
-  // Installs marketplaces from extraKnownMarketplaces and missing enabled plugins
-  // ZY_CODE_SYNC_PLUGIN_INSTALL=true: resolved in run() before the first
-  // query so plugins are guaranteed available on the first ask().
-  // --bare / SIMPLE: skip plugin install. Scripted calls don't add plugins
-  // mid-session; the next interactive run reconciles.
+  // 为所有 headless 用户在后台安装插件。
+  // 安装 extraKnownMarketplaces 中的 marketplace，以及已启用但缺失的插件。
+  // ZY_CODE_SYNC_PLUGIN_INSTALL=true 时，会在首次查询前于 run() 中等待安装完成，
+  // 确保第一次 ask() 即可使用插件。
+  // --bare / SIMPLE 模式跳过插件安装；脚本调用不会在会话中途新增插件，
+  // 下次交互式运行时再完成同步。
   if (!isBareMode()) {
     if (isEnvTruthy(process.env.ZY_CODE_SYNC_PLUGIN_INSTALL)) {
       mcp.pluginInstallPromise = mcp.installPluginsAndApplyMcpInBackground()
@@ -1138,10 +1105,10 @@ function runHeadlessStreaming(
     }
   }
 
-  // Idle timeout management
+  // 空闲超时管理。
   const idleTimeout = createIdleTimeoutManager(() => !loopState.running)
 
-  // Subscribe to skill changes for hot reloading
+  // 订阅 skill 变更以支持热重载。
   const unsubscribeSkillChanges = skillChangeDetector.subscribe(() => {
     clearCommandsCache()
     void getCommands(cwd()).then((newCommands) => {
@@ -1149,9 +1116,9 @@ function runHeadlessStreaming(
     })
   })
 
-  // Proactive mode: schedule a tick to keep the model looping autonomously.
-  // setTimeout(0) yields to the event loop so pending stdin messages
-  // (interrupts, user messages) are processed before the tick fires.
+  // 主动模式：调度一次 tick，让模型自主持续循环。
+  // setTimeout(0) 会先把执行权交还事件循环，使待处理的 stdin 消息
+  //（中断、用户消息）能在 tick 触发前得到处理。
   const scheduleProactiveTick =
     feature('PROACTIVE') || feature('KAIROS')
       ? () => {
@@ -1176,7 +1143,7 @@ function runHeadlessStreaming(
         }
       : undefined
 
-  // Abort the current operation when a 'now' priority message arrives.
+  // 收到 `now` 优先级消息时中止当前操作。
   subscribeToCommandQueue(() => {
     if (loopState.abortController && getCommandsByMaxPriority('now').length > 0) {
       loopState.abortController.abort('interrupt')
@@ -1210,8 +1177,7 @@ function runHeadlessStreaming(
   }
   run = () => runTurnLoop(turnLoopDeps)
 
-  // Set up UDS inbox callback so the query loop is kicked off
-  // when a message arrives via the UDS socket in headless mode.
+  // 注册 UDS 收件箱回调，使 headless 模式通过 UDS socket 收到消息时启动查询循环。
   if (feature('UDS_INBOX')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { setOnEnqueue } = require('../services/bridge/udsMessaging.js')
@@ -1223,12 +1189,10 @@ function runHeadlessStreaming(
     })
   }
 
-  // Cron scheduler: runs scheduled_tasks.json tasks in SDK/-p mode.
-  // Mirrors REPL's useScheduledTasks hook. Fired prompts enqueue + kick
-  // off run() directly — unlike REPL, there's no queue subscriber here
-  // that drains on enqueue while idle. The run() mutex makes this safe
-  // during an active turn: the call no-ops and the post-run recheck at
-  // the end of run() picks up the queued command.
+  // Cron 调度器：在 SDK/-p 模式下执行 scheduled_tasks.json 中的任务。
+  // 行为与 REPL 的 useScheduledTasks hook 对齐。触发的提示词入队后会直接启动 run()；
+  // 与 REPL 不同，此处没有在空闲入队时负责消费队列的订阅者。run() 的互斥机制保证
+  // 活跃轮次内调用仍然安全：该次调用不执行，run() 结束时的复查会拾取已入队命令。
   let cronScheduler: import('../services/jobs/cronScheduler.js').CronScheduler | null = null
   if (feature('AGENT_TRIGGERS') && cronSchedulerModule && cronGate?.isKairosCronEnabled()) {
     cronScheduler = cronSchedulerModule.createCronScheduler({
@@ -1241,14 +1205,12 @@ function runHeadlessStreaming(
           value: prompt,
           uuid: randomUUID(),
           priority: 'later',
-          // System-generated — matches useScheduledTasks.ts REPL equivalent.
-          // Without this, messages.ts metaProp eval is {} → prompt leaks
-          // into visible transcript when cron fires mid-turn in -p mode.
+          // 系统生成；与 useScheduledTasks.ts 中的 REPL 实现保持一致。
+          // 若不设置，在 -p 模式轮次中途触发 cron 时，messages.ts 对 metaProp 的求值结果为 {}，
+          // 提示词会泄漏到可见会话记录中。
           isMeta: true,
-          // Threaded to cc_workload= in the billing-header attribution block
-          // so the API can serve cron requests at lower QoS. drainCommandQueue
-          // reads this per-iteration and hoists it into bootstrap state for
-          // the ask() call.
+          // 此值会传至计费请求头归因块中的 cc_workload=，使 API 能以较低 QoS 服务 cron 请求。
+          // drainCommandQueue 每轮读取该值，并提升到 bootstrap 状态供 ask() 调用使用。
           workload: WORKLOAD_CRON,
         })
         void run()
@@ -1291,8 +1253,8 @@ function runHeadlessStreaming(
 }
 
 /**
- * Creates a CanUseToolFn that incorporates a custom permission prompt tool.
- * This function converts the permissionPromptTool into a CanUseToolFn that can be used in ask.tsx
+ * 创建包含自定义权限提示工具的 CanUseToolFn。
+ * 将 permissionPromptTool 转换为可供 ask.tsx 使用的 CanUseToolFn。
  */
 export function createCanUseToolWithPermissionPrompt(
   permissionPromptTool: PermissionPromptTool,
@@ -1309,26 +1271,25 @@ export function createCanUseToolWithPermissionPrompt(
       forceDecision ??
       (await hasPermissionsToUseTool(tool, input, toolUseContext, assistantMessage, toolUseId))
 
-    // If the tool is allowed or denied, return the result
+    // 工具已获准或被拒绝时，直接返回结果。
     if (mainPermissionResult.behavior === 'allow' || mainPermissionResult.behavior === 'deny') {
       return mainPermissionResult
     }
 
-    // Race the permission prompt tool against the abort signal.
+    // 让权限提示工具与中止信号竞争。
     //
-    // Why we need this: The permission prompt tool may block indefinitely waiting
-    // for user input (e.g., via stdin or a UI dialog). If the user triggers an
-    // interrupt (Ctrl+C), we need to detect it even while the tool is blocked.
-    // Without this race, the abort check would only run AFTER the tool completes,
-    // which may never happen if the tool is waiting for input that will never come.
+    // 权限提示工具可能因等待用户输入（如 stdin 或 UI 对话框）而无限阻塞。
+    // 用户触发中断（Ctrl+C）时，即使工具仍在阻塞也必须检测到。
+    // 若没有此竞争，中止检查只能等工具完成后才运行；而工具若一直等待不会到来的输入，
+    // 就可能永远无法完成。
     //
-    // The second check (combinedSignal.aborted) handles a race condition where
-    // abort fires after Promise.race resolves but before we reach this check.
+    // 第二次检查 combinedSignal.aborted，用于处理 Promise.race 已结束、
+    // 但代码尚未执行到检查处时触发 abort 的竞态。
     const { signal: combinedSignal, cleanup: cleanupAbortListener } = createCombinedAbortSignal(
       toolUseContext.abortController.signal,
     )
 
-    // Check if already aborted before starting the race
+    // 开始竞争前先检查是否已中止。
     if (combinedSignal.aborted) {
       cleanupAbortListener()
       return {
@@ -1374,7 +1335,7 @@ export function createCanUseToolWithPermissionPrompt(
       }
     }
 
-    // TypeScript narrowing: after the abort check, raceResult must be ToolResult
+    // TypeScript 类型收窄：通过中止检查后，raceResult 必为 ToolResult。
     const result = raceResult as Awaited<typeof toolCallPromise>
 
     const permissionToolResultBlock = permissionPromptTool.mapToolResultToToolResultBlock(
@@ -1402,8 +1363,8 @@ export function createCanUseToolWithPermissionPrompt(
   return canUseTool
 }
 
-// Exported for testing — regression: this used to crash at construction when
-// getMcpTools() was empty (before per-server connects populated appState).
+// 导出供测试使用。此前 getMcpTools() 为空时（各服务器连接尚未填充 appState），
+// 该函数会在构造阶段崩溃，属于回归测试覆盖点。
 export function getCanUseToolFn(
   permissionPromptToolName: string | undefined,
   structuredIO: StructuredIO,
@@ -1418,9 +1379,8 @@ export function getCanUseToolFn(
       forceDecision ??
       (await hasPermissionsToUseTool(tool, input, toolUseContext, assistantMessage, toolUseId))
   }
-  // Lazy lookup: MCP connects are per-server incremental in print mode, so
-  // the tool may not be in appState yet at init time. Resolve on first call
-  // (first permission prompt), by which point connects have had time to finish.
+  // 延迟查找：print 模式下 MCP 会逐个连接服务器，初始化时工具可能尚未进入 appState。
+  // 首次调用（第一次权限提示）时再解析，此时连接通常已有时间完成。
   let resolved: CanUseToolFn | null = null
   return async (tool, input, toolUseContext, assistantMessage, toolUseId, forceDecision) => {
     if (!resolved) {
@@ -1478,7 +1438,7 @@ export async function handleInitializeRequest(
     return
   }
 
-  // Apply systemPrompt/appendSystemPrompt from stdin to avoid ARG_MAX limits
+  // 从 stdin 应用 systemPrompt/appendSystemPrompt，避免触及 ARG_MAX 限制。
   if (request.systemPrompt !== undefined) {
     options.systemPrompt = request.systemPrompt
   }
@@ -1489,25 +1449,24 @@ export async function handleInitializeRequest(
     options.promptSuggestions = request.promptSuggestions
   }
 
-  // Merge agents from stdin to avoid ARG_MAX limits
+  // 从 stdin 合并 agents，避免触及 ARG_MAX 限制。
   if (request.agents) {
     const stdinAgents = parseAgentsFromJson(request.agents, 'flagSettings')
     agents.push(...stdinAgents)
   }
 
-  // Re-evaluate main thread agent after SDK agents are merged
-  // This allows --agent to reference agents defined via SDK
+  // 合并 SDK agents 后重新解析主线程 agent，使 --agent 能引用 SDK 定义的 agent。
   if (options.agent) {
-    // If main.tsx already found this agent (filesystem-defined), it already
-    // applied systemPrompt/model/initialPrompt. Skip to avoid double-apply.
+    // 若 main.tsx 已找到此 agent（由文件系统定义），则 systemPrompt/model/initialPrompt
+    // 已经应用；此处跳过以免重复应用。
     const alreadyResolved = getMainThreadAgentType() === options.agent
     const mainThreadAgent = agents.find((a) => a.agentType === options.agent)
     if (mainThreadAgent && !alreadyResolved) {
-      // Update the main thread agent type in bootstrap state
+      // 更新 bootstrap 状态中的主线程 agent 类型。
       setMainThreadAgentType(mainThreadAgent.agentType)
 
-      // Apply the agent's system prompt if user hasn't specified a custom one
-      // SDK agents are always custom agents (not built-in), so getSystemPrompt() takes no args
+      // 用户未指定自定义系统提示词时，应用 agent 的系统提示词。
+      // SDK agents 始终是自定义 agent（非内置），因此 getSystemPrompt() 不接收参数。
       if (!options.systemPrompt && !isBuiltInAgent(mainThreadAgent)) {
         const agentSystemPrompt = mainThreadAgent.getSystemPrompt()
         if (agentSystemPrompt) {
@@ -1515,7 +1474,7 @@ export async function handleInitializeRequest(
         }
       }
 
-      // Apply the agent's model if user didn't specify one and agent has a model
+      // 用户未指定模型且 agent 自带模型时，应用该模型。
       if (
         !options.userSpecifiedModel &&
         mainThreadAgent.model &&
@@ -1525,15 +1484,14 @@ export async function handleInitializeRequest(
         setMainLoopModelOverride(agentModel)
       }
 
-      // SDK-defined agents arrive via init, so main.tsx's lookup missed them.
+      // SDK 定义的 agents 通过 init 到达，因此 main.tsx 查找时无法看到。
       if (mainThreadAgent.initialPrompt) {
         structuredIO.prependUserMessage(mainThreadAgent.initialPrompt)
       }
     } else if (mainThreadAgent?.initialPrompt) {
-      // Filesystem-defined agent (alreadyResolved by main.tsx). main.tsx
-      // handles initialPrompt for the string inputPrompt case, but when
-      // inputPrompt is an AsyncIterable (SDK stream-json), it can't
-      // concatenate — fall back to prependUserMessage here.
+      // 文件系统定义的 agent（已由 main.tsx 解析）。inputPrompt 为字符串时，
+      // main.tsx 会处理 initialPrompt；但 inputPrompt 为 AsyncIterable（SDK stream-json）时
+      // 无法拼接，因此在此回退为 prependUserMessage。
       structuredIO.prependUserMessage(mainThreadAgent.initialPrompt)
     }
   }
@@ -1542,7 +1500,7 @@ export async function handleInitializeRequest(
   const outputStyle = settings?.outputStyle || DEFAULT_OUTPUT_STYLE_NAME
   const availableOutputStyles = await getAllOutputStyles(getCwd())
 
-  // Get account information
+  // 获取账户信息。
   const accountInfo = getAccountInformation()
   if (request.hooks) {
     const hooks: Partial<Record<HookEvent, HookCallbackMatcher[]>> = {}
@@ -1573,7 +1531,7 @@ export async function handleInitializeRequest(
     agents: agents.map((agent) => ({
       name: agent.agentType,
       description: agent.whenToUse,
-      // 'inherit' is an internal sentinel; normalize to undefined for the public API
+      // `inherit` 是内部哨兵值；对外 API 中统一转为 undefined。
       model: agent.model === 'inherit' ? undefined : agent.model,
     })),
     output_style: outputStyle,
@@ -1585,9 +1543,8 @@ export async function handleInitializeRequest(
       subscriptionType: accountInfo?.subscription,
       tokenSource: accountInfo?.tokenSource,
       apiKeySource: accountInfo?.apiKeySource,
-      // getAccountInformation() returns undefined under 3P providers, so the
-      // other fields are all absent. apiProvider disambiguates "not logged
-      // in" (direct API + tokenSource:none) from "3P, login not applicable".
+      // 使用第三方提供商时 getAccountInformation() 返回 undefined，因此其他字段均缺失。
+      // apiProvider 用于区分“未登录”（直连 API 且 tokenSource:none）与“第三方提供商不适用登录”。
       apiProvider: getAPIProvider() as AccountInfo['apiProvider'],
     } satisfies AccountInfo,
     pid: process.pid,
@@ -1602,9 +1559,7 @@ export async function handleInitializeRequest(
     },
   })
 
-  // After the initialize message, check the auth status-
-  // This will get notified of changes, but we also want to send the
-  // initial state.
+  // initialize 消息后检查认证状态。后续变更会收到通知，但初始状态也需要发送。
   if (enableAuthStatus) {
     const authStatusManager = AwsAuthStatusManager.getInstance()
     const status = authStatusManager.getStatus()
@@ -1672,7 +1627,7 @@ export function handleSetPermissionMode(
   toolPermissionContext: ToolPermissionContext,
   output: Stream<StdoutMessage>,
 ): ToolPermissionContext {
-  // Check if trying to switch to bypassPermissions mode
+  // 检查是否正尝试切换到 bypassPermissions 模式。
   if (request.mode === 'bypassPermissions') {
     if (isBypassPermissionsModeDisabled()) {
       output.enqueue({
@@ -1700,7 +1655,7 @@ export function handleSetPermissionMode(
     }
   }
 
-  // Check if trying to switch to auto mode without the classifier gate
+  // 检查是否在没有分类器门控的情况下尝试切换到 auto 模式。
   if (true && request.mode === 'auto' && !isAutoModeGateEnabled()) {
     const reason = getAutoModeUnavailableReason()
     output.enqueue({
@@ -1716,7 +1671,7 @@ export function handleSetPermissionMode(
     return toolPermissionContext
   }
 
-  // Allow the mode switch
+  // 允许切换模式。
   output.enqueue({
     type: 'control_response',
     response: {
@@ -1735,22 +1690,17 @@ export function handleSetPermissionMode(
 }
 
 /**
- * IDE-triggered channel enable. Derives the ChannelEntry from the connection's
- * pluginSource (IDE can't spoof kind/marketplace — we only take the server
- * name), appends it to session allowedChannels, and runs the full gate. On
- * gate failure, rolls back the append. On success, registers a notification
- * handler that enqueues channel messages at priority:'next' — drainCommandQueue
- * picks them up between turns.
+ * 处理 IDE 触发的 channel 启用。根据连接的 pluginSource 推导 ChannelEntry
+ *（IDE 无法伪造 kind/marketplace，因为这里只接受服务器名称），将其追加到会话的
+ * allowedChannels 后执行完整门控。门控失败则回滚追加；成功则注册通知处理器，
+ * 以 priority:'next' 将 channel 消息入队，由 drainCommandQueue 在轮次之间取出。
  *
- * Intentionally does NOT register the zy/channel/permission handler that
- * useManageMCPConnections sets up for interactive mode. That handler resolves
- * a pending dialog inside handleInteractivePermission — but print.ts never
- * calls handleInteractivePermission. When SDK permission lands on 'ask', it
- * goes to the consumer's canUseTool callback over stdio; there is no CLI-side
- * dialog for a remote "yes tbxkq" to resolve. If an IDE wants channel-relayed
- * tool approval, that's IDE-side plumbing against its own pending-map. (Also
- * gated separately by zy_harbor_permissions — not yet shipping on
- * interactive either.)
+ * 此处有意不注册 useManageMCPConnections 为交互模式设置的 zy/channel/permission
+ * 处理器。该处理器用于解析 handleInteractivePermission 内等待中的对话框，
+ * 但 print.ts 从不调用 handleInteractivePermission。SDK 权限进入 `ask` 后，
+ * 会通过 stdio 转给使用方的 canUseTool 回调，CLI 端没有可由远程“yes tbxkq”解析的
+ * 对话框。若 IDE 需要通过 channel 转发工具审批，应由 IDE 对接自己的 pending-map。
+ *（此能力还受 zy_harbor_permissions 单独门控，交互模式目前也尚未提供。）
  */
 export function handleChannelEnable(
   requestId: string,
@@ -1768,8 +1718,8 @@ export function handleChannelEnable(
     return respondError('channels feature not available in this build')
   }
 
-  // Only a 'connected' client has .capabilities and .client to register the
-  // handler on. The pool spread at the call site matches mcp_status.
+  // 只有 `connected` 客户端具备用于注册处理器的 .capabilities 和 .client。
+  // 调用处展开连接池的方式与 mcp_status 保持一致。
   const connection = connectionPool.find((c) => c.name === serverName && c.type === 'connected')
   if (!connection || connection.type !== 'connected') {
     return respondError(`server ${serverName} is not connected`)
@@ -1778,9 +1728,8 @@ export function handleChannelEnable(
   const pluginSource = connection.config.pluginSource
   const parsed = pluginSource ? parsePluginIdentifier(pluginSource) : undefined
   if (!parsed?.marketplace) {
-    // No pluginSource or @-less source — can never pass the {plugin,
-    // marketplace}-keyed allowlist. Short-circuit with the same reason the
-    // gate would produce.
+    // 缺少 pluginSource，或 source 中没有 @，都不可能通过以 {plugin, marketplace}
+    // 为键的允许列表；直接以门控原本会给出的同一原因短路返回。
     return respondError(
       `server ${serverName} is not plugin-sourced; channel_enable requires a marketplace plugin`,
     )
@@ -1791,7 +1740,7 @@ export function handleChannelEnable(
     name: parsed.name,
     marketplace: parsed.marketplace,
   }
-  // Idempotency: don't double-append on repeat enable.
+  // 保持幂等：重复启用时不要再次追加。
   const prior = getAllowedChannels()
   const already = prior.some(
     (e) => e.kind === 'plugin' && e.name === entry.name && e.marketplace === entry.marketplace,
@@ -1802,7 +1751,7 @@ export function handleChannelEnable(
 
   const gate = gateChannelServer(serverName, connection.capabilities, pluginSource)
   if (gate.action === 'skip') {
-    // Rollback — only remove the entry we appended.
+    // 回滚时只移除本次追加的条目。
     if (!already) {
       setAllowedChannels(prior)
     }
@@ -1814,10 +1763,9 @@ export function handleChannelEnable(
   logMCPDebug(serverName, 'Channel notifications registered')
   logEvent('zy_mcp_channel_enable', { plugin: pluginId })
 
-  // Identical enqueue shape to the interactive register block in
-  // useManageMCPConnections. drainCommandQueue processes it between turns —
-  // channel messages queue at priority 'next' and are seen by the model on
-  // the turn after they arrive.
+  // 入队结构与 useManageMCPConnections 中的交互式注册块一致。
+  // drainCommandQueue 会在轮次间处理；channel 消息以 `next` 优先级排队，
+  // 模型会在消息到达后的下一轮看到它。
   connection.client.setNotificationHandler(
     ChannelMessageNotificationSchema(),
     async (notification) => {
@@ -1856,20 +1804,17 @@ export function handleChannelEnable(
 }
 
 /**
- * Re-register the channel notification handler after mcp_reconnect /
- * mcp_toggle creates a new client. handleChannelEnable bound the handler to
- * the OLD client object; allowedChannels survives the reconnect but the
- * handler binding does not. Without this, channel messages silently drop
- * after a reconnect while the IDE still believes the channel is live.
+ * mcp_reconnect / mcp_toggle 创建新客户端后，重新注册 channel 通知处理器。
+ * handleChannelEnable 将处理器绑定在旧客户端对象上；allowedChannels 会跨重连保留，
+ * 处理器绑定却不会。若不重新注册，重连后的 channel 消息会被静默丢弃，
+ * 而 IDE 仍以为 channel 处于活跃状态。
  *
- * Mirrors the interactive CLI's onConnectionAttempt in
- * useManageMCPConnections, which re-gates on every new connection. Paired
- * with registerElicitationHandlers at the same call sites.
+ * 与交互式 CLI 在 useManageMCPConnections 中的 onConnectionAttempt 一致，
+ * 每次建立新连接都会重新执行门控。调用处同时配套调用 registerElicitationHandlers。
  *
- * No-op if the server was never channel-enabled: gateChannelServer calls
- * findChannelEntry internally and returns skip/session for an unlisted
- * server, so reconnecting a non-channel MCP server costs one feature-flag
- * check.
+ * 若服务器从未启用 channel，则不执行任何操作：gateChannelServer 内部调用
+ * findChannelEntry，未列入清单的服务器会返回 skip/session，因此重连非 channel
+ * MCP 服务器只多一次 feature flag 检查。
  */
 export function reregisterChannelHandlerAfterReconnect(connection: MCPServerConnection): void {
   if (!(feature('KAIROS') || feature('KAIROS_CHANNELS'))) {
@@ -1924,8 +1869,8 @@ export function reregisterChannelHandlerAfterReconnect(connection: MCPServerConn
 }
 
 /**
- * Emits an error message in the correct format based on outputFormat.
- * When using stream-json, writes JSON to stdout; otherwise writes plain text to stderr.
+ * 根据 outputFormat 以正确格式输出错误消息。
+ * 使用 stream-json 时将 JSON 写入 stdout，否则将纯文本写入 stderr。
  */
 function emitLoadError(message: string, outputFormat: string | undefined): void {
   if (outputFormat === 'stream-json') {
@@ -1952,11 +1897,10 @@ function emitLoadError(message: string, outputFormat: string | undefined): void 
 }
 
 /**
- * Removes an interrupted user message and its synthetic assistant sentinel
- * from the message array. Used during gateway-triggered restarts to clean up
- * the message history before re-enqueuing the interrupted prompt.
+ * 从消息数组中移除被中断的用户消息及其合成 assistant 哨兵。
+ * gateway 触发重启时用于清理消息历史，再将中断的提示词重新入队。
  *
- * @internal Exported for testing
+ * @internal 导出供测试使用。
  */
 export function removeInterruptedMessage(
   messages: Message[],
@@ -1964,8 +1908,7 @@ export function removeInterruptedMessage(
 ): void {
   const idx = messages.findIndex((m) => m.uuid === interruptedUserMessage.uuid)
   if (idx !== -1) {
-    // Remove the user message and the sentinel that immediately follows it.
-    // splice safely handles the case where idx is the last element.
+    // 移除用户消息及紧随其后的哨兵；若 idx 已是末尾元素，splice 也能安全处理。
     messages.splice(idx, 2)
   }
 }
@@ -1990,7 +1933,7 @@ async function loadInitialMessages(
   },
 ): Promise<LoadInitialMessagesResult> {
   const persistSession = !isSessionPersistenceDisabled()
-  // Handle continue in print mode
+  // 处理 print 模式下的 continue。
   if (options.continue) {
     try {
       logEvent('zy_continue_print', {})
@@ -2000,12 +1943,12 @@ async function loadInitialMessages(
         undefined /* file path */,
       )
       if (result) {
-        // Match coordinator mode to the resumed session's mode
+        // 让 coordinator 模式与恢复会话的模式保持一致。
         if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
           const warning = coordinatorModeModule.matchSessionMode(result.mode)
           if (warning) {
             process.stderr.write(`${warning}\n`)
-            // Refresh agent definitions to reflect the mode switch
+            // 刷新 agent 定义以反映模式切换。
             const { getAgentDefinitionsWithOverrides, getActiveAgentsFromList } =
               // eslint-disable-next-line @typescript-eslint/no-require-imports
               require('../tools/AgentTool/loadAgentsDir.js') as typeof import('../tools/AgentTool/loadAgentsDir.js')
@@ -2023,7 +1966,7 @@ async function loadInitialMessages(
           }
         }
 
-        // Reuse the resumed session's ID
+        // 复用已恢复会话的 ID。
         if (!options.forkSession) {
           if (result.sessionId) {
             switchSession(
@@ -2037,12 +1980,12 @@ async function loadInitialMessages(
         }
         restoreSessionStateFromLog(result, setAppState)
 
-        // Restore session metadata so it's re-appended on exit via reAppendSessionMetadata
+        // 恢复会话元数据，以便退出时由 reAppendSessionMetadata 重新追加。
         restoreSessionMetadata(
           options.forkSession ? { ...result, worktreeSession: undefined } : result,
         )
 
-        // Write mode entry for the resumed session
+        // 为已恢复会话写入模式条目。
         if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
           saveMode(coordinatorModeModule.isCoordinatorMode() ? 'coordinator' : 'normal')
         }
@@ -2060,7 +2003,7 @@ async function loadInitialMessages(
     }
   }
 
-  // Handle teleport in print mode
+  // 处理 print 模式下的 teleport。
   if (options.teleport) {
     try {
       if (!isPolicyAllowed('allow_remote_sessions')) {
@@ -2092,13 +2035,13 @@ async function loadInitialMessages(
     }
   }
 
-  // Handle resume in print mode (accepts session ID or URL)
-  // URLs are [INNER-ONLY]
+  // 处理 print 模式下的 resume（接受会话 ID 或 URL）。
+  // URL 仅供内部使用。
   if (options.resume) {
     try {
       logEvent('zy_resume_print', {})
 
-      // In print mode - we require a valid session ID, JSONL file or URL
+      // print 模式要求提供有效的会话 ID、JSONL 文件或 URL。
       const parsedSessionId = parseSessionIdentifier(
         typeof options.resume === 'string' ? options.resume : '',
       )
@@ -2113,10 +2056,9 @@ async function loadInitialMessages(
         return { messages: [] }
       }
 
-      // Hydrate local transcript from remote before loading
+      // 加载前先从远端填充本地会话记录。
       if (isEnvTruthy(process.env.ZY_CODE_)) {
-        // Await restore alongside hydration so SSE catchup lands on
-        // restored state, not a fresh default.
+        // 填充时一并等待恢复完成，使 SSE 追赶写入恢复后的状态，而非全新默认状态。
         const [, metadata] = await Promise.all([
           hydrateFromCCRv2InternalEvents(parsedSessionId.sessionId),
           options.restoredWorkerState,
@@ -2132,24 +2074,23 @@ async function loadInitialMessages(
         parsedSessionId.ingressUrl &&
         isEnvTruthy(process.env.ENABLE_SESSION_PERSISTENCE)
       ) {
-        // v1: fetch session logs from Session Ingress
+        // v1：从 Session Ingress 获取会话日志。
         await hydrateRemoteSession(parsedSessionId.sessionId, parsedSessionId.ingressUrl)
       }
 
-      // Load the conversation with the specified session ID
+      // 使用指定会话 ID 加载对话。
       const result = await loadConversationForResume(
         parsedSessionId.sessionId,
         parsedSessionId.jsonlFile || undefined,
       )
 
-      // hydrateFromCCRv2InternalEvents writes an empty transcript file for
-      // fresh sessions (writeFile(sessionFile, '') with zero events), so
-      // loadConversationForResume returns {messages: []} not null. Treat
-      // empty the same as null so SessionStart still fires.
+      // hydrateFromCCRv2InternalEvents 会为新会话写入空的会话记录文件
+      //（零事件时执行 writeFile(sessionFile, '')），因此 loadConversationForResume
+      // 返回 {messages: []} 而非 null。空记录应与 null 同等处理，确保仍触发 SessionStart。
       if (!result || result.messages.length === 0) {
-        // For URL-based or CCR v2 resume, start with empty session (it was hydrated but empty)
+        // 通过 URL 或 CCR v2 恢复时，若填充结果为空则从空会话开始。
         if (parsedSessionId.isUrl || isEnvTruthy(process.env.ZY_CODE_)) {
-          // Execute SessionStart hooks for startup since we're starting a new session
+          // 当前实际启动的是新会话，因此执行 SessionStart hooks。
           return {
             messages: await (options.sessionStartHooksPromise ??
               processSessionStartHooks('startup')),
@@ -2164,7 +2105,7 @@ async function loadInitialMessages(
         }
       }
 
-      // Handle resumeSessionAt feature
+      // 处理 resumeSessionAt 功能。
       if (options.resumeSessionAt) {
         const index = result.messages.findIndex((m) => m.uuid === options.resumeSessionAt)
         if (index < 0) {
@@ -2179,12 +2120,12 @@ async function loadInitialMessages(
         result.messages = index >= 0 ? result.messages.slice(0, index + 1) : []
       }
 
-      // Match coordinator mode to the resumed session's mode
+      // 让 coordinator 模式与恢复会话的模式保持一致。
       if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
         const warning = coordinatorModeModule.matchSessionMode(result.mode)
         if (warning) {
           process.stderr.write(`${warning}\n`)
-          // Refresh agent definitions to reflect the mode switch
+          // 刷新 agent 定义以反映模式切换。
           const { getAgentDefinitionsWithOverrides, getActiveAgentsFromList } =
             // eslint-disable-next-line @typescript-eslint/no-require-imports
             require('../tools/AgentTool/loadAgentsDir.js') as typeof import('../tools/AgentTool/loadAgentsDir.js')
@@ -2202,7 +2143,7 @@ async function loadInitialMessages(
         }
       }
 
-      // Reuse the resumed session's ID
+      // 复用已恢复会话的 ID。
       if (!options.forkSession && result.sessionId) {
         switchSession(
           asSessionId(result.sessionId),
@@ -2214,12 +2155,12 @@ async function loadInitialMessages(
       }
       restoreSessionStateFromLog(result, setAppState)
 
-      // Restore session metadata so it's re-appended on exit via reAppendSessionMetadata
+      // 恢复会话元数据，以便退出时由 reAppendSessionMetadata 重新追加。
       restoreSessionMetadata(
         options.forkSession ? { ...result, worktreeSession: undefined } : result,
       )
 
-      // Write mode entry for the resumed session
+      // 为已恢复会话写入模式条目。
       if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
         saveMode(coordinatorModeModule.isCoordinatorMode() ? 'coordinator' : 'normal')
       }
@@ -2241,9 +2182,9 @@ async function loadInitialMessages(
     }
   }
 
-  // Join the SessionStart hooks promise kicked in main.tsx (or run fresh if
-  // it wasn't kicked — e.g. --continue with no prior session falls through
-  // here with sessionStartHooksPromise undefined because main.tsx guards on continue)
+  // 等待 main.tsx 启动的 SessionStart hooks promise；若尚未启动则重新执行。
+  // 例如 --continue 找不到既有会话时会进入此处，而 main.tsx 对 continue 有防护，
+  // 此时 sessionStartHooksPromise 为 undefined。
   return {
     messages: await (options.sessionStartHooksPromise ?? processSessionStartHooks('startup')),
   }
@@ -2259,7 +2200,7 @@ function getStructuredIO(
   let inputStream: AsyncIterable<string>
   if (typeof inputPrompt === 'string') {
     if (inputPrompt.trim() !== '') {
-      // Normalize to a streaming input.
+      // 统一转换为流式输入。
       inputStream = fromArray([
         jsonStringify({
           type: 'user',
@@ -2275,24 +2216,23 @@ function getStructuredIO(
         } satisfies WireUserMessage),
       ])
     } else {
-      // Empty string - create empty stream
+      // 空字符串对应空流。
       inputStream = fromArray([])
     }
   } else {
     inputStream = inputPrompt
   }
 
-  // Use RemoteIO if sdkUrl is provided, otherwise use regular StructuredIO
+  // 提供 sdkUrl 时使用 RemoteIO，否则使用普通 StructuredIO。
   return options.sdkUrl
     ? new RemoteIO(options.sdkUrl, inputStream, options.replayUserMessages)
     : new StructuredIO(inputStream, options.replayUserMessages)
 }
 
 /**
- * Handles unexpected permission responses by looking up the unresolved tool
- * call in the transcript and enqueuing it for execution.
+ * 处理意外收到的权限响应：在会话记录中查找未解决的工具调用，并将其入队执行。
  *
- * Returns true if a permission was enqueued, false otherwise.
+ * 权限已入队时返回 true，否则返回 false。
  */
 export async function handleOrphanedPermissionResponse({
   message,
@@ -2320,11 +2260,9 @@ export async function handleOrphanedPermissionResponse({
       `handleOrphanedPermissionResponse: received orphaned control_response for toolUseID=${toolUseID} request_id=${message.response.request_id}`,
     )
 
-    // Prevent re-processing the same orphaned tool_use. Without this guard,
-    // duplicate control_response deliveries (e.g. from WebSocket reconnect)
-    // cause the same tool to be executed multiple times, producing duplicate
-    // tool_use IDs in the messages array and a 400 error from the API.
-    // Once corrupted, every retry accumulates more duplicates.
+    // 防止重复处理同一个孤立 tool_use。若无此防护，重复送达的 control_response
+    //（例如 WebSocket 重连造成）会使同一工具执行多次，在消息数组中生成重复的
+    // tool_use ID 并引发 API 400 错误；一旦损坏，每次重试还会继续累积重复项。
     if (handledToolUseIds.has(toolUseID)) {
       logForDebugging(
         `handleOrphanedPermissionResponse: skipping duplicate orphaned permission for toolUseID=${toolUseID} (already handled)`,
@@ -2362,18 +2300,18 @@ export async function handleOrphanedPermissionResponse({
 export type { DynamicMcpState } from './headless/mcpRuntime.js'
 
 /**
- * Converts a process transport config to a scoped config.
- * The types are structurally compatible, so we just add the scope.
+ * 将进程传输配置转换为带作用域的配置。
+ * 两种类型在结构上兼容，只需补充 scope。
  */
 function toScopedConfig(config: McpServerConfigForProcessTransport): ScopedMcpServerConfig {
-  // McpServerConfigForProcessTransport is a subset of McpServerConfig
-  // (it excludes IDE-specific types like sse-ide and ws-ide)
-  // Adding scope makes it a valid ScopedMcpServerConfig
+  // McpServerConfigForProcessTransport 是 McpServerConfig 的子集，
+  // 不包含 sse-ide、ws-ide 等 IDE 专用类型；补充 scope 后即可成为有效的
+  // ScopedMcpServerConfig。
   return { ...config, scope: 'dynamic' } as ScopedMcpServerConfig
 }
 
 /**
- * State for SDK MCP servers that run in the SDK process.
+ * 运行于 SDK 进程中的 MCP 服务器状态。
  */
 export type WireMcpState = {
   configs: Record<string, McpSdkServerConfig>
@@ -2382,7 +2320,7 @@ export type WireMcpState = {
 }
 
 /**
- * Result of handleMcpSetServers - contains new state and response data.
+ * handleMcpSetServers 的结果，包含新状态和响应数据。
  */
 export type McpSetServersResult = {
   response: WireControlMcpSetServersResponse
@@ -2392,13 +2330,13 @@ export type McpSetServersResult = {
 }
 
 /**
- * Handles mcp_set_servers requests by processing both SDK and process-based servers.
- * SDK servers run in the SDK process; process-based servers are spawned by the CLI.
+ * 处理 mcp_set_servers 请求，同时涵盖 SDK 服务器和基于进程的服务器。
+ * SDK 服务器运行在 SDK 进程中；基于进程的服务器由 CLI 启动。
  *
- * Applies enterprise allowedMcpServers/deniedMcpServers policy — same filter as
- * --mcp-config (see filterMcpServersByPolicy call in main.tsx). Without this,
- * SDK V2 Query.setMcpServers() was a second policy bypass vector. Blocked servers
- * are reported in response.errors so the SDK consumer knows why they weren't added.
+ * 应用企业 allowedMcpServers/deniedMcpServers 策略，与 --mcp-config 使用同一过滤器
+ *（参见 main.tsx 对 filterMcpServersByPolicy 的调用）。若无此处理，SDK V2
+ * Query.setMcpServers() 会成为另一条绕过策略的路径。被阻止的服务器会写入
+ * response.errors，让 SDK 使用方了解未添加的原因。
  */
 export async function handleMcpSetServers(
   servers: Record<string, McpServerConfigForProcessTransport>,
@@ -2406,18 +2344,18 @@ export async function handleMcpSetServers(
   dynamicState: DynamicMcpState,
   setAppState: (f: (prev: AppState) => AppState) => void,
 ): Promise<McpSetServersResult> {
-  // Enforce enterprise MCP policy on process-based servers (stdio/http/sse).
-  // Mirrors the --mcp-config filter in main.tsx — both user-controlled injection
-  // paths must have the same gate. type:'sdk' servers are exempt (SDK-managed,
-  // CLI never spawns/connects for them — see filterMcpServersByPolicy jsdoc).
-  // Blocked servers go into response.errors so the SDK caller sees why.
+  // 对基于进程的服务器（stdio/http/sse）强制执行企业 MCP 策略。
+  // 与 main.tsx 中的 --mcp-config 过滤一致，两条用户可控注入路径必须采用同一门控。
+  // type:'sdk' 的服务器不受此限（由 SDK 管理，CLI 不会为其启动进程或建立连接；
+  // 参见 filterMcpServersByPolicy 的 JSDoc）。被阻止的服务器会写入 response.errors，
+  // 让 SDK 调用方了解原因。
   const { allowed: allowedServers, blocked } = filterMcpServersByPolicy(servers)
   const policyErrors: Record<string, string> = {}
   for (const name of blocked) {
     policyErrors[name] = 'Blocked by enterprise policy (allowedMcpServers/deniedMcpServers)'
   }
 
-  // Separate SDK servers from process-based servers
+  // 分离 SDK 服务器与基于进程的服务器。
   const sdkServers: Record<string, McpSdkServerConfig> = {}
   const processServers: Record<string, McpServerConfigForProcessTransport> = {}
 
@@ -2429,7 +2367,7 @@ export async function handleMcpSetServers(
     }
   }
 
-  // Handle SDK servers
+  // 处理 SDK 服务器。
   const currentSdkNames = new Set(Object.keys(sdkState.configs))
   const newSdkNames = new Set(Object.keys(sdkServers))
   const sdkAdded: string[] = []
@@ -2439,7 +2377,7 @@ export async function handleMcpSetServers(
   let newSdkClients = [...sdkState.clients]
   let newSdkTools = [...sdkState.tools]
 
-  // Remove SDK servers no longer in desired state
+  // 移除目标状态中已不存在的 SDK 服务器。
   for (const name of currentSdkNames) {
     if (!newSdkNames.has(name)) {
       const client = newSdkClients.find((c) => c.name === name)
@@ -2454,8 +2392,8 @@ export async function handleMcpSetServers(
     }
   }
 
-  // Add new SDK servers as pending - they'll be upgraded to connected
-  // when updateSdkMcp() runs on the next query
+  // 以 pending 状态添加新的 SDK 服务器；下次查询运行 updateSdkMcp() 时，
+  // 它们会升级为 connected。
   for (const [name, config] of Object.entries(sdkServers)) {
     if (!currentSdkNames.has(name)) {
       newSdkConfigs[name] = config
@@ -2469,7 +2407,7 @@ export async function handleMcpSetServers(
     }
   }
 
-  // Handle process-based servers
+  // 处理基于进程的服务器。
   const processResult = await reconcileMcpServers(processServers, dynamicState, setAppState)
 
   return {
@@ -2489,8 +2427,7 @@ export async function handleMcpSetServers(
 }
 
 /**
- * Reconciles the current set of dynamic MCP servers with a new desired state.
- * Handles additions, removals, and config changes.
+ * 将当前动态 MCP 服务器集合与新的目标状态对齐，处理新增、移除及配置变更。
  */
 export async function reconcileMcpServers(
   desiredConfigs: Record<string, McpServerConfigForProcessTransport>,
@@ -2506,7 +2443,7 @@ export async function reconcileMcpServers(
   const toRemove = [...currentNames].filter((n) => !desiredNames.has(n))
   const toAdd = [...desiredNames].filter((n) => !currentNames.has(n))
 
-  // Check for config changes (same name, different config)
+  // 检查同名服务器的配置是否发生变化。
   const toCheck = [...currentNames].filter((n) => desiredNames.has(n))
   const toReplace = toCheck.filter((name) => {
     const currentConfig = currentState.configs[name]
@@ -2525,7 +2462,7 @@ export async function reconcileMcpServers(
   let newClients = [...currentState.clients]
   let newTools = [...currentState.tools]
 
-  // Remove old servers (including ones being replaced)
+  // 移除旧服务器，包括即将被替换的服务器。
   for (const name of [...toRemove, ...toReplace]) {
     const client = newClients.find((c) => c.name === name)
     const config = currentState.configs[name]
@@ -2537,24 +2474,24 @@ export async function reconcileMcpServers(
           logError(e)
         }
       }
-      // Clear the memoization cache
+      // 清除记忆化缓存。
       await clearServerCache(name, config)
     }
 
-    // Remove tools from this server
+    // 移除此服务器提供的工具。
     const prefix = `mcp__${name}__`
     newTools = newTools.filter((t) => !t.name.startsWith(prefix))
 
-    // Remove from clients list
+    // 从客户端列表移除。
     newClients = newClients.filter((c) => c.name !== name)
 
-    // Track removal (only for actually removed, not replaced)
+    // 记录真正的移除；替换不计入其中。
     if (toRemove.includes(name)) {
       removed.push(name)
     }
   }
 
-  // Add new servers (including replacements)
+  // 添加新服务器，包括替换项。
   for (const name of [...toAdd, ...toReplace]) {
     const config = desiredConfigs[name]
     if (!config) {
@@ -2562,8 +2499,7 @@ export async function reconcileMcpServers(
     }
     const scopedConfig = toScopedConfig(config)
 
-    // SDK servers are managed by the SDK process, not the CLI.
-    // Just track them without trying to connect.
+    // SDK 服务器由 SDK 进程而非 CLI 管理；这里只记录，不尝试连接。
     if (config.type === 'sdk') {
       added.push(name)
       continue
@@ -2588,7 +2524,7 @@ export async function reconcileMcpServers(
     }
   }
 
-  // Build new configs
+  // 构建新配置。
   const newConfigs: Record<string, ScopedMcpServerConfig> = {}
   for (const name of desiredNames) {
     const config = desiredConfigs[name]
@@ -2603,15 +2539,15 @@ export async function reconcileMcpServers(
     configs: newConfigs,
   }
 
-  // Update AppState with the new tools
+  // 使用新工具更新 AppState。
   setAppState((prev) => {
-    // Get all dynamic server names (current + new)
+    // 获取所有动态服务器名称，包括现有项和新增项。
     const allDynamicServerNames = new Set([
       ...Object.keys(currentState.configs),
       ...Object.keys(newConfigs),
     ])
 
-    // Remove old dynamic tools
+    // 移除旧的动态工具。
     const nonDynamicTools = prev.mcp.tools.filter((t) => {
       for (const serverName of allDynamicServerNames) {
         if (t.name.startsWith(`mcp__${serverName}__`)) {
@@ -2621,7 +2557,7 @@ export async function reconcileMcpServers(
       return true
     })
 
-    // Remove old dynamic clients
+    // 移除旧的动态客户端。
     const nonDynamicClients = prev.mcp.clients.filter((c) => {
       return !allDynamicServerNames.has(c.name)
     })

@@ -10,7 +10,7 @@ import { getGraphemeSegmenter } from '../utils/intl.js'
 export type TextObjectRange = { start: number; end: number } | null
 
 /**
- * Delimiter pairs for text objects.
+ * text object 使用的成对分隔符。
  */
 const PAIRS: Record<string, [string, string]> = {
   '(': ['(', ')'],
@@ -29,7 +29,7 @@ const PAIRS: Record<string, [string, string]> = {
 }
 
 /**
- * Find a text object at the given position.
+ * 查找指定位置的 text object。
  */
 export function findTextObject(
   text: string,
@@ -61,13 +61,13 @@ function findWordObject(
   isInner: boolean,
   isWordChar: (ch: string) => boolean,
 ): TextObjectRange {
-  // Pre-segment into graphemes for grapheme-safe iteration
+  // 预先拆分为 grapheme，确保迭代不会拆断字符。
   const graphemes: Array<{ segment: string; index: number }> = []
   for (const { segment, index } of getGraphemeSegmenter().segment(text)) {
     graphemes.push({ segment, index })
   }
 
-  // Find which grapheme index the offset falls in
+  // 查找 offset 所在的 grapheme 索引。
   let graphemeIdx = graphemes.length - 1
   for (let i = 0; i < graphemes.length; i++) {
     const g = graphemes[i]!
@@ -113,7 +113,7 @@ function findWordObject(
   }
 
   if (!isInner) {
-    // Include surrounding whitespace
+    // 包含周围空白。
     if (endIdx < graphemes.length && isWs(endIdx)) {
       while (endIdx < graphemes.length && isWs(endIdx)) {
         endIdx++
@@ -147,7 +147,7 @@ function findQuoteObject(
     }
   }
 
-  // Pair quotes correctly: 0-1, 2-3, 4-5, etc.
+  // 正确配对引号：0-1、2-3、4-5，以此类推。
   for (let i = 0; i < positions.length - 1; i += 2) {
     const qs = positions[i]!
     const qe = positions[i + 1]!

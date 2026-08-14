@@ -1,15 +1,13 @@
 /**
- * PowerShell static command prefix extraction.
+ * PowerShell 静态命令前缀提取。
  *
- * Mirrors bash's getCommandPrefixStatic / getCompoundCommandPrefixesStatic
- * (src/utils/bash/prefix.ts) but uses the PowerShell AST parser instead of
- * tree-sitter. The AST gives us cmd.name and cmd.args already split; for
- * external commands we feed those into the same fig-spec walker bash uses
- * (src/utils/shell/specPrefix.ts) — git/npm/kubectl CLIs are shell-agnostic.
+ * 对应 bash 的 getCommandPrefixStatic / getCompoundCommandPrefixesStatic
+ *（src/utils/bash/prefix.ts），但使用 PowerShell AST parser 而非 tree-sitter。
+ * AST 已提供拆分后的 cmd.name 和 cmd.args；对于外部命令，将其交给 bash 使用的同一
+ * fig-spec walker（src/utils/shell/specPrefix.ts），因为 git/npm/kubectl CLI 与 shell 无关。
  *
- * Feeds the "Yes, and don't ask again for: ___" editable input in the
- * permission dialog — static extractor provides a best-guess prefix, user
- * edits it down if needed.
+ * 为权限对话框中“允许，且不再询问：___”的可编辑输入提供内容；静态提取器给出
+ * 最合理的前缀，用户可按需缩减。
  */
 
 import { countCharInString } from '../../utils/stringUtils.js'
@@ -19,14 +17,13 @@ import { NEVER_SUGGEST } from './dangerousCmdlets.js'
 import { getAllCommands, type ParsedCommandElement, parsePowerShellCommand } from './parser.js'
 
 /**
- * Extract a static prefix from a single parsed command element.
- * Returns null for commands we won't suggest (shells, eval cmdlets, path-like
- * invocations) or can't extract a meaningful prefix from.
+ * 从单个已解析命令元素提取静态前缀。对于不应建议的命令（shell、eval cmdlet、
+ * 路径式调用）或无法提取有意义前缀的命令，返回 null。
  */
 async function extractPrefixFromElement(cmd: ParsedCommandElement): Promise<string | null> {
-  // nameType === 'application' means the raw name had path chars (./x, x\y,
-  // x.exe) — PowerShell will run a file, not a named cmdlet. Don't suggest.
-  // Same reasoning as the permission engine's nameType gate (PR #20096).
+  // nameType === 'application' 表示原始名称含路径字符（./x、x\y、x.exe）；
+  // PowerShell 将运行文件，而非具名 cmdlet，因此不要给出建议。
+  // 理由与权限引擎的 nameType 关卡相同（PR #20096）。
   if (cmd.nameType === 'application') {
     return null
   }
@@ -40,22 +37,22 @@ async function extractPrefixFromElement(cmd: ParsedCommandElement): Promise<stri
     return null
   }
 
-  // Cmdlets (Verb-Noun): the name alone is the right prefix granularity.
-  // Get-Process -Name pwsh → Get-Process. There's no subcommand concept.
+  // 对 Cmdlet（Verb-Noun），只取名称就是合适的前缀粒度。
+  // Get-Process -Name pwsh → Get-Process，因为不存在子命令概念。
   if (cmd.nameType === 'cmdlet') {
     return name
   }
 
-  // External command. Guard the argv before feeding it to buildPrefix.
+  // 外部命令：传给 buildPrefix 前先保护 argv。
   //
-  // elementTypes[0] (command name) must be a literal. `& $cmd status` has
-  // elementTypes[0]='Variable', name='$cmd' — classifies as 'unknown' (no path
-  // chars), passes NEVER_SUGGEST, getCommandSpec('$cmd')=null → returns bare
-  // '$cmd' → dead rule. Cheap to gate here.
+  // elementTypes[0]（命令名）必须是字面量。`& $cmd status` 的
+  // elementTypes[0]='Variable'、name='$cmd'，会因不含路径字符而归类为 'unknown'，
+  // 通过 NEVER_SUGGEST，随后 getCommandSpec('$cmd')=null，返回裸 '$cmd'，形成无效规则。
+  // 在此拦截成本很低。
   //
-  // elementTypes[1..] (args) must all be StringConstant or Parameter. Anything
-  // dynamic (Variable/SubExpression/ScriptBlock/ExpandableString) would embed
-  // `$foo`/`$(...)` in the prefix → dead rule.
+  // elementTypes[1..]（参数）必须全部为 StringConstant 或 Parameter。任何动态类型
+  //（Variable/SubExpression/ScriptBlock/ExpandableString）都会把 `$foo`/`$(...)`
+  // 嵌入前缀，形成无效规则。
   if (cmd.elementTypes?.[0] !== 'StringConstant') {
     return null
   }
@@ -66,37 +63,32 @@ async function extractPrefixFromElement(cmd: ParsedCommandElement): Promise<stri
     }
   }
 
-  // Consult the fig spec — same oracle bash uses. If git's spec says -C takes
-  // a value, buildPrefix skips -C /repo and finds `status` as a subcommand.
-  // Lowercase for lookup: fig specs are filesystem paths (git.js), case-
-  // sensitive on Linux. PowerShell is case-insensitive (Git === git) so `Git`
-  // must resolve to the git spec. macOS hides this bug (case-insensitive fs).
-  // Call buildPrefix unconditionally — calculateDepth consults DEPTH_RULES
-  // before its own `if (!spec) return 2` fallback, so gcloud/aws/kubectl/az
-  // get depth-aware prefixes even without a loaded spec. The old
-  // `if (!spec) return name` short-circuit produced bare `gcloud:*` which
-  // auto-allows every gcloud subcommand.
+  // 查询 bash 使用的同一 fig spec。若 git spec 声明 -C 接收值，buildPrefix 会跳过
+  // -C /repo，并把 `status` 识别为子命令。查询时转为小写：fig spec 是文件系统路径
+  //（git.js），在 Linux 区分大小写；PowerShell 不区分大小写（Git === git），因此 `Git`
+  // 必须解析到 git spec。macOS 的大小写不敏感文件系统会掩盖此问题。
+  // 无条件调用 buildPrefix；calculateDepth 会先查询 DEPTH_RULES，再走自身的
+  // `if (!spec) return 2` 回退，因此即便没有加载 spec，gcloud/aws/kubectl/az 也能获得
+  // 感知深度的前缀。旧的 `if (!spec) return name` 提前返回会生成裸 `gcloud:*`，
+  // 从而永久自动允许所有 gcloud 子命令。
   const nameLower = name.toLowerCase()
   const spec = await getCommandSpec(nameLower)
   const prefix = await buildPrefix(name, cmd.args, spec)
 
-  // Post-buildPrefix word integrity: buildPrefix space-joins consumed args
-  // into the prefix string. parser.ts:685 stores .value (quote-stripped) for
-  // single-quoted literals: git 'push origin' → args=['push origin']. If
-  // that arg is consumed, buildPrefix emits 'git push origin' — silently
-  // promoting 1 argv element to 3 prefix words. Rule PowerShell(git push
-  // origin:*) then matches `git push origin --force` (3-element argv) — not
-  // what the user approved.
+  // buildPrefix 后的单词完整性：buildPrefix 会用空格连接已消费参数并生成前缀字符串。
+  // parser.ts:685 对单引号字面量保存去除引号后的 .value：
+  // git 'push origin' → args=['push origin']。若消费此参数，buildPrefix 会生成
+  // 'git push origin'，悄然把 1 个 argv 元素提升为 3 个前缀单词。这样规则
+  // PowerShell(git push origin:*) 会匹配含 3 个 argv 元素的
+  // `git push origin --force`，并非用户批准的内容。
   //
-  // The old set-membership check (`!cmd.args.includes(word)`) was defeated
-  // by decoy args: `git 'push origin' push origin` → args=['push origin',
-  // 'push', 'origin'], prefix='git push origin'. Each word ∈ args (decoys at
-  // indices 1,2 satisfy .includes()) → passed. Now POSITIONAL: walk args in
-  // order; each prefix word must exactly match the next non-flag arg. A
-  // positional that doesn't match means buildPrefix split it. Flags and
-  // their values are skipped (buildPrefix skips them too) so
-  // `git -C '/my repo' status` and `git commit -m 'fix typo'` still pass.
-  // Backslash (C:\repo) rejected: dead over-specific rule.
+  // 旧的集合成员检查（`!cmd.args.includes(word)`）可被诱饵参数绕过：
+  // `git 'push origin' push origin` → args=['push origin', 'push', 'origin']，
+  // prefix='git push origin'。每个单词都存在于 args 中（索引 1、2 的诱饵满足
+  // .includes()），因而通过。现在改为按位置遍历 args：每个前缀单词必须精确匹配
+  // 下一个非 flag 参数；位置参数不匹配，说明 buildPrefix 拆开了它。flag 及其值会跳过
+  //（buildPrefix 也会跳过），所以 `git -C '/my repo' status` 和
+  // `git commit -m 'fix typo'` 仍能通过。拒绝反斜杠（C:\repo），以免产生无效且过细的规则。
   let argIdx = 0
   for (const word of prefix.split(' ').slice(1)) {
     if (word.includes('\\')) {
@@ -109,9 +101,8 @@ async function extractPrefixFromElement(cmd: ParsedCommandElement): Promise<stri
       }
       if (a.startsWith('-')) {
         argIdx++
-        // Only skip the flag's value if the spec says this flag takes a
-        // value argument. Without spec info, treat as a switch (no value)
-        // — fail-safe avoids over-skipping positional args. (bug #16)
+        // 仅当 spec 声明此 flag 接收值参数时，才跳过该值。没有 spec 信息时视为
+        // 不带值的 switch；这种关闭失败策略可避免多跳过位置参数。（bug #16）
         if (
           spec?.options &&
           argIdx < cmd.args.length &&
@@ -128,7 +119,7 @@ async function extractPrefixFromElement(cmd: ParsedCommandElement): Promise<stri
         }
         continue
       }
-      // Positional arg that isn't the expected word → arg was split.
+      // 位置参数不是预期单词，说明参数被拆开了。
       return null
     }
     if (argIdx >= cmd.args.length) {
@@ -137,13 +128,11 @@ async function extractPrefixFromElement(cmd: ParsedCommandElement): Promise<stri
     argIdx++
   }
 
-  // Bare-root guard: buildPrefix returns 'git' for `git` with no subcommand
-  // found (empty args, or only global flags). That's too broad — would
-  // auto-allow `git push --force` forever. Bash's extractor doesn't gate this
-  // (bash/prefix.ts:363, separate fix). Reject single-word results for
-  // commands whose spec declares subcommands OR that have DEPTH_RULES entries
-  // (gcloud, aws, kubectl, etc.) which implies subcommand structure even
-  // without a loaded spec. (bug #17)
+  // 裸根命令保护：若 `git` 未找到子命令（参数为空或只有全局 flag），buildPrefix
+  // 会返回 'git'，范围过宽，会永久自动允许 `git push --force`。bash 提取器尚未设置
+  // 此关卡（bash/prefix.ts:363，需另行修复）。对于 spec 声明子命令，或具有
+  // DEPTH_RULES 条目（gcloud、aws、kubectl 等，即便未加载 spec 也暗示子命令结构）的命令，
+  // 拒绝单词结果。（bug #17）
   if (!prefix.includes(' ') && (spec?.subcommands?.length || DEPTH_RULES[nameLower])) {
     return null
   }
@@ -151,12 +140,11 @@ async function extractPrefixFromElement(cmd: ParsedCommandElement): Promise<stri
 }
 
 /**
- * Extract a prefix suggestion for a PowerShell command.
+ * 为 PowerShell 命令提取前缀建议。
  *
- * Parses the command, takes the first CommandAst, returns a prefix suitable
- * for the permission dialog's "don't ask again for: ___" editable input.
- * Returns null when no safe prefix can be extracted (parse failure, shell
- * invocation, path-like name, bare subcommand-aware command).
+ * 解析命令并取首个 CommandAst，返回适合权限对话框“不再询问：___”可编辑输入的前缀。
+ * 无法安全提取前缀时返回 null，例如解析失败、shell 调用、路径式名称，
+ * 或只有裸根名称但具有子命令结构的命令。
  */
 export async function getCommandPrefixStatic(
   command: string,
@@ -166,10 +154,9 @@ export async function getCommandPrefixStatic(
     return null
   }
 
-  // Find the first actual command (CommandAst). getAllCommands iterates
-  // both statement.commands and statement.nestedCommands (for &&/||/if/for).
-  // Skip synthetic CommandExpressionAst entries (expression pipeline sources,
-  // non-PipelineAst statement placeholders).
+  // 查找第一条实际命令（CommandAst）。getAllCommands 会遍历 statement.commands 和
+  // statement.nestedCommands（用于 &&/||/if/for）。跳过合成的 CommandExpressionAst
+  // 条目（表达式管道源和非 PipelineAst 语句占位符）。
   const firstCommand = getAllCommands(parsed).find((cmd) => cmd.elementType === 'CommandAst')
   if (!firstCommand) {
     return { commandPrefix: null }
@@ -179,20 +166,18 @@ export async function getCommandPrefixStatic(
 }
 
 /**
- * Extract prefixes for all subcommands in a compound PowerShell command.
+ * 为复合 PowerShell 命令中的所有子命令提取前缀。
  *
- * For `Get-Process; git status && npm test`, returns per-subcommand prefixes.
- * Subcommands for which `excludeSubcommand` returns true (e.g. already
- * read-only/auto-allowed) are skipped — no point suggesting a rule for them.
- * Prefixes sharing a root are collapsed via word-aligned LCP:
+ * 对 `Get-Process; git status && npm test` 返回逐子命令前缀。
+ * 跳过 `excludeSubcommand` 返回 true 的子命令（如已为只读或自动允许），
+ * 因为无需为其建议规则。共享根命令的前缀通过单词对齐的 LCP 合并：
  * `npm run test && npm run lint` → `npm run`.
  *
- * The filter receives the ParsedCommandElement (not cmd.text) because
- * PowerShell's read-only check (isAllowlistedCommand) needs the element's
- * structured fields (nameType, args). Passing text would require reparsing,
- * which spawns pwsh.exe per subcommand — expensive and wasteful since we
- * already have the parsed elements here. Bash's equivalent passes text
- * because BashTool.isReadOnly works from regex/patterns, not parsed AST.
+ * 过滤器接收 ParsedCommandElement 而非 cmd.text，因为 PowerShell 只读检查
+ *（isAllowlistedCommand）需要元素的结构化字段（nameType、args）。若传入文本，
+ * 就必须重新解析，并为每个子命令启动一次 pwsh.exe；此处已有解析结果，这样做既昂贵
+ * 又浪费。Bash 对应实现传入文本，是因为 BashTool.isReadOnly 基于 regex/pattern，
+ * 而非已解析 AST。
  */
 export async function getCompoundCommandPrefixesStatic(
   command: string,
@@ -205,7 +190,7 @@ export async function getCompoundCommandPrefixesStatic(
 
   const commands = getAllCommands(parsed).filter((cmd) => cmd.elementType === 'CommandAst')
 
-  // Single command — no compound collapse needed.
+  // 只有一条命令，无需进行复合命令合并。
   if (commands.length <= 1) {
     const prefix = commands[0] ? await extractPrefixFromElement(commands[0]) : null
     return prefix ? [prefix] : []
@@ -226,21 +211,18 @@ export async function getCompoundCommandPrefixesStatic(
     return []
   }
 
-  // Group by root command (first word) and collapse each group via
-  // word-aligned longest common prefix. `npm run test` + `npm run lint`
-  // → `npm run`. But NEVER collapse down to a bare subcommand-aware root:
-  // `git add` + `git commit` would LCP to `git`, which extractPrefixFromElement
-  // explicitly refuses as too broad (line ~119). Collapsing through that gate
-  // would suggest PowerShell(git:*) → auto-allows git push --force forever.
-  // When LCP yields a bare subcommand-aware root, drop the group entirely
-  // rather than suggest either the too-broad root or N un-collapsed rules.
+  // 按根命令（第一个单词）分组，再通过单词对齐的最长公共前缀合并各组。
+  // `npm run test` + `npm run lint` → `npm run`。但绝不能合并成具有子命令结构的裸根：
+  // `git add` + `git commit` 的 LCP 为 `git`，extractPrefixFromElement 已明确认为它
+  // 范围过宽并拒绝（约 119 行）。绕过该关卡合并会建议 PowerShell(git:*)，
+  // 从而永久自动允许 git push --force。当 LCP 只剩这种裸根时，直接丢弃整个分组，
+  // 不建议过宽根规则，也不建议 N 条未合并规则。
   //
-  // Bash's getCompoundCommandPrefixesStatic has this same collapse without
-  // the guard (src/utils/bash/prefix.ts:360-365) — that's a separate fix.
+  // Bash 的 getCompoundCommandPrefixesStatic 有相同合并，但未设置此关卡
+  //（src/utils/bash/prefix.ts:360-365）；那属于另一项修复。
   //
-  // Grouping and word-comparison are case-insensitive (PowerShell is
-  // case-insensitive: Git === git, Get-Process === get-process). The Map key
-  // is lowercased; the emitted prefix keeps the first-seen casing.
+  // 分组和单词比较不区分大小写（PowerShell 中 Git === git、
+  // Get-Process === get-process）。Map key 使用小写，输出前缀保留首次出现的大小写。
   const groups = new Map<string, string[]>()
   for (const prefix of prefixes) {
     const root = prefix.split(' ')[0]!
@@ -258,10 +240,10 @@ export async function getCompoundCommandPrefixesStatic(
     const lcp = wordAlignedLCP(group)
     const lcpWordCount = lcp === '' ? 0 : countCharInString(lcp, ' ') + 1
     if (lcpWordCount <= 1) {
-      // LCP collapsed to a single word. If that root's fig spec declares
-      // subcommands, this is the same too-broad case extractPrefixFromElement
-      // rejects (bare `git` → allows `git push --force`). Drop the group.
-      // getCommandSpec is LRU-memoized; one lookup per distinct root.
+      // LCP 合并后只剩一个单词。若该根命令的 fig spec 声明了子命令，这就属于
+      // extractPrefixFromElement 拒绝的同类过宽情况（裸 `git` 会允许
+      // `git push --force`），应丢弃该组。getCommandSpec 已用 LRU memoize，
+      // 每个不同根命令只查询一次。
       const rootSpec = await getCommandSpec(rootLower)
       if (rootSpec?.subcommands?.length || DEPTH_RULES[rootLower]) {
         continue
@@ -273,9 +255,8 @@ export async function getCompoundCommandPrefixesStatic(
 }
 
 /**
- * Word-aligned longest common prefix. Doesn't chop mid-word.
- * Case-insensitive comparison (PowerShell: Git === git), emits first
- * string's casing.
+ * 按单词对齐的最长公共前缀，不会从单词中间截断。
+ * 比较不区分大小写（PowerShell 中 Git === git），输出沿用首个字符串的大小写。
  * ["npm run test", "npm run lint"] → "npm run"
  * ["Git status", "git log"] → "Git" (first-seen casing)
  * ["Get-Process"] → "Get-Process"

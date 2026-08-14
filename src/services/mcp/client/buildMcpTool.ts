@@ -22,9 +22,8 @@ type McpToolDefinition = ListToolsResult['tools'][number]
 type EnsureConnectedClient = (client: ConnectedMCPServer) => Promise<ConnectedMCPServer>
 
 /**
- * Encode MCP tool input for the auto-mode security classifier.
- * Exported so the auto-mode eval scripts can mirror production encoding
- * for `mcp__*` tool stubs without duplicating this logic.
+ * 为 auto-mode 安全 classifier 编码 MCP tool 输入。导出后，auto-mode eval 脚本可对
+ * `mcp__*` tool stub 复用生产环境编码，无需复制逻辑。
  */
 export function mcpToolInputToAutoClassifierInput(
   input: Record<string, unknown>,

@@ -41,9 +41,9 @@ import type { FocusedInputDialog } from './useReplOnCancel.js'
 import { ReplVoiceKeybindingHandler, type ReplVoiceState } from './useReplVoice.js'
 
 export interface ReplTranscriptViewProps {
-  // Store
+  // store
   replStore: ReplStoreInstance
-  // Screen / display
+  // screen / 显示
   disableVirtualScroll: boolean
   dumpMode: boolean
   screen: Screen
@@ -52,7 +52,7 @@ export interface ReplTranscriptViewProps {
   titleIsAnimating: boolean
   terminalTitle: string
   titleDisabled: boolean
-  // Messages
+  // 消息
   transcriptMessages: MessageType[]
   transcriptStreamingToolUses: StreamingToolUse[]
   inProgressToolUseIDs: Set<string>
@@ -62,12 +62,12 @@ export interface ReplTranscriptViewProps {
   isLoading: boolean
   // ToolJSX
   toolJSX: ToolJSXState | null
-  // Tools / commands
+  // tool / command
   tools: readonly Tool[]
   commands: Command[]
-  // Scroll
+  // 滚动
   scrollRef: React.RefObject<ScrollBoxHandle | null>
-  // Search
+  // 搜索
   jumpRef: React.RefObject<JumpHandle | null>
   searchOpen: boolean
   setSearchOpen: (v: boolean) => void
@@ -82,13 +82,13 @@ export interface ReplTranscriptViewProps {
   scanElement: ReturnType<typeof useSearchHighlight>['scanElement']
   setPositions: ReturnType<typeof useSearchHighlight>['setPositions']
   editorStatus: string | false
-  // Keybinding props — forwarded as-is; type safety at REPL.tsx call site
+  // keybinding props 原样转发；类型安全由 REPL.tsx 调用点保证
   globalKeybindingProps: Parameters<typeof GlobalKeybindingHandlers>[0]
   cancelRequestProps: Parameters<typeof CancelRequestHandler>[0]
   focusedInputDialog: FocusedInputDialog
-  // Voice
+  // 语音
   voice: ReplVoiceState
-  // Callbacks
+  // callback
   onSubmit: (
     input: string,
     helpers: PromptInputHelpers,

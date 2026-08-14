@@ -1,5 +1,5 @@
-// Extracted from dream.ts so auto-dream ships independently of KAIROS
-// feature flags (dream.ts is behind a feature()-gated require).
+// 从 dream.ts 提取，使 auto-dream 不依赖 KAIROS 功能开关即可发布；dream.ts 由
+// feature() 控制的 require 延迟加载。
 
 import { DIR_EXISTS_GUIDANCE, ENTRYPOINT_NAME, MAX_ENTRYPOINT_LINES } from '../../memdir/memdir.js'
 

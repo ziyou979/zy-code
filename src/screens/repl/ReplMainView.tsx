@@ -1,8 +1,8 @@
 /**
- * ReplMainView -- main prompt-screen render, extracted from REPL.tsx.
+ * ReplMainView：从 REPL.tsx 提取的主 prompt screen renderer。
  *
- * Renders inside <ReplStoreProvider>; reads store state via useReplState().
- * Only truly local values (callbacks, refs, flags) are props.
+ * 在 <ReplStoreProvider> 内渲染，通过 useReplState() 读取 store 状态。
+ * 只有真正局部的值（callback、ref、flag）作为 props 传入。
  */
 
 import { feature } from 'bun:bundle'
@@ -115,23 +115,23 @@ import { ReplVoiceKeybindingHandler } from './useReplVoice.js'
 
 export interface ReplMainViewProps {
   replStore: ReplStoreInstance
-  // Screen state
+  // screen 状态
   screen: Screen
   setScreen: React.Dispatch<React.SetStateAction<Screen>>
   showAllInTranscript: boolean
   setShowAllInTranscript: React.Dispatch<React.SetStateAction<boolean>>
-  // Keybinding flags
+  // keybinding 标志
   titleIsAnimating: boolean
   terminalTitle: string
   titleDisabled: boolean
   showStatusInTerminalTab: boolean
   disableMessageActions: boolean
-  // Transcript hooks output
+  // transcript hook 输出
   handleEnterTranscript: () => void
   handleExitTranscript: () => void
   searchBarOpen: boolean
   virtualScrollActive: boolean
-  // Input state
+  // 输入状态
   inputValue: string
   setInputValue: (v: string) => void
   inputMode: PromptInputMode
@@ -160,7 +160,7 @@ export interface ReplMainViewProps {
     deleteScreenSelection?: (bounds: SelectionBounds) => boolean
     cursorOffset: number
   } | null>
-  // Scroll / divider
+  // 滚动 / divider
   scrollRef: React.RefObject<ScrollBoxHandle | null>
   modalScrollRef: React.RefObject<ScrollBoxHandle | null>
   composedOnScroll: (sticky: boolean, handle: ScrollBoxHandle) => void
@@ -168,9 +168,9 @@ export interface ReplMainViewProps {
   unseenDivider: ReturnType<typeof computeUnseenDivider>
   jumpToNew: (handle: ScrollBoxHandle | null) => void
   repinScroll: () => void
-  // Deferred messages
+  // 延迟消息
   deferredMessages: MessageType[]
-  // Loading state
+  // 加载状态
   isLoading: boolean
   isExternalLoading: boolean
   showStreamingText: boolean
@@ -185,7 +185,7 @@ export interface ReplMainViewProps {
   stopHookSpinnerSuffix: string | null
   responseLengthRef: { readonly current: number }
   clearBashToolsTracking: () => void
-  // Query callbacks
+  // query callback
   onSubmit: (
     input: string,
     helpers: PromptInputHelpers,
@@ -205,24 +205,24 @@ export interface ReplMainViewProps {
   onCancel: () => void
   handleQueuedCommandOnCancel: () => void
   abortController: AbortController | null
-  // Remote
+  // remote
   isRemoteSession: boolean
-  // Voice
+  // 语音
   voice: ReplVoiceState
-  // Misc callbacks
+  // 其他 callback
   handleBackgroundSession: () => void
   mrRender: () => React.ReactNode
   regenerateConversationId: () => void
-  // Tools / commands
+  // tool / command
   tools: readonly Tool[]
   commands: Command[]
   mcpClients: MCPServerConnection[]
   strictMcpConfig: boolean
-  // Permissions
+  // 权限
   setToolPermissionContext: (v: ToolPermissionContext) => void
   canUseTool: CanUseToolFn
   sandboxWireCleanupRef: React.RefObject<Map<string, Array<() => void>>>
-  // Focus
+  // 焦点
   focusedInputDialog: FocusedInputDialog
   hasSuppressedDialogs: boolean
   // IDE
@@ -231,7 +231,7 @@ export interface ReplMainViewProps {
   ideInstallationStatus: IDEExtensionInstallationStatus | null
   showIdeOnboarding: boolean
   setShowIdeOnboarding: (v: boolean) => void
-  // Notifications cluster (only dialog-driving subset)
+  // 通知集合（仅包含驱动 dialog 的子集）
   showEffortCallout: boolean
   setShowEffortCallout: (v: boolean) => void
   showRemoteCallout: boolean
@@ -244,14 +244,14 @@ export interface ReplMainViewProps {
   hintRecommendation: ReplNotificationsCluster['hintRecommendation']
   handleHintResponse: ReplNotificationsCluster['handleHintResponse']
   frustrationDetection: ReplFrustrationDetection
-  // Key for MCP remount
+  // MCP 重新挂载所用的 key
   remountKey: number
-  // Api key
+  // API key
   apiKeyStatus: VerificationStatus
-  // Debug / disabled
+  // debug / disabled
   debug: boolean
   disabled: boolean
-  // Rewind / restore (for MessageSelector)
+  // 回退 / 恢复（供 MessageSelector 使用）
   rewindConversationTo: (msg: UserMessage) => void
   handleRestoreMessage: (msg: UserMessage) => Promise<void>
   // autoUpdater
@@ -701,7 +701,7 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
     streamMode,
   }
 
-  // Stub components (ultraplan gate not imported)
+  // stub 组件（未导入 ultraplan gate）
   const _UltraplanChoiceDialog: React.FC<Record<string, unknown>> = () => null
   const _UltraplanLaunchDialog: React.FC<Record<string, unknown>> = () => null
 

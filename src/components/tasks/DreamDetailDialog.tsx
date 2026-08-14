@@ -16,7 +16,7 @@ type Props = {
   onKill?: () => void
 }
 
-// How many recent turns to render. Earlier turns collapse to a count.
+// 要渲染的最近轮次数；更早的轮次折叠为数量。
 const VISIBLE_TURNS = 6
 export function DreamDetailDialog({ task, onDone, onBack, onKill }: Props) {
   const elapsedTime = useElapsedTime(task.startTime, task.status === 'running', 1000, 0)

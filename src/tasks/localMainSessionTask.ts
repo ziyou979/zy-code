@@ -1,12 +1,12 @@
 /**
- * localMainSessionTask - Handles backgrounding the main session query.
+ * localMainSessionTask：处理主 session query 的后台运行。
  *
- * When user presses Ctrl+B twice during a query, the session is "backgrounded":
+ * 用户在 query 期间连续按两次 Ctrl+B 时，session 会进入“后台”：
  * - The query continues running in the background
  * - The UI clears to a fresh prompt
  * - A notification is sent when the query completes
  *
- * This reuses the LocalAgentTask state structure since the behavior is similar.
+ * 由于行为相似，此处复用 LocalAgentTask state 结构。
  */
 
 import type { UUID } from 'node:crypto'
@@ -42,13 +42,13 @@ import { enqueuePendingNotification } from '../services/input/messageQueueManage
 import { getAgentTranscriptPath, recordSidechainTranscript } from '../services/sessionStorage.js'
 import type { LocalAgentTaskState } from './local-agent-task/LocalAgentTask.js'
 
-// Main session tasks use LocalAgentTaskState with agentType='main-session'
+// 主 session task 使用 agentType='main-session' 的 LocalAgentTaskState
 export type localMainSessionTaskState = LocalAgentTaskState & {
   agentType: 'main-session'
 }
 
 /**
- * Default agent definition for main session tasks when no agent is specified.
+ * 未指定 agent 时，主 session task 使用的默认 agent 定义。
  */
 const DEFAULT_MAIN_SESSION_AGENT: CustomAgentDefinition = {
   agentType: 'main-session',
@@ -58,8 +58,7 @@ const DEFAULT_MAIN_SESSION_AGENT: CustomAgentDefinition = {
 }
 
 /**
- * Generate a unique task ID for main session tasks.
- * Uses 's' prefix to distinguish from agent tasks ('a' prefix).
+ * 为主 session task 生成唯一 ID；使用前缀 's'，与前缀为 'a' 的 agent task 区分。
  */
 const TASK_ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
 
@@ -73,8 +72,7 @@ function generateMainSessionTaskId(): string {
 }
 
 /**
- * Register a backgrounded main session task.
- * Called when the user backgrounds the current session query.
+ * 注册已转入后台的主 session task，在用户把当前 session query 转入后台时调用。
  *
  * @param description - Description of the task
  * @param setAppState - State setter function
@@ -90,29 +88,28 @@ export function registerMainSessionTask(
 ): { taskId: string; abortSignal: AbortSignal } {
   const taskId = generateMainSessionTaskId()
 
-  // Link output to an isolated per-task transcript file (same layout as
-  // sub-agents). Do NOT use getTranscriptPath() — that's the main session's
-  // file, and writing there from a background query after /clear would corrupt
-  // the post-clear conversation. The isolated path lets this task survive
+  // 将输出关联到按 task 隔离的 transcript 文件，布局与 sub-agent 相同。不要使用
+  // getTranscriptPath()，它指向主 session 文件；/clear 后后台 query 若继续写入该文件，
+  // 会破坏清空后的对话。隔离路径让此 task 可以继续存活
   // /clear: the symlink re-link in clearConversation handles session ID changes.
   void initTaskOutputAsSymlink(taskId, getAgentTranscriptPath(asAgentId(taskId)))
 
-  // Use the existing abort controller if provided (important for backgrounding an active query)
-  // This ensures that aborting the task will abort the actual query
+  // 若提供了现有 abort controller 则继续使用，这对正在执行的 query 转后台尤为重要，
+  // 可确保终止 task 时实际 query 也会 abort
   const abortController = existingAbortController ?? createAbortController()
 
   const unregisterCleanup = registerCleanup(async () => {
-    // Clean up on process exit
+    // 进程退出时清理
     setAppState((prev) => {
       const { [taskId]: removed, ...rest } = prev.tasks
       return { ...prev, tasks: rest }
     })
   })
 
-  // Use provided agent definition or default
+  // 使用已提供的 agent 定义，否则使用默认值
   const selectedAgent = mainThreadAgentDefinition ?? DEFAULT_MAIN_SESSION_AGENT
 
-  // Create task state - already backgrounded since this is called when user backgrounds
+  // 创建 task state；调用发生在用户转入后台时，因此初始即为后台状态
   const taskState: localMainSessionTaskState = {
     ...createTaskStateBase(taskId, 'local_agent', description),
     type: 'local_agent',
@@ -137,7 +134,7 @@ export function registerMainSessionTask(
   )
   registerTask(taskState, setAppState)
 
-  // Verify task was registered by checking state
+  // 检查 state，确认 task 已注册
   setAppState((prev) => {
     const hasTask = taskId in prev.tasks
     logForDebugging(
@@ -150,8 +147,7 @@ export function registerMainSessionTask(
 }
 
 /**
- * Complete the main session task and send notification.
- * Called when the backgrounded query finishes.
+ * 完成主 session task 并发送通知，在后台 query 结束时调用。
  */
 export function completeMainSessionTask(
   taskId: string,
@@ -166,7 +162,7 @@ export function completeMainSessionTask(
       return task
     }
 
-    // Track if task was backgrounded (for notification decision)
+    // 记录 task 是否在后台，用于决定是否通知
     wasBackgrounded = task.isBackgrounded ?? true
     toolUseId = task.toolUseId
 
@@ -182,8 +178,7 @@ export function completeMainSessionTask(
 
   void evictTaskOutput(taskId)
 
-  // Only send notification if task is still backgrounded (not foregrounded)
-  // If foregrounded, user is watching it directly - no notification needed
+  // 仅当 task 仍在后台时发送通知；若已回到前台，用户正直接查看，无需通知
   if (wasBackgrounded) {
     enqueueMainSessionNotification(
       taskId,
@@ -193,11 +188,10 @@ export function completeMainSessionTask(
       toolUseId,
     )
   } else {
-    // Foregrounded: no XML notification (TUI user is watching), but SDK
-    // consumers still need to see the task_started bookend close.
-    // Set notified so evictTerminalTask/generateTaskAttachments eviction
-    // guards pass; the backgrounded path sets this inside
-    // enqueueMainSessionNotification's check-and-set.
+    // 已回到前台：TUI 用户正在查看，因此不发 XML 通知；但 SDK consumer 仍需看到
+    // task_started 的收尾事件。设置 notified 以通过 evictTerminalTask/
+    // generateTaskAttachments 的淘汰保护；后台路径会在
+    // enqueueMainSessionNotification 的检查并设置过程中写入该值。
     updateTaskState(taskId, setAppState, (task) => ({ ...task, notified: true }))
     emitTaskTerminatedBridge(taskId, success ? 'completed' : 'failed', {
       toolUseId,
@@ -207,7 +201,7 @@ export function completeMainSessionTask(
 }
 
 /**
- * Enqueue a notification about the backgrounded session completing.
+ * 将后台 session 完成通知加入队列。
  */
 function enqueueMainSessionNotification(
   taskId: string,
@@ -216,7 +210,7 @@ function enqueueMainSessionNotification(
   setAppState: SetAppState,
   toolUseId?: string,
 ): void {
-  // Atomically check and set notified flag to prevent duplicate notifications.
+  // 原子地检查并设置 notified 标志，防止重复通知
   let shouldEnqueue = false
   updateTaskState(taskId, setAppState, (task) => {
     if (task.notified) {
@@ -249,9 +243,8 @@ function enqueueMainSessionNotification(
 }
 
 /**
- * Foreground a main session task - mark it as foregrounded so its output
- * appears in the main view. The background query keeps running.
- * Returns the task's accumulated messages, or undefined if task not found.
+ * 将主 session task 切回前台：标记为前台，使输出显示在主视图中；后台 query 继续运行。
+ * 返回 task 已累积的消息，找不到 task 时返回 undefined。
  */
 export function foregroundMainSessionTask(
   taskId: string,
@@ -267,7 +260,7 @@ export function foregroundMainSessionTask(
 
     taskMessages = (task as localMainSessionTaskState).messages
 
-    // Restore previous foregrounded task to background if it exists
+    // 若存在先前的前台 task，将其恢复为后台
     const prevId = prev.foregroundedTaskId
     const prevTask = prevId ? prev.tasks[prevId] : undefined
     const restorePrev = prevId && prevId !== taskId && prevTask?.type === 'local_agent'
@@ -287,7 +280,7 @@ export function foregroundMainSessionTask(
 }
 
 /**
- * Check if a task is a main session task (vs a regular agent task).
+ * 检查 task 是否为主 session task，而非普通 agent task。
  */
 export function isMainSessionTask(task: unknown): task is localMainSessionTaskState {
   if (typeof task !== 'object' || task === null || !('type' in task) || !('agentType' in task)) {
@@ -298,7 +291,7 @@ export function isMainSessionTask(task: unknown): task is localMainSessionTaskSt
   )
 }
 
-// Max recent activities to keep for display
+// 展示时保留的最近 activity 数量上限
 const MAX_RECENT_ACTIVITIES = 5
 
 type ToolActivity = {
@@ -307,10 +300,9 @@ type ToolActivity = {
 }
 
 /**
- * Start a fresh background session with the given messages.
+ * 使用给定消息启动新的后台 session。
  *
- * Spawns an independent query() call with the current messages and registers it
- * as a background task. The caller's foreground query continues running normally.
+ * 使用当前消息启动独立 query() 调用并注册为后台 task；调用方的前台 query 正常继续。
  */
 export function startBackgroundSession({
   messages,
@@ -327,17 +319,16 @@ export function startBackgroundSession({
 }): string {
   const { taskId, abortSignal } = registerMainSessionTask(description, setAppState, agentDefinition)
 
-  // Persist the pre-backgrounding conversation to the task's isolated
-  // transcript so TaskOutput shows context immediately. Subsequent messages
-  // are written incrementally below.
+  // 将转入后台前的对话保存到 task 的隔离 transcript，使 TaskOutput 能立即显示 context；
+  // 后续消息在下方增量写入。
   void recordSidechainTranscript(messages, taskId).catch((err) =>
     logForDebugging(`bg-session initial transcript write failed: ${err}`),
   )
 
-  // Wrap in agent context so skill invocations scope to this task's agentId
+  // 包装在 agent context 中，使 skill 调用限定到此 task 的 agentId
   // (not null). This lets clearInvokedSkills(preservedAgentIds) selectively
-  // preserve this task's skills across /clear. AsyncLocalStorage isolates
-  // concurrent async chains — this wrapper doesn't affect the foreground.
+  // 让此 task 的 skill 跨 /clear 保留。AsyncLocalStorage 会隔离并发异步链，
+  // 因此此包装不会影响前台。
   const agentContext: SubagentContext = {
     agentId: taskId,
     agentType: 'subagent',
@@ -358,8 +349,8 @@ export function startBackgroundSession({
         ...queryParams,
       })) {
         if (abortSignal.aborted) {
-          // Aborted mid-stream — completeMainSessionTask won't be reached.
-          // chat:killAgents path already marked notified + emitted; stopTask path did not.
+          // 流中途 abort 时不会执行 completeMainSessionTask。
+          // chat:killAgents 路径已标记 notified 并发出事件，stopTask 路径则没有。
           let alreadyNotified = false
           updateTaskState(taskId, setAppState, (task) => {
             alreadyNotified = task.notified === true
@@ -379,8 +370,8 @@ export function startBackgroundSession({
 
         bgMessages.push(event)
 
-        // Per-message write (matches runAgent.ts pattern) — gives live
-        // TaskOutput progress and keeps the transcript file current even if
+        // 按消息写入，与 runAgent.ts 的模式一致；这样既能提供实时 TaskOutput 进度，
+        // 也能确保 transcript 文件始终最新，即使
         // /clear re-links the symlink mid-run.
         void recordSidechainTranscript([event], taskId, lastRecordedUuid).catch((err) =>
           logForDebugging(`bg-session transcript write failed: ${err}`),

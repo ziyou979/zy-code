@@ -35,8 +35,8 @@ export type SessionInfo = {
 }
 
 /**
- * Stable session key → session metadata. Persisted to ~/.zy/server-sessions.json
- * so sessions can be resumed across server restarts.
+ * 稳定会话 key → 会话元数据。持久化到 ~/.zy/server-sessions.json，
+ * 使服务器重启后仍能恢复会话。
  */
 export type SessionIndexEntry = {
   /** Server-assigned session ID (matches the subprocess zy session). */

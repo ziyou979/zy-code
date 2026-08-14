@@ -15,9 +15,8 @@ export type OutputStyleConfig = {
   source: SettingSource | 'built-in' | 'plugin'
   keepCodingInstructions?: boolean
   /**
-   * If true, this output style will be automatically applied when the plugin is enabled.
-   * Only applicable to plugin output styles.
-   * When multiple plugins have forced output styles, only one is chosen (logged via debug).
+   * 为 true 时，启用 plugin 后自动应用此输出风格。仅适用于 plugin 输出风格。
+   * 多个 plugin 强制指定输出风格时只选择一个，并通过 debug 记录。
    */
   forceForPlugin?: boolean
 }
@@ -26,7 +25,7 @@ export type OutputStyles = {
   readonly [K in OutputStyle]: OutputStyleConfig | null
 }
 
-// Used in both the Explanatory and Learning modes
+// Explanatory 与 Learning 模式共用
 const EXPLANATORY_FEATURE_PROMPT = `
 ## Insights
 In order to encourage learning, before and after writing code, always provide brief educational explanations about implementation choices using (with backticks):
@@ -138,7 +137,7 @@ export const getAllOutputStyles = memoize(async function getAllOutputStyles(
   const customStyles = await getOutputStyleDirStyles(cwd)
   const pluginStyles = await loadPluginOutputStyles()
 
-  // Start with built-in modes
+  // 先加入内置模式
   const allStyles = {
     ...OUTPUT_STYLE_CONFIG,
   }
@@ -147,7 +146,7 @@ export const getAllOutputStyles = memoize(async function getAllOutputStyles(
   const userStyles = customStyles.filter((style) => style.source === 'userSettings')
   const projectStyles = customStyles.filter((style) => style.source === 'projectSettings')
 
-  // Add styles in priority order (lowest to highest): built-in, plugin, managed, user, project
+  // 按优先级从低到高加入风格：内置、plugin、managed、user、project
   const styleGroups = [pluginStyles, userStyles, projectStyles, managedStyles]
 
   for (const styles of styleGroups) {
@@ -173,7 +172,7 @@ export function clearAllOutputStylesCache(): void {
 export async function getOutputStyleConfig(): Promise<OutputStyleConfig | null> {
   const allStyles = await getAllOutputStyles(getCwd())
 
-  // Check for forced plugin output styles
+  // 检查 plugin 强制指定的输出风格
   const forcedStyles = Object.values(allStyles).filter(
     (style): style is OutputStyleConfig =>
       style !== null && style.source === 'plugin' && style.forceForPlugin === true,

@@ -302,7 +302,7 @@ export class QueryEngine {
       handleElicitation: this.config.handleElicitation,
       options: {
         commands,
-        debug: false, // we use stdout, so don't want to clobber it
+        debug: false, // 此处使用 stdout，不应覆盖其内容
         tools,
         verbose,
         mainLoopModel: initialMainLoopModel,
@@ -418,10 +418,10 @@ export class QueryEngine {
     const replayableMessages = messagesFromUserInput.filter(
       (msg) =>
         (msg.type === 'user' &&
-          !msg.isMeta && // Skip synthetic caveat messages
-          !msg.toolUseResult && // Skip tool results (they'll be acked from query)
-          messageSelector().selectableUserMessagesFilter(msg)) || // Skip non-user-authored messages (task notifications, etc.)
-        (msg.type === 'system' && msg.subtype === 'compact_boundary'), // Always ack compact boundaries
+          !msg.isMeta && // 跳过合成的提示消息
+          !msg.toolUseResult && // 跳过 Tool 结果（由 query 确认）
+          messageSelector().selectableUserMessagesFilter(msg)) || // 跳过非用户编写的消息（如任务通知）
+        (msg.type === 'system' && msg.subtype === 'compact_boundary'), // 始终确认压缩边界
     )
     const messagesToAck = replayUserMessages ? replayableMessages : []
 
@@ -492,7 +492,7 @@ export class QueryEngine {
       tools,
       mcpClients,
       model: mainLoopModel,
-      permissionMode: initialAppState.toolPermissionContext.mode as PermissionMode, // TODO: avoid the cast
+      permissionMode: initialAppState.toolPermissionContext.mode as PermissionMode, // TODO：消除该类型断言
       commands,
       agents,
       skills,

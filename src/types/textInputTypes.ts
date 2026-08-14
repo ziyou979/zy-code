@@ -9,115 +9,113 @@ import type { UserContentBlock } from './llm.js'
 import type { AssistantMessage, MessageOrigin } from './message.js'
 
 /**
- * Inline ghost text for mid-input command autocomplete
+ * 用于命令输入中途自动补全的内联 ghost text。
  */
 export type InlineGhostText = {
-  /** The ghost text to display (e.g., "mit" for /commit) */
+  /** 要显示的 ghost text（例如 /commit 对应 "mit"）。 */
   readonly text: string
-  /** The full command name (e.g., "commit") */
+  /** 完整命令名（例如 "commit"）。 */
   readonly fullCommand: string
-  /** Position in the input where the ghost text should appear */
+  /** ghost text 在输入中的显示位置。 */
   readonly insertPosition: number
 }
 
 /**
- * Base props for text input components
+ * 文本输入组件的基础 props。
  */
 export type BaseTextInputProps = {
   /**
-   * Optional callback for handling history navigation on up arrow at start of input
+   * 光标位于输入开头并按上箭头时，处理历史导航的可选 callback。
    */
   readonly onHistoryUp?: () => void
 
   /**
-   * Optional callback for handling history navigation on down arrow at end of input
+   * 光标位于输入末尾并按下箭头时，处理历史导航的可选 callback。
    */
   readonly onHistoryDown?: () => void
 
   /**
-   * Text to display when `value` is empty.
+   * `value` 为空时显示的文本。
    */
   readonly placeholder?: string
 
   /**
-   * Allow multi-line input via line ending with backslash (default: `true`)
+   * 是否允许通过行尾反斜杠输入多行内容，默认为 `true`。
    */
   readonly multiline?: boolean
 
   /**
-   * Listen to user's input. Useful in case there are multiple input components
-   * at the same time and input must be "routed" to a specific component.
+   * 是否监听用户输入。多个输入组件同时存在、需要把输入“路由”到特定组件时使用。
    */
   readonly focus?: boolean
 
   /**
-   * Replace all chars and mask the value. Useful for password inputs.
+   * 替换全部字符并遮蔽值，适用于密码输入。
    */
   readonly mask?: string
 
   /**
-   * Whether to show cursor and allow navigation inside text input with arrow keys.
+   * 是否显示光标，并允许用方向键在文本输入中导航。
    */
   readonly showCursor?: boolean
 
   /**
-   * Highlight pasted text
+   * 是否高亮粘贴文本。
    */
   readonly highlightPastedText?: boolean
 
   /**
-   * Value to display in a text input.
+   * 文本输入中显示的值。
    */
   readonly value: string
 
   /**
-   * Function to call when value updates.
+   * 值更新时调用的函数。
    */
   readonly onChange: (value: string) => void
 
   /**
-   * Function to call when `Enter` is pressed, where first argument is a value of the input.
+   * 按下 `Enter` 时调用的函数，首个参数为输入值。
    */
   readonly onSubmit?: (value: string) => void
 
   /**
-   * Function to call when Ctrl+C is pressed to exit.
+   * 按 Ctrl+C 退出时调用的函数。
    */
   readonly onExit?: () => void
 
   /**
-   * Optional callback to show exit message
+   * 显示退出消息的可选 callback。
    */
   readonly onExitMessage?: (show: boolean, key?: string) => void
 
   /**
-   * Optional callback to show custom message
+   * 显示自定义消息的可选 callback。
    */
   // readonly onMessage?: (show: boolean, message?: string) => void
 
   /**
-   * Optional callback to reset history position
+   * 重置历史位置的可选 callback。
    */
   readonly onHistoryReset?: () => void
 
   /**
-   * Optional callback when input is cleared (e.g., double-escape)
+   * 输入被清除（如连按两次 Escape）时的可选 callback。
    */
   readonly onClearInput?: () => void
 
   /**
-   * Number of columns to wrap text at
+   * 文本换行的列数。
    */
   readonly columns: number
 
   /**
-   * Maximum visible lines for the input viewport. When the wrapped input
-   * exceeds this many lines, only lines around the cursor are rendered.
+   * 输入 viewport 的最大可见行数。换行后的输入超过此数时，只渲染光标附近的行。
    */
   readonly maxVisibleLines?: number
 
   /**
-   * Optional callback when an image is pasted
+   * 粘贴图像时的可选 callback。
    */
   readonly onImagePaste?: (
     base64Image: string,
@@ -128,116 +126,112 @@ export type BaseTextInputProps = {
   ) => void
 
   /**
-   * Optional callback when a large text (over 800 chars) is pasted
+   * 粘贴超过 800 个字符的大段文本时的可选 callback。
    */
   readonly onPaste?: (text: string) => void
 
   /**
-   * Callback when the pasting state changes
+   * 粘贴状态变化时的 callback。
    */
   readonly onIsPastingChange?: (isPasting: boolean) => void
 
   /**
-   * Whether to disable cursor movement for up/down arrow keys
+   * 是否禁用上下箭头键移动光标。
    */
   readonly disableCursorMovementForUpDownKeys?: boolean
 
   /**
-   * Skip the text-level double-press escape handler. Set this when a
-   * keybinding context (e.g. Autocomplete) owns escape — the keybinding's
-   * stopImmediatePropagation can't shield the text input because child
-   * effects register useInput listeners before parent effects.
+   * 跳过文本层的双击 Escape handler。当 Escape 由 keybinding context（如 Autocomplete）
+   * 接管时设置；子 effect 会先于父 effect 注册 useInput 监听器，因此 keybinding 的
+   * stopImmediatePropagation 无法隔离文本输入。
    */
   readonly disableEscapeDoublePress?: boolean
 
   /**
-   * The offset of the cursor within the text
+   * 光标在文本中的 offset。
    */
   readonly cursorOffset: number
 
   /**
-   * Callback to set the offset of the cursor
+   * 设置光标 offset 的 callback。
    */
   onChangeCursorOffset: (offset: number) => void
 
   /**
-   * Optional hint text to display after command input
-   * Used for showing available arguments for commands
+   * 命令输入后显示的可选提示文本，用于展示可用命令参数。
    */
   readonly argumentHint?: string
 
   /**
-   * Optional callback for undo functionality
+   * undo 功能的可选 callback。
    */
   readonly onUndo?: () => void
 
   /**
-   * Whether to render the text with dim color
+   * 是否使用暗色渲染文本。
    */
   readonly dimColor?: boolean
 
   /**
-   * Optional text highlights for search results or other highlighting
+   * 用于搜索结果或其他高亮的可选文本高亮项。
    */
   readonly highlights?: TextHighlight[]
 
   /**
-   * Optional custom React element to render as placeholder.
-   * When provided, overrides the standard `placeholder` string rendering.
+   * 用作 placeholder 的可选自定义 React 元素；提供后覆盖标准 `placeholder` 字符串渲染。
    */
   readonly placeholderElement?: React.ReactNode
 
   /**
-   * Optional inline ghost text for mid-input command autocomplete
+   * 用于命令输入中途自动补全的可选内联 ghost text。
    */
   readonly inlineGhostText?: InlineGhostText
 
   /**
-   * Optional filter applied to raw input before key routing. Return the
-   * (possibly transformed) input string; returning '' for a non-empty
-   * input drops the event.
+   * 在按键路由前应用于原始输入的可选 filter。返回可能经过转换的输入字符串；
+   * 对非空输入返回 '' 会丢弃该事件。
    */
   readonly inputFilter?: (input: string, key: Key) => string
 }
 
 /**
- * Extended props for VimTextInput
+ * VimTextInput 的扩展 props。
  */
 export type VimTextInputProps = BaseTextInputProps & {
   /**
-   * Initial vim mode to use
+   * 初始 vim 模式。
    */
   readonly initialMode?: VimMode
 
   /**
-   * Optional callback for mode changes
+   * 模式变化时的可选 callback。
    */
   readonly onModeChange?: (mode: VimMode) => void
 }
 
 /**
- * Vim editor modes
+ * Vim editor 模式。
  */
 export type VimMode = 'INSERT' | 'NORMAL' | 'VISUAL'
 
 /**
- * Common properties for input hook results
+ * 输入 hook 结果的公共属性。
  */
 export type BaseInputState = {
   onInput: (input: string, key: Key) => void
   renderedValue: string
   offset: number
   setOffset: (offset: number) => void
-  /** Cursor line (0-indexed) within the rendered text, accounting for wrapping. */
+  /** 光标在渲染文本中的行号（从 0 开始），已计入换行。 */
   cursorLine: number
-  /** Cursor column (display-width) within the current line. */
+  /** 光标在当前行中的列号，以显示宽度计。 */
   cursorColumn: number
-  /** Character offset in the full text where the viewport starts (0 when no windowing). */
+  /** viewport 起点在完整文本中的字符 offset；未启用窗口化时为 0。 */
   viewportCharOffset: number
-  /** Character offset in the full text where the viewport ends (text.length when no windowing). */
+  /** viewport 终点在完整文本中的字符 offset；未启用窗口化时为 text.length。 */
   viewportCharEnd: number
 
-  // For paste handling
+  // 用于处理粘贴
   isPasting?: boolean
   pasteState?: {
     chunks: string[]
@@ -246,12 +240,12 @@ export type BaseInputState = {
 }
 
 /**
- * State for text input
+ * 文本输入 state。
  */
 export type TextInputState = BaseInputState
 
 /**
- * State for vim input with mode
+ * 包含模式的 vim 输入 state。
  */
 export type VimInputState = BaseInputState & {
   mode: VimMode
@@ -259,108 +253,92 @@ export type VimInputState = BaseInputState & {
 }
 
 /**
- * Input modes for the prompt
+ * prompt 输入模式。
  */
 export type PromptInputMode = 'bash' | 'prompt' | 'orphaned-permission' | 'task-notification'
 
 export type EditablePromptInputMode = Exclude<PromptInputMode, `${string}-notification`>
 
 /**
- * Queue priority levels. Same semantics in both normal and proactive mode.
+ * 队列优先级；普通模式与 proactive 模式语义相同。
  *
- *  - `now`   — Interrupt and send immediately. Aborts any in-flight tool
- *              call (equivalent to Esc + send). Consumers (print.ts,
- *              REPL.tsx) subscribe to queue changes and abort when they
- *              see a 'now' command.
- *  - `next`  — Mid-turn drain. Let the current tool call finish, then
- *              send this message between the tool result and the next API
- *              round-trip. Wakes an in-progress SleepTool call.
- *  - `later` — End-of-turn drain. Wait for the current turn to finish,
- *              then process as a new query. Wakes an in-progress SleepTool
- *              call (query.ts upgrades the drain threshold after sleep so
- *              the message is attached to the same turn).
+ *  - `now`   — 立即中断并发送。abort 所有进行中的 tool call，相当于 Esc + 发送。
+ *              consumer（print.ts、REPL.tsx）订阅队列变化，看到 'now' 命令时 abort。
+ *  - `next`  — turn 中途 drain。等待当前 tool call 完成，再在 tool result 与下次 API
+ *              往返之间发送此消息，并唤醒进行中的 SleepTool 调用。
+ *  - `later` — turn 结束时 drain。等待当前 turn 完成，再作为新 query 处理，并唤醒
+ *              进行中的 SleepTool 调用。query.ts 会在 sleep 后提高 drain 阈值，
+ *              使消息附加到同一 turn。
  *
- * The SleepTool is only available in proactive mode, so "wakes SleepTool"
- * is a no-op in normal mode.
+ * SleepTool 仅在 proactive 模式可用，因此“唤醒 SleepTool”在普通模式下不产生效果。
  */
 export type QueuePriority = 'now' | 'next' | 'later'
 
 /**
- * Queued command type
+ * 入队命令类型。
  */
 export type QueuedCommand = {
   value: string | Array<UserContentBlock>
   mode: PromptInputMode
-  /** Defaults to the priority implied by `mode` when enqueued. */
+  /** 入队时默认为 `mode` 隐含的优先级。 */
   priority?: QueuePriority
   uuid?: UUID
   orphanedPermission?: OrphanedPermission
-  /** Raw pasted contents including images. Images are resized at execution time. */
+  /** 包含图像的原始粘贴内容；图像在执行时调整尺寸。 */
   pastedContents?: Record<number, PastedContent>
   /**
-   * The input string before [Pasted text #N] placeholders were expanded.
-   * Used for ultraplan keyword detection so pasted content containing the
-   * keyword does not trigger a CCR session. Falls back to `value` when
-   * unset (bridge/UDS/MCP sources have no paste expansion).
+   * 展开 [Pasted text #N] placeholder 前的输入字符串。用于 ultraplan 关键词检测，
+   * 避免粘贴内容中的关键词触发 CCR session。未设置时回退到 `value`；
+   * bridge/UDS/MCP 来源没有粘贴展开。
    */
   preExpansionValue?: string
   /**
-   * When true, the input is treated as plain text even if it starts with `/`.
-   * Used for remotely-received messages (e.g. bridge/CCR) that should not
-   * trigger local slash commands or skills.
+   * 为 true 时，即使输入以 `/` 开头也按纯文本处理。用于不应触发本地 slash command
+   * 或 skill 的远程消息（如 bridge/CCR）。
    */
   skipSlashCommands?: boolean
   /**
-   * When true, slash commands are dispatched but filtered through
-   * isBridgeSafeCommand() — 'local-jsx' and terminal-only commands return
-   * a helpful error instead of executing. Set by the Remote Control bridge
-   * inbound path so mobile/web clients can run skills and benign commands
-   * without re-exposing the PR #19134 bug (/model popping the local picker).
+   * 为 true 时仍分发 slash command，但先经 isBridgeSafeCommand() 过滤；'local-jsx'
+   * 和仅终端命令会返回说明性错误，而非执行。Remote Control bridge 入站路径会设置此项，
+   * 使移动端/Web client 能运行 skill 和安全命令，同时避免再次暴露 PR #19134
+   *（/model 弹出本地选择器）问题。
    */
   bridgeOrigin?: boolean
   /**
-   * When true, the resulting UserMessage gets `isMeta: true` — hidden in the
-   * transcript UI but visible to the model. Used by system-generated prompts
-   * (proactive ticks, teammate messages, resource updates) that route through
-   * the queue instead of calling `onQuery` directly.
+   * 为 true 时，生成的 UserMessage 会带 `isMeta: true`：在 transcript UI 中隐藏，
+   * 但模型可见。用于通过队列路由、而非直接调用 `onQuery` 的系统 prompt
+   *（proactive tick、teammate 消息、资源更新）。
    */
   isMeta?: boolean
   /**
-   * Provenance of this command. Stamped onto the resulting UserMessage so the
-   * transcript records origin structurally (not just via XML tags in content).
-   * undefined = human (keyboard).
+   * 命令来源。写入生成的 UserMessage，使 transcript 以结构化方式记录来源，
+   * 而非只依靠内容中的 XML tag。undefined 表示人类键盘输入。
    */
   origin?: MessageOrigin
   /**
-   * Workload tag threaded through to cc_workload= in the billing-header
-   * attribution block. The queue is the async boundary between the cron
-   * scheduler firing and the turn actually running — a user prompt can slip
-   * in between — so the tag rides on the QueuedCommand itself and is only
-   * hoisted into bootstrap state when THIS command is dequeued.
+   * 传递到 billing-header 归因块中 cc_workload= 的 workload tag。队列是 cron
+   * scheduler 触发与 turn 实际运行之间的异步边界，其间可能插入用户 prompt；
+   * 因此 tag 随 QueuedCommand 自身传递，仅在该命令出队时提升到 bootstrap state。
    */
   workload?: string
   /**
-   * Agent that should receive this notification. Undefined = main thread.
-   * Subagents run in-process and share the module-level command queue; the
-   * drain gate in query.ts filters by this field so a subagent's background
-   * task notifications don't leak into the coordinator's context (PR #18453
-   * unified the queue but lost the isolation the dual-queue accidentally had).
+   * 应接收此通知的 agent；undefined 表示主线程。subagent 在进程内运行并共享模块级
+   * 命令队列，query.ts 的 drain gate 按此字段过滤，避免 subagent 的后台 task 通知
+   * 泄漏到 coordinator context。PR #18453 合并队列时丢失了双队列原有的隔离性。
    */
   agentId?: AgentId
 }
 
 /**
- * Type guard for image PastedContent with non-empty data. Empty-content
- * images (e.g. from a 0-byte file drag) yield empty base64 strings that
- * the API rejects with `image cannot be empty`. Use this at every site
- * that converts PastedContent → ImageBlock so the filter and the
- * ID list stay in sync.
+ * 判断图像 PastedContent 数据非空的类型守卫。空内容图像（如拖入 0 字节文件）会生成
+ * 空 base64 字符串，并被 API 以 `image cannot be empty` 拒绝。所有把 PastedContent
+ * 转为 ImageBlock 的位置都应使用此守卫，使 filter 与 ID 列表保持同步。
  */
 export function isValidImagePaste(c: PastedContent): boolean {
   return c.type === 'image' && c.content.length > 0
 }
 
-/** Extract image paste IDs from a QueuedCommand's pastedContents. */
+/** 从 QueuedCommand 的 pastedContents 提取图像粘贴 ID。 */
 export function getImagePasteIds(
   pastedContents: Record<number, PastedContent> | undefined,
 ): number[] | undefined {

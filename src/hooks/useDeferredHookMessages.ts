@@ -2,12 +2,11 @@ import { useCallback, useEffect, useRef } from 'react'
 import type { Message } from '../types/message.js'
 
 /**
- * Manages deferred SessionStart hook messages so the REPL can render
- * immediately instead of blocking on hook execution (~500ms).
+ * 管理延迟到达的 SessionStart hook 消息，使 REPL 可以立即渲染，
+ * 无需等待约 500 毫秒的 hook 执行。
  *
- * Hook messages are injected asynchronously when the promise resolves.
- * Returns a callback that onSubmit should call before the first API
- * request to ensure the model always sees hook context.
+ * promise 完成后异步注入 hook 消息。返回的回调应由 onSubmit 在首次 API 请求前调用，
+ * 确保模型始终能看到 hook 上下文。
  */
 export function useDeferredHookMessages(
   pendingHookMessages: Promise<Message[]> | undefined,

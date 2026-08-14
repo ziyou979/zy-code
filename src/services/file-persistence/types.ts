@@ -1,4 +1,4 @@
-// Stub for src/utils/filePersistence/types.ts
+// src/utils/filePersistence/types.ts 的占位实现
 
 export const DEFAULT_UPLOAD_CONCURRENCY = 4
 export const FILE_COUNT_LIMIT = 100

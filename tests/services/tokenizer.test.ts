@@ -65,7 +65,7 @@ describe('getTokenizerKeyForModel', () => {
     ['codestral-2405', 'mistral'],
     // Cohere
     ['command-r-plus', 'cohere'],
-    // Fallback
+    // 回退逻辑
     ['pangu-pro', 'cl100k_base'],
     ['ernie-4.5-8k', 'cl100k_base'],
     ['hunyuan-turbos', 'cl100k_base'],

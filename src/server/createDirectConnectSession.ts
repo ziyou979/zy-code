@@ -6,7 +6,7 @@ import type { DirectConnectConfig } from './directConnectManager.js'
 import { connectResponseSchema } from './types.js'
 
 /**
- * Errors thrown by createDirectConnectSession when the connection fails.
+ * createDirectConnectSession 连接失败时抛出的错误。
  */
 export class DirectConnectError extends Error {
   constructor(message: string) {
@@ -16,12 +16,12 @@ export class DirectConnectError extends Error {
 }
 
 /**
- * Create a session on a direct-connect server.
+ * 在直连服务器上创建会话。
  *
- * Posts to `${serverUrl}/sessions`, validates the response, and returns
- * a DirectConnectConfig ready for use by the REPL or headless runner.
+ * 向 `${serverUrl}/sessions` 发起 POST 请求，校验响应，并返回可供 REPL 或
+ * headless 运行器直接使用的 DirectConnectConfig。
  *
- * Throws DirectConnectError on network, HTTP, or response-parsing failures.
+ * 网络、HTTP 或响应解析失败时抛出 DirectConnectError。
  */
 export async function createDirectConnectSession({
   serverUrl,

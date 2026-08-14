@@ -73,7 +73,7 @@ function emitDeclaration(node: ts.Node, src: string): string | null {
   }
 
   if (ts.isExportDeclaration(node)) {
-    // export { ... } from / export type { ... } / export * from
+    // 处理 export { ... } from / export type { ... } / export * from
     return full
   }
 
@@ -99,9 +99,9 @@ export function generateSnapshot(file: string): string {
 
   out.sort()
   const header = `// AUTO-GENERATED snapshot of public API for ${basename(file)}.
-// Regenerate: bun scripts/api-snapshot.ts
-// Refactor invariant: this file should NOT diff after restructuring,
-// only when exports are intentionally added/removed/renamed.
+// 重新生成：bun scripts/api-snapshot.ts
+// 重构不变式：结构调整后本文件不应产生 diff，
+// 只有刻意添加、删除或重命名导出时才应变化。
 
 `
   return header + out.join('\n\n') + '\n'

@@ -24,7 +24,7 @@ async function _temp() {
   if (!shouldEnableClaudeInChrome(chromeFlag)) {
     return null
   }
-  // Chrome extension notification requires subscription (not applicable)
+  // Chrome 扩展通知需要订阅，此处不适用
   const installed = await isChromeExtensionInstalled()
   if (!installed && !isRunningOnHomespace()) {
     return {

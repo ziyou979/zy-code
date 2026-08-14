@@ -2,11 +2,10 @@ import { useContext } from 'react'
 import TerminalFocusContext from '../components/TerminalFocusContext.js'
 
 /**
- * Hook to check if the terminal has focus.
+ * 检查终端是否拥有焦点的 hook。
  *
- * Uses DECSET 1004 focus reporting - the terminal sends escape sequences
- * when it gains or loses focus. These are handled automatically
- * by Ink and filtered from useInput.
+ * 使用 DECSET 1004 焦点报告：终端获得或失去焦点时会发送 escape sequence。
+ * Ink 会自动处理这些序列，并在 useInput 中将其过滤掉。
  *
  * @returns true if the terminal is focused (or focus state is unknown)
  */

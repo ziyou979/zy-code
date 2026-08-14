@@ -28,11 +28,10 @@ import { handleMessageFromStream } from '../services/messages/./streaming.js'
 import type { StreamingToolUse } from '../services/messages/./streaming.js'
 import { generateSessionTitle } from '../services/session-storage/sessionTitle.js'
 
-// How long to wait for a response before showing a warning
+// 显示警告前等待响应的时长
 const RESPONSE_TIMEOUT_MS = 60000 // 60 seconds
-// Extended timeout during compaction — compact API calls take 5-30s and
-// block other SDK messages, so the normal 60s timeout isn't enough when
-// compaction itself runs close to the edge.
+// compaction 期间延长超时：compact API 调用需要 5-30 秒且会阻塞其他 SDK 消息，
+// compaction 本身接近上限时，常规 60 秒超时并不够用。
 const COMPACTION_TIMEOUT_MS = 180000 // 3 minutes
 
 type UseRemoteSessionProps = {
@@ -55,13 +54,13 @@ type UseRemoteSessionResult = {
 }
 
 /**
- * Hook for managing a remote CCR session in the REPL.
+ * 在 REPL 中管理 remote CCR 会话的 hook。
  *
- * Handles:
- * - WebSocket connection to CCR
- * - Converting SDK messages to REPL messages
- * - Sending user input to CCR via HTTP POST
- * - Permission request/response flow via existing ToolUseConfirm queue
+ * 负责：
+ * - 建立到 CCR 的 WebSocket 连接
+ * - 将 SDK 消息转换为 REPL 消息
+ * - 通过 HTTP POST 将用户输入发送到 CCR
+ * - 通过现有 ToolUseConfirm 队列处理权限请求/响应流程
  */
 export function useRemoteSession({
   config,
@@ -85,9 +84,8 @@ export function useRemoteSession({
     [setAppState],
   )
 
-  // Event-sourced count of subagents running inside the remote daemon child.
-  // The viewer's own AppState.tasks is empty — tasks live in a different
-  // process. task_started/task_notification reach us via the bridge WS.
+  // remote daemon child 内运行中 subagent 的事件溯源计数。viewer 自身的 AppState.tasks
+  // 为空，任务位于另一进程；task_started/task_notification 通过 bridge WS 到达。
   const runningTaskIdsRef = useRef(new Set<string>())
   const writeTaskCount = useCallback(() => {
     const n = runningTaskIdsRef.current.size
@@ -96,17 +94,16 @@ export function useRemoteSession({
     )
   }, [setAppState])
 
-  // Timer for detecting stuck sessions
+  // 检测会话卡住的定时器
   const responseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Track whether the remote session is compacting. During compaction the
-  // CLI worker is busy with an API call and won't emit messages for a while;
-  // use a longer timeout and suppress spurious "unresponsive" warnings.
+  // 跟踪 remote 会话是否正在 compact。compaction 期间 CLI worker 忙于 API 调用，
+  // 会暂时停止发送消息；此时使用更长超时，避免误报“无响应”。
   const isCompactingRef = useRef(false)
 
   const managerRef = useRef<RemoteSessionManager | null>(null)
 
-  // Track whether we've already updated the session title (for no-initial-prompt sessions)
+  // 跟踪无 initial prompt 会话是否已更新标题
   const hasUpdatedTitleRef = useRef(false)
 
   // UUIDs of user messages we POSTed locally — the WS echoes them back and
@@ -122,15 +119,15 @@ export function useRemoteSession({
   // seeds the set from history UUIDs; only sendMessage populates it).
   const sentUUIDsRef = useRef(new BoundedUUIDSet(50))
 
-  // Keep a ref to tools so the WebSocket callback doesn't go stale
+  // 用 ref 保存 tools，避免 WebSocket callback 捕获旧值
   const toolsRef = useRef(tools)
   useEffect(() => {
     toolsRef.current = tools
   }, [tools])
 
-  // Initialize and connect to remote session
+  // 初始化并连接 remote 会话
   useEffect(() => {
-    // Skip if not in remote mode
+    // 非 remote 模式时跳过
     if (!config) {
       return
     }
@@ -171,7 +168,7 @@ export function useRemoteSession({
           logForDebugging(`[useRemoteSession] Dropping echoed user message ${sdkMessage.uuid}`)
           return
         }
-        // Handle init message - extract available slash commands
+        // 处理 init 消息，提取可用 slash command
         if (sdkMessage.type === 'system' && sdkMessage.subtype === 'init' && onInit) {
           logForDebugging(
             `[useRemoteSession] Init received with ${sdkMessage.slash_commands.length} slash commands`,
@@ -213,7 +210,7 @@ export function useRemoteSession({
           }
         }
 
-        // Check if session ended
+        // 检查会话是否结束
         if (isSessionEndMessage(sdkMessage)) {
           isCompactingRef.current = false
           setIsLoading(false)
@@ -305,12 +302,12 @@ export function useRemoteSession({
             )
           }
         }
-        // 'ignored' messages are silently dropped
+        // 静默丢弃 'ignored' 消息
       },
       onPermissionRequest: (request, requestId) => {
         logForDebugging(`[useRemoteSession] Permission request for tool: ${request.tool_name}`)
 
-        // Look up the Tool object by name, or create a stub for unknown tools
+        // 按名称查找 Tool 对象；未知 tool 则创建 stub
         const tool =
           findToolByName(toolsRef.current, request.tool_name) ?? createToolStub(request.tool_name)
 
@@ -333,7 +330,7 @@ export function useRemoteSession({
           permissionResult,
           permissionPromptStartTimeMs: Date.now(),
           onUserInteraction() {
-            // No-op for remote — classifier runs on the container
+            // remote 模式无需处理，classifier 在 container 上运行
           },
           onAbort() {
             const response: RemotePermissionResponse = {
@@ -354,7 +351,7 @@ export function useRemoteSession({
             setToolUseConfirmQueue((queue) =>
               queue.filter((item) => item.toolUseID !== request.tool_use_id),
             )
-            // Resume loading indicator after approving
+            // 批准后恢复加载指示器
             setIsLoading(true)
           },
           onReject(feedback?: string) {
@@ -368,12 +365,12 @@ export function useRemoteSession({
             )
           },
           async recheckPermission() {
-            // No-op for remote — permission state is on the container
+            // remote 模式无需处理，权限状态位于 container
           },
         }
 
         setToolUseConfirmQueue((queue) => [...queue, toolUseConfirm])
-        // Pause loading indicator while waiting for permission
+        // 等待权限期间暂停加载指示器
         setIsLoading(false)
       },
       onPermissionCancelled: (requestId, toolUseId) => {
@@ -415,7 +412,7 @@ export function useRemoteSession({
 
     return () => {
       logForDebugging('[useRemoteSession] Cleanup - disconnecting')
-      // Clear any pending timeout
+      // 清除待处理的超时
       if (responseTimeoutRef.current) {
         clearTimeout(responseTimeoutRef.current)
         responseTimeoutRef.current = null
@@ -436,7 +433,7 @@ export function useRemoteSession({
     writeTaskCount,
   ])
 
-  // Send a user message to the remote session
+  // 向 remote 会话发送用户消息
   const sendMessage = useCallback(
     async (content: RemoteMessageContent, opts?: { uuid?: string }): Promise<boolean> => {
       const manager = managerRef.current
@@ -445,7 +442,7 @@ export function useRemoteSession({
         return false
       }
 
-      // Clear any existing timeout
+      // 清除已有超时
       if (responseTimeoutRef.current) {
         clearTimeout(responseTimeoutRef.current)
       }
@@ -514,9 +511,9 @@ export function useRemoteSession({
     [config, setIsLoading, setMessages],
   )
 
-  // Cancel the current request on the remote session
+  // 取消 remote 会话上的当前请求
   const cancelRequest = useCallback(() => {
-    // Clear any pending timeout
+    // 清除待处理的超时
     if (responseTimeoutRef.current) {
       clearTimeout(responseTimeoutRef.current)
       responseTimeoutRef.current = null
@@ -531,9 +528,9 @@ export function useRemoteSession({
     setIsLoading(false)
   }, [config, setIsLoading])
 
-  // Disconnect from the session
+  // 断开会话连接
   const disconnect = useCallback(() => {
-    // Clear any pending timeout
+    // 清除待处理的超时
     if (responseTimeoutRef.current) {
       clearTimeout(responseTimeoutRef.current)
       responseTimeoutRef.current = null

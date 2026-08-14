@@ -1,20 +1,20 @@
 /**
- * Command semantics configuration for interpreting exit codes in PowerShell.
+ * 在 PowerShell 中解释退出码的命令语义配置。
  *
- * PowerShell-native cmdlets do NOT need exit-code semantics:
+ * PowerShell 原生 cmdlet 不需要退出码语义：
  *   - Select-String (grep equivalent) exits 0 on no-match (returns $null)
  *   - Compare-Object (diff equivalent) exits 0 regardless
  *   - Test-Path exits 0 regardless (returns bool via pipeline)
- * Native cmdlets signal failure via terminating errors ($?), not exit codes.
+ * 原生 cmdlet 通过终止错误 ($?) 而非退出码表示失败。
  *
- * However, EXTERNAL executables invoked from PowerShell DO set $LASTEXITCODE,
- * and many use non-zero codes to convey information rather than failure:
+ * 但从 PowerShell 调用的外部可执行文件确实会设置 $LASTEXITCODE，
+ * 且许多程序使用非零值传达信息，而非表示失败：
  *   - grep.exe / rg.exe (Git for Windows, scoop, etc.): 1 = no match
  *   - findstr.exe (Windows native): 1 = no match
  *   - robocopy.exe (Windows native): 0-7 = success, 8+ = error (notorious!)
  *
- * Without this module, PowerShellTool throws ShellError on any non-zero exit,
- * so `robocopy` reporting "files copied successfully" (exit 1) shows as an error.
+ * 如无此模块，PowerShellTool 会对任意非零退出码抛出 ShellError，
+ * 导致 `robocopy` 报告“文件复制成功”（退出码 1）时仍显示为错误。
  */
 
 export type CommandSemantic = (
@@ -27,7 +27,7 @@ export type CommandSemantic = (
 }
 
 /**
- * Default semantic: treat only 0 as success, everything else as error
+ * 默认语义：仅将 0 视为成功，其他值均视为错误。
  */
 const DEFAULT_SEMANTIC: CommandSemantic = (exitCode, _stdout, _stderr) => ({
   isError: exitCode !== 0,
@@ -43,8 +43,8 @@ const GREP_SEMANTIC: CommandSemantic = (exitCode, _stdout, _stderr) => ({
 })
 
 /**
- * Command-specific semantics for external executables.
- * Keys are lowercase command names WITHOUT .exe suffix.
+ * 外部可执行文件的命令专属语义。
+ * key 是不带 .exe 后缀的小写命令名。
  *
  * Deliberately omitted:
  *   - 'diff': Ambiguous. Windows PowerShell 5.1 aliases `diff` → Compare-Object
@@ -93,8 +93,8 @@ const COMMAND_SEMANTICS: Map<string, CommandSemantic> = new Map([
 ])
 
 /**
- * Extract the command name from a single pipeline segment.
- * Strips leading `&` / `.` call operators and `.exe` suffix, lowercases.
+ * 从单个 pipeline 片段中提取命令名。
+ * 移除前导 `&` / `.` 调用 operator 和 `.exe` 后缀，并转为小写。
  */
 function extractBaseCommand(segment: string): string {
   // Strip PowerShell call operators: & "cmd", . "cmd"
@@ -124,7 +124,7 @@ function heuristicallyExtractBaseCommand(command: string): string {
 }
 
 /**
- * Interpret command result based on semantic rules
+ * 根据语义规则解释命令结果。
  */
 export function interpretCommandResult(
   command: string,

@@ -1,7 +1,7 @@
 import { isEnvTruthy, isInternalBuild } from '../services/infra/envUtils.js'
 
-// Lazy read so ENABLE_GROWTHBOOK_DEV from globalSettings.env (applied after
-// module load) is picked up. USER_TYPE is a build-time define so it's safe.
+// 延迟读取，以便获取模块加载后才应用的 globalSettings.env.ENABLE_GROWTHBOOK_DEV。
+// USER_TYPE 是构建期 define，因此可以安全读取。
 export function getGrowthBookClientKey(): string {
   return isInternalBuild()
     ? isEnvTruthy(process.env.ENABLE_GROWTHBOOK_DEV)

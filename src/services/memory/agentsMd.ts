@@ -1,28 +1,27 @@
 /**
- * Files are loaded in the following order:
+ * 文件按以下顺序加载：
  *
- * 1. Managed memory (eg. /etc/zy-code/AGENTS.md) - Global instructions for all users
- * 2. User memory (~/.zy/AGENTS.md) - Private global instructions for all projects
- * 3. Project memory (AGENTS.md, .zy/AGENTS.md, and .zy/rules/*.md in project roots) - Instructions checked into the codebase
- * 4. Local memory (AGENTS.local.md in project roots) - Private project-specific instructions
+ * 1. 托管 memory（如 /etc/zy-code/AGENTS.md）：面向所有用户的全局指令
+ * 2. 用户 memory（~/.zy/AGENTS.md）：面向所有项目的私有全局指令
+ * 3. 项目 memory（项目根目录中的 AGENTS.md、.zy/AGENTS.md 和 .zy/rules/*.md）：随代码提交的指令
+ * 4. 本地 memory（项目根目录中的 AGENTS.local.md）：项目专属的私有指令
  *
- * Files are loaded in reverse order of priority, i.e. the latest files are highest priority
- * with the model paying more attention to them.
+ * 文件按优先级从低到高加载，即越晚加载的文件优先级越高，模型会给予更多关注。
  *
- * File discovery:
- * - User memory is loaded from the user's home directory
- * - Project and Local files are discovered by traversing from the current directory up to root
- * - Files closer to the current directory have higher priority (loaded later)
- * - AGENTS.md, .zy/AGENTS.md, and all .md files in .zy/rules/ are checked in each directory for Project memory
+ * 文件发现规则：
+ * - 从用户主目录加载用户 memory
+ * - 从当前目录向上遍历至根目录，发现项目与本地文件
+ * - 越靠近当前目录的文件优先级越高（加载得更晚）
+ * - 在每层目录检查 AGENTS.md、.zy/AGENTS.md 及 .zy/rules/ 下所有 .md 文件，作为项目 memory
  *
- * Memory @include directive:
- * - Memory files can include other files using @ notation
- * - Syntax: @path, @./relative/path, @~/home/path, or @/absolute/path
- * - @path (without prefix) is treated as a relative path (same as @./path)
- * - Works in leaf text nodes only (not inside code blocks or code strings)
- * - Included files are added as separate entries before the including file
- * - Circular references are prevented by tracking processed files
- * - Non-existent files are silently ignored
+ * Memory @include 指令：
+ * - Memory 文件可使用 @ 表示法包含其他文件
+ * - 语法：@path、@./relative/path、@~/home/path 或 @/absolute/path
+ * - 无前缀的 @path 按相对路径处理，与 @./path 相同
+ * - 仅在叶子文本节点中生效，不处理代码块或代码字符串
+ * - 被包含文件会作为独立条目添加在包含方之前
+ * - 通过记录已处理文件避免循环引用
+ * - 不存在的文件会被静默忽略
  */
 
 import { feature } from 'bun:bundle'
@@ -74,31 +73,30 @@ let hasLoggedInitialLoad = false
 
 const MEMORY_INSTRUCTION_PROMPT =
   'Codebase and user instructions are shown below. Be sure to adhere to these instructions. IMPORTANT: These instructions OVERRIDE any default behavior and you MUST follow them exactly as written.'
-// Recommended max character count for a memory file
+// memory 文件建议的最大字符数。
 export const MAX_MEMORY_CHARACTER_COUNT = 40000
 
-// File extensions that are allowed for @include directives
-// This prevents binary files (images, PDFs, etc.) from being loaded into memory
+// @include 指令允许的文件扩展名，避免将图片、PDF 等二进制文件载入 memory。
 const TEXT_FILE_EXTENSIONS = new Set([
-  // Markdown and text
+  // Markdown 与文本。
   '.md',
   '.txt',
   '.text',
-  // Data formats
+  // 数据格式。
   '.json',
   '.yaml',
   '.yml',
   '.toml',
   '.xml',
   '.csv',
-  // Web
+  // Web。
   '.html',
   '.htm',
   '.css',
   '.scss',
   '.sass',
   '.less',
-  // JavaScript/TypeScript
+  // JavaScript/TypeScript。
   '.js',
   '.ts',
   '.tsx',
@@ -107,24 +105,24 @@ const TEXT_FILE_EXTENSIONS = new Set([
   '.cjs',
   '.mts',
   '.cts',
-  // Python
+  // Python。
   '.py',
   '.pyi',
   '.pyw',
-  // Ruby
+  // Ruby。
   '.rb',
   '.erb',
   '.rake',
-  // Go
+  // Go。
   '.go',
-  // Rust
+  // Rust。
   '.rs',
-  // Java/Kotlin/Scala
+  // Java/Kotlin/Scala。
   '.java',
   '.kt',
   '.kts',
   '.scala',
-  // C/C++
+  // C/C++。
   '.c',
   '.cpp',
   '.cc',
@@ -132,11 +130,11 @@ const TEXT_FILE_EXTENSIONS = new Set([
   '.h',
   '.hpp',
   '.hxx',
-  // C#
+  // C#。
   '.cs',
-  // Swift
+  // Swift。
   '.swift',
-  // Shell
+  // Shell。
   '.sh',
   '.bash',
   '.zsh',
@@ -144,29 +142,29 @@ const TEXT_FILE_EXTENSIONS = new Set([
   '.ps1',
   '.bat',
   '.cmd',
-  // Config
+  // 配置文件。
   '.env',
   '.ini',
   '.cfg',
   '.conf',
   '.config',
   '.properties',
-  // Database
+  // 数据库。
   '.sql',
   '.graphql',
   '.gql',
-  // Protocol
+  // 协议。
   '.proto',
-  // Frontend frameworks
+  // 前端框架。
   '.vue',
   '.svelte',
   '.astro',
-  // Templating
+  // 模板。
   '.ejs',
   '.hbs',
   '.pug',
   '.jade',
-  // Other languages
+  // 其他语言。
   '.php',
   '.pl',
   '.pm',
@@ -191,22 +189,22 @@ const TEXT_FILE_EXTENSIONS = new Set([
   '.f90',
   '.f95',
   '.for',
-  // Build files
+  // 构建文件。
   '.cmake',
   '.make',
   '.makefile',
   '.gradle',
   '.sbt',
-  // Documentation
+  // 文档。
   '.rst',
   '.adoc',
   '.asciidoc',
   '.org',
   '.tex',
   '.latex',
-  // Lock files (often text-based)
+  // lock 文件，通常为文本格式。
   '.lock',
-  // Misc
+  // 其他。
   '.log',
   '.diff',
   '.patch',
@@ -218,12 +216,10 @@ export type MemoryFileInfo = {
   content: string
   parent?: string // Path of the file that included this one
   globs?: string[] // Glob patterns for file paths this rule applies to
-  // True when auto-injection transformed `content` (stripped HTML comments,
-  // stripped frontmatter, truncated MEMORY.md) such that it no longer matches
-  // the bytes on disk. When set, `rawContent` holds the unmodified disk bytes
-  // so callers can cache a `isPartialView` readFileState entry — presence in
-  // cache provides dedup + change detection, but Edit/Write still require an
-  // explicit Read before proceeding.
+  // auto-injection 转换 `content`（移除 HTML 注释、移除 frontmatter、截断 MEMORY.md）
+  // 后与磁盘字节不再一致时为 true。设置后，`rawContent` 保存未经修改的磁盘字节，
+  // 供调用方缓存 `isPartialView` readFileState 条目；缓存可用于去重和变更检测，
+  // 但 Edit/Write 在继续前仍要求显式执行 Read。
   contentDiffersFromDisk?: boolean
   rawContent?: string
 }
@@ -233,9 +229,9 @@ function pathInOriginalCwd(path: string): boolean {
 }
 
 /**
- * Parses raw content to extract both content and glob patterns from frontmatter
- * @param rawContent Raw file content with frontmatter
- * @returns Object with content and globs (undefined if no paths or match-all pattern)
+ * 解析原始内容，提取正文及 frontmatter 中的 glob 模式。
+ * @param rawContent 包含 frontmatter 的原始文件内容
+ * @returns 包含 content 和 globs 的对象；无路径或为全匹配模式时 globs 为 undefined
  */
 function parseFrontmatterPaths(rawContent: string): {
   content: string
@@ -249,14 +245,13 @@ function parseFrontmatterPaths(rawContent: string): {
 
   const patterns = splitPathInFrontmatter(frontmatter.paths)
     .map((pattern) => {
-      // Remove /** suffix - ignore library treats 'path' as matching both
-      // the path itself and everything inside it
+      // 移除 /** 后缀；ignore 库会将 'path' 视为同时匹配路径本身及其中所有内容。
       return pattern.endsWith('/**') ? pattern.slice(0, -3) : pattern
     })
     .filter((p: string) => p.length > 0)
 
-  // If all patterns are ** (match-all), treat as no globs (undefined)
-  // This means the file applies to all paths
+  // 若所有模式均为 **（全匹配），则视为未设置 globs（undefined），
+  // 表示该文件适用于所有路径。
   if (patterns.length === 0 || patterns.every((p: string) => p === '**')) {
     return { content }
   }
@@ -265,15 +260,12 @@ function parseFrontmatterPaths(rawContent: string): {
 }
 
 /**
- * Strip block-level HTML comments (<!-- ... -->) from markdown content.
+ * 从 markdown 内容中移除块级 HTML 注释（<!-- ... -->）。
  *
- * Uses the marked lexer to identify comments at the block level only, so
- * comments inside inline code spans and fenced code blocks are preserved.
- * Inline HTML comments inside a paragraph are also left intact; the intended
- * use case is authorial notes that occupy their own lines.
+ * 使用 marked lexer 仅识别块级注释，因此会保留行内代码和围栏代码块内的注释。
+ * 段落中的行内 HTML 注释也保持不变；目标场景是独占一行的作者备注。
  *
- * Unclosed comments (`<!--` with no matching `-->`) are left in place so a
- * typo doesn't silently swallow the rest of the file.
+ * 未闭合的注释（`<!--` 没有匹配的 `-->`）保持原样，避免拼写错误静默吞掉文件余下内容。
  */
 export function stripHtmlComments(content: string): {
   content: string
@@ -282,7 +274,7 @@ export function stripHtmlComments(content: string): {
   if (!content.includes('<!--')) {
     return { content, stripped: false }
   }
-  // gfm:false is fine here — html-block detection is a CommonMark rule.
+  // 此处使用 gfm:false 没有问题，因为 HTML 块检测属于 CommonMark 规则。
   return stripHtmlCommentsFromTokens(new Lexer({ gfm: false }).lex(content))
 }
 
@@ -293,21 +285,20 @@ function stripHtmlCommentsFromTokens(tokens: ReturnType<Lexer['lex']>): {
   let result = ''
   let stripped = false
 
-  // A well-formed HTML comment span. Non-greedy so multiple comments on the
-  // same line are matched independently; [\s\S] to span newlines.
+  // 匹配格式正确的 HTML 注释区段。使用非贪婪匹配，使同一行的多条注释可独立匹配；
+  // [\s\S] 用于跨行匹配。
   const commentSpan = /<!--[\s\S]*?-->/g
 
   for (const token of tokens) {
     if (token.type === 'html') {
       const trimmed = token.raw.trimStart()
       if (trimmed.startsWith('<!--') && trimmed.includes('-->')) {
-        // Per CommonMark, a type-2 HTML block ends at the *line* containing
-        // `-->`, so text after `-->` on that line is part of this token.
-        // Strip only the comment spans and keep any residual content.
+        // 按 CommonMark，type-2 HTML 块在包含 `-->` 的整行结束，因此该行中
+        // `-->` 后的文本也属于此 token。仅移除注释区段，保留其余内容。
         const residue = token.raw.replace(commentSpan, '')
         stripped = true
         if (residue.trim().length > 0) {
-          // Residual content exists (e.g. `<!-- note --> Use bun`): keep it.
+          // 存在剩余内容（如 `<!-- note --> Use bun`）时保留。
           result += residue
         }
         continue
@@ -320,11 +311,10 @@ function stripHtmlCommentsFromTokens(tokens: ReturnType<Lexer['lex']>): {
 }
 
 /**
- * Parses raw memory file content into a MemoryFileInfo. Pure function — no I/O.
+ * 将 memory 文件原始内容解析为 MemoryFileInfo。纯函数，不执行 I/O。
  *
- * When includeBasePath is given, @include paths are resolved in the same lex
- * pass and returned alongside the parsed file (so processMemoryFile doesn't
- * need to lex the same content a second time).
+ * 提供 includeBasePath 时，在同一次 lex 中解析 @include 路径，并与已解析文件
+ * 一同返回，避免 processMemoryFile 对同一内容执行第二次 lex。
  */
 function parseMemoryFileContent(
   rawContent: string,
@@ -332,7 +322,7 @@ function parseMemoryFileContent(
   type: MemoryType,
   includeBasePath?: string,
 ): { info: MemoryFileInfo | null; includePaths: string[] } {
-  // Skip non-text files to prevent loading binary data (images, PDFs, etc.) into memory
+  // 跳过非文本文件，避免将图片、PDF 等二进制数据载入 memory。
   const ext = extname(filePath).toLowerCase()
   if (ext && !TEXT_FILE_EXTENSIONS.has(ext)) {
     logForDebugging(`Skipping non-text file in @include: ${filePath}`)
@@ -341,18 +331,17 @@ function parseMemoryFileContent(
 
   const { content: withoutFrontmatter, paths } = parseFrontmatterPaths(rawContent)
 
-  // Lex once so strip and @include-extract share the same tokens. gfm:false
-  // is required by extract (so ~/path doesn't tokenize as strikethrough) and
-  // doesn't affect strip (html blocks are a CommonMark rule).
+  // 只执行一次 lex，让移除注释与提取 @include 共用 token。extract 要求
+  // gfm:false，以免将 ~/path 解析为删除线；这不影响移除注释，因为 HTML 块属于
+  // CommonMark 规则。
   const hasComment = withoutFrontmatter.includes('<!--')
   const tokens =
     hasComment || includeBasePath !== undefined
       ? new Lexer({ gfm: false }).lex(withoutFrontmatter)
       : undefined
 
-  // Only rebuild via tokens when a comment actually needs stripping —
-  // marked normalises \r\n during lex, so round-tripping a CRLF file
-  // through token.raw would spuriously flip contentDiffersFromDisk.
+  // 仅在确实需要移除注释时通过 token 重建。marked 会在 lex 时规范化 \r\n，
+  // 因此让 CRLF 文件经过 token.raw 往返会错误改变 contentDiffersFromDisk。
   const strippedContent =
     hasComment && tokens ? stripHtmlCommentsFromTokens(tokens).content : withoutFrontmatter
 
@@ -361,13 +350,13 @@ function parseMemoryFileContent(
       ? extractIncludePathsFromTokens(tokens, includeBasePath)
       : []
 
-  // Truncate MEMORY.md entrypoints to the line AND byte caps
+  // 同时按行数和字节上限截断 MEMORY.md 入口文件。
   let finalContent = strippedContent
   if (type === 'AutoMem' || type === 'TeamMem') {
     finalContent = truncateEntrypointContent(strippedContent).content
   }
 
-  // Covers frontmatter strip, HTML comment strip, and MEMORY.md truncation
+  // 覆盖移除 frontmatter、移除 HTML 注释和截断 MEMORY.md 的情况。
   const contentDiffersFromDisk = finalContent !== rawContent
   return {
     info: {
@@ -384,13 +373,13 @@ function parseMemoryFileContent(
 
 function handleMemoryFileReadError(error: unknown, filePath: string): void {
   const code = getErrnoCode(error)
-  // ENOENT = file doesn't exist, EISDIR = is a directory — both expected
+  // ENOENT 表示文件不存在，EISDIR 表示路径为目录，二者均属预期情况。
   if (code === 'ENOENT' || code === 'EISDIR') {
     return
   }
-  // Log permission errors (EACCES) as they're actionable
+  // 权限错误（EACCES）可采取措施解决，因此记录日志。
   if (code === 'EACCES') {
-    // Don't log the full file path to avoid PII/security issues
+    // 不记录完整文件路径，以避免 PII 和安全问题。
     logEvent('zy_agents_md_permission_error', {
       is_access_error: 1,
       has_home_dir: filePath.includes(getZyConfigHomeDir()) ? 1 : 0,
@@ -399,10 +388,9 @@ function handleMemoryFileReadError(error: unknown, filePath: string): void {
 }
 
 /**
- * Used by processMemoryFile → getMemoryFiles so the event loop stays
- * responsive during the directory walk (many readFile attempts, most
- * ENOENT). When includeBasePath is given, @include paths are resolved in
- * the same lex pass and returned alongside the parsed file.
+ * 由 processMemoryFile → getMemoryFiles 使用，使目录遍历期间事件循环保持响应；
+ * 此过程会尝试大量 readFile，其中多数返回 ENOENT。提供 includeBasePath 时，
+ * 在同一次 lex 中解析 @include 路径，并与已解析文件一同返回。
  */
 async function safelyReadMemoryFileAsync(
   filePath: string,
@@ -428,16 +416,15 @@ type MarkdownToken = {
   items?: MarkdownToken[]
 }
 
-// Extract @path include references from pre-lexed tokens and resolve to
-// absolute paths. Skips html tokens so @paths inside block comments are
-// ignored — the caller may pass pre-strip tokens.
+// 从已 lex 的 token 中提取 @path include 引用并解析为绝对路径。跳过 HTML token，
+// 从而忽略块注释内的 @path；调用方可能传入尚未移除注释的 token。
 function extractIncludePathsFromTokens(
   tokens: ReturnType<Lexer['lex']>,
   basePath: string,
 ): string[] {
   const absolutePaths = new Set<string>()
 
-  // Extract @paths from a text string and add resolved paths to absolutePaths.
+  // 从文本字符串提取 @path，并将解析后的路径加入 absolutePaths。
   function extractPathsFromText(textContent: string) {
     const includeRegex = /(?:^|\s)@((?:[^\s\\]|\\ )+)/g
     let match
@@ -447,7 +434,7 @@ function extractIncludePathsFromTokens(
         continue
       }
 
-      // Strip fragment identifiers (#heading, #section-name, etc.)
+      // 移除 fragment 标识符，如 #heading、#section-name。
       const hashIndex = path.indexOf('#')
       if (hashIndex !== -1) {
         path = path.substring(0, hashIndex)
@@ -456,7 +443,7 @@ function extractIncludePathsFromTokens(
         continue
       }
 
-      // Unescape the spaces in the path
+      // 还原路径中转义的空格。
       path = path.replace(/\\ /g, ' ')
 
       // Accept @path, @./path, @~/path, or @/path
@@ -475,16 +462,15 @@ function extractIncludePathsFromTokens(
     }
   }
 
-  // Recursively process elements to find text nodes
+  // 递归处理元素以查找文本节点。
   function processElements(elements: MarkdownToken[]) {
     for (const element of elements) {
       if (element.type === 'code' || element.type === 'codespan') {
         continue
       }
 
-      // For html tokens that contain comments, strip the comment spans and
-      // check the residual for @paths (e.g. `<!-- note --> @./file.md`).
-      // Other html tokens (non-comment tags) are skipped entirely.
+      // 对包含注释的 HTML token，移除注释区段并检查剩余内容中的 @path，
+      // 如 `<!-- note --> @./file.md`。其他 HTML token（非注释标签）完全跳过。
       if (element.type === 'html') {
         const raw = element.raw || ''
         const trimmed = raw.trimStart()
@@ -498,17 +484,17 @@ function extractIncludePathsFromTokens(
         continue
       }
 
-      // Process text nodes
+      // 处理文本节点。
       if (element.type === 'text') {
         extractPathsFromText(element.text || '')
       }
 
-      // Recurse into children tokens
+      // 递归处理子 token。
       if (element.tokens) {
         processElements(element.tokens)
       }
 
-      // Special handling for list structures
+      // 特殊处理列表结构。
       if (element.items) {
         processElements(element.items)
       }
@@ -522,12 +508,11 @@ function extractIncludePathsFromTokens(
 const MAX_INCLUDE_DEPTH = 5
 
 /**
- * Checks whether a AGENTS.md file path is excluded by the agentsMdExcludes setting.
- * Only applies to User, Project, and Local memory types.
- * Managed, AutoMem, and TeamMem types are never excluded.
+ * 检查 AGENTS.md 文件路径是否被 agentsMdExcludes 设置排除。
+ * 仅适用于 User、Project 和 Local memory；Managed、AutoMem、TeamMem 永不排除。
  *
- * Matches both the original path and the realpath-resolved path to handle symlinks
- * (e.g., /tmp -> /private/tmp on macOS).
+ * 同时匹配原始路径和 realpath 解析后的路径，以处理符号链接，
+ * 如 macOS 上的 /tmp -> /private/tmp。
  */
 function isAgentsMdExcluded(filePath: string, type: MemoryType): boolean {
   if (type !== 'User' && type !== 'Project' && type !== 'Local') {
@@ -542,11 +527,10 @@ function isAgentsMdExcluded(filePath: string, type: MemoryType): boolean {
   const matchOpts = { dot: true }
   const normalizedPath = filePath.replaceAll('\\', '/')
 
-  // Build an expanded pattern list that includes realpath-resolved versions of
-  // absolute patterns. This handles symlinks like /tmp -> /private/tmp on macOS:
-  // the user writes "/tmp/project/AGENTS.md" in their exclude, but the system
-  // resolves the CWD to "/private/tmp/project/...", so the file path uses the
-  // real path. By resolving the patterns too, both sides match.
+  // 构造扩展模式列表，加入绝对模式经 realpath 解析后的版本，以处理 macOS 上
+  // /tmp -> /private/tmp 等符号链接。用户在 exclude 中写入
+  // "/tmp/project/AGENTS.md"，系统却将 CWD 解析为 "/private/tmp/project/..."；
+  // 同时解析模式后，两侧即可匹配。
   const expandedPatterns = resolveExcludePatterns(patterns).filter((p) => p.length > 0)
   if (expandedPatterns.length === 0) {
     return false
@@ -556,36 +540,34 @@ function isAgentsMdExcluded(filePath: string, type: MemoryType): boolean {
 }
 
 /**
- * Expands exclude patterns by resolving symlinks in absolute path prefixes.
- * For each absolute pattern (starting with /), tries to resolve the longest
- * existing directory prefix via realpathSync and adds the resolved version.
- * Glob patterns (containing *) have their static prefix resolved.
+ * 通过解析绝对路径前缀中的符号链接来扩展排除模式。对每个以 / 开头的绝对模式，
+ * 尝试用 realpathSync 解析最长的现有目录前缀并添加解析版本；包含 * 的 glob 模式
+ * 则解析其静态前缀。
  */
 function resolveExcludePatterns(patterns: string[]): string[] {
   const fs = getFsImplementation()
   const expanded: string[] = patterns.map((p) => p.replaceAll('\\', '/'))
 
   for (const normalized of expanded) {
-    // Only resolve absolute patterns — glob-only patterns like "**/*.md" don't have
-    // a filesystem prefix to resolve
+    // 仅解析绝对模式；"**/*.md" 等纯 glob 模式没有可解析的文件系统前缀。
     if (!normalized.startsWith('/')) {
       continue
     }
 
-    // Find the static prefix before any glob characters
+    // 查找首个 glob 字符前的静态前缀。
     const globStart = normalized.search(/[*?{[]/)
     const staticPrefix = globStart === -1 ? normalized : normalized.slice(0, globStart)
     const dirToResolve = dirname(staticPrefix)
 
     try {
-      // sync IO: called from sync context (isAgentsMdExcluded -> processMemoryFile -> getMemoryFiles)
+      // 同步 I/O：从同步上下文调用（isAgentsMdExcluded → processMemoryFile → getMemoryFiles）。
       const resolvedDir = fs.realpathSync(dirToResolve).replaceAll('\\', '/')
       if (resolvedDir !== dirToResolve) {
         const resolvedPattern = resolvedDir + normalized.slice(dirToResolve.length)
         expanded.push(resolvedPattern)
       }
     } catch {
-      // Directory doesn't exist; skip resolution for this pattern
+      // 目录不存在，跳过此模式的解析。
     }
   }
 
@@ -593,8 +575,8 @@ function resolveExcludePatterns(patterns: string[]): string[] {
 }
 
 /**
- * Recursively processes a memory file and all its @include references
- * Returns an array of MemoryFileInfo objects with includes first, then main file
+ * 递归处理 memory 文件及其全部 @include 引用，返回 MemoryFileInfo 数组，
+ * 被包含文件在前，主文件在后。
  */
 export async function processMemoryFile(
   filePath: string,
@@ -604,20 +586,19 @@ export async function processMemoryFile(
   depth: number = 0,
   parent?: string,
 ): Promise<MemoryFileInfo[]> {
-  // Skip if already processed or max depth exceeded.
-  // Normalize paths for comparison to handle Windows drive letter casing
-  // differences (e.g., C:\Users vs c:\Users).
+  // 已处理或超过最大深度时跳过。比较前规范化路径，以处理 Windows 驱动器盘符
+  // 大小写差异，如 C:\Users 与 c:\Users。
   const normalizedPath = normalizePathForComparison(filePath)
   if (processedPaths.has(normalizedPath) || depth >= MAX_INCLUDE_DEPTH) {
     return []
   }
 
-  // Skip if path is excluded by agentsMdExcludes setting
+  // 路径被 agentsMdExcludes 设置排除时跳过。
   if (isAgentsMdExcluded(filePath, type)) {
     return []
   }
 
-  // Resolve symlink path early for @import resolution
+  // 提前解析符号链接路径，供 @import 解析使用。
   const { resolvedPath, isSymlink } = safeResolvePath(getFsImplementation(), filePath)
 
   processedPaths.add(normalizedPath)
@@ -634,14 +615,14 @@ export async function processMemoryFile(
     return []
   }
 
-  // Add parent information
+  // 添加父级信息。
   if (parent) {
     memoryFile.parent = parent
   }
 
   const result: MemoryFileInfo[] = []
 
-  // Add the main file first (parent before children)
+  // 先添加主文件，确保父级先于子级。
   result.push(memoryFile)
 
   for (const resolvedIncludePath of resolvedIncludePaths) {
@@ -650,7 +631,7 @@ export async function processMemoryFile(
       continue
     }
 
-    // Recursively process included files with this file as parent
+    // 以当前文件为父级递归处理被包含文件。
     const includedFiles = await processMemoryFile(
       resolvedIncludePath,
       type,
@@ -666,14 +647,14 @@ export async function processMemoryFile(
 }
 
 /**
- * Processes all .md files in the .zy/rules/ directory and its subdirectories
- * @param rulesDir The path to the rules directory
- * @param type Type of memory file (User, Project, Local)
- * @param processedPaths Set of already processed file paths
- * @param includeExternal Whether to include external files
- * @param conditionalRule If true, only include files with frontmatter paths; if false, only include files without frontmatter paths
- * @param visitedDirs Set of already visited directory real paths (for cycle detection)
- * @returns Array of MemoryFileInfo objects
+ * 处理 .zy/rules/ 目录及其子目录中的所有 .md 文件。
+ * @param rulesDir rules 目录路径
+ * @param type memory 文件类型（User、Project、Local）
+ * @param processedPaths 已处理文件路径集合
+ * @param includeExternal 是否包含外部文件
+ * @param conditionalRule 为 true 时仅包含带 frontmatter paths 的文件；为 false 时仅包含不带该字段的文件
+ * @param visitedDirs 已访问目录的真实路径集合，用于检测循环
+ * @returns MemoryFileInfo 对象数组
  */
 export async function processMdRules({
   rulesDir,
@@ -720,8 +701,7 @@ export async function processMdRules({
       const entryPath = join(rulesDir, entry.name)
       const { resolvedPath: resolvedEntryPath, isSymlink } = safeResolvePath(fs, entryPath)
 
-      // Use Dirent methods for non-symlinks to avoid extra stat calls.
-      // For symlinks, we need stat to determine what the target is.
+      // 非符号链接使用 Dirent 方法，避免额外 stat；符号链接则需 stat 判断目标类型。
       const stats = isSymlink ? await fs.stat(resolvedEntryPath) : null
       const isDirectory = stats ? stats.isDirectory() : entry.isDirectory()
       const isFile = stats ? stats.isFile() : entry.isFile()
@@ -771,12 +751,12 @@ export const getMemoryFiles = memoize(
     const includeExternal =
       forceIncludeExternal || config.hasAgentsMdExternalIncludesApproved || false
 
-    // Process Managed file first (always loaded - policy settings)
+    // 先处理 Managed 文件；作为策略设置始终加载。
     const managedAgentsMd = getMemoryPath('Managed')
     result.push(
       ...(await processMemoryFile(managedAgentsMd, 'Managed', processedPaths, includeExternal)),
     )
-    // Process Managed .zy/rules/*.md files
+    // 处理 Managed .zy/rules/*.md 文件。
     const managedZyRulesDir = getManagedZyRulesDir()
     result.push(
       ...(await processMdRules({
@@ -788,7 +768,7 @@ export const getMemoryFiles = memoize(
       })),
     )
 
-    // Process User file (only if userSettings is enabled)
+    // 仅在启用 userSettings 时处理 User 文件。
     if (isSettingSourceEnabled('userSettings')) {
       const userAgentsMd = getMemoryPath('User')
       result.push(
@@ -799,7 +779,7 @@ export const getMemoryFiles = memoize(
           true, // User memory can always include external files
         )),
       )
-      // Process User ~/.zy/rules/*.md files
+      // 处理 User ~/.zy/rules/*.md 文件。
       const userZyRulesDir = getUserZyRulesDir()
       result.push(
         ...(await processMdRules({
@@ -812,7 +792,7 @@ export const getMemoryFiles = memoize(
       )
     }
 
-    // Then process Project and Local files
+    // 随后处理 Project 和 Local 文件。
     const dirs: string[] = []
     const originalCwd = getOriginalCwd()
     let currentDir = originalCwd
@@ -822,14 +802,11 @@ export const getMemoryFiles = memoize(
       currentDir = dirname(currentDir)
     }
 
-    // When running from a git worktree nested inside its main repo (e.g.,
-    // .zy/worktrees/<name>/ from `zy -w`), the upward walk passes
-    // through both the worktree root and the main repo root. Both contain
-    // checked-in files like AGENTS.md and .zy/rules/*.md, so the same
-    // content gets loaded twice. Skip Project-type (checked-in) files from
-    // directories above the worktree but within the main repo — the worktree
-    // already has its own checkout. AGENTS.local.md is gitignored so it only
-    // exists in the main repo and is still loaded.
+    // 从嵌套在主仓库内的 git worktree（如 `zy -w` 创建的
+    // .zy/worktrees/<name>/）运行时，向上遍历会同时经过 worktree 根目录和主仓库
+    // 根目录。两者都有 AGENTS.md、.zy/rules/*.md 等已提交文件，会重复加载内容。
+    // 因此跳过 worktree 上方但仍位于主仓库内目录的 Project 类型文件；worktree
+    // 已有自己的 checkout。AGENTS.local.md 被 gitignore，仅存在于主仓库，仍需加载。
     // See: https://github.com/anthropics/zy-code/issues/29599
     const gitRoot = findGitRoot(originalCwd)
     const canonicalRoot = findCanonicalGitRoot(originalCwd)
@@ -839,29 +816,29 @@ export const getMemoryFiles = memoize(
       normalizePathForComparison(gitRoot) !== normalizePathForComparison(canonicalRoot) &&
       pathInWorkingPath(gitRoot, canonicalRoot)
 
-    // Process from root downward to CWD
+    // 从根目录向下处理至 CWD。
     for (const dir of dirs.reverse()) {
-      // In a nested worktree, skip checked-in files from the main repo's
-      // working tree (dirs inside canonicalRoot but outside the worktree).
+      // 嵌套 worktree 中跳过主仓库工作树里的已提交文件，即 canonicalRoot 内、
+      // worktree 外的目录。
       const skipProject =
         isNestedWorktree &&
         pathInWorkingPath(dir, canonicalRoot) &&
         !pathInWorkingPath(dir, gitRoot)
 
-      // Try reading AGENTS.md (Project) - only if projectSettings is enabled
+      // 仅在启用 projectSettings 时尝试读取 Project AGENTS.md。
       if (isSettingSourceEnabled('projectSettings') && !skipProject) {
         const projectPath = join(dir, 'AGENTS.md')
         result.push(
           ...(await processMemoryFile(projectPath, 'Project', processedPaths, includeExternal)),
         )
 
-        // Try reading .zy/AGENTS.md (Project)
+        // 尝试读取 Project .zy/AGENTS.md。
         const dotZyPath = join(dir, '.zy', 'AGENTS.md')
         result.push(
           ...(await processMemoryFile(dotZyPath, 'Project', processedPaths, includeExternal)),
         )
 
-        // Try reading .zy/rules/*.md files (Project)
+        // 尝试读取 Project .zy/rules/*.md 文件。
         const rulesDir = join(dir, '.zy', 'rules')
         result.push(
           ...(await processMdRules({
@@ -874,7 +851,7 @@ export const getMemoryFiles = memoize(
         )
       }
 
-      // Try reading AGENTS.local.md (Local) - only if localSettings is enabled
+      // 仅在启用 localSettings 时尝试读取 Local AGENTS.local.md。
       if (isSettingSourceEnabled('localSettings')) {
         const localPath = join(dir, 'AGENTS.local.md')
         result.push(
@@ -883,26 +860,26 @@ export const getMemoryFiles = memoize(
       }
     }
 
-    // Process AGENTS.md from additional directories (--add-dir) if env var is enabled
-    // This is controlled by ZY_CODE_ADDITIONAL_DIRECTORIES_ZY_MD and defaults to off
-    // Note: we don't check isSettingSourceEnabled('projectSettings') here because --add-dir
-    // is an explicit user action and the SDK defaults settingSources to [] when not specified
+    // 环境变量启用时处理额外目录（--add-dir）中的 AGENTS.md。该行为由
+    // ZY_CODE_ADDITIONAL_DIRECTORIES_ZY_MD 控制，默认关闭。此处不检查
+    // isSettingSourceEnabled('projectSettings')，因为 --add-dir 是显式用户操作，
+    // 且 SDK 未指定 settingSources 时默认为 []。
     if (isEnvTruthy(process.env.ZY_CODE_ADDITIONAL_DIRECTORIES_ZY_MD)) {
       const additionalDirs = getAdditionalDirectoriesForAgentsMd()
       for (const dir of additionalDirs) {
-        // Try reading AGENTS.md from the additional directory
+        // 尝试读取额外目录中的 AGENTS.md。
         const projectPath = join(dir, 'AGENTS.md')
         result.push(
           ...(await processMemoryFile(projectPath, 'Project', processedPaths, includeExternal)),
         )
 
-        // Try reading .zy/AGENTS.md from the additional directory
+        // 尝试读取额外目录中的 .zy/AGENTS.md。
         const dotZyPath = join(dir, '.zy', 'AGENTS.md')
         result.push(
           ...(await processMemoryFile(dotZyPath, 'Project', processedPaths, includeExternal)),
         )
 
-        // Try reading .zy/rules/*.md files from the additional directory
+        // 尝试读取额外目录中的 .zy/rules/*.md 文件。
         const rulesDir = join(dir, '.zy', 'rules')
         result.push(
           ...(await processMdRules({
@@ -916,7 +893,7 @@ export const getMemoryFiles = memoize(
       }
     }
 
-    // Memdir entrypoint (memory.md) - only if feature is on and file exists
+    // Memdir 入口（memory.md）：仅在功能开启且文件存在时处理。
     if (isAutoMemoryEnabled()) {
       const { info: memdirEntry } = await safelyReadMemoryFileAsync(
         getAutoMemEntrypoint(),
@@ -931,7 +908,7 @@ export const getMemoryFiles = memoize(
       }
     }
 
-    // Team memory entrypoint - only if feature is on and file exists
+    // Team memory 入口：仅在功能开启且文件存在时处理。
     if (feature('TEAMMEM') && teamMemPaths!.isTeamMemoryEnabled()) {
       const { info: teamMemEntry } = await safelyReadMemoryFileAsync(
         teamMemPaths!.getTeamMemEntrypoint(),
@@ -974,17 +951,14 @@ export const getMemoryFiles = memoize(
       })
     }
 
-    // Fire InstructionsLoaded hook for each instruction file loaded
-    // (fire-and-forget, audit/observability only).
-    // AutoMem/TeamMem are intentionally excluded — they're a separate
-    // memory system, not "instructions" in the AGENTS.md/rules sense.
-    // Gated on !forceIncludeExternal: the forceIncludeExternal=true variant
-    // is only used by getExternalAgentsMdIncludes() for approval checks, not
-    // for building context — firing the hook there would double-fire on startup.
-    // The one-shot flag is consumed on every !forceIncludeExternal cache miss
-    // (NOT gated on hasInstructionsLoadedHook) so the flag is released even
-    // when no hook is configured — otherwise a mid-session hook registration
-    // followed by a direct .cache.clear() would spuriously fire with a stale
+    // 为每个已加载的指令文件触发 InstructionsLoaded hook；fire-and-forget，
+    // 仅用于审计和可观测性。有意排除 AutoMem/TeamMem，因为它们属于另一套 memory
+    // 系统，不是 AGENTS.md/rules 意义上的“instructions”。以 !forceIncludeExternal
+    // 为条件：forceIncludeExternal=true 仅供 getExternalAgentsMdIncludes() 做审批
+    // 检查，不用于构建上下文；在那里触发会导致启动时重复。每次
+    // !forceIncludeExternal 缓存未命中都会消费 one-shot flag，不受
+    // hasInstructionsLoadedHook 控制，从而即使未配置 hook 也能释放 flag；否则会话
+    // 中途注册 hook 后直接 .cache.clear()，会错误地以陈旧状态触发。
     // 'session_start' reason.
     if (!forceIncludeExternal) {
       const eagerLoadReason = consumeNextEagerLoadReason()
@@ -1010,18 +984,16 @@ function isInstructionsMemoryType(type: MemoryType): type is InstructionsMemoryT
   return type === 'User' || type === 'Project' || type === 'Local' || type === 'Managed'
 }
 
-// Load reason to report for top-level (non-included) files on the next eager
-// getMemoryFiles() pass. Set to 'compact' by resetGetMemoryFilesCache when
-// compaction clears the cache, so the InstructionsLoaded hook reports the
-// reload correctly instead of misreporting it as 'session_start'. One-shot:
-// reset to 'session_start' after being read.
+// 下次主动执行 getMemoryFiles() 时，顶层（非 include）文件要报告的加载原因。
+// compact 清除缓存时由 resetGetMemoryFilesCache 设为 'compact'，使
+// InstructionsLoaded hook 正确报告重新加载，而非误报为 'session_start'。
+// 该值为 one-shot，读取后重置为 'session_start'。
 let nextEagerLoadReason: InstructionsLoadReason = 'session_start'
 
-// Whether the InstructionsLoaded hook should fire on the next cache miss.
-// true initially (for session_start), consumed after firing, re-enabled only
-// by resetGetMemoryFilesCache(). Callers that only need cache invalidation
-// for correctness (e.g. worktree enter/exit, settings sync, /memory dialog)
-// should use clearMemoryFileCaches() instead to avoid spurious hook fires.
+// 下次缓存未命中时是否应触发 InstructionsLoaded hook。初始为 true，供
+// session_start 使用，触发后消费，仅由 resetGetMemoryFilesCache() 重新启用。
+// 只需为正确性使缓存失效的调用方（如 worktree 进入/退出、设置同步、/memory
+// 对话框）应改用 clearMemoryFileCaches()，避免错误触发 hook。
 let shouldFireHook = true
 
 function consumeNextEagerLoadReason(): InstructionsLoadReason | undefined {
@@ -1035,16 +1007,14 @@ function consumeNextEagerLoadReason(): InstructionsLoadReason | undefined {
 }
 
 /**
- * Clears the getMemoryFiles memoize cache
- * without firing the InstructionsLoaded hook.
+ * 清除 getMemoryFiles memoize 缓存，但不触发 InstructionsLoaded hook。
  *
- * Use this for cache invalidation that is purely for correctness (e.g.
- * worktree enter/exit, settings sync, /memory dialog). For events that
- * represent instructions actually being reloaded into context (e.g.
- * compaction), use resetGetMemoryFilesCache() instead.
+ * 用于仅为正确性而使缓存失效的场景，如 worktree 进入/退出、设置同步、/memory
+ * 对话框。对于实际将指令重新载入上下文的事件（如 compact），改用
+ * resetGetMemoryFilesCache()。
  */
 export function clearMemoryFileCaches(): void {
-  // ?.cache because tests spyOn this, which replaces the memoize wrapper.
+  // 使用 ?.cache，因为测试会 spyOn 此函数并替换 memoize wrapper。
   getMemoryFiles.cache?.clear?.()
 }
 
@@ -1059,10 +1029,9 @@ export function getLargeMemoryFiles(files: MemoryFileInfo[]): MemoryFileInfo[] {
 }
 
 /**
- * When zy_moth_copse is on, the findRelevantMemories prefetch surfaces
- * memory files via attachments, so the MEMORY.md index is no longer injected
- * into the system prompt. Callsites that care about "what's actually in
- * context" (context builder, /context viz) should filter through this.
+ * zy_moth_copse 开启时，findRelevantMemories prefetch 会通过附件提供 memory 文件，
+ * 因此不再将 MEMORY.md 索引注入 system prompt。关注“上下文中实际有哪些内容”的
+ * 调用点（context builder、/context 可视化）应通过此函数过滤。
  */
 export function filterInjectedMemoryFiles(files: MemoryFileInfo[]): MemoryFileInfo[] {
   const skipMemoryIndex = getFeatureValue_CACHED_MAY_BE_STALE('zy_moth_copse', false)
@@ -1117,12 +1086,11 @@ export const getAgentsMds = (
 }
 
 /**
- * Gets managed and user conditional rules that match the target path.
- * This is the first phase of nested memory loading.
+ * 获取匹配目标路径的 managed 与 user 条件规则。这是嵌套 memory 加载的第一阶段。
  *
- * @param targetPath The target file path to match against glob patterns
- * @param processedPaths Set of already processed file paths (will be mutated)
- * @returns Array of MemoryFileInfo objects for matching conditional rules
+ * @param targetPath 要与 glob 模式匹配的目标文件路径
+ * @param processedPaths 已处理文件路径集合，会被修改
+ * @returns 匹配条件规则的 MemoryFileInfo 对象数组
  */
 export async function getManagedAndUserConditionalRules(
   targetPath: string,
@@ -1130,7 +1098,7 @@ export async function getManagedAndUserConditionalRules(
 ): Promise<MemoryFileInfo[]> {
   const result: MemoryFileInfo[] = []
 
-  // Process Managed conditional .zy/rules/*.md files
+  // 处理 Managed 条件 .zy/rules/*.md 文件。
   const managedZyRulesDir = getManagedZyRulesDir()
   result.push(
     ...(await processConditionedMdRules(
@@ -1143,7 +1111,7 @@ export async function getManagedAndUserConditionalRules(
   )
 
   if (isSettingSourceEnabled('userSettings')) {
-    // Process User conditional .zy/rules/*.md files
+    // 处理 User 条件 .zy/rules/*.md 文件。
     const userZyRulesDir = getUserZyRulesDir()
     result.push(
       ...(await processConditionedMdRules(
@@ -1160,13 +1128,13 @@ export async function getManagedAndUserConditionalRules(
 }
 
 /**
- * Gets memory files for a single nested directory (between CWD and target).
- * Loads AGENTS.md, unconditional rules, and conditional rules for that directory.
+ * 获取单个嵌套目录（CWD 与目标之间）的 memory 文件，并加载该目录的 AGENTS.md、
+ * 无条件规则和条件规则。
  *
- * @param dir The directory to process
- * @param targetPath The target file path (for conditional rule matching)
- * @param processedPaths Set of already processed file paths (will be mutated)
- * @returns Array of MemoryFileInfo objects
+ * @param dir 要处理的目录
+ * @param targetPath 用于匹配条件规则的目标文件路径
+ * @param processedPaths 已处理文件路径集合，会被修改
+ * @returns MemoryFileInfo 对象数组
  */
 export async function getMemoryFilesForNestedDirectory(
   dir: string,
@@ -1175,7 +1143,7 @@ export async function getMemoryFilesForNestedDirectory(
 ): Promise<MemoryFileInfo[]> {
   const result: MemoryFileInfo[] = []
 
-  // Process project memory files (AGENTS.md and .zy/AGENTS.md)
+  // 处理项目 memory 文件（AGENTS.md 和 .zy/AGENTS.md）。
   if (isSettingSourceEnabled('projectSettings')) {
     const projectPath = join(dir, 'AGENTS.md')
     result.push(...(await processMemoryFile(projectPath, 'Project', processedPaths, false)))
@@ -1183,7 +1151,7 @@ export async function getMemoryFilesForNestedDirectory(
     result.push(...(await processMemoryFile(dotZyPath, 'Project', processedPaths, false)))
   }
 
-  // Process local memory file (AGENTS.local.md)
+  // 处理本地 memory 文件（AGENTS.local.md）。
   if (isSettingSourceEnabled('localSettings')) {
     const localPath = join(dir, 'AGENTS.local.md')
     result.push(...(await processMemoryFile(localPath, 'Local', processedPaths, false)))
@@ -1191,8 +1159,8 @@ export async function getMemoryFilesForNestedDirectory(
 
   const rulesDir = join(dir, '.zy', 'rules')
 
-  // Process project unconditional .zy/rules/*.md files, which were not eagerly loaded
-  // Use a separate processedPaths set to avoid marking conditional rule files as processed
+  // 处理未主动加载的项目无条件 .zy/rules/*.md 文件。使用独立 processedPaths 集合，
+  // 避免将条件规则文件标记为已处理。
   const unconditionalProcessedPaths = new Set(processedPaths)
   result.push(
     ...(await processMdRules({
@@ -1204,12 +1172,12 @@ export async function getMemoryFilesForNestedDirectory(
     })),
   )
 
-  // Process project conditional .zy/rules/*.md files
+  // 处理项目条件 .zy/rules/*.md 文件。
   result.push(
     ...(await processConditionedMdRules(targetPath, rulesDir, 'Project', processedPaths, false)),
   )
 
-  // processedPaths must be seeded with unconditional paths for subsequent directories
+  // processedPaths 必须以无条件路径作为初始值，供后续目录使用。
   for (const path of unconditionalProcessedPaths) {
     processedPaths.add(path)
   }
@@ -1218,13 +1186,13 @@ export async function getMemoryFilesForNestedDirectory(
 }
 
 /**
- * Gets conditional rules for a CWD-level directory (from root up to CWD).
- * Only processes conditional rules since unconditional rules are already loaded eagerly.
+ * 获取 CWD 层级目录（从根目录至 CWD）的条件规则。无条件规则已主动加载，
+ * 因此这里只处理条件规则。
  *
- * @param dir The directory to process
- * @param targetPath The target file path (for conditional rule matching)
- * @param processedPaths Set of already processed file paths (will be mutated)
- * @returns Array of MemoryFileInfo objects
+ * @param dir 要处理的目录
+ * @param targetPath 用于匹配条件规则的目标文件路径
+ * @param processedPaths 已处理文件路径集合，会被修改
+ * @returns MemoryFileInfo 对象数组
  */
 export async function getConditionalRulesForCwdLevelDirectory(
   dir: string,
@@ -1236,14 +1204,14 @@ export async function getConditionalRulesForCwdLevelDirectory(
 }
 
 /**
- * Processes all .md files in the .zy/rules/ directory and its subdirectories,
- * filtering to only include files with frontmatter paths that match the target path
- * @param targetPath The file path to match against frontmatter glob patterns
- * @param rulesDir The path to the rules directory
- * @param type Type of memory file (User, Project, Local)
- * @param processedPaths Set of already processed file paths
- * @param includeExternal Whether to include external files
- * @returns Array of MemoryFileInfo objects that match the target path
+ * 处理 .zy/rules/ 目录及其子目录中的所有 .md 文件，仅保留 frontmatter paths
+ * 匹配目标路径的文件。
+ * @param targetPath 要与 frontmatter glob 模式匹配的文件路径
+ * @param rulesDir rules 目录路径
+ * @param type memory 文件类型（User、Project、Local）
+ * @param processedPaths 已处理文件路径集合
+ * @param includeExternal 是否包含外部文件
+ * @returns 匹配目标路径的 MemoryFileInfo 对象数组
  */
 export async function processConditionedMdRules(
   targetPath: string,
@@ -1260,23 +1228,22 @@ export async function processConditionedMdRules(
     conditionalRule: true,
   })
 
-  // Filter to only include files whose globs patterns match the targetPath
+  // 仅保留 glob 模式匹配 targetPath 的文件。
   return conditionedRuleMdFiles.filter((file) => {
     if (!file.globs || file.globs.length === 0) {
       return false
     }
 
-    // For Project rules: glob patterns are relative to the directory containing .zy
-    // For Managed/User rules: glob patterns are relative to the original CWD
+    // Project 规则的 glob 模式相对于包含 .zy 的目录；Managed/User 规则则相对于
+    // 原始 CWD。
     const baseDir =
       type === 'Project'
         ? dirname(dirname(rulesDir)) // Parent of .zy
         : getOriginalCwd() // Project root for managed/user rules
 
     const relativePath = isAbsolute(targetPath) ? relative(baseDir, targetPath) : targetPath
-    // ignore() throws on empty strings, paths escaping the base (../),
-    // and absolute paths (Windows cross-drive relative() returns absolute).
-    // Files outside baseDir can't match baseDir-relative globs anyway.
+    // ignore() 会对空字符串、逃逸 base 的路径（../）和绝对路径抛错；Windows 跨盘
+    // relative() 会返回绝对路径。baseDir 外的文件本就无法匹配相对 baseDir 的 glob。
     if (!relativePath || relativePath.startsWith('..') || isAbsolute(relativePath)) {
       return false
     }
@@ -1316,7 +1283,7 @@ export async function shouldShowAgentsMdExternalIncludesWarning(): Promise<boole
 }
 
 /**
- * Check if a file path is a memory file (AGENTS.md, AGENTS.local.md, or .zy/rules/*.md)
+ * 检查文件路径是否为 memory 文件（AGENTS.md、AGENTS.local.md 或 .zy/rules/*.md）。
  */
 export function isMemoryFilePath(filePath: string): boolean {
   const name = basename(filePath)
@@ -1326,7 +1293,7 @@ export function isMemoryFilePath(filePath: string): boolean {
     return true
   }
 
-  // .md files in .zy/rules/ directories
+  // .zy/rules/ 目录中的 .md 文件。
   if (name.endsWith('.md') && filePath.includes(`${sep}.zy${sep}rules${sep}`)) {
     return true
   }
@@ -1335,10 +1302,10 @@ export function isMemoryFilePath(filePath: string): boolean {
 }
 
 /**
- * Get all memory file paths from both standard discovery and readFileState.
+ * 从标准发现流程和 readFileState 获取全部 memory 文件路径。
  * Combines:
- * - getMemoryFiles() paths (CWD upward to root)
- * - readFileState paths matching memory patterns (includes child directories)
+ * - getMemoryFiles() 路径（从 CWD 向上至根目录）
+ * - readFileState 中匹配 memory 模式的路径（包括子目录）
  */
 export function getAllMemoryFilePaths(
   files: MemoryFileInfo[],
@@ -1351,7 +1318,7 @@ export function getAllMemoryFilePaths(
     }
   }
 
-  // Add memory files from readFileState (includes child directories)
+  // 添加 readFileState 中的 memory 文件，包括子目录。
   for (const filePath of cacheKeys(readFileState)) {
     if (isMemoryFilePath(filePath)) {
       paths.add(filePath)

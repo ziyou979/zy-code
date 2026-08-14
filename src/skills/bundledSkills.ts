@@ -9,8 +9,7 @@ import { getBundledSkillsRoot } from '../services/permissions/scratchpadStorage.
 import type { HooksSettings } from '../services/settings/types.js'
 
 /**
- * Definition for a bundled skill that ships with the CLI.
- * These are registered programmatically at startup.
+ * 随 CLI 分发的内置 skill 定义，在启动时以编程方式注册。
  */
 export type BundledSkillDefinition = {
   name: string
@@ -29,25 +28,22 @@ export type BundledSkillDefinition = {
   context?: 'inline' | 'fork'
   agent?: string
   /**
-   * Additional reference files to extract to disk on first invocation.
-   * Keys are relative paths (forward slashes, no `..`), values are content.
-   * When set, the skill prompt is prefixed with a "Base directory for this
-   * skill: <dir>" line so the model can Read/Grep these files on demand —
-   * same contract as disk-based skills.
+   * 首次调用时需要提取到磁盘的附加参考文件。键为使用正斜杠且不含 `..` 的相对路径，
+   * 值为文件内容。设置后会在 skill prompt 前添加“Base directory for this skill:
+   * <dir>”一行，使模型可按需 Read/Grep 这些文件，契约与磁盘 skill 相同。
    */
   files?: Record<string, string>
   getPromptForCommand: (args: string, context: ToolUseContext) => Promise<ContentBlock[]>
 }
 
-// Internal registry for bundled skills
+// 内置 skill 的内部 registry
 const bundledSkills: Command[] = []
 
 /**
- * Register a bundled skill that will be available to the model.
- * Call this at module initialization or in an init function.
+ * 注册模型可用的内置 skill；应在模块初始化或 init 函数中调用。
  *
- * Bundled skills are compiled into the CLI binary and available to all users.
- * They follow the same pattern as registerPostSamplingHook() for internal features.
+ * 内置 skill 会编译进 CLI 二进制并对所有用户可用。
+ * 内部 feature 沿用 registerPostSamplingHook() 的相同模式。
  */
 export function registerBundledSkill(definition: BundledSkillDefinition): void {
   const { files } = definition
@@ -57,9 +53,8 @@ export function registerBundledSkill(definition: BundledSkillDefinition): void {
 
   if (files && Object.keys(files).length > 0) {
     skillRoot = getBundledSkillExtractDir(definition.name)
-    // Closure-local memoization: extract once per process.
-    // Memoize the promise (not the result) so concurrent callers await
-    // the same extraction instead of racing into separate writes.
+    // 闭包内 memoize：每个进程只提取一次。缓存 promise 而非结果，使并发调用方
+    // 等待同一次提取，避免竞态写入不同副本。
     let extractionPromise: Promise<string | null> | undefined
     const inner = definition.getPromptForCommand
     getPromptForCommand = async (args, ctx) => {
@@ -101,33 +96,30 @@ export function registerBundledSkill(definition: BundledSkillDefinition): void {
 }
 
 /**
- * Get all registered bundled skills.
- * Returns a copy to prevent external mutation.
+ * 获取全部已注册的内置 skill；返回副本以防外部修改。
  */
 export function getBundledSkills(): Command[] {
   return [...bundledSkills]
 }
 
 /**
- * Clear bundled skills registry (for testing).
+ * 清空内置 skill registry，供测试使用。
  */
 export function clearBundledSkills(): void {
   bundledSkills.length = 0
 }
 
 /**
- * Deterministic extraction directory for a bundled skill's reference files.
+ * 内置 skill 参考文件使用的确定性提取目录。
  */
 export function getBundledSkillExtractDir(skillName: string): string {
   return join(getBundledSkillsRoot(), skillName)
 }
 
 /**
- * Extract a bundled skill's reference files to disk so the model can
- * Read/Grep them on demand. Called lazily on first skill invocation.
+ * 将内置 skill 的参考文件提取到磁盘，使模型可按需 Read/Grep；首次调用 skill 时延迟执行。
  *
- * Returns the directory written to, or null if write failed (skill
- * continues to work, just without the base-directory prefix).
+ * 返回写入目录；写入失败时返回 null。skill 仍可工作，只是不添加 base-directory 前缀。
  */
 async function extractBundledSkillFiles(
   skillName: string,
@@ -146,7 +138,7 @@ async function extractBundledSkillFiles(
 }
 
 async function writeSkillFiles(dir: string, files: Record<string, string>): Promise<void> {
-  // Group by parent dir so we mkdir each subtree once, then write.
+  // 按父目录分组，使每个子树只需 mkdir 一次，再写入文件
   const byParent = new Map<string, [string, string][]>()
   for (const [relPath, content] of Object.entries(files)) {
     const target = resolveSkillFilePath(dir, relPath)
@@ -167,15 +159,13 @@ async function writeSkillFiles(dir: string, files: Record<string, string>): Prom
   )
 }
 
-// The per-process nonce in getBundledSkillsRoot() is the primary defense
-// against pre-created symlinks/dirs. Explicit 0o700/0o600 modes keep the
-// nonce subtree owner-only even on umask=0, so an attacker who learns the
-// nonce via inotify on the predictable parent still can't write into it.
-// O_NOFOLLOW|O_EXCL is belt-and-suspenders (O_NOFOLLOW only protects the
-// final component); we deliberately do NOT unlink+retry on EEXIST — unlink()
-// follows intermediate symlinks too.
+// getBundledSkillsRoot() 的每进程 nonce 是防御预创建 symlink/目录的主要措施。
+// 显式使用 0o700/0o600，使 nonce 子树即使在 umask=0 时也仅 owner 可访问；攻击者即使
+// 通过监听可预测父目录的 inotify 得知 nonce，仍无法写入。O_NOFOLLOW|O_EXCL 是额外
+// 保险（O_NOFOLLOW 只保护最后一个组件）；遇到 EEXIST 时有意不执行 unlink 后重试，
+// 因为 unlink() 同样会跟随中间 symlink。
 const O_NOFOLLOW = fsConstants.O_NOFOLLOW ?? 0
-// On Windows, use string flags — numeric O_EXCL can produce EINVAL through libuv.
+// Windows 使用字符串 flag；数字 O_EXCL 经 libuv 可能产生 EINVAL。
 const SAFE_WRITE_FLAGS =
   process.platform === 'win32'
     ? 'wx'
@@ -190,7 +180,7 @@ async function safeWriteFile(p: string, content: string): Promise<void> {
   }
 }
 
-/** Normalize and validate a skill-relative path; throws on traversal. */
+/** 归一化并校验 skill 相对路径，检测到遍历时抛错。 */
 function resolveSkillFilePath(baseDir: string, relPath: string): string {
   const normalized = normalize(relPath)
   if (

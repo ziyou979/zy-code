@@ -4,8 +4,8 @@ import { Box, Text } from '../ink/index.js'
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js'
 
 /**
- * Small component to display transcript mode footer with dynamic keybinding.
- * Must be rendered inside KeybindingSetup to access keybinding context.
+ * 显示 transcript 模式 footer 和动态 keybinding 的小型组件。
+ * 必须在 KeybindingSetup 内渲染，才能访问 keybinding context。
  */
 export function TranscriptModeFooter({
   showAllInTranscript,

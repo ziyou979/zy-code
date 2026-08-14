@@ -15,12 +15,12 @@ export class QueryGuard {
     return this._state
   }
 
-  /** Snapshot for useSyncExternalStore. Returns true when not idle. */
+  /** 提供给 useSyncExternalStore 的快照；非 idle 状态时返回 true。 */
   getSnapshot = (): boolean => {
     return this._state !== 'idle'
   }
 
-  /** Subscribe for useSyncExternalStore. Arrow property = auto-bound. */
+  /** 提供给 useSyncExternalStore 的订阅函数；使用箭头属性以自动绑定 this。 */
   subscribe = (listener: () => void): (() => void) => {
     return this._onChange.subscribe(listener)
   }

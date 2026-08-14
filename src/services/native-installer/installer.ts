@@ -1,13 +1,12 @@
 /**
- * Native Installer Implementation
+ * 原生安装器实现。
  *
- * This module implements the file-based native installer system described in
- * docs/native-installer.md. It provides:
- * - Directory structure management with symlinks
- * - Version installation and activation
- * - Multi-process safety with locking
- * - Simple fallback mechanism using modification time
- * - Support for both JS and native builds
+ * 本模块实现 docs/native-installer.md 所述的文件型原生安装器系统，提供：
+ * - 使用符号链接管理目录结构
+ * - 版本安装与激活
+ * - 通过锁保证多进程安全
+ * - 基于修改时间的简单 fallback 机制
+ * - 同时支持 JS 和原生构建
  */
 
 import { constants as fsConstants, type Stats } from 'node:fs'
@@ -73,9 +72,8 @@ import {
 
 export const VERSION_RETENTION_COUNT = 2
 
-// 7 days in milliseconds - used for mtime-based lock stale timeout.
-// This is long enough to survive laptop sleep durations while still
-// allowing cleanup of abandoned locks from crashed processes within a reasonable time.
+// 7 天对应的毫秒数，用作基于 mtime 的锁过期时间。该时长足以覆盖笔记本休眠，
+// 又能在合理时间内清理崩溃进程遗留的锁。
 const LOCK_STALE_MS = 7 * 24 * 60 * 60 * 1000
 
 export type SetupMessage = {
@@ -85,7 +83,7 @@ export type SetupMessage = {
 }
 
 export function getPlatform(): string {
-  // Use env.platform which already handles platform detection and defaults to 'linux'
+  // 使用已处理平台检测且默认值为 'linux' 的 env.platform。
   const os = env.platform
 
   const arch = process.arch === 'x64' ? 'x64' : process.arch === 'arm64' ? 'arm64' : null
@@ -98,7 +96,7 @@ export function getPlatform(): string {
     throw error
   }
 
-  // Check for musl on Linux and adjust platform accordingly
+  // 在 Linux 上检测 musl，并相应调整 platform。
   if (os === 'linux' && envDynamic.isMuslEnvironment()) {
     return `linux-${arch}-musl`
   }
@@ -115,16 +113,16 @@ function getBaseDirectories() {
   const executableName = getBinaryName(platform)
 
   return {
-    // Data directories (permanent storage)
+    // 数据目录（永久存储）。
     versions: join(getXDGDataHome(), 'zy', 'versions'),
 
-    // Cache directories (can be deleted)
+    // 缓存目录（可删除）。
     staging: join(getXDGCacheHome(), 'zy', 'staging'),
 
-    // State directories
+    // 状态目录。
     locks: join(getXDGStateHome(), 'zy', 'locks'),
 
-    // User bin
+    // 用户 bin 目录。
     executable: join(getUserBinDir(), executableName),
   }
 }
@@ -132,15 +130,14 @@ function getBaseDirectories() {
 async function isPossibleZyBinary(filePath: string): Promise<boolean> {
   try {
     const stats = await stat(filePath)
-    // before download, the version lock file (located at the same filePath) will be size 0
-    // also, we allow small sizes because we want to treat small wrapper scripts as valid
+    // 下载前，同一 filePath 上的版本锁文件大小为 0；同时允许较小文件，
+    // 因为较小的 wrapper script 也应视为有效。
     if (!stats.isFile() || stats.size === 0) {
       return false
     }
 
-    // Check if file is executable. Note: On Windows, this relies on file extensions
-    // (.exe, .bat, .cmd) and ACL permissions rather than Unix permission bits,
-    // so it may not work perfectly for all executable files on Windows.
+    // 检查文件是否可执行。注意：Windows 依赖扩展名（.exe、.bat、.cmd）和 ACL
+    // 权限，而非 Unix 权限位，因此无法保证适用于 Windows 上的所有可执行文件。
     await access(filePath, fsConstants.X_OK)
     return true
   } catch {
@@ -151,17 +148,17 @@ async function isPossibleZyBinary(filePath: string): Promise<boolean> {
 async function getVersionPaths(version: string) {
   const dirs = getBaseDirectories()
 
-  // Create directories, but not the executable path (which is a file)
+  // 创建目录，但不创建作为文件的 executable path。
   const dirsToCreate = [dirs.versions, dirs.staging, dirs.locks]
   await Promise.all(dirsToCreate.map((dir) => mkdir(dir, { recursive: true })))
 
-  // Ensure parent directory of executable exists
+  // 确保可执行文件的父目录存在。
   const executableParentDir = dirname(dirs.executable)
   await mkdir(executableParentDir, { recursive: true })
 
   const installPath = join(dirs.versions, version)
 
-  // Create an empty file if it doesn't exist
+  // 文件不存在时创建空文件。
   try {
     await stat(installPath)
   } catch {
@@ -174,8 +171,8 @@ async function getVersionPaths(version: string) {
   }
 }
 
-// Execute a callback while holding a lock on a version file
-// Returns false if the file is already locked, true if callback executed
+// 持有版本文件锁期间执行 callback。文件已被锁定时返回 false，
+// callback 已执行时返回 true。
 async function tryWithVersionLock(
   versionFilePath: string,
   callback: () => void | Promise<void>,
@@ -185,11 +182,11 @@ async function tryWithVersionLock(
 
   const lockfilePath = getLockFilePathFromVersionPath(dirs, versionFilePath)
 
-  // Ensure the locks directory exists
+  // 确保 locks 目录存在。
   await mkdir(dirs.locks, { recursive: true })
 
   if (isPidBasedLockingEnabled()) {
-    // Use PID-based locking with optional retries
+    // 使用基于 PID 的锁，并可选择重试。
     let attempts = 0
     const maxAttempts = retries + 1
     const minTimeout = retries > 0 ? 1000 : 100
@@ -216,7 +213,7 @@ async function tryWithVersionLock(
 
       attempts++
       if (attempts < maxAttempts) {
-        // Wait before retrying with exponential backoff
+        // 按指数退避等待后重试。
         const timeout = Math.min(minTimeout * 2 ** (attempts - 1), maxTimeout)
         await sleep(timeout)
       }
@@ -231,14 +228,12 @@ async function tryWithVersionLock(
     return false
   }
 
-  // Use mtime-based locking (proper-lockfile) with 30-day stale timeout
+  // 使用基于 mtime 的锁（proper-lockfile），过期时间为 30 天。
   let release: (() => Promise<void>) | null = null
   try {
-    // Lock acquisition phase - catch lock errors and return false
-    // Use 30 days for stale to match lockCurrentVersion() - this ensures we never
-    // consider a running process's lock as stale during normal usage (including
-    // laptop sleep). 30 days allows eventual cleanup of abandoned locks from
-    // crashed processes while being long enough for any realistic session.
+    // 获取锁阶段：捕获锁错误并返回 false。过期时间采用与 lockCurrentVersion()
+    // 一致的 30 天，确保正常使用（包括笔记本休眠）时不会将运行中进程的锁视为过期，
+    // 同时仍能最终清理崩溃进程遗留的锁，且足以覆盖任何现实会话时长。
     try {
       release = await lockfile.lock(versionFilePath, {
         stale: LOCK_STALE_MS,
@@ -248,8 +243,7 @@ async function tryWithVersionLock(
           maxTimeout: retries > 0 ? 5000 : 500,
         },
         lockfilePath,
-        // Handle lock compromise gracefully to prevent unhandled rejections
-        // This can happen if another process deletes the lock directory while we hold it
+        // 平稳处理锁失效，避免未处理拒绝。持锁期间另一进程删除锁目录时可能发生。
         onCompromised: (err: Error) => {
           logForDebugging(
             `NON-FATAL: Version lock was compromised during operation: ${err.message}`,
@@ -266,7 +260,7 @@ async function tryWithVersionLock(
       return false
     }
 
-    // Operation phase - log errors but let them propagate
+    // 操作阶段：记录错误，但继续向上传播。
     try {
       await callback()
       logEvent('zy_version_lock_acquired', {
@@ -286,25 +280,25 @@ async function tryWithVersionLock(
 }
 
 async function atomicMoveToInstallPath(stagedBinaryPath: string, installPath: string) {
-  // Create installation directory if it doesn't exist
+  // 安装目录不存在时创建。
   await mkdir(dirname(installPath), { recursive: true })
 
-  // Move from staging to final location atomically
+  // 从 staging 原子移动到最终位置。
   const tempInstallPath = `${installPath}.tmp.${process.pid}.${Date.now()}`
 
   try {
-    // Copy to temp next to install path, then rename. A direct rename from staging
-    // would fail with EXDEV if staging and install are on different filesystems.
+    // 先复制到 install path 旁的临时文件，再重命名。若 staging 与 install 位于
+    // 不同文件系统，直接从 staging 重命名会因 EXDEV 失败。
     await copyFile(stagedBinaryPath, tempInstallPath)
     await chmod(tempInstallPath, 0o755)
     await rename(tempInstallPath, installPath)
     logForDebugging(`Atomically installed binary to ${installPath}`)
   } catch (error) {
-    // Clean up temp file if it exists
+    // 清理存在的临时文件。
     try {
       await unlink(tempInstallPath)
     } catch {
-      // Ignore cleanup errors
+      // 忽略清理错误。
     }
     throw error
   }
@@ -312,7 +306,7 @@ async function atomicMoveToInstallPath(stagedBinaryPath: string, installPath: st
 
 async function installVersionFromPackage(stagingPath: string, installPath: string) {
   try {
-    // Extract binary from npm package structure in staging
+    // 从 staging 中的 npm package 结构提取二进制文件。
     const nodeModulesDir = join(stagingPath, 'node_modules', '@anthropic-ai')
     const entries = await readdir(nodeModulesDir)
     const nativePackage = entries.find((entry: string) => entry.startsWith('zy-cli-native-'))
@@ -341,12 +335,12 @@ async function installVersionFromPackage(stagingPath: string, installPath: strin
 
     await atomicMoveToInstallPath(stagedBinaryPath, installPath)
 
-    // Clean up staging directory
+    // 清理 staging 目录。
     await rm(stagingPath, { recursive: true, force: true })
 
     logEvent('zy_native_install_package_success', {})
   } catch (error) {
-    // Log if not already logged above
+    // 若上方尚未记录，则记录日志。
     const msg = errorMessage(error)
     if (
       !msg.includes('Could not find platform-specific') &&
@@ -364,7 +358,7 @@ async function installVersionFromPackage(stagingPath: string, installPath: strin
 
 async function installVersionFromBinary(stagingPath: string, installPath: string) {
   try {
-    // For direct binary downloads (GCS, generic bucket), the binary is directly in staging
+    // 直接下载二进制文件时（GCS、通用 bucket），文件直接位于 staging 中。
     const platform = getPlatform()
     const binaryName = getBinaryName(platform)
     const stagedBinaryPath = join(stagingPath, binaryName)
@@ -403,7 +397,7 @@ async function installVersion(
   installPath: string,
   downloadType: 'npm' | 'binary',
 ) {
-  // Use the explicit download type instead of guessing
+  // 使用明确的下载类型，不做猜测。
   if (downloadType === 'npm') {
     await installVersionFromPackage(stagingPath, installPath)
   } else {
@@ -412,19 +406,19 @@ async function installVersion(
 }
 
 /**
- * Performs the core update operation: download (if needed), install, and update symlink.
- * Returns whether a new install was performed (vs just updating symlink).
+ * 执行核心更新操作：按需下载、安装并更新符号链接。
+ * 返回是否进行了新安装，而非仅更新符号链接。
  */
 async function performVersionUpdate(version: string, forceReinstall: boolean): Promise<boolean> {
   const { stagingPath: baseStagingPath, installPath } = await getVersionPaths(version)
   const { executable: executablePath } = getBaseDirectories()
 
-  // For lockless updates, use a unique staging path to avoid conflicts between concurrent downloads
+  // 无锁更新使用唯一 staging 路径，避免并发下载冲突。
   const stagingPath = isEnvTruthy(process.env.ENABLE_LOCKLESS_UPDATES)
     ? `${baseStagingPath}.${process.pid}.${Date.now()}`
     : baseStagingPath
 
-  // Only download if not already installed (or if force reinstall)
+  // 尚未安装或要求强制重装时才下载。
   const needsInstall = !(await versionIsAvailable(version)) || forceReinstall
   if (needsInstall) {
     logForDebugging(
@@ -438,18 +432,18 @@ async function performVersionUpdate(version: string, forceReinstall: boolean): P
     logForDebugging(`Version ${version} already installed, updating symlink`)
   }
 
-  // Create direct symlink from ~/.local/bin/zy to the version binary
+  // 创建从 ~/.local/bin/zy 到版本二进制文件的直接符号链接。
   await removeDirectoryIfEmpty(executablePath)
   await updateSymlink(executablePath, installPath)
 
-  // Verify the executable was actually created/updated
+  // 验证可执行文件确实已创建或更新。
   if (!(await isPossibleZyBinary(executablePath))) {
     let installPathExists = false
     try {
       await stat(installPath)
       installPathExists = true
     } catch {
-      // installPath doesn't exist
+      // installPath 不存在。
     }
     throw new Error(
       `Failed to create executable at ${executablePath}. ` +
@@ -480,14 +474,14 @@ async function updateLatest(
 
   logForDebugging(`Checking for native installer update to version ${version}`)
 
-  // Check if max version is set (server-side kill switch for auto-updates)
+  // 检查是否设置最高版本，作为 auto-update 的服务端 kill switch。
   if (!forceReinstall) {
     const maxVersion = await getMaxVersion()
     if (maxVersion && gt(version, maxVersion)) {
       logForDebugging(
         `Native installer: maxVersion ${maxVersion} is set, capping update from ${version} to ${maxVersion}`,
       )
-      // If we're already at or above maxVersion, skip the update entirely
+      // 当前版本已达到或超过 maxVersion 时完全跳过更新。
       if (gte(MACRO.VERSION, maxVersion)) {
         logForDebugging(
           `Native installer: current version ${MACRO.VERSION} is already at or above maxVersion ${maxVersion}, skipping update`,
@@ -503,9 +497,8 @@ async function updateLatest(
     }
   }
 
-  // Early exit: if we're already running this exact version AND both the version binary
-  // and executable exist and are valid. We need to proceed if the executable doesn't exist,
-  // is invalid (e.g., empty/corrupted from a failed install), or we're running via npx.
+  // 若当前运行的正是目标版本，且版本二进制文件与可执行文件均存在并有效，则提前退出。
+  // 可执行文件不存在、无效（如安装失败留下空文件或损坏文件）或通过 npx 运行时仍需继续。
   if (
     !forceReinstall &&
     version === MACRO.VERSION &&
@@ -522,7 +515,7 @@ async function updateLatest(
     return { success: true, latestVersion: version }
   }
 
-  // Check if this version should be skipped due to minimumVersion setting
+  // 检查是否应因 minimumVersion 设置跳过此版本。
   if (!forceReinstall && shouldSkipVersion(version)) {
     logEvent('zy_native_update_skipped_minimum_version', {
       latency_ms: Date.now() - startTime,
@@ -531,18 +524,18 @@ async function updateLatest(
     return { success: true, latestVersion: version }
   }
 
-  // Track if we're actually installing or just symlinking
+  // 记录实际执行的是安装还是仅创建符号链接。
   let wasNewInstall = false
   let latencyMs: number
 
   if (isEnvTruthy(process.env.ENABLE_LOCKLESS_UPDATES)) {
-    // Lockless: rely on atomic operations, errors propagate
+    // 无锁模式依靠原子操作，错误向上传播。
     wasNewInstall = await performVersionUpdate(version, forceReinstall)
     latencyMs = Date.now() - startTime
   } else {
-    // Lock-based updates
+    // 基于锁的更新。
     const { installPath } = await getVersionPaths(version)
-    // If force reinstall, remove any existing lock to bypass stale locks
+    // 强制重装时移除已有锁，以绕过过期锁。
     if (forceReinstall) {
       await forceRemoveLock(installPath)
     }
@@ -557,7 +550,7 @@ async function updateLatest(
 
     latencyMs = Date.now() - startTime
 
-    // Lock acquisition failed - get lock holder PID for error message
+    // 获取锁失败，取得持锁进程 PID 以生成错误消息。
     if (!lockAcquired) {
       const dirs = getBaseDirectories()
       let lockHolderPid: number | undefined
@@ -589,17 +582,17 @@ async function updateLatest(
   return { success: true, latestVersion: version }
 }
 
-// Exported for testing
+// 导出供测试使用。
 export async function removeDirectoryIfEmpty(path: string): Promise<void> {
-  // rmdir alone handles all cases: ENOTDIR if path is a file, ENOTEMPTY if
-  // directory is non-empty, ENOENT if missing. No need to stat+readdir first.
+  // 仅用 rmdir 即可处理所有情况：路径是文件时返回 ENOTDIR，目录非空时返回
+  // ENOTEMPTY，不存在时返回 ENOENT，无需先执行 stat+readdir。
   try {
     await rmdir(path)
     logForDebugging(`Removed empty directory at ${path}`)
   } catch (error) {
     const code = getErrnoCode(error)
-    // Expected cases (not-a-dir, missing, not-empty) — silently skip.
-    // ENOTDIR is the normal path: executablePath is typically a symlink.
+    // 非目录、不存在、非空均为预期情况，静默跳过。ENOTDIR 是常规路径，
+    // 因为 executablePath 通常是符号链接。
     if (code !== 'ENOTDIR' && code !== 'ENOENT' && code !== 'ENOTEMPTY') {
       logForDebugging(`Could not remove directory at ${path}: ${error}`)
     }
@@ -610,51 +603,51 @@ async function updateSymlink(symlinkPath: string, targetPath: string): Promise<b
   const platform = getPlatform()
   const isWindows = platform.startsWith('win32')
 
-  // On Windows, directly copy the executable instead of creating a symlink
+  // Windows 上直接复制可执行文件，不创建符号链接。
   if (isWindows) {
     try {
-      // Ensure parent directory exists
+      // 确保父目录存在。
       const parentDir = dirname(symlinkPath)
       await mkdir(parentDir, { recursive: true })
 
-      // Check if file already exists and has same content
+      // 检查文件是否已存在且内容相同。
       let existingStats: Stats | undefined
       try {
         existingStats = await stat(symlinkPath)
       } catch {
-        // symlinkPath doesn't exist
+        // symlinkPath 不存在。
       }
 
       if (existingStats) {
         try {
           const targetStats = await stat(targetPath)
-          // If sizes match, assume files are the same (avoid reading large files)
+          // 大小相同时假定文件相同，避免读取大型文件。
           if (existingStats.size === targetStats.size) {
             return false
           }
         } catch {
-          // Continue with copy if we can't compare
+          // 无法比较时继续复制。
         }
-        // Use rename strategy to handle file locking on Windows
-        // Rename always works even for running executables, unlike delete
+        // 使用重命名策略处理 Windows 文件锁；与删除不同，即使可执行文件正在运行，
+        // 重命名也始终可用。
         const oldFileName = `${symlinkPath}.old.${Date.now()}`
         await rename(symlinkPath, oldFileName)
 
-        // Try to copy new executable, with rollback on failure
+        // 尝试复制新可执行文件，失败时回滚。
         try {
           await copyFile(targetPath, symlinkPath)
-          // Success - try immediate cleanup of old file (non-blocking)
+          // 成功后立即尝试非阻塞清理旧文件。
           try {
             await unlink(oldFileName)
           } catch {
-            // File still running - ignore, Windows will clean up eventually
+            // 文件仍在运行，忽略；Windows 最终会清理。
           }
         } catch (copyError) {
-          // Copy failed - restore the old executable
+          // 复制失败，恢复旧可执行文件。
           try {
             await rename(oldFileName, symlinkPath)
           } catch (restoreError) {
-            // Critical: User left without working executable - prioritize restore error
+            // 严重情况：用户已无可用的可执行文件，优先报告恢复错误。
             const errorWithCause = new Error(`Failed to restore old executable: ${restoreError}`, {
               cause: copyError,
             })
@@ -664,9 +657,8 @@ async function updateSymlink(symlinkPath: string, targetPath: string): Promise<b
           throw copyError
         }
       } else {
-        // First-time installation (no existing file to rename)
-        // Copy the executable directly; handle ENOENT from copyFile itself
-        // rather than a stat() pre-check (avoids TOCTOU + extra syscall)
+        // 首次安装，没有已有文件可重命名。直接复制可执行文件，并处理 copyFile
+        // 自身的 ENOENT，而非预先 stat()，以避免 TOCTOU 和额外 syscall。
         try {
           await copyFile(targetPath, symlinkPath)
         } catch (e) {
@@ -676,7 +668,7 @@ async function updateSymlink(symlinkPath: string, targetPath: string): Promise<b
           throw e
         }
       }
-      // chmod is not needed on Windows - executability is determined by .exe extension
+      // Windows 无需 chmod，可执行性由 .exe 扩展名决定。
       return true
     } catch (error) {
       logError(
@@ -686,8 +678,7 @@ async function updateSymlink(symlinkPath: string, targetPath: string): Promise<b
     }
   }
 
-  // For non-Windows platforms, use symlinks as before
-  // Ensure parent directory exists (same as Windows path above)
+  // 非 Windows 平台沿用符号链接，并确保父目录存在，与上方 Windows 路径一致。
   const parentDir = dirname(symlinkPath)
   try {
     await mkdir(parentDir, { recursive: true })
@@ -697,14 +688,14 @@ async function updateSymlink(symlinkPath: string, targetPath: string): Promise<b
     return false
   }
 
-  // Check if symlink already exists and points to the correct target
+  // 检查符号链接是否已存在并指向正确目标。
   try {
     let symlinkExists = false
     try {
       await stat(symlinkPath)
       symlinkExists = true
     } catch {
-      // symlinkPath doesn't exist
+      // symlinkPath 不存在。
     }
 
     if (symlinkExists) {
@@ -717,33 +708,32 @@ async function updateSymlink(symlinkPath: string, targetPath: string): Promise<b
           return false
         }
       } catch {
-        // Path exists but is not a symlink - will remove it below
+        // 路径存在但不是符号链接，将在下方移除。
       }
 
-      // Remove existing file/symlink before creating new one
+      // 创建新链接前移除已有文件或符号链接。
       await unlink(symlinkPath)
     }
   } catch (error) {
     logError(new Error(`Failed to check/remove existing symlink: ${error}`))
   }
 
-  // Use atomic rename to avoid race conditions. Create symlink with temporary name
-  // then atomically rename to final name. This ensures the symlink always exists
-  // and is always valid, even with concurrent updates.
+  // 使用原子重命名避免竞态。先以临时名称创建符号链接，再原子重命名为最终名称，
+  // 确保即使并发更新，符号链接也始终存在且有效。
   const tempSymlink = `${symlinkPath}.tmp.${process.pid}.${Date.now()}`
   try {
     await symlink(targetPath, tempSymlink)
 
-    // Atomically rename to final name (replaces existing)
+    // 原子重命名为最终名称，并替换已有项。
     await rename(tempSymlink, symlinkPath)
     logForDebugging(`Atomically updated symlink ${symlinkPath} -> ${targetPath}`)
     return true
   } catch (error) {
-    // Clean up temp symlink if it exists
+    // 清理存在的临时符号链接。
     try {
       await unlink(tempSymlink)
     } catch {
-      // Ignore cleanup errors
+      // 忽略清理错误。
     }
     logError(new Error(`Failed to create symlink from ${symlinkPath} to ${targetPath}: ${error}`))
     return false
@@ -751,26 +741,24 @@ async function updateSymlink(symlinkPath: string, targetPath: string): Promise<b
 }
 
 export async function checkInstall(force: boolean = false): Promise<SetupMessage[]> {
-  // Skip all installation checks if disabled via environment variable
+  // 环境变量禁用安装检查时全部跳过。
   if (isEnvTruthy(process.env.DISABLE_INSTALLATION_CHECKS)) {
     return []
   }
 
-  // Get the actual installation type and config
+  // 获取实际安装类型和配置。
   const installationType = await getCurrentInstallationType()
 
-  // Skip checks for development builds - config.installMethod from a previous
-  // native installation shouldn't trigger warnings when running dev builds
+  // 开发构建跳过检查；此前原生安装留下的 config.installMethod 不应在运行开发
+  // 构建时触发警告。
   if (installationType === 'development') {
     return []
   }
 
   const config = getGlobalConfig()
 
-  // Only show warnings if:
-  // 1. User is actually running from native installation, OR
-  // 2. User has explicitly set installMethod to 'native' in config (they're trying to use native)
-  // 3. force is true (used during installation process)
+  // 仅在以下情况显示警告：实际从原生安装运行；配置中显式将 installMethod 设为
+  // 'native'；或安装过程传入 force=true。
   const shouldCheckNative =
     force || installationType === 'native' || config.installMethod === 'native'
 
@@ -785,7 +773,7 @@ export async function checkInstall(force: boolean = false): Promise<SetupMessage
   const platform = getPlatform()
   const isWindows = platform.startsWith('win32')
 
-  // Check if bin directory exists
+  // 检查 bin 目录是否存在。
   try {
     await access(localBinDir)
   } catch {
@@ -796,15 +784,12 @@ export async function checkInstall(force: boolean = false): Promise<SetupMessage
     })
   }
 
-  // Check if zy executable exists and is valid.
-  // On non-Windows, call readlink directly and route errno — ENOENT means
-  // the executable is missing, EINVAL means it exists but isn't a symlink.
-  // This avoids an access()→readlink() TOCTOU where deletion between the
-  // two calls produces a misleading "Not a symlink" diagnostic.
-  // isPossibleZyBinary stats the path internally, so we don't pre-check
-  // with access() — that would be a TOCTOU between access and the stat.
+  // 检查 zy 可执行文件是否存在且有效。非 Windows 平台直接调用 readlink 并按 errno
+  // 分流：ENOENT 表示缺失，EINVAL 表示存在但不是符号链接。这避免 access()→readlink()
+  // 间删除导致误报“Not a symlink”的 TOCTOU。isPossibleZyBinary 内部会 stat 路径，
+  // 因此不预先 access()，避免 access 与 stat 间的 TOCTOU。
   if (isWindows) {
-    // On Windows it's a copied executable, not a symlink
+    // Windows 上是复制的可执行文件，而非符号链接。
     if (!(await isPossibleZyBinary(dirs.executable))) {
       messages.push({
         message: `installMethod is native, but zy command is missing or invalid at ${dirs.executable}`,
@@ -831,7 +816,7 @@ export async function checkInstall(force: boolean = false): Promise<SetupMessage
           type: 'error',
         })
       } else {
-        // EINVAL (not a symlink) or other — check as regular binary
+        // EINVAL（非符号链接）或其他情况：按普通二进制文件检查。
         if (!(await isPossibleZyBinary(dirs.executable))) {
           messages.push({
             message: `${dirs.executable} exists but is not a valid Zy binary`,
@@ -843,11 +828,11 @@ export async function checkInstall(force: boolean = false): Promise<SetupMessage
     }
   }
 
-  // Check if bin directory is in PATH
+  // 检查 bin 目录是否在 PATH 中。
   const isInCurrentPath = (process.env.PATH || '').split(delimiter).some((entry) => {
     try {
       const resolvedEntry = resolve(entry)
-      // On Windows, perform case-insensitive comparison for paths
+      // Windows 上不区分大小写比较路径。
       if (isWindows) {
         return resolvedEntry.toLowerCase() === resolvedLocalBinPath.toLowerCase()
       }
@@ -859,7 +844,7 @@ export async function checkInstall(force: boolean = false): Promise<SetupMessage
 
   if (!isInCurrentPath) {
     if (isWindows) {
-      // Windows-specific PATH instructions
+      // Windows 专用 PATH 说明。
       const windowsBinPath = localBinDir.replace(/\//g, '\\')
       messages.push({
         message: `Native installation exists but ${windowsBinPath} is not in your PATH. Add it by opening: System Properties → Environment Variables → Edit User PATH → New → Add the path above. Then restart your terminal.`,
@@ -867,7 +852,7 @@ export async function checkInstall(force: boolean = false): Promise<SetupMessage
         type: 'path',
       })
     } else {
-      // Unix-style PATH instructions
+      // Unix 风格 PATH 说明。
       const shellType = getShellType()
       const configPaths = getShellConfigPaths()
       const configFile = configPaths[shellType as keyof typeof configPaths]
@@ -891,11 +876,10 @@ type InstallLatestResult = {
   lockHolderPid?: number
 }
 
-// In-process singleflight guard. NativeAutoUpdater remounts whenever the
-// prompt suggestions overlay toggles (PromptInput.tsx:2916), and the
-// isUpdating guard does not survive the remount. Each remount kicked off a
-// fresh 271MB binary download while previous ones were still in flight.
-// Telemetry: session 42fed33f saw arrayBuffers climb to 91GB at ~650MB/s.
+// 进程内 singleflight 守卫。prompt suggestion overlay 切换时
+// NativeAutoUpdater 会重新挂载（PromptInput.tsx:2916），isUpdating 守卫无法跨越
+// 重挂载。此前每次重挂载都会启动新的 271MB 二进制下载，而旧下载仍在进行。
+// 遥测显示 session 42fed33f 的 arrayBuffer 以约 650MB/s 增长至 91GB。
 let inFlightInstall: Promise<InstallLatestResult> | null = null
 
 export function installLatest(
@@ -933,17 +917,17 @@ async function installLatestImpl(
     }
   }
 
-  // Installation succeeded (early return above covers failure). Mark as native
-  // and disable legacy auto-updater to protect symlinks.
+  // 安装成功；上方提前返回已覆盖失败情况。标记为 native，并禁用旧版 auto-updater
+  // 以保护符号链接。
   const config = getGlobalConfig()
   if (config.installMethod !== 'native') {
     saveGlobalConfig((current) => ({
       ...current,
       installMethod: 'native',
-      // Disable legacy auto-updater to prevent npm sessions from deleting native symlinks.
-      // Native installations use NativeAutoUpdater instead, which respects native installation.
+      // 禁用旧版 auto-updater，防止 npm 会话删除原生符号链接。
+      // 原生安装改用能正确识别原生安装的 NativeAutoUpdater。
       autoUpdates: false,
-      // Mark this as protection-based, not user preference
+      // 标记为保护机制所致，而非用户偏好。
       autoUpdatesProtectedForNative: true,
     }))
     logForDebugging(
@@ -968,7 +952,7 @@ async function getVersionFromSymlink(symlinkPath: string): Promise<string | null
       return absoluteTarget
     }
   } catch {
-    // Not a symlink / doesn't exist / target doesn't exist
+    // 不是符号链接、路径不存在或目标不存在。
   }
   return null
 }
@@ -982,16 +966,14 @@ function getLockFilePathFromVersionPath(
 }
 
 /**
- * Acquire a lock on the current running version to prevent it from being deleted
- * This lock is held for the entire lifetime of the process
+ * 为当前运行版本加锁，防止其被删除。锁在整个进程生命周期内保持。
  *
- * Uses PID-based locking (when enabled) which can immediately detect crashed processes
- * (unlike mtime-based locking which requires a 30-day timeout)
+ * 启用时使用基于 PID 的锁，可立即检测崩溃进程；基于 mtime 的锁则需等待 30 天超时。
  */
 export async function lockCurrentVersion(): Promise<void> {
   const dirs = getBaseDirectories()
 
-  // Only lock if we're running from the versions directory
+  // 仅从 versions 目录运行时加锁。
   if (!process.execPath.includes(dirs.versions)) {
     return
   }
@@ -1000,13 +982,12 @@ export async function lockCurrentVersion(): Promise<void> {
   try {
     const lockfilePath = getLockFilePathFromVersionPath(dirs, versionPath)
 
-    // Ensure locks directory exists
+    // 确保 locks 目录存在。
     await mkdir(dirs.locks, { recursive: true })
 
     if (isPidBasedLockingEnabled()) {
-      // Acquire PID-based lock and hold it for the process lifetime
-      // PID-based locking allows immediate detection of crashed processes
-      // while still surviving laptop sleep (process is suspended but PID exists)
+      // 获取基于 PID 的锁并保持至进程结束。该机制可立即检测崩溃进程，
+      // 同时能跨越笔记本休眠，因为进程虽挂起但 PID 仍存在。
       const acquired = await acquireProcessLifetimeLock(versionPath, lockfilePath)
 
       if (!acquired) {
@@ -1024,11 +1005,9 @@ export async function lockCurrentVersion(): Promise<void> {
       })
       logForDebugging(`Acquired PID lock on running version: ${versionPath}`)
     } else {
-      // Acquire mtime-based lock and never release it (until process exits)
-      // Use 30 days for stale to prevent the lock from being considered stale during
-      // normal usage. This is critical because laptop sleep suspends the process,
-      // stopping the mtime heartbeat. 30 days is long enough for any realistic session
-      // while still allowing eventual cleanup of abandoned locks.
+      // 获取基于 mtime 的锁并保持至进程退出。过期时间设为 30 天，避免正常使用时
+      // 被误判过期；笔记本休眠会挂起进程并停止 mtime 心跳，因此这一点至关重要。
+      // 30 天足以覆盖现实会话，也仍能最终清理遗留锁。
       let release: (() => Promise<void>) | undefined
       try {
         release = await lockfile.lock(versionPath, {
@@ -1048,12 +1027,12 @@ export async function lockCurrentVersion(): Promise<void> {
         })
         logForDebugging(`Acquired mtime-based lock on running version: ${versionPath}`)
 
-        // Release lock explicitly; proper-lockfile's cleanup is unreliable with signal-exit v3+v4
+        // 显式释放锁；proper-lockfile 的 cleanup 在 signal-exit v3+v4 下不可靠。
         registerCleanup(async () => {
           try {
             await release?.()
           } catch {
-            // Lock may already be released
+            // 锁可能已释放。
           }
         })
       } catch (lockError) {
@@ -1078,8 +1057,8 @@ export async function lockCurrentVersion(): Promise<void> {
       })
       return
     }
-    // We fallback to previous behavior where we don't acquire a lock on a running version
-    // This ~mostly works but using native binaries like ripgrep will fail
+    // 退回旧行为，不为运行中的版本加锁。大部分情况下可用，但使用 ripgrep 等
+    // 原生二进制文件时会失败。
     logForDebugging(
       `NON-FATAL: Failed to lock current version during execution ${errorMessage(error)}`,
       { level: 'info' },
@@ -1097,8 +1076,7 @@ function logLockAcquisitionError(versionPath: string, lockError: unknown) {
 }
 
 /**
- * Force-remove a lock file for a given version path.
- * Used when --force is specified to bypass stale locks.
+ * 强制移除指定版本路径的锁文件。指定 --force 时用于绕过过期锁。
  */
 async function forceRemoveLock(versionFilePath: string): Promise<void> {
   const dirs = getBaseDirectories()
@@ -1108,19 +1086,19 @@ async function forceRemoveLock(versionFilePath: string): Promise<void> {
     await unlink(lockfilePath)
     logForDebugging(`Force-removed lock file at ${lockfilePath}`)
   } catch (error) {
-    // Log but don't throw - we'll try to acquire the lock anyway
+    // 记录但不抛错，仍会尝试获取锁。
     logForDebugging(`Failed to force-remove lock file: ${errorMessage(error)}`)
   }
 }
 
 export async function cleanupOldVersions(): Promise<void> {
-  // Yield to ensure we don't block startup
+  // 主动让出执行权，避免阻塞启动。
   await Promise.resolve()
 
   const dirs = getBaseDirectories()
   const oneHourAgo = Date.now() - 3600000
 
-  // Clean up old renamed executables on Windows (no longer running at startup)
+  // Windows 上清理旧的重命名可执行文件；启动时这些文件已不再运行。
   if (getPlatform().startsWith('win32')) {
     const executableDir = dirname(dirs.executable)
     try {
@@ -1134,7 +1112,7 @@ export async function cleanupOldVersions(): Promise<void> {
           await unlink(join(executableDir, file))
           cleanedCount++
         } catch {
-          // File might still be in use by another process
+          // 文件可能仍被其他进程使用。
         }
       }
       if (cleanedCount > 0) {
@@ -1147,17 +1125,16 @@ export async function cleanupOldVersions(): Promise<void> {
     }
   }
 
-  // Clean up orphaned staging directories older than 1 hour
+  // 清理超过 1 小时的孤立 staging 目录。
   try {
     const stagingEntries = await readdir(dirs.staging)
     let stagingCleanedCount = 0
     for (const entry of stagingEntries) {
       const stagingPath = join(dirs.staging, entry)
       try {
-        // stat() is load-bearing here (we need mtime). There is a theoretical
-        // TOCTOU where a concurrent installer could freshen a stale staging
-        // dir between stat and rm — but the 1-hour threshold makes this
-        // vanishingly unlikely, and rm({force:true}) tolerates concurrent
+        // 此处必须使用 stat() 取得 mtime。理论上存在 TOCTOU：并发安装器可能在 stat
+        // 与 rm 之间更新过期 staging 目录，但 1 小时阈值使其概率极低，且
+        // rm({force:true}) 可容忍并发。
         // deletion.
         const stats = await stat(stagingPath)
         if (stats.mtime.getTime() < oneHourAgo) {
@@ -1166,7 +1143,7 @@ export async function cleanupOldVersions(): Promise<void> {
           logForDebugging(`Cleaned up old staging directory: ${entry}`)
         }
       } catch {
-        // Ignore individual errors
+        // 忽略单项错误。
       }
     }
     if (stagingCleanedCount > 0) {
@@ -1181,7 +1158,7 @@ export async function cleanupOldVersions(): Promise<void> {
     }
   }
 
-  // Clean up stale PID locks (crashed processes) — cleanupStaleLocks handles ENOENT
+  // 清理崩溃进程留下的过期 PID 锁；cleanupStaleLocks 会处理 ENOENT。
   if (isPidBasedLockingEnabled()) {
     const staleLocksCleaned = cleanupStaleLocks(dirs.locks)
     if (staleLocksCleaned > 0) {
@@ -1192,8 +1169,8 @@ export async function cleanupOldVersions(): Promise<void> {
     }
   }
 
-  // Single readdir of versions dir. Partition into temp files vs candidate binaries,
-  // stat'ing each entry at most once.
+  // 仅 readdir versions 目录一次，将条目分为临时文件和候选二进制文件，
+  // 每项最多 stat 一次。
   let versionEntries: string[]
   try {
     versionEntries = await readdir(dirs.versions)
@@ -1216,7 +1193,7 @@ export async function cleanupOldVersions(): Promise<void> {
   for (const entry of versionEntries) {
     const entryPath = join(dirs.versions, entry)
     if (/\.tmp\.\d+\.\d+$/.test(entry)) {
-      // Orphaned temp install file — pattern: {version}.tmp.{pid}.{timestamp}
+      // 孤立临时安装文件，格式为 {version}.tmp.{pid}.{timestamp}。
       try {
         const stats = await stat(entryPath)
         if (stats.mtime.getTime() < oneHourAgo) {
@@ -1225,23 +1202,22 @@ export async function cleanupOldVersions(): Promise<void> {
           logForDebugging(`Cleaned up orphaned temp install file: ${entry}`)
         }
       } catch {
-        // Ignore individual errors
+        // 忽略单项错误。
       }
       continue
     }
-    // Candidate version binary — stat once, reuse for isFile/size/mtime/mode
+    // 候选版本二进制文件：stat 一次，并复用于 isFile/size/mtime/mode。
     try {
       const stats = await stat(entryPath)
       if (!stats.isFile()) {
         continue
       }
       if (process.platform !== 'win32' && stats.size > 0 && (stats.mode & 0o111) === 0) {
-        // Check executability via mode bits from the existing stat result —
-        // avoids a second syscall (access(X_OK)) and the TOCTOU window between
-        // stat and access. Skip on Windows: libuv only sets execute bits for
-        // .exe/.com/.bat/.cmd, but version files are extensionless semver
-        // strings (e.g. "1.2.3"), so this check would reject all of them.
-        // The previous access(X_OK) passed any readable file on Windows anyway.
+        // 通过已有 stat 结果的 mode bit 检查可执行性，避免第二次 syscall
+        //（access(X_OK)）以及 stat 与 access 间的 TOCTOU。Windows 上跳过：libuv
+        // 仅为 .exe/.com/.bat/.cmd 设置执行位，而版本文件是不带扩展名的 semver
+        // 字符串（如 "1.2.3"），否则会全部被拒绝。此前 access(X_OK) 在 Windows
+        // 上本来也会放行所有可读文件。
         continue
       }
       versionFiles.push({
@@ -1251,7 +1227,7 @@ export async function cleanupOldVersions(): Promise<void> {
         mtime: stats.mtime,
       })
     } catch {
-      // Skip files we can't stat
+      // 跳过无法 stat 的文件。
     }
   }
 
@@ -1267,7 +1243,7 @@ export async function cleanupOldVersions(): Promise<void> {
   }
 
   try {
-    // Identify protected versions
+    // 识别受保护版本。
     const currentBinaryPath = process.execPath
     const protectedVersions = new Set<string>()
     if (currentBinaryPath?.includes(dirs.versions)) {
@@ -1279,7 +1255,7 @@ export async function cleanupOldVersions(): Promise<void> {
       protectedVersions.add(currentSymlinkVersion)
     }
 
-    // Protect versions with active locks (running in other processes)
+    // 保护被其他运行中进程持有 active lock 的版本。
     for (const v of versionFiles) {
       if (protectedVersions.has(v.resolvedPath)) {
         continue
@@ -1305,7 +1281,7 @@ export async function cleanupOldVersions(): Promise<void> {
       }
     }
 
-    // Eligible versions: not protected, sorted newest first (reuse cached mtime)
+    // 可清理版本：不受保护，按最新优先排序，并复用缓存的 mtime。
     const eligibleVersions = versionFiles
       .filter((v) => !protectedVersions.has(v.resolvedPath))
       .sort((a, b) => b.mtime.getTime() - a.mtime.getTime())
@@ -1363,40 +1339,38 @@ export async function cleanupOldVersions(): Promise<void> {
 }
 
 /**
- * Check if a given path is managed by npm
- * @param executablePath - The path to check (can be a symlink)
- * @returns true if the path is npm-managed, false otherwise
+ * 检查指定路径是否由 npm 管理。
+ * @param executablePath 要检查的路径，可以是符号链接
+ * @returns 路径由 npm 管理时为 true，否则为 false
  */
 async function isNpmSymlink(executablePath: string): Promise<boolean> {
-  // Resolve symlink to its target if applicable
+  // 适用时将符号链接解析到目标。
   let targetPath = executablePath
   const stats = await lstat(executablePath)
   if (stats.isSymbolicLink()) {
     targetPath = await realpath(executablePath)
   }
 
-  // checking npm prefix isn't guaranteed to work, as prefix can change
-  // and users may set --prefix manually when installing
-  // thus we use this heuristic:
+  // npm prefix 可能变化，用户安装时也可手动设置 --prefix，因此检查 prefix
+  // 并不可靠；改用以下启发式规则：
   return targetPath.endsWith('.js') || targetPath.includes('node_modules')
 }
 
 /**
- * Remove the zy symlink from the executable directory
- * This is used when switching away from native installation
- * Will only remove if it's a native binary symlink, not npm-managed JS files
+ * 从可执行目录移除 zy 符号链接。切换离开原生安装时使用；
+ * 仅移除原生二进制符号链接，不移除 npm 管理的 JS 文件。
  */
 export async function removeInstalledSymlink(): Promise<void> {
   const dirs = getBaseDirectories()
 
   try {
-    // Check if this is an npm-managed installation
+    // 检查是否为 npm 管理的安装。
     if (await isNpmSymlink(dirs.executable)) {
       logForDebugging(`Skipping removal of ${dirs.executable} - appears to be npm-managed`)
       return
     }
 
-    // It's a native binary symlink, safe to remove
+    // 这是原生二进制符号链接，可安全移除。
     await unlink(dirs.executable)
     logForDebugging(`Removed zy symlink at ${dirs.executable}`)
   } catch (error) {
@@ -1408,8 +1382,7 @@ export async function removeInstalledSymlink(): Promise<void> {
 }
 
 /**
- * Clean up old zy aliases from shell configuration files
- * Only handles alias removal, not PATH setup
+ * 从 shell 配置文件清理旧 zy alias。仅处理 alias 移除，不设置 PATH。
  */
 export async function cleanupShellAliases(): Promise<SetupMessage[]> {
   const messages: SetupMessage[] = []
@@ -1450,7 +1423,7 @@ async function manualRemoveNpmPackage(
   packageName: string,
 ): Promise<{ success: boolean; error?: string; warning?: string }> {
   try {
-    // Get npm global prefix
+    // 获取 npm 全局 prefix。
     const prefixResult = await execFileNoThrowWithCwd('npm', ['config', 'get', 'prefix'])
     if (prefixResult.code !== 0 || !prefixResult.stdout) {
       return {
@@ -1462,10 +1435,9 @@ async function manualRemoveNpmPackage(
     const globalPrefix = prefixResult.stdout.trim()
     let manuallyRemoved = false
 
-    // Helper to try removing a file. unlink alone is sufficient — it throws
-    // ENOENT if the file is missing, which the catch handles identically.
-    // A stat() pre-check would add a syscall and a TOCTOU window where
-    // concurrent cleanup causes a false-negative return.
+    // 尝试移除文件的辅助逻辑。单独使用 unlink 已足够；文件缺失时会抛出 ENOENT，
+    // catch 会统一处理。预先 stat() 会增加一次 syscall，并引入 TOCTOU 窗口，
+    // 使并发清理导致错误的 false 返回值。
     async function tryRemove(filePath: string, description: string) {
       try {
         await unlink(filePath)
@@ -1477,7 +1449,7 @@ async function manualRemoveNpmPackage(
     }
 
     if (getPlatform().startsWith('win32')) {
-      // Windows - only remove executables, not the package directory
+      // Windows：只移除可执行文件，不移除 package 目录。
       const binCmd = join(globalPrefix, 'zy.cmd')
       const binPs1 = join(globalPrefix, 'zy.ps1')
       const binExe = join(globalPrefix, 'zy')
@@ -1494,7 +1466,7 @@ async function manualRemoveNpmPackage(
         manuallyRemoved = true
       }
     } else {
-      // Unix/Mac - only remove symlink, not the package directory
+      // Unix/Mac：只移除符号链接，不移除 package 目录。
       const binSymlink = join(globalPrefix, 'bin', 'zy')
 
       if (await tryRemove(binSymlink, 'bin symlink')) {
@@ -1540,7 +1512,7 @@ async function attemptNpmUninstall(
     logForDebugging(`Removed global npm installation of ${packageName}`)
     return { success: true }
   } else if (stderr && !stderr.includes('npm ERR! code E404')) {
-    // Check for ENOTEMPTY error and try manual removal
+    // 检查 ENOTEMPTY 错误，并尝试手动移除。
     if (stderr.includes('npm error code ENOTEMPTY')) {
       logForDebugging(`Failed to uninstall global npm package ${packageName}: ${stderr}`, {
         level: 'error',
@@ -1558,7 +1530,7 @@ async function attemptNpmUninstall(
       }
     }
 
-    // Only report as error if it's not a "package not found" error
+    // 不是“package not found”错误时才报告。
     logForDebugging(`Failed to uninstall global npm package ${packageName}: ${stderr}`, {
       level: 'error',
     })
@@ -1580,7 +1552,7 @@ export async function cleanupNpmInstallations(): Promise<{
   const warnings: string[] = []
   let removed = 0
 
-  // Always attempt to remove @anthropic-ai/zy-code
+  // 始终尝试移除 @anthropic-ai/zy-code。
   const codePackageResult = await attemptNpmUninstall('@anthropic-ai/zy-code')
   if (codePackageResult.success) {
     removed++
@@ -1591,7 +1563,7 @@ export async function cleanupNpmInstallations(): Promise<{
     errors.push(codePackageResult.error)
   }
 
-  // Also attempt to remove MACRO.PACKAGE_URL if it's defined and different
+  // MACRO.PACKAGE_URL 已定义且不同时也尝试移除。
   if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== '@anthropic-ai/zy-code') {
     const macroPackageResult = await attemptNpmUninstall(MACRO.PACKAGE_URL)
     if (macroPackageResult.success) {
@@ -1604,7 +1576,7 @@ export async function cleanupNpmInstallations(): Promise<{
     }
   }
 
-  // Check for local installation at ~/.zy/local
+  // 检查 ~/.zy/local 下的本地安装。
   const localInstallDir = join(homedir(), '.zy', 'local')
 
   try {

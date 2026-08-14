@@ -1,10 +1,10 @@
 /**
- * Hook for managing session backgrounding (Ctrl+B to background/foreground sessions).
+ * 管理会话后台化的 hook（Ctrl+B 在后台/前台会话间切换）。
  *
- * Handles:
- * - Calling onBackgroundQuery to spawn a background task for the current query
- * - Re-backgrounding foregrounded tasks
- * - Syncing foregrounded task messages/state to main view
+ * 负责：
+ * - 调用 onBackgroundQuery，为当前 query 创建后台任务
+ * - 将已置前台的任务重新放回后台
+ * - 将前台任务的消息和状态同步到主视图
  */
 
 import { useCallback, useEffect, useRef } from 'react'
@@ -20,7 +20,7 @@ type UseSessionBackgroundingProps = {
 }
 
 type UseSessionBackgroundingResult = {
-  /** Call when user wants to background (Ctrl+B) */
+  /** 用户希望切至后台（Ctrl+B）时调用。 */
   handleBackgroundSession: () => void
 }
 
@@ -40,7 +40,7 @@ export function useSessionBackgrounding({
 
   const handleBackgroundSession = useCallback(() => {
     if (foregroundedTaskId) {
-      // Re-background the foregrounded task
+      // 将前台任务重新放回后台
       setAppState((prev) => {
         const taskId = prev.foregroundedTaskId
         if (!taskId) {
@@ -75,10 +75,10 @@ export function useSessionBackgrounding({
     onBackgroundQuery,
   ])
 
-  // Sync foregrounded task's messages and loading state to the main view
+  // 将前台任务的消息和加载状态同步到主视图
   useEffect(() => {
     if (!foregroundedTaskId) {
-      // Reset when no foregrounded task
+      // 没有前台任务时重置
       lastSyncedMessagesLengthRef.current = 0
       return
     }
@@ -90,8 +90,7 @@ export function useSessionBackgrounding({
       return
     }
 
-    // Sync messages from background task to main view
-    // Only update if messages have actually changed to avoid redundant renders
+    // 将后台任务消息同步到主视图；仅在消息确实变化时更新，避免重复渲染
     const taskMessages = foregroundedTask.messages ?? []
     if (taskMessages.length !== lastSyncedMessagesLengthRef.current) {
       lastSyncedMessagesLengthRef.current = taskMessages.length
@@ -99,10 +98,10 @@ export function useSessionBackgrounding({
     }
 
     if (foregroundedTask.status === 'running') {
-      // Check if the task was aborted (user pressed Escape)
+      // 检查任务是否已中止（用户按下 Escape）
       const taskAbortController = foregroundedTask.abortController
       if (taskAbortController?.signal.aborted) {
-        // Task was aborted - clear foregrounded state immediately
+        // 任务已中止，立即清除前台状态
         setAppState((prev) => {
           if (!prev.foregroundedTaskId) {
             return prev
@@ -127,12 +126,12 @@ export function useSessionBackgrounding({
       }
 
       setIsLoading(true)
-      // Set abort controller to the foregrounded task's controller for Escape handling
+      // 将 abort controller 设为前台任务的 controller，供 Escape 处理
       if (taskAbortController) {
         setAbortController(taskAbortController)
       }
     } else {
-      // Task completed - restore to background and clear foregrounded view
+      // 任务完成后恢复到后台，并清除前台视图
       setAppState((prev) => {
         const taskId = prev.foregroundedTaskId
         if (!taskId) {
