@@ -37,13 +37,13 @@ export function useInputBuffer({
     (text: string, cursorOffset: number, pastedContents: Record<number, PastedContent> = {}) => {
       const now = Date.now()
 
-      // Clear any pending push
+      // 清除尚未执行的写入
       if (pendingPush.current) {
         clearTimeout(pendingPush.current)
         pendingPush.current = null
       }
 
-      // Debounce rapid changes
+      // 对连续变化做 debounce
       if (now - lastPushTime.current < debounceMs) {
         pendingPush.current = setTimeout(
           pushToBuffer,
@@ -57,34 +57,25 @@ export function useInputBuffer({
 
       lastPushTime.current = now
 
-      setBuffer((prevBuffer) => {
-        // If we're not at the end of the buffer, truncate everything after current position
-        const newBuffer = currentIndex >= 0 ? prevBuffer.slice(0, currentIndex + 1) : prevBuffer
+      // 若当前位置不在缓冲区末尾，则截掉其后的所有内容。
+      const newBuffer = currentIndex >= 0 ? buffer.slice(0, currentIndex + 1) : buffer
 
-        // Don't add if it's the same as the last entry
-        const lastEntry = newBuffer[newBuffer.length - 1]
-        if (lastEntry && lastEntry.text === text) {
-          return newBuffer
+      // 与最后一项相同时不重复添加，也不能推进当前索引。
+      const lastEntry = newBuffer[newBuffer.length - 1]
+      if (lastEntry?.text === text) {
+        if (newBuffer.length !== buffer.length) {
+          setBuffer(newBuffer)
         }
+        return
+      }
 
-        // Add new entry
-        const updatedBuffer = [...newBuffer, { text, cursorOffset, pastedContents, timestamp: now }]
-
-        // Limit buffer size
-        if (updatedBuffer.length > maxBufferSize) {
-          return updatedBuffer.slice(-maxBufferSize)
-        }
-
-        return updatedBuffer
-      })
-
-      // Update current index to point to the new entry
-      setCurrentIndex((prev) => {
-        const newIndex = prev >= 0 ? prev + 1 : buffer.length
-        return Math.min(newIndex, maxBufferSize - 1)
-      })
+      const updatedBuffer = [...newBuffer, { text, cursorOffset, pastedContents, timestamp: now }]
+      const boundedBuffer =
+        updatedBuffer.length > maxBufferSize ? updatedBuffer.slice(-maxBufferSize) : updatedBuffer
+      setBuffer(boundedBuffer)
+      setCurrentIndex(boundedBuffer.length - 1)
     },
-    [debounceMs, maxBufferSize, currentIndex, buffer.length],
+    [debounceMs, maxBufferSize, currentIndex, buffer],
   )
 
   const undo = useCallback((): BufferEntry | undefined => {

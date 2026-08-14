@@ -59,6 +59,23 @@ export function getPreservedSelection(
   return newIndex >= 0 ? newIndex : 0
 }
 
+/**
+ * 按 CC 的 slash command 行为更新选中项。
+ * 输入文本变化时应选新结果首项；只有同一输入下的候选重算才保留原 ID。
+ */
+export function getCommandSelectionForInputUpdate(
+  previousInput: string,
+  currentInput: string,
+  previousSuggestions: SuggestionItem[],
+  previousSelection: number,
+  newSuggestions: SuggestionItem[],
+): number {
+  if (previousInput !== currentInput) {
+    return newSuggestions.length > 0 ? 0 : -1
+  }
+  return getPreservedSelection(previousSuggestions, previousSelection, newSuggestions)
+}
+
 export function buildResumeInputFromSuggestion(suggestion: SuggestionItem): string {
   const metadata = suggestion.metadata as
     | {

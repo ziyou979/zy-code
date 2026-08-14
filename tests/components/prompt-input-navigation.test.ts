@@ -5,7 +5,10 @@ import {
   resolveAutocompleteArrowAction,
   resolvePromptHistoryNavigation,
 } from '../../src/components/PromptInput/promptInputNavigation.js'
-import { getPreservedSelection } from '../../src/hooks/typeaheadTokenUtils.js'
+import {
+  getCommandSelectionForInputUpdate,
+  getPreservedSelection,
+} from '../../src/hooks/typeaheadTokenUtils.js'
 
 describe('PromptInput 方向键路由', () => {
   test('slash command 完全匹配且候选仍可见时，不把上下键交给历史记录', () => {
@@ -49,6 +52,30 @@ describe('PromptInput 方向键路由', () => {
     const regenerated = previous.map((item) => ({ ...item }))
 
     expect(getPreservedSelection(previous, 1, regenerated)).toBe(1)
+  })
+
+  test('slash command 输入变化时重置到新结果首项', () => {
+    const previous = [
+      { id: 'extract', displayText: '/extract-claude-internal' },
+      { id: 'exit', displayText: '/exit' },
+    ]
+    const filtered = [
+      { id: 'exit', displayText: '/exit' },
+      { id: 'export', displayText: '/export' },
+      { id: 'extract', displayText: '/extract-claude-internal' },
+    ]
+
+    expect(getCommandSelectionForInputUpdate('/', '/ex', previous, 0, filtered)).toBe(0)
+  })
+
+  test('slash command 同一输入的候选刷新保留原 ID', () => {
+    const previous = [
+      { id: 'exit', displayText: '/exit' },
+      { id: 'extract', displayText: '/extract-claude-internal' },
+    ]
+    const regenerated = previous.map((item) => ({ ...item }))
+
+    expect(getCommandSelectionForInputUpdate('/ex', '/ex', previous, 1, regenerated)).toBe(1)
   })
 
   test('方向键兜底执行对应选择并停止传播', () => {

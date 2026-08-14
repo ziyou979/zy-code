@@ -73,6 +73,7 @@ import {
   findShellTokenStart,
   formatReplacementValue,
   generateBashSuggestions,
+  getCommandSelectionForInputUpdate,
   getPreservedSelection,
   hasCommandWithArguments,
   HAS_AT_SYMBOL_RE,
@@ -123,7 +124,7 @@ type UseTypeaheadResult = {
   onHoverSuggestion: (id: string | null) => void
 }
 /**
- * Hook for handling typeahead functionality for both commands and file paths
+ * 处理命令和文件路径 typeahead 功能的 hook
  */
 export function useTypeahead({
   commands,
@@ -146,8 +147,7 @@ export function useTypeahead({
   const thinkingToggleShortcut = useShortcutDisplay('chat:thinkingToggle', 'Chat', 'alt+t')
   const [suggestionType, setSuggestionType] = useState<SuggestionType>('none')
 
-  // Compute max column width from ALL commands once (not filtered results)
-  // This prevents layout shift when filtering
+  // 根据所有命令而非过滤结果一次性计算最大列宽，避免过滤时布局偏移
   const allCommandsMaxWidth = useMemo(() => {
     const visibleCommands = commands.filter((cmd) => !cmd.isHidden)
     if (visibleCommands.length === 0) {
@@ -160,19 +160,18 @@ export function useTypeahead({
   const mcpResources = useAppState((s) => s.mcp.resources)
   const store = useAppStateStore()
   const promptSuggestion = useAppState((s) => s.promptSuggestion)
-  // PromptInput hides suggestion ghost text in teammate view — mirror that
-  // gate here so Tab/rightArrow can't accept what isn't displayed.
+  // PromptInput 在 teammate 视图隐藏 suggestion ghost text；此处使用相同门控，
+  // 避免 Tab/rightArrow 接受未显示的内容。
   const isViewingTeammate = useAppState((s) => !!s.viewingAgentTaskId)
 
-  // Access keybinding context to check for pending chord sequences
+  // 访问 keybinding context，检查待处理的 chord sequence
   const keybindingContext = useOptionalKeybindingContext()
 
-  // State for inline ghost text (bash history completion - async)
+  // 行内 ghost text 状态（bash 历史补全，异步）
   const [inlineGhostText, setInlineGhostText] = useState<InlineGhostText | undefined>(undefined)
 
-  // Synchronous ghost text for prompt mode mid-input slash commands.
-  // Computed during render via useMemo to eliminate the one-frame flicker
-  // that occurs when using useState + useEffect (effect runs after render).
+  // prompt 模式行中 slash command 的同步 ghost text。render 期间通过 useMemo 计算，
+  // 消除 useState + useEffect 因 effect 晚于 render 而产生的单帧闪烁。
   const syncPromptGhostText = useMemo((): InlineGhostText | undefined => {
     if (mode !== 'prompt' || suppressSuggestions) {
       return undefined
@@ -192,35 +191,35 @@ export function useTypeahead({
     }
   }, [input, cursorOffset, mode, commands, suppressSuggestions])
 
-  // Merged ghost text: prompt mode uses synchronous useMemo, bash mode uses async useState
+  // 合并的 ghost text：prompt 模式使用同步 useMemo，bash 模式使用异步 useState
   const effectiveGhostText = suppressSuggestions
     ? undefined
     : mode === 'prompt'
       ? syncPromptGhostText
       : inlineGhostText
 
-  // Use a ref for cursorOffset to avoid re-triggering suggestions on cursor movement alone
-  // We only want to re-fetch suggestions when the actual search token changes
+  // 用 ref 保存 cursorOffset，避免仅移动光标就重新触发 suggestion；
+  // 只在实际 search token 变化时重新获取
   const cursorOffsetRef = useRef(cursorOffset)
   cursorOffsetRef.current = cursorOffset
 
-  // Track the latest search token to discard stale results from slow async operations
+  // 跟踪最新 search token，丢弃慢速异步操作返回的旧结果
   const latestSearchTokenRef = useRef<string | null>(null)
-  // Track previous input to detect actual text changes vs. callback recreations
+  // 跟踪上一次输入，区分真实文本变化和 callback 重建
   const prevInputRef = useRef('')
-  // Track the latest path token to discard stale results from path completion
+  // 跟踪最新 path token，丢弃路径补全的旧结果
   const latestPathTokenRef = useRef('')
-  // Track the latest bash input to discard stale results from history completion
+  // 跟踪最新 bash 输入，丢弃历史补全的旧结果
   const latestBashInputRef = useRef('')
-  // Track the latest slack channel token to discard stale results from MCP
+  // 跟踪最新 Slack channel token，丢弃 MCP 返回的旧结果
   const latestSlackTokenRef = useRef('')
-  // Track suggestions via ref to avoid updateSuggestions being recreated on selection changes
+  // 用 ref 跟踪 suggestion，避免选区变化时重建 updateSuggestions
   const suggestionsRef = useRef(suggestions)
   suggestionsRef.current = suggestions
-  // Track the input value when suggestions were manually dismissed to prevent re-triggering
+  // 记录手动关闭 suggestion 时的输入值，防止再次触发
   const dismissedForInputRef = useRef<string | null>(null)
 
-  // Clear all suggestions
+  // 清除所有 suggestion
   const clearSuggestions = useCallback(() => {
     setSuggestionsState(() => ({
       commandArgumentHint: undefined,
@@ -233,7 +232,7 @@ export function useTypeahead({
     setInlineGhostText(undefined)
   }, [setSuggestionsState])
 
-  // Expensive async operation to fetch file/resource suggestions
+  // 获取文件/resource suggestion 的高开销异步操作
   const fetchFileSuggestions = useCallback(
     async (searchToken: string, isAtSymbol = false): Promise<void> => {
       latestSearchTokenRef.current = searchToken
@@ -243,12 +242,12 @@ export function useTypeahead({
         agents,
         isAtSymbol,
       )
-      // Discard stale results if a newer query was initiated while waiting
+      // 等待期间已有更新 query 发起时丢弃旧结果
       if (latestSearchTokenRef.current !== searchToken) {
         return
       }
       if (combinedItems.length === 0) {
-        // Inline clearSuggestions logic to avoid needing debouncedFetchFileSuggestions
+        // 内联 clearSuggestions 逻辑，避免依赖 debouncedFetchFileSuggestions
         setSuggestionsState(() => ({
           commandArgumentHint: undefined,
           suggestions: [],
@@ -273,20 +272,15 @@ export function useTypeahead({
     [mcpResources, setSuggestionsState, agents],
   )
 
-  // Pre-warm the file index on mount so the first @-mention doesn't block.
-  // The build runs in background with ~4ms event-loop yields, so it doesn't
-  // delay first render — it just races the user's first @ keystroke.
+  // 挂载时预热文件索引，避免首次 @-mention 阻塞。构建在后台运行，每约 4ms
+  // 让出 event loop，不会延迟首帧，只会与用户首次按下 @ 竞争。
   //
-  // If the user types before the build finishes, they get partial results
-  // from the ready chunks; when the build completes, re-fire the last
-  // search so partial upgrades to full. Clears the token ref so the same
-  // query isn't discarded as stale.
+  // 构建完成前输入时先返回已就绪 chunk 的部分结果；完成后重新执行最近一次搜索，
+  // 将部分结果升级为完整结果。清除 token ref，避免同一 query 被当作旧结果丢弃。
   //
-  // Skipped under NODE_ENV=test: REPL-mounting tests would spawn git ls-files
-  // against the real CI workspace (270k+ files on Windows runners), and the
-  // background build outlives the test — its setImmediate chain leaks into
-  // subsequent tests in the shard. The subscriber still registers so
-  // fileSuggestions tests that trigger a refresh directly work correctly.
+  // NODE_ENV=test 时跳过：挂载 REPL 的测试会在真实 CI workspace 上运行 git ls-files，
+  // Windows runner 可能有 27 万多个文件；后台构建会活过测试，并让 setImmediate 链泄漏到
+  // 同 shard 的后续测试。subscriber 仍会注册，使直接触发 refresh 的 fileSuggestions 测试正常。
   useEffect(() => {
     if (!isTestEnv()) {
       startBackgroundCacheRefresh()
@@ -300,10 +294,9 @@ export function useTypeahead({
     })
   }, [fetchFileSuggestions])
 
-  // Debounce the file fetch operation. 50ms sits just above macOS default
-  // key-repeat (~33ms) so held-delete/backspace coalesces into one search
-  // instead of stuttering on each repeated key. The search itself is ~8–15ms
-  // on a 270k-file index.
+  // 对文件获取做 debounce。50ms 略高于 macOS 默认约 33ms 的按键重复间隔，
+  // 按住 delete/backspace 时可合并为一次搜索，避免每次重复按键都卡顿。
+  // 27 万文件索引上的搜索本身约耗时 8-15ms。
   const debouncedFetchFileSuggestions = useDebounceCallback(fetchFileSuggestions, 50)
 
   // Bash 模式历史 ghost text：冷缓存时会扫 history JSONL；每键 await 会让输入掉帧。
@@ -354,15 +347,18 @@ export function useTypeahead({
     [setSuggestionsState, store.getState],
   )
 
-  // First keystroke after # needs the MCP round-trip; subsequent keystrokes
-  // that share the same first-word segment hit the cache synchronously.
+  // # 后首次按键需要 MCP 往返；首个 word segment 相同的后续按键会同步命中 cache。
   const debouncedFetchSlackChannels = useDebounceCallback(fetchSlackChannels, 150)
 
-  // Handle immediate suggestion logic (cheap operations)
+  // 处理即时 suggestion 逻辑（低开销操作）
   // biome-ignore lint/correctness/useExhaustiveDependencies: store is a stable context ref, read imperatively at call-time
   const updateSuggestions = useCallback(
-    async (value: string, inputCursorOffset?: number): Promise<void> => {
-      // Use provided cursor offset or fall back to ref (avoids dependency on cursorOffset)
+    async (
+      value: string,
+      inputCursorOffset?: number,
+      previousInput: string = value,
+    ): Promise<void> => {
+      // 使用传入的 cursor offset，否则回退到 ref，避免依赖 cursorOffset
       const effectiveCursorOffset = inputCursorOffset ?? cursorOffsetRef.current
       if (suppressSuggestions) {
         debouncedFetchFileSuggestions.cancel()
@@ -371,16 +367,15 @@ export function useTypeahead({
         return
       }
 
-      // Check for mid-input slash command (e.g., "help me /com")
-      // Only in prompt mode, not when input starts with "/" (handled separately)
-      // Note: ghost text for prompt mode is computed synchronously via syncPromptGhostText useMemo.
-      // We only need to clear dropdown suggestions here when ghost text is active.
+      // 检查行中 slash command（如 "help me /com"）。仅用于 prompt 模式；
+      // 输入以 "/" 开头时由其他逻辑处理。prompt ghost text 已通过 syncPromptGhostText
+      // useMemo 同步计算，此处只需在其活跃时清除下拉 suggestion。
       if (mode === 'prompt') {
         const midInputCommand = findMidInputSlashCommand(value, effectiveCursorOffset)
         if (midInputCommand) {
           const match = getBestCommandMatch(midInputCommand.partialCommand, commands)
           if (match) {
-            // Clear dropdown suggestions when showing ghost text
+            // 显示 ghost text 时清除下拉 suggestion
             setSuggestionsState(() => ({
               commandArgumentHint: undefined,
               suggestions: [],
@@ -423,15 +418,13 @@ export function useTypeahead({
         debouncedBashHistoryGhost.cancel()
       }
 
-      // Check for @ to trigger team member / named subagent suggestions
-      // Must check before @ file symbol to prevent conflict
-      // Skip in bash mode - @ has no special meaning in shell commands
+      // 检查 @ 以触发 team member / named subagent suggestion。
+      // 必须先于 @ 文件符号检查以避免冲突；bash 模式下跳过，因为 @ 在 shell 命令中无特殊含义。
       const atMatch =
         mode !== 'bash' ? value.substring(0, effectiveCursorOffset).match(/(^|\s)@([\w-]*)$/) : null
       if (atMatch) {
         const partialName = (atMatch[2] ?? '').toLowerCase()
-        // Imperative read — reading at call-time fixes staleness for
-        // teammates/subagents added mid-session.
+        // 命令式读取；调用时读取可避免会话中途新增 teammate/subagent 后数据过期。
         const state = store.getState()
         const members: SuggestionItem[] = []
         const seen = new Set<string>()
@@ -482,7 +475,7 @@ export function useTypeahead({
         }
       }
 
-      // Check for # to trigger Slack channel suggestions (requires Slack MCP server)
+      // 检查 # 以触发 Slack channel suggestion（需要 Slack MCP server）
       if (mode === 'prompt') {
         const hashMatch = value.substring(0, effectiveCursorOffset).match(HASH_CHANNEL_RE)
         if (hashMatch && hasSlackMcpServer(store.getState().mcp.clients)) {
@@ -494,27 +487,26 @@ export function useTypeahead({
         }
       }
 
-      // Check for @ symbol to trigger file suggestions (including quoted paths)
-      // Includes colon for MCP resources (e.g., server:resource/path)
+      // 检查 @ 符号以触发文件 suggestion，包括带引号的路径；
+      // MCP resource 还允许冒号（如 server:resource/path）。
       const hasAtSymbol = value.substring(0, effectiveCursorOffset).match(HAS_AT_SYMBOL_RE)
 
-      // First, check for slash command suggestions (higher priority than @ symbol)
-      // Only show slash command selector if cursor is not on the "/" character itself
-      // Also don't show if cursor is at end of line with whitespace before it
-      // Don't show slash commands in bash mode
+      // 先检查 slash command suggestion，其优先级高于 @ 符号。
+      // 仅当光标不在 "/" 字符本身时显示 selector；光标位于行尾且前方为空白时也不显示。
+      // bash 模式下不显示 slash command。
       const isAtEndWithWhitespace =
         effectiveCursorOffset === value.length &&
         effectiveCursorOffset > 0 &&
         value.length > 0 &&
         value[effectiveCursorOffset - 1] === ' '
 
-      // Handle directory completion for commands
+      // 处理命令的目录补全
       if (mode === 'prompt' && isCommandInput(value) && effectiveCursorOffset > 0) {
         const parsedCommand = extractCommandNameAndArgs(value)
         if (parsedCommand && parsedCommand.commandName === 'add-dir' && parsedCommand.args) {
           const { args } = parsedCommand
 
-          // Clear suggestions if args end with whitespace (user is done with path)
+          // args 以空白结尾时清除 suggestion，表示用户已完成路径输入
           if (args.match(/\s+$/)) {
             debouncedFetchFileSuggestions.cancel()
             clearSuggestions()
@@ -535,13 +527,13 @@ export function useTypeahead({
             return
           }
 
-          // No suggestions found - clear and return
+          // 未找到 suggestion，清除后返回
           debouncedFetchFileSuggestions.cancel()
           clearSuggestions()
           return
         }
 
-        // Handle custom title completion for /resume command
+        // 处理 /resume 命令的自定义标题补全
         if (
           parsedCommand &&
           parsedCommand.commandName === 'resume' &&
@@ -550,7 +542,7 @@ export function useTypeahead({
         ) {
           const { args } = parsedCommand
 
-          // Get custom title suggestions using partial match
+          // 通过部分匹配获取自定义标题 suggestion
           const matches = await searchSessionsByCustomTitle(args, {
             limit: 10,
           })
@@ -579,13 +571,13 @@ export function useTypeahead({
             return
           }
 
-          // No suggestions found - clear and return
+          // 未找到 suggestion，清除后返回
           clearSuggestions()
           return
         }
       }
 
-      // Determine whether to display the argument hint and command suggestions.
+      // 判断是否显示参数提示和命令 suggestion。
       if (
         mode === 'prompt' &&
         isCommandInput(value) &&
@@ -594,30 +586,28 @@ export function useTypeahead({
       ) {
         let commandArgumentHint: string | undefined
         if (value.length > 1) {
-          // We have a partial or complete command without arguments
-          // Check if it matches a command exactly and has an argument hint
+          // 当前是没有参数的部分或完整命令，检查是否精确匹配命令且带参数提示
 
-          // Extract command name: everything after / until the first space (or end)
+          // 提取命令名：/ 之后直到首个空格或末尾的内容
           const spaceIndex = value.indexOf(' ')
           const commandName = spaceIndex === -1 ? value.slice(1) : value.slice(1, spaceIndex)
 
-          // Check if there are real arguments (non-whitespace after the command)
+          // 检查是否存在真实参数，即命令后有非空白内容
           const hasRealArguments =
             spaceIndex !== -1 && value.slice(spaceIndex + 1).trim().length > 0
 
-          // Check if input is exactly "command + single space" (ready for arguments)
+          // 检查输入是否恰为“命令 + 单个空格”，即已准备输入参数
           const hasExactlyOneTrailingSpace = spaceIndex !== -1 && value.length === spaceIndex + 1
 
-          // If input has a space after the command, don't show suggestions
-          // This prevents Enter from selecting a different command after Tab completion
+          // 命令后存在空格时不显示 suggestion，避免 Tab 补全后按 Enter 选中其他命令
           if (spaceIndex !== -1) {
             const exactMatch = commands.find((cmd) => getCommandName(cmd) === commandName)
             if (exactMatch || hasRealArguments) {
-              // Priority 1: Static argumentHint (only on first trailing space for backwards compat)
+              // 优先级 1：静态 argumentHint，仅在首个尾随空格时显示以保持向后兼容
               if (exactMatch?.argumentHint && hasExactlyOneTrailingSpace) {
                 commandArgumentHint = exactMatch.argumentHint
               }
-              // Priority 2: Progressive hint from argNames (show when trailing space)
+              // 优先级 2：来自 argNames 的渐进提示，存在尾随空格时显示
               else if (
                 exactMatch?.type === 'prompt' &&
                 exactMatch.argNames?.length &&
@@ -641,16 +631,16 @@ export function useTypeahead({
             }
           }
 
-          // Note: argument hint is only shown when there's exactly one trailing space
-          // (set above when hasExactlyOneTrailingSpace is true)
+          // 参数提示仅在恰好有一个尾随空格时显示，已在上方
+          // hasExactlyOneTrailingSpace 为 true 时设置。
         }
         const commandItems = generateCommandSuggestions(value, commands)
         setSuggestionsState((prev) => ({
           commandArgumentHint,
           suggestions: commandItems,
-          // updateSuggestions 会因命令注册或回调引用变化而对同一输入重跑；
-          // 按 ID 保留当前项，不能把刚完成的方向键导航重置到首项。
-          selectedSuggestion: getPreservedSelection(
+          selectedSuggestion: getCommandSelectionForInputUpdate(
+            previousInput,
+            value,
             prev.suggestions,
             prev.selectedSuggestion,
             commandItems,
@@ -658,21 +648,19 @@ export function useTypeahead({
         }))
         setSuggestionType(commandItems.length > 0 ? 'command' : 'none')
 
-        // Use stable width from all commands (prevents layout shift when filtering)
+        // 使用所有命令计算出的稳定宽度，避免过滤时布局偏移
         if (commandItems.length > 0) {
           setMaxColumnWidth(allCommandsMaxWidth)
         }
         return
       }
       if (suggestionType === 'command') {
-        // If we had command suggestions but the input no longer starts with '/'
-        // we need to clear the suggestions. However, we should not return
-        // because there may be relevant @ symbol and file suggestions.
+        // 曾有命令 suggestion 但输入不再以 '/' 开头时需要清除；不能直接返回，
+        // 因为仍可能存在相关 @ 符号和文件 suggestion。
         debouncedFetchFileSuggestions.cancel()
         clearSuggestions()
       } else if (isCommandInput(value) && hasCommandWithArguments(isAtEndWithWhitespace, value)) {
-        // If we have a command with arguments (no trailing space), clear any stale hint
-        // This prevents the hint from flashing when transitioning between states
+        // 命令已有参数且没有尾随空格时清除旧提示，避免状态切换时提示闪烁
         setSuggestionsState((prev) =>
           prev.commandArgumentHint
             ? {
@@ -683,38 +671,36 @@ export function useTypeahead({
         )
       }
       if (suggestionType === 'custom-title') {
-        // If we had custom-title suggestions but the input is no longer /resume
-        // we need to clear the suggestions.
+        // 曾有自定义标题 suggestion 但输入不再是 /resume 时清除。
         clearSuggestions()
       }
       if (
         suggestionType === 'agent' &&
         suggestionsRef.current.some((s: SuggestionItem) => s.id?.startsWith('dm-'))
       ) {
-        // If we had team member suggestions but the input no longer has @
-        // we need to clear the suggestions.
+        // 曾有 team member suggestion 但输入不再包含 @ 时清除。
         const hasAt = value.substring(0, effectiveCursorOffset).match(/(^|\s)@([\w-]*)$/)
         if (!hasAt) {
           clearSuggestions()
         }
       }
 
-      // Check for @ symbol to trigger file and MCP resource suggestions
-      // Skip @ autocomplete in bash mode - @ has no special meaning in shell commands
+      // 检查 @ 符号以触发文件和 MCP resource suggestion。
+      // bash 模式下跳过 @ 自动补全，因为 @ 在 shell 命令中无特殊含义。
       if (hasAtSymbol && mode !== 'bash') {
-        // Get the @ token (including the @ symbol)
+        // 获取包含 @ 符号的 token
         const completionToken = extractCompletionToken(value, effectiveCursorOffset, true)
         if (completionToken?.token.startsWith('@')) {
           const searchToken = extractSearchToken(completionToken)
 
-          // If the token after @ is path-like, use path completion instead of fuzzy search
-          // This handles cases like @~/path, @./path, @/path for directory traversal
+          // @ 后 token 类似路径时使用路径补全而非模糊搜索，
+          // 处理 @~/path、@./path、@/path 等目录遍历情况
           if (isPathLikeToken(searchToken)) {
             latestPathTokenRef.current = searchToken
             const pathSuggestions = await getPathCompletions(searchToken, {
               maxResults: 10,
             })
-            // Discard stale results if a newer query was initiated while waiting
+            // 等待期间已有更新 query 发起时丢弃旧结果
             if (latestPathTokenRef.current !== searchToken) {
               return
             }
@@ -733,8 +719,8 @@ export function useTypeahead({
             }
           }
 
-          // Skip if we already fetched for this exact token (prevents loop from
-          // suggestions dependency causing updateSuggestions to be recreated)
+          // 已为完全相同 token 获取过时跳过，避免 suggestion 依赖重建
+          // updateSuggestions 后形成循环。
           if (latestSearchTokenRef.current === searchToken) {
             return
           }
@@ -743,24 +729,24 @@ export function useTypeahead({
         }
       }
 
-      // If we have active file suggestions or the input changed, check for file suggestions
+      // 存在活动文件 suggestion 或输入变化时，检查文件 suggestion
       if (suggestionType === 'file') {
         const completionToken = extractCompletionToken(value, effectiveCursorOffset, true)
         if (completionToken) {
           const searchToken = extractSearchToken(completionToken)
-          // Skip if we already fetched for this exact token
+          // 已为完全相同 token 获取过时跳过
           if (latestSearchTokenRef.current === searchToken) {
             return
           }
           void debouncedFetchFileSuggestions(searchToken, false)
         } else {
-          // If we had file suggestions but now there's no completion token
+          // 曾有文件 suggestion，但现在没有 completion token
           debouncedFetchFileSuggestions.cancel()
           clearSuggestions()
         }
       }
 
-      // Clear shell suggestions if not in bash mode OR if input has changed
+      // 非 bash 模式或输入已变化时清除 shell suggestion
       if (suggestionType === 'shell') {
         const inputSnapshot = (
           suggestionsRef.current[0]?.metadata as {
@@ -783,51 +769,49 @@ export function useTypeahead({
       debouncedBashHistoryGhost,
       mode,
       suppressSuggestions,
-      // Note: using suggestionsRef instead of suggestions to avoid recreating
-      // this callback when only selectedSuggestion changes (not the suggestions list)
+      // 使用 suggestionsRef 而非 suggestions，避免只有 selectedSuggestion 变化、
+      // suggestion 列表未变时重建此 callback。
       allCommandsMaxWidth,
     ],
   )
 
-  // Update suggestions when input changes
-  // Note: We intentionally don't depend on cursorOffset here - cursor movement alone
-  // shouldn't re-trigger suggestions. The cursorOffsetRef is used to get the current
-  // position when needed without causing re-renders.
+  // 输入变化时更新 suggestion。此处有意不依赖 cursorOffset，单纯移动光标不应重新触发；
+  // 需要时通过 cursorOffsetRef 获取当前位置，且不造成重渲染。
   useEffect(() => {
-    // If suggestions were dismissed for this exact input, don't re-trigger
+    // 已针对完全相同输入关闭 suggestion 时不重新触发
     if (dismissedForInputRef.current === input) {
       return
     }
-    // When the actual input text changes (not just updateSuggestions being recreated),
-    // reset the search token ref so the same query can be re-fetched.
-    // This fixes: type @readme.md, clear, retype @readme.md → no suggestions.
-    if (prevInputRef.current !== input) {
+    // 实际输入文本变化而非仅重建 updateSuggestions 时，重置 search token ref，
+    // 使同一 query 可重新获取。修复输入 @readme.md、清除、再输入后无 suggestion 的问题。
+    const previousInput = prevInputRef.current
+    if (previousInput !== input) {
       prevInputRef.current = input
       latestSearchTokenRef.current = null
       setHoveredSuggestionId(null)
     }
-    // Clear the dismissed state when input changes
+    // 输入变化时清除 dismissed 状态
     dismissedForInputRef.current = null
-    void updateSuggestions(input)
+    void updateSuggestions(input, undefined, previousInput)
   }, [input, updateSuggestions])
 
-  // Handle tab key press - complete suggestions or trigger file suggestions
+  // 处理 Tab：补全 suggestion 或触发文件 suggestion
   const handleTab = useCallback(async () => {
-    // If we have inline ghost text, apply it
+    // 存在行内 ghost text 时应用
     if (effectiveGhostText) {
-      // Check for bash mode history completion first
+      // 先检查 bash 模式历史补全
       if (mode === 'bash') {
-        // Replace the input with the full command from history
+        // 用历史中的完整命令替换输入
         onInputChange(effectiveGhostText.fullCommand)
         setCursorOffset(effectiveGhostText.fullCommand.length)
         setInlineGhostText(undefined)
         return
       }
 
-      // Find the mid-input command to get its position (for prompt mode)
+      // 查找行中命令并获取位置（prompt 模式）
       const midInputCommand = findMidInputSlashCommand(input, cursorOffset)
       if (midInputCommand) {
-        // Replace the partial command with the full command + space
+        // 用完整命令加空格替换部分命令
         const before = input.slice(0, midInputCommand.startPos)
         const after = input.slice(midInputCommand.startPos + midInputCommand.token.length)
         const newInput = `${before}/${effectiveGhostText.fullCommand} ${after}`
@@ -839,9 +823,9 @@ export function useTypeahead({
       }
     }
 
-    // If we have active suggestions, select one
+    // 存在活动 suggestion 时选择一项
     if (suggestions.length > 0) {
-      // Cancel any pending debounced fetches to prevent flicker when accepting
+      // 取消待处理的 debounced fetch，避免接受时闪烁
       debouncedFetchFileSuggestions.cancel()
       debouncedFetchSlackChannels.cancel()
       const index = selectedSuggestion === -1 ? 0 : selectedSuggestion
@@ -851,7 +835,7 @@ export function useTypeahead({
           applyCommandSuggestion(
             suggestion,
             false,
-            // don't execute on tab
+            // Tab 时不执行
             commands,
             onInputChange,
             setCursorOffset,
@@ -860,7 +844,7 @@ export function useTypeahead({
           clearSuggestions()
         }
       } else if (suggestionType === 'custom-title' && suggestions.length > 0) {
-        // Apply custom title to /resume command with sessionId
+        // 将自定义标题应用到带 sessionId 的 /resume 命令
         if (suggestion) {
           const newInput = buildResumeInputFromSuggestion(suggestion)
           onInputChange(newInput)
@@ -870,11 +854,11 @@ export function useTypeahead({
       } else if (suggestionType === 'directory' && suggestions.length > 0) {
         const suggestion = suggestions[index]
         if (suggestion) {
-          // Check if this is a command context (e.g., /add-dir) or general path completion
+          // 检查是命令 context（如 /add-dir）还是通用路径补全
           const isInCommandContext = isCommandInput(input)
           let newInput: string
           if (isInCommandContext) {
-            // Command context: replace just the argument portion
+            // 命令 context：只替换参数部分
             const spaceIndex = input.indexOf(' ')
             const commandPart = input.slice(0, spaceIndex + 1) // Include the space
             const cmdSuffix =
@@ -885,18 +869,18 @@ export function useTypeahead({
             onInputChange(newInput)
             setCursorOffset(newInput.length)
             if (isPathMetadata(suggestion.metadata) && suggestion.metadata.type === 'directory') {
-              // For directories, fetch new suggestions for the updated path
+              // 目录则为更新后的路径获取新 suggestion
               setSuggestionsState((prev) => ({
                 ...prev,
                 commandArgumentHint: undefined,
               }))
-              void updateSuggestions(newInput, newInput.length)
+              void updateSuggestions(newInput, newInput.length, input)
             } else {
               clearSuggestions()
             }
           } else {
-            // General path completion: replace the path token in input with @-prefixed path
-            // Try to get token with @ prefix first to check if already prefixed
+            // 通用路径补全：用带 @ 前缀的路径替换输入中的 path token；
+            // 先尝试获取带 @ 前缀的 token，检查是否已有前缀。
             const completionTokenWithAt = extractCompletionToken(input, cursorOffset, true)
             const completionToken =
               completionTokenWithAt ?? extractCompletionToken(input, cursorOffset, false)
@@ -914,19 +898,19 @@ export function useTypeahead({
               onInputChange(newInput)
               setCursorOffset(result.cursorPos)
               if (isDir) {
-                // For directories, fetch new suggestions for the updated path
+                // 目录则为更新后的路径获取新 suggestion
                 setSuggestionsState((prev) => ({
                   ...prev,
                   commandArgumentHint: undefined,
                 }))
-                void updateSuggestions(newInput, result.cursorPos)
+                void updateSuggestions(newInput, result.cursorPos, input)
               } else {
-                // For files, clear suggestions
+                // 文件则清除 suggestion
                 clearSuggestions()
               }
             } else {
-              // No completion token found (e.g., cursor after space) - just clear suggestions
-              // without modifying input to avoid data loss
+              // 未找到 completion token（如光标位于空格后）时只清除 suggestion，
+              // 不修改输入，避免数据丢失。
               clearSuggestions()
             }
           }
@@ -986,15 +970,15 @@ export function useTypeahead({
           return
         }
 
-        // Check if all suggestions share a common prefix longer than the current input
+        // 检查所有 suggestion 是否共享比当前输入更长的前缀
         const commonPrefix = findLongestCommonPrefix(suggestions)
 
-        // Determine if token starts with @ to preserve it during replacement
+        // 判断 token 是否以 @ 开头，以便替换时保留
         const hasAtPrefix = completionToken.token.startsWith('@')
-        // The effective token length excludes the @ and quotes if present
+        // 有 @ 和引号时，effective token 长度不包含它们
         let effectiveTokenLength: number
         if (completionToken.isQuoted) {
-          // Remove @" prefix and optional closing " to get effective length
+          // 移除 @" 前缀及可选结束引号，得到 effective length
           effectiveTokenLength = completionToken.token.slice(2).replace(/"$/, '').length
         } else if (hasAtPrefix) {
           effectiveTokenLength = completionToken.token.length - 1
@@ -1002,15 +986,14 @@ export function useTypeahead({
           effectiveTokenLength = completionToken.token.length
         }
 
-        // If there's a common prefix longer than what the user has typed,
-        // replace the current input with the common prefix
+        // 公共前缀长于用户已输入内容时，用公共前缀替换当前输入
         if (commonPrefix.length > effectiveTokenLength) {
           const replacementValue = formatReplacementValue({
             displayText: commonPrefix,
             mode,
             hasAtPrefix,
             needsQuotes: false,
-            // common prefix doesn't need quotes unless already quoted
+            // 除非原本已有引号，否则公共前缀无需引号
             isQuoted: completionToken.isQuoted,
             isComplete: false, // partial completion
           })
@@ -1022,14 +1005,14 @@ export function useTypeahead({
             onInputChange,
             setCursorOffset,
           )
-          // Don't clear suggestions so user can continue typing or select a specific option
-          // Instead, update for the new prefix
+          // 不清除 suggestion，让用户继续输入或选择具体选项；改为按新前缀更新
           void updateSuggestions(
             input.replace(completionToken.token, replacementValue),
             cursorOffset,
+            input,
           )
         } else if (index < suggestions.length) {
-          // Otherwise, apply the selected suggestion
+          // 否则应用选中的 suggestion
           const suggestion = suggestions[index]
           if (suggestion) {
             const needsQuotes = suggestion.displayText.includes(' ')
@@ -1058,10 +1041,10 @@ export function useTypeahead({
       let suggestionItems: SuggestionItem[]
       if (mode === 'bash') {
         suggestionType = 'shell'
-        // This should be very fast, taking <10ms
+        // 此操作应很快，耗时小于 10ms
         const bashSuggestions = await generateBashSuggestions(input, cursorOffset)
         if (bashSuggestions.length === 1) {
-          // If single suggestion, apply it immediately
+          // 只有一个 suggestion 时立即应用
           const suggestion = bashSuggestions[0]
           if (suggestion) {
             const metadata = suggestion.metadata as
@@ -1084,10 +1067,10 @@ export function useTypeahead({
         }
       } else {
         suggestionType = 'file'
-        // If no suggestions, fetch file and MCP resource suggestions
+        // 没有 suggestion 时获取文件和 MCP resource suggestion
         const completionInfo = extractCompletionToken(input, cursorOffset, true)
         if (completionInfo) {
-          // If token starts with @, search without the @ prefix
+          // token 以 @ 开头时，去掉 @ 前缀搜索
           const isAtSymbol = completionInfo.token.startsWith('@')
           const searchToken = isAtSymbol ? completionInfo.token.substring(1) : completionInfo.token
           suggestionItems = await generateUnifiedSuggestions(
@@ -1101,7 +1084,7 @@ export function useTypeahead({
         }
       }
       if (suggestionItems.length > 0) {
-        // Multiple suggestions or not bash mode: show list
+        // 有多个 suggestion 或不在 bash 模式时显示列表
         setSuggestionsState((prev) => ({
           commandArgumentHint: undefined,
           suggestions: suggestionItems,
@@ -1159,7 +1142,7 @@ export function useTypeahead({
           clearSuggestions()
         }
       } else if (suggestionType === 'custom-title' && index < suggestions.length) {
-        // Apply custom title and execute /resume command with sessionId
+        // 应用自定义标题并执行带 sessionId 的 /resume 命令
         if (suggestion) {
           const newInput = buildResumeInputFromSuggestion(suggestion)
           onInputChange(newInput)
@@ -1216,7 +1199,7 @@ export function useTypeahead({
           clearSuggestions()
         }
       } else if (suggestionType === 'file' && index < suggestions.length) {
-        // Extract completion token directly when needed
+        // 需要时直接提取 completion token
         const completionInfo = extractCompletionToken(input, cursorOffset, true)
         if (completionInfo) {
           if (suggestion) {
@@ -1244,16 +1227,15 @@ export function useTypeahead({
         }
       } else if (suggestionType === 'directory' && index < suggestions.length) {
         if (suggestion) {
-          // In command context (e.g., /add-dir), Enter submits the command
-          // rather than applying the directory suggestion. Just clear
-          // suggestions and let the submit handler process the current input.
+          // 命令 context（如 /add-dir）中，Enter 提交命令而非应用目录 suggestion。
+          // 只清除 suggestion，让 submit handler 处理当前输入。
           if (isCommandInput(input)) {
             debouncedFetchFileSuggestions.cancel()
             clearSuggestions()
             return
           }
 
-          // General path completion: replace the path token
+          // 通用路径补全：替换 path token
           const completionTokenWithAt = extractCompletionToken(input, cursorOffset, true)
           const completionToken =
             completionTokenWithAt ?? extractCompletionToken(input, cursorOffset, false)
@@ -1270,8 +1252,8 @@ export function useTypeahead({
             onInputChange(result.newInput)
             setCursorOffset(result.cursorPos)
           }
-          // If no completion token found (e.g., cursor after space), don't modify input
-          // to avoid data loss - just clear suggestions
+          // 未找到 completion token（如光标位于空格后）时不修改输入，以免数据丢失；
+          // 只清除 suggestion。
 
           debouncedFetchFileSuggestions.cancel()
           clearSuggestions()
@@ -1341,21 +1323,21 @@ export function useTypeahead({
     acceptSuggestion(selectedSuggestion)
   }, [acceptSuggestion, selectedSuggestion, suggestions.length])
 
-  // Handler for autocomplete:accept - accepts current suggestion via Tab or Right Arrow
+  // autocomplete:accept 处理器：通过 Tab 或 Right Arrow 接受当前 suggestion
   const handleAutocompleteAccept = useCallback(() => {
     void handleTab()
   }, [handleTab])
 
-  // Handler for autocomplete:dismiss - clears suggestions and prevents re-triggering
+  // autocomplete:dismiss 处理器：清除 suggestion 并阻止重新触发
   const handleAutocompleteDismiss = useCallback(() => {
     debouncedFetchFileSuggestions.cancel()
     debouncedFetchSlackChannels.cancel()
     clearSuggestions()
-    // Remember the input when dismissed to prevent immediate re-triggering
+    // 关闭时记住输入，避免立即重新触发
     dismissedForInputRef.current = input
   }, [debouncedFetchFileSuggestions, debouncedFetchSlackChannels, clearSuggestions, input])
 
-  // Handler for autocomplete:previous - selects previous suggestion
+  // autocomplete:previous 处理器：选择上一项 suggestion
   const handleAutocompletePrevious = useCallback(() => {
     setHoveredSuggestionId(null)
     setSuggestionsState((prev) => ({
@@ -1368,7 +1350,7 @@ export function useTypeahead({
     }))
   }, [suggestions.length, setSuggestionsState])
 
-  // Handler for autocomplete:next - selects next suggestion
+  // autocomplete:next 处理器：选择下一项 suggestion
   const handleAutocompleteNext = useCallback(() => {
     setHoveredSuggestionId(null)
     setSuggestionsState((prev) => ({
@@ -1385,7 +1367,7 @@ export function useTypeahead({
     setHoveredSuggestionId(id)
   }, [])
 
-  // Autocomplete context keybindings - only active when suggestions are visible
+  // Autocomplete context keybinding，仅在 suggestion 可见时生效
   const autocompleteHandlers = useMemo(
     () => ({
       'autocomplete:accept': handleAutocompleteAccept,
@@ -1401,17 +1383,17 @@ export function useTypeahead({
     ],
   )
 
-  // Register autocomplete as an overlay so CancelRequestHandler defers ESC handling
-  // This ensures ESC dismisses autocomplete before canceling running tasks
+  // 将 autocomplete 注册为 overlay，使 CancelRequestHandler 延后处理 ESC，
+  // 确保先关闭 autocomplete，再取消运行中的任务。
   const isAutocompleteActive = suggestions.length > 0 || !!effectiveGhostText
   const isModalOverlayActive = useIsModalOverlayActive()
   useRegisterOverlay('autocomplete', isAutocompleteActive)
-  // Register Autocomplete context so it appears in activeContexts for other handlers.
-  // This allows Chat's resolver to see Autocomplete and defer to its bindings for up/down.
+  // 注册 Autocomplete context，使其出现在其他处理器的 activeContexts 中，
+  // 让 Chat resolver 能看到它，并将 up/down 交给其 binding。
   useRegisterKeybindingContext('Autocomplete', isAutocompleteActive)
 
-  // Disable autocomplete keybindings when a modal overlay (e.g., DiffDialog) is active,
-  // so escape reaches the overlay's handler instead of dismissing autocomplete
+  // modal overlay（如 DiffDialog）活跃时禁用 autocomplete keybinding，
+  // 使 escape 到达 overlay 处理器，而不是关闭 autocomplete。
   useKeybindings(autocompleteHandlers, {
     context: 'Autocomplete',
     isActive: isAutocompleteActive && !isModalOverlayActive,
@@ -1429,9 +1411,9 @@ export function useTypeahead({
     }
   }
 
-  // Handle keyboard input for behaviors not covered by keybindings
+  // 处理 keybinding 未覆盖行为的键盘输入
   const handleKeyDown = (e: KeyboardEvent): void => {
-    // Handle right arrow to accept prompt suggestion ghost text
+    // 处理 Right Arrow 以接受 prompt suggestion ghost text
     if (e.key === 'right' && !isViewingTeammate) {
       const suggestionText = promptSuggestion.text
       const suggestionShownAt = promptSuggestion.shownAt
@@ -1443,14 +1425,14 @@ export function useTypeahead({
       }
     }
 
-    // Handle Tab key fallback behaviors when no autocomplete suggestions
-    // Don't handle tab if shift is pressed (used for mode cycle)
+    // 没有 autocomplete suggestion 时处理 Tab fallback；按住 shift 时不处理，
+    // 因为 shift+tab 用于模式循环。
     if (e.key === 'tab' && !e.shift) {
-      // Skip if autocomplete is handling this (suggestions or ghost text exist)
+      // autocomplete 正在处理时跳过，即存在 suggestion 或 ghost text
       if (suggestions.length > 0 || effectiveGhostText) {
         return
       }
-      // Accept prompt suggestion if it exists in AppState
+      // AppState 中存在 prompt suggestion 时接受
       const suggestionText = promptSuggestion.text
       const suggestionShownAt = promptSuggestion.shownAt
       if (suggestionText && suggestionShownAt > 0 && input === '' && !isViewingTeammate) {
@@ -1459,7 +1441,7 @@ export function useTypeahead({
         acceptSuggestionText(suggestionText)
         return
       }
-      // Remind user about thinking toggle shortcut if empty input
+      // 输入为空时提醒用户 thinking toggle 快捷键
       if (input.trim() === '') {
         e.preventDefault()
         addNotification({
@@ -1472,7 +1454,7 @@ export function useTypeahead({
       return
     }
 
-    // Only continue with navigation if we have suggestions
+    // 仅在存在 suggestion 时继续导航
     if (suggestions.length === 0) {
       return
     }
@@ -1490,8 +1472,8 @@ export function useTypeahead({
       return
     }
 
-    // Handle Ctrl-N/P for navigation (arrows handled by keybindings)
-    // Skip if we're in the middle of a chord sequence to allow chords like ctrl+f n
+    // 用 Ctrl-N/P 导航，方向键由 keybinding 处理。处于 chord sequence 中时跳过，
+    // 以允许 ctrl+f n 等 chord。
     const hasPendingChord = keybindingContext?.pendingChord != null
     if (e.ctrl && e.key === 'n' && !hasPendingChord) {
       e.preventDefault()
@@ -1504,19 +1486,17 @@ export function useTypeahead({
       return
     }
 
-    // Handle selection and execution via return/enter
-    // Shift+Enter and Meta+Enter insert newlines (handled by useTextInput),
-    // so don't accept the suggestion for those.
+    // 通过 return/enter 处理选择和执行。Shift+Enter 与 Meta+Enter 由 useTextInput
+    // 插入换行，因此这些组合不接受 suggestion。
     if (e.key === 'return' && !e.shift && !e.meta) {
       e.preventDefault()
       handleEnter()
     }
   }
 
-  // Backward-compat bridge: PromptInput doesn't yet wire handleKeyDown to
-  // <Box onKeyDown>. Subscribe via useInput and adapt InputEvent →
-  // KeyboardEvent until the consumer is migrated (separate PR).
-  // TODO(onKeyDown-migration): remove once PromptInput passes handleKeyDown.
+  // 向后兼容 bridge：PromptInput 尚未将 handleKeyDown 接到 <Box onKeyDown>。
+  // 在 consumer 通过独立 PR 迁移前，先用 useInput 订阅并适配 InputEvent → KeyboardEvent。
+  // TODO(onKeyDown-migration)：PromptInput 传入 handleKeyDown 后移除。
   useInput((_input, _key, event) => {
     const kbEvent = new KeyboardEvent(event.keypress)
     handleKeyDown(kbEvent)
