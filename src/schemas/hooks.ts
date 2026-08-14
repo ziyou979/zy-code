@@ -1,11 +1,10 @@
 /**
- * Hook Zod schemas extracted to break import cycles.
+ * 为打破循环依赖而抽出的 Hook Zod schema。
  *
- * This file contains hook-related schema definitions that were originally
- * in src/services/settings/types.ts. By extracting them here, we break the
- * circular dependency between settings/types.ts and plugins/schemas.ts.
+ * 本文件包含原先位于 src/services/settings/types.ts 的 Hook 相关 schema 定义。
+ * 抽取到这里后，可打破 settings/types.ts 与 plugins/schemas.ts 之间的循环依赖。
  *
- * Both files now import from this shared location instead of each other.
+ * 两个文件现在都从这个共享位置导入，不再互相依赖。
  */
 
 import { HOOK_EVENTS, type HookEvent } from 'src/types/index.js'
@@ -186,7 +185,7 @@ function buildHookSchemas() {
 }
 
 /**
- * Schema for hook command (excludes function hooks - they can't be persisted)
+ * Hook 命令的 schema（不含无法持久化的函数 Hook）。
  */
 export const HookCommandSchema = lazySchema(() => {
   const {
@@ -206,7 +205,7 @@ export const HookCommandSchema = lazySchema(() => {
 })
 
 /**
- * Schema for matcher configuration with multiple hooks
+ * 包含多个 Hook 的 matcher 配置 schema。
  */
 export const HookMatcherSchema = lazySchema(() =>
   z.object({
@@ -221,9 +220,9 @@ export const HookMatcherSchema = lazySchema(() =>
 )
 
 /**
- * Schema for hooks configuration
- * The key is the hook event. The value is an array of matcher configurations.
- * Uses partialRecord since not all hook events need to be defined.
+ * Hook 配置的 schema。
+ * key 是 Hook 事件，value 是 matcher 配置数组。
+ * 并非所有 Hook 事件都必须定义，因此使用 partialRecord。
  */
 export const HooksSchema = lazySchema(() =>
   z.partialRecord(z.enum(HOOK_EVENTS), z.array(HookMatcherSchema())),

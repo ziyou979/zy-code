@@ -1,16 +1,15 @@
 /**
- * Hook input/output payload types.
+ * Hook 输入和输出的 payload 类型。
  *
- * TypeScript types for the data shapes exchanged between the agent and hook
- * callbacks. Schemas live in ./schemas.ts. Runtime callback machinery lives
- * in ./runtime.ts.
+ * 定义 agent 与 hook 回调之间交换的数据结构。schema 位于 ./schemas.ts，
+ * 运行时回调机制位于 ./runtime.ts。
  */
 
 import type { PermissionBehavior, PermissionUpdate } from '../coreTypes.generated.js'
 import type { WireAssistantMessageError } from '../wire/messages.js'
 
 // ============================================================================
-// Hook Input Types
+// Hook 输入类型
 // ============================================================================
 
 export interface BaseHookInput {
@@ -106,10 +105,10 @@ export interface BackgroundTaskInfo {
 
 export interface SessionCronInfo {
   id: string
-  /** 5-field cron string (local time) */
+  /** 5 段式 cron 字符串（本地时间） */
   schedule: string
   recurring?: boolean
-  /** ISO timestamp of the next scheduled run, if known */
+  /** 下次计划执行的 ISO 时间戳（如已知） */
   next_run?: string
 }
 
@@ -318,7 +317,7 @@ export type HookInput =
   | UserPromptExpansionHookInput
 
 // ============================================================================
-// Hook Output Types
+// Hook 输出类型
 // ============================================================================
 
 export interface AsyncHookJSONOutput {
@@ -415,9 +414,9 @@ export interface FileChangedHookSpecificOutput {
 
 export interface MessageDisplayHookSpecificOutput {
   hookEventName: 'MessageDisplay'
-  /** Replace the displayed text (display-only; does not change context/transcript). */
+  /** 替换显示文本（仅影响显示，不修改 context 或 transcript）。 */
   transformedText?: string
-  /** Hide the message from display entirely. */
+  /** 完全隐藏该消息。 */
   hide?: boolean
 }
 

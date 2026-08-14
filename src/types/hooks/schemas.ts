@@ -1,9 +1,8 @@
 /**
- * Hook payload schemas.
+ * Hook payload schema。
  *
- * Zod schemas for hook input/output payloads (the data shapes exchanged
- * between the agent and hook callbacks). Runtime callback machinery lives
- * in ./runtime.ts.
+ * 定义 hook 输入和输出 payload（agent 与 hook 回调之间交换的数据结构）
+ * 的 Zod schema。运行时回调机制位于 ./runtime.ts。
  */
 
 import { z } from 'zod/v4'
@@ -12,7 +11,7 @@ import { PermissionBehaviorSchema, PermissionUpdateSchema } from '../coreSchemas
 import { WireAssistantMessageErrorSchema } from '../wire/messageSchemas.js'
 
 // ============================================================================
-// Hook Types
+// Hook 类型
 // ============================================================================
 
 export const HOOK_EVENTS = [
@@ -89,7 +88,7 @@ export const BaseHookInputSchema = lazySchema(() =>
   }),
 )
 
-// Use .and() instead of .extend() to preserve BaseHookInput & {...} in generated types
+// 使用 .and() 而非 .extend()，以在生成类型中保留 BaseHookInput & {...}
 export const PreToolUseHookInputSchema = lazySchema(() =>
   BaseHookInputSchema().and(
     z.object({
