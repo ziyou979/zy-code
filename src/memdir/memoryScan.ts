@@ -1,7 +1,7 @@
 /**
- * Memory-directory scanning primitives. Split out of findRelevantMemories.ts
- * so extractMemories can import the scan without pulling in sideQuery and
- * the API-client chain (which closed a cycle through memdir.ts — #25372).
+ * memory 目录扫描原语。从 findRelevantMemories.ts 中拆出，
+ * 使 extractMemories 可导入扫描逻辑，而不引入 sideQuery 和 API client 链；
+ * 后者会通过 memdir.ts 形成循环依赖（#25372）。
  */
 
 import { readdir } from 'node:fs/promises'
@@ -22,15 +22,13 @@ const MAX_MEMORY_FILES = 200
 const FRONTMATTER_MAX_LINES = 30
 
 /**
- * Scan a memory directory for .md files, read their frontmatter, and return
- * a header list sorted newest-first (capped at MAX_MEMORY_FILES). Shared by
- * findRelevantMemories (query-time recall) and extractMemories (pre-injects
- * the listing so the extraction agent doesn't spend a turn on `ls`).
+ * 扫描 memory 目录中的 .md 文件，读取 frontmatter，并按从新到旧返回 header 列表
+ *（最多 MAX_MEMORY_FILES 项）。findRelevantMemories（query 时召回）和 extractMemories 共用此逻辑；
+ * 后者会预先注入该列表，避免提取 agent 浪费一个 turn 执行 `ls`。
  *
- * Single-pass: readFileInRange stats internally and returns mtimeMs, so we
- * read-then-sort rather than stat-sort-read. For the common case (N ≤ 200)
- * this halves syscalls vs a separate stat round; for large N we read a few
- * extra small files but still avoid the double-stat on the surviving 200.
+ * 单遍扫描：readFileInRange 会在内部 stat 并返回 mtimeMs，因此先读取再排序，
+ * 而非 stat—排序—读取。常见场景（N ≤ 200）下，这比单独一轮 stat 减少一半 syscall；
+ * N 较大时会多读取少量小文件，但仍避免对最终保留的 200 个文件重复 stat。
  */
 export async function scanMemoryFiles(
   memoryDir: string,
@@ -72,9 +70,8 @@ export async function scanMemoryFiles(
 }
 
 /**
- * Format memory headers as a text manifest: one line per file with
- * [type] filename (timestamp): description. Used by both the recall
- * selector prompt and the extraction-agent prompt.
+ * 将 memory header 格式化为文本清单：每个文件一行，格式为
+ * [type] filename (timestamp): description。召回 selector prompt 和提取 agent prompt 共用。
  */
 export function formatMemoryManifest(memories: MemoryHeader[]): string {
   return memories

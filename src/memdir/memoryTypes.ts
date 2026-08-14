@@ -1,14 +1,12 @@
 /**
- * Memory type taxonomy.
+ * Memory 类型分类。
  *
- * Memories are constrained to four types capturing context NOT derivable
- * from the current project state. Code patterns, architecture, git history,
- * and file structure are derivable (via grep/git/AGENTS.md) and should NOT
- * be saved as memories.
+ * memory 限定为四种类型，仅记录无法从当前项目状态推导的 context。
+ * 代码模式、架构、git 历史和文件结构可通过 grep/git/AGENTS.md 推导，
+ * 不应保存为 memory。
  *
- * The two TYPES_SECTION_* exports below are intentionally duplicated rather
- * than generated from a shared spec — keeping them flat makes per-mode edits
- * trivial without reasoning through a helper's conditional rendering.
+ * 下方两个 TYPES_SECTION_* 导出刻意保持重复，而不从共享 spec 生成。
+ * 扁平结构可使各模式的修改更直接，无需推理 helper 的条件渲染。
  */
 
 export const MEMORY_TYPES = ['user', 'feedback', 'project', 'reference'] as const
@@ -16,8 +14,8 @@ export const MEMORY_TYPES = ['user', 'feedback', 'project', 'reference'] as cons
 export type MemoryType = (typeof MEMORY_TYPES)[number]
 
 /**
- * Parse a raw frontmatter value into a MemoryType.
- * Invalid or missing values return undefined.
+ * 将原始 frontmatter 值解析为 MemoryType。
+ * 值无效或缺失时返回 undefined。
  */
 export function parseMemoryType(raw: unknown): MemoryType | undefined {
   if (typeof raw !== 'string') {
@@ -27,8 +25,8 @@ export function parseMemoryType(raw: unknown): MemoryType | undefined {
 }
 
 /**
- * `## Types of memory` section for COMBINED mode (private + team directories).
- * Includes <scope> tags and team/private qualifiers in examples.
+ * COMBINED 模式（private + team 目录）的 `## Types of memory` 部分。
+ * 示例包含 <scope> tag 和 team/private 限定。
  */
 export const TYPES_SECTION_COMBINED: readonly string[] = [
   '## Types of memory',
@@ -102,9 +100,9 @@ export const TYPES_SECTION_COMBINED: readonly string[] = [
 ]
 
 /**
- * `## Types of memory` section for INDIVIDUAL-ONLY mode (single directory).
- * No <scope> tags. Examples use plain `[saves X memory: …]`. Prose that
- * only makes sense with a private/team split is reworded.
+ * INDIVIDUAL-ONLY 模式（单目录）的 `## Types of memory` 部分。
+ * 不包含 <scope> tag，示例使用简单的 `[saves X memory: …]`。
+ * 仅在 private/team 分离时才成立的表述已重写。
  */
 export const TYPES_SECTION_INDIVIDUAL: readonly string[] = [
   '## Types of memory',
@@ -174,7 +172,7 @@ export const TYPES_SECTION_INDIVIDUAL: readonly string[] = [
 ]
 
 /**
- * `## What NOT to save in memory` section. Identical across both modes.
+ * `## What NOT to save in memory` 部分，两种模式内容相同。
  */
 export const WHAT_NOT_TO_SAVE_SECTION: readonly string[] = [
   '## What NOT to save in memory',
@@ -185,14 +183,14 @@ export const WHAT_NOT_TO_SAVE_SECTION: readonly string[] = [
   '- Anything already documented in AGENTS.md files.',
   '- Ephemeral task details: in-progress work, temporary state, current conversation context.',
   '',
-  // H2: explicit-save gate. Eval-validated (memory-prompt-iteration case 3,
-  // 0/2 → 3/3): prevents "save this week's PR list" → activity-log noise.
+  // H2：显式保存 gate。已经 eval 验证（memory-prompt-iteration 用例 3，
+  // 0/2 → 3/3）：防止“保存本周 PR 列表”转化为活动日志噪声。
   'These exclusions apply even when the user explicitly asks you to save. If they ask you to save a PR list or activity summary, ask what was *surprising* or *non-obvious* about it — that is the part worth keeping.',
 ]
 
 /**
- * Recall-side drift caveat. Single bullet under `## When to access memories`.
- * Proactive: verify memory against current state before answering.
+ * 召回侧的漂移提示，位于 `## When to access memories` 下的单个 bullet。
+ * 要求回答前主动将 memory 与当前状态核对。
  */
 export const MEMORY_DRIFT_CAVEAT =
   '- Memory records can become stale over time. Use memory as context for what was true at a given point in time. Before answering the user or building assumptions based solely on information in memory records, verify that the memory is still correct and up-to-date by reading the current state of the files or resources. If a recalled memory conflicts with current information, trust what you observe now — and update or remove the stale memory rather than acting on it.'
@@ -232,7 +230,7 @@ export const TRUSTING_RECALL_SECTION: readonly string[] = [
 ]
 
 /**
- * Frontmatter format example with the `type` field.
+ * 带 `type` 字段的 frontmatter 格式示例。
  */
 export const MEMORY_FRONTMATTER_EXAMPLE: readonly string[] = [
   '```markdown',

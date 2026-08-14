@@ -28,8 +28,8 @@ import { MEMORY_FRONTMATTER_EXAMPLE, WHAT_NOT_TO_SAVE_SECTION } from './memoryTy
 
 export const ENTRYPOINT_NAME = 'MEMORY.md'
 export const MAX_ENTRYPOINT_LINES = 200
-// ~125 chars/line at 200 lines. At p97 today; catches long-line indexes that
-// slip past the line cap (p100 observed: 197KB under 200 lines).
+// 以 200 行、每行约 125 字符计算。当前位于 p97，用于捕获绕过行数上限的超长行索引
+//（观测到的 p100：不到 200 行却达 197KB）。
 export const MAX_ENTRYPOINT_BYTES = 25_000
 const AUTO_MEM_DISPLAY_NAME = 'auto memory'
 
@@ -42,12 +42,10 @@ export type EntrypointTruncation = {
 }
 
 /**
- * Truncate MEMORY.md content to the line AND byte caps, appending a warning
- * that names which cap fired. Line-truncates first (natural boundary), then
- * byte-truncates at the last newline before the cap so we don't cut mid-line.
+ * 按行数和字节数上限截断 MEMORY.md，并追加说明触发哪项上限的警告。
+ * 先按行截断（自然边界），再在字节上限前的最后一个换行处截断，避免从行中间切断。
  *
- * Shared by buildMemoryPrompt and agentsMd getMemoryFiles (previously
- * duplicated the line-only logic).
+ * 由 buildMemoryPrompt 和 agentsMd getMemoryFiles 共用；两处之前重复实现了仅按行截断的逻辑。
  */
 export function truncateEntrypointContent(raw: string): EntrypointTruncation {
   const trimmed = raw.trim()
@@ -56,8 +54,8 @@ export function truncateEntrypointContent(raw: string): EntrypointTruncation {
   const byteCount = trimmed.length
 
   const wasLineTruncated = lineCount > MAX_ENTRYPOINT_LINES
-  // Check original byte count — long lines are the failure mode the byte cap
-  // targets, so post-line-truncation size would understate the warning.
+  // 检查原始字节数。字节上限专门处理超长行，
+  // 因此使用按行截断后的大小会低估警告条件。
   const wasByteTruncated = byteCount > MAX_ENTRYPOINT_BYTES
 
   if (!wasLineTruncated && !wasByteTruncated) {
@@ -104,9 +102,9 @@ const teamMemPrompts = feature('TEAMMEM')
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
- * Shared guidance text appended to each memory directory prompt line.
- * Shipped because Zy was burning turns on `ls`/`mkdir -p` before writing.
- * Harness guarantees the directory exists via ensureMemoryDirExists().
+ * 追加到每条 memory 目录 prompt 的共享指引文本。
+ * 此指引用于避免 Zy 写入前浪费 turn 执行 `ls`/`mkdir -p`。
+ * Harness 会通过 ensureMemoryDirExists() 保证目录存在。
  */
 export const DIR_EXISTS_GUIDANCE =
   'This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence).'
@@ -114,22 +112,19 @@ export const DIRS_EXIST_GUIDANCE =
   'Both directories already exist — write to them directly with the Write tool (do not run mkdir or check for their existence).'
 
 /**
- * Ensure a memory directory exists. Idempotent — called from loadMemoryPrompt
- * (once per session via systemPromptSection cache) so the model can always
- * write without checking existence first. FsOperations.mkdir is recursive
- * by default and already swallows EEXIST, so the full parent chain
- * (~/.zy/projects/<slug>/memory/) is created in one call with no
- * try/catch needed for the happy path.
+ * 确保 memory 目录存在。该操作幂等，由 loadMemoryPrompt 调用
+ *（通过 systemPromptSection cache，每个 session 一次），使 model 写入前无需检查目录。
+ * FsOperations.mkdir 默认递归创建并会忽略 EEXIST，因此只需调用一次即可创建整条父路径
+ *（~/.zy/projects/<slug>/memory/），正常路径不需要 try/catch。
  */
 export async function ensureMemoryDirExists(memoryDir: string): Promise<void> {
   const fs = getFsImplementation()
   try {
     await fs.mkdir(memoryDir)
   } catch (e) {
-    // fs.mkdir already handles EEXIST internally. Anything reaching here is
-    // a real problem (EACCES/EPERM/EROFS) — log so --debug shows why. Prompt
-    // building continues either way; the model's Write will surface the
-    // real perm error (and FileWriteTool does its own mkdir of the parent).
+    // fs.mkdir 已在内部处理 EEXIST。进入此处表示真实错误（EACCES/EPERM/EROFS），
+    // 需记录日志以便 --debug 显示原因。无论如何都会继续构建 prompt；model 后续 Write 时
+    // 会暴露真实的 permission 错误，且 FileWriteTool 也会自行 mkdir 父目录。
     const code =
       e instanceof Error && 'code' in e && typeof e.code === 'string' ? e.code : undefined
     logForDebugging(`ensureMemoryDirExists failed for ${memoryDir}: ${code ?? String(e)}`, {
@@ -139,8 +134,8 @@ export async function ensureMemoryDirExists(memoryDir: string): Promise<void> {
 }
 
 /**
- * Log memory directory file/subdir counts asynchronously.
- * Fire-and-forget — doesn't block prompt building.
+ * 异步记录 memory 目录中的文件和子目录数量。
+ * 只发不等，不阻塞 prompt 构建。
  */
 function logMemoryDirCounts(
   memoryDir: string,
@@ -168,25 +163,24 @@ function logMemoryDirCounts(
       })
     },
     () => {
-      // Directory unreadable — log without counts
+      // 目录无法读取，仅记录日志而不带数量
       logEvent('zy_memdir_loaded', baseMetadata)
     },
   )
 }
 
 /**
- * Build the typed-memory behavioral instructions (without MEMORY.md content).
- * Constrains memories to a closed four-type taxonomy (user / feedback / project /
- * reference) — content that is derivable from the current project state (code
- * patterns, architecture, git history) is explicitly excluded.
+ * 构建 typed-memory 行为指引（不含 MEMORY.md 内容）。
+ * 将 memory 限制在封闭的四类分类中（user / feedback / project / reference）；
+ * 明确排除可从当前项目状态推导的内容（代码模式、架构、git 历史）。
  *
  * 对齐 Claude Code 2.1.220 的精简版 Memory 节：类型、去重、召回验证各收敛
  * 为单段表述，并引入 [[name]] 互链约定与"召回记忆是背景上下文而非用户指令"
  * 声明。详细版 TYPES/WHEN_TO_ACCESS/TRUSTING_RECALL 节仍保留在
  * memoryTypes.ts，供 team 记忆与记忆提取服务使用。
  *
- * Used by both buildMemoryPrompt (agent memory, includes content) and
- * loadMemoryPrompt (system prompt, content injected via user context instead).
+ * buildMemoryPrompt（agent memory，包含内容）和 loadMemoryPrompt（system prompt，
+ * 内容改为通过 user context 注入）共用。
  */
 export function buildMemoryLines(
   displayName: string,
@@ -229,8 +223,8 @@ export function buildMemoryLines(
 }
 
 /**
- * Build the typed-memory prompt with MEMORY.md content included.
- * Used by agent memory (which has no getAgentsMds() equivalent).
+ * 构建包含 MEMORY.md 内容的 typed-memory prompt。
+ * 供没有 getAgentsMds() 等价机制的 agent memory 使用。
  */
 export function buildMemoryPrompt(params: {
   displayName: string
@@ -241,16 +235,16 @@ export function buildMemoryPrompt(params: {
   const fs = getFsImplementation()
   const entrypoint = memoryDir + ENTRYPOINT_NAME
 
-  // Directory creation is the caller's responsibility (loadMemoryPrompt /
-  // loadAgentMemoryPrompt). Builders only read, they don't mkdir.
+  // 目录创建由调用方（loadMemoryPrompt / loadAgentMemoryPrompt）负责。
+  // builder 只读取，不执行 mkdir。
 
-  // Read existing memory entrypoint (sync: prompt building is synchronous)
+  // 读取现有 memory 入口（同步执行，因为 prompt 构建为同步流程）
   let entrypointContent = ''
   try {
     // eslint-disable-next-line custom-rules/no-sync-fs
     entrypointContent = fs.readFileSync(entrypoint, { encoding: 'utf-8' })
   } catch {
-    // No memory file yet
+    // memory 文件尚未存在
   }
 
   const lines = buildMemoryLines(displayName, memoryDir, extraGuidelines)
@@ -278,22 +272,18 @@ export function buildMemoryPrompt(params: {
 }
 
 /**
- * Assistant-mode daily-log prompt. Gated behind feature('KAIROS').
+ * Assistant 模式的每日日志 prompt，受 feature('KAIROS') 控制。
  *
- * Assistant sessions are effectively perpetual, so the agent writes memories
- * append-only to a date-named log file rather than maintaining MEMORY.md as
- * a live index. A separate nightly /dream skill distills logs into topic
- * files + MEMORY.md. MEMORY.md is still loaded into context (via agentsMd.ts)
- * as the distilled index — this prompt only changes where NEW memories go.
+ * Assistant session 实际上长期存续，因此 agent 会以只追加方式将 memory 写入按日期命名的日志，
+ * 而不是将 MEMORY.md 作为实时索引维护。独立的夜间 /dream skill 会将日志提炼为主题文件和 MEMORY.md。
+ * MEMORY.md 仍会作为提炼后的索引通过 agentsMd.ts 加载到 context；此 prompt 只改变新 memory 的写入位置。
  */
 function buildAssistantDailyLogPrompt(skipIndex = false): string {
   const memoryDir = getAutoMemPath()
-  // Describe the path as a pattern rather than inlining today's literal path:
-  // this prompt is cached by systemPromptSection('memory', ...) and NOT
-  // invalidated on date change. The model derives the current date from the
-  // date_change attachment (appended at the tail on midnight rollover) rather
-  // than the user-context message — the latter is intentionally left stale to
-  // preserve the prompt cache prefix across midnight.
+  // 以模式而非当天字面路径描述：该 prompt 由 systemPromptSection('memory', ...) 缓存，
+  // 日期变化时不会失效。model 从午夜跨日时追加到尾部的 date_change attachment
+  // 推导当前日期，而非从 user-context 消息获取；后者会刻意保持过期，
+  // 以便跨越午夜时仍保留 prompt cache 前缀。
   const logPathPattern = join(memoryDir, 'logs', 'YYYY', 'MM', 'YYYY-MM-DD.md')
 
   const lines: string[] = [
@@ -332,18 +322,17 @@ function buildAssistantDailyLogPrompt(skipIndex = false): string {
 }
 
 /**
- * Build the "Searching past context" section if the feature gate is enabled.
+ * feature gate 启用时构建“搜索过往 context”部分。
  */
 export function buildSearchingPastContextSection(autoMemDir: string): string[] {
   if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_coral_fern', false)) {
     return []
   }
   const projectDir = getProjectDir(getOriginalCwd())
-  // Ant-native builds alias grep to embedded ugrep and remove the dedicated
-  // Grep tool, so give the model a real shell invocation there.
-  // In REPL mode, both Grep and Bash are hidden from direct use — the model
-  // calls them from inside REPL scripts, so the grep shell form is what it
-  // will write in the script anyway.
+  // Ant-native build 将 grep 别名到内置 ugrep，并移除专用 Grep Tool，
+  // 因此在该场景下向 model 提供真实的 shell 调用。
+  // REPL 模式下 Grep 和 Bash 都不能直接使用；model 会在 REPL script 内调用它们，
+  // 因此无论如何都会在 script 中写入 grep 的 shell 形式。
   const embedded = hasEmbeddedSearchTools() || isReplModeEnabled()
   const memSearch = embedded
     ? `grep -rn "<search term>" ${autoMemDir} --include="*.md"`
@@ -369,25 +358,22 @@ export function buildSearchingPastContextSection(autoMemDir: string): string[] {
 }
 
 /**
- * Load the unified memory prompt for inclusion in the system prompt.
- * Dispatches based on which memory systems are enabled:
- *   - auto + team: combined prompt (both directories)
- *   - auto only: memory lines (single directory)
- * Team memory requires auto memory (enforced by isTeamMemoryEnabled), so
- * there is no team-only branch.
+ * 加载要包含在 system prompt 中的统一 memory prompt。
+ * 根据已启用的 memory 系统分派：
+ *   - auto + team：组合 prompt（两个目录）
+ *   - 仅 auto：memory 行（单个目录）
+ * Team memory 依赖 auto memory（由 isTeamMemoryEnabled 强制保证），因此不存在仅 team 的分支。
  *
- * Returns null when auto memory is disabled.
+ * auto memory 禁用时返回 null。
  */
 export async function loadMemoryPrompt(): Promise<string | null> {
   const autoEnabled = isAutoMemoryEnabled()
 
   const skipIndex = getFeatureValue_CACHED_MAY_BE_STALE('zy_moth_copse', false)
 
-  // KAIROS daily-log mode takes precedence over TEAMMEM: the append-only
-  // log paradigm does not compose with team sync (which expects a shared
-  // MEMORY.md that both sides read + write). Gating on `autoEnabled` here
-  // means the !autoEnabled case falls through to the zy_memdir_disabled
-  // telemetry block below, matching the non-KAIROS path.
+  // KAIROS 每日日志模式优先于 TEAMMEM：只追加日志模式无法与 team 同步组合，
+  // 后者预期双方读写共享 MEMORY.md。此处再以 `autoEnabled` 为条件，
+  // 可使 !autoEnabled 落入下方 zy_memdir_disabled telemetry 分支，与非 KAIROS 路径一致。
   if (feature('KAIROS') && autoEnabled && getKairosActive()) {
     logMemoryDirCounts(getAutoMemPath(), {
       memory_type: 'auto' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -395,7 +381,7 @@ export async function loadMemoryPrompt(): Promise<string | null> {
     return buildAssistantDailyLogPrompt(skipIndex)
   }
 
-  // Cowork injects memory-policy text via env var; thread into all builders.
+  // Cowork 通过 env var 注入 memory policy 文本，需透传给所有 builder。
   const coworkExtraGuidelines = process.env.CLAUDE_COWORK_MEMORY_EXTRA_GUIDELINES
   const extraGuidelines =
     coworkExtraGuidelines && coworkExtraGuidelines.trim().length > 0
@@ -406,13 +392,10 @@ export async function loadMemoryPrompt(): Promise<string | null> {
     if (teamMemPaths!.isTeamMemoryEnabled()) {
       const autoDir = getAutoMemPath()
       const teamDir = teamMemPaths!.getTeamMemPath()
-      // Harness guarantees these directories exist so the model can write
-      // without checking. The prompt text reflects this ("already exists").
-      // Only creating teamDir is sufficient: getTeamMemPath() is defined as
-      // join(getAutoMemPath(), 'team'), so recursive mkdir of the team dir
-      // creates the auto dir as a side effect. If the team dir ever moves
-      // out from under the auto dir, add a second ensureMemoryDirExists call
-      // for autoDir here.
+      // Harness 保证这些目录存在，使 model 可不经检查直接写入；prompt 文本也会说明“已存在”。
+      // 只创建 teamDir 即可：getTeamMemPath() 定义为 join(getAutoMemPath(), 'team')，
+      // 因此递归 mkdir team 目录会顺带创建 auto 目录。如果 team 目录以后移出 auto 目录，
+      // 需在此为 autoDir 再添加一次 ensureMemoryDirExists 调用。
       await ensureMemoryDirExists(teamDir)
       logMemoryDirCounts(autoDir, {
         memory_type: 'auto' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -426,8 +409,8 @@ export async function loadMemoryPrompt(): Promise<string | null> {
 
   if (autoEnabled) {
     const autoDir = getAutoMemPath()
-    // Harness guarantees the directory exists so the model can write without
-    // checking. The prompt text reflects this ("already exists").
+    // Harness 保证目录存在，使 model 可不经检查直接写入；
+    // prompt 文本也会说明“已存在”。
     await ensureMemoryDirExists(autoDir)
     logMemoryDirCounts(autoDir, {
       memory_type: 'auto' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -441,9 +424,9 @@ export async function loadMemoryPrompt(): Promise<string | null> {
       !isEnvTruthy(process.env.ZY_CODE_DISABLE_AUTO_MEMORY) &&
       getInitialSettings().autoMemoryEnabled === false,
   })
-  // Gate on the GB flag directly, not isTeamMemoryEnabled() — that function
-  // checks isAutoMemoryEnabled() first, which is definitionally false in this
-  // branch. We want "was this user in the team-memory cohort at all."
+  // 直接检查 GB flag，不调用 isTeamMemoryEnabled()。该函数会先检查
+  // isAutoMemoryEnabled()，而它在此分支中必然为 false。我们需要判断的是
+  // “该用户是否曾属于 team-memory cohort”。
   if (getFeatureValue_CACHED_MAY_BE_STALE('zy_herring_clock', false)) {
     logEvent('zy_team_memdir_disabled', {})
   }

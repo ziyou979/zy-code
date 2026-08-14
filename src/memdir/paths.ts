@@ -1,5 +1,5 @@
 import { homedir } from 'node:os'
-import { isAbsolute, join, normalize, sep } from 'node:path'
+import { isAbsolute, join, normalize, relative, resolve, sep } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
 import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getProjectRoot } from 'src/bootstrap/runtime/runtimeContext.js'
@@ -10,13 +10,13 @@ import { sanitizePath } from '../utils/path.js'
 import { getInitialSettings, getSettingsForSource } from '../services/settings/settings.js'
 
 /**
- * Whether auto-memory features are enabled (memdir, agent memory, past session search).
- * Enabled by default. Priority chain (first defined wins):
+ * auto-memory feature（memdir、agent memory、过往 session 搜索）是否启用。
+ * 默认启用。优先级链（首个已定义的值生效）：
  *   1. ZY_CODE_DISABLE_AUTO_MEMORY env var (1/true → OFF, 0/false → ON)
  *   2. ZY_CODE_SIMPLE (--bare) → OFF
  *   3. CCR without persistent storage → OFF (no ZY_CODE_REMOTE_MEMORY_DIR)
  *   4. autoMemoryEnabled in settings.json (supports project-level opt-out)
- *   5. Default: enabled
+ *   5. 默认：启用
  */
 export function isAutoMemoryEnabled(): boolean {
   const envVal = process.env.ZY_CODE_DISABLE_AUTO_MEMORY
@@ -26,9 +26,8 @@ export function isAutoMemoryEnabled(): boolean {
   if (isEnvDefinedFalsy(envVal)) {
     return true
   }
-  // --bare / SIMPLE: prompts.ts already drops the memory section from the
-  // system prompt via its SIMPLE early-return; this gate stops the other half
-  // (extractMemories turn-end fork, autoDream, /remember, /dream, team sync).
+  // --bare / SIMPLE：prompts.ts 已通过 SIMPLE 提前返回从 system prompt 中移除 memory 部分；
+  // 此 gate 还会停止其余功能（extractMemories turn 结束 fork、autoDream、/remember、/dream、team 同步）。
   if (isEnvTruthy(process.env.ZY_CODE_SIMPLE)) {
     return false
   }
@@ -43,16 +42,14 @@ export function isAutoMemoryEnabled(): boolean {
 }
 
 /**
- * Whether the extract-memories background agent will run this session.
+ * extract-memories 后台 agent 是否会在本 session 中运行。
  *
- * The main agent's prompt always has full save instructions regardless of
- * this gate — when the main agent writes memories, the background agent
- * skips that range (hasMemoryWritesSince in extractMemories.ts); when it
- * doesn't, the background agent catches anything missed.
+ * 无论该 gate 状态如何，主 agent 的 prompt 始终包含完整保存指引。
+ * 主 agent 写入 memory 时，后台 agent 会跳过该范围（extractMemories.ts 中的 hasMemoryWritesSince）；
+ * 主 agent 未写入时，后台 agent 会补上遗漏内容。
  *
- * Callers must also gate on feature('EXTRACT_MEMORIES') — that check cannot
- * live inside this helper because feature() only tree-shakes when used
- * directly in an `if` condition.
+ * 调用方还必须检查 feature('EXTRACT_MEMORIES')。该检查不能放入此 helper，
+ * 因为 feature() 只有直接用在 `if` 条件中时才能 tree-shake。
  */
 export function isExtractModeActive(): boolean {
   if (!getFeatureValue_CACHED_MAY_BE_STALE('zy_passport_quail', false)) {
@@ -64,10 +61,10 @@ export function isExtractModeActive(): boolean {
 }
 
 /**
- * Returns the base directory for persistent memory storage.
- * Resolution order:
- *   1. ZY_CODE_REMOTE_MEMORY_DIR env var (explicit override, set in CCR)
- *   2. ~/.zy (default config home)
+ * 返回持久 memory 存储的根目录。
+ * 解析顺序：
+ *   1. ZY_CODE_REMOTE_MEMORY_DIR env var（显式覆盖，由 CCR 设置）
+ *   2. ~/.zy（默认配置主目录）
  */
 export function getMemoryBaseDir(): string {
   if (process.env.ZY_CODE_REMOTE_MEMORY_DIR) {
@@ -80,32 +77,31 @@ const AUTO_MEM_DIRNAME = 'memory'
 const AUTO_MEM_ENTRYPOINT_NAME = 'MEMORY.md'
 
 /**
- * Normalize and validate a candidate auto-memory directory path.
+ * 规范化并校验候选 auto-memory 目录路径。
  *
- * SECURITY: Rejects paths that would be dangerous as a read-allowlist root
- * or that normalize() doesn't fully resolve:
+ * 安全：拒绝作为读取 allowlist 根目录会带来危险，
+ * 或 normalize() 无法完全解析的路径：
  * - relative (!isAbsolute): "../foo" — would be interpreted relative to CWD
  * - root/near-root (length < 3): "/" → "" after strip; "/a" too short
  * - Windows drive-root (C: regex): "C:\" → "C:" after strip
  * - UNC paths (\\server\share): network paths — opaque trust boundary
  * - null byte: survives normalize(), can truncate in syscalls
  *
- * Returns the normalized path with exactly one trailing separator,
- * or undefined if the path is unset/empty/rejected.
+ * 返回规范化后且末尾恰好有一个分隔符的路径；
+ * 路径未设置、为空或被拒绝时返回 undefined。
  */
 function validateMemoryPath(raw: string | undefined, expandTilde: boolean): string | undefined {
   if (!raw) {
     return undefined
   }
   let candidate = raw
-  // Settings.json paths support ~/ expansion (user-friendly). The env var
-  // override does not (it's set programmatically by Cowork/SDK, which should
-  // always pass absolute paths). Bare "~", "~/", "~/.", "~/..", etc. are NOT
-  // expanded — they would make isAutoMemPath() match all of $HOME or its
-  // parent (same class of danger as "/" or "C:\").
+  // Settings.json 路径支持 ~/ 展开，方便用户使用；env var 覆盖不支持，因为它由
+  // Cowork/SDK 以编程方式设置，应始终传入绝对路径。裸 "~"、"~/"、"~/.", "~/.."
+  // 等不会展开，否则会让 isAutoMemPath() 匹配整个 $HOME 或其父目录，风险等级与
+  // "/" 或 "C:\" 相同。
   if (expandTilde && (candidate.startsWith('~/') || candidate.startsWith('~\\'))) {
     const rest = candidate.slice(2)
-    // Reject trivial remainders that would expand to $HOME or an ancestor.
+    // 拒绝会展开为 $HOME 或其祖先目录的简单余项。
     // normalize('') = '.', normalize('.') = '.', normalize('foo/..') = '.',
     // normalize('..') = '..', normalize('foo/../..') = '..'
     const restNorm = normalize(rest || '.')
@@ -114,8 +110,8 @@ function validateMemoryPath(raw: string | undefined, expandTilde: boolean): stri
     }
     candidate = join(homedir(), rest)
   }
-  // normalize() may preserve a trailing separator; strip before adding
-  // exactly one to match the trailing-sep contract of getAutoMemPath()
+  // normalize() 可能保留尾部分隔符；先移除，再精确添加一个，
+  // 以符合 getAutoMemPath() 的尾部分隔符契约
   const normalized = normalize(candidate).replace(/[/\\]+$/, '')
   if (
     !isAbsolute(normalized) ||
@@ -131,28 +127,23 @@ function validateMemoryPath(raw: string | undefined, expandTilde: boolean): stri
 }
 
 /**
- * Direct override for the full auto-memory directory path via env var.
- * When set, getAutoMemPath()/getAutoMemEntrypoint() return this path directly
- * instead of computing `{base}/projects/{sanitized-cwd}/memory/`.
+ * 通过 env var 直接覆盖完整 auto-memory 目录路径。设置后，getAutoMemPath()/
+ * getAutoMemEntrypoint() 直接返回此路径，不再计算 `{base}/projects/{sanitized-cwd}/memory/`。
  *
- * Used by Cowork to redirect memory to a space-scoped mount where the
- * per-session cwd (which contains the VM process name) would otherwise
- * produce a different project-key for every session.
+ * Cowork 用它把 memory 重定向到 space 范围的挂载点；否则每 session 的 cwd
+ * 包含 VM 进程名，会为每个 session 生成不同 project-key。
  */
 function getAutoMemPathOverride(): string | undefined {
   return validateMemoryPath(process.env.CLAUDE_COWORK_MEMORY_PATH_OVERRIDE, false)
 }
 
 /**
- * Settings.json override for the full auto-memory directory path.
- * Supports ~/ expansion for user convenience.
+ * Settings.json 对完整 auto-memory 目录路径的覆盖，支持 ~/ 展开以方便用户。
  *
- * SECURITY: projectSettings (.zy/settings.json committed to the repo) is
- * intentionally excluded — a malicious repo could otherwise set
- * autoMemoryDirectory: "~/.ssh" and gain silent write access to sensitive
- * directories via the filesystem.ts write carve-out (which fires when
- * isAutoMemPath() matches and hasAutoMemPathOverride() is false). This follows
- * the same pattern as hasSkipDangerousModePermissionPrompt() etc.
+ * 安全边界：有意排除会提交到仓库的 projectSettings（.zy/settings.json）。否则恶意仓库
+ * 可设置 autoMemoryDirectory: "~/.ssh"，再通过 filesystem.ts 的写入例外静默获取
+ * 敏感目录写权限；该例外在 isAutoMemPath() 匹配且 hasAutoMemPathOverride() 为 false
+ * 时触发。此处沿用 hasSkipDangerousModePermissionPrompt() 等相同模式。
  */
 function getAutoMemPathSetting(): string | undefined {
   const dir =
@@ -164,39 +155,38 @@ function getAutoMemPathSetting(): string | undefined {
 }
 
 /**
- * Check if CLAUDE_COWORK_MEMORY_PATH_OVERRIDE is set to a valid override.
- * Use this as a signal that the SDK caller has explicitly opted into
- * the auto-memory mechanics — e.g. to decide whether to inject the
- * memory prompt when a custom system prompt replaces the default.
+ * 检查 CLAUDE_COWORK_MEMORY_PATH_OVERRIDE 是否设置为有效覆盖值。
+ * 这表示 SDK 调用方已明确选择使用 auto-memory 机制；例如自定义 system prompt
+ * 替代默认值时，可据此决定是否注入 memory prompt。
  */
 export function hasAutoMemPathOverride(): boolean {
   return getAutoMemPathOverride() !== undefined
 }
 
 /**
- * Returns the canonical git repo root if available, otherwise falls back to
- * the stable project root. Uses findCanonicalGitRoot so all worktrees of the
- * same repo share one auto-memory directory (anthropics/zy-code#24382).
+ * canonical git repo root 可用时返回它，否则回退到稳定 project root。
+ * 使用 findCanonicalGitRoot，使同一仓库的所有 worktree 共享一个 auto-memory 目录
+ *（anthropics/zy-code#24382）。
  */
 function getAutoMemBase(): string {
   return findCanonicalGitRoot(getProjectRoot()) ?? getProjectRoot()
 }
 
 /**
- * Returns the auto-memory directory path.
+ * 返回 auto-memory 目录路径。
  *
- * Resolution order:
+ * 解析顺序：
  *   1. CLAUDE_COWORK_MEMORY_PATH_OVERRIDE env var (full-path override, used by Cowork)
  *   2. autoMemoryDirectory in settings.json (trusted sources only: policy/local/user)
  *   3. <memoryBase>/projects/<sanitized-git-root>/memory/
  *      where memoryBase is resolved by getMemoryBaseDir()
  *
- * Memoized: render-path callers (collapseReadSearchGroups → isAutoManagedMemoryFile)
- * fire per tool-use message per Messages re-render; each miss costs
- * getSettingsForSource × 4 → parseSettingsFile (realpathSync + readFileSync).
- * Keyed on projectRoot so tests that change its mock mid-block recompute;
- * env vars / settings.json / ZY_CONFIG_DIR are session-stable in
- * production and covered by per-test cache.clear.
+ * 使用 memoize：render 路径调用方（collapseReadSearchGroups →
+ * isAutoManagedMemoryFile）会在 Messages 每次重新渲染时按 tool-use 消息触发；
+ * 每次 miss 都需执行四次 getSettingsForSource，再进入 parseSettingsFile
+ *（realpathSync + readFileSync）。缓存以 projectRoot 为键，使测试在 block 中途修改 mock
+ * 后能重新计算；生产环境的 env var/settings.json/ZY_CONFIG_DIR 在 session 内稳定，
+ * 测试则通过每例 cache.clear 覆盖。
  */
 export const getAutoMemPath = memoize(
   (): string => {
@@ -213,13 +203,12 @@ export const getAutoMemPath = memoize(
 )
 
 /**
- * Returns the daily log file path for the given date (defaults to today).
- * Shape: <autoMemPath>/logs/YYYY/MM/YYYY-MM-DD.md
+ * 返回给定日期的每日日志文件路径，默认为今天。
+ * 形状：<autoMemPath>/logs/YYYY/MM/YYYY-MM-DD.md
  *
- * Used by assistant mode (feature('KAIROS')): rather than maintaining
- * MEMORY.md as a live index, the agent appends to a date-named log file
- * as it works. A separate nightly /dream skill distills these logs into
- * topic files + MEMORY.md.
+ * 由 assistant 模式（feature('KAIROS')）使用：agent 工作时不把 MEMORY.md 维护为
+ * 实时索引，而是追加到按日期命名的日志文件；独立的夜间 /dream skill 再将这些日志
+ * 提炼为主题文件与 MEMORY.md。
  */
 export function getAutoMemDailyLogPath(date: Date = new Date()): string {
   const yyyy = date.getFullYear().toString()
@@ -229,28 +218,30 @@ export function getAutoMemDailyLogPath(date: Date = new Date()): string {
 }
 
 /**
- * Returns the auto-memory entrypoint (MEMORY.md inside the auto-memory dir).
- * Follows the same resolution order as getAutoMemPath().
+ * 返回 auto-memory 入口，即 auto-memory 目录内的 MEMORY.md；
+ * 遵循与 getAutoMemPath() 相同的解析顺序。
  */
 export function getAutoMemEntrypoint(): string {
   return join(getAutoMemPath(), AUTO_MEM_ENTRYPOINT_NAME)
 }
 
 /**
- * Check if an absolute path is within the auto-memory directory.
+ * 检查绝对路径是否位于 auto-memory 目录内。
  *
- * When CLAUDE_COWORK_MEMORY_PATH_OVERRIDE is set, this matches against the
- * env-var override directory. Note that a true return here does NOT imply
- * write permission in that case — the filesystem.ts write carve-out is gated
- * on !hasAutoMemPathOverride() (it exists to bypass DANGEROUS_DIRECTORIES).
+ * 设置 CLAUDE_COWORK_MEMORY_PATH_OVERRIDE 后，会与 env-var 覆盖目录匹配。
+ * 注意，此时返回 true 不代表拥有写权限；filesystem.ts 的写入例外还受
+ * !hasAutoMemPathOverride() 控制，该例外用于绕过 DANGEROUS_DIRECTORIES。
  *
- * The settings.json autoMemoryDirectory DOES get the write carve-out: it's the
- * user's explicit choice from a trusted settings source (projectSettings is
- * excluded — see getAutoMemPathSetting), and hasAutoMemPathOverride() remains
- * false for it.
+ * settings.json 的 autoMemoryDirectory 会获得写入例外：它来自可信 settings 来源，
+ * 是用户的明确选择；projectSettings 已排除，见 getAutoMemPathSetting。
+ * 对它而言 hasAutoMemPathOverride() 仍为 false。
  */
 export function isAutoMemPath(absolutePath: string): boolean {
-  // SECURITY: Normalize to prevent path traversal bypasses via .. segments
-  const normalizedPath = normalize(absolutePath)
-  return normalizedPath.startsWith(getAutoMemPath())
+  const relativePath = relative(resolve(getAutoMemPath()), resolve(absolutePath))
+  return (
+    relativePath !== '' &&
+    relativePath !== '..' &&
+    !relativePath.startsWith(`..${sep}`) &&
+    !isAbsolute(relativePath)
+  )
 }

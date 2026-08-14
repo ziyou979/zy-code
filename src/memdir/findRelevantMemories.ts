@@ -20,17 +20,13 @@ Return a list of filenames for the memories that will clearly be useful to ZY Co
 `
 
 /**
- * Find memory files relevant to a query by scanning memory file headers
- * and asking Sonnet to select the most relevant ones.
+ * 扫描 memory 文件头，并请 Sonnet 选出与 query 最相关的 memory 文件。
  *
- * Returns absolute file paths + mtime of the most relevant memories
- * (up to 5). Excludes MEMORY.md (already loaded in system prompt).
- * mtime is threaded through so callers can surface freshness to the
- * main model without a second stat.
+ * 返回最相关 memory 的绝对路径和 mtime（最多 5 个）。排除已加载到 system prompt 的 MEMORY.md。
+ * mtime 会一路透传，使调用方无需再次 stat 即可向主 model 展示新鲜度。
  *
- * `alreadySurfaced` filters paths shown in prior turns before the
- * Sonnet call, so the selector spends its 5-slot budget on fresh
- * candidates instead of re-picking files the caller will discard.
+ * 调用 Sonnet 前，`alreadySurfaced` 会过滤之前 turn 已展示的路径，
+ * 使 selector 将 5 个名额用于新候选，而非重复挑选最终会被调用方丢弃的文件。
  */
 export async function findRelevantMemories(
   query: string,
@@ -52,8 +48,8 @@ export async function findRelevantMemories(
     .map((filename) => byFilename.get(filename))
     .filter((m): m is MemoryHeader => m !== undefined)
 
-  // Fires even on empty selection: selection-rate needs the denominator,
-  // and -1 ages distinguish "ran, picked nothing" from "never ran".
+  // 即使选择为空也会上报：selection-rate 需要分母，
+  // 而 age 为 -1 可区分“已运行但未选中”与“从未运行”。
   if (feature('MEMORY_SHAPE_TELEMETRY')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { logMemoryRecallShape } = require('./memoryShapeTelemetry.js') as unknown as {
@@ -76,11 +72,9 @@ async function selectRelevantMemories(
 
   const manifest = formatMemoryManifest(memories)
 
-  // When ZY Code is actively using a tool (e.g. mcp__X__spawn),
-  // surfacing that tool's reference docs is noise — the conversation
-  // already contains working usage.  The selector otherwise matches
-  // on keyword overlap ("spawn" in query + "spawn" in a memory
-  // description → false positive).
+  // ZY Code 正在使用 Tool（如 mcp__X__spawn）时，展示该 Tool 的参考文档只会造成干扰，
+  // 因为对话中已包含可用的用法。否则 selector 会因关键词重叠而误匹配
+  //（query 中的 "spawn" + memory 描述中的 "spawn" → 假阳性）。
   const toolsSection =
     recentTools.length > 0 ? `\n\nRecently used tools: ${recentTools.join(', ')}` : ''
 

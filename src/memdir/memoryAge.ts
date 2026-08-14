@@ -1,16 +1,18 @@
 /**
- * Days elapsed since mtime.  Floor-rounded — 0 for today, 1 for
- * yesterday, 2+ for older.  Negative inputs (future mtime, clock skew)
- * clamp to 0.
+ * 从 mtime 起经过的天数，向下取整：今天为 0，昨天为 1，更早为 2 以上。
+ * 负数输入（未来的 mtime 或时钟偏差）会限制为 0。
  */
 export function memoryAgeDays(mtimeMs: number): number {
-  return Math.max(0, Math.floor((Date.now() - mtimeMs) / 86_400_000))
+  const now = new Date(Date.now())
+  const mtime = new Date(mtimeMs)
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+  const memoryDay = Date.UTC(mtime.getFullYear(), mtime.getMonth(), mtime.getDate())
+  return Math.max(0, Math.round((today - memoryDay) / 86_400_000))
 }
 
 /**
- * Human-readable age string.  Models are poor at date arithmetic —
- * a raw ISO timestamp doesn't trigger staleness reasoning the way
- * "47 days ago" does.
+ * 易读的时间差字符串。Model 不擅长日期计算；与“47 天前”相比，
+ * 原始 ISO 时间戳不容易触发对过期风险的推理。
  */
 export function memoryAge(mtimeMs: number): string {
   const d = memoryAgeDays(mtimeMs)
@@ -24,15 +26,14 @@ export function memoryAge(mtimeMs: number): string {
 }
 
 /**
- * Plain-text staleness caveat for memories >1 day old.  Returns ''
- * for fresh (today/yesterday) memories — warning there is noise.
+ * 针对超过 1 天的 memory 返回纯文本过期提示。对新鲜的 memory（今天或昨天）
+ * 返回 ''，因为此时警告只会增加噪声。
  *
- * Use this when the consumer already provides its own wrapping
- * (e.g. messages.ts relevant_memories → wrapMessagesInSystemReminder).
+ * consumer 已自行提供包装时使用（如 messages.ts 的
+ * relevant_memories → wrapMessagesInSystemReminder）。
  *
- * Motivated by user reports of stale code-state memories (file:line
- * citations to code that has since changed) being asserted as fact —
- * the citation makes the stale claim sound more authoritative, not less.
+ * 该提示源于用户反馈：过期的代码状态 memory（引用已变更代码的 file:line）
+ * 会被当作事实。这种引用反而使过期说法听起来更权威。
  */
 export function memoryFreshnessText(mtimeMs: number): string {
   const d = memoryAgeDays(mtimeMs)
@@ -48,9 +49,9 @@ export function memoryFreshnessText(mtimeMs: number): string {
 }
 
 /**
- * Per-memory staleness note wrapped in <system-reminder> tags.
- * Returns '' for memories ≤ 1 day old.  Use this for callers that
- * don't add their own system-reminder wrapper (e.g. FileReadTool output).
+ * 使用 <system-reminder> tag 包装的单个 memory 过期提示。
+ * memory 不超过 1 天时返回 ''。适用于不会自行添加 system-reminder 包装的调用方
+ *（如 FileReadTool 输出）。
  */
 export function memoryFreshnessNote(mtimeMs: number): string {
   const text = memoryFreshnessText(mtimeMs)
