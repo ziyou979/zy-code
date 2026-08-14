@@ -36,7 +36,7 @@ export function isConnectionError(err: unknown): boolean {
   return false
 }
 
-/** Detect HTTP 5xx errors from axios (code: 'ERR_BAD_RESPONSE'). */
+/** 识别 axios 返回的 HTTP 5xx 错误（code 为 `ERR_BAD_RESPONSE`）。 */
 export function isServerError(err: unknown): boolean {
   return (
     !!err &&
@@ -47,7 +47,7 @@ export function isServerError(err: unknown): boolean {
   )
 }
 
-/** Add ±25% jitter to a delay value. */
+/** 为延迟时间增加 ±25% 的随机抖动。 */
 export function addJitter(ms: number): number {
   return Math.max(0, ms + ms * 0.25 * (2 * Math.random() - 1))
 }
@@ -57,8 +57,8 @@ export function formatDelay(ms: number): string {
 }
 
 /**
- * Retry stopWork with exponential backoff (3 attempts, 1s/2s/4s).
- * Ensures the server learns the work item ended, preventing server-side zombies.
+ * 以指数退避重试 stopWork（最多尝试 3 次，重试间隔为 1s/2s）。
+ * 确保服务端获知工作项已经结束，避免残留僵尸任务。
  */
 export async function stopWorkWithRetry(
   api: WireApiClient,
@@ -77,7 +77,7 @@ export async function stopWorkWithRetry(
       )
       return
     } catch (err) {
-      // Auth/permission errors won't be fixed by retrying
+      // 重试无法解决认证或权限错误
       if (err instanceof WireFatalError) {
         if (isSuppressible403(err)) {
           logForDebugging(`[bridge:work] Suppressed stopWork 403 for ${workId}: ${err.message}`)
@@ -132,15 +132,15 @@ export type ParsedArgs = {
   sessionTimeoutMs?: number
   permissionMode?: string
   name?: string
-  /** Value passed to --spawn (if any); undefined if no --spawn flag was given. */
+  /** 传给 --spawn 的值；未提供该参数时为 undefined。 */
   spawnMode: SpawnMode | undefined
-  /** Value passed to --capacity (if any); undefined if no --capacity flag was given. */
+  /** 传给 --capacity 的值；未提供该参数时为 undefined。 */
   capacity: number | undefined
-  /** --[no-]create-session-in-dir override; undefined = use default (on). */
+  /** --[no-]create-session-in-dir 的覆盖值；undefined 表示使用默认值（开启）。 */
   createSessionInDir: boolean | undefined
-  /** Resume an existing session instead of creating a new one. */
+  /** 恢复已有会话，而不是新建会话。 */
   sessionId?: string
-  /** Resume the last session in this directory (reads bridge-pointer.json). */
+  /** 恢复此目录中的上一个会话（读取 bridge-pointer.json）。 */
   continueSession: boolean
   help: boolean
   error?: string
@@ -162,11 +162,24 @@ export function parseSpawnValue(raw: string | undefined): SpawnMode | string {
 }
 
 export function parseCapacityValue(raw: string | undefined): number | string {
-  const n = raw === undefined ? NaN : parseInt(raw, 10)
-  if (Number.isNaN(n) || n < 1) {
+  if (raw === undefined || !/^[1-9]\d*$/.test(raw)) {
     return `--capacity requires a positive integer (got: ${raw ?? '<missing>'})`
   }
-  return n
+  const value = Number(raw)
+  return Number.isSafeInteger(value)
+    ? value
+    : `--capacity requires a positive integer (got: ${raw})`
+}
+
+export function parseSessionTimeoutValue(raw: string | undefined): number | string {
+  if (raw === undefined || !/^[1-9]\d*$/.test(raw)) {
+    return `--session-timeout requires a positive integer (got: ${raw ?? '<missing>'})`
+  }
+  const seconds = Number(raw)
+  if (!Number.isSafeInteger(seconds) || seconds > Number.MAX_SAFE_INTEGER / 1000) {
+    return `--session-timeout requires a positive integer (got: ${raw})`
+  }
+  return seconds * 1000
 }
 
 export function parseArgs(args: string[]): ParsedArgs {
@@ -197,10 +210,15 @@ export function parseArgs(args: string[]): ParsedArgs {
       debugFile = resolve(args[++i]!)
     } else if (arg.startsWith('--debug-file=')) {
       debugFile = resolve(arg.slice('--debug-file='.length))
-    } else if (arg === '--session-timeout' && i + 1 < args.length) {
-      sessionTimeoutMs = parseInt(args[++i]!, 10) * 1000
-    } else if (arg.startsWith('--session-timeout=')) {
-      sessionTimeoutMs = parseInt(arg.slice('--session-timeout='.length), 10) * 1000
+    } else if (arg === '--session-timeout' || arg.startsWith('--session-timeout=')) {
+      const raw = arg.startsWith('--session-timeout=')
+        ? arg.slice('--session-timeout='.length)
+        : args[++i]
+      const value = parseSessionTimeoutValue(raw)
+      if (typeof value === 'string') {
+        return makeError(value)
+      }
+      sessionTimeoutMs = value
     } else if (arg === '--permission-mode' && i + 1 < args.length) {
       permissionMode = args[++i]!
     } else if (arg.startsWith('--permission-mode=')) {
@@ -252,19 +270,18 @@ export function parseArgs(args: string[]): ParsedArgs {
     }
   }
 
-  // Note: gate check for --spawn/--capacity/--create-session-in-dir is in bridgeMain
-  // (gate-aware error). Flag cross-validation happens here.
+  // --spawn/--capacity/--create-session-in-dir 的功能开关检查位于 bridgeMain，
+  // 以便给出与开关状态对应的错误；此处只做参数间的交叉校验。
 
-  // --capacity only makes sense for multi-session modes.
+  // --capacity 仅适用于多会话模式。
   if (spawnMode === 'single-session' && capacity !== undefined) {
     return makeError(
       `--capacity cannot be used with --spawn=session (single-session mode has fixed capacity 1).`,
     )
   }
 
-  // --session-id / --continue resume a specific session on its original
-  // environment; incompatible with spawn-related flags (which configure
-  // fresh session creation), and mutually exclusive with each other.
+  // --session-id 和 --continue 都会在原环境中恢复特定会话，因此不能与配置新会话创建方式的
+  // spawn 相关参数共用，二者之间也互斥。
   if (
     (sessionId || continueSession) &&
     (spawnMode !== undefined || capacity !== undefined || createSessionInDir !== undefined)
@@ -312,8 +329,8 @@ export function parseArgs(args: string[]): ParsedArgs {
 }
 
 export async function printHelp(): Promise<void> {
-  // Use EXTERNAL_PERMISSION_MODES for help text — internal modes (bubble)
-  // are ant-only and auto is feature-gated; they're still accepted by validation.
+  // 帮助文本仅展示 EXTERNAL_PERMISSION_MODES；内部模式 bubble 仅供 ant 使用，auto 受功能开关
+  // 控制，但参数校验仍会接受这些值。
   const { EXTERNAL_PERMISSION_MODES } = await import('../../types/permissions.js')
   const modes = EXTERNAL_PERMISSION_MODES.join(', ')
   const showServer = await isMultiSessionSpawnEnabled()
@@ -377,21 +394,19 @@ ${serverNote}`
 
 export const TITLE_MAX_LEN = 80
 
-/** Derive a session title from a user message: first line, truncated. */
+/** 从用户消息生成会话标题：取第一行并截断。 */
 export function deriveSessionTitle(text: string): string {
-  // Collapse whitespace — newlines/tabs would break the single-line status display.
+  // 合并空白字符，避免换行符或制表符破坏单行状态展示。
   const flat = text.replace(/\s+/g, ' ').trim()
   return truncateToWidth(flat, TITLE_MAX_LEN)
 }
 
 /**
- * One-shot fetch of a session's title via GET /v1/sessions/{id}.
+ * 通过 GET /v1/sessions/{id} 单次获取会话标题。
  *
- * Uses `getWireSession` from createSession.ts (ccr-byoc headers + org UUID)
- * rather than the environments-level bridgeApi client, whose headers make the
- * Sessions API return 404. Returns undefined if the session has no title yet
- * or the fetch fails — the caller falls back to deriving a title from the
- * first user message.
+ * 这里使用 createSession.ts 中的 `getWireSession`（携带 ccr-byoc 标头和组织 UUID），
+ * 不使用环境层级的 bridgeApi 客户端，因为后者的标头会导致 Sessions API 返回 404。
+ * 会话尚无标题或获取失败时返回 undefined，由调用方改为根据第一条用户消息生成标题。
  */
 export async function fetchSessionTitle(
   compatSessionId: string,
