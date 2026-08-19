@@ -10,12 +10,9 @@ import type { UiLanguage } from '../i18n/types.js'
 import { Box, Link, Newline, Text, useTheme } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
-import { setAuthConfigConnection } from '../services/auth/authConfig.js'
-import { normalizeApiKeyForConfig } from '../services/auth/authPortable.js'
-import { saveGlobalConfig } from '../services/config/config.js'
 import { type EffortLevel, toPersistableEffort } from '../services/effort/effort.js'
 import { updateSettingsForSource } from '../services/settings/settings.js'
-import type { SettingsJson } from '../services/settings/types.js'
+import { ApiKeySetup, type ApiKeyProvider } from './ApiKeySetup.js'
 import { Select } from './CustomSelect/select.js'
 import { effortLevelToSymbol } from './EffortIndicator.js'
 import { Welcome } from './Logo/Welcome.js'
@@ -44,63 +41,7 @@ type Props = {
   onDone(): void
 }
 
-/** Provider id — derived from PROVIDER_REGISTRY */
-type PlatformProvider = (typeof PROVIDER_REGISTRY)[number]['id']
-
-interface PlatformConfig {
-  /** Unique identifier for this platform entry (used as Select value) */
-  id: string
-  provider: PlatformProvider
-  label: string
-  description: string
-  apiKeyLabel: string
-  baseUrlHint?: string
-  suggestedModels?: Array<{ label: string; value: string; description: string }>
-  defaultBaseUrls?: {
-    'openai-chat'?: string
-    'openai-responses'?: string
-    anthropic?: string
-    google?: string
-  }
-}
-
-/**
- * Build the onboarding platform list from PROVIDER_REGISTRY.
- *
- * This is a **function** (not a module-level constant) so it re-reads the
- * language cache on each render — after a language switch during onboarding,
- * the cached messages change but module-level constants would be stale.
- */
-function getPlatforms(): PlatformConfig[] {
-  return PROVIDER_REGISTRY.filter((entry) => entry.showInOnboarding !== false).map((entry) => {
-    // Resolve i18n labels — convention: onboarding.platform.{id} / {id}Desc
-    const i18nLabel = tSync(`onboarding.platform.${entry.id}`)
-    const i18nDesc = tSync(`onboarding.platform.${entry.id}Desc`)
-    // For 'local' provider, apiKeyLabel is also i18n
-    const apiKeyLabel =
-      entry.id === 'local'
-        ? tSync('onboarding.platform.localApiKey')
-        : (entry.apiKeyLabel ?? tSync('onboarding.defaultApiKeyLabel'))
-
-    // 根据 tier 渲染模型描述
-    const suggestedModels = entry.suggestedModels?.map((model) => ({
-      label: model.label,
-      value: model.value,
-      description: tSync(`model.tier.${model.tier}`),
-    }))
-
-    return {
-      id: entry.id,
-      provider: entry.id,
-      label: i18nLabel,
-      description: i18nDesc,
-      apiKeyLabel,
-      baseUrlHint: entry.baseUrlHint,
-      suggestedModels,
-      defaultBaseUrls: entry.defaultBaseUrls,
-    }
-  })
-}
+type PlatformProvider = ApiKeyProvider
 
 function getGenericModelOptions(): Array<{ label: string; value: string; description: string }> {
   return [
@@ -193,48 +134,14 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
     </Box>
   )
 
-  // Platform setup step (replaces OAuth + API key approval)
-  function handlePlatformDone(platformId: string, apiKey: string) {
-    const platform = getPlatforms().find((p) => p.id === platformId)
-    const provider: PlatformProvider = platform?.provider ?? 'generic'
-    const normalizedKey = normalizeApiKeyForConfig(apiKey)
-
-    // Resolve base URL from platform defaults based on supported formats
-    let baseUrl: string | undefined
-    let apiFormat: 'anthropic' | 'openai-chat' | 'openai-responses' | 'google' | undefined
-    if (platform?.defaultBaseUrls) {
-      // Priority: google > openai > anthropic (based on provider's supportedFormats order)
-      const entry = PROVIDER_REGISTRY.find((e) => e.id === platform.provider)
-      const formats = entry?.supportedFormats ?? (['anthropic'] as const)
-      const primaryFormat = formats[0]
-      apiFormat = primaryFormat
-      baseUrl =
-        (primaryFormat ? platform.defaultBaseUrls[primaryFormat] : undefined) ??
-        platform.defaultBaseUrls['openai-chat'] ??
-        platform.defaultBaseUrls.google ??
-        platform.defaultBaseUrls.anthropic
-    }
-
-    // 仅记录 key 指纹审批（不落全局 configuredApiKey）
-    saveGlobalConfig((current) => ({
-      ...current,
-      apiKeyResponses: {
-        ...current.apiKeyResponses,
-        approved: [...(current.apiKeyResponses?.approved ?? []), normalizedKey],
-      },
-    }))
-    // 连接细节集中进 auth.json；settings 只选择连接/模型。
-    setAuthConfigConnection(provider, { provider, baseUrl, apiFormat, apiKey })
-    updateSettingsForSource('userSettings', {
-      provider: provider as SettingsJson['provider'],
-    })
+  function handlePlatformDone(provider: PlatformProvider) {
     setSelectedProvider(provider)
     goToNextStep()
   }
 
   const platformStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
-      <PlatformSetup onDone={handlePlatformDone} />
+      <ApiKeySetup onDone={handlePlatformDone} onCancel={() => handlePlatformDone('anthropic')} />
     </Box>
   )
 
@@ -500,110 +407,6 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   )
 }
 
-function PlatformSetup({
-  onDone,
-}: {
-  onDone(platformId: string, apiKey: string): void
-}): React.ReactNode {
-  const [phase, setPhase] = useState<'provider' | 'apiKey'>('provider')
-  const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null)
-
-  const handleProviderSelect = (value: string) => {
-    setSelectedPlatformId(value)
-    setPhase('apiKey')
-  }
-
-  const handleApiKeyDone = (apiKey: string) => {
-    if (selectedPlatformId) {
-      onDone(selectedPlatformId, apiKey)
-    }
-  }
-
-  if (phase === 'provider') {
-    return (
-      <>
-        <Text bold>{tSync('onboarding.selectPlatform')}</Text>
-        <Box flexDirection="column" width={60} gap={1}>
-          <Select
-            options={getPlatforms().map((p) => ({
-              label: p.label,
-              description: p.description,
-              value: p.id,
-            }))}
-            onChange={handleProviderSelect}
-            onCancel={() => onDone('anthropic', '')}
-          />
-          <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
-        </Box>
-      </>
-    )
-  }
-
-  // apiKey phase
-  const platform = getPlatforms().find((p) => p.id === selectedPlatformId)
-  return (
-    <ApiKeyInput
-      apiKeyLabel={platform?.apiKeyLabel ?? tSync('onboarding.defaultApiKeyLabel')}
-      baseUrlHint={platform?.baseUrlHint}
-      onDone={handleApiKeyDone}
-      onBack={() => {
-        setPhase('provider')
-      }}
-    />
-  )
-}
-
-function ApiKeyInput({
-  apiKeyLabel,
-  baseUrlHint,
-  onDone,
-  onBack,
-}: {
-  apiKeyLabel: string
-  baseUrlHint?: string
-  onDone(apiKey: string): void
-  onBack(): void
-}): React.ReactNode {
-  // ref instead of state: per-keystroke option.onChange must not auto-submit;
-  // the typed value is committed only on Enter via the Select's top-level onChange.
-  const apiKeyRef = useRef('')
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold>{tSync('onboarding.enterApiKey', { apiKeyLabel })}</Text>
-      <Box flexDirection="column" width={60} gap={1}>
-        <Select
-          options={[
-            {
-              type: 'input',
-              label: apiKeyLabel,
-              value: 'input',
-              placeholder: 'sk-...',
-              onChange: (value: string) => {
-                apiKeyRef.current = value
-              },
-              allowEmptySubmitToCancel: true,
-              resetCursorOnUpdate: true,
-            },
-          ]}
-          onChange={() => {
-            const trimmed = apiKeyRef.current.trim()
-            if (trimmed.length > 0) {
-              onDone(trimmed)
-            }
-          }}
-          onCancel={onBack}
-        />
-        {baseUrlHint && (
-          <Text dimColor>
-            {tSync('onboarding.baseUrlLabel')}: {baseUrlHint}
-          </Text>
-        )}
-        <Text dimColor>{tSync('onboarding.confirmBack')}</Text>
-      </Box>
-    </Box>
-  )
-}
-
 function CustomModelInput({
   onSubmit,
   onBack,
@@ -664,9 +467,14 @@ function TierModelSetup({
 }): React.ReactNode {
   const [phase, setPhase] = useState<'select' | 'custom'>('select')
 
-  const platform = getPlatforms().find((p) => p.provider === provider)
-  const modelOptions = platform?.suggestedModels ?? getGenericModelOptions()
-  const hasCustomOption = !platform?.suggestedModels || platform.provider === 'generic'
+  const providerEntry = PROVIDER_REGISTRY.find((entry) => entry.id === provider)
+  const suggestedModels = providerEntry?.suggestedModels?.map((model) => ({
+    label: model.label,
+    value: model.value,
+    description: tSync(`model.tier.${model.tier}`),
+  }))
+  const modelOptions = suggestedModels ?? getGenericModelOptions()
+  const hasCustomOption = !suggestedModels || providerEntry?.id === 'generic'
 
   // Build select options — add skip and custom options
   const selectOptions = modelOptions.map((m) => ({

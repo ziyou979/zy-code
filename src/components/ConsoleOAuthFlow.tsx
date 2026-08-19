@@ -21,7 +21,9 @@ import type {
 import { openBrowser } from '../services/browser/browser.js'
 import { logError } from '../services/infra/log.js'
 import { Select } from './CustomSelect/select.js'
+import { ApiKeySetup } from './ApiKeySetup.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
+import { resolveLoginSetupState } from './loginSelection.js'
 import { Spinner } from './Spinner.js'
 import TextInput from './TextInput.js'
 
@@ -34,6 +36,7 @@ type Props = {
 
 type OAuthStatus =
   | { state: 'idle' }
+  | { state: 'api_key_setup' }
   | { state: 'platform_setup' }
   | { state: 'waiting_for_login'; url: string }
   | { state: 'device_code_waiting'; userCode: string; verificationUri: string }
@@ -44,8 +47,6 @@ type OAuthStatus =
   | { state: 'success'; providerName: string }
   | { state: 'error'; message: string; toRetry?: OAuthStatus }
 
-const PASTE_HERE_MSG = 'Paste code here if prompted > '
-
 export function ConsoleOAuthFlow({ onDone, startingMessage }: Props): React.ReactNode {
   const terminal = useTerminalNotification()
   const [oauthStatus, setOAuthStatus] = useState<OAuthStatus>({ state: 'idle' })
@@ -53,7 +54,8 @@ export function ConsoleOAuthFlow({ onDone, startingMessage }: Props): React.Reac
   const [cursorOffset, setCursorOffset] = useState(0)
   const [showPastePrompt, setShowPastePrompt] = useState(false)
   const [urlCopied, setUrlCopied] = useState(false)
-  const textInputColumns = useTerminalSize().columns - PASTE_HERE_MSG.length - 1
+  const pasteCodePrompt = tSync('oauth.pasteCodeHere')
+  const textInputColumns = useTerminalSize().columns - pasteCodePrompt.length - 1
 
   // 多 Provider 回调的 Promise resolver refs
   const promptResolverRef = useRef<((value: string) => void) | null>(null)
@@ -313,6 +315,7 @@ export function ConsoleOAuthFlow({ onDone, startingMessage }: Props): React.Reac
           onSelectProvider={startMultiProviderLogin}
           onPromptSubmit={handlePromptSubmit}
           onSelectMethod={handleSelectMethod}
+          pasteCodePrompt={pasteCodePrompt}
         />
       </Box>
     </Box>
@@ -336,6 +339,7 @@ type OAuthStatusMessageProps = {
   onSelectProvider: (provider: OAuthProviderInterface) => void
   onPromptSubmit: (value: string) => void
   onSelectMethod: (value: string) => void
+  pasteCodePrompt: string
 }
 
 function OAuthStatusMessage({
@@ -353,6 +357,7 @@ function OAuthStatusMessage({
   onSelectProvider,
   onPromptSubmit,
   onSelectMethod,
+  pasteCodePrompt,
 }: OAuthStatusMessageProps) {
   switch (oauthStatus.state) {
     case 'idle': {
@@ -400,12 +405,15 @@ function OAuthStatusMessage({
             <Select
               options={options}
               onChange={(value: string) => {
-                if (value === 'platform') {
-                  logEvent('zy_oauth_platform_selected', {})
-                  setOAuthStatus({ state: 'platform_setup' })
-                } else if (value === 'apikey') {
-                  logEvent('zy_oauth_apikey_selected', {})
-                  setOAuthStatus({ state: 'platform_setup' })
+                const setupState = resolveLoginSetupState(value)
+                if (setupState) {
+                  logEvent(
+                    setupState === 'api_key_setup'
+                      ? 'zy_oauth_apikey_selected'
+                      : 'zy_oauth_platform_selected',
+                    {},
+                  )
+                  setOAuthStatus({ state: setupState })
                 } else if (value.startsWith('oauth:')) {
                   const providerId = value.slice(6)
                   const provider = oauthProviders.find((p) => p.id === providerId)
@@ -423,6 +431,18 @@ function OAuthStatusMessage({
         </Box>
       )
     }
+    case 'api_key_setup':
+      return (
+        <ApiKeySetup
+          onDone={() => {
+            setOAuthStatus({
+              state: 'success',
+              providerName: tSync('oauth.providerApikey'),
+            })
+          }}
+          onCancel={() => setOAuthStatus({ state: 'idle' })}
+        />
+      )
     case 'platform_setup': {
       const heading = <Text bold={true}>{tSync('oauth.usingThirdPartyPlatforms')}</Text>
       const description1 = <Text>{tSync('oauth.thirdPartyPlatformsDesc')}</Text>
@@ -471,7 +491,7 @@ function OAuthStatusMessage({
       )
       const pasteInputBox = showPastePrompt && (
         <Box>
-          <Text>{PASTE_HERE_MSG}</Text>
+          <Text>{pasteCodePrompt}</Text>
           <TextInput
             value={pastedCode}
             onChange={setPastedCode}
