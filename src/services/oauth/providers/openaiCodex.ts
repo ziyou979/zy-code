@@ -6,6 +6,7 @@
  * 2. 设备码登录（RFC 8628）— 适用于无浏览器环境
  */
 
+import { tSync } from '../../../i18n/index.js'
 import { pollOAuthDeviceCodeFlow } from './deviceCode.js'
 import { oauthErrorHtml, oauthSuccessHtml } from './oauthPage.js'
 import { generatePKCE } from './pkce.js'
@@ -15,6 +16,7 @@ import type {
   OAuthLoginCallbacks,
   OAuthPrompt,
   OAuthProviderInterface,
+  OAuthSelectPrompt,
 } from './types.js'
 
 const CLIENT_ID = 'app_EMoamEEZ73f0CkXaXp7hrann'
@@ -31,6 +33,23 @@ export const OPENAI_CODEX_BROWSER_LOGIN_METHOD = 'browser'
 export const OPENAI_CODEX_DEVICE_CODE_LOGIN_METHOD = 'device_code'
 const SCOPE = 'openid profile email offline_access'
 const JWT_CLAIM_PATH = 'https://api.openai.com/auth'
+
+/** 在打开选择器前一次性解析文案，保证同一页面使用同一种语言。 */
+export function getOpenAICodexLoginPrompt(): OAuthSelectPrompt {
+  return {
+    message: tSync('oauth.openaiCodex.selectLoginMethod'),
+    options: [
+      {
+        id: OPENAI_CODEX_BROWSER_LOGIN_METHOD,
+        label: tSync('oauth.openaiCodex.browserLogin'),
+      },
+      {
+        id: OPENAI_CODEX_DEVICE_CODE_LOGIN_METHOD,
+        label: tSync('oauth.openaiCodex.deviceCodeLogin'),
+      },
+    ],
+  }
+}
 
 type OAuthToken = { access: string; refresh: string; expires: number }
 type TokenOperation = 'exchange' | 'refresh'
@@ -107,13 +126,23 @@ function decodeJwt(token: string): JwtPayload | null {
   }
 }
 
+/**
+ * 从 ChatGPT OAuth access token 提取 Codex backend 要求的账户 ID。
+ * 该值属于订阅通道鉴权的一部分，不能用 API Platform 的 project/org header 替代。
+ */
+export function getOpenAICodexAccountId(accessToken: string): string | null {
+  const payload = decodeJwt(accessToken)
+  const accountId = payload?.[JWT_CLAIM_PATH]?.chatgpt_account_id
+  return typeof accountId === 'string' && accountId.length > 0 ? accountId : null
+}
+
 /** 带取消支持的 fetch */
 async function fetchWithLoginCancellation(input: string, init: RequestInit): Promise<Response> {
   try {
     return await fetch(input, init)
   } catch (error) {
     if (init.signal?.aborted) {
-      throw new Error('Login cancelled')
+      throw new Error(tSync('oauth.loginCancelled'))
     }
     throw error
   }
@@ -127,7 +156,11 @@ async function readTokenResponse(
   if (!response.ok) {
     const text = await response.text().catch(() => '')
     throw new Error(
-      `OpenAI Codex token ${operation} failed (${response.status}): ${text || response.statusText}`,
+      tSync('oauth.openaiCodex.tokenOperationFailed', {
+        operation,
+        status: response.status,
+        detail: text || response.statusText,
+      }),
     )
   }
 
@@ -139,7 +172,10 @@ async function readTokenResponse(
   } | null
   if (!json?.access_token || !json.refresh_token || typeof json.expires_in !== 'number') {
     throw new Error(
-      `OpenAI Codex token ${operation} response missing fields: ${JSON.stringify(json)}`,
+      tSync('oauth.openaiCodex.tokenResponseMissingFields', {
+        operation,
+        response: JSON.stringify(json),
+      }),
     )
   }
 
@@ -188,7 +224,9 @@ async function refreshAccessToken(refreshToken: string): Promise<OAuthToken> {
     })
   } catch (error) {
     throw new Error(
-      `OpenAI Codex token refresh error: ${error instanceof Error ? error.message : String(error)}`,
+      tSync('oauth.openaiCodex.tokenRefreshError', {
+        error: error instanceof Error ? error.message : String(error),
+      }),
     )
   }
 
@@ -206,13 +244,14 @@ async function startOpenAICodexDeviceAuth(signal?: AbortSignal): Promise<DeviceA
 
   if (!response.ok) {
     if (response.status === 404) {
-      throw new Error(
-        'OpenAI Codex device code login is not enabled for this server. Use browser login or verify the server URL.',
-      )
+      throw new Error(tSync('oauth.openaiCodex.deviceCodeNotEnabled'))
     }
     const responseBody = await response.text().catch(() => '')
     throw new Error(
-      `OpenAI Codex device code request failed with status ${response.status}${responseBody ? `: ${responseBody}` : ''}`,
+      tSync('oauth.openaiCodex.deviceCodeRequestFailed', {
+        status: response.status,
+        detail: responseBody ? `: ${responseBody}` : '',
+      }),
     )
   }
 
@@ -231,7 +270,9 @@ async function startOpenAICodexDeviceAuth(signal?: AbortSignal): Promise<DeviceA
     !Number.isFinite(intervalSeconds) ||
     intervalSeconds < 0
   ) {
-    throw new Error(`Invalid OpenAI Codex device code response: ${JSON.stringify(json)}`)
+    throw new Error(
+      tSync('oauth.openaiCodex.invalidDeviceCodeResponse', { response: JSON.stringify(json) }),
+    )
   }
 
   return {
@@ -270,7 +311,9 @@ async function pollOpenAICodexDeviceAuth(
         if (!json?.authorization_code || !json.code_verifier) {
           return {
             status: 'failed',
-            message: `Invalid OpenAI Codex device auth token response: ${JSON.stringify(json)}`,
+            message: tSync('oauth.openaiCodex.invalidDeviceTokenResponse', {
+              response: JSON.stringify(json),
+            }),
           }
         }
         return {
@@ -302,7 +345,10 @@ async function pollOpenAICodexDeviceAuth(
 
       return {
         status: 'failed',
-        message: `OpenAI Codex device auth failed with status ${response.status}${responseBody ? `: ${responseBody}` : ''}`,
+        message: tSync('oauth.openaiCodex.deviceAuthFailed', {
+          status: response.status,
+          detail: responseBody ? `: ${responseBody}` : '',
+        }),
       }
     },
   })
@@ -356,30 +402,30 @@ function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
       if (url.pathname !== '/auth/callback') {
         res.statusCode = 404
         res.setHeader('Content-Type', 'text/html; charset=utf-8')
-        res.end(oauthErrorHtml('Callback route not found.'))
+        res.end(oauthErrorHtml(tSync('oauth.openaiCodex.callbackRouteNotFound')))
         return
       }
       if (url.searchParams.get('state') !== state) {
         res.statusCode = 400
         res.setHeader('Content-Type', 'text/html; charset=utf-8')
-        res.end(oauthErrorHtml('State mismatch.'))
+        res.end(oauthErrorHtml(tSync('oauth.openaiCodex.stateMismatch')))
         return
       }
       const code = url.searchParams.get('code')
       if (!code) {
         res.statusCode = 400
         res.setHeader('Content-Type', 'text/html; charset=utf-8')
-        res.end(oauthErrorHtml('Missing authorization code.'))
+        res.end(oauthErrorHtml(tSync('oauth.openaiCodex.missingAuthorizationCode')))
         return
       }
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/html; charset=utf-8')
-      res.end(oauthSuccessHtml('OpenAI authentication completed. You can close this window.'))
+      res.end(oauthSuccessHtml(tSync('oauth.openaiCodex.authenticationCompleted')))
       settleWait?.({ code })
     } catch {
       res.statusCode = 500
       res.setHeader('Content-Type', 'text/html; charset=utf-8')
-      res.end(oauthErrorHtml('Internal error while processing OAuth callback.'))
+      res.end(oauthErrorHtml(tSync('oauth.openaiCodex.callbackInternalError')))
     }
   })
 
@@ -413,17 +459,14 @@ function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
 
 /** 从 access token 中提取 accountId */
 function getAccountId(accessToken: string): string | null {
-  const payload = decodeJwt(accessToken)
-  const auth = payload?.[JWT_CLAIM_PATH]
-  const accountId = auth?.chatgpt_account_id
-  return typeof accountId === 'string' && accountId.length > 0 ? accountId : null
+  return getOpenAICodexAccountId(accessToken)
 }
 
 /** 从 token 构造凭证 */
 function credentialsFromToken(token: OAuthToken): OAuthCredentials {
   const accountId = getAccountId(token.access)
   if (!accountId) {
-    throw new Error('Failed to extract accountId from token')
+    throw new Error(tSync('oauth.openaiCodex.accountIdMissing'))
   }
 
   return {
@@ -480,7 +523,7 @@ export async function loginOpenAICodex(options: {
   const { verifier, state, url } = await createAuthorizationFlow(options.originator)
   const server = await startLocalOAuthServer(state)
 
-  options.onAuth({ url, instructions: 'A browser window should open. Complete login to finish.' })
+  options.onAuth({ url, instructions: tSync('oauth.openaiCodex.browserInstructions') })
 
   let code: string | undefined
   try {
@@ -510,7 +553,7 @@ export async function loginOpenAICodex(options: {
       } else if (manualCode) {
         const parsed = parseAuthorizationInput(manualCode)
         if (parsed.state && parsed.state !== state) {
-          throw new Error('State mismatch')
+          throw new Error(tSync('oauth.openaiCodex.stateMismatch'))
         }
         code = parsed.code
       }
@@ -523,7 +566,7 @@ export async function loginOpenAICodex(options: {
         if (manualCode) {
           const parsed = parseAuthorizationInput(manualCode)
           if (parsed.state && parsed.state !== state) {
-            throw new Error('State mismatch')
+            throw new Error(tSync('oauth.openaiCodex.stateMismatch'))
           }
           code = parsed.code
         }
@@ -538,17 +581,17 @@ export async function loginOpenAICodex(options: {
     // 最终回退：提示用户手动输入
     if (!code) {
       const input = await options.onPrompt({
-        message: 'Paste the authorization code (or full redirect URL):',
+        message: tSync('oauth.openaiCodex.pasteAuthorizationCode'),
       })
       const parsed = parseAuthorizationInput(input)
       if (parsed.state && parsed.state !== state) {
-        throw new Error('State mismatch')
+        throw new Error(tSync('oauth.openaiCodex.stateMismatch'))
       }
       code = parsed.code
     }
 
     if (!code) {
-      throw new Error('Missing authorization code')
+      throw new Error(tSync('oauth.openaiCodex.missingAuthorizationCode'))
     }
 
     return exchangeAuthorizationCodeForCredentials(code, verifier, REDIRECT_URI)
@@ -571,15 +614,9 @@ export const openaiCodexOAuthProvider: OAuthProviderInterface = {
   apiFormat: 'openai-chat',
 
   async login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
-    const loginMethod = await callbacks.onSelect({
-      message: 'Select OpenAI Codex login method:',
-      options: [
-        { id: OPENAI_CODEX_BROWSER_LOGIN_METHOD, label: 'Browser login (default)' },
-        { id: OPENAI_CODEX_DEVICE_CODE_LOGIN_METHOD, label: 'Device code login (headless)' },
-      ],
-    })
+    const loginMethod = await callbacks.onSelect(getOpenAICodexLoginPrompt())
     if (!loginMethod) {
-      throw new Error('Login cancelled')
+      throw new Error(tSync('oauth.loginCancelled'))
     }
 
     if (loginMethod === OPENAI_CODEX_DEVICE_CODE_LOGIN_METHOD) {
@@ -590,7 +627,7 @@ export const openaiCodexOAuthProvider: OAuthProviderInterface = {
     }
 
     if (loginMethod !== OPENAI_CODEX_BROWSER_LOGIN_METHOD) {
-      throw new Error(`Unknown OpenAI Codex login method: ${loginMethod}`)
+      throw new Error(tSync('oauth.openaiCodex.unknownLoginMethod', { method: loginMethod }))
     }
 
     return loginOpenAICodex({

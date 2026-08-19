@@ -52,10 +52,10 @@ describe('xai OAuth', () => {
   test('validateXaiOAuthEndpoint 拒绝非 https 或非 x.ai 主机', () => {
     expect(() =>
       validateXaiOAuthEndpoint('http://auth.x.ai/oauth2/token', 'token_endpoint'),
-    ).toThrow(/HTTPS/)
+    ).toThrow(/HTTPS|oauth\.xai\.endpointMustUseHttps/)
     expect(() =>
       validateXaiOAuthEndpoint('https://evil.example.com/token', 'token_endpoint'),
-    ).toThrow(/not on x\.ai/)
+    ).toThrow(/not on x\.ai|不属于 x\.ai|oauth\.xai\.invalidEndpointHost/)
   })
 
   test('getApiKey 返回 access token', () => {
@@ -117,7 +117,7 @@ describe('xai OAuth', () => {
         expires: Date.now() - 1000,
         tokenEndpoint: 'https://auth.x.ai/oauth2/token',
       }),
-    ).rejects.toThrow(/HTTP 403/)
+    ).rejects.toThrow(/HTTP 403|oauth\.xai\.refreshForbidden/)
   })
 
   test('refreshToken 拒绝把 refresh_token 发到非 x.ai 端点', async () => {
@@ -145,7 +145,7 @@ describe('xai OAuth', () => {
         expires: Date.now() - 1000,
         tokenEndpoint: 'https://evil.example.com/token',
       }),
-    ).rejects.toThrow(/not on x\.ai/)
+    ).rejects.toThrow(/not on x\.ai|不属于 x\.ai|oauth\.xai\.invalidEndpointHost/)
 
     expect(tokenPostCount).toBe(0)
   })

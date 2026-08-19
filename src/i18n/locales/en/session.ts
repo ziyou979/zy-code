@@ -68,6 +68,7 @@ export const enSession: TranslationResource = {
   'oauth.loginSuccessful': 'Login successful. Press Enter to continue…',
   'oauth.openingBrowserToSignIn': 'Opening browser to sign in…',
   'oauth.pasteCodePrompt': 'Paste code here if prompted',
+  'oauth.pasteCodeHere': 'Paste code here if prompted > ',
   'oauth.platformOptionDesc': 'Amazon Bedrock, Microsoft Azure, or Vertex AI',
   'oauth.platformOptionLabel': '3rd-party platform ·',
   'oauth.pressEnterToGoBack': 'Press Enter to go back',
@@ -97,6 +98,60 @@ export const enSession: TranslationResource = {
   'oauth.providerXaiOauthDesc': 'SuperGrok or X Premium+ subscription',
   'oauth.providerApikey': 'API Key',
   'oauth.providerApikeyDesc': 'Use your own API key',
+  'oauth.openaiCodex.browserInstructions':
+    'A browser window should open. Complete login to finish.',
+  'oauth.openaiCodex.accountIdMissing': 'Failed to extract accountId from token',
+  'oauth.openaiCodex.authenticationCompleted':
+    'OpenAI authentication completed. You can close this window.',
+  'oauth.openaiCodex.browserLogin': 'Browser login (default)',
+  'oauth.openaiCodex.callbackInternalError': 'Internal error while processing OAuth callback.',
+  'oauth.openaiCodex.callbackRouteNotFound': 'Callback route not found.',
+  'oauth.openaiCodex.deviceAuthFailed':
+    'OpenAI Codex device auth failed with status {status}{detail}',
+  'oauth.openaiCodex.deviceCodeNotEnabled':
+    'OpenAI Codex device code login is not enabled for this server. Use browser login or verify the server URL.',
+  'oauth.openaiCodex.deviceCodeRequestFailed':
+    'OpenAI Codex device code request failed with status {status}{detail}',
+  'oauth.openaiCodex.deviceCodeLogin': 'Device code login (headless)',
+  'oauth.openaiCodex.invalidDeviceCodeResponse':
+    'Invalid OpenAI Codex device code response: {response}',
+  'oauth.openaiCodex.invalidDeviceTokenResponse':
+    'Invalid OpenAI Codex device auth token response: {response}',
+  'oauth.openaiCodex.missingAuthorizationCode': 'Missing authorization code',
+  'oauth.openaiCodex.pasteAuthorizationCode':
+    'Paste the authorization code (or full redirect URL):',
+  'oauth.openaiCodex.selectLoginMethod': 'Select OpenAI Codex login method:',
+  'oauth.openaiCodex.stateMismatch': 'OAuth state mismatch',
+  'oauth.openaiCodex.tokenOperationFailed':
+    'OpenAI Codex token {operation} failed ({status}): {detail}',
+  'oauth.openaiCodex.tokenRefreshError': 'OpenAI Codex token refresh error: {error}',
+  'oauth.openaiCodex.tokenResponseMissingFields':
+    'OpenAI Codex token {operation} response missing fields: {response}',
+  'oauth.openaiCodex.unknownLoginMethod': 'Unknown OpenAI Codex login method: {method}',
+  'oauth.xai.deviceCodeRequestFailed': 'xAI device-code request failed (HTTP {status}){detail}',
+  'oauth.xai.deviceTokenMissingAccessToken': 'xAI device-code token response missing access_token',
+  'oauth.xai.deviceTokenMissingRefreshToken':
+    'xAI device-code token response missing refresh_token',
+  'oauth.xai.deviceTokenPollingFailed': 'xAI device-code token polling failed: {detail}',
+  'oauth.xai.deviceTokenPollingHttpFailed':
+    'xAI device-code token polling failed (HTTP {status}){detail}',
+  'oauth.xai.discoveringEndpoints': 'Discovering xAI OAuth endpoints…',
+  'oauth.xai.discoveryFailed': 'xAI OIDC discovery failed (HTTP {status})',
+  'oauth.xai.discoveryMissingEndpoints': 'xAI OIDC discovery response missing required endpoints',
+  'oauth.xai.endpointMustUseHttps': 'xAI OIDC {field} must use HTTPS: {url}',
+  'oauth.xai.invalidDeviceCodeResponse': 'Invalid xAI device-code response: {response}',
+  'oauth.xai.invalidEndpointHost':
+    'xAI OIDC {field} host "{host}" is not on x.ai (expected x.ai or *.x.ai)',
+  'oauth.xai.invalidEndpointUrl': 'xAI OIDC {field} is not a valid URL: {url}',
+  'oauth.xai.missingAccessToken': 'xAI OAuth token response missing access_token',
+  'oauth.xai.missingRefreshToken': 'xAI OAuth token response missing refresh_token',
+  'oauth.xai.refreshFailed': 'xAI token refresh failed (HTTP {status}){detail}',
+  'oauth.xai.refreshForbidden':
+    'xAI token refresh failed with HTTP 403. This OAuth account may not be authorized for API access (xAI sometimes gates OAuth by SuperGrok tier). Re-login will not fix this; set an API key for provider "xai" in auth.json, or upgrade at https://x.ai/grok.{detail}',
+  'oauth.xai.refreshTokenMissing':
+    'xAI OAuth is missing refresh_token. Re-authenticate with: zy auth login --provider xai-oauth',
+  'oauth.xai.requestingDeviceCode': 'Requesting device code…',
+  'oauth.xai.responseDetail': 'Response: {detail}',
   'oauth.deviceCodeWaiting': 'Waiting for device authorization...',
   'oauth.deviceCodeUserCode': 'Enter this code: {code}',
   'oauth.deviceCodeVisit': 'Visit: {url}',

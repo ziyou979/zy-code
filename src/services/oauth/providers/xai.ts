@@ -7,6 +7,7 @@
  * 协议细节对齐 Hermes `xai-oauth` 与 xAI 公开 OIDC discovery。
  */
 
+import { tSync } from '../../../i18n/index.js'
 import { pollOAuthDeviceCodeFlow } from './deviceCode.js'
 import type { OAuthCredentials, OAuthLoginCallbacks, OAuthProviderInterface } from './types.js'
 
@@ -21,6 +22,19 @@ export const DEFAULT_XAI_API_BASE_URL = 'https://api.x.ai/v1'
 const DEFAULT_XAI_TOKEN_ENDPOINT = `${XAI_OAUTH_ISSUER}/oauth2/token`
 /** expires_in 缺失时的默认有效期（秒） */
 const DEFAULT_EXPIRES_IN_SECONDS = 3600
+
+/** 一次性解析登录进度文案，避免登录期间切换语言造成同一流程中英混杂。 */
+export function getXaiOAuthProgressMessages(): {
+  discoveringEndpoints: string
+  requestingDeviceCode: string
+  waitingForAuthorization: string
+} {
+  return {
+    discoveringEndpoints: tSync('oauth.xai.discoveringEndpoints'),
+    requestingDeviceCode: tSync('oauth.xai.requestingDeviceCode'),
+    waitingForAuthorization: tSync('oauth.deviceCodeWaiting'),
+  }
+}
 
 /** xAI OAuth 凭证扩展：缓存 token_endpoint 避免每次 refresh 都做 discovery */
 export type XaiOAuthCredentials = OAuthCredentials & {
@@ -61,14 +75,14 @@ export function validateXaiOAuthEndpoint(url: string, field: string): string {
   try {
     parsed = new URL(url)
   } catch {
-    throw new Error(`xAI OIDC ${field} is not a valid URL: ${url}`)
+    throw new Error(tSync('oauth.xai.invalidEndpointUrl', { field, url }))
   }
   if (parsed.protocol !== 'https:') {
-    throw new Error(`xAI OIDC ${field} must use HTTPS: ${url}`)
+    throw new Error(tSync('oauth.xai.endpointMustUseHttps', { field, url }))
   }
   const host = parsed.hostname.toLowerCase()
   if (host !== 'x.ai' && !host.endsWith('.x.ai')) {
-    throw new Error(`xAI OIDC ${field} host "${host}" is not on x.ai (expected x.ai or *.x.ai)`)
+    throw new Error(tSync('oauth.xai.invalidEndpointHost', { field, host }))
   }
   return url
 }
@@ -108,11 +122,11 @@ function credentialsFromTokenResponse(
 ): XaiOAuthCredentials {
   const access = payload.access_token?.trim()
   if (!access) {
-    throw new Error('xAI OAuth token response missing access_token')
+    throw new Error(tSync('oauth.xai.missingAccessToken'))
   }
   const refresh = (payload.refresh_token || previousRefresh || '').trim()
   if (!refresh) {
-    throw new Error('xAI OAuth token response missing refresh_token')
+    throw new Error(tSync('oauth.xai.missingRefreshToken'))
   }
 
   return {
@@ -131,7 +145,7 @@ export async function discoverXaiOAuth(timeoutMs = 15_000): Promise<OidcDiscover
     signal: AbortSignal.timeout(timeoutMs),
   })
   if (!response.ok) {
-    throw new Error(`xAI OIDC discovery failed (HTTP ${response.status})`)
+    throw new Error(tSync('oauth.xai.discoveryFailed', { status: response.status }))
   }
 
   const raw = (await response.json()) as {
@@ -141,7 +155,7 @@ export async function discoverXaiOAuth(timeoutMs = 15_000): Promise<OidcDiscover
   const authorization_endpoint = raw.authorization_endpoint?.trim() ?? ''
   const token_endpoint = raw.token_endpoint?.trim() ?? ''
   if (!authorization_endpoint || !token_endpoint) {
-    throw new Error('xAI OIDC discovery response missing required endpoints')
+    throw new Error(tSync('oauth.xai.discoveryMissingEndpoints'))
   }
 
   return {
@@ -170,7 +184,10 @@ async function requestDeviceCode(signal?: AbortSignal): Promise<DeviceCodeRespon
   if (!response.ok) {
     const text = await response.text().catch(() => '')
     throw new Error(
-      `xAI device-code request failed (HTTP ${response.status})${text ? `: ${text}` : ''}`,
+      tSync('oauth.xai.deviceCodeRequestFailed', {
+        status: response.status,
+        detail: text ? `: ${text}` : '',
+      }),
     )
   }
 
@@ -182,7 +199,7 @@ async function requestDeviceCode(signal?: AbortSignal): Promise<DeviceCodeRespon
     typeof raw.expires_in !== 'number' ||
     typeof raw.interval !== 'number'
   ) {
-    throw new Error(`Invalid xAI device-code response: ${JSON.stringify(raw)}`)
+    throw new Error(tSync('oauth.xai.invalidDeviceCodeResponse', { response: JSON.stringify(raw) }))
   }
 
   return {
@@ -226,13 +243,13 @@ async function pollDeviceToken(
         if (!payload.access_token) {
           return {
             status: 'failed',
-            message: 'xAI device-code token response missing access_token',
+            message: tSync('oauth.xai.deviceTokenMissingAccessToken'),
           }
         }
         if (!payload.refresh_token) {
           return {
             status: 'failed',
-            message: 'xAI device-code token response missing refresh_token',
+            message: tSync('oauth.xai.deviceTokenMissingRefreshToken'),
           }
         }
         return { status: 'complete' as const, value: payload }
@@ -245,7 +262,10 @@ async function pollDeviceToken(
         const text = await response.text().catch(() => '')
         return {
           status: 'failed',
-          message: `xAI device-code token polling failed (HTTP ${response.status})${text ? `: ${text}` : ''}`,
+          message: tSync('oauth.xai.deviceTokenPollingHttpFailed', {
+            status: response.status,
+            detail: text ? `: ${text}` : '',
+          }),
         }
       }
 
@@ -261,7 +281,7 @@ async function pollDeviceToken(
         errorPayload.error_description || errorPayload.error || `HTTP ${response.status}`
       return {
         status: 'failed',
-        message: `xAI device-code token polling failed: ${description}`,
+        message: tSync('oauth.xai.deviceTokenPollingFailed', { detail: description }),
       }
     },
   })
@@ -275,11 +295,12 @@ export async function loginXaiOAuth(options: {
   onProgress?: OAuthLoginCallbacks['onProgress']
   signal?: AbortSignal
 }): Promise<XaiOAuthCredentials> {
+  const progressMessages = getXaiOAuthProgressMessages()
   if (options.signal?.aborted) {
-    throw new Error('Login cancelled')
+    throw new Error(tSync('oauth.loginCancelled'))
   }
 
-  options.onProgress?.('Discovering xAI OAuth endpoints...')
+  options.onProgress?.(progressMessages.discoveringEndpoints)
   let tokenEndpoint = DEFAULT_XAI_TOKEN_ENDPOINT
   try {
     const discovery = await discoverXaiOAuth()
@@ -289,7 +310,7 @@ export async function loginXaiOAuth(options: {
     tokenEndpoint = validateXaiOAuthEndpoint(DEFAULT_XAI_TOKEN_ENDPOINT, 'token_endpoint')
   }
 
-  options.onProgress?.('Requesting device code...')
+  options.onProgress?.(progressMessages.requestingDeviceCode)
   const device = await requestDeviceCode(options.signal)
 
   // 优先 verification_uri_complete（URL 已嵌入 user_code）
@@ -302,7 +323,7 @@ export async function loginXaiOAuth(options: {
     expiresInSeconds: device.expires_in,
   })
 
-  options.onProgress?.('Waiting for device authorization...')
+  options.onProgress?.(progressMessages.waitingForAuthorization)
   const tokenPayload = await pollDeviceToken(
     tokenEndpoint,
     device.device_code,
@@ -324,9 +345,7 @@ export async function refreshXaiOAuthToken(
 ): Promise<XaiOAuthCredentials> {
   const refreshToken = credentials.refresh?.trim()
   if (!refreshToken) {
-    throw new Error(
-      'xAI OAuth is missing refresh_token. Re-authenticate with: zy auth login --provider xai-oauth',
-    )
+    throw new Error(tSync('oauth.xai.refreshTokenMissing'))
   }
 
   let tokenEndpoint = credentials.tokenEndpoint?.trim() || DEFAULT_XAI_TOKEN_ENDPOINT
@@ -355,14 +374,16 @@ export async function refreshXaiOAuthToken(
     const detail = await response.text().catch(() => '')
     if (response.status === 403) {
       throw new Error(
-        'xAI token refresh failed with HTTP 403. This OAuth account may not be authorized for API access ' +
-          '(xAI sometimes gates OAuth by SuperGrok tier). Re-login will not fix this; ' +
-          'set an API key for provider "xai" in auth.json, or upgrade at https://x.ai/grok.' +
-          (detail ? ` Response: ${detail}` : ''),
+        tSync('oauth.xai.refreshForbidden', {
+          detail: detail ? ` ${tSync('oauth.xai.responseDetail', { detail })}` : '',
+        }),
       )
     }
     throw new Error(
-      `xAI token refresh failed (HTTP ${response.status})${detail ? `: ${detail}` : ''}`,
+      tSync('oauth.xai.refreshFailed', {
+        status: response.status,
+        detail: detail ? `: ${detail}` : '',
+      }),
     )
   }
 
