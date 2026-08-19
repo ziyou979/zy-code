@@ -291,7 +291,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 ```
 
 - **token 字符串**:`k`=1024、`m`=1024²。`"200k"`=204800、`"1m"`=1048576。
-- **`costs` 两种格式**:固定单价(`inputTokens`/`outputTokens`/`promptCache*`/`webSearchRequests`,单位 元/百万 token),或阶梯 `tiers: [{upTo,inputTokens,outputTokens,…}]`。
+- **`costs` 三种格式**:固定单价(`inputTokens`/`outputTokens`/`promptCache*`/`webSearchRequests`,单位 元/百万 token)；阶梯 `tiers: [{upTo,inputTokens,outputTokens,…}]`；时段 `schedules`（配合可选 `timezone`，如 DeepSeek 北京时间高峰 09:00–12:00 / 14:00–18:00）。带 `windows` 的条目优先匹配，无 `windows` 的条目作为回退。
 - **`providerOverrides`**:按 provider 覆盖 `apiFormat`、`capabilities`、`tokens`、`betaHeaders`、`costs`。用于同一模型在不同 provider 下上下文窗口、价格或 API 协议不同的场景。
 - **优先级**:`providerOverrides` 高于同条模型的通用字段；本地模型配置整体高于 provider 默认(effort 档位、context 窗口等)。
 

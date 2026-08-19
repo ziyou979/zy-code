@@ -272,6 +272,45 @@
       }
     },
     {
+      "pattern": "deepseek-v4-flash",
+      "capabilities": {
+        "thinking": {
+          "preserve": "always",
+          "effort": {
+            "levels": ["off", "balanced", "thorough"],
+            "map": { "balanced": "high", "thorough": "max" }
+          }
+        },
+        "structured_outputs": true,
+        "auto_mode": true,
+        "prompt_caching": "implicit"
+      },
+      "tokens": {
+        "contextWindow": "1m",
+        "maxInputTokens": "1m",
+        "maxOutputTokens": "384k"
+      },
+      "costs": {
+        "timezone": "Asia/Shanghai",
+        "schedules": [
+          {
+            "windows": [
+              { "start": "09:00", "end": "12:00" },
+              { "start": "14:00", "end": "18:00" }
+            ],
+            "inputTokens": 3,
+            "outputTokens": 9,
+            "promptCacheReadTokens": 0.1
+          },
+          {
+            "inputTokens": 1.5,
+            "outputTokens": 4.5,
+            "promptCacheReadTokens": 0.05
+          }
+        ]
+      }
+    },
+    {
       "pattern": "gpt-4o",
       "capabilities": {
         "thinking": { "effort": ["off"] },

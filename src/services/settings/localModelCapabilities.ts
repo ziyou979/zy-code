@@ -106,6 +106,102 @@ export type TokenLimits = {
 export type ModelCapabilityMatchContext = {
   provider?: string | null
   apiFormat?: ApiFormat | null
+  /** 计算时段费率时使用的时间点；未传则取当前时间 */
+  at?: Date
+}
+
+// ---------------------------------------------------------------------------
+// 费用解析
+// ---------------------------------------------------------------------------
+
+export type ResolvedModelCosts = {
+  inputTokens: number
+  outputTokens: number
+  promptCacheWriteTokens: number
+  promptCacheReadTokens: number
+  webSearchRequests: number
+  currency: string
+}
+
+type CostRate = {
+  inputTokens: number
+  outputTokens: number
+  promptCacheWriteTokens?: number
+  promptCacheReadTokens?: number
+}
+
+function resolveCostRate(
+  rate: CostRate,
+  webSearchRequests: number | undefined,
+  currency: string,
+): ResolvedModelCosts {
+  return {
+    inputTokens: rate.inputTokens,
+    outputTokens: rate.outputTokens,
+    promptCacheWriteTokens: rate.promptCacheWriteTokens ?? 0,
+    promptCacheReadTokens: rate.promptCacheReadTokens ?? 0,
+    webSearchRequests: webSearchRequests ?? 0,
+    currency,
+  }
+}
+
+/**
+ * 解析 "HH:mm" / "H:mm" 为当天分钟数。非法值返回 NaN。
+ */
+export function parseClockMinutes(value: string): number {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim())
+  if (!match) {
+    return NaN
+  }
+  const hours = Number(match[1])
+  const minutes = Number(match[2])
+  if (hours > 23 || minutes > 59) {
+    return NaN
+  }
+  return hours * 60 + minutes
+}
+
+/**
+ * 取指定时区下的本地分钟数（0–1439）。
+ * 时区无效时回退到系统本地时间。
+ */
+export function getZonedMinutes(at: Date, timezone?: string): number {
+  const options: Intl.DateTimeFormatOptions = {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }
+  if (timezone) {
+    options.timeZone = timezone
+  }
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(at)
+    const hour = Number(parts.find((part) => part.type === 'hour')?.value)
+    const minute = Number(parts.find((part) => part.type === 'minute')?.value)
+    if (Number.isInteger(hour) && Number.isInteger(minute)) {
+      return hour * 60 + minute
+    }
+  } catch {
+    // 非法 IANA 时区：回退到系统本地时间，避免整份定价失效
+  }
+  if (timezone) {
+    return getZonedMinutes(at)
+  }
+  return at.getHours() * 60 + at.getMinutes()
+}
+
+/**
+ * 判断本地分钟数是否落在 [start, end) 内。
+ * end <= start 视为跨午夜，例如 22:00–06:00。
+ */
+export function isMinuteInWindow(minute: number, start: number, end: number): boolean {
+  if (start === end) {
+    return true
+  }
+  if (start < end) {
+    return minute >= start && minute < end
+  }
+  return minute >= start || minute < end
 }
 
 // ---------------------------------------------------------------------------
@@ -231,37 +327,65 @@ const TokenLimitsSchema = z.object({
   ),
 })
 
+/** 共享的货币 / 时区 / 搜索费字段 */
+const ModelCostCommonFields = {
+  currency: z.enum(CURRENCIES).optional().describe('定价货币单位，未配置时默认 CNY'),
+  timezone: z
+    .string()
+    .optional()
+    .describe('时段计费使用的 IANA 时区，如 Asia/Shanghai；未配置时使用系统本地时区'),
+  webSearchRequests: z.number().optional().describe('每次网络搜索费用'),
+}
+
+/** 一组费率（每百万 token） */
+const ModelCostRateFields = {
+  inputTokens: z.number().describe('每百万输入 token 费用（缓存未命中）'),
+  outputTokens: z.number().describe('每百万输出 token 费用'),
+  promptCacheWriteTokens: z.number().optional().describe('每百万缓存写入 token 费用'),
+  promptCacheReadTokens: z.number().optional().describe('每百万缓存读取 token 费用'),
+}
+
+const ModelCostTimeWindowSchema = z.object({
+  start: z.string().describe('时段起始（含），HH:mm，按 timezone 解释'),
+  end: z.string().describe('时段结束（不含），HH:mm，按 timezone 解释'),
+})
+
+const ModelCostScheduleSchema = z.object({
+  ...ModelCostRateFields,
+  windows: z
+    .array(ModelCostTimeWindowSchema)
+    .optional()
+    .describe('匹配这些本地时段时使用此费率；省略表示默认/回退费率'),
+})
+
 const ModelCostSchema = z.union([
-  // 固定单价（向后兼容）
+  // 时段费用：按 timezone 下的本地时刻选择费率（如 DeepSeek 峰谷价）
   z.object({
-    currency: z.enum(CURRENCIES).optional().describe('定价货币单位，未配置时默认 CNY'),
-    inputTokens: z.number().describe('每百万输入 token 费用'),
-    outputTokens: z.number().describe('每百万输出 token 费用'),
-    promptCacheWriteTokens: z.number().optional().describe('每百万缓存写入 token 费用'),
-    promptCacheReadTokens: z.number().optional().describe('每百万缓存读取 token 费用'),
-    webSearchRequests: z.number().optional().describe('每次网络搜索费用'),
+    ...ModelCostCommonFields,
+    schedules: z
+      .array(ModelCostScheduleSchema)
+      .min(1)
+      .describe(
+        '按时段计价的费率列表。带 windows 的条目优先匹配；无 windows 的条目作为回退。' +
+          '建议把高峰条目放前面，把空闲/默认条目放最后。',
+      ),
   }),
   // 阶梯费用：根据输入 token 总量分段计价
   z.object({
-    currency: z.enum(CURRENCIES).optional().describe('定价货币单位，未配置时默认 CNY'),
+    ...ModelCostCommonFields,
     tiers: z
       .array(
         z.object({
           upTo: TokenCountSchema.describe('此阶梯的输入 token 上限，支持 "128k"、"1m" 等格式'),
-          inputTokens: z.number().describe('此阶梯内每百万输入 token 费用'),
-          outputTokens: z.number().describe('此阶梯内每百万输出 token 费用'),
-          promptCacheWriteTokens: z
-            .number()
-            .optional()
-            .describe('此阶梯内每百万缓存写入 token 费用'),
-          promptCacheReadTokens: z
-            .number()
-            .optional()
-            .describe('此阶梯内每百万缓存读取 token 费用'),
+          ...ModelCostRateFields,
         }),
       )
       .describe('按输入 token 总量分段计价的阶梯列表（从低到高排序）'),
-    webSearchRequests: z.number().optional().describe('每次网络搜索费用'),
+  }),
+  // 固定单价（向后兼容）
+  z.object({
+    ...ModelCostCommonFields,
+    ...ModelCostRateFields,
   }),
 ])
 
@@ -945,31 +1069,49 @@ export function getLocalMaxThinkingTokens(
 
 /**
  * 从本地配置获取模型定价。
- * 支持固定单价和阶梯费用两种格式。
+ * 支持固定单价、阶梯费用和按时段费率三种格式。
  */
 export function getLocalModelCosts(
   model: string,
   currentInputTokens?: number,
   context?: ModelCapabilityMatchContext,
-):
-  | {
-      inputTokens: number
-      outputTokens: number
-      promptCacheWriteTokens: number
-      promptCacheReadTokens: number
-      webSearchRequests: number
-      currency: string
-    }
-  | undefined {
+): ResolvedModelCosts | undefined {
   const entry = getLocalModelCapability(model, context)
   if (!entry?.costs) {
     return undefined
   }
 
-  const currency = entry.costs.currency ?? 'CNY'
+  const costs = entry.costs
+  const currency = costs.currency ?? 'CNY'
+  const webSearchRequests = costs.webSearchRequests
 
-  if ('tiers' in entry.costs) {
-    const tiers = entry.costs.tiers
+  if ('schedules' in costs) {
+    const schedules = costs.schedules
+    if (!schedules || schedules.length === 0) {
+      return undefined
+    }
+
+    const minute = getZonedMinutes(context?.at ?? new Date(), costs.timezone)
+    let fallback = schedules[schedules.length - 1]
+    for (const schedule of schedules) {
+      if (!schedule.windows || schedule.windows.length === 0) {
+        fallback = schedule
+        continue
+      }
+      const matched = schedule.windows.some((window) => {
+        const start = parseClockMinutes(window.start)
+        const end = parseClockMinutes(window.end)
+        return !Number.isNaN(start) && !Number.isNaN(end) && isMinuteInWindow(minute, start, end)
+      })
+      if (matched) {
+        return resolveCostRate(schedule, webSearchRequests, currency)
+      }
+    }
+    return resolveCostRate(fallback, webSearchRequests, currency)
+  }
+
+  if ('tiers' in costs) {
+    const tiers = costs.tiers
     if (!tiers || tiers.length === 0) {
       return undefined
     }
@@ -978,28 +1120,14 @@ export function getLocalModelCosts(
     let activeTier = tiers[tiers.length - 1]
     for (const tier of tiers) {
       const upTo = parseTokenCount(tier.upTo)
-      if (upTo === undefined || usage <= upTo) {
+      if (Number.isNaN(upTo) || usage <= upTo) {
         activeTier = tier
         break
       }
     }
 
-    return {
-      inputTokens: activeTier.inputTokens,
-      outputTokens: activeTier.outputTokens,
-      promptCacheWriteTokens: activeTier.promptCacheWriteTokens ?? 0,
-      promptCacheReadTokens: activeTier.promptCacheReadTokens ?? 0,
-      webSearchRequests: entry.costs.webSearchRequests ?? 0,
-      currency,
-    }
+    return resolveCostRate(activeTier, webSearchRequests, currency)
   }
 
-  return {
-    inputTokens: entry.costs.inputTokens,
-    outputTokens: entry.costs.outputTokens,
-    promptCacheWriteTokens: entry.costs.promptCacheWriteTokens ?? 0,
-    promptCacheReadTokens: entry.costs.promptCacheReadTokens ?? 0,
-    webSearchRequests: entry.costs.webSearchRequests ?? 0,
-    currency,
-  }
+  return resolveCostRate(costs, webSearchRequests, currency)
 }

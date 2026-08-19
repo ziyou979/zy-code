@@ -7,7 +7,10 @@ import {
   getLocalModelApiFormat,
   getLocalModelCapability,
   getLocalModelCosts,
+  getZonedMinutes,
+  isMinuteInWindow,
   localModelHasCapability,
+  parseClockMinutes,
 } from '../../src/services/settings/localModelCapabilities.js'
 
 let previousConfigDir: string | undefined
@@ -342,5 +345,92 @@ describe('多文件分片加载', () => {
       }),
     )
     expect(getLocalContextWindow('only-frag')).toBe(8 * 1024)
+  })
+})
+
+describe('时段费用', () => {
+  test('parseClockMinutes 解析 HH:mm 并拒绝非法值', () => {
+    expect(parseClockMinutes('00:00')).toBe(0)
+    expect(parseClockMinutes('9:00')).toBe(9 * 60)
+    expect(parseClockMinutes('18:00')).toBe(18 * 60)
+    expect(parseClockMinutes('23:59')).toBe(23 * 60 + 59)
+    expect(parseClockMinutes('24:00')).toBeNaN()
+    expect(parseClockMinutes('12:60')).toBeNaN()
+    expect(parseClockMinutes('noon')).toBeNaN()
+  })
+
+  test('isMinuteInWindow 支持普通区间与跨午夜', () => {
+    expect(isMinuteInWindow(9 * 60, 9 * 60, 12 * 60)).toBe(true)
+    expect(isMinuteInWindow(12 * 60, 9 * 60, 12 * 60)).toBe(false)
+    expect(isMinuteInWindow(23 * 60, 22 * 60, 6 * 60)).toBe(true)
+    expect(isMinuteInWindow(5 * 60 + 59, 22 * 60, 6 * 60)).toBe(true)
+    expect(isMinuteInWindow(6 * 60, 22 * 60, 6 * 60)).toBe(false)
+  })
+
+  test('getZonedMinutes 按 IANA 时区取本地时刻', () => {
+    // 2026-08-18 01:00 UTC = 北京时间 09:00
+    expect(getZonedMinutes(new Date('2026-08-18T01:00:00.000Z'), 'Asia/Shanghai')).toBe(9 * 60)
+    expect(getZonedMinutes(new Date('2026-08-18T10:00:00.000Z'), 'Asia/Shanghai')).toBe(18 * 60)
+  })
+
+  test('schedules 按配置时区选择高峰或空闲费率', () => {
+    writeFileSync(
+      join(configDir, 'model-capabilities.json'),
+      JSON.stringify({
+        models: [
+          {
+            pattern: 'deepseek-v4-flash',
+            capabilities: { thinking: { effort: ['off'] } },
+            costs: {
+              currency: 'CNY',
+              timezone: 'Asia/Shanghai',
+              schedules: [
+                {
+                  windows: [
+                    { start: '09:00', end: '12:00' },
+                    { start: '14:00', end: '18:00' },
+                  ],
+                  inputTokens: 3,
+                  outputTokens: 9,
+                  promptCacheReadTokens: 0.1,
+                },
+                {
+                  inputTokens: 1.5,
+                  outputTokens: 4.5,
+                  promptCacheReadTokens: 0.05,
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    )
+
+    const peakMorning = getLocalModelCosts('deepseek-v4-flash', 0, {
+      at: new Date('2026-08-18T01:30:00.000Z'),
+    })
+    const peakAfternoon = getLocalModelCosts('deepseek-v4-flash', 0, {
+      at: new Date('2026-08-18T07:00:00.000Z'),
+    })
+    const offPeakNoon = getLocalModelCosts('deepseek-v4-flash', 0, {
+      at: new Date('2026-08-18T04:00:00.000Z'),
+    })
+    const offPeakEvening = getLocalModelCosts('deepseek-v4-flash', 0, {
+      at: new Date('2026-08-18T10:00:00.000Z'),
+    })
+
+    expect(peakMorning).toMatchObject({
+      currency: 'CNY',
+      inputTokens: 3,
+      outputTokens: 9,
+      promptCacheReadTokens: 0.1,
+    })
+    expect(peakAfternoon).toMatchObject({ inputTokens: 3, outputTokens: 9 })
+    expect(offPeakNoon).toMatchObject({
+      inputTokens: 1.5,
+      outputTokens: 4.5,
+      promptCacheReadTokens: 0.05,
+    })
+    expect(offPeakEvening).toMatchObject({ inputTokens: 1.5, outputTokens: 4.5 })
   })
 })
