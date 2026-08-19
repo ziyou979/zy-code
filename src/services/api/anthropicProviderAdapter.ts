@@ -4,8 +4,13 @@
  * 所有标准格式 ↔ Anthropic 格式的转换都委托给 conversions/anthropic.ts。
  * 本文件只负责拿到 Anthropic client、发起请求。
  */
-import type Anthropic from '@anthropic-ai/sdk'
-import { getMainLoopModel, normalizeModelStringForAPI } from '../model/model.js'
+import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
+import {
+  getAuthProfileForModel,
+  getMainLoopModel,
+  getProviderForModel,
+  normalizeModelStringForAPI,
+} from '../model/model.js'
 import type {
   CreateParams,
   LLMAdapter,
@@ -16,6 +21,9 @@ import type {
 } from '../../types/llm.js'
 import { getModelBetas } from '../feature-flags/betas.js'
 import { logError } from '../../services/infra/log.js'
+import { getApiKey } from '../auth/auth.js'
+import { getOAuthProviderIdForConnection } from '../oauth/oauthStorage.js'
+import { getProxyFetchOptions } from '../http/proxy.js'
 import { getAnthropicClient } from './client.js'
 import {
   anthropicResponseToStandard,
@@ -24,6 +32,64 @@ import {
   messagesToAnthropic,
   toolsToAnthropic,
 } from './conversions/anthropic.js'
+
+const ANTHROPIC_OAUTH_BETAS = 'claude-code-20250219,oauth-2025-04-20'
+const ANTHROPIC_OAUTH_BETA_LIST = ANTHROPIC_OAUTH_BETAS.split(',')
+const ANTHROPIC_OAUTH_IDENTITY = "You are Claude Code, Anthropic's official CLI for Claude."
+
+/** 创建 Claude Pro/Max 订阅专用客户端，与普通 API Key 鉴权严格分离。 */
+export function getAnthropicOAuthClient(options: {
+  accessToken: string
+  baseURL?: string
+  maxRetries?: number
+  timeout?: number
+  fetch?: ClientOptions['fetch']
+  userAgent?: string
+}): Anthropic {
+  return new Anthropic({
+    apiKey: null,
+    authToken: options.accessToken,
+    baseURL: options.baseURL,
+    maxRetries: options.maxRetries ?? 0,
+    timeout: options.timeout ?? 600 * 1000,
+    dangerouslyAllowBrowser: true,
+    defaultHeaders: {
+      accept: 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true',
+      'anthropic-beta': ANTHROPIC_OAUTH_BETAS,
+      'user-agent': options.userAgent ?? 'claude-cli/2.1.75',
+      'x-app': 'cli',
+    },
+    fetchOptions: getProxyFetchOptions({ forAnthropicAPI: true }),
+    ...(options.fetch && { fetch: options.fetch }),
+  } as ClientOptions & { fetchOptions: ReturnType<typeof getProxyFetchOptions> })
+}
+
+/** OAuth inference 要求把 Claude Code 身份作为首个 system block。 */
+export function buildAnthropicOAuthRequestParams(
+  params: CreateParams,
+): ReturnType<typeof buildAnthropicCreateParams> {
+  const request = buildAnthropicCreateParams(params)
+  const existingSystem = request.system
+  const systemBlocks: Array<{ type: 'text'; text: string }> = [
+    { type: 'text', text: ANTHROPIC_OAUTH_IDENTITY },
+  ]
+  if (typeof existingSystem === 'string') {
+    systemBlocks.push({ type: 'text', text: existingSystem })
+  } else if (Array.isArray(existingSystem)) {
+    for (const block of existingSystem) {
+      if (block.type === 'text') {
+        systemBlocks.push({ type: 'text', text: block.text })
+      }
+    }
+  }
+  const requestBetas = Array.isArray(request.betas) ? request.betas : []
+  return {
+    ...request,
+    system: systemBlocks,
+    betas: [...new Set([...ANTHROPIC_OAUTH_BETA_LIST, ...requestBetas])],
+  }
+}
 
 export class anthropicProviderAdapter implements LLMAdapter {
   readonly name = 'anthropic'
@@ -38,11 +104,33 @@ export class anthropicProviderAdapter implements LLMAdapter {
     this.injectedClient = client ?? null
   }
 
-  private async getClient(model?: string): Promise<Anthropic> {
-    if (this.injectedClient) {
-      return this.injectedClient
+  private async getClient(model?: string): Promise<{ client: Anthropic; isOAuth: boolean }> {
+    const connectionId = getAuthProfileForModel(model) ?? getProviderForModel(model)
+    const storedOAuth = getOAuthProviderIdForConnection(connectionId) === 'anthropic'
+    const environmentOAuth =
+      getProviderForModel(model) === 'anthropic' ? process.env.ANTHROPIC_AUTH_TOKEN : undefined
+    if (storedOAuth || environmentOAuth) {
+      const accessToken = storedOAuth ? getApiKey(connectionId) : environmentOAuth
+      if (!accessToken) {
+        throw new Error('Anthropic OAuth token is unavailable')
+      }
+      return {
+        client: getAnthropicOAuthClient({ accessToken }),
+        isOAuth: true,
+      }
     }
-    return getAnthropicClient({ maxRetries: 0, model, source: 'standard_provider' })
+    // 主请求基础设施会预先创建普通客户端；OAuth 分支必须优先，避免误用注入的 API Key 客户端。
+    if (this.injectedClient) {
+      return { client: this.injectedClient, isOAuth: false }
+    }
+    return {
+      client: await getAnthropicClient({ maxRetries: 0, model, source: 'standard_provider' }),
+      isOAuth: false,
+    }
+  }
+
+  private buildRequest(params: CreateParams, isOAuth: boolean) {
+    return isOAuth ? buildAnthropicOAuthRequestParams(params) : buildAnthropicCreateParams(params)
   }
 
   async createStream(
@@ -50,8 +138,8 @@ export class anthropicProviderAdapter implements LLMAdapter {
     signal: AbortSignal,
     clientRequestId?: string,
   ): Promise<StreamResult> {
-    const client = await this.getClient(params.model)
-    const anthropicParams = buildAnthropicCreateParams(params)
+    const { client, isOAuth } = await this.getClient(params.model)
+    const anthropicParams = this.buildRequest(params, isOAuth)
 
     const headers: Record<string, string> = {}
     if (clientRequestId) {
@@ -83,8 +171,8 @@ export class anthropicProviderAdapter implements LLMAdapter {
     signal: AbortSignal,
     timeout?: number,
   ): Promise<LLMResponse> {
-    const client = await this.getClient(params.model)
-    const anthropicParams = buildAnthropicCreateParams(params)
+    const { client, isOAuth } = await this.getClient(params.model)
+    const anthropicParams = this.buildRequest(params, isOAuth)
 
     const result = await client.beta.messages.create(
       {
@@ -124,7 +212,7 @@ export class anthropicProviderAdapter implements LLMAdapter {
       const betas = getModelBetas(model)
       const containsThinking = this.hasThinkingBlocks(messages)
 
-      const client = await this.getClient(model)
+      const { client, isOAuth } = await this.getClient(model)
 
       // 转换为 Anthropic SDK 接受的格式
       const anthropicMessages = messagesToAnthropic(messages)
@@ -145,6 +233,9 @@ export class anthropicProviderAdapter implements LLMAdapter {
             budget_tokens: 1024,
           },
         }),
+        ...(isOAuth && {
+          system: [{ type: 'text', text: ANTHROPIC_OAUTH_IDENTITY }],
+        }),
       })
 
       if (typeof response.input_tokens !== 'number') {
@@ -160,8 +251,8 @@ export class anthropicProviderAdapter implements LLMAdapter {
 
   async createRawRequest(params: CreateParams): Promise<Response | null> {
     try {
-      const client = await this.getClient(params.model)
-      const anthropicParams = buildAnthropicCreateParams(params)
+      const { client, isOAuth } = await this.getClient(params.model)
+      const anthropicParams = this.buildRequest(params, isOAuth)
       // .asResponse() 必须在 APIPromise 上调用（链式），不能在 await 后的结果上调用
       const apiPromise = client.beta.messages.create({
         ...anthropicParams,
@@ -177,7 +268,7 @@ export class anthropicProviderAdapter implements LLMAdapter {
 
   async listModels(): Promise<Record<string, unknown>[] | null> {
     try {
-      const client = await this.getClient()
+      const { client } = await this.getClient()
       const results: Record<string, unknown>[] = []
       for await (const entry of client.models.list({})) {
         results.push(entry as unknown as Record<string, unknown>)

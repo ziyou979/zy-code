@@ -36,3 +36,9 @@ describe('opencode-go provider', () => {
     expect(getEffectiveApiFormat('opencode-go', 'qwen3.6-plus')).toBe('anthropic')
   })
 })
+
+describe('ark provider', () => {
+  test('默认优先使用 Responses API，并保留其他兼容协议', () => {
+    expect(getEffectiveApiFormat('ark', 'doubao-seed-evolving')).toBe('openai-responses')
+  })
+})

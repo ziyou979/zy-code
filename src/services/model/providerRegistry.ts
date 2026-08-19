@@ -715,7 +715,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'ark',
-    supportedFormats: ['anthropic', 'openai-chat'],
+    // 方舟同时提供 Responses、Chat Completions 与 Anthropic 兼容端点；优先使用
+    // Responses 以保留原生 Agent / 工具调用能力，其他协议仅作为兼容回退。
+    supportedFormats: ['openai-responses', 'openai-chat', 'anthropic'],
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     defaultBaseUrls: {

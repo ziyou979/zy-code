@@ -62,6 +62,8 @@ export interface ToolCallBlock {
   id: string
   name: string
   input: Record<string, unknown>
+  /** provider 专属的无透明业务语义元数据，由对应适配器写入和读取。 */
+  providerMetadata?: Record<string, unknown>
 }
 
 // ============================================================================

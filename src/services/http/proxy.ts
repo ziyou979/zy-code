@@ -26,6 +26,22 @@ export function disableKeepAlive(): void {
   keepAliveDisabled = true
 }
 
+/**
+ * 为只接受 fetch 覆盖的 SDK 注入代理与 mTLS 选项。
+ * 无额外网络配置时返回 undefined，让 SDK 使用原生 fetch。
+ */
+export function buildProxiedFetch():
+  | ((input: string | URL | Request, init?: RequestInit) => Promise<Response>)
+  | undefined {
+  const proxyOptions = getProxyFetchOptions()
+  if (Object.keys(proxyOptions).length === 0) {
+    return undefined
+  }
+  const inner = globalThis.fetch
+  // dispatcher/proxy/tls 属于运行时扩展，不在标准 RequestInit 类型中。
+  return (input, init) => inner(input, { ...init, ...proxyOptions } as unknown as RequestInit)
+}
+
 export function _resetKeepAliveForTesting(): void {
   keepAliveDisabled = false
 }

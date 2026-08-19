@@ -30,6 +30,7 @@ import type {
   StopReason,
   ThinkingConfig,
   TokenUsage,
+  ToolCallBlock,
   ToolChoice,
   ToolDefinition,
 } from '../../../types/llm.js'
@@ -91,6 +92,41 @@ function extractToolResultText(
   return ''
 }
 
+interface ResponsesToolCallMetadata {
+  itemId?: string
+}
+
+/**
+ * 获取 Responses 工具调用的两个独立标识。
+ * `ToolCallBlock.id` 始终用于通用的 call_id；output item id 只保存在 provider 元数据中。
+ */
+function getResponsesToolCallIds(block: ToolCallBlock): {
+  callId: string
+  itemId?: string
+} {
+  const metadata = block.providerMetadata?.openaiResponses
+  const itemId =
+    typeof metadata === 'object' && metadata !== null && 'itemId' in metadata
+      ? (metadata as ResponsesToolCallMetadata).itemId
+      : undefined
+
+  // 兼容修复前已写入当前会话的 `call_id|item_id`，避免要求用户丢弃会话。
+  const separatorIndex = block.id.indexOf('|')
+  if (separatorIndex > 0) {
+    return {
+      callId: block.id.slice(0, separatorIndex),
+      itemId: itemId ?? (block.id.slice(separatorIndex + 1) || undefined),
+    }
+  }
+  return { callId: block.id || randomUUID(), itemId }
+}
+
+/** 从工具结果引用中提取 call_id，并兼容修复前当前会话里的复合 ID。 */
+function getResponsesCallId(toolCallId: string): string {
+  const separatorIndex = toolCallId.indexOf('|')
+  return separatorIndex > 0 ? toolCallId.slice(0, separatorIndex) : toolCallId
+}
+
 /**
  * 将标准消息转换为 Responses API 的 input item 数组。
  *
@@ -99,14 +135,14 @@ function extractToolResultText(
  * - user 消息内嵌的 tool_result 块 → 拆为独立 function_call_output item
  *   （保持原始数组顺序，output 紧随对应 function_call）
  * - assistant 消息：文本 → message item（role assistant）；tool_call 块 →
- *   独立 function_call item；thinking 块丢弃（无状态多轮无需回传推理内容）
+ *   独立 function_call item；带 Responses 签名的 thinking 块还原为 reasoning item
  * - tool 消息 → function_call_output item
  * - 图片块 → input_image（data URL）
  */
 export function messagesToResponses(messages: LLMMessage[]): OpenAI.Responses.ResponseInputItem[] {
   const result: OpenAI.Responses.ResponseInputItem[] = []
 
-  for (const msg of messages) {
+  for (const [messageIndex, msg] of messages.entries()) {
     switch (msg.role) {
       case 'system':
         // 系统消息由 extractInstructions 收集，不产生 item
@@ -134,7 +170,7 @@ export function messagesToResponses(messages: LLMMessage[]): OpenAI.Responses.Re
             const text = extractToolResultText(block.content)
             toolOutputs.push({
               type: 'function_call_output',
-              call_id: block.toolCallId ?? '',
+              call_id: getResponsesCallId(block.toolCallId ?? ''),
               output: text || '(empty)',
             })
           } else if (block.type === 'text') {
@@ -167,9 +203,11 @@ export function messagesToResponses(messages: LLMMessage[]): OpenAI.Responses.Re
         // v1 兼容：content 可能是字符串
         if (typeof msg.content === 'string') {
           result.push({
+            id: `msg_zy_${messageIndex}`,
             type: 'message',
             role: 'assistant',
-            content: [{ type: 'input_text', text: msg.content }],
+            status: 'completed',
+            content: [{ type: 'output_text', text: msg.content, annotations: [] }],
           })
           break
         }
@@ -177,30 +215,50 @@ export function messagesToResponses(messages: LLMMessage[]): OpenAI.Responses.Re
           break
         }
         const textParts: string[] = []
+        const reasoningItems: OpenAI.Responses.ResponseReasoningItem[] = []
         const toolCalls: OpenAI.Responses.ResponseFunctionToolCall[] = []
         for (const block of msg.content) {
           if (block.type === 'text') {
             if (block.text) {
               textParts.push(block.text)
             }
+          } else if (block.type === 'thinking' && block.signature) {
+            // store:false 的 Responses 多轮必须重放完整 reasoning item。
+            // signature 只接受本转换器保存的 JSON，避免把其他 provider 的签名误传。
+            try {
+              const item = JSON.parse(block.signature) as Record<string, unknown>
+              if (
+                item.type === 'reasoning' &&
+                typeof item.id === 'string' &&
+                Array.isArray(item.summary)
+              ) {
+                reasoningItems.push(item as unknown as OpenAI.Responses.ResponseReasoningItem)
+              }
+            } catch {
+              // 非 Responses 签名属于其他 provider，忽略即可。
+            }
           } else if (block.type === 'tool_call') {
             // 工具调用是独立 function_call item（arguments 为 JSON 字符串）
+            const { callId, itemId } = getResponsesToolCallIds(block)
             toolCalls.push({
               type: 'function_call',
-              call_id: block.id ?? randomUUID(),
+              ...(itemId ? { id: itemId } : {}),
+              call_id: callId || randomUUID(),
               name: block.name,
               arguments: safeStringifyToolArguments(block.input),
             })
           }
-          // thinking / redacted_thinking：无状态多轮不回传（需 encrypted_content
-          // 才可回传，项目未启用），丢弃
+          // redacted_thinking 属于其他 provider，不在此处转换。
         }
-        // 消息 item 在前、function_call items 在后，与模型实际输出顺序一致
+        // Responses 输出顺序通常是 reasoning → message → function_call；重放时保持一致。
+        result.push(...reasoningItems)
         if (textParts.length > 0) {
           result.push({
+            id: `msg_zy_${messageIndex}`,
             type: 'message',
             role: 'assistant',
-            content: [{ type: 'input_text', text: textParts.join('\n\n') }],
+            status: 'completed',
+            content: [{ type: 'output_text', text: textParts.join('\n\n'), annotations: [] }],
           })
         }
         result.push(...toolCalls)
@@ -210,7 +268,7 @@ export function messagesToResponses(messages: LLMMessage[]): OpenAI.Responses.Re
       case 'tool':
         result.push({
           type: 'function_call_output',
-          call_id: msg.toolCallId,
+          call_id: getResponsesCallId(msg.toolCallId),
           output: msg.content || '(empty)',
         })
         break
@@ -470,15 +528,19 @@ export function responsesToStandard(
           id: item.call_id ?? item.id ?? randomUUID(),
           name: item.name,
           input: parsedInput,
+          ...(item.id ? { providerMetadata: { openaiResponses: { itemId: item.id } } } : {}),
         })
         break
       }
 
       case 'reasoning': {
         const summary = (item.summary ?? []).map((s) => s.text).join('\n\n')
-        if (summary) {
-          contentBlocks.push({ type: 'thinking', thinking: summary, signature: '' })
-        }
+        contentBlocks.push({
+          type: 'thinking',
+          thinking: summary,
+          // 保存完整 item（含 id 与 encrypted_content），供 store:false 下一轮重放。
+          signature: JSON.stringify(item),
+        })
         break
       }
 
@@ -527,6 +589,7 @@ export async function* mapResponsesStreamToStandard(
   let nextIndex = 0
   let finalStopReason: StopReason | null = null
   let finalUsage: DeltaUsage | undefined
+  let reasoningSignature = ''
 
   yield { type: 'response_start', responseId: messageId, model }
 
@@ -592,6 +655,27 @@ export async function* mapResponsesStreamToStandard(
         break
       }
 
+      case 'response.output_item.done': {
+        if (event.item.type === 'reasoning') {
+          if (!thinkingStarted) {
+            thinkingBlockIndex = nextIndex++
+            yield {
+              type: 'chunk_start',
+              index: thinkingBlockIndex,
+              chunk: { type: 'thinking', thinking: '', signature: '' },
+            }
+            thinkingStarted = true
+          }
+          reasoningSignature = JSON.stringify(event.item)
+          yield {
+            type: 'chunk_delta',
+            index: thinkingBlockIndex,
+            delta: { type: 'signature_delta', signature: reasoningSignature },
+          }
+        }
+        break
+      }
+
       case 'response.output_item.added': {
         // function_call item 创建时即可拿到函数名（arguments.delta 不带 name）
         if (event.item.type === 'function_call') {
@@ -607,9 +691,10 @@ export async function* mapResponsesStreamToStandard(
               index,
               chunk: {
                 type: 'tool_call',
-                id: itemId,
+                id: event.item.call_id,
                 name: event.item.name,
                 input: {},
+                providerMetadata: { openaiResponses: { itemId } },
               },
             }
           }
@@ -643,6 +728,30 @@ export async function* mapResponsesStreamToStandard(
       }
 
       case 'response.completed': {
+        // 某些兼容端点只在终止事件里补 encrypted_content；以终止响应为准回填签名。
+        const terminalReasoning = event.response.output?.find(
+          (item) => item.type === 'reasoning' && Boolean(item.encrypted_content),
+        )
+        if (terminalReasoning) {
+          if (!thinkingStarted) {
+            thinkingBlockIndex = nextIndex++
+            yield {
+              type: 'chunk_start',
+              index: thinkingBlockIndex,
+              chunk: { type: 'thinking', thinking: '', signature: '' },
+            }
+            thinkingStarted = true
+          }
+          const terminalSignature = JSON.stringify(terminalReasoning)
+          if (terminalSignature !== reasoningSignature) {
+            reasoningSignature = terminalSignature
+            yield {
+              type: 'chunk_delta',
+              index: thinkingBlockIndex,
+              delta: { type: 'signature_delta', signature: terminalSignature },
+            }
+          }
+        }
         // usage 与最终状态只在 completed 事件内返回
         const stopReason = responseStopReason(event.response)
         for (const e of stopAllOpenBlocks()) {
@@ -657,7 +766,11 @@ export async function* mapResponsesStreamToStandard(
         return
       }
 
-      case 'response.failed':
+      case 'response.failed': {
+        const detail = event.response.error?.message ?? 'OpenAI Responses request failed'
+        throw new Error(detail)
+      }
+
       case 'response.incomplete': {
         const stopReason = responseStopReason(event.response)
         for (const e of stopAllOpenBlocks()) {

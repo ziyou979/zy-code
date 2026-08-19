@@ -17,7 +17,8 @@ import {
 import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/services/auth/auth.js'
 import { getAuthConfigBaseUrl } from 'src/services/auth/authConfig.js'
 import { getUserAgent } from 'src/services/http/http.js'
-import { getProxyFetchOptions } from 'src/services/http/proxy.js'
+import { buildProxiedFetch, getProxyFetchOptions } from 'src/services/http/proxy.js'
+import { getOAuthProviderIdForConnection } from 'src/services/oauth/oauthStorage.js'
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import type { LLMAdapter } from '../../types/llm.js'
@@ -26,6 +27,7 @@ import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../services/inf
 import { anthropicProviderAdapter } from './anthropicProviderAdapter.js'
 import { googleProviderAdapter } from './googleProviderAdapter.js'
 import { OpenAIProviderAdapter } from './openAIProviderAdapter.js'
+import { OpenAICodexResponsesProviderAdapter } from './openAICodexResponsesProviderAdapter.js'
 import { OpenAIResponsesProviderAdapter } from './openAIResponsesProviderAdapter.js'
 
 /**
@@ -497,24 +499,6 @@ function buildFetch(
 }
 
 /**
- * 构建 OpenAI SDK 的 fetch 覆盖，注入代理 / mTLS 选项。
- * OpenAI SDK 不支持 fetchOptions，故通过 fetch 覆盖实现，
- * 与 Anthropic SDK 的 getProxyFetchOptions 行为对齐。
- * 无代理 / mTLS 配置时返回 undefined，交由 SDK 使用默认 fetch。
- */
-function buildProxiedFetch():
-  | ((input: string | URL | Request, init?: RequestInit) => Promise<Response>)
-  | undefined {
-  const proxyOpts = getProxyFetchOptions()
-  if (Object.keys(proxyOpts).length === 0) {
-    return undefined
-  }
-  const inner = globalThis.fetch
-  // 代理选项（dispatcher/proxy/tls）是平台扩展，非标准 RequestInit
-  return (input, init) => inner(input, { ...init, ...proxyOpts } as unknown as RequestInit)
-}
-
-/**
  * 统一的 LLM Adapter 工厂函数（使用 llm.ts 中立标准类型）。
  * 根据当前 provider 自动选择对应的 Adapter 实现。
  * 调用方使用 llm.ts 类型，完全不依赖任何 SDK。
@@ -532,7 +516,14 @@ export function getLLMAdapter(options?: {
   model?: string
 }): LLMAdapter {
   const apiProvider = getProviderForModel(options?.model)
+  const authProfile = getAuthProfileForModel(options?.model)
   const model = options?.model
+
+  // Codex 订阅凭证决定传输端点，优先级高于模型的普通 OpenAI API 格式。
+  // 同一个 openai provider 使用 API Key 时仍走 api.openai.com，不受此分支影响。
+  if (getOAuthProviderIdForConnection(authProfile ?? apiProvider) === 'openai-codex') {
+    return new OpenAICodexResponsesProviderAdapter()
+  }
 
   // Google 原生格式优先检查（最具体）
   if (isGoogleProvider(apiProvider, model)) {

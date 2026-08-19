@@ -227,6 +227,25 @@ describe('messagesToResponses', () => {
     ])
   })
 
+  test('user 内嵌的旧复合工具 ID 只发送长度受限的 call_id', () => {
+    const callId = `call_${'a'.repeat(31)}`
+    const legacyToolCallId = `${callId}|fc_${'b'.repeat(43)}`
+    expect(legacyToolCallId).toHaveLength(83)
+    const result = messagesToResponses([
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'tool_result',
+            toolCallId: legacyToolCallId,
+            content: '完成',
+          },
+        ],
+      },
+    ])
+    expect(result).toEqual([{ type: 'function_call_output', call_id: callId, output: '完成' }])
+  })
+
   test('assistant 文本 + tool_call → message item + function_call item（arguments 为 JSON 字符串）', () => {
     const result = messagesToResponses([
       {
@@ -240,9 +259,11 @@ describe('messagesToResponses', () => {
     ])
     expect(result).toEqual([
       {
+        id: 'msg_zy_0',
         type: 'message',
         role: 'assistant',
-        content: [{ type: 'input_text', text: '我来搜索' }],
+        status: 'completed',
+        content: [{ type: 'output_text', text: '我来搜索', annotations: [] }],
       },
       {
         type: 'function_call',
@@ -258,6 +279,36 @@ describe('messagesToResponses', () => {
       { role: 'assistant', content: [{ type: 'thinking', thinking: '思考', signature: '' }] },
     ])
     expect(result).toHaveLength(0)
+  })
+
+  test('assistant 的 Responses reasoning 签名会在工具结果前完整重放', () => {
+    const reasoningItem = {
+      type: 'reasoning' as const,
+      id: 'rs_1',
+      summary: [],
+      encrypted_content: 'encrypted-reasoning',
+      status: 'completed' as const,
+    }
+    const result = messagesToResponses([
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: '', signature: JSON.stringify(reasoningItem) },
+          {
+            type: 'tool_call',
+            id: 'call_1',
+            name: 'search',
+            input: { q: 'test' },
+            providerMetadata: { openaiResponses: { itemId: 'fc_1' } },
+          },
+        ],
+      },
+      { role: 'tool', toolCallId: 'call_1', content: 'ok' },
+    ])
+
+    expect(result[0]).toEqual(reasoningItem)
+    expect(result[1]).toMatchObject({ type: 'function_call', id: 'fc_1', call_id: 'call_1' })
+    expect(result[2]).toMatchObject({ type: 'function_call_output', call_id: 'call_1' })
   })
 
   test('tool 消息 → function_call_output item', () => {
@@ -396,9 +447,19 @@ describe('responsesToStandard', () => {
     }
     const result = responsesToStandard(response as unknown as OpenAI.Responses.Response, 'gpt-5')
     expect(result.content).toEqual([
-      { type: 'thinking', thinking: '第一步思考', signature: '' },
+      {
+        type: 'thinking',
+        thinking: '第一步思考',
+        signature: JSON.stringify(response.output[0]),
+      },
       { type: 'text', text: '结果如下' },
-      { type: 'tool_call', id: 'call_1', name: 'search', input: { q: 'test' } },
+      {
+        type: 'tool_call',
+        id: 'call_1',
+        name: 'search',
+        input: { q: 'test' },
+        providerMetadata: { openaiResponses: { itemId: 'fc_1' } },
+      },
     ])
     // 含 function_call → stopReason 为 tool_use（completed status 无法区分）
     expect(result.stopReason).toBe('tool_use')
@@ -468,6 +529,7 @@ describe('mapResponsesStreamToStandard', () => {
       index?: number
       stopReason?: unknown
       usage?: unknown
+      chunk?: unknown
     }> = []
     for await (const event of mapResponsesStreamToStandard(
       events as unknown as AsyncIterable<OpenAI.Responses.ResponseStreamEvent>,
@@ -478,6 +540,7 @@ describe('mapResponsesStreamToStandard', () => {
         index: (event as { index?: number }).index,
         stopReason: (event as { stopReason?: unknown }).stopReason,
         usage: (event as { usage?: unknown }).usage,
+        chunk: (event as { chunk?: unknown }).chunk,
       })
     }
     return eventsOut
@@ -622,6 +685,13 @@ describe('mapResponsesStreamToStandard', () => {
     const toolStart = events[7]
     expect(toolStart.type).toBe('chunk_start')
     expect(toolStart.index).toBe(2)
+    expect(toolStart).toMatchObject({
+      chunk: {
+        type: 'tool_call',
+        id: 'call_1',
+        providerMetadata: { openaiResponses: { itemId: 'fc_1' } },
+      },
+    })
     // completed 含 function_call → stopReason tool_use
     expect(events[11]).toMatchObject({ type: 'response_delta', stopReason: 'tool_use' })
   })
@@ -645,6 +715,46 @@ describe('mapResponsesStreamToStandard', () => {
         }
       })(),
     ).rejects.toThrow(/boom/)
+  })
+
+  test('reasoning item 的 encrypted_content 会进入 thinking signature', async () => {
+    const reasoningItem = {
+      type: 'reasoning' as const,
+      id: 'rs_1',
+      summary: [],
+      encrypted_content: 'encrypted-reasoning',
+      status: 'completed' as const,
+    }
+    const stream = mapResponsesStreamToStandard(
+      [
+        ev<OpenAI.Responses.ResponseStreamEvent>({
+          type: 'response.output_item.done',
+          output_index: 0,
+          sequence_number: 1,
+          item: reasoningItem,
+        }),
+        ev<OpenAI.Responses.ResponseStreamEvent>({
+          type: 'response.completed',
+          sequence_number: 2,
+          response: ev<OpenAI.Responses.Response>({
+            id: 'resp_1',
+            status: 'completed',
+            output: [reasoningItem],
+          }),
+        }),
+      ] as unknown as AsyncIterable<OpenAI.Responses.ResponseStreamEvent>,
+      'gpt-5.6-sol',
+    )
+    const events = []
+    for await (const event of stream) {
+      events.push(event)
+    }
+
+    expect(events).toContainEqual({
+      type: 'chunk_delta',
+      index: 0,
+      delta: { type: 'signature_delta', signature: JSON.stringify(reasoningItem) },
+    })
   })
 })
 
