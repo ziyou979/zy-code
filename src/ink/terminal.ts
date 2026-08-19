@@ -214,6 +214,38 @@ export function hasCursorUpViewportYankBug(): boolean {
   return process.platform === 'win32' || !!process.env.WT_SESSION
 }
 
+type WideCellRenderAnchorOptions = {
+  platform?: NodeJS.Platform
+  env?: NodeJS.ProcessEnv
+}
+
+/**
+ * 终端写入 CJK/emoji 宽字符后，物理光标列是否可能与内部单元格模型偏离。
+ *
+ * Windows Terminal 的差量重绘在宽字符移动或样式切换后可能留下半格残影；
+ * JediTerm 在 Windows 上也有相同的光标列偏差。启用后，下一处写入会使用
+ * 绝对坐标重新锚定，并显式清理被移除的宽字符尾格。
+ */
+export function needsWideCellRenderAnchor(options: WideCellRenderAnchorOptions = {}): boolean {
+  const platform = options.platform ?? process.platform
+  const processEnv = options.env ?? process.env
+
+  if (processEnv.WT_SESSION) {
+    return true
+  }
+
+  return platform === 'win32' && processEnv.TERMINAL_EMULATOR?.includes('JetBrains') === true
+}
+
+/**
+ * 主屏布局位移时会同时重写多行并移动交互光标，此时插入额外锚点会与
+ * 候选栏、权限框等动态区域的相对定位竞争。备用屏拥有绝对坐标原点，
+ * 可以在布局变化期间安全地继续锚定。
+ */
+export function canAnchorWideCellsForFrame(layoutShifted: boolean, altScreen: boolean): boolean {
+  return !layoutShifted || altScreen
+}
+
 // 模块加载时计算一次——终端能力在会话期间不会改变。
 // 导出以便调用方传递同步跳过提示，仅限特定模式。
 export const SYNC_OUTPUT_SUPPORTED = isSynchronizedOutputSupported()

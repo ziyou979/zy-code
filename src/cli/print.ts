@@ -259,7 +259,7 @@ export function trackReceivedMessageUuid(uuid: UUID): boolean {
   }
   receivedMessageUuids.add(uuid)
   receivedMessageUuidsOrder.push(uuid)
-    // 达到容量时淘汰最早项
+  // 达到容量时淘汰最早项
   if (receivedMessageUuidsOrder.length > MAX_RECEIVED_UUIDS) {
     const toEvict = receivedMessageUuidsOrder.splice(
       0,
@@ -433,8 +433,8 @@ export async function runHeadless(
         `  Commands will run WITHOUT sandboxing. Network and filesystem restrictions will NOT be enforced.\n\n`,
     )
   } else if (SandboxManager.isSandboxingEnabled()) {
-  // 初始化 sandbox，并提供 callback，通过 can_use_tool control_request 协议将网络权限请求转发到
-  // SDK host。必须在 structuredIO 创建后执行，才能发送请求。
+    // 初始化 sandbox，并提供 callback，通过 can_use_tool control_request 协议将网络权限请求转发到
+    // SDK host。必须在 structuredIO 创建后执行，才能发送请求。
     try {
       await SandboxManager.initialize(structuredIO.createSandboxAskCallback())
     } catch (err) {
@@ -521,8 +521,8 @@ export async function runHeadless(
     structuredIO.prependUserMessage(hookInitialUserMessage)
   }
 
-    // 从恢复的会话还原 agent 设置；若当前 --agent 参数或 settings agent 已覆盖，则 main.tsx
-    // 已设置 mainThreadAgentType。
+  // 从恢复的会话还原 agent 设置；若当前 --agent 参数或 settings agent 已覆盖，则 main.tsx
+  // 已设置 mainThreadAgentType。
   if (!options.agent && !getMainThreadAgentType() && resumedAgentSetting) {
     const { agentDefinition: restoredAgent } = restoreAgentFromSession(
       resumedAgentSetting,
@@ -633,7 +633,7 @@ export async function runHeadless(
     onPermissionPrompt,
   )
   if (options.permissionPromptToolName) {
-  // 从可用 tool 列表中移除权限 prompt tool。
+    // 从可用 tool 列表中移除权限 prompt tool。
     filteredTools = filteredTools.filter(
       (tool) => !toolMatchesName(tool, options.permissionPromptToolName!),
     )
@@ -690,9 +690,9 @@ export async function runHeadless(
     } else if (options.outputFormat === 'stream-json' && options.verbose) {
       await structuredIO.write(message)
     }
-      // 非流模式不应收到控制消息或流事件。也过滤 streamlined 类型，因为它们只由 transformer
-      // 产生。排除 SDK 专用 system 事件，使 lastMessage 保持为 result；finally 块中 result 后的
-      // session_state_changed(idle) 与迟到 task_notification drain 不会覆盖它。
+    // 非流模式不应收到控制消息或流事件。也过滤 streamlined 类型，因为它们只由 transformer
+    // 产生。排除 SDK 专用 system 事件，使 lastMessage 保持为 result；finally 块中 result 后的
+    // session_state_changed(idle) 与迟到 task_notification drain 不会覆盖它。
     if (
       message.type !== 'control_response' &&
       message.type !== 'control_request' &&
@@ -860,7 +860,7 @@ function runHeadlessStreaming(
   // 专用 wrapper 的两条路径。wrapper 函数体完全重复：既在此入队又调用
   // notifySessionMetadataChanged，而 onChangeAppState 现已覆盖两者；保留会导致状态消息发送两次。
   setPermissionModeChangedListener((newMode) => {
-      // 只为 SDK 暴露的模式发送。
+    // 只为 SDK 暴露的模式发送。
     if (
       newMode === 'default' ||
       newMode === 'acceptEdits' ||

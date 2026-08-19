@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import {
+  canAnchorWideCellsForFrame,
   isDecstbmFastPathSupported,
   isSynchronizedOutputSupported,
+  needsWideCellRenderAnchor,
 } from '../../src/ink/terminal.js'
 
 const originalTerminalEmulator = process.env.TERMINAL_EMULATOR
@@ -51,5 +53,40 @@ describe('终端同步输出能力', () => {
     process.env.TERM_PROGRAM = 'vscode'
 
     expect(isDecstbmFastPathSupported()).toBe(true)
+  })
+})
+
+describe('终端宽字符重绘能力', () => {
+  test('Windows Terminal 启用宽字符绝对重锚定', () => {
+    expect(
+      needsWideCellRenderAnchor({
+        platform: 'linux',
+        env: { WT_SESSION: 'session-id' },
+      }),
+    ).toBe(true)
+  })
+
+  test('Windows JediTerm 启用宽字符绝对重锚定', () => {
+    expect(
+      needsWideCellRenderAnchor({
+        platform: 'win32',
+        env: { TERMINAL_EMULATOR: 'JetBrains-JediTerm' },
+      }),
+    ).toBe(true)
+  })
+
+  test('普通终端不启用宽字符绝对重锚定', () => {
+    expect(
+      needsWideCellRenderAnchor({
+        platform: 'linux',
+        env: { TERM_PROGRAM: 'ghostty' },
+      }),
+    ).toBe(false)
+  })
+
+  test('主屏候选栏展开等布局位移帧不插入宽字符锚点', () => {
+    expect(canAnchorWideCellsForFrame(true, false)).toBe(false)
+    expect(canAnchorWideCellsForFrame(false, false)).toBe(true)
+    expect(canAnchorWideCellsForFrame(true, true)).toBe(true)
   })
 })

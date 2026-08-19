@@ -34,7 +34,7 @@ function createFixture() {
   }
 }
 
-describe('LogUpdate JediTerm 宽字符重绘', () => {
+describe('LogUpdate 宽字符重绘', () => {
   test('宽字符后继续差量写入时应使用绝对坐标重新锚定', () => {
     const { stylePool, createTestScreen, createFrame, logUpdate } = createFixture()
     const previous = createTestScreen()
@@ -98,5 +98,71 @@ describe('LogUpdate JediTerm 宽字符重绘', () => {
     expect(diff.filter((patch) => patch.type === 'stdout' && patch.content === '\n')).toHaveLength(
       height - 1,
     )
+  })
+
+  test('主屏表格重排使宽字符左移时应重新锚定后再清理旧尾格', () => {
+    const { stylePool, createTestScreen, createFrame, logUpdate } = createFixture()
+    const previous = createTestScreen()
+    const next = createTestScreen()
+    setCellAt(previous, 1, 0, {
+      char: '表',
+      styleId: stylePool.none,
+      width: CellWidth.Wide,
+      hyperlink: undefined,
+    })
+    setCellAt(next, 0, 0, {
+      char: '表',
+      styleId: stylePool.none,
+      width: CellWidth.Wide,
+      hyperlink: undefined,
+    })
+
+    const diff = logUpdate.render(
+      createFrame(previous),
+      createFrame(next),
+      false,
+      false,
+      { x: 0, y: 0 },
+      { anchorAfterWideCell: true },
+    )
+    const wideIndex = diff.findIndex((patch) => patch.type === 'stdout' && patch.content === '表')
+    const carriageReturnIndex = diff.findIndex((patch) => patch.type === 'carriageReturn')
+    const anchorIndex = diff.findIndex(
+      (patch, index) =>
+        index > carriageReturnIndex &&
+        patch.type === 'cursorMove' &&
+        patch.x === 2 &&
+        patch.y === 0,
+    )
+    const cleanupIndex = diff.findIndex(
+      (patch, index) => index > anchorIndex && patch.type === 'stdout' && patch.content === ' ',
+    )
+
+    expect(wideIndex).toBeGreaterThanOrEqual(0)
+    expect(carriageReturnIndex).toBeGreaterThan(wideIndex)
+    expect(anchorIndex).toBeGreaterThan(wideIndex)
+    expect(cleanupIndex).toBeGreaterThan(anchorIndex)
+    expect(
+      diff.some((patch) => patch.type === 'stdout' && /^\x1b\[\d+;\d+H$/.test(patch.content)),
+    ).toBe(false)
+  })
+})
+
+describe('LogUpdate 主屏卸载', () => {
+  test('退出前应将交互光标停靠到完整内容底部', () => {
+    const { createTestScreen, logUpdate } = createFixture()
+    const frame: Frame = {
+      screen: createTestScreen(),
+      viewport: { width, height: 8 },
+      cursor: { x: 0, y: 6, visible: false },
+    }
+
+    const diff = logUpdate.renderPreviousOutput_DEPRECATED(frame, { x: 12, y: 3 })
+
+    expect(diff).toEqual([
+      { type: 'carriageReturn' },
+      { type: 'cursorMove', x: 0, y: 3 },
+      { type: 'cursorShow' },
+    ])
   })
 })

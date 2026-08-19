@@ -79,7 +79,9 @@ import {
   updateSelection,
 } from './selection.js'
 import {
+  canAnchorWideCellsForFrame,
   DECSTBM_FAST_PATH_SUPPORTED,
+  needsWideCellRenderAnchor,
   SYNC_OUTPUT_SUPPORTED,
   supportsExtendedKeys,
   type Terminal,
@@ -130,7 +132,7 @@ const ERASE_THEN_HOME_PATCH = Object.freeze({
   type: 'stdout' as const,
   content: ERASE_SCREEN + CURSOR_HOME,
 })
-const JEDITERM_WIDE_CELL_QUIRKS = Object.freeze({
+const WIDE_CELL_RENDER_QUIRKS = Object.freeze({
   anchorAfterWideCell: true,
 })
 const JEDITERM_LAYOUT_SHIFT_QUIRKS = Object.freeze({
@@ -256,9 +258,11 @@ export default class Ink {
   // 导致鼠标列坐标系统性偏小。缓存检测结果以避免每次事件查询环境变量。
   private isJetBrainsTerminal: boolean =
     process.env.TERMINAL_EMULATOR?.includes('JetBrains') === true
-  // Windows JediTerm 的宽字符写入和局部重绘存在额外偏差；其他平台
-  // 不启用关键帧回退，避免扩大终端特例的影响范围。
-  private usesJediTermRenderQuirks = process.platform === 'win32' && this.isJetBrainsTerminal
+  // Windows Terminal 与 Windows JediTerm 在宽字符后的物理光标列可能
+  // 偏离内部单元格模型。Windows Terminal 只需重新锚定；JediTerm 在
+  // 布局位移时还需要全量重绘。
+  private usesWideCellRenderAnchor = needsWideCellRenderAnchor()
+  private usesJediTermLayoutQuirks = process.platform === 'win32' && this.isJetBrainsTerminal
   // True when the previous frame's screen buffer cannot be trusted for
   // blit — selection overlay mutated it, resetFramesForAltScreen()
   // replaced it with blanks, or forceRedraw() reset it to 0×0. Forces
@@ -296,7 +300,7 @@ export default class Ink {
     // 启动时记录 quirk 决策：JediTerm 上的渲染路径与普通终端不同
     //（宽字符列补偿、全量重绘），没有这条日志时很难确认渲染问题
     // 是否来自终端特例分支。
-    if (this.usesJediTermRenderQuirks) {
+    if (this.usesJediTermLayoutQuirks) {
       logForDebugging(
         `ink: JediTerm wide-cell/layout-shift render quirks enabled (${process.platform})`,
       )
@@ -849,10 +853,11 @@ export default class Ink {
       // 内存帧发生行偏移，最终表现为正文和状态栏重叠。
       DECSTBM_FAST_PATH_SUPPORTED,
       this.altScreenActive ? ALT_SCREEN_ANCHOR_CURSOR : undefined,
-      this.usesJediTermRenderQuirks && this.altScreenActive
-        ? layoutShifted
+      this.usesWideCellRenderAnchor &&
+        canAnchorWideCellsForFrame(layoutShifted, this.altScreenActive)
+        ? layoutShifted && this.usesJediTermLayoutQuirks && this.altScreenActive
           ? JEDITERM_LAYOUT_SHIFT_QUIRKS
-          : JEDITERM_WIDE_CELL_QUIRKS
+          : WIDE_CELL_RENDER_QUIRKS
         : undefined,
     )
     const diffMs = performance.now() - tDiff
@@ -1991,8 +1996,12 @@ export default class Ink {
     this.unsubscribeTTYHandlers?.()
 
     // 非 TTY 环境无法妥善处理擦除 ANSI escape，因此非静态输出最好只渲染最后一帧
-    const diff = this.log.renderPreviousOutput_DEPRECATED(this.frontFrame)
+    const diff = this.log.renderPreviousOutput_DEPRECATED(
+      this.frontFrame,
+      this.altScreenActive ? null : this.displayCursor,
+    )
     writeDiffToTerminal(this.terminal, optimize(diff))
+    this.displayCursor = null
 
     // Clean up terminal modes synchronously before process exit.
     // React's componentWillUnmount won't run in time when process.exit() is called,

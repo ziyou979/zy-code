@@ -35,7 +35,7 @@ type Options = {
 }
 
 type RenderQuirks = {
-  /** 宽字符写入后，下一次差量写入使用绝对坐标重新锚定物理光标。 */
+  /** 宽字符写入后，下一次差量写入重新锚定物理光标。 */
   anchorAfterWideCell?: boolean
   /** 忽略旧帧差量，先清屏再绘制完整帧。仅用于终端状态自愈。 */
   forceFullRepaint?: boolean
@@ -53,12 +53,12 @@ export class LogUpdate {
     }
   }
 
-  renderPreviousOutput_DEPRECATED(prevFrame: Frame): Diff {
+  renderPreviousOutput_DEPRECATED(prevFrame: Frame, parkedCursor?: Point | null): Diff {
     if (!this.options.isTTY) {
       // 非 TTY 输出不再支持（字符串输出已被移除）
       return [NEWLINE]
     }
-    return this.getRenderOpsForDone(prevFrame)
+    return this.getRenderOpsForDone(prevFrame, parkedCursor)
   }
 
   // 进程从挂起状态恢复（SIGCONT）时调用，防止覆盖终端内容
@@ -115,13 +115,24 @@ export class LogUpdate {
     return [{ type: 'stdout', content: lines.join('\n') }]
   }
 
-  private getRenderOpsForDone(prev: Frame): Diff {
+  private getRenderOpsForDone(prev: Frame, parkedCursor?: Point | null): Diff {
     this.state.previousOutput = ''
 
-    if (!prev.cursor.visible) {
-      return [{ type: 'cursorShow' }]
+    const diff: Diff = []
+    if (parkedCursor) {
+      // 主屏的交互控件会把物理光标停靠在当前选项/输入位置，
+      // 而 frame.cursor 始终位于完整内容底部。退出前先回到第 0 列，
+      // 再相对移动到底部，确保 shell 提示不会插进仍可见的 UI 中间。
+      diff.push(CARRIAGE_RETURN)
+      const dy = prev.cursor.y - parkedCursor.y
+      if (prev.cursor.x !== 0 || dy !== 0) {
+        diff.push({ type: 'cursorMove', x: prev.cursor.x, y: dy })
+      }
     }
-    return []
+    if (!prev.cursor.visible) {
+      diff.push({ type: 'cursorShow' })
+    }
+    return diff
   }
 
   render(
@@ -258,6 +269,7 @@ export class LogUpdate {
       cursorOverride ?? prev.cursor,
       next.viewport.width,
       quirks?.anchorAfterWideCell === true,
+      altScreen,
     )
 
     // 将空屏幕视为高度 1，避免首次渲染时出现误调整
@@ -496,7 +508,7 @@ function fullResetSequence_CAUSES_FLICKER(
   omitFinalNewline = false,
 ): Diff {
   // clearTerminal 之后，光标位于 (0, 0)
-  const screen = new VirtualScreen({ x: 0, y: 0 }, frame.viewport.width, anchorAfterWideCell)
+  const screen = new VirtualScreen({ x: 0, y: 0 }, frame.viewport.width, anchorAfterWideCell, true)
   renderFrame(screen, frame, stylePool, omitFinalNewline)
   return [{ type: 'clearTerminal', reason, debug }, ...screen.diff]
 }
@@ -665,10 +677,21 @@ function writeCellWithStyleStr(screen: VirtualScreen, cell: Cell, styleStr: stri
 
 function moveCursorTo(screen: VirtualScreen, targetX: number, targetY: number) {
   if (screen.needsAbsoluteAnchor) {
-    screen.diff.push({
-      type: 'stdout',
-      content: cursorPosition(targetY + 1, targetX + 1),
-    })
+    if (screen.absoluteRowCoordinates) {
+      screen.diff.push({
+        type: 'stdout',
+        content: cursorPosition(targetY + 1, targetX + 1),
+      })
+    } else {
+      // 主屏的 y 是相对应用起始行，不能用于 CUP 绝对定位，否则会覆盖
+      // 终端顶部的 shell 输出。CR 先可靠地锚定当前物理行的第 0 列，
+      // 再用相对纵向移动和目标列恢复到内部坐标。
+      const dy = targetY - screen.cursor.y
+      screen.diff.push(CARRIAGE_RETURN)
+      if (targetX !== 0 || dy !== 0) {
+        screen.diff.push({ type: 'cursorMove', x: targetX, y: dy })
+      }
+    }
     screen.cursor.x = targetX
     screen.cursor.y = targetY
     screen.needsAbsoluteAnchor = false
@@ -740,6 +763,7 @@ class VirtualScreen {
     origin: Point,
     readonly viewportWidth: number,
     readonly anchorAfterWideCell = false,
+    readonly absoluteRowCoordinates = false,
   ) {
     this.cursor = { ...origin }
   }
