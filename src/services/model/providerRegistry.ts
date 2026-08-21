@@ -10,7 +10,7 @@ import {
   localModelHasAdaptiveThinking,
   type ModelCapabilityMatchContext,
 } from '../settings/localModelCapabilities.js'
-import { API_FORMATS, type ApiFormat } from './apiFormat.js'
+import type { ApiFormat } from './apiFormat.js'
 import type { ProviderCapability } from './providers.js'
 
 /**
@@ -119,24 +119,64 @@ export interface ProviderEntry {
  * 协议实现代码通过读取此字段决定行为，新增 provider 只需声明配置。
  */
 export interface OpenAiAttr {
-  thinking?: {
-    /** 启用 thinking 时传给 API 的参数。effort 为映射后的 provider 参数值，model 为模型名 */
-    enable: (
-      effort: string | undefined,
-      model?: string,
-      context?: ModelCapabilityMatchContext,
-    ) => Record<string, unknown>
-    /** 显式禁用 thinking 时传给 API 的参数（省略则不传），支持按模型动态生成 */
-    disable?:
-      | Record<string, unknown>
-      | ((effort: string | undefined, model?: string) => Record<string, unknown>)
-  }
+  thinking?: OpenAiThinkingAttr
 
   /**
    * 是否需要从流式 content 中剥离泄漏的 think/thinking 标签。
    * DashScope/Qwen 模型在 thinking 结束时可能将 `</think>` 标签泄漏到 content 字段。
    */
   stripThinkingTags?: boolean
+}
+
+type OpenAiThinkingParamsFactory = (
+  effort: string | undefined,
+  model?: string,
+  context?: ModelCapabilityMatchContext,
+) => Record<string, unknown>
+
+type OpenAiThinkingDisable =
+  | Record<string, unknown>
+  | ((effort: string | undefined, model?: string) => Record<string, unknown>)
+
+export interface OpenAiThinkingAttr {
+  /** 启用 thinking 时传给 API 的参数。effort 为映射后的 provider 参数值，model 为模型名 */
+  enable: OpenAiThinkingParamsFactory
+  /** 显式禁用 thinking 时传给 API 的参数（省略则不传），支持按模型动态生成 */
+  disable?: OpenAiThinkingDisable
+  /**
+   * 同一兼容端点可为不同模型暴露不同的思考参数。转换层按最长 pattern 优先匹配，
+   * 避免 provider 配置退化为持续增长的模型名称条件链。
+   */
+  modelOverrides?: Array<{
+    pattern: string
+    enable?: OpenAiThinkingParamsFactory
+    disable?: OpenAiThinkingDisable
+  }>
+}
+
+/**
+ * 将 provider 默认思考映射与最具体的模型级覆盖合并。
+ * pattern 使用大小写不敏感的 substring match，与模型能力配置保持一致。
+ */
+export function resolveOpenAiThinkingAttr(
+  attr: OpenAiThinkingAttr,
+  model?: string,
+): OpenAiThinkingAttr {
+  if (!model || !attr.modelOverrides?.length) {
+    return attr
+  }
+  const normalizedModel = model.toLowerCase()
+  const override = attr.modelOverrides
+    .filter(({ pattern }) => normalizedModel.includes(pattern.toLowerCase()))
+    .sort((a, b) => b.pattern.length - a.pattern.length)[0]
+  if (!override) {
+    return attr
+  }
+  return {
+    ...attr,
+    enable: override.enable ?? attr.enable,
+    disable: override.disable ?? attr.disable,
+  }
 }
 
 /**
@@ -190,47 +230,6 @@ const XAI_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> = {
   disable: {},
 }
 
-/**
- * NVIDIA NIM 的托管端点使用顶层 `reasoning_effort`，不接受通用的 `thinking.type`。
- * 这里只覆盖 NVIDIA 已明确公布请求语义的模型；其他 NIM 模型维持通用映射。
- */
-const NIM_THINKING_ATTR: NonNullable<OpenAiAttr['thinking']> = {
-  enable: (effort, model, context) => {
-    const normalizedModel = model?.toLowerCase()
-    if (normalizedModel?.includes('nemotron-3-ultra')) {
-      // Ultra 仅接受 none / medium / high；无指定档位时沿用端点默认的 high。
-      return { reasoning_effort: effort === 'medium' ? 'medium' : 'high' }
-    }
-    if (normalizedModel?.includes('gpt-oss-120b')) {
-      // gpt-oss 不支持关闭思考，且端点默认档位为 medium。
-      const normalizedEffort = effort?.toLowerCase()
-      return {
-        reasoning_effort:
-          normalizedEffort === 'low' || normalizedEffort === 'medium' || normalizedEffort === 'high'
-            ? normalizedEffort
-            : 'medium',
-      }
-    }
-    if (normalizedModel?.includes('inkling')) {
-      // NVIDIA 当前未公开 Inkling 的 effort 请求参数，保留模型默认思考行为。
-      return {}
-    }
-    return DEFAULT_OPENAI_THINKING_ATTR.enable(effort, model, context)
-  },
-  disable: (effort, model) => {
-    const normalizedModel = model?.toLowerCase()
-    if (normalizedModel?.includes('nemotron-3-ultra')) {
-      return { reasoning_effort: 'none' }
-    }
-    if (normalizedModel?.includes('gpt-oss-120b') || normalizedModel?.includes('inkling')) {
-      // 端点未声明关闭值；省略字段比发送非法的 none / thinking.type 更安全。
-      return {}
-    }
-    const params = DEFAULT_OPENAI_THINKING_ATTR.disable
-    return typeof params === 'function' ? params(effort, model) : (params ?? {})
-  },
-}
-
 // ---------------------------------------------------------------------------
 // 预设能力集（减少重复）
 // ---------------------------------------------------------------------------
@@ -253,7 +252,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'Anthropic API Key',
     suggestedModels: [
-      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tier: 'advanced' },
+      { label: 'claude-opus-5', value: 'claude-opus-5', tier: 'advanced' },
       { label: 'claude-sonnet-5', value: 'claude-sonnet-5', tier: 'standard' },
       { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
     ],
@@ -266,9 +265,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { 'openai-chat': 'https://aistudio.baidu.com/llm/lmapi/v3' },
     apiKeyLabel: 'Baidu API Key',
     suggestedModels: [
-      { label: 'deepseek-r1', value: 'deepseek-r1', tier: 'advanced' },
-      { label: 'ernie-4.5-8k', value: 'ernie-4.5-8k', tier: 'standard' },
-      { label: 'ernie-4.5-turbo-8k', value: 'ernie-4.5-turbo-8k', tier: 'compact' },
+      { label: 'ernie-5.1', value: 'ernie-5.1', tier: 'advanced' },
+      { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro', tier: 'standard' },
+      { label: 'ernie-4.5-turbo-128k', value: 'ernie-4.5-turbo-128k', tier: 'compact' },
     ],
   },
   {
@@ -281,8 +280,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'AWS Access Key',
     baseUrlHint: 'https://bedrock-runtime.{region}.amazonaws.com',
     suggestedModels: [
-      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tier: 'advanced' },
-      { label: 'claude-sonnet-4-6', value: 'claude-sonnet-4-6', tier: 'standard' },
+      { label: 'claude-opus-5', value: 'claude-opus-5', tier: 'advanced' },
+      { label: 'claude-sonnet-5', value: 'claude-sonnet-5', tier: 'standard' },
       { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
     ],
   },
@@ -298,9 +297,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     baseUrlEnvVar: 'DASHSCOPE_BASE_URL',
     apiKeyLabel: 'DashScope API Key',
     suggestedModels: [
-      { label: 'qwen3.7-max', value: 'qwen3.5-plus', tier: 'advanced' },
-      { label: 'qwen3.7-plus', value: 'qwen3.6-plus', tier: 'standard' },
-      { label: 'qwen3.6-flash', value: 'qwen3.5-flash', tier: 'compact' },
+      { label: 'qwen3.8-max', value: 'qwen3.8-max', tier: 'advanced' },
+      { label: 'qwen3.7-plus', value: 'qwen3.7-plus', tier: 'standard' },
+      { label: 'qwen3.7-flash', value: 'qwen3.7-flash', tier: 'compact' },
     ],
     openaiAttr: {
       stripThinkingTags: true,
@@ -315,8 +314,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'DeepSeek API Key',
     suggestedModels: [
       { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro', tier: 'advanced' },
-      { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro', tier: 'standard' },
-      { label: 'deepseek-v4-flash', value: 'deepseek-v4-flash', tier: 'compact' },
+      { label: 'deepseek-v4-flash', value: 'deepseek-v4-flash', tier: 'standard' },
     ],
   },
   {
@@ -331,18 +329,18 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'Fireworks API Key',
     suggestedModels: [
       {
-        label: 'accounts/fireworks/models/qwen3-235b-a22b',
-        value: 'accounts/fireworks/models/qwen3-235b-a22b',
+        label: 'accounts/fireworks/models/deepseek-v4-pro',
+        value: 'accounts/fireworks/models/deepseek-v4-pro',
         tier: 'advanced',
       },
       {
-        label: 'accounts/fireworks/models/llama4-maverick-instruct-basic',
-        value: 'accounts/fireworks/models/llama4-maverick-instruct-basic',
+        label: 'accounts/fireworks/models/gpt-oss-120b',
+        value: 'accounts/fireworks/models/gpt-oss-120b',
         tier: 'standard',
       },
       {
-        label: 'accounts/fireworks/models/deepseek-r1',
-        value: 'accounts/fireworks/models/deepseek-r1',
+        label: 'accounts/fireworks/models/gpt-oss-20b',
+        value: 'accounts/fireworks/models/gpt-oss-20b',
         tier: 'compact',
       },
     ],
@@ -360,7 +358,7 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'Microsoft Azure API Key',
     baseUrlHint: 'https://{resource}.services.ai.azure.com/models',
     suggestedModels: [
-      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tier: 'advanced' },
+      { label: 'claude-opus-5', value: 'claude-opus-5', tier: 'advanced' },
       { label: 'claude-sonnet-5', value: 'claude-sonnet-5', tier: 'standard' },
       { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
     ],
@@ -376,9 +374,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       'openai-chat': 'https://generativelanguage.googleapis.com/v1beta/openai/',
     },
     suggestedModels: [
-      { label: 'gemini-2.5-pro', value: 'gemini-2.5-pro', tier: 'advanced' },
-      { label: 'gemini-2.5-flash', value: 'gemini-2.5-flash', tier: 'standard' },
-      { label: 'gemini-3-flash', value: 'gemini-3-flash', tier: 'compact' },
+      { label: 'gemini-3.1-pro-preview', value: 'gemini-3.1-pro-preview', tier: 'advanced' },
+      { label: 'gemini-3.7-flash', value: 'gemini-3.7-flash', tier: 'standard' },
+      { label: 'gemini-3.5-flash-lite', value: 'gemini-3.5-flash-lite', tier: 'compact' },
     ],
   },
   {
@@ -397,8 +395,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'Groq API Key',
     suggestedModels: [
       {
-        label: 'deepseek-r1-distill-llama-70b',
-        value: 'deepseek-r1-distill-llama-70b',
+        label: 'openai/gpt-oss-120b',
+        value: 'openai/gpt-oss-120b',
         tier: 'advanced',
       },
       {
@@ -428,13 +426,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       thinking: XAI_THINKING_ATTR,
     },
     suggestedModels: [
-      { label: 'grok-4.3', value: 'grok-4.3', tier: 'advanced' },
-      { label: 'grok-build-0.1', value: 'grok-build-0.1', tier: 'standard' },
-      {
-        label: 'grok-4.1-fast-non-reasoning',
-        value: 'grok-4.1-fast-non-reasoning',
-        tier: 'compact',
-      },
+      { label: 'grok-4.6', value: 'grok-4.6', tier: 'advanced' },
+      { label: 'grok-4.3', value: 'grok-4.3', tier: 'standard' },
     ],
   },
   {
@@ -445,8 +438,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { 'openai-chat': 'https://api.modelarts-maas.com/openai/v1' },
     apiKeyLabel: '华为盘古 API Key',
     suggestedModels: [
-      { label: 'DeepSeek-R1', value: 'DeepSeek-R1', tier: 'advanced' },
-      { label: 'DeepSeek-V4-pro', value: 'DeepSeek-V4-pro', tier: 'standard' },
+      { label: 'DeepSeek-V4-pro', value: 'DeepSeek-V4-pro', tier: 'advanced' },
+      { label: 'DeepSeek-V4-flash', value: 'DeepSeek-V4-flash', tier: 'standard' },
     ],
   },
   {
@@ -461,7 +454,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     baseUrlEnvVar: 'KIMI_BASE_URL',
     apiKeyLabel: 'Kimi API Key',
     suggestedModels: [
-      { label: 'moonshot-v1', value: 'moonshot-v1', tier: 'standard' },
+      { label: 'kimi-k2.7-code', value: 'kimi-k2.7-code', tier: 'advanced' },
+      { label: 'kimi-k2.6', value: 'kimi-k2.6', tier: 'standard' },
       { label: 'moonshot-v1-8k', value: 'moonshot-v1-8k', tier: 'compact' },
     ],
     openaiAttr: {
@@ -505,8 +499,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     apiKeyLabel: 'MiniMax API Key',
     suggestedModels: [
-      { label: 'MiniMax-M1', value: 'MiniMax-M1', tier: 'advanced' },
-      { label: 'MiniMax-Text-01', value: 'MiniMax-Text-01', tier: 'standard' },
+      { label: 'MiniMax-M2.7', value: 'MiniMax-M2.7', tier: 'advanced' },
+      { label: 'MiniMax-M2.5', value: 'MiniMax-M2.5', tier: 'standard' },
+      { label: 'MiniMax-M2.1', value: 'MiniMax-M2.1', tier: 'compact' },
     ],
   },
   {
@@ -523,7 +518,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     suggestedModels: [
       { label: 'mimo-v2.5-pro', value: 'mimo-v2.5-pro', tier: 'advanced' },
       { label: 'mimo-v2.5', value: 'mimo-v2.5', tier: 'standard' },
-      { label: 'mimo-v2-flash', value: 'mimo-v2-flash', tier: 'compact' },
     ],
   },
   {
@@ -535,8 +529,53 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'NVIDIA API Key',
     baseUrlHint: 'https://integrate.api.nvidia.com/v1',
     openaiAttr: {
-      thinking: NIM_THINKING_ATTR,
+      thinking: {
+        ...DEFAULT_OPENAI_THINKING_ATTR,
+        modelOverrides: [
+          {
+            pattern: 'nemotron-3-ultra',
+            // Ultra 仅接受 none / medium / high；未指定时沿用端点默认的 high。
+            enable: (effort) => ({ reasoning_effort: effort === 'medium' ? 'medium' : 'high' }),
+            disable: { reasoning_effort: 'none' },
+          },
+          {
+            pattern: 'gpt-oss-120b',
+            enable: (effort) => {
+              // gpt-oss 仅接受 low / medium / high，且不提供关闭档位。
+              const normalizedEffort = effort?.toLowerCase()
+              return {
+                reasoning_effort:
+                  normalizedEffort === 'low' ||
+                  normalizedEffort === 'medium' ||
+                  normalizedEffort === 'high'
+                    ? normalizedEffort
+                    : 'medium',
+              }
+            },
+            disable: {},
+          },
+          {
+            pattern: 'inkling',
+            // 端点未公开 effort/关闭参数，省略字段以保留模型默认行为。
+            enable: () => ({}),
+            disable: {},
+          },
+        ],
+      },
     },
+    suggestedModels: [
+      {
+        label: 'nvidia/nemotron-3-ultra-550b-a55b',
+        value: 'nvidia/nemotron-3-ultra-550b-a55b',
+        tier: 'advanced',
+      },
+      { label: 'openai/gpt-oss-120b', value: 'openai/gpt-oss-120b', tier: 'standard' },
+      {
+        label: 'nvidia/nemotron-3-nano-30b-a3b',
+        value: 'nvidia/nemotron-3-nano-30b-a3b',
+        tier: 'compact',
+      },
+    ],
   },
   {
     id: 'ollama',
@@ -547,9 +586,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'API Key',
     baseUrlHint: 'http://localhost:11434/v1',
     suggestedModels: [
-      { label: 'deepseek-r1', value: 'deepseek-r1', tier: 'advanced' },
-      { label: 'qwen2.5-coder', value: 'qwen2.5-coder', tier: 'standard' },
-      { label: 'llama3.1', value: 'llama3.1', tier: 'compact' },
+      { label: 'qwen3-coder-next', value: 'qwen3-coder-next', tier: 'advanced' },
+      { label: 'gpt-oss:20b', value: 'gpt-oss:20b', tier: 'standard' },
+      { label: 'qwen3.5', value: 'qwen3.5', tier: 'compact' },
     ],
   },
   {
@@ -563,9 +602,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: ['context_management'],
     apiKeyLabel: 'OpenAI API Key',
     suggestedModels: [
-      { label: 'gpt-5', value: 'gpt-5', tier: 'advanced' },
-      { label: 'gpt-5-mini', value: 'gpt-5-mini', tier: 'standard' },
-      { label: 'gpt-4o-mini', value: 'gpt-4o-mini', tier: 'compact' },
+      { label: 'gpt-5.6-sol', value: 'gpt-5.6-sol', tier: 'advanced' },
+      { label: 'gpt-5.6-terra', value: 'gpt-5.6-terra', tier: 'standard' },
+      { label: 'gpt-5.6-luna', value: 'gpt-5.6-luna', tier: 'compact' },
     ],
   },
   {
@@ -612,15 +651,15 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
       anthropic: 'https://openrouter.ai/api',
     },
     suggestedModels: [
-      { label: 'anthropic/claude-opus-4', value: 'anthropic/claude-opus-4', tier: 'advanced' },
+      { label: 'anthropic/claude-opus-5', value: 'anthropic/claude-opus-5', tier: 'advanced' },
       {
-        label: 'anthropic/claude-sonnet-4',
-        value: 'anthropic/claude-sonnet-4',
+        label: 'anthropic/claude-sonnet-5',
+        value: 'anthropic/claude-sonnet-5',
         tier: 'standard',
       },
       {
-        label: 'anthropic/claude-haiku-3.5',
-        value: 'anthropic/claude-haiku-3.5',
+        label: 'anthropic/claude-haiku-4.5',
+        value: 'anthropic/claude-haiku-4.5',
         tier: 'compact',
       },
     ],
@@ -640,8 +679,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { 'openai-chat': 'https://api.perplexity.ai' },
     apiKeyLabel: 'Perplexity API Key',
     suggestedModels: [
-      { label: 'sonar-pro', value: 'sonar-pro', tier: 'advanced' },
-      { label: 'sonar-reasoning-pro', value: 'sonar-reasoning-pro', tier: 'standard' },
+      { label: 'sonar-reasoning-pro', value: 'sonar-reasoning-pro', tier: 'advanced' },
+      { label: 'sonar-pro', value: 'sonar-pro', tier: 'standard' },
       { label: 'sonar', value: 'sonar', tier: 'compact' },
     ],
   },
@@ -656,13 +695,21 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     apiKeyLabel: 'SiliconFlow API Key',
     suggestedModels: [
-      { label: 'Qwen/Qwen3-235B-A22B', value: 'Qwen/Qwen3-235B-A22B', tier: 'advanced' },
       {
-        label: 'deepseek-ai/DeepSeek-V3',
-        value: 'deepseek-ai/DeepSeek-V3',
+        label: 'deepseek-ai/DeepSeek-V4-Pro',
+        value: 'deepseek-ai/DeepSeek-V4-Pro',
+        tier: 'advanced',
+      },
+      {
+        label: 'Pro/moonshotai/Kimi-K2.6',
+        value: 'Pro/moonshotai/Kimi-K2.6',
         tier: 'standard',
       },
-      { label: 'Qwen/Qwen3-30B-A3B', value: 'Qwen/Qwen3-30B-A3B', tier: 'compact' },
+      {
+        label: 'deepseek-ai/DeepSeek-V4-Flash',
+        value: 'deepseek-ai/DeepSeek-V4-Flash',
+        tier: 'compact',
+      },
     ],
   },
   {
@@ -676,8 +723,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     apiKeyLabel: 'Tencent Cloud API Key',
     suggestedModels: [
-      { label: 'deepseek-r1', value: 'deepseek-r1', tier: 'advanced' },
-      { label: 'deepseek-v3', value: 'deepseek-v3', tier: 'standard' },
+      { label: 'deepseek-v3.2', value: 'deepseek-v3.2', tier: 'advanced' },
+      { label: 'deepseek-r1-0528', value: 'deepseek-r1-0528', tier: 'standard' },
       { label: 'hunyuan-turbos', value: 'hunyuan-turbos', tier: 'compact' },
     ],
   },
@@ -689,13 +736,17 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     defaultBaseUrls: { 'openai-chat': 'https://api.together.xyz/v1' },
     apiKeyLabel: 'Together AI API Key',
     suggestedModels: [
-      { label: 'Qwen/Qwen3-235B-A22B', value: 'Qwen/Qwen3-235B-A22B', tier: 'advanced' },
       {
-        label: 'meta-llama/Llama-4-Maverick-17B-128E',
-        value: 'meta-llama/Llama-4-Maverick-17B-128E',
+        label: 'deepseek-ai/DeepSeek-V4-Pro',
+        value: 'deepseek-ai/DeepSeek-V4-Pro',
+        tier: 'advanced',
+      },
+      {
+        label: 'MiniMaxAI/MiniMax-M2.7',
+        value: 'MiniMaxAI/MiniMax-M2.7',
         tier: 'standard',
       },
-      { label: 'deepseek-ai/DeepSeek-R1', value: 'deepseek-ai/DeepSeek-R1', tier: 'compact' },
+      { label: 'openai/gpt-oss-20b', value: 'openai/gpt-oss-20b', tier: 'compact' },
     ],
   },
   {
@@ -708,8 +759,8 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     apiKeyLabel: 'GCP API Key',
     baseUrlHint: 'https://{region}-aiplatform.googleapis.com/v1',
     suggestedModels: [
-      { label: 'claude-opus-4-8', value: 'claude-opus-4-8', tier: 'advanced' },
-      { label: 'claude-sonnet-4-6', value: 'claude-sonnet-4-6', tier: 'standard' },
+      { label: 'claude-opus-5', value: 'claude-opus-5', tier: 'advanced' },
+      { label: 'claude-sonnet-5', value: 'claude-sonnet-5', tier: 'standard' },
       { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
     ],
   },
@@ -726,13 +777,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     },
     apiKeyLabel: 'ARK API Key',
     suggestedModels: [
-      { label: 'deepseek-r1', value: 'deepseek-r1', tier: 'advanced' },
-      {
-        label: 'doubao-1.5-pro-256k',
-        value: 'doubao-1.5-pro-256k',
-        tier: 'standard',
-      },
-      { label: 'doubao-1.5-lite-32k', value: 'doubao-1.5-lite-32k', tier: 'compact' },
+      { label: 'doubao-seed-evolving', value: 'doubao-seed-evolving', tier: 'advanced' },
+      { label: 'doubao-seed-code', value: 'doubao-seed-code', tier: 'standard' },
+      { label: 'deepseek-v3.2', value: 'deepseek-v3.2', tier: 'compact' },
     ],
   },
   {
@@ -747,8 +794,9 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     baseUrlEnvVar: 'ZHIPU_BASE_URL',
     apiKeyLabel: 'ZHIPU API Key',
     suggestedModels: [
-      { label: 'glm-4-plus', value: 'glm-4-plus', tier: 'standard' },
-      { label: 'glm-4-flash', value: 'glm-4-flash', tier: 'compact' },
+      { label: 'glm-5.2', value: 'glm-5.2', tier: 'advanced' },
+      { label: 'glm-5-turbo', value: 'glm-5-turbo', tier: 'standard' },
+      { label: 'glm-4.5-flash', value: 'glm-4.5-flash', tier: 'compact' },
     ],
   },
 ] as const

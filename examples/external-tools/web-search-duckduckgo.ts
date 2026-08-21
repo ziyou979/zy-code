@@ -167,3 +167,5 @@ const webSearchTool = {
     )
   },
 }
+
+export default webSearchTool

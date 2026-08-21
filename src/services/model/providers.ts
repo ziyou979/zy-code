@@ -15,6 +15,7 @@ import { type ApiFormat } from './apiFormat.js'
 import {
   DEFAULT_OPENAI_THINKING_ATTR,
   getProviderEntry,
+  resolveOpenAiThinkingAttr,
   type OpenAiAttr,
   PROVIDER_REGISTRY,
 } from './providerRegistry.js'
@@ -370,10 +371,13 @@ export function getProviderAttr(provider?: string, model?: string): OpenAiAttr |
   if (getEffectiveApiFormat(providerId as APIProvider, model) === 'openai-chat') {
     return {
       ...entry.openaiAttr,
-      thinking: {
-        ...DEFAULT_OPENAI_THINKING_ATTR,
-        ...(entry.openaiAttr?.thinking ?? {}),
-      },
+      thinking: resolveOpenAiThinkingAttr(
+        {
+          ...DEFAULT_OPENAI_THINKING_ATTR,
+          ...(entry.openaiAttr?.thinking ?? {}),
+        },
+        model,
+      ),
     }
   }
 

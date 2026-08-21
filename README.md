@@ -1,225 +1,189 @@
-# ZY Code — Source Build
+# ZY Code
 
-ZY Code CLI 的源码构建版本，基于 [Bun](https://bun.sh) 运行时与 [Ink](https://github.com/vadimdemedes/ink)（React 终端 UI）构建。
+[简体中文](README.zh-CN.md) | English
 
-## 环境要求
+ZY Code is a terminal-first AI coding agent built with TypeScript, React, Ink, and Bun. It
+connects your codebase to multiple model providers and gives the model a controlled set of tools
+for reading, editing, searching, running commands, and coordinating longer development tasks.
 
-- [Bun](https://bun.sh) >= 1.0
-- Node.js >= 18（部分工具链依赖）
-- macOS / Linux
+> ZY Code `0.0.1` is an initial public preview. Some capabilities are incomplete, and configuration
+> and extension APIs may change before the first stable release.
 
-## 快速开始
+## Project lineage
 
-```bash
-# 安装依赖
-bun install
+ZY Code began as a fork of Claude Code 2.1.88 and has evolved independently since that point. The
+project retains the terminal-agent foundation while developing its own multi-provider model layer,
+named connection and subscription routing, Chinese localization, external tool system, terminal
+renderer, cross-platform support, and long-running agent workflows.
 
-# 构建 CLI
-bun run build
+ZY Code is an independent open-source project and is not affiliated with or endorsed by Anthropic.
 
-# 运行
-bun dist/cli.js
-```
+## Why ZY Code?
 
-## 开发工作流
+- **Mix subscriptions and providers** — configure multiple subscription, API-key, gateway, and
+  local connections at the same time instead of locking the whole agent to one provider.
+- **Route work by model tier** — assign different connections to advanced, standard, and compact
+  workloads, or define an ordered cross-provider fallback chain for any tier.
+- **Work from the terminal** — an interactive Ink UI supports streaming responses, tool calls,
+  diffs, plans, reviews, session history, and keyboard-driven workflows.
+- **Keep execution under control** — permission rules, approval prompts, sandbox integration, and
+  project-scoped instructions help constrain file, shell, and network access.
+- **Bring your own tools** — load project or user tools from plain TypeScript/JavaScript files;
+  supported built-ins can be replaced by exporting a tool with the same name.
+- **Extend the agent** — connect MCP servers and add skills, hooks, plugins, and custom commands.
+- **Handle larger tasks** — built-in context management, persistent memory, background work,
+  subagents, model failover, and resumable sessions support long-running workflows.
 
-### 构建
+## Mix models your way
 
-```bash
-bun run build           # 构建 CLI → dist/cli.js
-```
+Named connections make providers independent from model selection. For example, the main loop can
+prefer an xAI subscription, switch to a DashScope API connection when authentication, rate limits,
+or quota prevent continued use, and use a local model for compact workloads. The selected fallback
+is remembered across sessions.
 
-构建产物输出到 `dist/`。
-
-### 开发模式
-
-```bash
-bun run dev             # 开发模式（需 --preload 注入 MACRO 等构建时宏）
-```
-
-### 类型检查
-
-```bash
-bun tsc --noEmit        # 更改代码后必须执行，禁止提交类型错误的代码
-```
-
-TypeScript 配置见 `tsconfig.json`，使用 `bundler` 模块解析模式，目标运行时为 `bun-types`。
-
-### 代码格式化
-
-```bash
-bun run format          # 使用 Biome 格式化代码
-```
-
-配置见 `biome.json`：缩进 2 空格，行宽 100，单引号，`asNeeded` 分号，尾逗号。
-
-## 项目结构
-
-```
-.
-├── src/
-│   ├── entrypoints/       # 构建入口（cli.tsx, sdk/, mcp.ts …）
-│   ├── cli/               # CLI 框架：bootstrap、commands、handlers、options、transports
-│   ├── commands/          # 斜杠命令（/compact、/goal、/plan、/review 等）
-│   ├── tools/             # 工具实现（三文件模式：ToolName.ts + UI.tsx + prompt.ts）
-│   ├── components/        # Ink（React）UI 组件
-│   ├── screens/           # 顶层页面（REPL.tsx、Doctor.tsx）
-│   ├── hooks/             # React hooks
-│   ├── services/          # 外部服务集成（API、MCP、LSP、OAuth、沙箱等）
-│   ├── shell-eval/        # Shell 解析与执行（bash / powershell）
-│   ├── bridge/            # 远程会话桥接（REPL bridge、transport、JWT）
-│   ├── coordinator/       # 协调器模式（多 worker 编排）
-│   ├── skills/            # 技能系统（内置 + 插件）
-│   ├── utils/             # 无业务语义的纯函数 helper（messages/、hooks/ 等子模块）
-│   ├── state/             # 全局状态管理（AppStateStore）
-│   ├── types/             # 共享类型定义（llm.ts 等）
-│   └── i18n/              # 国际化（locales/en/、locales/zh-CN/）
-├── packages/              # Monorepo 子包
-│   ├── claude-for-chrome-mcp/
-│   ├── computer-use-mcp/
-│   └── computer-use-input/
-├── tests/                 # 测试（路径镜像 src/）
-├── build.ts               # Bun bundler 构建脚本
-├── dist/                  # 构建产物（不提交）
-└── tsconfig.json
-```
-
-## 构建宏（MACRO.*）
-
-`build.ts` 在打包时将以下占位符替换为实际值：
-
-| 宏 | 说明 |
-|---|---|
-| `MACRO.VERSION` | 版本号 |
-| `MACRO.BUILD_TIME` | 构建时间戳 |
-| `MACRO.PACKAGE_URL` | npm 包名 |
-| `MACRO.FEEDBACK_CHANNEL` | 反馈链接 |
-
-## External 依赖
-
-以下包在运行时动态加载，不打包进产物（完整列表以 `build.ts` 中 `external` 数组为准）：
-
-- 原生二进制模块（`@ant/computer-use-*`、`modifiers-napi` 等）
-- 懒加载包（`sharp`、`yaml`、`turndown`、`fflate` 等）
-- OpenTelemetry 导出器（按用户配置动态加载）
-
-如需使用这些功能，确保对应包已安装。
-
-## 配置
-
-ZY Code 通过 `~/.zy/settings.json` 进行配置。配置支持多层级来源（用户、项目、本地、策略），按优先级合并。
-
-### 配置示例（百炼 DashScope）
-
-```json
+```jsonc
 {
-  "provider": "dashscope",
-  "apiKey": "sk-xxxxxxxxxxxxxxxxxxxxxxxx",
   "mainLoopModel": "standard",
   "models": {
-    "advanced": "qwen3.6-plus",
-    "standard": "qwen3.5-plus",
-    "compact": "qwen3.5-flash"
+    "advanced": { "provider": "grok-subscription", "model": "grok-4.6" },
+    "standard": [
+      { "provider": "grok-subscription", "model": "grok-4.6" },
+      { "provider": "qwen-work", "model": "qwen3.8-max" }
+    ],
+    "compact": { "provider": "local", "model": "qwen3.5" }
   },
-  "language": "Chinese",
-  "outputStyle": "concise",
-  "permissions": {
-    "defaultMode": "acceptEdits"
-  },
-  "hooks": {
-    "SessionStart": [
-      {
-        "type": "command",
-        "command": "echo 'Session started'"
-      }
-    ]
-  },
-  "mcp": {
-    "server": {}
-  },
-  "customModels": [
-    {
-      "alias": "qwen-max",
-      "model": "qwen-max-latest",
-      "label": "Qwen Max",
-      "description": "通义千问最大模型"
-    }
-  ],
-  "cleanupPeriodDays": 30,
-  "fastMode": false,
-  "alwaysThinkingEnabled": true,
-  "effortLevel": "medium"
+  "modelFailover": {
+    "enabled": true,
+    "maxConsecutiveFailures": 2
+  }
 }
 ```
 
-> **百炼配置说明**：
-> - `provider: "dashscope"` 自动使用百炼默认 base URL：
->   - OpenAI 格式：`https://dashscope.aliyuncs.com/compatible-mode/v1`
->   - Anthropic 格式：`https://dashscope.aliyuncs.com/apps/anthropic/`
-> - 如需自定义 base URL，设置环境变量 `DASHSCOPE_BASE_URL`
-> - 百炼支持的模型：`qwen3.6-plus`（推荐）、`qwen3.5-plus`（深度思考）、`qwen3.5-flash`（快速）
-> - 百炼深度思考模型的 `reasoning_content` 会自动映射为标准 `thinking` 块
+Connections and credentials are stored separately in `~/.zy/auth.json`; model routing stays in
+settings. See the [configuration reference](docs/configuration.md) for connection setup and
+failover behavior.
 
-### 常用配置项
+## Customize and override tools
 
-| 配置项 | 类型 | 说明 |
-|---|---|---|
-| `provider` | string | API 提供商（anthropic / dashscope / openrouter / zhipu / kimi / generic / local 等） |
-| `apiKey` | string | API 密钥 |
-| `mainLoopModel` | string | 主对话 tier（advanced / standard / compact） |
-| `models` | object | 按能力层级配置模型 |
-| `modelOverrides` | object | 模型 ID 映射（如 Bedrock ARN） |
-| `customModels` | array | 自定义模型列表 |
-| `language` | string | 语言偏好 |
-| `outputStyle` | string | 输出风格 |
-| `permissions` | object | 权限配置（allow / deny / ask / defaultMode） |
-| `hooks` | object | 钩子配置（PreToolUse / PostToolUse / SessionStart 等） |
-| `mcp` | object | MCP 服务器配置 |
-| `sandbox` | object | 沙箱配置 |
-| `fastMode` | boolean | 是否启用快速模式 |
-| `alwaysThinkingEnabled` | boolean | 是否启用思考模式 |
-| `effortLevel` | string | 努力程度（low / medium / high） |
-| `cleanupPeriodDays` | number | 会话保留天数 |
-| `builtInStatusBar` | object | 底部状态栏配置 |
-| `autoMemoryEnabled` / `autoDreamEnabled` | boolean | 自动记忆 / 自动 Dream |
+ZY Code loads external tools from the project-level `.zy/tools/` directory and the user-level
+`~/.zy/tools/` directory. A new tool name extends the tool set; using the same name as a supported
+built-in replaces that implementation while the external tool is active. Tool definitions use a
+small framework-independent object with a description, JSON Schema, and async `call()` function.
 
-### 配置来源优先级
+> [!IMPORTANT]
+> The built-in `WebSearch` requires a self-hosted [OpenSERP](https://github.com/karust/openserp)
+> service at `http://127.0.0.1:7000`; ZY Code does not bundle or host this service. Deploy it
+> yourself, for example with
+> `docker run --rm -p 127.0.0.1:7000:7000 karust/openserp:latest serve -a 0.0.0.0 -p 7000`, or
+> replace `WebSearch` with your own external tool as shown below.
 
-从低到高：
-1. **userSettings** — `~/.zy/settings.json`
-2. **projectSettings** — `.zy/settings.json`（项目根目录）
-3. **localSettings** — `.zy/settings.local.json`（本地，自动加入 .gitignore）
-4. **policySettings** — 企业策略配置（最高优先级）
+The included [DuckDuckGo WebSearch demo](examples/external-tools/web-search-duckduckgo.ts) replaces
+the built-in `WebSearch` tool without modifying ZY Code itself:
 
-> **注意**: 请勿将包含真实 API Key 的配置文件提交到版本控制。
-
-### model-capabilities.json
-
-路径 `~/.zy/model-capabilities.json`（示例见仓库根 `model-capabilities.example.json`）。按 `pattern` 子串匹配 model id，声明模型的能力、token 上限、定价及附加 beta header。
-
-```json
-{
-  "models": [
-    {
-      "pattern": "claude-sonnet-4",
-      "capabilities": [
-        "thinking", "adaptive_thinking", "structured_outputs",
-        "context_management", "prompt_caching", "web_search"
-      ],
-      "effortLevels": ["low", "medium", "high"],
-      "betaHeaders": ["context-management-2025-06-27"],
-      "contextWindow": "1m",
-      "maxOutputTokens": "64k",
-      "costs": {
-        "inputTokens": 9,
-        "outputTokens": 54
-      }
-    }
-  ]
-}
+```bash
+mkdir -p .zy/tools
+cp examples/external-tools/web-search-duckduckgo.ts .zy/tools/web-search.ts
 ```
 
+Restart ZY Code, or run `/reload-tools` to apply additions, edits, removals, and overrides in the
+current session. Removing the override and reloading restores the built-in tool.
 
-## 许可证
+## Requirements
 
-本项目基于 MIT 许可证发布。
+- [Bun](https://bun.sh/) 1.3 or later
+- Git
+- A terminal with true-color support is recommended
+- macOS, Linux, or Windows
+
+Some sandbox, keychain, browser, and native computer-use features are platform-specific. The core
+CLI can run without them.
+
+## Build from source
+
+```bash
+git clone https://github.com/ziyou979/zy-code.git
+cd zy-code
+bun install --frozen-lockfile
+bun run build
+bun run start
+```
+
+The build output is written to `dist/cli.js`. On first launch, the onboarding flow asks you to
+choose an API provider, credentials, API format, and model tier.
+
+For local development:
+
+```bash
+bun install
+bun run dev
+```
+
+## Configuration
+
+ZY Code keeps user configuration under `~/.zy` by default. Set `ZY_CONFIG_DIR` to use a different
+location.
+
+| Path | Purpose |
+| --- | --- |
+| `~/.zy/settings.json` | User settings, model tiers, permissions, hooks, and UI preferences |
+| `~/.zy/auth.json` | Named provider connections and credentials |
+| `.zy/settings.json` | Project settings intended to be shared with the repository |
+| `.zy/settings.local.json` | Local project overrides; do not commit secrets |
+| `~/.zy/model-capabilities.json` | Optional model capabilities, limits, pricing, and routing |
+| `.mcp.json` | Project MCP servers |
+| `AGENTS.md` | Project instructions for the coding agent |
+
+Settings are merged from user, project, local, command-line, and managed-policy sources. See the
+[configuration reference](docs/configuration.md) for the complete schema, precedence rules,
+provider connections, model failover, permissions, hooks, MCP, and sandbox options.
+
+Never commit API keys or `.zy/settings.local.json`.
+
+## Development
+
+```bash
+bun run format          # Format source and tests
+bun tsc --noEmit        # Type-check
+bun test                # Run the test suite
+bun run lint            # Run Biome checks
+bun run quality         # Run the complete local quality gate
+```
+
+Useful references:
+
+- [Architecture](docs/architecture.md)
+- [Development guidelines](docs/development-guidelines.md)
+- [Configuration reference](docs/configuration.md)
+- [Feature flags](FEATURE_FLAGS.md)
+- [Changelog](CHANGELOG.md)
+
+The main directories are:
+
+```text
+src/entrypoints/   CLI, SDK, and MCP entry points
+src/cli/           CLI bootstrap, options, commands, and transports
+src/components/    Ink/React terminal UI
+src/commands/      Interactive slash commands
+src/tools/         Agent tools and their UI/prompt definitions
+src/services/      Model, API, MCP, sandbox, settings, and other domain services
+src/state/         Shared application state
+src/i18n/          English and Simplified Chinese UI translations
+packages/          Workspace packages for browser and computer-use integrations
+tests/             Tests mirroring the source tree
+```
+
+## Contributing
+
+Issues and pull requests are welcome. Before submitting a change:
+
+1. Read `AGENTS.md` and the [development guidelines](docs/development-guidelines.md).
+2. Keep user-visible text in both English and Simplified Chinese locale files.
+3. Run `bun run format`, `bun tsc --noEmit`, and the relevant `bun test` targets.
+4. Do not edit generated files in `dist/`.
+
+When reporting a security issue, avoid opening a public issue containing credentials, private code,
+or exploit details. Contact the maintainers privately instead.
+
+## License
+
+ZY Code is available under the [MIT License](LICENSE).

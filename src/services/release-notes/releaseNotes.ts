@@ -25,17 +25,17 @@ const MAX_RELEASE_NOTES_SHOWN = 5
  * 2. We fetch the changelog in the background and store it in config
  * 3. Next time the user starts ZY Code, the cached changelog is available immediately
  */
-// TODO 更换为zy的更新日志
-export const CHANGELOG_URL = 'https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md'
+export const CHANGELOG_URL = 'https://github.com/ziyou979/zy-code/blob/main/CHANGELOG.md'
 const RAW_CHANGELOG_URL =
-  'https://raw.githubusercontent.com/anthropics/claude-code/refs/heads/main/CHANGELOG.md'
+  'https://raw.githubusercontent.com/ziyou979/zy-code/refs/heads/main/CHANGELOG.md'
 
 /**
  * Get the path for the cached changelog file.
- * The changelog is stored at ~/.zy/cache/changelog.md
+ * The changelog is stored at ~/.zy/cache/zy-changelog.md
  */
 function getChangelogCachePath(): string {
-  return join(getZyConfigHomeDir(), 'cache', 'changelog.md')
+  // 使用独立文件名，避免升级后继续展示旧版缓存中的上游项目更新日志。
+  return join(getZyConfigHomeDir(), 'cache', 'zy-changelog.md')
 }
 
 // In-memory cache populated by async reads. Sync callers (React render, sync
@@ -48,9 +48,9 @@ export function _resetChangelogCacheForTesting(): void {
 }
 
 /**
- * Migrate changelog from old config-based storage to file-based storage.
- * This should be called once at startup to ensure the migration happens
- * before any other config saves that might re-add the deprecated field.
+ * 清理旧配置字段中的更新日志。
+ *
+ * 旧值可能包含上游项目内容，因此不能迁移到 ZY Code 的独立缓存文件。
  */
 export async function migrateChangelogFromConfig(): Promise<void> {
   const config = getGlobalConfig()
@@ -58,20 +58,7 @@ export async function migrateChangelogFromConfig(): Promise<void> {
     return
   }
 
-  const cachePath = getChangelogCachePath()
-
-  // If cache file doesn't exist, create it from old config
-  try {
-    await mkdir(dirname(cachePath), { recursive: true })
-    await writeFile(cachePath, config.cachedChangelog, {
-      encoding: 'utf-8',
-      flag: 'wx', // Write only if file doesn't exist
-    })
-  } catch {
-    // File already exists, which is fine - skip silently
-  }
-
-  // Remove the deprecated field from config
+  // 旧字段可能保存的是上游更新日志，只清理而不迁移到 ZY Code 缓存。
   saveGlobalConfig(({ cachedChangelog: _, ...rest }) => rest)
 }
 
