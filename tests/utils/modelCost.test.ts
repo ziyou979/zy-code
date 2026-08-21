@@ -8,10 +8,13 @@
  * getCurrencySymbolFor 根据货币类型返回符号。
  */
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
+import * as realModel from '../../src/services/model/model.js'
+import * as realModelCapabilities from '../../src/services/model/modelCapabilities.js'
 
 describe('modelCost', () => {
   beforeEach(() => {
     mock.module('../../src/services/model/modelCapabilities.js', () => ({
+      ...realModelCapabilities,
       getStaticPricingForModel: () => ({
         cost_input: 30,
         cost_output: 60,
@@ -149,6 +152,7 @@ describe('modelCost', () => {
   describe('getModelCurrency', () => {
     test('配置 currency: CNY 时返回 CNY', async () => {
       mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        ...realModelCapabilities,
         getStaticPricingForModel: () => ({
           cost_input: 1,
           cost_output: 2,
@@ -164,6 +168,7 @@ describe('modelCost', () => {
 
     test('配置 currency: USD 时返回 USD', async () => {
       mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        ...realModelCapabilities,
         getStaticPricingForModel: () => ({
           cost_input: 1,
           cost_output: 2,
@@ -179,9 +184,11 @@ describe('modelCost', () => {
 
     test('无定价配置时默认 CNY', async () => {
       mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        ...realModelCapabilities,
         getStaticPricingForModel: () => null,
       }))
       mock.module('../../src/services/model/model.js', () => ({
+        ...realModel,
         getDefaultMainLoopModelSetting: () => null,
       }))
       const { getModelCurrency } = await import('../../src/services/model/modelCost.js')
@@ -204,6 +211,7 @@ describe('modelCost', () => {
   describe('getCurrencySymbol — 根据模型货币', () => {
     test('当前模型 currency 为 USD 时返回 $', async () => {
       mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        ...realModelCapabilities,
         getStaticPricingForModel: () => ({
           cost_input: 1,
           cost_output: 2,
@@ -214,6 +222,7 @@ describe('modelCost', () => {
         }),
       }))
       mock.module('../../src/services/model/model.js', () => ({
+        ...realModel,
         getDefaultMainLoopModelSetting: () => 'gpt-4o',
       }))
       const { getCurrencySymbol: fn } = await import('../../src/services/model/modelCost.js')
@@ -222,6 +231,7 @@ describe('modelCost', () => {
 
     test('当前模型 currency 为 CNY 时返回 ¥', async () => {
       mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        ...realModelCapabilities,
         getStaticPricingForModel: () => ({
           cost_input: 1,
           cost_output: 2,
@@ -232,6 +242,7 @@ describe('modelCost', () => {
         }),
       }))
       mock.module('../../src/services/model/model.js', () => ({
+        ...realModel,
         getDefaultMainLoopModelSetting: () => 'qwen3.6-max',
       }))
       const { getCurrencySymbol: fn } = await import('../../src/services/model/modelCost.js')
@@ -240,9 +251,11 @@ describe('modelCost', () => {
 
     test('无模型配置时默认返回 ¥', async () => {
       mock.module('../../src/services/model/modelCapabilities.js', () => ({
+        ...realModelCapabilities,
         getStaticPricingForModel: () => null,
       }))
       mock.module('../../src/services/model/model.js', () => ({
+        ...realModel,
         getDefaultMainLoopModelSetting: () => null,
       }))
       const { getCurrencySymbol: fn } = await import('../../src/services/model/modelCost.js')
