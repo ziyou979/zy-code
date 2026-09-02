@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
+import { buildSessionApiHeaders } from '../http/authHeaders.js'
 import z from 'zod/v4'
 import { getOrganizationUUID, getZyAIOAuthTokens } from '../auth/auth.js'
 import { logForDebugging } from '../../services/infra/debug.js'
@@ -14,8 +15,6 @@ import { jsonStringify } from '../../services/infra/slowOperations.js'
 // Retry configuration for teleport API requests
 const TELEPORT_RETRY_DELAYS = [2000, 4000, 8000, 16000] // 4 retries with exponential backoff
 const MAX_TELEPORT_RETRIES = TELEPORT_RETRY_DELAYS.length
-
-export const CCR_BYOC_BETA = 'ccr-byoc-2025-07-29'
 
 /**
  * Checks if an axios error is a transient network error that should be retried
@@ -206,11 +205,7 @@ export async function fetchCodeSessionsFromSessionsAPI(): Promise<CodeSession[]>
   const url = `${getOauthConfig().BASE_API_URL}/v1/sessions`
 
   try {
-    const headers = {
-      ...getOAuthHeaders(accessToken),
-      'anthropic-beta': 'ccr-byoc-2025-07-29',
-      'x-organization-uuid': orgUUID,
-    }
+    const headers = buildSessionApiHeaders({ accessToken, orgUUID })
 
     const response = await axiosGetWithRetry<ListSessionsResponse>(url, {
       headers,
@@ -266,19 +261,6 @@ export async function fetchCodeSessionsFromSessionsAPI(): Promise<CodeSession[]>
 }
 
 /**
- * Creates OAuth headers for API requests
- * @param accessToken The OAuth access token
- * @returns Headers object with Authorization, Content-Type, and anthropic-version
- */
-export function getOAuthHeaders(accessToken: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${accessToken}`,
-    'Content-Type': 'application/json',
-    'anthropic-version': '2023-06-01',
-  }
-}
-
-/**
  * Fetches a single session by ID from the Sessions API
  * @param sessionId The session ID to fetch
  * @returns The session resource
@@ -287,11 +269,7 @@ export async function fetchSession(sessionId: string): Promise<SessionResource> 
   const { accessToken, orgUUID } = await prepareApiRequest()
 
   const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}`
-  const headers = {
-    ...getOAuthHeaders(accessToken),
-    'anthropic-beta': 'ccr-byoc-2025-07-29',
-    'x-organization-uuid': orgUUID,
-  }
+  const headers = buildSessionApiHeaders({ accessToken, orgUUID })
 
   const response = await axios.get<SessionResource>(url, {
     headers,
@@ -356,11 +334,7 @@ export async function sendEventToRemoteSession(
     const { accessToken, orgUUID } = await prepareApiRequest()
 
     const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/events`
-    const headers = {
-      ...getOAuthHeaders(accessToken),
-      'anthropic-beta': 'ccr-byoc-2025-07-29',
-      'x-organization-uuid': orgUUID,
-    }
+    const headers = buildSessionApiHeaders({ accessToken, orgUUID })
 
     const userEvent = {
       uuid: opts?.uuid ?? randomUUID(),
@@ -412,11 +386,7 @@ export async function updateSessionTitle(sessionId: string, title: string): Prom
     const { accessToken, orgUUID } = await prepareApiRequest()
 
     const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}`
-    const headers = {
-      ...getOAuthHeaders(accessToken),
-      'anthropic-beta': 'ccr-byoc-2025-07-29',
-      'x-organization-uuid': orgUUID,
-    }
+    const headers = buildSessionApiHeaders({ accessToken, orgUUID })
 
     logForDebugging(`[updateSessionTitle] Updating title for session ${sessionId}: "${title}"`)
     const response = await axios.patch(

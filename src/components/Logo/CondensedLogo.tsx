@@ -4,7 +4,7 @@ import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text } from '../../ink/index.js'
 import { renderModelSetting } from '../../services/model/model.js'
 import { useAppState } from '../../state/AppState.js'
-import { truncate } from '../../utils/format.js'
+import { truncate } from '../../utils/truncate.js'
 import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import {
   formatModelAndProvider,

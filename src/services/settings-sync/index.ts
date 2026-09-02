@@ -15,14 +15,14 @@ import { dirname } from 'node:path'
 import axios from 'axios'
 import pickBy from 'lodash-es/pickBy.js'
 import { getIsInteractive } from '../../bootstrap/runtime/runtimeContext.js'
-import {
-  getOauthConfig,
-  OAUTH_BETA_HEADER,
-  ZY_CODE_INFERENCE_SCOPE,
-} from '../../constants/oauth.js'
-import { getAPIProvider, isAnthropicBaseUrl } from '../model/providers.js'
+import { getOauthConfig } from '../../constants/oauth.js'
+import { buildAuthHeaders } from '../http/authHeaders.js'
 import { clearMemoryFileCaches } from '../../services/memory/agentsMd.js'
-import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from '../auth/auth.js'
+import {
+  checkAndRefreshOAuthTokenIfNeeded,
+  getZyAIOAuthTokens,
+  isUsingOAuthForService,
+} from '../auth/auth.js'
 import { getMemoryPath } from '../config/config.js'
 import { logForDiagnosticsNoPII } from '../telemetry/diagLogs.js'
 import { classifyAxiosError } from '../../utils/errors.js'
@@ -30,11 +30,10 @@ import { getRepoRemoteHash } from '../../services/infra/git.js'
 import { markInternalWrite } from '../settings/internalWrites.js'
 import { getSettingsFilePathForSource } from '../settings/settings.js'
 import { resetSettingsCache } from '../settings/settingsCache.js'
-import { sleep } from '../../utils/sleep.js'
 import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
-import { getRetryDelay } from '../api/withRetry.js'
+import { retryWithBackoffLoop } from '../http/retryLoop.js'
 import {
   type SettingsSyncFetchResult,
   type SettingsSyncUploadResult,
@@ -191,38 +190,22 @@ async function doDownloadUserSettings(maxRetries = DEFAULT_MAX_RETRIES): Promise
  * Only checks user:inference (not user:profile) — CCR's file-descriptor token
  * hardcodes scopes to ['user:inference'] only, so requiring profile would make
  * download a no-op there. Upload is independently guarded by getIsInteractive().
+ * 实现收敛到 auth.isUsingOAuthForService()（不带 extraScopes，正是上述只查
+ * inference 的语义）。
  */
 function isUsingOAuth(): boolean {
-  if (getAPIProvider() !== 'anthropic' || !isAnthropicBaseUrl()) {
-    return false
-  }
-
-  const tokens = getZyAIOAuthTokens()
-  return Boolean(tokens?.accessToken && tokens.scopes?.includes(ZY_CODE_INFERENCE_SCOPE))
+  return isUsingOAuthForService()
 }
 
 function getSettingsSyncEndpoint(): string {
   return `${getOauthConfig().BASE_API_URL}/api/claude_code/user_settings`
 }
 
-function getSettingsSyncAuthHeaders(): {
-  headers: Record<string, string>
-  error?: string
-} {
-  const oauthTokens = getZyAIOAuthTokens()
-  if (oauthTokens?.accessToken) {
-    return {
-      headers: {
-        Authorization: `Bearer ${oauthTokens.accessToken}`,
-        'anthropic-beta': OAUTH_BETA_HEADER,
-      },
-    }
-  }
-
-  return {
-    headers: {},
-    error: 'No OAuth token available',
-  }
+function getSettingsSyncAuthHeaders() {
+  return buildAuthHeaders({
+    oauthToken: getZyAIOAuthTokens()?.accessToken,
+    errorMessage: 'No OAuth token available',
+  })
 }
 
 async function fetchUserSettingsOnce(): Promise<SettingsSyncFetchResult> {
@@ -296,33 +279,18 @@ async function fetchUserSettingsOnce(): Promise<SettingsSyncFetchResult> {
 async function fetchUserSettings(
   maxRetries = DEFAULT_MAX_RETRIES,
 ): Promise<SettingsSyncFetchResult> {
-  let lastResult: SettingsSyncFetchResult | null = null
-
-  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
-    lastResult = await fetchUserSettingsOnce()
-
-    if (lastResult.success) {
-      return lastResult
-    }
-
-    if (lastResult.skipRetry) {
-      return lastResult
-    }
-
-    if (attempt > maxRetries) {
-      return lastResult
-    }
-
-    const delayMs = getRetryDelay(attempt)
-    logForDiagnosticsNoPII('info', 'settings_sync_retry', {
-      attempt,
-      maxRetries,
-      delayMs,
-    })
-    await sleep(delayMs)
-  }
-
-  return lastResult!
+  // 重试骨架收敛到 http/retryLoop.ts
+  return retryWithBackoffLoop({
+    maxRetries,
+    fetchOnce: () => fetchUserSettingsOnce(),
+    onRetry: (attempt, delayMs) => {
+      logForDiagnosticsNoPII('info', 'settings_sync_retry', {
+        attempt,
+        maxRetries,
+        delayMs,
+      })
+    },
+  })
 }
 
 async function uploadUserSettings(

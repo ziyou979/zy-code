@@ -35,6 +35,106 @@ function createFixture() {
 }
 
 describe('LogUpdate 宽字符重绘', () => {
+  test('宽字符变窄时应清理 damage 之外的旧尾格', () => {
+    const { stylePool, createTestScreen, createFrame, logUpdate } = createFixture()
+    const previous = createTestScreen()
+    const next = createTestScreen()
+    setCellAt(previous, 0, 0, {
+      char: '中',
+      styleId: stylePool.none,
+      width: CellWidth.Wide,
+      hyperlink: undefined,
+    })
+    setCellAt(next, 0, 0, {
+      char: 'A',
+      styleId: stylePool.none,
+      width: CellWidth.Narrow,
+      hyperlink: undefined,
+    })
+
+    const diff = logUpdate.render(createFrame(previous), createFrame(next), false, false, {
+      x: 0,
+      y: 0,
+    })
+    const narrowIndex = diff.findIndex((patch) => patch.type === 'stdout' && patch.content === 'A')
+    const cleanupIndex = diff.findIndex(
+      (patch, index) => index > narrowIndex && patch.type === 'stdout' && patch.content === ' ',
+    )
+
+    expect(narrowIndex).toBeGreaterThanOrEqual(0)
+    expect(cleanupIndex).toBeGreaterThan(narrowIndex)
+  })
+
+  test('宽字符左移覆盖相邻宽字符时应清理旧字符的尾格', () => {
+    const { stylePool, createTestScreen, createFrame, logUpdate } = createFixture()
+    const previous = createTestScreen()
+    const next = createTestScreen()
+    setCellAt(previous, 1, 0, {
+      char: '度',
+      styleId: stylePool.none,
+      width: CellWidth.Wide,
+      hyperlink: undefined,
+    })
+    setCellAt(next, 0, 0, {
+      char: '常',
+      styleId: stylePool.none,
+      width: CellWidth.Wide,
+      hyperlink: undefined,
+    })
+
+    const diff = logUpdate.render(createFrame(previous), createFrame(next), false, false, {
+      x: 0,
+      y: 0,
+    })
+    const wideIndex = diff.findIndex((patch) => patch.type === 'stdout' && patch.content === '常')
+    const cleanupIndex = diff.findIndex(
+      (patch, index) => index > wideIndex && patch.type === 'stdout' && patch.content === ' ',
+    )
+
+    expect(wideIndex).toBeGreaterThanOrEqual(0)
+    expect(cleanupIndex).toBeGreaterThan(wideIndex)
+  })
+
+  test('Windows Terminal 主屏连续中文应在每个宽字符后重新锚定', () => {
+    const { stylePool, createTestScreen, createFrame, logUpdate } = createFixture()
+    const previous = createTestScreen()
+    const next = createTestScreen()
+    const chars = ['非', '常', '明', '确']
+    for (const [index, char] of chars.entries()) {
+      setCellAt(next, index * 2, 0, {
+        char,
+        styleId: stylePool.none,
+        width: CellWidth.Wide,
+        hyperlink: undefined,
+      })
+    }
+
+    const diff = logUpdate.render(
+      createFrame(previous),
+      createFrame(next),
+      false,
+      false,
+      { x: 0, y: 0 },
+      { anchorAfterWideCell: true },
+    )
+
+    const charIndexes = chars.map((char) =>
+      diff.findIndex((patch) => patch.type === 'stdout' && patch.content === char),
+    )
+    expect(charIndexes.every((index) => index >= 0)).toBe(true)
+    for (let index = 1; index < chars.length; index++) {
+      const anchorIndex = diff.findIndex(
+        (patch, patchIndex) =>
+          patchIndex > charIndexes[index - 1]! &&
+          patchIndex < charIndexes[index]! &&
+          patch.type === 'cursorMove' &&
+          patch.x === index * 2 &&
+          patch.y === 0,
+      )
+      expect(anchorIndex).toBeGreaterThan(charIndexes[index - 1]!)
+    }
+  })
+
   test('宽字符后继续差量写入时应使用绝对坐标重新锚定', () => {
     const { stylePool, createTestScreen, createFrame, logUpdate } = createFixture()
     const previous = createTestScreen()

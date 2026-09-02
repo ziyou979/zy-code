@@ -25,7 +25,8 @@ import type { Message as MessageType, ProgressMessage } from '../../types/messag
 import { count } from '../../utils/array.js'
 import { getGlobalConfig } from '../../services/config/config.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
-import { formatTokens, truncateToWidth } from '../../utils/format.js'
+import { formatTokens } from '../../utils/format.js'
+import { truncateToWidth } from '../../utils/truncate.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'
 
 // ── useStopHookSpinnerSuffix ──

@@ -1,6 +1,7 @@
 import axios from 'axios'
 import memoize from 'lodash-es/memoize.js'
 import { getOauthConfig } from 'src/constants/oauth.js'
+import { ANTHROPIC_VERSION } from '../../constants/api.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -80,7 +81,7 @@ export const fetchZyAIMcpConfigsIfEligible = memoize(
           Authorization: `Bearer ${tokens.accessToken}`,
           'Content-Type': 'application/json',
           'anthropic-beta': MCP_SERVERS_BETA_HEADER,
-          'anthropic-version': '2023-06-01',
+          'anthropic-version': ANTHROPIC_VERSION,
         },
         timeout: FETCH_TIMEOUT_MS,
       })

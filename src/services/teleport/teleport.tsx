@@ -34,7 +34,7 @@ import {
 import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { TeleportOperationError, toError } from '../../utils/errors.js'
 import { execFileNoThrow } from '../shell/execFileNoThrow.js'
-import { truncateToWidth } from '../../utils/format.js'
+import { truncateToWidth } from '../../utils/truncate.js'
 import { findGitRoot, getDefaultBranch, getIsClean, gitExe } from '../../services/infra/git.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { logError } from '../../services/infra/log.js'
@@ -50,9 +50,9 @@ import {
   type GitRepositoryOutcome,
   type GitSource,
   getBranchFromSession,
-  getOAuthHeaders,
   type SessionResource,
 } from './api.js'
+import { buildSessionApiHeaders } from '../http/authHeaders.js'
 import { fetchEnvironments } from './environments.js'
 import { createAndUploadGitBundle } from './gitBundle.js'
 export type TeleportResult = {
@@ -715,11 +715,7 @@ export async function pollRemoteSessionEvents(
   if (!orgUUID) {
     throw new Error('No org UUID for polling')
   }
-  const headers = {
-    ...getOAuthHeaders(accessToken),
-    'anthropic-beta': 'ccr-byoc-2025-07-29',
-    'x-organization-uuid': orgUUID,
-  }
+  const headers = buildSessionApiHeaders({ accessToken, orgUUID })
   const eventsUrl = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/events`
   type EventsResponse = {
     data: unknown[]
@@ -887,11 +883,7 @@ export async function teleportToRemote(options: {
     // 触发前完成 checkout。
     if (options.environmentId) {
       const url = `${getOauthConfig().BASE_API_URL}/v1/sessions`
-      const headers = {
-        ...getOAuthHeaders(accessToken),
-        'anthropic-beta': 'ccr-byoc-2025-07-29',
-        'x-organization-uuid': orgUUID,
-      }
+      const headers = buildSessionApiHeaders({ accessToken, orgUUID })
       const envVars = {
         ZY_CODE_OAUTH_TOKEN: accessToken,
         ...(options.environmentVariables ?? {}),
@@ -1197,11 +1189,7 @@ export async function teleportToRemote(options: {
 
     // 准备 Sessions API 请求。
     const url = `${getOauthConfig().BASE_API_URL}/v1/sessions`
-    const headers = {
-      ...getOAuthHeaders(accessToken),
-      'anthropic-beta': 'ccr-byoc-2025-07-29',
-      'x-organization-uuid': orgUUID,
-    }
+    const headers = buildSessionApiHeaders({ accessToken, orgUUID })
     const sessionContext = {
       sources: gitSource ? [gitSource] : [],
       ...(seedBundleFileId && {
@@ -1312,11 +1300,7 @@ export async function archiveRemoteSession(sessionId: string): Promise<void> {
   if (!orgUUID) {
     return
   }
-  const headers = {
-    ...getOAuthHeaders(accessToken),
-    'anthropic-beta': 'ccr-byoc-2025-07-29',
-    'x-organization-uuid': orgUUID,
-  }
+  const headers = buildSessionApiHeaders({ accessToken, orgUUID })
   const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/archive`
   try {
     const resp = await axios.post(

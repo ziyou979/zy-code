@@ -499,13 +499,3 @@ export function formatWeekday(date: Date, locale?: string): string {
   const resolvedLocale = locale ?? getLocale() ?? 'en-US'
   return date.toLocaleDateString(resolvedLocale, { weekday: 'long' })
 }
-
-// 向后兼容：截断辅助函数已移至 ./truncate.ts（依赖 ink/stringWidth）
-export {
-  truncate,
-  truncatePathMiddle,
-  truncateStartToWidth,
-  truncateToWidth,
-  truncateToWidthNoEllipsis,
-  wrapText,
-} from './truncate.js'

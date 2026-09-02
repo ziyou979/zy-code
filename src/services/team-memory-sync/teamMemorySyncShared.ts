@@ -3,15 +3,15 @@
  */
 
 import { createHash } from 'node:crypto'
-import {
-  getOauthConfig,
-  OAUTH_BETA_HEADER,
-  ZY_CODE_INFERENCE_SCOPE,
-  ZY_CODE_PROFILE_SCOPE,
-} from '../../constants/oauth.js'
+import { getOauthConfig, ZY_CODE_PROFILE_SCOPE } from '../../constants/oauth.js'
 import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
-import { checkAndRefreshOAuthTokenIfNeeded, getZyAIOAuthTokens } from '../auth/auth.js'
-import { getAPIProvider, isAnthropicBaseUrl } from '../model/providers.js'
+import {
+  checkAndRefreshOAuthTokenIfNeeded,
+  getZyAIOAuthTokens,
+  isUsingOAuthForService,
+} from '../auth/auth.js'
+import { isNodeError } from '../policy-limits/index.js'
+import { buildAuthHeaders } from '../http/authHeaders.js'
 
 export const TEAM_MEMORY_SYNC_TIMEOUT_MS = 30_000
 export const MAX_FILE_SIZE_BYTES = 250_000
@@ -44,20 +44,13 @@ export function hashContent(content: string): string {
   return `sha256:${createHash('sha256').update(content, 'utf8').digest('hex')}`
 }
 
-export function isErrnoException(e: unknown): e is NodeJS.ErrnoException {
-  return e instanceof Error && 'code' in e && typeof e.code === 'string'
-}
+// Re-export isNodeError from policy-limits as the canonical implementation
+export { isNodeError }
 
 export function isUsingOAuth(): boolean {
-  if (getAPIProvider() !== 'anthropic' || !isAnthropicBaseUrl()) {
-    return false
-  }
-  const tokens = getZyAIOAuthTokens()
-  return Boolean(
-    tokens?.accessToken &&
-      tokens.scopes?.includes(ZY_CODE_INFERENCE_SCOPE) &&
-      tokens.scopes.includes(ZY_CODE_PROFILE_SCOPE),
-  )
+  // 团队记忆同步需要读取用户资料，额外要求 user:profile scope。
+  // 实现收敛到 auth.isUsingOAuthForService()。
+  return isUsingOAuthForService([ZY_CODE_PROFILE_SCOPE])
 }
 
 export function getTeamMemorySyncEndpoint(repoSlug: string): string {
@@ -65,21 +58,12 @@ export function getTeamMemorySyncEndpoint(repoSlug: string): string {
   return `${baseUrl}/api/claude_code/team_memory?repo=${encodeURIComponent(repoSlug)}`
 }
 
-export function getAuthHeaders(): {
-  headers?: Record<string, string>
-  error?: string
-} {
-  const oauthTokens = getZyAIOAuthTokens()
-  if (oauthTokens?.accessToken) {
-    return {
-      headers: {
-        Authorization: `Bearer ${oauthTokens.accessToken}`,
-        'anthropic-beta': OAUTH_BETA_HEADER,
-        'User-Agent': getZyCodeUserAgent(),
-      },
-    }
-  }
-  return { error: 'No OAuth token available for team memory sync' }
+export function getAuthHeaders() {
+  return buildAuthHeaders({
+    oauthToken: getZyAIOAuthTokens()?.accessToken,
+    userAgent: getZyCodeUserAgent(),
+    errorMessage: 'No OAuth token available for team memory sync',
+  })
 }
 
 export async function ensureTeamMemoryAuthReady(): Promise<void> {

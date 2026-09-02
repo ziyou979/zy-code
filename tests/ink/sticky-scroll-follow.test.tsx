@@ -7,6 +7,7 @@ import { Writable } from 'node:stream'
 import React from 'react'
 import Box from '../../src/ink/components/Box.js'
 import Ink from '../../src/ink/ink.js'
+import { canUseScrollShiftFastPath } from '../../src/ink/renderNodeToOutput.js'
 import { computeScrollFollow } from '../../src/ink/scrollFollow.js'
 
 function makeStdout(cols: number, rows: number): NodeJS.WriteStream {
@@ -139,5 +140,15 @@ describe('StreamingMarkdown 长内容渲染时限', () => {
     const ms = performance.now() - t0
     expect(ms).toBeLessThan(8000)
     ink.unmount()
+  })
+})
+
+describe('ScrollBox 滚动快路径', () => {
+  test('中间思考块展开时禁用整块平移', () => {
+    expect(canUseScrollShiftFastPath(1, 1, true)).toBe(false)
+  })
+
+  test('底部流式追加时保留整块平移', () => {
+    expect(canUseScrollShiftFastPath(2, 2, false)).toBe(true)
   })
 })

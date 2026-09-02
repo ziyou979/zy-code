@@ -1,7 +1,7 @@
 import type { UUID } from 'node:crypto'
 import axios, { type AxiosError } from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
-import { getOAuthHeaders } from '../teleport/api.js'
+import { buildOAuthApiHeaders } from '../http/authHeaders.js'
 import type { Entry, TranscriptMessage } from '../../types/logs.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { logForDiagnosticsNoPII } from '../telemetry/diagLogs.js'
@@ -224,7 +224,7 @@ export async function getSessionLogsViaOAuth(
   const url = `${getOauthConfig().BASE_API_URL}/v1/session_ingress/session/${sessionId}`
   logForDebugging(`[session-ingress] 正在从 ${url} 获取会话日志`)
   const headers = {
-    ...getOAuthHeaders(accessToken),
+    ...buildOAuthApiHeaders(accessToken),
     'x-organization-uuid': orgUUID,
   }
   const result = await fetchSessionLogsFromUrl(sessionId, url, headers)
@@ -268,7 +268,7 @@ export async function getTeleportEvents(
 ): Promise<Entry[] | null> {
   const baseUrl = `${getOauthConfig().BASE_API_URL}/v1/code/sessions/${sessionId}/teleport-events`
   const headers = {
-    ...getOAuthHeaders(accessToken),
+    ...buildOAuthApiHeaders(accessToken),
     'x-organization-uuid': orgUUID,
   }
 

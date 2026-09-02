@@ -82,6 +82,8 @@ export type State = {
   totalCostByCurrency: Record<string, number>
   totalAPIDuration: number
   totalAPIDurationWithoutRetries: number
+  /** 累计解码时长（首 token 之后到响应结束），供状态栏 tok/s 使用；null = 无 TTFT 记录 */
+  totalDecodeMs: number
   totalToolDuration: number
   turnHookDurationMs: number
   turnToolDurationMs: number
@@ -299,6 +301,7 @@ function getInitialState(): State {
     totalCostByCurrency: { CNY: 0, USD: 0 },
     totalAPIDuration: 0,
     totalAPIDurationWithoutRetries: 0,
+    totalDecodeMs: 0,
     totalToolDuration: 0,
     turnHookDurationMs: 0,
     turnToolDurationMs: 0,

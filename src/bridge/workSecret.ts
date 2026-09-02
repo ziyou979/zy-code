@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { jsonParse, jsonStringify } from '../services/infra/slowOperations.js'
 import type { WorkSecret } from './types.js'
+import { buildOAuthApiHeaders } from '../services/http/authHeaders.js'
 /** Decode a base64url-encoded work secret and validate its version. */
 export function decodeWorkSecret(secret: string): WorkSecret {
   const json = Buffer.from(secret, 'base64url').toString('utf-8')
@@ -86,11 +87,7 @@ export async function registerWorker(sessionUrl: string, accessToken: string): P
     `${sessionUrl}/worker/register`,
     {},
     {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-      },
+      headers: buildOAuthApiHeaders(accessToken),
       timeout: 10_000,
     },
   )

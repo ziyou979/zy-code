@@ -58,19 +58,11 @@ import type { Message } from '../types/message.js'
 import type { WireMessage } from '../types/index.js'
 import type { WireControlRequest, WireControlResponse } from '../types/wire/control.js'
 import type { PermissionMode } from '../services/permissions/permissionMode.js'
-const ANTHROPIC_VERSION = '2023-06-01'
+import { buildSessionApiHeaders } from '../services/http/authHeaders.js'
 
 // ws_connected 的 telemetry 判别值。'initial' 是默认值，绝不会传给只能在初始化后调用的
 // rebuildTransport；Exclude<> 在两个签名中显式表达此约束。
 type ConnectCause = 'initial' | 'proactive_refresh' | 'auth_401_recovery'
-
-function oauthHeaders(accessToken: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${accessToken}`,
-    'Content-Type': 'application/json',
-    'anthropic-version': ANTHROPIC_VERSION,
-  }
-}
 
 export type EnvLessWireParams = {
   baseUrl: string
@@ -875,11 +867,7 @@ async function archiveSession(
       `${baseUrl}/v1/sessions/${compatId}/archive`,
       {},
       {
-        headers: {
-          ...oauthHeaders(accessToken),
-          'anthropic-beta': 'ccr-byoc-2025-07-29',
-          'x-organization-uuid': orgUUID,
-        },
+        headers: buildSessionApiHeaders({ accessToken, orgUUID }),
         timeout: timeoutMs,
         validateStatus: () => true,
       },

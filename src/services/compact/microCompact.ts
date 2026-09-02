@@ -10,16 +10,18 @@ import { GLOB_TOOL_NAME } from '../../tools/GlobTool/prompt.js'
 import { GREP_TOOL_NAME } from '../../tools/GrepTool/prompt.js'
 import { WEB_FETCH_TOOL_NAME } from '../../tools/WebFetchTool/prompt.js'
 import { WEB_SEARCH_TOOL_NAME } from '../../tools/WebSearchTool/prompt.js'
-import type { ToolResultBlock } from '../../types/llm.js'
 import type { Message } from '../../types/message.js'
 import { logForDebugging } from '../../services/infra/debug.js'
-import { jsonStringify } from '../../services/infra/slowOperations.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
 import { notifyCacheDeletion } from '../api/promptCacheBreakDetection.js'
-import { roughTokenCountEstimation } from '../tokenEstimation.js'
+import {
+  roughTokenCountEstimationForBlock,
+  roughTokenCountEstimationForMessages,
+} from '../tokenEstimation.js'
+import type { Attachment } from '../attachments/attachments.js'
 import { clearCompactWarningSuppression, suppressCompactWarning } from './compactWarningState.js'
 import { getTimeBasedMCConfig, type TimeBasedMCConfig } from './timeBasedMCConfig.js'
 
@@ -27,8 +29,6 @@ import { getTimeBasedMCConfig, type TimeBasedMCConfig } from './timeBasedMCConfi
 // sessionStorage → utils/messages → services/api/errors，经 promptCacheBreakDetection
 // 回到本文件形成循环依赖。通过测试断言与源头相等来捕获漂移。
 export const TIME_BASED_MC_CLEARED_MESSAGE = '[Old tool result content cleared]'
-
-const IMAGE_MAX_TOKEN_SIZE = 2000
 
 // 仅压缩以下工具
 const COMPACTABLE_TOOLS = new Set<string>([
@@ -137,72 +137,22 @@ export function resetMicrocompactState(): void {
   pendingCacheEdits = null
 }
 
-// 辅助函数：计算工具结果 token 数
-function calculateToolResultTokens(block: ToolResultBlock): number {
-  if (!block.content) {
-    return 0
-  }
-
-  if (typeof block.content === 'string') {
-    return roughTokenCountEstimation(block.content)
-  }
-
-  // TextBlock | ImageBlock | DocumentBlock 数组
-  return block.content.reduce((sum, item) => {
-    const typedItem = item as { type: string; text?: string }
-    if (typedItem.type === 'text') {
-      return sum + roughTokenCountEstimation(typedItem.text ?? '')
-    } else if (typedItem.type === 'image' || typedItem.type === 'document') {
-      // 图片/文档无论格式约为 2000 token
-      return sum + IMAGE_MAX_TOKEN_SIZE
-    }
-    return sum
-  }, 0)
-}
-
 /**
- * 通过提取文本内容估算消息的 token 数。
- * 在没有准确 API 计数时用于粗略 token 估算。
- * 估算结果乘以 4/3 以保守计算。
+ * 估算消息列表的 token 数，估算结果乘以 4/3 保守（兼容历史调用方语义）。
+ * 遍历与 block 级估算逻辑收敛到 tokenEstimation.roughTokenCountEstimationForMessages，
+ * 此处仅保留调用方特有的保守系数。
  */
 export function estimateMessageTokens(messages: Message[]): number {
-  let totalTokens = 0
-
-  for (const message of messages) {
-    if (message.type !== 'user' && message.type !== 'assistant') {
-      continue
-    }
-
-    if (!Array.isArray(message.message.content)) {
-      continue
-    }
-
-    for (const block of message.message.content) {
-      if (block.type === 'text') {
-        totalTokens += roughTokenCountEstimation(block.text)
-      } else if (block.type === 'tool_result') {
-        totalTokens += calculateToolResultTokens(block)
-      } else if (block.type === 'image' || block.type === 'document') {
-        totalTokens += IMAGE_MAX_TOKEN_SIZE
-      } else if (block.type === 'thinking') {
-        // 与 roughTokenCountEstimationForBlock 一致：仅统计 thinking 文本，
-        // 不含 JSON 包装器或 signature（signature 是元数据，非模型 token 化内容）。
-        totalTokens += roughTokenCountEstimation(block.thinking)
-      } else if (block.type === 'redacted_thinking') {
-        totalTokens += roughTokenCountEstimation(block.data)
-      } else if (block.type === 'tool_call') {
-        // 与 roughTokenCountEstimationForBlock 一致：统计 name + input，
-        // 不含 JSON 包装器或 id 字段。
-        totalTokens += roughTokenCountEstimation(block.name + jsonStringify(block.input ?? {}))
-      } else {
-        // server_tool_use、web_search_tool_result 等
-        totalTokens += roughTokenCountEstimation(jsonStringify(block))
-      }
-    }
-  }
-
-  // 估算结果乘以 4/3 以保守计算
-  return Math.ceil(totalTokens * (4 / 3))
+  return Math.ceil(
+    roughTokenCountEstimationForMessages(
+      messages as readonly {
+        type: string
+        message?: { content?: unknown }
+        attachment?: Attachment
+      }[],
+    ) *
+      (4 / 3),
+  )
 }
 
 export type PendingCacheEdits = {
@@ -494,7 +444,7 @@ function maybeTimeBasedMicrocompact(
         clearSet.has(block.toolCallId) &&
         block.content !== TIME_BASED_MC_CLEARED_MESSAGE
       ) {
-        tokensSaved += calculateToolResultTokens(block)
+        tokensSaved += roughTokenCountEstimationForBlock(block)
         touched = true
         return { ...block, content: TIME_BASED_MC_CLEARED_MESSAGE }
       }

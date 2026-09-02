@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { getOauthConfig } from '../constants/oauth.js'
-import { getOAuthHeaders, prepareApiRequest } from '../services/teleport/api.js'
+import { buildSessionApiHeaders } from '../services/http/authHeaders.js'
+import { prepareApiRequest } from '../services/teleport/api.js'
 import type { WireMessage } from '../types/index.js'
 import { logForDebugging } from '../services/infra/debug.js'
 export const HISTORY_PAGE_SIZE = 100
@@ -31,11 +32,7 @@ export async function createHistoryAuthCtx(sessionId: string): Promise<HistoryAu
   const { accessToken, orgUUID } = await prepareApiRequest()
   return {
     baseUrl: `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/events`,
-    headers: {
-      ...getOAuthHeaders(accessToken),
-      'anthropic-beta': 'ccr-byoc-2025-07-29',
-      'x-organization-uuid': orgUUID,
-    },
+    headers: buildSessionApiHeaders({ accessToken, orgUUID }),
   }
 }
 

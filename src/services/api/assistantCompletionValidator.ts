@@ -7,6 +7,7 @@ import {
 } from '../../types/llm.js'
 
 export type MalformedAssistantCompletionReason =
+  | 'missing_stop_reason'
   | 'empty_visible_content'
   | 'thinking_only'
   | 'thinking_tag_only'
@@ -104,6 +105,15 @@ export function validateAssistantCompletion(args: {
     if (block.type === 'redacted_thinking' && block.data.trim()) {
       hasThinking = true
     }
+  }
+
+  // 上游可能在生成较长工具参数时直接截断 SSE：此时工具块没有 chunk_stop，
+  // 但它前面的“现在写……”文本块已经完成并展示。若仅按已有可见内容判断成功，
+  // 未完成的 Write 等工具调用会被静默丢弃，UI 看起来就像 agent 无故结束。
+  // 最终 stopReason 是协议层确认整轮完整结束的必要信号；缺失时统一触发现有
+  // 流式重试/非流式回退，不能执行残缺工具输入，也不能把部分文本当作完成。
+  if (args.stopReason == null) {
+    return { ok: false, reason: 'missing_stop_reason' }
   }
 
   // stopReason 是协议层对本轮结果的承诺。若 provider 声明 tool_use，

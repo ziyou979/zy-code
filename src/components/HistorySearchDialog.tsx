@@ -12,7 +12,8 @@ import { wrapAnsi } from '../ink/wrapAnsi.js'
 import { Box, Text } from '../ink/index.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { HistoryEntry } from '../services/config/config.js'
-import { formatRelativeTimeAgo, truncateToWidth } from '../utils/format.js'
+import { formatRelativeTimeAgo } from '../utils/format.js'
+import { truncateToWidth } from '../utils/truncate.js'
 import { FuzzyPicker } from './design-system/FuzzyPicker.js'
 
 type Props = {

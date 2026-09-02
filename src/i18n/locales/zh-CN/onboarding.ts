@@ -88,6 +88,8 @@ export const zhOnboarding: TranslationResource = {
   'onboarding.platform.togetherDesc': 'Together AI 推理平台',
   'onboarding.platform.vertex': 'Google Vertex AI',
   'onboarding.platform.vertexDesc': 'Google Vertex AI 模型推理',
+  'onboarding.platform.xai': 'xAI Grok',
+  'onboarding.platform.xaiDesc': 'xAI API（Grok 系列模型）',
   'onboarding.platform.ark': '火山方舟',
   'onboarding.platform.arkDesc': '字节跳动火山引擎方舟平台',
   'onboarding.platform.zhipu': '智谱 AI',

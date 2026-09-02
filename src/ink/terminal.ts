@@ -238,12 +238,17 @@ export function needsWideCellRenderAnchor(options: WideCellRenderAnchorOptions =
 }
 
 /**
- * 主屏布局位移时会同时重写多行并移动交互光标，此时插入额外锚点会与
- * 候选栏、权限框等动态区域的相对定位竞争。备用屏拥有绝对坐标原点，
- * 可以在布局变化期间安全地继续锚定。
+ * Windows Terminal 在 Markdown 表格流式增长等布局位移帧中仍需要宽字符锚点，
+ * 否则连续 CJK 字符之间会留下半格残影。JediTerm 主屏的候选栏、权限框等
+ * 动态区域仍使用相对定位，因此仅对该终端保留布局位移期间的禁用策略；
+ * 备用屏有绝对坐标原点，可以始终安全地继续锚定。
  */
-export function canAnchorWideCellsForFrame(layoutShifted: boolean, altScreen: boolean): boolean {
-  return !layoutShifted || altScreen
+export function canAnchorWideCellsForFrame(
+  layoutShifted: boolean,
+  altScreen: boolean,
+  usesJediTermLayoutQuirks: boolean,
+): boolean {
+  return !layoutShifted || altScreen || !usesJediTermLayoutQuirks
 }
 
 // 模块加载时计算一次——终端能力在会话期间不会改变。

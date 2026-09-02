@@ -15,11 +15,8 @@ import { feature } from 'bun:bundle'
 import { hostname } from 'node:os'
 import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import {
-  getAPIProvider,
-  isAnthropicProvider,
-  isOpenAIProvider,
-} from '../services/model/providers.js'
+import { isAnthropicProvider, isOpenAIProvider } from '../services/model/providers.js'
+import { getMainLoopModel, getProviderForModel } from '../services/model/model.js'
 import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../services/policy-limits/index.js'
 import type { WireMessage } from '../types/index.js'
 import type { Message } from '../types/message.js'
@@ -121,10 +118,14 @@ export async function initReplBridge(options?: InitWireOptions): Promise<ReplWir
   // 1b. 最低版本检查延迟到下方 v1/v2 分支后，因为各实现有独立下限：v1 使用
   // zy_bridge_min_version，v2 使用 zy_bridge_repl_v2_config.min_version。
 
-  // 2. 检查 OAuth，用户必须登录 zy.ai。在策略检查前运行，使 console-auth 用户获得可操作的
-  // "/login" 提示，而非陈旧或错误组织缓存导致的误导性策略错误。
-  // 仅 Anthropic 直连平台需要 OAuth；OpenAI / Google / 本地引擎等平台跳过
-  if (!getWireAccessToken() && isAnthropicProvider(getAPIProvider())) {
+  // 2. 检查旧版 Zy 远程控制所需的登录凭证。在策略检查前运行，使使用旧 Anthropic
+  // 直连配置但尚未登录 Zy 账户的用户先获得可操作的 "/login" 提示。
+  // 这不是通用 OAuth 能力判断：xAI、Codex、Copilot 等命名连接由各 provider 独立认证。
+  const mainLoopModel = getMainLoopModel()
+  if (
+    !getWireAccessToken() &&
+    isAnthropicProvider(getProviderForModel(mainLoopModel), mainLoopModel)
+  ) {
     logWireSkip('no_oauth', '[bridge:repl] Skipping: no OAuth tokens')
     onStateChange?.('failed', '/login')
     return null

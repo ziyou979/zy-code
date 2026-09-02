@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { MessageResponse } from '../MessageResponse.js'
 import { Text } from '../../ink/index.js'
-import { truncateToWidth } from '../../utils/format.js'
+import { truncateToWidth } from '../../utils/truncate.js'
 import type { MCPToolResult } from '../../services/mcp/mcpValidation.js'
 import { renderInlineImage } from '../../services/shell/terminalImage.js'
 

@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { z } from 'zod/v4'
 import { getOauthConfig } from '../../constants/oauth.js'
+import { ANTHROPIC_VERSION } from '../../constants/api.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { isPolicyAllowed } from '../../services/policy-limits/index.js'
 import type { ToolUseContext } from '../../tools/tool.js'
@@ -87,7 +88,7 @@ export const RemoteTriggerTool = buildTool({
     const headers = {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
-      'anthropic-version': '2023-06-01',
+      'anthropic-version': ANTHROPIC_VERSION,
       'anthropic-beta': TRIGGERS_BETA,
       'x-organization-uuid': orgUUID,
     }

@@ -477,6 +477,11 @@ export const enMisc: TranslationResource = {
   'modelPicker.effortLabel': '{effort} effort',
   'modelPicker.effortNotSupported': 'Effort not supported',
   'modelPicker.effortNotSupportedFor': ' for {modelName}',
+  'modelInput.modality.document': 'documents',
+  'modelInput.modality.image': 'images',
+  'modelInput.modality.text': 'text',
+  'modelInput.unsupported':
+    'Model {model} does not support {unsupported} input. Supported input: {supported}. Remove the attachment or switch models.',
   'modelPicker.pressAgainToExit': 'Press {key} again to exit',
   'modelPicker.selectModel': 'Select model',
   'modelCommand.current': 'Current model: {model}',

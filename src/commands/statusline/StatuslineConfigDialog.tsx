@@ -22,6 +22,7 @@ import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useSettings } from '../../hooks/useSettings.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
+import { padVisual } from '../../utils/truncate.js'
 import { Box, Text, useInput } from '../../ink/index.js'
 import { useAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
@@ -291,18 +292,6 @@ function MainView({
 }
 
 /**
- * Visual-width padEnd: pads a string with spaces so its rendered width
- * (accounting for double-cell CJK chars) equals `width` cells.
- */
-function padVisual(s: string, width: number): string {
-  const w = stringWidth(s)
-  if (w >= width) {
-    return s
-  }
-  return s + ' '.repeat(width - w)
-}
-
-/**
  * Single-row label for the module list. Returned as Select option `label`,
  * which Select wraps in a <Text> — so this MUST be Text-only (no <Box>),
  * otherwise Ink throws "<Box> can't be nested inside <Text>". Column
@@ -327,12 +316,12 @@ function ModuleRow({
   const name = tSync(`statusline.module.${module.id}` as never)
   // 位置编号（3 字符宽，如 "1. "）
   const posLabel = `${index + 1}.`
-  const posPadded = padVisual(posLabel, 3)
+  const posPadded = padVisual(posLabel, stringWidth(posLabel), 3)
   // 方向箭头（2 字符宽）
   const arrows = index === 0 ? '↓' : index === total - 1 ? '↑' : '↕'
   // Column widths in terminal cells: name=14, icon=3 (with trailing space).
-  const namePadded = padVisual(name, 14)
-  const iconPadded = padVisual(iconCell, 3)
+  const namePadded = padVisual(name, stringWidth(name), 14)
+  const iconPadded = padVisual(iconCell, stringWidth(iconCell), 3)
   return (
     <Text>
       {checkbox} <Text dimColor>{posPadded}</Text>
@@ -362,7 +351,7 @@ function IconPickerView({
     // Text-only label (Select wraps in <Text>); pad icon to fixed cell width.
     label: (
       <Text>
-        {padVisual(ic || ' ', 3)}
+        {padVisual(ic || ' ', stringWidth(ic || ' '), 3)}
         <Text dimColor>{ic === '' ? tSync('statusline.icon.none') : ic}</Text>
       </Text>
     ),

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { getOauthConfig } from '../constants/oauth.js'
+import { ANTHROPIC_VERSION } from '../constants/api.js'
 import type { WireMessage } from '../types/index.js'
 import type {
   WireControlCancelRequest,
@@ -111,7 +112,7 @@ export class SessionsWebSocket {
     const accessToken = this.getAccessToken()
     const headers = {
       Authorization: `Bearer ${accessToken}`,
-      'anthropic-version': '2023-06-01',
+      'anthropic-version': ANTHROPIC_VERSION,
     }
 
     if (typeof Bun !== 'undefined') {

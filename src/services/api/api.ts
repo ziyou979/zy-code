@@ -12,11 +12,8 @@ import {
 } from 'src/services/analytics/index.js'
 import { prefetchAllMcpResources } from 'src/services/mcp/client.js'
 import type { ScopedMcpServerConfig } from 'src/services/mcp/types.js'
-import {
-  getAPIProvider,
-  isAnthropicBaseUrl,
-  providerHasCapability,
-} from 'src/services/model/providers.js'
+import { getAPIProvider, providerHasCapability } from 'src/services/model/providers.js'
+import { isAnthropicOfficialEndpointForModel } from './baseUrlResolution.js'
 import { BashTool } from 'src/tools/BashTool/BashTool.js'
 import { FileEditTool } from 'src/tools/FileEditTool/FileEditTool.js'
 import { normalizeFileEditInput, stripTrailingWhitespace } from 'src/tools/FileEditTool/utils.js'
@@ -195,7 +192,7 @@ export async function toolToAPISchema(
     if (
       options.model &&
       getModelPromptCachingMode(options.model) === 'explicit' &&
-      isAnthropicBaseUrl() &&
+      isAnthropicOfficialEndpointForModel(options.model) &&
       (getFeatureValue_CACHED_MAY_BE_STALE('zy_fgts', false) ||
         isEnvTruthy(process.env.ZY_CODE_ENABLE_FINE_GRAINED_TOOL_STREAMING))
     ) {

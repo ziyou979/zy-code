@@ -156,7 +156,7 @@ interface ProtocolRegistry {
 }
 ```
 
-- **分派依据直接复用现有决议链**：`getEffectiveApiFormat(provider, model)`（`src/services/model/providers.ts`，已综合 model-capabilities 的 `apiFormat`、provider 注册表的 `modelApiFormats` pattern、OAuth provider 格式、`settings.apiFormat`）产出的 `ApiFormat` 就是 registry 的查表键。`client.ts` 里 `isOpenAIProvider` / `isAnthropicProvider` 等 if/else 全部收敛为注册项的 `match` 函数，行为零变化。
+- **分派依据直接复用现有决议链**：`getEffectiveApiFormat(provider, model)`（`src/services/model/providers.ts`，已综合 model-capabilities 的 `apiFormat`、provider 注册表的 `modelApiFormats` pattern、OAuth provider 格式、auth.json 命名连接的 `apiFormat`）产出的 `ApiFormat` 就是 registry 的查表键。`client.ts` 里 `isOpenAIProvider` / `isAnthropicProvider` 等 if/else 全部收敛为注册项的 `match` 函数，行为零变化。
 - **同名覆盖**：注册 `apiFormat` 相同的 entry 时，后注册者覆盖先注册者（与工具层「用户 > 内置」规则一致），实现「用户替换内置协议」。
 
 ### 4.3 内置注册（与现有代码的映射）

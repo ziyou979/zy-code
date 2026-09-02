@@ -1,5 +1,5 @@
 import { logForDebugging } from '../../services/infra/debug.js'
-import { truncate } from '../../utils/format.js'
+import { truncate } from '../../utils/truncate.js'
 import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { expandPath } from '../../utils/path.js'
 

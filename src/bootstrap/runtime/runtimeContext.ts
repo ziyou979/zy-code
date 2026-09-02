@@ -516,6 +516,12 @@ export const getTotalAPIDurationWithoutRetries: StateModule['getTotalAPIDuration
   ...args
 ) => resolveRuntimeFunction('getTotalAPIDurationWithoutRetries')(...args)
 
+export const addToTotalDecodeMs: StateModule['addToTotalDecodeMs'] = (...args) =>
+  resolveRuntimeFunction('addToTotalDecodeMs')(...args)
+
+export const getTotalDecodeMs: StateModule['getTotalDecodeMs'] = (...args) =>
+  resolveRuntimeFunction('getTotalDecodeMs')(...args)
+
 export const getTotalCostByCurrency: StateModule['getTotalCostByCurrency'] = (...args) =>
   resolveRuntimeFunction('getTotalCostByCurrency')(...args)
 

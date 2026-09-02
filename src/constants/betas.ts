@@ -10,6 +10,8 @@ export const CONTEXT_MANAGEMENT_BETA_HEADER = 'context-management-2025-06-27'
 export const ADVANCED_TOOL_USE_BETA_HEADER = 'advanced-tool-use-2025-11-20'
 export const TOOL_SEARCH_TOOL_BETA_HEADER = 'tool-search-tool-2025-10-19'
 export const EFFORT_BETA_HEADER = 'effort-2025-11-24'
+// 远端会话 ingress（bridge/teleport/remote-setup 的 session 创建与 wire 通道）必需的 BYOC beta。
+export const CCR_BYOC_BETA_HEADER = 'ccr-byoc-2025-07-29'
 export const TASK_BUDGETS_BETA_HEADER = 'task-budgets-2026-03-13'
 export const TOKEN_EFFICIENT_TOOLS_BETA_HEADER = 'token-efficient-tools-2026-03-28'
 export const SUMMARIZE_CONNECTOR_TEXT_BETA_HEADER = feature('CONNECTOR_TEXT')

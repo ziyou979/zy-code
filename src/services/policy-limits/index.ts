@@ -17,22 +17,19 @@ import { readFileSync as fsReadFileSync } from 'node:fs'
 import { unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import axios from 'axios'
-import {
-  getOauthConfig,
-  OAUTH_BETA_HEADER,
-  ZY_CODE_INFERENCE_SCOPE,
-} from '../../constants/oauth.js'
-import { getAPIProvider, isAnthropicBaseUrl } from '../model/providers.js'
+import { getOauthConfig, ZY_CODE_INFERENCE_SCOPE } from '../../constants/oauth.js'
+import { buildAuthHeaders } from '../http/authHeaders.js'
+import { getAPIProvider } from '../model/providers.js'
+import { isAnthropicOfficialEndpointForModel } from '../api/baseUrlResolution.js'
 import { registerCleanup } from '../cleanup/cleanupRegistry.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { isEssentialTrafficOnly } from '../telemetry/privacyLevel.js'
-import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
-import { getRetryDelay } from '../api/withRetry.js'
+import { retryWithBackoffLoop } from '../http/retryLoop.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getApiKeyWithSource,
@@ -44,8 +41,8 @@ import {
   PolicyLimitsResponseSchema,
 } from './types.js'
 
-function isNodeError(e: unknown): e is NodeJS.ErrnoException {
-  return e instanceof Error
+export function isNodeError(e: unknown): e is NodeJS.ErrnoException {
+  return e instanceof Error && 'code' in e && typeof e.code === 'string'
 }
 
 // Constants
@@ -162,7 +159,7 @@ export function isPolicyLimitsEligible(): boolean {
   }
 
   // Custom base URL users should not hit the policy limits endpoint
-  if (!isAnthropicBaseUrl()) {
+  if (!isAnthropicOfficialEndpointForModel()) {
     return false
   }
 
@@ -212,70 +209,37 @@ export async function waitForPolicyLimitsToLoad(): Promise<void> {
  * Get auth headers for policy limits without calling getSettings()
  * Supports both API key and OAuth authentication
  */
-function getAuthHeaders(): {
-  headers: Record<string, string>
-  error?: string
-} {
-  // Try API key first (for Console users)
+function getAuthHeaders() {
+  // Try API key first (for Console users)；CI/测试环境下 getApiKeyWithSource 可能抛异常
+  let apiKey: string | undefined
   try {
-    const { key: apiKey } = getApiKeyWithSource({
+    const { key } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })
-    if (apiKey) {
-      return {
-        headers: {
-          'x-api-key': apiKey,
-        },
-      }
-    }
+    apiKey = key ?? undefined
   } catch {
     // No API key available - continue to check OAuth
   }
 
-  // Fall back to OAuth tokens (for Zy.ai users)
-  const oauthTokens = getZyAIOAuthTokens()
-  if (oauthTokens?.accessToken) {
-    return {
-      headers: {
-        Authorization: `Bearer ${oauthTokens.accessToken}`,
-        'anthropic-beta': OAUTH_BETA_HEADER,
-      },
-    }
-  }
-
-  return {
-    headers: {},
-    error: 'No authentication available',
-  }
+  return buildAuthHeaders({
+    apiKey,
+    oauthToken: getZyAIOAuthTokens()?.accessToken,
+    errorMessage: 'No authentication available',
+  })
 }
 
 /**
  * Fetch policy limits with retry logic and exponential backoff
  */
 async function fetchWithRetry(cachedChecksum?: string): Promise<PolicyLimitsFetchResult> {
-  let lastResult: PolicyLimitsFetchResult | null = null
-
-  for (let attempt = 1; attempt <= DEFAULT_MAX_RETRIES + 1; attempt++) {
-    lastResult = await fetchPolicyLimits(cachedChecksum)
-
-    if (lastResult.success) {
-      return lastResult
-    }
-
-    if (lastResult.skipRetry) {
-      return lastResult
-    }
-
-    if (attempt > DEFAULT_MAX_RETRIES) {
-      return lastResult
-    }
-
-    const delayMs = getRetryDelay(attempt)
-    logForDebugging(`Policy limits: Retry ${attempt}/${DEFAULT_MAX_RETRIES} after ${delayMs}ms`)
-    await sleep(delayMs)
-  }
-
-  return lastResult!
+  // 重试骨架收敛到 http/retryLoop.ts
+  return retryWithBackoffLoop({
+    maxRetries: DEFAULT_MAX_RETRIES,
+    fetchOnce: () => fetchPolicyLimits(cachedChecksum),
+    onRetry: (attempt, delayMs) => {
+      logForDebugging(`Policy limits: Retry ${attempt}/${DEFAULT_MAX_RETRIES} after ${delayMs}ms`)
+    },
+  })
 }
 
 /**

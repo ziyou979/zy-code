@@ -5,7 +5,8 @@ import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
 import type { ToolProgressData } from '../../tools/tool.js'
 import type { ProgressMessage } from '../../types/message.js'
-import { formatFileSize, truncate } from '../../utils/format.js'
+import { formatFileSize } from '../../utils/format.js'
+import { truncate } from '../../utils/truncate.js'
 import type { Output } from './WebFetchTool.js'
 export function renderToolUseMessage(
   {

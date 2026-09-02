@@ -1,5 +1,6 @@
 import { feature } from 'bun:bundle'
 import {
+  addToTotalDecodeMs,
   addToTotalDurationState,
   consumePostCompaction,
   getIsNonInteractiveSession,
@@ -645,6 +646,11 @@ export function logAPISuccessAndDuration({
   const durationMs = Date.now() - start
   const durationMsIncludingRetries = Date.now() - startIncludingRetries
   addToTotalDurationState(durationMsIncludingRetries, durationMs)
+  // 解码时长 = 总时长 - TTFT（首 token 前的排队/提示处理）。仅流式请求有
+  // ttftMs；非流式一次性返回，无法拆分，不计入 tok/s 口径。
+  if (ttftMs !== null) {
+    addToTotalDecodeMs(durationMs - ttftMs)
+  }
 
   logAPISuccess({
     model,

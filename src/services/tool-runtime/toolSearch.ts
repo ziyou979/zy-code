@@ -7,11 +7,8 @@
 
 import memoize from 'lodash-es/memoize.js'
 import { getMainLoopModel } from 'src/services/model/model.js'
-import {
-  getAPIProvider,
-  isAnthropicBaseUrl,
-  isAnthropicModel,
-} from 'src/services/model/providers.js'
+import { getAPIProvider, isAnthropicModel } from 'src/services/model/providers.js'
+import { isAnthropicOfficialEndpointForModel } from '../api/baseUrlResolution.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -310,11 +307,7 @@ export function isToolSearchEnabledOptimistic(): boolean {
   // 未设置/为空（默认行为）时适用。设置任意非空值（'true'、'auto'、'auto:N'）表示用户
   // 显式配置了 tool search，并断言其配置支持它。falsy 检查（而非 === undefined）与
   // getToolSearchMode() 一致，后者也把 "" 视为未设置。
-  if (
-    !process.env.ENABLE_TOOL_SEARCH &&
-    getAPIProvider() === 'anthropic' &&
-    !isAnthropicBaseUrl()
-  ) {
+  if (!process.env.ENABLE_TOOL_SEARCH && !isAnthropicOfficialEndpointForModel(getMainLoopModel())) {
     if (!loggedOptimistic) {
       loggedOptimistic = true
       logForDebugging(

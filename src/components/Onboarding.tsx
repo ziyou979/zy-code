@@ -11,6 +11,7 @@ import { Box, Link, Newline, Text, useTheme } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
 import { type EffortLevel, toPersistableEffort } from '../services/effort/effort.js'
+import { buildOnboardingModels } from '../services/settings/onboardingModelSettings.js'
 import { updateSettingsForSource } from '../services/settings/settings.js'
 import { ApiKeySetup, type ApiKeyProvider } from './ApiKeySetup.js'
 import { Select } from './CustomSelect/select.js'
@@ -212,14 +213,8 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
 
   // mainLoopModel tier selection — choose which tier is the default
   function handleTierDone(tier: string) {
-    // Build models object
-    const models: Record<string, string> = { standard: tierModels.standard }
-    if (tierModels.advanced) {
-      models.advanced = tierModels.advanced
-    }
-    if (tierModels.compact) {
-      models.compact = tierModels.compact
-    }
+    // 模型引用必须携带连接 id，避免首次启动依赖顶层 provider 或 auth.json 条目顺序。
+    const models = buildOnboardingModels(selectedProvider ?? 'anthropic', tierModels)
 
     const mainLoopModel = (['advanced', 'standard', 'compact'] as const).includes(
       tier as 'advanced' | 'standard' | 'compact',

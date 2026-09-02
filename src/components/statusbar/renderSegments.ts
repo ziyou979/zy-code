@@ -22,6 +22,7 @@ import {
   getTotalAPIDuration,
   getTotalCost,
   getTotalCostByCurrency,
+  getTotalDecodeMs,
   getTotalInputTokens,
   getTotalOutputTokens,
 } from '../../services/cost/costTracker.js'
@@ -186,8 +187,12 @@ const RENDERERS: Record<ModuleId, Renderer> = {
       return null
     }
     const icon = effectiveIcon(module)
+    // 输入/输出分开统计：↑ 累计输入（含缓存读写），↓ 累计输出。
     let body = `↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`
-    const durationMs = getTotalAPIDuration()
+    // tok/s 只按解码时长（首 token 之后）计算，避免 TTFT/重试等待稀释读数；
+    // 无解码记录时回退总 API 时长，保证非流式通道仍有参考值。
+    const decodeMs = getTotalDecodeMs()
+    const durationMs = decodeMs > 0 ? decodeMs : getTotalAPIDuration()
     if (totalOut > 0 && durationMs > 0) {
       const tps = totalOut / (durationMs / 1000)
       body += `  » ${tps >= 1000 ? `${(tps / 1000).toFixed(1)}k` : `${Math.round(tps)}`} tok/s`

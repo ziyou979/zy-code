@@ -8,6 +8,7 @@ import { sleep } from '../../utils/sleep.js'
 import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 import type { Transport } from './transport.js'
+import { ANTHROPIC_VERSION } from '../../constants/api.js'
 
 // ---------------------------------------------------------------------------
 // 配置
@@ -241,7 +242,7 @@ export class SSETransport implements Transport {
       ...this.headers,
       ...authHeaders,
       Accept: 'text/event-stream',
-      'anthropic-version': '2023-06-01',
+      'anthropic-version': ANTHROPIC_VERSION,
       'User-Agent': getZyCodeUserAgent(),
     }
     if (authHeaders.Cookie) {
@@ -555,7 +556,7 @@ export class SSETransport implements Transport {
     const headers: Record<string, string> = {
       ...authHeaders,
       'Content-Type': 'application/json',
-      'anthropic-version': '2023-06-01',
+      'anthropic-version': ANTHROPIC_VERSION,
       'User-Agent': getZyCodeUserAgent(),
     }
 

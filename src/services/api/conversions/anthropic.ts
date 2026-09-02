@@ -561,16 +561,21 @@ export function buildAnthropicCreateParams(params: CreateParams): AnthropicCreat
   if (contextManagement !== undefined) {
     out.context_management = contextManagement
   }
+  // `on` 是 zy-code 的语义档位，只表示开启思考而不指定强度。Anthropic 协议不接受
+  // 这个值；保留 thinking 配置即可让端点自行选择默认强度。
+  const anthropicReasoningEffort =
+    params.reasoningEffort === 'on' ? undefined : params.reasoningEffort
+
   // output_config 从拍平后的字段构造；anthropicExtras.outputConfig 作为全量覆盖
   const hasAnyOutputConfigField =
-    params.reasoningEffort ||
+    anthropicReasoningEffort ||
     params.responseFormat ||
     params.taskBudget ||
     anthropicExtras?.outputConfig
   if (hasAnyOutputConfigField) {
     const anthropicOutputConfig: Record<string, unknown> = {
       ...(anthropicExtras?.outputConfig ?? {}),
-      ...(params.reasoningEffort && { effort: params.reasoningEffort }),
+      ...(anthropicReasoningEffort && { effort: anthropicReasoningEffort }),
       ...(params.responseFormat && { format: params.responseFormat }),
       ...(params.taskBudget && { task_budget: params.taskBudget }),
     }

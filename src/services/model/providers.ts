@@ -1,5 +1,4 @@
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/index.js'
-import { isInternalBuild } from '../../services/infra/envUtils.js'
 import {
   getLocalModelApiFormat,
   getLocalModelCapability,
@@ -15,6 +14,7 @@ import { type ApiFormat } from './apiFormat.js'
 import {
   DEFAULT_OPENAI_THINKING_ATTR,
   getProviderEntry,
+  getSupportedFormats,
   resolveOpenAiThinkingAttr,
   type OpenAiAttr,
   PROVIDER_REGISTRY,
@@ -27,7 +27,7 @@ import {
 export type APIProvider = (typeof PROVIDER_REGISTRY)[number]['id']
 
 /**
- * 从 settings（zy.json）中获取已配置的 API provider。
+ * 从旧版 settings（zy.json）中获取已配置的 API provider。
  * 未配置时返回 null。
  */
 function getSettingsProvider(): APIProvider | null {
@@ -58,13 +58,13 @@ export function getAPIProvider(): APIProvider {
     // settings / sticky 未就绪
   }
 
-  // 1. settings.json 中配置的平台。OAuth 不应覆盖用户的模型组合。
+  // 1. 兼容旧版 settings.provider；新配置由模型引用显式绑定连接。
   const settingsProvider = getSettingsProvider()
   if (settingsProvider) {
     return settingsProvider
   }
 
-  // 2. 未配置 settings 时，任意已登录 OAuth 可作为启动回退。
+  // 2. 任意已登录 OAuth 可作为启动回退。
   const oauthProvider = getActiveOAuthProviderInfo()
   if (oauthProvider?.apiProvider) {
     return oauthProvider.apiProvider as APIProvider
@@ -149,60 +149,25 @@ export function providerHasCapability(
 }
 
 /**
- * 检查 ZY_CODE_BASE_URL 是否为 Anthropic API 地址。
- * 未设置（使用默认 API）或指向 api.anthropic.com 时返回 true
- * （内部构建还允许 api-staging.anthropic.com）。
- */
-export function isAnthropicBaseUrl(): boolean {
-  const baseUrl = process.env.ZY_CODE_BASE_URL
-  if (!baseUrl) {
-    return true
-  }
-  try {
-    const host = new URL(baseUrl).host
-    const allowedHosts = ['api.anthropic.com']
-    if (isInternalBuild()) {
-      allowedHosts.push('api-staging.anthropic.com')
-    }
-    return allowedHosts.includes(host)
-  } catch {
-    return false
-  }
-}
-
-/**
- * 对于直接使用 Anthropic SDK 并采用 Anthropic 兼容消息格式的 provider 返回 true
- * （不仅是使用了 SDK 库，而是请求/响应的实际结构也兼容）。
- * 用于 beta header 注入和 request-ID 日志记录。
- */
-export function isCompatibleProvider(provider: APIProvider): boolean {
-  const entry = getProviderEntry(provider)
-  if (!entry) {
-    return false
-  }
-  // bedrock、vertex、azure 使用 Anthropic 格式但不走 Anthropic SDK
-  return !['bedrock', 'vertex', 'azure'].includes(entry.id)
-}
-
-/**
  * 返回 provider 当前实际生效的 API 消息格式。
  *
- * 优先级：
+ * 优先级（用户配置入口只有两处：模型维度走 model-capabilities.json，
+ * 供应商维度走 auth.json 命名连接）：
  * 1. 模型在 `model-capabilities.json` 中声明的 `apiFormat`（若 provider 支持）
  * 2. provider 注册表中的模型级 apiFormat 路由（若 provider 支持）
- * 3. 活跃 OAuth provider 声明的 apiFormat（若与当前 provider 匹配）
- * 4. 用户显式设置的 `settings.apiFormat`（若 provider 支持）
- * 5. provider 注册表声明的 `supportedFormats[0]`（默认首选格式）
+ * 3. 活跃 OAuth 连接声明的 apiFormat（若与当前 provider 匹配）
+ * 4. `auth.json` 命名连接声明的 apiFormat（若 provider 支持）
+ * 5. 兜底：provider 注册表 `formatEndpoints` 首位声明的格式（默认首选格式）
  *
  * 若 provider 不存在或不支持任何格式，返回 null。
  */
 export function getEffectiveApiFormat(provider: APIProvider, model?: string): ApiFormat | null {
   const entry = getProviderEntry(provider)
-  if (!entry || entry.supportedFormats.length === 0) {
+  if (!entry || entry.formatEndpoints.length === 0) {
     return null
   }
 
-  const supported = new Set(entry.supportedFormats)
+  const supported = new Set(getSupportedFormats(entry))
 
   // 1. 模型级声明优先，用于同一 provider 下不同模型走不同 API 格式。
   if (model) {
@@ -253,21 +218,8 @@ export function getEffectiveApiFormat(provider: APIProvider, model?: string): Ap
     }
   }
 
-  // 5. 用户显式设置优先
-  try {
-    const { getInitialSettings } =
-      require('../settings/settings.js') as typeof import('../settings/settings.js')
-    const settings = getInitialSettings()
-    const format = settings.providers?.[provider]?.apiFormat ?? settings.apiFormat
-    if (format && supported.has(format)) {
-      return format
-    }
-  } catch {
-    // settings 尚未就绪，继续按默认值推导
-  }
-
-  // 6. 默认使用注册表中声明的第一个格式
-  return entry.supportedFormats[0]
+  // 5. 兜底使用注册表中声明的第一个格式
+  return entry.formatEndpoints[0].format
 }
 
 /**
@@ -291,7 +243,7 @@ export function isOpenAIResponsesProvider(provider: APIProvider, model?: string)
 
 /**
  * 判断是否为使用 Google Generative AI 原生 API 的 provider。
- * Gemini 默认使用 google 格式，可通过 settings.apiFormat 切换回 openai。
+ * Gemini 默认使用 google 格式，可通过 auth.json 连接的 apiFormat 切换回 openai。
  */
 export function isGoogleProvider(provider: APIProvider, model?: string): boolean {
   return getEffectiveApiFormat(provider, model) === 'google'
@@ -299,7 +251,7 @@ export function isGoogleProvider(provider: APIProvider, model?: string): boolean
 
 /**
  * 判断是否为使用 Anthropic SDK / Anthropic 兼容消息格式的 provider。
- * 双格式 provider（如 dashscope）通过 settings.apiFormat 切换为 openai 时返回 false。
+ * 双格式 provider（如 dashscope）通过 auth.json 连接的 apiFormat 切换为 openai 时返回 false。
  */
 export function isAnthropicProvider(provider: APIProvider, model?: string): boolean {
   return getEffectiveApiFormat(provider, model) === 'anthropic'

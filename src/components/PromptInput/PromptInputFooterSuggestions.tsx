@@ -2,7 +2,7 @@ import { memo } from 'react'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, type ClickEvent, Text } from '../../ink/index.js'
-import { truncatePathMiddle, truncateToWidth } from '../../utils/format.js'
+import { truncatePathMiddle, truncateToWidth } from '../../utils/truncate.js'
 import type { Theme } from '../../services/environment/theme.js'
 import type { SuggestionItem, SuggestionType } from '../../services/suggestions/types.js'
 

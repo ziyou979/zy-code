@@ -1,5 +1,6 @@
 import axios from 'axios'
 
+import { ANTHROPIC_VERSION } from '../constants/api.js'
 import { debugBody, extractErrorDetail } from './debugUtils.js'
 import {
   BRIDGE_LOGIN_INSTRUCTION,
@@ -76,7 +77,7 @@ export function createWireApiClient(deps: WireApiDeps): WireApiClient {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
-      'anthropic-version': '2023-06-01',
+      'anthropic-version': ANTHROPIC_VERSION,
       'anthropic-beta': BETA_HEADER,
       'x-environment-runner-version': deps.runnerVersion,
     }

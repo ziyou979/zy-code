@@ -26,7 +26,7 @@ import {
 // Files API 目前处于 beta 阶段。oauth-2025-04-20 在公共 API 路由上启用
 // Bearer OAuth（auth.py: "oauth_auth" 不在 beta_versions 中 → 404）。
 const FILES_API_BETA_HEADER = 'files-api-2025-04-14,oauth-2025-04-20'
-const ANTHROPIC_VERSION = '2023-06-01'
+import { ANTHROPIC_VERSION } from '../../constants/api.js'
 
 // API 基础 URL — 使用 env-manager 设置的 ZY_CODE_BASE_URL 以匹配对应环境
 // 独立使用时回退到 ZY Code 自有文件服务

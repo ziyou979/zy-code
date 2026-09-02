@@ -7,8 +7,7 @@ import {
   getModelEffortLevels,
 } from '../../services/effort/effort.js'
 import { executeEffort, showCurrentEffort } from './effort.js'
-
-const COMMON_HELP_ARGS = ['help', '-h', '--help']
+import { COMMON_HELP_ARGS } from '../../constants/xml.js'
 
 /**
  * /effort 的非交互（local）入口：复用已有纯函数 executeEffort / showCurrentEffort，

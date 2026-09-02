@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { StdoutMessage } from 'src/types/wire/control.js'
 import type { WirePartialAssistantMessage } from 'src/types/wire/messages.js'
 import { decodeJwtExpiry } from '../../bridge/jwtUtils.js'
+import { ANTHROPIC_VERSION } from '../../constants/api.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { logForDiagnosticsNoPII } from '../../services/telemetry/diagLogs.js'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
@@ -534,7 +535,7 @@ export class CCRClient {
         headers: {
           ...authHeaders,
           'Content-Type': 'application/json',
-          'anthropic-version': '2023-06-01',
+          'anthropic-version': ANTHROPIC_VERSION,
           'User-Agent': getZyCodeUserAgent(),
         },
         validateStatus: alwaysValidStatus,
@@ -861,7 +862,7 @@ export class CCRClient {
         response = await this.http.get<T>(url, {
           headers: {
             ...authHeaders,
-            'anthropic-version': '2023-06-01',
+            'anthropic-version': ANTHROPIC_VERSION,
             'User-Agent': getZyCodeUserAgent(),
           },
           validateStatus: alwaysValidStatus,

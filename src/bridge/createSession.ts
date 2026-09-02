@@ -54,7 +54,7 @@ export async function createWireSession({
   const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
   const { getOrganizationUUID } = await import('../services/auth/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
-  const { getOAuthHeaders } = await import('../services/teleport/api.js')
+  const { buildSessionApiHeaders } = await import('../services/http/authHeaders.js')
   const { parseGitHubRepository } = await import('../services/git/detectRepository.js')
   const { getDefaultBranch } = await import('../services/infra/git.js')
   const { getMainLoopModel } = await import('../services/model/model.js')
@@ -133,11 +133,7 @@ export async function createWireSession({
     ...(permissionMode && { permission_mode: permissionMode }),
   }
 
-  const headers = {
-    ...getOAuthHeaders(accessToken),
-    'anthropic-beta': 'ccr-byoc-2025-07-29',
-    'x-organization-uuid': orgUUID,
-  }
+  const headers = buildSessionApiHeaders({ accessToken, orgUUID })
 
   const url = `${baseUrlOverride ?? getOauthConfig().BASE_API_URL}/v1/sessions`
   let response
@@ -190,7 +186,7 @@ export async function getWireSession(
   const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
   const { getOrganizationUUID } = await import('../services/auth/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
-  const { getOAuthHeaders } = await import('../services/teleport/api.js')
+  const { buildSessionApiHeaders } = await import('../services/http/authHeaders.js')
   const { default: axios } = await import('axios')
 
   const accessToken = opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
@@ -205,11 +201,7 @@ export async function getWireSession(
     return null
   }
 
-  const headers = {
-    ...getOAuthHeaders(accessToken),
-    'anthropic-beta': 'ccr-byoc-2025-07-29',
-    'x-organization-uuid': orgUUID,
-  }
+  const headers = buildSessionApiHeaders({ accessToken, orgUUID })
 
   const url = `${opts?.baseUrl ?? getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}`
   logForDebugging(`[bridge] Fetching session ${sessionId}`)
@@ -265,7 +257,7 @@ export async function archiveWireSession(
   const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
   const { getOrganizationUUID } = await import('../services/auth/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
-  const { getOAuthHeaders } = await import('../services/teleport/api.js')
+  const { buildSessionApiHeaders } = await import('../services/http/authHeaders.js')
   const { default: axios } = await import('axios')
 
   const accessToken = opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
@@ -280,11 +272,7 @@ export async function archiveWireSession(
     return
   }
 
-  const headers = {
-    ...getOAuthHeaders(accessToken),
-    'anthropic-beta': 'ccr-byoc-2025-07-29',
-    'x-organization-uuid': orgUUID,
-  }
+  const headers = buildSessionApiHeaders({ accessToken, orgUUID })
 
   const url = `${opts?.baseUrl ?? getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/archive`
   logForDebugging(`[bridge] Archiving session ${sessionId}`)
@@ -325,7 +313,7 @@ export async function updateWireSessionTitle(
   const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
   const { getOrganizationUUID } = await import('../services/auth/auth.js')
   const { getOauthConfig } = await import('../constants/oauth.js')
-  const { getOAuthHeaders } = await import('../services/teleport/api.js')
+  const { buildSessionApiHeaders } = await import('../services/http/authHeaders.js')
   const { default: axios } = await import('axios')
 
   const accessToken = opts?.getAccessToken?.() ?? getZyAIOAuthTokens()?.accessToken
@@ -340,11 +328,7 @@ export async function updateWireSessionTitle(
     return
   }
 
-  const headers = {
-    ...getOAuthHeaders(accessToken),
-    'anthropic-beta': 'ccr-byoc-2025-07-29',
-    'x-organization-uuid': orgUUID,
-  }
+  const headers = buildSessionApiHeaders({ accessToken, orgUUID })
 
   // Compat gateway only accepts session_* (compat/convert.go:27). v2 callers
   // pass raw cse_*; retag here so all callers can pass whatever they hold.

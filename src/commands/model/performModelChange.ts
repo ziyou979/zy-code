@@ -1,5 +1,5 @@
 import { tSync } from '../../i18n/index.js'
-import { MODEL_ALIASES } from '../../services/model/aliases.js'
+import { isKnownModelAlias } from '../../services/model/aliases.js'
 import {
   getDefaultMainLoopModelSetting,
   getMainLoopModel,
@@ -7,6 +7,7 @@ import {
 } from '../../services/model/model.js'
 import { isModelAllowed } from '../../services/model/modelAllowlist.js'
 import { validateModel } from '../../services/model/validateModel.js'
+import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js'
 
 /**
  * /model 命令的纯逻辑层，被 local-jsx 与 local 两个入口共享。
@@ -24,14 +25,6 @@ export type ModelDecision =
   | { kind: 'reject'; message: string }
   | { kind: 'picker' }
   | { kind: 'info'; message: string }
-
-const COMMON_HELP_ARGS = ['help', '-h', '--help']
-const COMMON_INFO_ARGS = ['list', 'show', 'display', 'current', 'status']
-
-/** 与 model.tsx 中同名 helper 对齐：判断输入是否为预定义别名 */
-function isKnownAlias(model: string): boolean {
-  return (MODEL_ALIASES as readonly string[]).includes(model.toLowerCase().trim())
-}
 
 /** 渲染模型显示名（含 default 标注），与 jsx 端一致 */
 export function renderModelLabel(model: string | null): string {
@@ -51,9 +44,13 @@ export function describeCurrentModel(
   const displayModel = renderModelLabel(mainLoopModel ?? null)
   const effortInfo = effortValue !== undefined ? ` (effort: ${String(effortValue)})` : ''
   if (mainLoopModelForSession) {
-    return `Current model: ${renderModelLabel(mainLoopModelForSession)} (session override from plan mode)\nBase model: ${displayModel}${effortInfo}`
+    return tSync('modelCommand.currentSessionOverride', {
+      model: renderModelLabel(mainLoopModelForSession),
+      base: displayModel,
+      effort: effortInfo,
+    })
   }
-  return `Current model: ${displayModel}${effortInfo}`
+  return tSync('modelCommand.current', { model: displayModel }) + effortInfo
 }
 
 /**
@@ -74,7 +71,9 @@ export async function resolveModelChange(rawArgs: string): Promise<ModelDecision
     // 这里仅给一个不依赖 appState 的最小回退（极少触发）
     return {
       kind: 'info',
-      message: `Current model: ${renderModelLabel(getMainLoopModel() ?? null)}`,
+      message: tSync('modelCommand.current', {
+        model: renderModelLabel(getMainLoopModel() ?? null),
+      }),
     }
   }
 
@@ -93,11 +92,11 @@ export async function resolveModelChange(rawArgs: string): Promise<ModelDecision
   }
 
   // null 或别名跳过 validateModel —— 与 jsx 端 SetModelAndClose 行为对齐
-  if (!model || isKnownAlias(model)) {
+  if (!model || isKnownModelAlias(model)) {
     return {
       kind: 'apply',
       model,
-      message: `Set model to ${renderModelLabel(model)}`,
+      message: tSync('modelCommand.set', { model: renderModelLabel(model) }),
     }
   }
 
@@ -108,7 +107,7 @@ export async function resolveModelChange(rawArgs: string): Promise<ModelDecision
       return {
         kind: 'apply',
         model,
-        message: `Set model to ${renderModelLabel(model)}`,
+        message: tSync('modelCommand.set', { model: renderModelLabel(model) }),
       }
     }
     return { kind: 'reject', message: error || tSync('modelCommand.notFound', { model }) }

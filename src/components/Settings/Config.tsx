@@ -11,6 +11,8 @@ import {
   saveGlobalConfig,
   getCurrentProjectConfig,
   type OutputStyle,
+  approveApiKeyFingerprint,
+  rejectApiKeyFingerprint,
 } from '../../services/config/config.js'
 import { normalizeApiKeyForConfig } from '../../services/auth/authPortable.js'
 import {
@@ -1163,60 +1165,15 @@ export function Config({
             ),
             type: 'boolean' as const,
             onChange(useCustomKey: boolean) {
-              saveGlobalConfig((current_22) => {
-                const updated = {
-                  ...current_22,
+              if (process.env.ZY_API_KEY) {
+                const truncatedKey = normalizeApiKeyForConfig(process.env.ZY_API_KEY)
+                // 与 ApproveApiKey / ApiKeySetup / auth.saveApiKey 共用同一写入路径
+                if (useCustomKey) {
+                  approveApiKeyFingerprint(truncatedKey)
+                } else {
+                  rejectApiKeyFingerprint(truncatedKey)
                 }
-                if (!updated.apiKeyResponses) {
-                  updated.apiKeyResponses = {
-                    approved: [],
-                    rejected: [],
-                  }
-                }
-                if (!updated.apiKeyResponses.approved) {
-                  updated.apiKeyResponses = {
-                    ...updated.apiKeyResponses,
-                    approved: [],
-                  }
-                }
-                if (!updated.apiKeyResponses.rejected) {
-                  updated.apiKeyResponses = {
-                    ...updated.apiKeyResponses,
-                    rejected: [],
-                  }
-                }
-                if (process.env.ZY_API_KEY) {
-                  const truncatedKey = normalizeApiKeyForConfig(process.env.ZY_API_KEY)
-                  if (useCustomKey) {
-                    updated.apiKeyResponses = {
-                      ...updated.apiKeyResponses,
-                      approved: [
-                        ...(updated.apiKeyResponses.approved ?? []).filter(
-                          (k) => k !== truncatedKey,
-                        ),
-                        truncatedKey,
-                      ],
-                      rejected: (updated.apiKeyResponses.rejected ?? []).filter(
-                        (k_0) => k_0 !== truncatedKey,
-                      ),
-                    }
-                  } else {
-                    updated.apiKeyResponses = {
-                      ...updated.apiKeyResponses,
-                      approved: (updated.apiKeyResponses.approved ?? []).filter(
-                        (k_1) => k_1 !== truncatedKey,
-                      ),
-                      rejected: [
-                        ...(updated.apiKeyResponses.rejected ?? []).filter(
-                          (k_2) => k_2 !== truncatedKey,
-                        ),
-                        truncatedKey,
-                      ],
-                    }
-                  }
-                }
-                return updated
-              })
+              }
               setGlobalConfig(getGlobalConfig())
             },
           },

@@ -192,3 +192,31 @@ export function wrapText(text: string, width: number): string[] {
   }
   return lines
 }
+
+/**
+ * Pads a string to a target display width with spaces.
+ * Supports left, center, and right alignment.
+ * Handles ANSI escape codes correctly by using display width.
+ *
+ * @param content The string to pad
+ * @param displayWidth The current display width of the content (without padding)
+ * @param targetWidth The target display width
+ * @param align Alignment: 'left' (default), 'center', or 'right'
+ * @returns The padded string
+ */
+export function padVisual(
+  content: string,
+  displayWidth: number,
+  targetWidth: number,
+  align: 'left' | 'center' | 'right' = 'left',
+): string {
+  const padding = Math.max(0, targetWidth - displayWidth)
+  if (align === 'center') {
+    const leftPad = Math.floor(padding / 2)
+    return ' '.repeat(leftPad) + content + ' '.repeat(padding - leftPad)
+  }
+  if (align === 'right') {
+    return ' '.repeat(padding) + content
+  }
+  return content + ' '.repeat(padding)
+}

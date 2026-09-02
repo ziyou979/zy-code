@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text } from '../../ink/index.js'
-import { truncate } from '../../utils/format.js'
+import { truncate } from '../../utils/truncate.js'
 export type FeedLine = {
   text: string
   timestamp?: string

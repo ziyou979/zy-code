@@ -1,4 +1,3 @@
-import { getProviderForModel } from 'src/services/model/model.js'
 import { resolveModel } from 'src/services/model/resolvedModel.js'
 import { getCLISyspromptPrefix } from '../../../constants/system.js'
 import { type Tools, toolMatchesName } from '../../../tools/tool.js'
@@ -45,6 +44,7 @@ import { type EffortLevel } from 'src/services/effort/effort.js'
 import { isMcpInstructionsDeltaEnabled } from 'src/services/mcp/mcpInstructionsDelta.js'
 import { queryCheckpoint } from 'src/services/query/queryProfiler.js'
 import { type ThinkingConfig } from 'src/services/messages/thinking.js'
+import { assertModelAcceptsMessageInput } from 'src/services/model/modelInputCapabilities.js'
 import {
   extractDiscoveredToolNames,
   isDeferredToolsDeltaEnabled,
@@ -125,7 +125,7 @@ export async function prepareStreamingQuery(
     'query',
   )
 
-  const apiProvider = getProviderForModel(options.model)
+  const apiProvider = resolved.provider
 
   // 预计算一次 — isDeferredTool 每次调用执行 2 次 GrowthBook 查找
   const deferredToolNames = new Set<string>()
@@ -294,6 +294,9 @@ export async function prepareStreamingQuery(
   // 与其报错（在 Cowork/CCD 中难以恢复），我们
   // 静默移除最旧的媒体项以保持在限制内。
   messagesForAPI = stripExcessMediaItems(messagesForAPI, API_MAX_MEDIA_PER_REQUEST)
+
+  // 能力未声明时保持历史兼容；显式声明后，在 provider 收到请求前给出可操作的错误。
+  assertModelAcceptsMessageInput(options.model, messagesForAPI)
 
   //  instrumentation：跟踪规范化后的消息数量
   logEvent('zy_api_after_normalize', {

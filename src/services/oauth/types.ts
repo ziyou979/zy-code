@@ -1,4 +1,6 @@
-// OAuth 类型
+// 旧版 Zy 账户 OAuth 兼容类型（订阅资料、scope 与远端服务使用）。
+// 多 Provider OAuth 的通用凭证和接口定义位于 providers/types.ts，支持
+// Anthropic、xAI、OpenAI Codex、GitHub Copilot 及后续注册的 provider。
 
 export interface OAuthConfig {
   clientId: string

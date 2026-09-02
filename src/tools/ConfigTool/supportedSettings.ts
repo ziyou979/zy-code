@@ -34,12 +34,6 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
     description: 'Color theme for the UI',
     options: feature('AUTO_THEME') ? THEME_SETTINGS : THEME_NAMES,
   },
-  provider: {
-    source: 'settings',
-    type: 'string',
-    description: 'API provider to use (anthropic, dashscope, opencode-go, openrouter, generic)',
-    options: ['anthropic', 'dashscope', 'opencode-go', 'openrouter', 'generic'],
-  },
   editorMode: {
     source: 'global',
     type: 'string',

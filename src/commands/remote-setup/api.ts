@@ -1,10 +1,9 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
-import { getOAuthHeaders, prepareApiRequest } from '../../services/teleport/api.js'
+import { buildOAuthApiHeaders, buildSessionApiHeaders } from '../../services/http/authHeaders.js'
+import { prepareApiRequest } from '../../services/teleport/api.js'
 import { fetchEnvironments } from '../../services/teleport/environments.js'
 import { logForDebugging } from '../../services/infra/debug.js'
-
-const CCR_BYOC_BETA_HEADER = 'ccr-byoc-2025-07-29'
 
 /**
  * Wraps a raw GitHub token so that its string representation is redacted.
@@ -59,11 +58,7 @@ export async function importGithubToken(
   }
 
   const url = `${getOauthConfig().BASE_API_URL}/v1/code/github/import-token`
-  const headers = {
-    ...getOAuthHeaders(accessToken),
-    'anthropic-beta': CCR_BYOC_BETA_HEADER,
-    'x-organization-uuid': orgUUID,
-  }
+  const headers = buildSessionApiHeaders({ accessToken, orgUUID })
 
   try {
     const response = await axios.post<ImportTokenResult>(
@@ -130,7 +125,7 @@ export async function createDefaultEnvironment(): Promise<boolean> {
   // fetchEnvironments() uses. Org is passed via x-organization-uuid header.
   const url = `${getOauthConfig().BASE_API_URL}/v1/environment_providers/cloud/create`
   const headers = {
-    ...getOAuthHeaders(accessToken),
+    ...buildOAuthApiHeaders(accessToken),
     'x-organization-uuid': orgUUID,
   }
 

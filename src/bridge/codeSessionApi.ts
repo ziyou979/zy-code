@@ -11,15 +11,7 @@ import { logForDebugging } from '../services/infra/debug.js'
 import { errorMessage } from '../utils/errors.js'
 import { jsonStringify } from '../services/infra/slowOperations.js'
 import { extractErrorDetail } from './debugUtils.js'
-const ANTHROPIC_VERSION = '2023-06-01'
-
-function oauthHeaders(accessToken: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${accessToken}`,
-    'Content-Type': 'application/json',
-    'anthropic-version': ANTHROPIC_VERSION,
-  }
-}
+import { buildOAuthApiHeaders } from '../services/http/authHeaders.js'
 
 export async function createCodeSession(
   baseUrl: string,
@@ -37,7 +29,7 @@ export async function createCodeSession(
       // 会得到 400。WireRunner 当前是空消息，为以后 bridge 专属选项预留。
       { title, bridge: {}, ...(tags?.length ? { tags } : {}) },
       {
-        headers: oauthHeaders(accessToken),
+        headers: buildOAuthApiHeaders(accessToken),
         timeout: timeoutMs,
         validateStatus: (s) => s < 500,
       },
@@ -93,7 +85,7 @@ export async function fetchRemoteCredentials(
   trustedDeviceToken?: string,
 ): Promise<RemoteCredentials | null> {
   const url = `${baseUrl}/v1/code/sessions/${sessionId}/bridge`
-  const headers = oauthHeaders(accessToken)
+  const headers = buildOAuthApiHeaders(accessToken)
   if (trustedDeviceToken) {
     headers['X-Trusted-Device-Token'] = trustedDeviceToken
   }

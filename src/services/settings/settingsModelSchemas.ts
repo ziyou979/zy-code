@@ -96,10 +96,6 @@ export const ProviderScopedSettingsSchema = lazySchema(() =>
         .describe(
           'Deprecated compatibility field. Put baseUrl in the referenced auth.json connection.',
         ),
-      apiFormat: z
-        .enum(['anthropic', 'openai-chat', 'openai-responses', 'google'])
-        .optional()
-        .describe('API protocol format for this provider. Overrides the top-level apiFormat.'),
       model: ModelReferenceSchema()
         .optional()
         .describe(

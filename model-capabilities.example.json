@@ -4,6 +4,7 @@
     {
       "pattern": "qwen3.6-max-preview",
       "capabilities": {
+        "input": ["text"],
         "thinking": {
           "preserve": "optional",
           "effort": {
@@ -33,6 +34,7 @@
       "provider": "openrouter",
       "apiFormat": "openai-chat",
       "capabilities": {
+        "input": ["text"],
         "thinking": {
           "effort": {
             "levels": ["off", "light", "balanced", "thorough"],
@@ -53,6 +55,7 @@
     {
       "pattern": "qwen3.6-plus",
       "capabilities": {
+        "input": ["text"],
         "thinking": {
           "preserve": "always",
           "effort": ["off", "on"]
@@ -117,6 +120,7 @@
     {
       "pattern": "grok-4.5",
       "capabilities": {
+        "input": ["text", "image"],
         "thinking": {
           "preserve": "always",
           "effort": {
@@ -166,6 +170,7 @@
     {
       "pattern": "grok-4.3",
       "capabilities": {
+        "input": ["text", "image"],
         "thinking": {
           "preserve": "always",
           "effort": {
@@ -215,6 +220,7 @@
     {
       "pattern": "grok-4.1-fast-reasoning",
       "capabilities": {
+        "input": ["text", "image"],
         "thinking": {
           "preserve": "always",
           "effort": ["off", "on"]
@@ -246,6 +252,7 @@
     {
       "pattern": "grok-4.1-fast-non-reasoning",
       "capabilities": {
+        "input": ["text", "image"],
         "thinking": { "effort": ["off"] },
         "structured_outputs": true,
         "auto_mode": true,
@@ -274,6 +281,7 @@
     {
       "pattern": "deepseek-v4-flash",
       "capabilities": {
+        "input": ["text"],
         "thinking": {
           "preserve": "always",
           "effort": {
@@ -313,6 +321,7 @@
     {
       "pattern": "gpt-4o",
       "capabilities": {
+        "input": ["text", "image"],
         "thinking": { "effort": ["off"] },
         "structured_outputs": true
       },
@@ -326,6 +335,7 @@
     {
       "pattern": "claude-sonnet-4",
       "capabilities": {
+        "input": ["text", "image", "document"],
         "thinking": {
           "adaptive": true,
           "preserve": "always"

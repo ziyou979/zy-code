@@ -8,6 +8,7 @@ import {
   cellAt,
   charInCellAt,
   diffEach,
+  diffEachWideInvalidated,
   type Hyperlink,
   isEmptyCellAt,
   type Screen,
@@ -337,7 +338,7 @@ export class LogUpdate {
     // 第一遍：渲染对已有行的改动（行号 < prev.screen.height）
     let needsFullReset = false
     let resetTriggerY = -1
-    diffEach(prev.screen, next.screen, (x, y, removed, added) => {
+    diffEachWideInvalidated(prev.screen, next.screen, (x, y, removed, added) => {
       // 跳过新行 —— 稍后直接渲染
       if (growing && y >= prev.screen.height) {
         return

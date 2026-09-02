@@ -2,20 +2,9 @@ import { randomUUID } from 'node:crypto'
 import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import OpenAI from 'openai'
-import { getAuthProfileForModel, getProviderForModel } from 'src/services/model/model.js'
-import { getProviderEntry } from 'src/services/model/providerRegistry.js'
-import {
-  getSettingsBaseUrl,
-  isAnthropicBaseUrl,
-  isAnthropicProvider,
-  isCustomEndpointProvider,
-  isEnvEndpointProvider,
-  isGoogleProvider,
-  isOpenAIProvider,
-  isOpenAIResponsesProvider,
-} from 'src/services/model/providers.js'
+import { resolveModelRequestContext } from 'src/services/model/modelRequestContext.js'
+import { isCustomEndpointProvider, isEnvEndpointProvider } from 'src/services/model/providers.js'
 import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/services/auth/auth.js'
-import { getAuthConfigBaseUrl } from 'src/services/auth/authConfig.js'
 import { getUserAgent } from 'src/services/http/http.js'
 import { buildProxiedFetch, getProxyFetchOptions } from 'src/services/http/proxy.js'
 import { getOAuthProviderIdForConnection } from 'src/services/oauth/oauthStorage.js'
@@ -29,6 +18,7 @@ import { googleProviderAdapter } from './googleProviderAdapter.js'
 import { OpenAIProviderAdapter } from './openAIProviderAdapter.js'
 import { OpenAICodexResponsesProviderAdapter } from './openAICodexResponsesProviderAdapter.js'
 import { OpenAIResponsesProviderAdapter } from './openAIResponsesProviderAdapter.js'
+import { isOfficialAnthropicApiBaseUrl, resolveApiBaseUrl } from './baseUrlResolution.js'
 
 /**
  * 不同客户端类型的环境变量：
@@ -112,12 +102,13 @@ export async function getAnthropicClient({
   // ── Registry 驱动的 provider ──────────────────────────────────────────
   // 处理 env-or-default（dashscope、zhipu、kimi）、预配置（deepseek、siliconflow 等）和
   // generic provider；它们共享同一套 client 创建逻辑。
-  const apiProvider = getProviderForModel(model)
-  const authProfile = getAuthProfileForModel(model)
+  const context = resolveModelRequestContext(model)
+  const { provider: apiProvider, authProfile } = context
   const authProvider = authProfile ?? apiProvider
-  const registryEntry = getProviderEntry(apiProvider)
+  const resolvedBaseURL = resolveApiBaseUrl({ context })
 
-  // 始终配置 API 密钥 header（无订阅上下文）
+  // 先创建 Anthropic API-key fallback；anthropicProviderAdapter 会优先识别该连接的
+  // Anthropic OAuth，并在订阅路径上忽略这个 fallback client。
   await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession(), authProvider)
   const resolvedFetch = buildFetch(fetchOverride, source, apiProvider)
   const ARGS = {
@@ -133,77 +124,32 @@ export async function getAnthropicClient({
     }),
   } as ClientOptions & { fetchOptions: ReturnType<typeof getProxyFetchOptions> }
   // 处理有默认值的 provider（endpointType 包含 'default'）
-  if (
-    registryEntry &&
-    (registryEntry.endpointType.includes('default') || apiProvider === 'generic')
-  ) {
+  if (!isCustomEndpointProvider(apiProvider) && resolvedBaseURL) {
     const resolvedApiKey = getApiKey(authProvider)
-    let resolvedBaseURL: string | undefined
-
-    // 1. provider 专用环境变量，例如 DASHSCOPE_BASE_URL
-    if (registryEntry.baseUrlEnvVar && process.env[registryEntry.baseUrlEnvVar]) {
-      resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar]
+    const providerHeaders: Record<string, string> = {}
+    if (defaultHeaders['User-Agent']) {
+      providerHeaders['User-Agent'] = defaultHeaders['User-Agent']
     }
-    // 2. 通用环境变量
-    if (!resolvedBaseURL && process.env.ZY_CODE_BASE_URL) {
-      resolvedBaseURL = process.env.ZY_CODE_BASE_URL
-    }
-    if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
-      resolvedBaseURL = process.env.LLM_BASE_URL
-    }
-    // 3. auth.json 命名连接；旧 settings baseUrl 仅作为迁移回退。
-    if (!resolvedBaseURL) {
-      resolvedBaseURL =
-        getAuthConfigBaseUrl(authProfile) ?? getSettingsBaseUrl(apiProvider) ?? undefined
-    }
-    // 4. Registry defaults（根据当前格式选择对应端点）
-    if (!resolvedBaseURL && registryEntry.defaultBaseUrls) {
-      const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai-chat'
-      resolvedBaseURL =
-        registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls['openai-chat']
-    }
-
-    if (resolvedBaseURL) {
-      const providerHeaders: Record<string, string> = {}
-      if (defaultHeaders['User-Agent']) {
-        providerHeaders['User-Agent'] = defaultHeaders['User-Agent']
-      }
-      const providerConfig = {
-        apiKey: resolvedApiKey,
-        // 显式置空 authToken，避免 SDK 自动读取 ANTHROPIC_AUTH_TOKEN
-        // 与非 Anthropic provider 的 apiKey 鉴权冲突
-        authToken: null,
-        baseURL: resolvedBaseURL,
-        defaultHeaders: providerHeaders,
-        maxRetries: ARGS.maxRetries,
-        timeout: ARGS.timeout,
-        dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
-        // 传入代理 / mTLS 配置，否则 Windows 下走代理的网络环境会直连超时
-        fetchOptions: getProxyFetchOptions(),
-        ...(ARGS.fetch && { fetch: ARGS.fetch }),
-        ...(isDebugToStdErr() && { logger: createStderrLogger() }),
-      } as unknown as ClientOptions
-      return new Anthropic(providerConfig)
-    }
+    const providerConfig = {
+      apiKey: resolvedApiKey,
+      // 显式置空 authToken，避免 SDK 自动读取 ANTHROPIC_AUTH_TOKEN
+      // 与非 Anthropic provider 的 apiKey 鉴权冲突
+      authToken: null,
+      baseURL: resolvedBaseURL,
+      defaultHeaders: providerHeaders,
+      maxRetries: ARGS.maxRetries,
+      timeout: ARGS.timeout,
+      dangerouslyAllowBrowser: ARGS.dangerouslyAllowBrowser,
+      // 传入代理 / mTLS 配置，否则 Windows 下走代理的网络环境会直连超时
+      fetchOptions: getProxyFetchOptions(),
+      ...(ARGS.fetch && { fetch: ARGS.fetch }),
+      ...(isDebugToStdErr() && { logger: createStderrLogger() }),
+    } as unknown as ClientOptions
+    return new Anthropic(providerConfig)
   }
 
   // 本地推理引擎（ollama、lmstudio、llamacpp、nim 等）
-  if (isCustomEndpointProvider(apiProvider) && registryEntry) {
-    // 优先级：环境变量 > settings.json > registry 默认值
-    let customBaseURL: string | undefined
-    if (process.env.LLM_BASE_URL) {
-      customBaseURL = process.env.LLM_BASE_URL
-    }
-    if (!customBaseURL) {
-      customBaseURL =
-        getAuthConfigBaseUrl(authProfile) ?? getSettingsBaseUrl(apiProvider) ?? undefined
-    }
-    if (!customBaseURL && registryEntry.defaultBaseUrls) {
-      const format = isAnthropicProvider(apiProvider, model) ? 'anthropic' : 'openai-chat'
-      customBaseURL =
-        registryEntry.defaultBaseUrls[format] ?? registryEntry.defaultBaseUrls['openai-chat']
-    }
-
+  if (isCustomEndpointProvider(apiProvider)) {
     const customApiKey = apiKey || process.env.LLM_API_KEY || getApiKey(authProvider)
     const customEndpointHeaders: Record<string, string> = {}
     if (defaultHeaders['User-Agent']) {
@@ -213,7 +159,7 @@ export async function getAnthropicClient({
       apiKey: customApiKey,
       // 显式置空 authToken，避免 SDK 自动读取 ANTHROPIC_AUTH_TOKEN
       authToken: null,
-      baseURL: customBaseURL,
+      baseURL: resolvedBaseURL,
       defaultHeaders: customEndpointHeaders,
       maxRetries: ARGS.maxRetries,
       timeout: ARGS.timeout,
@@ -254,7 +200,7 @@ export async function getAnthropicClient({
  * 与 getAnthropicClient 共享相同的基础设施：
  * - 共享 headers（X-Zy-Code-Session-Id、User-Agent、ZY_CODE_CUSTOM_HEADERS 等）
  * - baseUrl 优先级：传入值 → provider-specific env → OPENAI_BASE_URL → LLM_BASE_URL
- *   → settings.json baseUrl → registry.defaultBaseUrls['openai-chat'] → api.openai.com/v1
+ *   → settings.json baseUrl → registry openai-chat 端点 → api.openai.com/v1
  * - proxy 配置（getProxyFetchOptions）
  * - debug logger（isDebugToStdErr）
  * - timeout 配置（API_TIMEOUT_MS）
@@ -266,10 +212,9 @@ export async function getOpenAIClient(options?: {
   maxRetries?: number
   model?: string
 }): Promise<OpenAI> {
-  const apiProvider = getProviderForModel(options?.model)
-  const authProfile = getAuthProfileForModel(options?.model)
+  const context = resolveModelRequestContext(options?.model)
+  const { provider: apiProvider, authProfile } = context
   const authProvider = authProfile ?? apiProvider
-  const registryEntry = getProviderEntry(apiProvider)
 
   // ── Headers（与 getAnthropicClient 保持一致）──────────────────────────────────
   const containerId = process.env.ZY_CODE_CONTAINER_ID
@@ -298,35 +243,8 @@ export async function getOpenAIClient(options?: {
   }
 
   // ── Base URL（与 getAnthropicClient registry-driven 段保持一致）──────────────
-  let resolvedBaseURL = options?.baseURL
-  if (!resolvedBaseURL) {
-    // 1. provider 专用环境变量，例如 DASHSCOPE_BASE_URL
-    if (registryEntry?.baseUrlEnvVar && process.env[registryEntry.baseUrlEnvVar]) {
-      resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar]
-    }
-    // 2. OpenAI / Generic 环境变量
-    if (!resolvedBaseURL && process.env.OPENAI_BASE_URL) {
-      resolvedBaseURL = process.env.OPENAI_BASE_URL
-    }
-    if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
-      resolvedBaseURL = process.env.LLM_BASE_URL
-    }
-    // 3. auth.json 命名连接；旧 settings baseUrl 仅作为迁移回退。
-    if (!resolvedBaseURL) {
-      resolvedBaseURL =
-        getAuthConfigBaseUrl(authProfile) ?? getSettingsBaseUrl(apiProvider) ?? undefined
-    }
-    // 4. Registry defaults（Responses 与 Chat 共用端点时可能只配其一）
-    if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
-      resolvedBaseURL =
-        registryEntry.defaultBaseUrls['openai-chat'] ??
-        registryEntry.defaultBaseUrls['openai-responses']
-    }
-    // 5. 后备值
-    if (!resolvedBaseURL) {
-      resolvedBaseURL = 'https://api.openai.com/v1'
-    }
-  }
+  const resolvedBaseURL =
+    resolveApiBaseUrl({ context, explicitBaseUrl: options?.baseURL }) ?? 'https://api.openai.com/v1'
 
   const timeout = options?.timeout ?? parseInt(process.env.API_TIMEOUT_MS || String(600 * 1000), 10)
 
@@ -357,17 +275,16 @@ export async function getOpenAIClient(options?: {
  * 与 getOpenAIClient / getAnthropicClient 共享相同的基础设施：
  * - 共享 headers（X-Zy-Code-Session-Id、User-Agent 等）
  * - baseUrl 优先级：传入值 → provider-specific env → GOOGLE_BASE_URL → LLM_BASE_URL
- *   → settings.json baseUrl → registry.defaultBaseUrls.google → generativelanguage.googleapis.com
+ *   → settings.json baseUrl → registry google 格式端点 → generativelanguage.googleapis.com
  */
 export async function getGoogleClient(options?: {
   apiKey?: string
   baseURL?: string
   model?: string
 }): Promise<{ client: GoogleGenerativeAI; baseURL: string }> {
-  const apiProvider = getProviderForModel(options?.model)
-  const authProfile = getAuthProfileForModel(options?.model)
+  const context = resolveModelRequestContext(options?.model)
+  const { provider: apiProvider, authProfile } = context
   const authProvider = authProfile ?? apiProvider
-  const registryEntry = getProviderEntry(apiProvider)
 
   // ── API Key ────────────────────────────────────────────────────────────
   let resolvedApiKey = options?.apiKey
@@ -383,33 +300,9 @@ export async function getGoogleClient(options?: {
   }
 
   // ── Base URL ───────────────────────────────────────────────────────────
-  let resolvedBaseURL = options?.baseURL
-  if (!resolvedBaseURL) {
-    // 1. provider 专用环境变量
-    if (registryEntry?.baseUrlEnvVar && process.env[registryEntry.baseUrlEnvVar]) {
-      resolvedBaseURL = process.env[registryEntry.baseUrlEnvVar]
-    }
-    // 2. 通用环境变量
-    if (!resolvedBaseURL && process.env.GOOGLE_BASE_URL) {
-      resolvedBaseURL = process.env.GOOGLE_BASE_URL
-    }
-    if (!resolvedBaseURL && process.env.LLM_BASE_URL) {
-      resolvedBaseURL = process.env.LLM_BASE_URL
-    }
-    // 3. auth.json 命名连接；旧 settings baseUrl 仅作为迁移回退。
-    if (!resolvedBaseURL) {
-      resolvedBaseURL =
-        getAuthConfigBaseUrl(authProfile) ?? getSettingsBaseUrl(apiProvider) ?? undefined
-    }
-    // 4. Registry 默认值
-    if (!resolvedBaseURL && registryEntry?.defaultBaseUrls) {
-      resolvedBaseURL = registryEntry.defaultBaseUrls.google
-    }
-    // 5. 后备值
-    if (!resolvedBaseURL) {
-      resolvedBaseURL = 'https://generativelanguage.googleapis.com/v1beta'
-    }
-  }
+  const resolvedBaseURL =
+    resolveApiBaseUrl({ context, explicitBaseUrl: options?.baseURL }) ??
+    'https://generativelanguage.googleapis.com/v1beta'
 
   logForDebugging(
     `[API:request] Creating Google client, baseURL=${resolvedBaseURL}, ` +
@@ -469,24 +362,30 @@ function buildFetch(
 ): ClientOptions['fetch'] {
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
   const inner = fetchOverride ?? globalThis.fetch
-  // 仅发送到直接 API——Bedrock/Vertex/Foundry 不记录此
-  // 未知 header 有被严格代理拒绝的风险（inc-4029 类）
-  const injectClientRequestId = provider === 'anthropic' && isAnthropicBaseUrl()
   return (input, init) => {
     // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
     const headers = new Headers((init as RequestInit | undefined)?.headers)
+    let requestUrl: string | undefined
+    try {
+      requestUrl = input instanceof Request ? input.url : String(input)
+    } catch {
+      // URL 仅用于日志与官方端点判断，解析失败不能阻断请求。
+    }
     // 生成客户端侧请求 ID，以便超时（不返回服务器请求 ID）
     // 仍能被 API 团队与服务器日志关联。
     // 想要自行追踪 ID 的调用方可以预设此 header
-    if (injectClientRequestId && !headers.has(CLIENT_REQUEST_ID_HEADER)) {
+    if (
+      provider === 'anthropic' &&
+      requestUrl &&
+      isOfficialAnthropicApiBaseUrl(requestUrl) &&
+      !headers.has(CLIENT_REQUEST_ID_HEADER)
+    ) {
       headers.set(CLIENT_REQUEST_ID_HEADER, randomUUID())
     }
     try {
-      // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-      const url = input instanceof Request ? input.url : String(input)
       const id = headers.get(CLIENT_REQUEST_ID_HEADER)
       logForDebugging(
-        `[API REQUEST] ${new URL(url).pathname}${id ? ` ${CLIENT_REQUEST_ID_HEADER}=${id}` : ''} source=${source ?? 'unknown'}`,
+        `[API REQUEST] ${new URL(requestUrl ?? '').pathname}${id ? ` ${CLIENT_REQUEST_ID_HEADER}=${id}` : ''} source=${source ?? 'unknown'}`,
       )
     } catch {
       // 绝不让日志导致 fetch 崩溃
@@ -500,7 +399,7 @@ function buildFetch(
 
 /**
  * 统一的 LLM Adapter 工厂函数（使用 llm.ts 中立标准类型）。
- * 根据当前 provider 自动选择对应的 Adapter 实现。
+ * 根据同一次解析得到的 apiFormat 与 OAuth provider ID 选择 Adapter。
  * 调用方使用 llm.ts 类型，完全不依赖任何 SDK。
  *
  * @param options.anthropicClient 可选。Anthropic SDK client 实例，用于复用
@@ -515,35 +414,56 @@ export function getLLMAdapter(options?: {
   anthropicClient?: Anthropic
   model?: string
 }): LLMAdapter {
-  const apiProvider = getProviderForModel(options?.model)
-  const authProfile = getAuthProfileForModel(options?.model)
-  const model = options?.model
+  const context = resolveModelRequestContext(options?.model)
+  return createAdapterFromContext(context, options?.anthropicClient)
+}
 
-  // Codex 订阅凭证决定传输端点，优先级高于模型的普通 OpenAI API 格式。
-  // 同一个 openai provider 使用 API Key 时仍走 api.openai.com，不受此分支影响。
+/**
+ * 为一次重试周期创建协议匹配的 adapter。
+ * OAuth 并非 Anthropic 专属：xAI、OpenAI Codex、GitHub Copilot 仍按命名连接进入
+ * 各自的 OpenAI 格式 adapter。这里只在最终协议确为 Anthropic 时预创建 Anthropic
+ * SDK client，避免其他协议读取无关认证与端点。
+ */
+export async function createLLMAdapter(options: {
+  model: string
+  maxRetries: number
+  fetchOverride?: ClientOptions['fetch']
+  source?: string
+}): Promise<LLMAdapter> {
+  const context = resolveModelRequestContext(options.model)
+  const anthropicClient =
+    context.apiFormat === 'anthropic'
+      ? await getAnthropicClient({
+          maxRetries: options.maxRetries,
+          model: options.model,
+          fetchOverride: options.fetchOverride,
+          source: options.source,
+        })
+      : undefined
+  return createAdapterFromContext(context, anthropicClient)
+}
+
+function createAdapterFromContext(
+  context: ReturnType<typeof resolveModelRequestContext>,
+  anthropicClient?: Anthropic,
+): LLMAdapter {
+  const { provider: apiProvider, authProfile, apiFormat } = context
+
+  // 大多数 OAuth provider（xAI、Copilot、Anthropic）可沿用其 apiFormat adapter；
+  // Codex 订阅后端的端点和请求约束不同，因此必须在通用 OpenAI 分派前单独识别。
+  // 同一个 openai provider 使用 API key 时仍走 api.openai.com，不受此分支影响。
   if (getOAuthProviderIdForConnection(authProfile ?? apiProvider) === 'openai-codex') {
     return new OpenAICodexResponsesProviderAdapter()
   }
 
-  // Google 原生格式优先检查（最具体）
-  if (isGoogleProvider(apiProvider, model)) {
-    return new googleProviderAdapter()
+  switch (apiFormat) {
+    case 'google':
+      return new googleProviderAdapter()
+    case 'openai-responses':
+      return new OpenAIResponsesProviderAdapter()
+    case 'openai-chat':
+      return new OpenAIProviderAdapter()
+    case 'anthropic':
+      return new anthropicProviderAdapter(anthropicClient)
   }
-
-  // OpenAI Responses API 比 isOpenAIProvider 更具体，必须在其之前分派
-  if (isOpenAIResponsesProvider(apiProvider, model)) {
-    return new OpenAIResponsesProviderAdapter()
-  }
-
-  if (isOpenAIProvider(apiProvider, model)) {
-    // 客户端创建委托给 getOpenAIClient()（懒加载），不再手动传参
-    return new OpenAIProviderAdapter()
-  }
-
-  if (isAnthropicProvider(apiProvider, model)) {
-    return new anthropicProviderAdapter(options?.anthropicClient)
-  }
-
-  // 兜底：所有已知 provider 均已按 effective format 分派，此处不可达
-  return new anthropicProviderAdapter(options?.anthropicClient)
 }

@@ -22,6 +22,21 @@ export function getTotalAPIDurationWithoutRetries(): number {
   return STATE.totalAPIDurationWithoutRetries
 }
 
+/**
+ * 累计解码时长（首 token → 响应结束）。与 totalAPIDuration 分开累计，
+ * 使状态栏 tok/s 只反映生成速度，不被 TTFT/重试等待稀释。
+ * ttftMs 为 null（非流式或未记录）时不计入。
+ */
+export function addToTotalDecodeMs(decodeMs: number): void {
+  if (Number.isFinite(decodeMs) && decodeMs > 0) {
+    STATE.totalDecodeMs += decodeMs
+  }
+}
+
+export function getTotalDecodeMs(): number {
+  return STATE.totalDecodeMs
+}
+
 export function getTotalToolDuration(): number {
   return STATE.totalToolDuration
 }

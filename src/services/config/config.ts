@@ -1046,6 +1046,54 @@ export function getApiKeyStatus(truncatedApiKey: string): 'approved' | 'rejected
   return 'new'
 }
 
+/**
+ * 合并 approved 列表：幂等追加 fingerprint，并保证 approved/rejected 互斥
+ * （同一 fingerprint 从 rejected 中移除）。纯函数，便于组合进一次配置写入。
+ */
+export function withApprovedFingerprint(
+  responses: GlobalConfig['apiKeyResponses'] | undefined,
+  fingerprint: string,
+): NonNullable<GlobalConfig['apiKeyResponses']> {
+  const approved = responses?.approved ?? []
+  const rejected = responses?.rejected ?? []
+  return {
+    approved: approved.includes(fingerprint) ? approved : [...approved, fingerprint],
+    rejected: rejected.filter((k) => k !== fingerprint),
+  }
+}
+
+/**
+ * 合并 rejected 列表：幂等追加 fingerprint，并保证 approved/rejected 互斥
+ * （同一 fingerprint 从 approved 中移除）。纯函数，便于组合进一次配置写入。
+ */
+export function withRejectedFingerprint(
+  responses: GlobalConfig['apiKeyResponses'] | undefined,
+  fingerprint: string,
+): NonNullable<GlobalConfig['apiKeyResponses']> {
+  const approved = responses?.approved ?? []
+  const rejected = responses?.rejected ?? []
+  return {
+    approved: approved.filter((k) => k !== fingerprint),
+    rejected: rejected.includes(fingerprint) ? rejected : [...rejected, fingerprint],
+  }
+}
+
+/** 记录一个 API key 指纹为"已批准"（幂等，并从 rejected 中移除）。 */
+export function approveApiKeyFingerprint(fingerprint: string): void {
+  saveGlobalConfig((current) => ({
+    ...current,
+    apiKeyResponses: withApprovedFingerprint(current.apiKeyResponses, fingerprint),
+  }))
+}
+
+/** 记录一个 API key 指纹为"已拒绝"（幂等，并从 approved 中移除）。 */
+export function rejectApiKeyFingerprint(fingerprint: string): void {
+  saveGlobalConfig((current) => ({
+    ...current,
+    apiKeyResponses: withRejectedFingerprint(current.apiKeyResponses, fingerprint),
+  }))
+}
+
 function saveConfig<A extends object>(file: string, config: A, defaultConfig: A): void {
   // 写入配置前确保目录存在
   const dir = dirname(file)

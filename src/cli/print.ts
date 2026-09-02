@@ -1543,8 +1543,9 @@ export async function handleInitializeRequest(
       subscriptionType: accountInfo?.subscription,
       tokenSource: accountInfo?.tokenSource,
       apiKeySource: accountInfo?.apiKeySource,
-      // 使用第三方提供商时 getAccountInformation() 返回 undefined，因此其他字段均缺失。
-      // apiProvider 用于区分“未登录”（直连 API 且 tokenSource:none）与“第三方提供商不适用登录”。
+      // getAccountInformation() 只返回当前连接可表达的账户字段；不同 OAuth provider
+      // 暴露的资料并不相同。apiProvider 用于让调用方解释这些可选字段，而不是判断
+      // “是否支持 OAuth”。
       apiProvider: getAPIProvider() as AccountInfo['apiProvider'],
     } satisfies AccountInfo,
     pid: process.pid,

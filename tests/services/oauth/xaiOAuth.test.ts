@@ -10,7 +10,11 @@ import {
   getOAuthProvider,
   getOAuthProviders,
 } from '../../../src/services/oauth/providers/registry.js'
-import { getProviderEntry } from '../../../src/services/model/providerRegistry.js'
+import {
+  getDefaultBaseUrl,
+  getProviderEntry,
+  getSupportedFormats,
+} from '../../../src/services/model/providerRegistry.js'
 
 describe('xai OAuth', () => {
   const originalFetch = globalThis.fetch
@@ -31,9 +35,9 @@ describe('xai OAuth', () => {
   test('PROVIDER_REGISTRY 包含 xai 且默认走 Responses 端点', () => {
     const entry = getProviderEntry('xai')
     expect(entry).toBeDefined()
-    expect(entry?.supportedFormats).toContain('openai-responses')
-    expect(entry?.defaultBaseUrls?.['openai-responses']).toBe(DEFAULT_XAI_API_BASE_URL)
-    expect(entry?.defaultBaseUrls?.['openai-chat']).toBe(DEFAULT_XAI_API_BASE_URL)
+    expect(getSupportedFormats(entry!)).toContain('openai-responses')
+    expect(getDefaultBaseUrl(entry!, 'openai-responses')).toBe(DEFAULT_XAI_API_BASE_URL)
+    expect(getDefaultBaseUrl(entry!, 'openai-chat')).toBe(DEFAULT_XAI_API_BASE_URL)
     expect(entry?.baseUrlEnvVar).toBe('XAI_BASE_URL')
   })
 

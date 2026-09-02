@@ -8,6 +8,15 @@ import {
 import type { AssistantContentBlock } from '../../../src/types/llm.js'
 
 describe('assistantCompletionValidator', () => {
+  test('已有可见文本但缺少最终停止原因时判定为截断响应', () => {
+    const content: AssistantContentBlock[] = [{ type: 'text', text: '继续实现。现在写核心文件：' }]
+
+    expect(validateAssistantCompletion({ content, stopReason: null })).toEqual({
+      ok: false,
+      reason: 'missing_stop_reason',
+    })
+  })
+
   test('只有 thinking 且正常结束时判定为可重试异常', () => {
     const content: AssistantContentBlock[] = [
       { type: 'thinking', thinking: 'let me inspect this', signature: '' },

@@ -62,7 +62,7 @@ plugin 设置  <  user(~/.zy/settings.json)  <  project(.zy/settings.json)
 
 | Key | 类型 | 默认 | 用途 |
 |---|---|---|---|
-| `provider` | `'anthropic'\|'dashscope'\|'xai'\|'opencode-go'\|'openrouter'\|'generic'\|'local'\|…` | — | API 提供商(完整枚见 providerRegistry) |
+| `provider` | `'anthropic'\|'dashscope'\|'xai'\|…` | — | 旧版兼容字段；新配置在模型引用中填写 `auth.json` 连接 id |
 | `baseUrl` | string | — | 旧版兼容字段；新配置应写入 `auth.json` 命名连接 |
 | `model` | `string \| {provider?,model}` | — | 覆盖默认模型；对象格式可指定该模型使用的 provider |
 | `mainLoopModel` | `'advanced'\|'standard'\|'compact'` | `standard` | 主循环能力层级 |
@@ -239,6 +239,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 ```
 
 - **扁平命名连接 map**:顶层 key 是可自由命名的连接 id；值可包含底层注册表 `provider`、`baseUrl`、`apiFormat`、`apiKey` / `apiKeyHelper`。省略 `provider` 时连接 id 本身按注册表 provider 解析，兼容旧格式。
+- **apiFormat 配置入口**:连接的 `apiFormat` 是供应商维度的唯一用户配置入口（多协议 provider 在此选择格式）；模型维度走 `model-capabilities.json` 的模型级 `apiFormat`。settings 级 `apiFormat` 字段已移除，未指定时回落注册表 `formatEndpoints` 首位声明的格式。
 - **连接内 OAuth**:`/login` 与 `zy auth login` 将凭证写到 API provider 同名连接的 `oauth` 字段；`provider` 标识具体登录/刷新实现。不再存在全局 `activeProvider`。
 - **settings 分离**:`settings.json` 不再承载连接细节；`baseUrl` 只作为旧版迁移回退，`apiKey` / `apiKeyHelper` 只放在 `auth.json`。
 - **模型路由**:`settings.json` 中通过 `{provider,model}` 或 `customModels[].provider` 的 `provider` 直接填写连接 id。运行时用连接的底层 `provider` 做协议分派，用连接 id 读取 URL 和凭证。
@@ -264,18 +265,26 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
   "models": [
     {
       "pattern": "claude-sonnet-4",            // 必填:大小写不敏感子串匹配 model id
-      "capabilities": [                         // 必填:能力列表
-        "thinking", "adaptive_thinking", "structured_outputs",
-        "auto_mode"
-      ],
-      "promptCaching": "explicit",              // 可选:prompt 缓存模式("implicit"|"explicit")
-      "preserveThinking": "always",             // 可选:思考块回传模式("optional"|"always")
-      "effortLevels": ["low","medium","high"],  // 可选:effort 档位(省略=不支持设 effort)
+      "provider": "anthropic",                  // 可选:限定 provider；也可写数组
+      "apiFormat": ["anthropic", "openai-chat"], // 可选:该模型支持的协议格式（有序）
+      "capabilities": {                         // 必填:结构化能力声明
+        "input": ["text", "image"],             // 可选:输入模态(text/image/document)
+        "thinking": {
+          "adaptive": true,
+          "preserve": "always",
+          "effort": ["off", "light", "balanced", "thorough"]
+        },
+        "structured_outputs": true,
+        "auto_mode": true,
+        "prompt_caching": "explicit"
+      },
       "betaHeaders": ["context-management-2025-06-27"], // 可选:附加 anthropic-beta(见 §6)
-      "contextWindow": "1m",                    // 可选:上下文窗口(数字或 "200k"/"1m")
-      "maxInputTokens": "1m",                   // 可选
-      "maxOutputTokens": "64k",                 // 可选
-      "maxThinkingTokens": "32k",               // 可选(默认 maxOutputTokens-1)
+      "tokens": {
+        "contextWindow": "1m",                  // 可选:上下文窗口(数字或 "200k"/"1m")
+        "maxInputTokens": "1m",
+        "maxOutputTokens": "64k",
+        "maxThinkingTokens": "32k"              // 可选(默认 maxOutputTokens-1)
+      },
       "costs": { "inputTokens": 9, "outputTokens": 54,
                  "promptCacheWriteTokens": 11.25, "promptCacheReadTokens": 0.9 },
       "providerOverrides": {                    // 可选:同一模型在不同 provider 下的覆盖
@@ -291,6 +300,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 ```
 
 - **token 字符串**:`k`=1024、`m`=1024²。`"200k"`=204800、`"1m"`=1048576。
+- **`capabilities.input`**:可选的有序输入模态列表，支持 `text`、`image`、`document`。未声明时为“未知”，保持历史兼容；一旦声明，请求发出前会严格检查普通附件与工具结果中的媒体，模型不支持时直接给出明确提示。
 - **`costs` 三种格式**:固定单价(`inputTokens`/`outputTokens`/`promptCache*`/`webSearchRequests`,单位 元/百万 token)；阶梯 `tiers: [{upTo,inputTokens,outputTokens,…}]`；时段 `schedules`（配合可选 `timezone`，如 DeepSeek 北京时间高峰 09:00–12:00 / 14:00–18:00）。带 `windows` 的条目优先匹配，无 `windows` 的条目作为回退。
 - **`providerOverrides`**:按 provider 覆盖 `apiFormat`、`capabilities`、`tokens`、`betaHeaders`、`costs`。用于同一模型在不同 provider 下上下文窗口、价格或 API 协议不同的场景。
 - **优先级**:`providerOverrides` 高于同条模型的通用字段；本地模型配置整体高于 provider 默认(effort 档位、context 窗口等)。
@@ -311,7 +321,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 | `ZY_CODE_MODEL` / `ZY_CODE_SUBAGENT_MODEL` / `ZY_CODE_AUTO_MODE_MODEL` | 主循环 / 子 agent / 自动模式分类器 模型 |
 | `ANTHROPIC_SMALL_FAST_MODEL` | 小快模型 ID 覆盖 |
 
-provider 解析优先级: sticky 多 auth 候选 > `settings.provider` > 已登录 OAuth 启动回退 > 默认 `anthropic`。
+provider 解析优先级：sticky 多 auth 候选 > 模型引用中的连接 > 旧版 `settings.provider` 兼容回退 > 已登录 OAuth 启动回退 > 默认 `anthropic`。
 
 ### 5.2 API / 认证 / 网络
 

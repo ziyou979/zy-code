@@ -19,6 +19,7 @@ import { errorMessage, isENOENT } from '../utils/errors.js'
 import { createSignal } from '../utils/signal.js'
 import { jsonParse } from '../services/infra/slowOperations.js'
 import { DEFAULT_BINDINGS } from './defaultBindings.js'
+import { parseKeybindingsContent } from './parseKeybindingsCore.js'
 import { parseBindings } from './parser.js'
 import type { KeybindingBlock, ParsedBinding } from './types.js'
 import { checkDuplicateKeysInJson, type KeybindingWarning, validateBindings } from './validate.js'
@@ -94,24 +95,6 @@ function logCustomBindingsLoadedOncePerDay(userBindingCount: number): void {
 }
 
 /**
- * 检查对象是否为有效 KeybindingBlock 的类型守卫。
- */
-function isKeybindingBlock(obj: unknown): obj is KeybindingBlock {
-  if (typeof obj !== 'object' || obj === null) {
-    return false
-  }
-  const b = obj as Record<string, unknown>
-  return typeof b.context === 'string' && typeof b.bindings === 'object' && b.bindings !== null
-}
-
-/**
- * 检查数组是否只包含有效 KeybindingBlock 的类型守卫。
- */
-function isKeybindingBlockArray(arr: unknown): arr is KeybindingBlock[] {
-  return Array.isArray(arr) && arr.every(isKeybindingBlock)
-}
-
-/**
  * 获取用户快捷键文件路径。
  */
 export function getKeybindingsPath(): string {
@@ -143,53 +126,14 @@ export async function loadKeybindings(): Promise<KeybindingsLoadResult> {
 
   try {
     const content = await readFile(userPath, 'utf-8')
-    const parsed: unknown = jsonParse(content)
-
-    // 从对象包装格式 { "bindings": [...] } 中提取 bindings 数组
-    let userBlocks: unknown
-    if (typeof parsed === 'object' && parsed !== null && 'bindings' in parsed) {
-      userBlocks = (parsed as { bindings: unknown }).bindings
-    } else {
-      // 格式无效：缺少 bindings 属性
-      const errorMessage = 'keybindings.json must have a "bindings" array'
-      const suggestion = 'Use format: { "bindings": [ ... ] }'
-      logForDebugging(`[keybindings] Invalid keybindings.json: ${errorMessage}`)
-      return {
-        bindings: defaultBindings,
-        warnings: [
-          {
-            type: 'parse_error',
-            severity: 'error',
-            message: errorMessage,
-            suggestion,
-          },
-        ],
-      }
+    // bindings 提取与结构校验收敛到 parseKeybindingsCore
+    const { userBlocks, warnings: structuralWarnings } = parseKeybindingsContent(content)
+    if (structuralWarnings.length > 0) {
+      logForDebugging(`[keybindings] Invalid keybindings.json: ${structuralWarnings[0]!.message}`)
+      return { bindings: defaultBindings, warnings: structuralWarnings }
     }
 
-    // 校验结构：bindings 必须是有效快捷键绑定块组成的数组
-    if (!isKeybindingBlockArray(userBlocks)) {
-      const errorMessage = !Array.isArray(userBlocks)
-        ? '"bindings" must be an array'
-        : 'keybindings.json contains invalid block structure'
-      const suggestion = !Array.isArray(userBlocks)
-        ? 'Set "bindings" to an array of keybinding blocks'
-        : 'Each block must have "context" (string) and "bindings" (object)'
-      logForDebugging(`[keybindings] Invalid keybindings.json: ${errorMessage}`)
-      return {
-        bindings: defaultBindings,
-        warnings: [
-          {
-            type: 'parse_error',
-            severity: 'error',
-            message: errorMessage,
-            suggestion,
-          },
-        ],
-      }
-    }
-
-    const userParsed = parseBindings(userBlocks)
+    const userParsed = parseBindings(userBlocks!)
     logForDebugging(`[keybindings] Loaded ${userParsed.length} user bindings from ${userPath}`)
 
     // 用户绑定位于默认绑定之后，因此会覆盖默认值
@@ -216,13 +160,7 @@ export async function loadKeybindings(): Promise<KeybindingsLoadResult> {
     logForDebugging(`[keybindings] Error loading ${userPath}: ${errorMessage(error)}`)
     return {
       bindings: defaultBindings,
-      warnings: [
-        {
-          type: 'parse_error',
-          severity: 'error',
-          message: `Failed to parse keybindings.json: ${errorMessage(error)}`,
-        },
-      ],
+      warnings: getSyncLoadErrorWarnings(error),
     }
   }
 }
@@ -265,47 +203,16 @@ export function loadKeybindingsSyncWithWarnings(): KeybindingsLoadResult {
   try {
     // 同步 IO：由 React useState 初始化器等同步上下文调用
     const content = readFileSync(userPath, 'utf-8')
-    const parsed: unknown = jsonParse(content)
-
-    // 从对象包装格式 { "bindings": [...] } 中提取 bindings 数组
-    let userBlocks: unknown
-    if (typeof parsed === 'object' && parsed !== null && 'bindings' in parsed) {
-      userBlocks = (parsed as { bindings: unknown }).bindings
-    } else {
-      // 格式无效：缺少 bindings 属性
+    // bindings 提取与结构校验收敛到 parseKeybindingsCore
+    const { userBlocks, warnings: structuralWarnings } = parseKeybindingsContent(content)
+    if (structuralWarnings.length > 0) {
+      logForDebugging(`[keybindings] Invalid keybindings.json: ${structuralWarnings[0]!.message}`)
       cachedBindings = defaultBindings
-      cachedWarnings = [
-        {
-          type: 'parse_error',
-          severity: 'error',
-          message: 'keybindings.json must have a "bindings" array',
-          suggestion: 'Use format: { "bindings": [ ... ] }',
-        },
-      ]
+      cachedWarnings = structuralWarnings
       return { bindings: cachedBindings, warnings: cachedWarnings }
     }
 
-    // 校验结构：bindings 必须是有效快捷键绑定块组成的数组
-    if (!isKeybindingBlockArray(userBlocks)) {
-      const errorMessage = !Array.isArray(userBlocks)
-        ? '"bindings" must be an array'
-        : 'keybindings.json contains invalid block structure'
-      const suggestion = !Array.isArray(userBlocks)
-        ? 'Set "bindings" to an array of keybinding blocks'
-        : 'Each block must have "context" (string) and "bindings" (object)'
-      cachedBindings = defaultBindings
-      cachedWarnings = [
-        {
-          type: 'parse_error',
-          severity: 'error',
-          message: errorMessage,
-          suggestion,
-        },
-      ]
-      return { bindings: cachedBindings, warnings: cachedWarnings }
-    }
-
-    const userParsed = parseBindings(userBlocks)
+    const userParsed = parseBindings(userBlocks!)
     logForDebugging(`[keybindings] Loaded ${userParsed.length} user bindings from ${userPath}`)
     cachedBindings = [...defaultBindings, ...userParsed]
 

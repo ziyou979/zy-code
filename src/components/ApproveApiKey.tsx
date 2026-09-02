@@ -1,6 +1,6 @@
 import { tSync } from 'src/i18n/index.js'
 import { Text } from '../ink/index.js'
-import { saveGlobalConfig } from '../services/config/config.js'
+import { approveApiKeyFingerprint, rejectApiKeyFingerprint } from '../services/config/config.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
 
@@ -12,24 +12,12 @@ export function ApproveApiKey({ apiKeyTruncated, onDone }: Props) {
   const onChange = function onChange(value: string) {
     switch (value) {
       case 'yes': {
-        saveGlobalConfig((current_0) => ({
-          ...current_0,
-          apiKeyResponses: {
-            ...current_0.apiKeyResponses,
-            approved: [...(current_0.apiKeyResponses?.approved ?? []), apiKeyTruncated],
-          },
-        }))
+        approveApiKeyFingerprint(apiKeyTruncated)
         onDone(true)
         break
       }
       case 'no': {
-        saveGlobalConfig((current) => ({
-          ...current,
-          apiKeyResponses: {
-            ...current.apiKeyResponses,
-            rejected: [...(current.apiKeyResponses?.rejected ?? []), apiKeyTruncated],
-          },
-        }))
+        rejectApiKeyFingerprint(apiKeyTruncated)
         onDone(false)
       }
     }

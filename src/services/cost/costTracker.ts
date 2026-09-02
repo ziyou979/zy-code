@@ -19,6 +19,7 @@ import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   getTotalAPIDuration,
   getTotalAPIDurationWithoutRetries,
+  getTotalDecodeMs,
   getTotalDuration,
   getTotalToolDuration,
 } from 'src/bootstrap/runtime/runtimeContext.js'
@@ -32,6 +33,7 @@ import {
 import { resetStateForTests } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../utils/stringWidth.js'
+import { padVisual } from '../../utils/truncate.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -60,6 +62,7 @@ export {
   getTotalCacheReadInputTokens,
   getTotalCost,
   getTotalCostByCurrency,
+  getTotalDecodeMs,
   getTotalDuration,
   getTotalInputTokens,
   getTotalLinesAdded,
@@ -370,9 +373,9 @@ function formatCost(cost: number, maxDecimalPlaces: number = 4): string {
 
 // 按显示宽度右填充（处理 CJK 双列宽字符）
 const LABEL_COL_WIDTH = 23
+// 使用共享的 padVisual（左对齐，无最小填充）
 function padToWidth(text: string, targetWidth: number): string {
-  const w = stringWidth(text)
-  return text + ' '.repeat(Math.max(1, targetWidth - w))
+  return padVisual(text, stringWidth(text), targetWidth)
 }
 
 function formatModelUsage(): string {

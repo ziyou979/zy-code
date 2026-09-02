@@ -11,7 +11,9 @@ import {
   modelSupportsThinking,
 } from '../../services/messages/thinking.js'
 import { getMaxOutputTokensForModel } from '../api/apiHelpers.js'
-import { getProviderForModel, normalizeModelStringForAPI } from './model.js'
+import { normalizeModelStringForAPI } from './model.js'
+import type { ApiFormat } from './apiFormat.js'
+import { resolveModelRequestContext } from './modelRequestContext.js'
 import { getProviderEntry, type OpenAiAttr } from './providerRegistry.js'
 import { type APIProvider, isAnthropicModel } from './providers.js'
 
@@ -22,6 +24,10 @@ export interface ResolvedModel {
   apiModelId: string
   /** 解析后的 provider */
   provider: APIProvider
+  /** 当前模型绑定的命名认证连接。 */
+  authProfile?: string
+  /** 当前模型实际使用的 API 协议格式。 */
+  apiFormat: ApiFormat
   /** 是否支持 thinking */
   supportsThinking: boolean
   /** 是否支持自适应 thinking */
@@ -45,13 +51,16 @@ export interface ResolvedModel {
  * 优先级链：model-capabilities.json → API error 运行时降级 → provider 注册表 → 默认值。
  */
 export function resolveModel(modelName: string): ResolvedModel {
-  const provider = getProviderForModel(modelName)
+  const requestContext = resolveModelRequestContext(modelName)
+  const { provider } = requestContext
   const entry = getProviderEntry(provider)
 
   return {
     id: modelName,
     apiModelId: normalizeModelStringForAPI(modelName),
     provider,
+    authProfile: requestContext.authProfile,
+    apiFormat: requestContext.apiFormat,
     supportsThinking: modelSupportsThinking(modelName),
     supportsAdaptiveThinking: modelSupportsAdaptiveThinking(modelName),
     supportsEffort: modelSupportsEffort(modelName),

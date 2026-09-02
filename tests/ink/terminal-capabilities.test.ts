@@ -84,9 +84,13 @@ describe('终端宽字符重绘能力', () => {
     ).toBe(false)
   })
 
-  test('主屏候选栏展开等布局位移帧不插入宽字符锚点', () => {
-    expect(canAnchorWideCellsForFrame(true, false)).toBe(false)
-    expect(canAnchorWideCellsForFrame(false, false)).toBe(true)
-    expect(canAnchorWideCellsForFrame(true, true)).toBe(true)
+  test('Windows Terminal 主屏布局位移仍保留宽字符锚点', () => {
+    expect(canAnchorWideCellsForFrame(true, false, false)).toBe(true)
+  })
+
+  test('JediTerm 仅在主屏布局位移时禁用宽字符锚点', () => {
+    expect(canAnchorWideCellsForFrame(true, false, true)).toBe(false)
+    expect(canAnchorWideCellsForFrame(false, false, true)).toBe(true)
+    expect(canAnchorWideCellsForFrame(true, true, true)).toBe(true)
   })
 })

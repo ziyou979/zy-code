@@ -18,9 +18,9 @@ import {
   type StatusState,
   TOOL_DISPLAY_EXPIRY_MS,
   timestamp,
-  truncatePrompt,
-  wrapWithOsc8Link,
 } from './bridgeStatusUtil.js'
+import { truncateToWidth } from '../utils/truncate.js'
+import { wrapWithOsc8Link } from '../utils/hyperlink.js'
 import type { SessionActivity, SpawnMode, WireConfig, WireLogger } from './types.js'
 const QR_OPTIONS = {
   type: 'utf8' as const,
@@ -216,11 +216,11 @@ export function createWireLogger(options: {
         `    ${chalk.dim(`Capacity: ${sessionActive}/${sessionMax} \u00b7 ${modeHint}`)}\n`,
       )
       for (const [, info] of sessionDisplayInfo) {
-        const titleText = info.title ? truncatePrompt(info.title, 35) : chalk.dim('Attached')
+        const titleText = info.title ? truncateToWidth(info.title, 35) : chalk.dim('Attached')
         const titleLinked = wrapWithOsc8Link(titleText, info.url)
         const act = info.activity
         const showAct = act && act.type !== 'result' && act.type !== 'error'
-        const actText = showAct ? chalk.dim(` ${truncatePrompt(act.summary, 40)}`) : ''
+        const actText = showAct ? chalk.dim(` ${truncateToWidth(act.summary, 40)}`) : ''
         writeStatus(`    ${titleLinked}${actText}
 `)
       }
@@ -244,7 +244,7 @@ export function createWireLogger(options: {
       lastToolSummary &&
       Date.now() - lastToolTime < TOOL_DISPLAY_EXPIRY_MS
     ) {
-      writeStatus(`  ${chalk.dim(truncatePrompt(lastToolSummary, 60))}\n`)
+      writeStatus(`  ${chalk.dim(truncateToWidth(lastToolSummary, 60))}\n`)
     }
 
     // footer 前的空行分隔符
@@ -289,7 +289,7 @@ export function createWireLogger(options: {
 
     logSessionStart(sessionId: string, prompt: string): void {
       if (verbose) {
-        const short = truncatePrompt(prompt, 80)
+        const short = truncateToWidth(prompt, 80)
         printLog(
           chalk.dim(`[${timestamp()}]`) +
             ` Session started: ${chalk.white(`"${short}"`)} (${chalk.dim(sessionId)})\n`,
@@ -483,7 +483,7 @@ export function createWireLogger(options: {
       if (sessionMax === 1) {
         // 单会话模式下也在主状态行显示标题。
         currentState = 'titled'
-        currentStateText = truncatePrompt(title, 40)
+        currentStateText = truncateToWidth(title, 40)
       }
       renderStatusLine()
     },

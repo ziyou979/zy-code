@@ -7,7 +7,8 @@
  */
 
 import { ZY_CODE_INFERENCE_SCOPE } from '../../constants/oauth.js'
-import { getAPIProvider, isAnthropicBaseUrl } from '../model/providers.js'
+import { getAPIProvider } from '../model/providers.js'
+import { isAnthropicOfficialEndpointForModel } from '../api/baseUrlResolution.js'
 import { getApiKeyWithSource, getZyAIOAuthTokens } from '../auth/auth.js'
 
 import { resetSyncCache as resetLeafCache, setEligibility } from './syncCacheState.js'
@@ -47,7 +48,7 @@ export function isRemoteManagedSettingsEligible(): boolean {
   }
 
   // Custom base URL users should not hit the settings endpoint
-  if (!isAnthropicBaseUrl()) {
+  if (!isAnthropicOfficialEndpointForModel()) {
     return (cached = setEligibility(false))
   }
 

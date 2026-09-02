@@ -483,6 +483,11 @@ export const zhMisc: TranslationResource = {
   'modelPicker.effortLabel': '{effort} 思考强度',
   'modelPicker.effortNotSupported': '',
   'modelPicker.effortNotSupportedFor': ' {modelName} 不支持思考强度',
+  'modelInput.modality.document': '文档',
+  'modelInput.modality.image': '图片',
+  'modelInput.modality.text': '文本',
+  'modelInput.unsupported':
+    '模型 {model} 不支持{unsupported}输入。该模型支持的输入：{supported}。请移除附件或切换模型。',
   'modelPicker.pressAgainToExit': '再按一次 {key} 退出',
   'modelPicker.selectModel': '选择模型',
   'modelCommand.current': '当前模型：{model}',

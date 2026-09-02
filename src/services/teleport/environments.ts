@@ -1,9 +1,9 @@
 import axios from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
+import { buildOAuthApiHeaders, buildSessionApiHeaders } from '../http/authHeaders.js'
 import { getOrganizationUUID, getZyAIOAuthTokens } from '../auth/auth.js'
 import { toError } from '../../utils/errors.js'
 import { logError } from '../../services/infra/log.js'
-import { getOAuthHeaders } from './api.js'
 
 export type EnvironmentKind = 'anthropic_cloud' | 'byoc' | 'bridge'
 export type EnvironmentState = 'active'
@@ -45,7 +45,7 @@ export async function fetchEnvironments(): Promise<EnvironmentResource[]> {
 
   try {
     const headers = {
-      ...getOAuthHeaders(accessToken),
+      ...buildOAuthApiHeaders(accessToken),
       'x-organization-uuid': orgUUID,
     }
 
@@ -103,11 +103,7 @@ export async function createDefaultCloudEnvironment(name: string): Promise<Envir
       },
     },
     {
-      headers: {
-        ...getOAuthHeaders(accessToken),
-        'anthropic-beta': 'ccr-byoc-2025-07-29',
-        'x-organization-uuid': orgUUID,
-      },
+      headers: buildSessionApiHeaders({ accessToken, orgUUID }),
       timeout: 15000,
     },
   )

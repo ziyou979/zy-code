@@ -24,6 +24,7 @@ import {
   BoundedUUIDSet,
 } from './bridgeMessaging.js'
 import { decodeWorkSecret, buildSdkUrl, buildCCRv2SdkUrl, sameSessionId } from './workSecret.js'
+import { ANTHROPIC_VERSION } from '../constants/api.js'
 import { toCompatSessionId, toInfraSessionId } from './sessionIdCompat.js'
 import { updateSessionWireId } from '../services/session/concurrentSessions.js'
 import { getTrustedDeviceToken } from './trustedDevice.js'
@@ -1286,12 +1287,12 @@ export async function initBridgeCore(params: WireCoreParams): Promise<WireCoreHa
               new URL(wsUrl),
               {
                 Authorization: `Bearer ${oauthToken}`,
-                'anthropic-version': '2023-06-01',
+                'anthropic-version': ANTHROPIC_VERSION,
               },
               workSessionId,
               () => ({
                 Authorization: `Bearer ${getOAuthToken() ?? oauthToken}`,
-                'anthropic-version': '2023-06-01',
+                'anthropic-version': ANTHROPIC_VERSION,
               }),
               // 限制重试次数，使持续失败的 session-ingress 不会在整个 bridge 生命周期内
               // 卡住上传排空循环。50 次尝试 ≈ 20 分钟（稳态下每周期 15 秒 POST 超时 + 8 秒退避 + 抖动）。

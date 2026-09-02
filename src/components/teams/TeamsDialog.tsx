@@ -28,7 +28,7 @@ import { getEmptyToolPermissionContext } from '../../tools/tool.js'
 import { AGENT_COLOR_TO_THEME_COLOR } from '../../tools/AgentTool/agentColorManager.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { execFileNoThrow } from '../../services/shell/execFileNoThrow.js'
-import { truncateToWidth } from '../../utils/format.js'
+import { truncateToWidth } from '../../utils/truncate.js'
 import { getNextPermissionMode } from '../../services/permissions/getNextPermissionMode.js'
 import {
   getModeColor,

@@ -3,6 +3,9 @@ import { join } from 'node:path'
 import chalk from 'chalk'
 import { execa } from 'execa'
 import memoize from 'lodash-es/memoize.js'
+import { ZY_CODE_INFERENCE_SCOPE } from '../../constants/oauth.js'
+import { isAnthropicOfficialEndpoint } from '../api/baseUrlResolution.js'
+import { resolveModelRequestContext } from '../model/modelRequestContext.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -45,6 +48,7 @@ import {
   checkHasTrustDialogAccepted,
   getGlobalConfig,
   saveGlobalConfig,
+  withApprovedFingerprint,
 } from '../config/config.js'
 import { getMockSubscriptionType, shouldUseMockSubscription } from '../mockRateLimits.js'
 import { getAuthProfileForModel, getMainLoopModel, getProviderForModel } from '../model/model.js'
@@ -90,10 +94,10 @@ function getAuthProviderId(provider?: string): string | undefined {
   return getInitialSettings().provider ?? getAPIProvider()
 }
 
-/** 是否支持直连 API 认证。 */
+/** 旧版 Zy 账户订阅状态 gate；不表示是否存在任意 provider 的 OAuth 凭证。 */
 // 此代码与 getAuthTokenSource 密切相关
 export function isZyAISubscriber(): boolean {
-  // 跳过登录检查，始终返回 false 以避免 OAuth 检查
+  // 当前构建不启用旧版 Zy 订阅判定；多 Provider OAuth 由命名连接独立判断。
   return false
 }
 
@@ -170,6 +174,11 @@ export type ApiKeySource =
   | 'oauth'
   | 'none'
 
+/**
+ * 返回当前命名连接可交给对应 SDK 的认证值。
+ * 历史名称保留为 getApiKey，但返回值既可能是 API key，也可能是 xAI、Codex、
+ * Copilot 或 Anthropic OAuth provider 导出的 access token。
+ */
 export function getApiKey(provider?: string): null | string {
   const { key } = getApiKeyWithSource({ provider })
   return key
@@ -555,28 +564,15 @@ export async function saveApiKey(apiKey: string): Promise<void> {
   // 清理历史 legacy 存储，保证单源
   await maybeRemoveApiKeyFromMacOSKeychain()
   const normalizedKey = normalizeApiKeyForConfig(apiKey)
-  saveGlobalConfig((current) => {
-    const approved = current.apiKeyResponses?.approved ?? []
-    return {
-      ...current,
-      primaryApiKey: undefined,
-      apiKeyResponses: {
-        ...current.apiKeyResponses,
-        approved: approved.includes(normalizedKey) ? approved : [...approved, normalizedKey],
-        rejected: current.apiKeyResponses?.rejected ?? [],
-      },
-    }
-  })
+  saveGlobalConfig((current) => ({
+    ...current,
+    primaryApiKey: undefined,
+    apiKeyResponses: withApprovedFingerprint(current.apiKeyResponses, normalizedKey),
+  }))
 
   logEvent('zy_api_key_saved_to_auth_json', {})
   getApiKeyFromConfigOrMacOSKeychain.cache.clear?.()
   clearLegacyApiKeyPrefetch()
-}
-
-export function isApiKeyApproved(apiKey: string): boolean {
-  const config = getGlobalConfig()
-  const normalizedKey = normalizeApiKeyForConfig(apiKey)
-  return config.apiKeyResponses?.approved?.includes(normalizedKey) ?? false
 }
 
 /**
@@ -646,6 +642,39 @@ export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
     rateLimitTier: null,
   }
 })
+
+/**
+ * 纯函数：判断 OAuth token 是否满足 user:inference + 额外 scopes。
+ * 独立导出便于测试（不依赖 auth 模块内部状态）。
+ */
+export function isUsingOAuthTokens(
+  tokens: OAuthTokens | null,
+  extraScopes: string[] = [],
+): boolean {
+  const scopes = tokens?.scopes ?? []
+  return Boolean(
+    tokens?.accessToken &&
+      scopes.includes(ZY_CODE_INFERENCE_SCOPE) &&
+      extraScopes.every((scope) => scopes.includes(scope)),
+  )
+}
+
+/**
+ * 判断当前模型连接是否走 Zy.ai OAuth 官方端点（anthropic provider +
+ * 官方 base URL），并要求 token 具备 user:inference scope。
+ *
+ * 收敛 settings-sync 与 team-memory-sync 两处的重复实现。后者额外要求
+ * user:profile scope（团队记忆同步需要读取用户资料），通过 extraScopes 传入。
+ * settings-sync 只查 inference 是有意的——CCR 的 file-descriptor token 只
+ * 硬编码 ['user:inference']，要求 profile 会使下载变 no-op。
+ */
+export function isUsingOAuthForService(extraScopes: string[] = []): boolean {
+  const context = resolveModelRequestContext()
+  if (context.provider !== 'anthropic' || !isAnthropicOfficialEndpoint(context)) {
+    return false
+  }
+  return isUsingOAuthTokens(getZyAIOAuthTokens(), extraScopes)
+}
 
 /**
  * 检查 OAuth token 是否已过期（含 5 分钟安全余量）。
@@ -981,9 +1010,11 @@ export type UserAccountInfo = {
 }
 
 export function getAccountInformation() {
-  const apiProvider = getAPIProvider()
-  // 仅为 Anthropic 直连或使用 OpenAI SDK 的 provider 提供账户信息（Google 等平台使用自身认证）
-  if (!isAnthropicProvider(apiProvider) && !isOpenAIProvider(apiProvider)) {
+  const model = getMainLoopModel()
+  const apiProvider = getProviderForModel(model)
+  // 覆盖 Anthropic 格式及 OpenAI 兼容格式连接；后者也包括 xAI、Codex、Copilot 等 OAuth。
+  // Google 原生协议由自身 SDK 鉴权，不使用这组通用账户字段。
+  if (!isAnthropicProvider(apiProvider, model) && !isOpenAIProvider(apiProvider, model)) {
     return undefined
   }
   const { source: authTokenSource } = getAuthTokenSource()
@@ -995,7 +1026,7 @@ export function getAccountInformation() {
     accountInfo.apiKeySource = apiKeySource
   }
 
-  // 从 OAuth 账户信息获取组织名称和邮箱
+  // 旧版 Zy 账户资料才提供组织名称和邮箱；其他 OAuth provider 未必暴露这些字段。
   const oauthAccount = getOauthAccountInfo()
   if (oauthAccount?.organizationName) {
     accountInfo.organization = oauthAccount.organizationName
