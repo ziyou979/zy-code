@@ -37,7 +37,6 @@ import { type Command } from '../commands/index.js'
 import type { QueuedCommand } from '../types/textInputTypes.js'
 import { useIdeLogging } from '../hooks/useIdeLogging.js'
 import type { DirectConnectConfig } from '../server/directConnectManager.js'
-import { useAssistantHistory } from '../hooks/useAssistantHistory.js'
 import type { SSHSession } from '../ssh/createSSHSession.js'
 import { useMoreRight } from '../moreright/useMoreRight.js'
 import { startBackgroundHousekeeping } from '../services/background/backgroundHousekeeping.js'
@@ -579,15 +578,7 @@ export function REPL({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId])
 
-  const { maybeLoadOlder } = feature('KAIROS')
-    ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useAssistantHistory({
-        config: remoteSessionConfig,
-        setMessages,
-        scrollRef,
-        onPrepend: shiftDivider,
-      })
-    : HISTORY_STUB
+  const { maybeLoadOlder } = HISTORY_STUB
 
   const composedOnScroll = useCallback(
     (sticky: boolean, handle: ScrollBoxHandle) => {

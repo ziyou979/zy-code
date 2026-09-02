@@ -143,11 +143,6 @@ const workflowsCmd = feature('WORKFLOW_SCRIPTS')
   ? (require('../commands/workflows/index.js') as typeof import('../commands/workflows/index.js'))
       .default
   : null
-const webCmd = feature('CCR_REMOTE_SETUP')
-  ? (
-      require('../commands/remote-setup/index.js') as typeof import('../commands/remote-setup/index.js')
-    ).default
-  : null
 const clearSkillIndexCache = feature('EXPERIMENTAL_SKILL_SEARCH')
   ? (
       require('../services/skill-search/localSearch.js') as typeof import('../services/skill-search/localSearch.js')
@@ -292,7 +287,6 @@ const COMMANDS = memoize((): Command[] => [
   usage,
   usageReport,
   vim,
-  ...(webCmd ? [webCmd] : []),
   ...(forkCmd ? [forkCmd] : []),
   ...(proactive ? [proactive] : []),
   ...(briefCommand ? [briefCommand] : []),
