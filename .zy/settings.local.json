@@ -185,7 +185,9 @@
       "Bash(NODE_ENV=test bun -e \"console.log\\(process.env.NODE_ENV\\)\")",
       "Bash(ZY_TEST_DIAG=1 bun test)",
       "Bash(find E:ProjectCollectionTSProjectspi -maxdepth 4 -type d -name sdk -path *anthropic*)",
-      "Bash(find E:ProjectCollectionTSProjectspinode_modules -maxdepth 3 -type d -name @anthropic*)"
+      "Bash(find E:ProjectCollectionTSProjectspinode_modules -maxdepth 3 -type d -name @anthropic*)",
+      "Bash(sed -n \"298,310p\" src/cli/headless/controlLoop.ts)",
+      "Bash(sed -n \"68,82p\" src/state/onChangeAppState.ts)"
     ]
   },
   "spinnerTipsEnabled": true

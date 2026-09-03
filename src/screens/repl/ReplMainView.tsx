@@ -403,8 +403,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
   const viewingAgentTaskId = useAppState((s) => s.viewingAgentTaskId)
   const elicitation = useAppState((s) => s.elicitation)
   const workerSandboxPermissions = useAppState((s) => s.workerSandboxPermissions)
-  const _ultraplanPendingChoice = useAppState((s) => s.ultraplanPendingChoice)
-  const _ultraplanLaunchPending = useAppState((s) => s.ultraplanLaunchPending)
   const setAppState = useSetAppState()
 
   // ── Local state ──
@@ -701,10 +699,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
     streamMode,
   }
 
-  // stub 组件（未导入 ultraplan gate）
-  const _UltraplanChoiceDialog: React.FC<Record<string, unknown>> = () => null
-  const _UltraplanLaunchDialog: React.FC<Record<string, unknown>> = () => null
-
   return (
     <KeybindingSetup>
       <AnimatedTerminalTitle
@@ -868,7 +862,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                   handleLspResponse={handleLspResponse}
                   setShowDesktopUpsellStartup={setShowDesktopUpsellStartup}
                   setShowFullscreenUpsell={setShowFullscreenUpsell}
-                  createAbortController={createAbortController}
                   exitFlow={exitFlow}
                 />
 

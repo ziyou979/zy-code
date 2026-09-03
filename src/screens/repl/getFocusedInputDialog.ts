@@ -6,7 +6,6 @@
  * 为 true。
  */
 
-import { feature } from 'bun:bundle'
 import type React from 'react'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
 import type { ResumeReturnPrompt } from '../../services/session-storage/resumeReturn.js'
@@ -29,8 +28,6 @@ export interface GetFocusedInputDialogParams {
   idleReturnPending: { input: string; idleMinutes: number } | null
   resumeReturnPending?: ResumeReturnPrompt | null
   isLoading: boolean
-  ultraplanPendingChoice: unknown
-  ultraplanLaunchPending: unknown
   showIdeOnboarding: boolean
   showEffortCallout: boolean
   showRemoteCallout: boolean
@@ -79,22 +76,6 @@ export function getFocusedInputDialog(p: GetFocusedInputDialogParams): FocusedIn
   }
   if (allowDialogsWithAnimation && p.resumeReturnPending) {
     return 'resume-return'
-  }
-  if (
-    feature('ULTRAPLAN') &&
-    allowDialogsWithAnimation &&
-    !p.isLoading &&
-    p.ultraplanPendingChoice
-  ) {
-    return 'ultraplan-choice'
-  }
-  if (
-    feature('ULTRAPLAN') &&
-    allowDialogsWithAnimation &&
-    !p.isLoading &&
-    p.ultraplanLaunchPending
-  ) {
-    return 'ultraplan-launch'
   }
 
   // Onboarding 对话框（特殊条件）

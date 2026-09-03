@@ -41,13 +41,11 @@ import pr_comments from '../commands/pr-comments/index.js'
 import releaseNotes from '../commands/release-notes/index.js'
 import rename, { renameLocal } from '../commands/rename/index.js'
 import resume from '../commands/resume/index.js'
-import { ultrareview } from '../commands/review.js'
 import session from '../commands/session/index.js'
 import share from '../commands/share/index.js'
 import skills from '../commands/skills/index.js'
 import status from '../commands/status/index.js'
 import tasks from '../commands/tasks/index.js'
-import teleport from '../commands/teleport/index.js'
 import tools from '../commands/tools/index.js'
 import bughunter from '../commands/bughunter/index.js'
 import terminalSetup from '../commands/terminal-setup/index.js'
@@ -102,7 +100,6 @@ import exportCommand from '../commands/export/index.js'
 import model, { modelLocal } from '../commands/model/index.js'
 import tag from '../commands/tag/index.js'
 import outputStyle from '../commands/output-style/index.js'
-import remoteEnv from '../commands/remote-env/index.js'
 import upgrade from '../commands/upgrade/index.js'
 import rateLimitOptions from '../commands/rate-limit-options/index.js'
 import statusline from '../commands/statusline/index.js'
@@ -151,7 +148,6 @@ const clearSkillIndexCache = feature('EXPERIMENTAL_SKILL_SEARCH')
 const subscribePr = feature('KAIROS_GITHUB_WEBHOOKS')
   ? require('../commands/subscribe-pr.js').default
   : null
-const ultraplan = feature('ULTRAPLAN') ? require('../commands/ultraplan.js').default : null
 const torch = feature('TORCH') ? require('../commands/torch.js').default : null
 const peersCmd = feature('UDS_INBOX')
   ? (require('../commands/peers/index.js') as typeof import('../commands/peers/index.js')).default
@@ -201,14 +197,12 @@ export const INTERNAL_ONLY_COMMANDS = [
   mockLimits,
   bridgeKick,
   version,
-  ...(ultraplan ? [ultraplan] : []),
   ...(subscribePr ? [subscribePr] : []),
   resetLimits,
   resetLimitsNonInteractive,
   onboarding,
   share,
   summary,
-  teleport,
   antTrace,
   perfIssue,
   env,
@@ -257,7 +251,6 @@ const COMMANDS = memoize((): Command[] => [
   // 同名 local 变体：交互模式 findCommand 命中前者，非交互过滤后只剩本项
   modelLocal,
   outputStyle,
-  remoteEnv,
   plugin,
   powerup,
   pr_comments,
@@ -278,7 +271,6 @@ const COMMANDS = memoize((): Command[] => [
   theme,
   tools,
   feedback,
-  ultrareview,
   rewind,
   terminalSetup,
   upgrade,

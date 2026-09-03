@@ -7,7 +7,6 @@ import type { LocalAgentTaskState } from 'src/tasks/local-agent-task/LocalAgentT
 import type { LocalShellTaskState } from 'src/tasks/local-shell-task/guards.js'
 import type { LocalWorkflowTaskState } from 'src/tasks/local-workflow-task/localWorkflowTask.js'
 import type { MonitorMcpTaskState } from 'src/tasks/monitor-mcp-task/monitorMcpTask.js'
-import type { RemoteAgentTaskState } from 'src/tasks/remote-agent-task/RemoteAgentTask.js'
 import type { BackgroundTaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import { POINTER } from '../../constants/figures.js'
@@ -22,13 +21,6 @@ export type ListItem =
       label: string
       status: string
       task: DeepImmutable<LocalShellTaskState>
-    }
-  | {
-      id: string
-      type: 'remote_agent'
-      label: string
-      status: string
-      task: DeepImmutable<RemoteAgentTaskState>
     }
   | {
       id: string
@@ -79,14 +71,6 @@ export function toListItem(task: BackgroundTaskState): ListItem {
         id: task.id,
         type: 'local_bash',
         label: task.kind === 'monitor' ? task.description : task.command,
-        status: task.status,
-        task,
-      }
-    case 'remote_agent':
-      return {
-        id: task.id,
-        type: 'remote_agent',
-        label: task.title,
         status: task.status,
         task,
       }

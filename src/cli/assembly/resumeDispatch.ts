@@ -1,62 +1,32 @@
-// resume / teleport / remote 会话分派。
-// 对应原 root.ts 约 2947-3413 行的 else if 分支，处理：
-// --from-pr PR 过滤、按自定义标题搜索会话、--remote 远程会话创建、
-// --teleport 远程传送、普通 resume 会话恢复、交互式会话选择器。
+// resume 会话分派。
+// 处理 --from-pr PR 过滤、按自定义标题搜索会话、普通 resume 会话恢复和交互式选择器。
 
 import { resolve } from 'node:path'
 import chalk from 'chalk'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import {
-  getOriginalCwd,
-  setOriginalCwd,
-  switchSession,
-} from 'src/bootstrap/runtime/runtimeContext.js'
-import { setIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
-import { setTeleportedSessionInfo } from 'src/bootstrap/runtime/runtimeContext.js'
-import { filterCommandsForRemoteMode } from '../../commands/index.js'
-import { getRemoteSessionUrl } from '../../constants/product.js'
+import { getOriginalCwd } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { StatsStore } from '../../context/stats.js'
-import {
-  launchResumeChooser,
-  launchTeleportRepoMismatchDialog,
-  launchTeleportResumeWrapper,
-} from '../../cli/DialogLaunchers.js'
+import { launchResumeChooser } from '../../cli/DialogLaunchers.js'
 import type { Root } from '../../ink/index.js'
 import { exitWithError } from '../../cli/InteractiveHelpers.js'
-import { createRemoteSessionConfig } from '../../remote/remoteSessionManager.js'
 import type { DownloadResult } from '../../services/api/filesApi.js'
-import { isPolicyAllowed, waitForPolicyLimitsToLoad } from '../../services/policy-limits/index.js'
-import { fetchSession, prepareApiRequest } from '../../services/teleport/api.js'
 import type { AppState } from '../../state/AppStateStore.js'
-import type { AgentColorName } from '../../tools/AgentTool/agentColorManager.js'
 import type {
   AgentDefinition,
   AgentDefinitionsResult,
 } from '../../tools/AgentTool/loadAgentsDir.js'
-import type { Command } from '../../commands/types.js'
-import { asSessionId } from '../../types/ids.js'
 import type { LogOption } from '../../types/logs.js'
-import type { Message as MessageType } from '../../types/message.js'
 import { count } from '../../utils/array.js'
 import { loadConversationForResume } from '../../services/session-storage/conversationRecovery.js'
-import { logForDebugging } from '../../services/infra/debug.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
-import { errorMessage, isENOENT, TeleportOperationError, toError } from '../../utils/errors.js'
+import { errorMessage, isENOENT } from '../../utils/errors.js'
 import type { FpsMetrics } from '../../utils/fpsTracker.js'
 import { getWorktreePaths } from '../../services/worktree/getWorktreePaths.js'
-import { getBranch } from '../../services/infra/git.js'
-import {
-  filterExistingPaths,
-  getKnownPathsForRepo,
-} from '../../services/github/githubRepoPathMapping.js'
 import { gracefulShutdown } from '../../bootstrap/lifecycle/gracefulShutdown.js'
 import { logError } from '../../services/infra/log.js'
-import { createSystemMessage, createUserMessage } from '../../services/messages/./constructors.js'
-import { setCwd } from '../../services/shell/shell.js'
 import {
   type ProcessedResume,
   processResumedConversation,
@@ -66,18 +36,10 @@ import {
   loadTranscriptFromFile,
   searchSessionsByCustomTitle,
 } from '../../services/sessionStorage.js'
-import {
-  checkOutTeleportedSessionBranch,
-  processMessagesForTeleportResume,
-  validateGitState,
-  validateSessionRepository,
-} from '../../services/teleport/teleport.js'
-import { teleportToRemoteWithErrorHandling } from '../../components/TeleportController.js'
 import type { ThinkingConfig } from '../../services/messages/thinking.js'
 import { validateUuid } from '../../utils/uuid.js'
 import { maybeActivateBrief } from '../activate/brief.js'
 import { maybeActivateProactive } from '../activate/proactive.js'
-import { launchRemoteSessionRepl } from './remoteSession.js'
 import { launchResumedSessionRepl } from './resumedSession.js'
 import type { RenderAndRun, RootActionOptions, SessionConfig } from './types.js'
 // processResumedConversation 第三参数的上下文类型。
@@ -106,21 +68,12 @@ export interface ResumeDispatchParams {
     initialState: AppState
   }
   mainThreadAgentDefinition: AgentDefinition | undefined
-  teleport: string | true | null
-  remote: string | null
-  commands: Command[]
-  debug: boolean
-  debugToStderr: boolean
-  ide: boolean
-  disableSlashCommands: boolean
   thinkingConfig: ThinkingConfig
   fileDownloadPromise: Promise<DownloadResult[]> | undefined
 }
 
 /**
- * 分派 resume / teleport / remote 会话恢复流程。
- *
- * 对应原 root.ts 中 `else if (options.resume || options.fromPr || teleport || remote !== null)` 分支。
+ * 分派本地 resume 会话恢复流程。
  */
 export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<void> {
   const {
@@ -132,13 +85,6 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
     options,
     sessionConfig,
     resumeContext,
-    teleport,
-    remote,
-    commands,
-    debug,
-    debugToStderr,
-    ide,
-    disableSlashCommands,
     thinkingConfig,
     fileDownloadPromise,
   } = params
@@ -151,7 +97,6 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
   // 恢复前清除过时缓存，确保文件/技能发现为最新
   const { clearSessionCaches } = await import('../../commands/clear/caches.js')
   clearSessionCaches()
-  let messages: MessageType[] | null = null
   let processedResume: ProcessedResume | undefined
   let maybeSessionId = validateUuid(options.resume)
   let searchTerm: string | undefined
@@ -189,222 +134,6 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
     }
   }
 
-  // --remote 和 --teleport 都创建/恢复 ZY Code Web (ZYR) 会话。
-  // Remote Control (--rc) 是独立的功能，门控在 initReplBridge.ts 中。
-  if (remote !== null || teleport) {
-    await waitForPolicyLimitsToLoad()
-    if (!isPolicyAllowed('allow_remote_sessions')) {
-      return await exitWithError(
-        root,
-        "Error: Remote sessions are disabled by your organization's policy.",
-        () => gracefulShutdown(1),
-      )
-    }
-  }
-  if (remote !== null) {
-    // 创建远程会话（可选带初始提示）
-    const hasInitialPrompt = remote.length > 0
-
-    // 检查是否启用了 TUI 模式 —— 描述仅在 TUI 模式下是可选的
-    const isRemoteTuiEnabled = getFeatureValue_CACHED_MAY_BE_STALE('zy_remote_backend', false)
-    if (!isRemoteTuiEnabled && !hasInitialPrompt) {
-      return await exitWithError(
-        root,
-        'Error: --remote requires a description.\nUsage: zycode --remote "your task description"',
-        () => gracefulShutdown(1),
-      )
-    }
-    logEvent('zy_remote_create_session', {
-      has_initial_prompt: String(
-        hasInitialPrompt,
-      ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-
-    // 传递当前分支以便 CCR 在正确的修订版克隆仓库
-    const currentBranch = await getBranch()
-    const createdSession = await teleportToRemoteWithErrorHandling(
-      root,
-      hasInitialPrompt ? remote : null,
-      new AbortController().signal,
-      currentBranch || undefined,
-    )
-    if (!createdSession) {
-      logEvent('zy_remote_create_session_error', {
-        error:
-          'unable_to_create_session' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      return await exitWithError(root, 'Error: Unable to create remote session', () =>
-        gracefulShutdown(1),
-      )
-    }
-    logEvent('zy_remote_create_session_success', {
-      session_id: createdSession.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-
-    // 通过功能门检查是否启用了新的远程 TUI 模式
-    if (!isRemoteTuiEnabled) {
-      // 原始行为：打印会话信息并退出
-      process.stdout.write(`Created remote session: ${createdSession.title}\n`)
-      process.stdout.write(`View: ${getRemoteSessionUrl(createdSession.id)}?m=0\n`)
-      process.stdout.write(`Resume with: zycode --teleport ${createdSession.id}\n`)
-      await gracefulShutdown(0)
-      process.exit(0)
-    }
-
-    // 新行为：启动带 CCR 引擎的本地 TUI
-    // 标记我们处于远程模式以进行命令可见性
-    setIsRemoteMode(true)
-    switchSession(asSessionId(createdSession.id))
-
-    // 获取远程会话的 OAuth 凭证
-    let apiCreds: {
-      accessToken: string
-      orgUUID: string
-    }
-    try {
-      apiCreds = await prepareApiRequest()
-    } catch (error) {
-      logError(toError(error))
-      return await exitWithError(
-        root,
-        `Error: ${errorMessage(error) || 'Failed to authenticate'}`,
-        () => gracefulShutdown(1),
-      )
-    }
-
-    // 为 REPL 创建远程会话配置
-    const { getZyAIOAuthTokens: getTokensForRemote } = await import('../../services/auth/auth.js')
-    const getAccessTokenForRemote = (): string =>
-      getTokensForRemote()?.accessToken ?? apiCreds.accessToken
-    const remoteSessionConfig = createRemoteSessionConfig(
-      createdSession.id,
-      getAccessTokenForRemote,
-      apiCreds.orgUUID,
-      hasInitialPrompt,
-    )
-
-    // 将远程会话信息作为初始系统消息添加
-    const remoteSessionUrl = `${getRemoteSessionUrl(createdSession.id)}?m=0`
-    const remoteInfoMessage = createSystemMessage(
-      `/remote-control is active. Code in CLI or at ${remoteSessionUrl}`,
-      'info',
-    )
-
-    // 如果提供了提示，从提示创建初始用户消息（CCR 回显它但我们忽略）
-    const initialUserMessage = hasInitialPrompt
-      ? createUserMessage({
-          content: [{ type: 'text' as const, text: remote ?? '' }],
-        })
-      : null
-
-    // 在应用状态中设置远程会话 URL 用于底部指示器
-    const remoteInitialState = {
-      ...initialState,
-      remoteSessionUrl,
-    }
-
-    // 预过滤命令以仅包含远程安全的命令。
-    // CCR 的初始化响应可能进一步细化列表（通过 REPL 中的 handleRemoteInit）。
-    const remoteCommands = filterCommandsForRemoteMode(commands)
-    await launchRemoteSessionRepl({
-      root,
-      appProps: { getFpsMetrics, stats, initialState: remoteInitialState },
-      renderAndRun,
-      config: {
-        debug: debug || debugToStderr,
-        autoConnectIdeFlag: ide,
-        mainThreadAgentDefinition,
-        disableSlashCommands,
-        thinkingConfig,
-      },
-      remoteCommands,
-      initialMessages: initialUserMessage
-        ? [remoteInfoMessage, initialUserMessage]
-        : [remoteInfoMessage],
-      remoteSessionConfig,
-    })
-    return
-  } else if (teleport) {
-    if (teleport === true || teleport === '') {
-      // 交互模式：显示任务选择器并处理恢复
-      logEvent('zy_teleport_interactive_mode', {})
-      logForDebugging('selectAndResumeTeleportTask: Starting teleport flow...')
-      const teleportResult = await launchTeleportResumeWrapper(root)
-      if (!teleportResult) {
-        // 用户取消或发生错误
-        await gracefulShutdown(0)
-        process.exit(0)
-      }
-      const { branchError } = await checkOutTeleportedSessionBranch(teleportResult.branch)
-      messages = processMessagesForTeleportResume(teleportResult.log, branchError)
-    } else if (typeof teleport === 'string') {
-      logEvent('zy_teleport_resume_session', {
-        mode: 'direct' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      try {
-        // 首先，在检查 git 状态之前获取会话并验证仓库
-        const sessionData = await fetchSession(teleport)
-        const repoValidation = await validateSessionRepository(sessionData)
-
-        // 处理仓库不匹配或不在仓库中的情况
-        if (repoValidation.status === 'mismatch' || repoValidation.status === 'not_in_repo') {
-          const sessionRepo = repoValidation.sessionRepo
-          if (sessionRepo) {
-            // 检查已知路径
-            const knownPaths = getKnownPathsForRepo(sessionRepo)
-            const existingPaths = await filterExistingPaths(knownPaths)
-            if (existingPaths.length > 0) {
-              // 显示目录切换对话框
-              const selectedPath = await launchTeleportRepoMismatchDialog(root, {
-                targetRepo: sessionRepo,
-                initialPaths: existingPaths,
-              })
-              if (selectedPath) {
-                // 切换到选定的目录
-                process.chdir(selectedPath)
-                setCwd(selectedPath)
-                setOriginalCwd(selectedPath)
-              } else {
-                // 用户取消
-                await gracefulShutdown(0)
-              }
-            } else {
-              // 没有已知路径 —— 显示原始错误
-              throw new TeleportOperationError(
-                `You must run zycode --teleport ${teleport} from a checkout of ${sessionRepo}.`,
-                chalk.red(
-                  `You must run zycode --teleport ${teleport} from a checkout of ${chalk.bold(sessionRepo)}.\n`,
-                ),
-              )
-            }
-          }
-        } else if (repoValidation.status === 'error') {
-          throw new TeleportOperationError(
-            repoValidation.errorMessage || 'Failed to validate session',
-            chalk.red(`Error: ${repoValidation.errorMessage || 'Failed to validate session'}\n`),
-          )
-        }
-        await validateGitState()
-
-        // 使用进度 UI 进行 teleport
-        const { teleportWithProgress } = await import('../../components/TeleportProgress.js')
-        const result = await teleportWithProgress(root, teleport)
-        // 跟踪 teleported 会话用于可靠性日志
-        setTeleportedSessionInfo({
-          sessionId: teleport,
-        })
-        messages = result.messages
-      } catch (error) {
-        if (error instanceof TeleportOperationError) {
-          process.stderr.write(`${error.formattedMessage}\n`)
-        } else {
-          logError(error)
-          process.stderr.write(chalk.red(`Error: ${errorMessage(error)}\n`))
-        }
-        await gracefulShutdown(1)
-      }
-    }
-  }
   if (isInternalBuild()) {
     if (options.resume && typeof options.resume === 'string' && !maybeSessionId) {
       // 检查 ccshare URL（如 https://go/ccshare/boris-20260311-211036）
@@ -522,20 +251,8 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
     }
   }
 
-  // 如果我们有处理过的恢复或 teleport 消息，渲染 REPL
-  const resumeData =
-    processedResume ??
-    (Array.isArray(messages)
-      ? {
-          messages,
-          fileHistorySnapshots: undefined,
-          agentName: undefined,
-          agentColor: undefined as AgentColorName | undefined,
-          restoredAgentDef: mainThreadAgentDefinition,
-          initialState,
-          contentReplacements: undefined,
-        }
-      : undefined)
+  // 如果成功恢复了会话，渲染 REPL。
+  const resumeData = processedResume
   if (resumeData) {
     maybeActivateProactive(options)
     maybeActivateBrief(options)

@@ -45,8 +45,6 @@ export type FocusedInputDialog =
   | 'plugin-hint'
   | 'fullscreen-upsell'
   | 'desktop-upsell'
-  | 'ultraplan-choice'
-  | 'ultraplan-launch'
   | undefined
 
 export type UseReplOnCancelParams = {

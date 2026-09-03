@@ -16,14 +16,9 @@ import { LocalShellTask } from 'src/tasks/local-shell-task/LocalShellTask.js'
 // Type import is erased at build time — safe even though module is ant-gated.
 import type { LocalWorkflowTaskState } from 'src/tasks/local-workflow-task/localWorkflowTask.js'
 import type { MonitorMcpTaskState } from 'src/tasks/monitor-mcp-task/monitorMcpTask.js'
-import {
-  RemoteAgentTask,
-  type RemoteAgentTaskState,
-} from 'src/tasks/remote-agent-task/RemoteAgentTask.js'
 import { type BackgroundTaskState, isBackgroundTask, type TaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
 import { intersperse } from 'src/utils/array.js'
-import { stopUltraplan } from '../../commands/ultraplan.js'
 import type { CommandResultDisplay } from '../../commands/index.js'
 import { useRegisterOverlay } from '../../context/OverlayContext.js'
 import type { ExitState } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
@@ -40,7 +35,6 @@ import { AsyncAgentDetailDialog } from './AsyncAgentDetailDialog.js'
 import { BackgroundTask as BackgroundTaskComponent } from './BackgroundTask.js'
 import { DreamDetailDialog } from './DreamDetailDialog.js'
 import { InProcessTeammateDetailDialog } from './InProcessTeammateDetailDialog.js'
-import { RemoteSessionDetailDialog } from './RemoteSessionDetailDialog.js'
 import { ShellDetailDialog } from './ShellDetailDialog.js'
 import { Item, type ListItem, TeammateTaskGroups, toListItem } from './TaskListRenderers.js'
 
@@ -138,7 +132,6 @@ export function BackgroundTasksDialog({
   // 将排序和分类的项目一起 memo 化以确保引用稳定
   const {
     bashTasks,
-    remoteSessions,
     agentTasks,
     teammateTasks,
     workflowTasks,
@@ -159,7 +152,6 @@ export function BackgroundTasksDialog({
       return bTime - aTime
     })
     const bash = sorted.filter((item) => item.type === 'local_bash')
-    const remote = sorted.filter((item) => item.type === 'remote_agent')
     // 排除已前置的任务——它正在主 UI 中查看，不是后台任务
     const agent = sorted.filter(
       (item) => item.type === 'local_agent' && item.id !== foregroundedTaskId,
@@ -185,7 +177,6 @@ export function BackgroundTasksDialog({
         : []
     return {
       bashTasks: bash,
-      remoteSessions: remote,
       agentTasks: agent,
       workflowTasks: workflows,
       mcpMonitors: monitorMcp,
@@ -198,7 +189,6 @@ export function BackgroundTasksDialog({
         ...teammates,
         ...bash,
         ...monitorMcp,
-        ...remote,
         ...agent,
         ...workflows,
         ...dreamTasks,
@@ -279,15 +269,6 @@ export function BackgroundTasksDialog({
         killMonitorMcp(currentSelection.id, setAppState)
       } else if (currentSelection.type === 'dream' && currentSelection.status === 'running') {
         void killDreamTask(currentSelection.id)
-      } else if (
-        currentSelection.type === 'remote_agent' &&
-        currentSelection.status === 'running'
-      ) {
-        if (currentSelection.task.isUltraplan) {
-          void stopUltraplan(currentSelection.id, currentSelection.task.sessionId, setAppState)
-        } else {
-          void killRemoteAgentTask(currentSelection.id)
-        }
       }
     }
     if (e.key === 'f') {
@@ -320,9 +301,6 @@ export function BackgroundTasksDialog({
   }
   async function killDreamTask(taskId: string): Promise<void> {
     await DreamTask.kill(taskId, setAppState)
-  }
-  async function killRemoteAgentTask(taskId: string): Promise<void> {
-    await RemoteAgentTask.kill(taskId, setAppState)
   }
 
   // 用 useEffectEvent 包装 onDone，获得稳定引用，始终调用当前 onDone 回调，
@@ -396,23 +374,6 @@ export function BackgroundTasksDialog({
             onKillAgent={() => void killAgentTask(task.id)}
             onBack={goBackToList}
             key={`agent-${task.id}`}
-          />
-        )
-      case 'remote_agent':
-        return (
-          <RemoteSessionDetailDialog
-            session={task}
-            onDone={onDone}
-            toolUseContext={toolUseContext}
-            onBack={goBackToList}
-            onKill={
-              task.status !== 'running'
-                ? undefined
-                : task.isUltraplan
-                  ? () => void stopUltraplan(task.id, task.sessionId, setAppState)
-                  : () => void killRemoteAgentTask(task.id)
-            }
-            key={`session-${task.id}`}
           />
         )
       case 'in_process_teammate':
@@ -491,11 +452,7 @@ export function BackgroundTasksDialog({
     }
   }
   const runningBashCount = count(bashTasks, (_) => _.status === 'running')
-  const runningAgentCount =
-    count(
-      remoteSessions,
-      (session) => session.status === 'running' || session.status === 'pending',
-    ) + count(agentTasks, (agent) => agent.status === 'running')
+  const runningAgentCount = count(agentTasks, (agent) => agent.status === 'running')
   const runningTeammateCount = count(teammateTasks, (teammate) => teammate.status === 'running')
   const subtitle = intersperse(
     [
@@ -543,8 +500,7 @@ export function BackgroundTasksDialog({
       currentSelection?.type === 'in_process_teammate' ||
       currentSelection?.type === 'local_workflow' ||
       currentSelection?.type === 'monitor_mcp' ||
-      currentSelection?.type === 'dream' ||
-      currentSelection?.type === 'remote_agent') &&
+      currentSelection?.type === 'dream') &&
     currentSelection.status === 'running'
       ? [<KeyboardShortcutHint key="kill" shortcut="x" action="stop" />]
       : []),
@@ -584,7 +540,7 @@ export function BackgroundTasksDialog({
           <Box flexDirection="column">
             {teammateTasks.length > 0 && (
               <Box flexDirection="column">
-                {(bashTasks.length > 0 || remoteSessions.length > 0 || agentTasks.length > 0) && (
+                {(bashTasks.length > 0 || agentTasks.length > 0) && (
                   <Text dimColor>
                     <Text bold>
                       {'  '}
@@ -604,9 +560,7 @@ export function BackgroundTasksDialog({
 
             {bashTasks.length > 0 && (
               <Box flexDirection="column" marginTop={teammateTasks.length > 0 ? 1 : 0}>
-                {(teammateTasks.length > 0 ||
-                  remoteSessions.length > 0 ||
-                  agentTasks.length > 0) && (
+                {(teammateTasks.length > 0 || agentTasks.length > 0) && (
                   <Text dimColor>
                     <Text bold>
                       {'  '}
@@ -643,38 +597,11 @@ export function BackgroundTasksDialog({
               </Box>
             )}
 
-            {remoteSessions.length > 0 && (
-              <Box
-                flexDirection="column"
-                marginTop={
-                  teammateTasks.length > 0 || bashTasks.length > 0 || mcpMonitors.length > 0 ? 1 : 0
-                }
-              >
-                <Text dimColor>
-                  <Text bold>
-                    {'  '}
-                    {tSync('backgroundTasks.remoteAgents')}
-                  </Text>{' '}
-                  ({remoteSessions.length})
-                </Text>
-                <Box flexDirection="column">
-                  {remoteSessions.map((item) => (
-                    <Item key={item.id} item={item} isSelected={item.id === currentSelection?.id} />
-                  ))}
-                </Box>
-              </Box>
-            )}
-
             {agentTasks.length > 0 && (
               <Box
                 flexDirection="column"
                 marginTop={
-                  teammateTasks.length > 0 ||
-                  bashTasks.length > 0 ||
-                  mcpMonitors.length > 0 ||
-                  remoteSessions.length > 0
-                    ? 1
-                    : 0
+                  teammateTasks.length > 0 || bashTasks.length > 0 || mcpMonitors.length > 0 ? 1 : 0
                 }
               >
                 <Text dimColor>
@@ -699,7 +626,6 @@ export function BackgroundTasksDialog({
                   teammateTasks.length > 0 ||
                   bashTasks.length > 0 ||
                   mcpMonitors.length > 0 ||
-                  remoteSessions.length > 0 ||
                   agentTasks.length > 0
                     ? 1
                     : 0
@@ -727,7 +653,6 @@ export function BackgroundTasksDialog({
                   teammateTasks.length > 0 ||
                   bashTasks.length > 0 ||
                   mcpMonitors.length > 0 ||
-                  remoteSessions.length > 0 ||
                   agentTasks.length > 0 ||
                   workflowTasks.length > 0
                     ? 1

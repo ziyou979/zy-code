@@ -301,7 +301,6 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
           prev.toolPermissionContext,
           output,
         ),
-        isUltraplanMode: m.ultraplan ?? prev.isUltraplanMode,
       }))
       // handleSetPermissionMode 会发送 control_response；此前紧随其后的
       // notifySessionMetadataChanged 现由 onChangeAppState 触发，并使用外部模式名。

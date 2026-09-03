@@ -3,7 +3,6 @@ import type { Task, TaskType } from '../tasks/task.js'
 import { DreamTask } from './dream-task/dreamTask.js'
 import { LocalAgentTask } from './local-agent-task/LocalAgentTask.js'
 import { LocalShellTask } from './local-shell-task/LocalShellTask.js'
-import { RemoteAgentTask } from './remote-agent-task/RemoteAgentTask.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const LocalWorkflowTask: Task | null = feature('WORKFLOW_SCRIPTS')
@@ -19,7 +18,7 @@ const MonitorMcpTask: Task | null = feature('MONITOR_TOOL')
  * 沿用 tools.ts 的模式；直接返回内联数组，避免顶层 const 引发循环依赖问题。
  */
 export function getAllTasks(): Task[] {
-  const tasks: Task[] = [LocalShellTask, LocalAgentTask, RemoteAgentTask, DreamTask]
+  const tasks: Task[] = [LocalShellTask, LocalAgentTask, DreamTask]
   if (LocalWorkflowTask) {
     tasks.push(LocalWorkflowTask)
   }

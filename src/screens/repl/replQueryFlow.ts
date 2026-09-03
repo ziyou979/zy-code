@@ -59,7 +59,7 @@ import type { ActiveSpeculationState } from '../../services/prompt-suggestion/sp
 import { handleSpeculationAccept } from '../../services/prompt-suggestion/speculation.js'
 import { prependToShellHistoryCache } from '../../services/suggestions/shellHistoryCompletion.js'
 import { setMemberActive } from '../../services/swarm/teamHelpers.js'
-import type { RemoteMessageContent } from '../../services/teleport/api.js'
+import type { RemoteMessageContent } from '../../remote/messageAdapter.js'
 import type { AppState, AppStateStore } from '../../state/AppStateStore.js'
 import type { ReplStoreInstance, ToolJSXState } from '../../state/replStore.js'
 import type { CompactProgressEvent, Tool } from '../../tools/tool.js'

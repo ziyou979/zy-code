@@ -353,14 +353,6 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
     }
   }
 
-  // 提取 teleport 选项
-  const teleport = options.teleport ?? null
-
-  // 提取 remote 选项（如果没有提供描述可以为 true，或为字符串）
-  const remoteOption = options.remote
-
-  const remote = remoteOption === true ? '' : (remoteOption ?? null)
-
   // 提取 --remote-control / --rc 标志（在交互会话中启用桥接）
   const remoteControlOption = options.remoteControl ?? options.rc
 
@@ -715,9 +707,6 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
     storedTeammateOpts,
     sdkUrl,
     effectiveIncludePartialMessages,
-    teleport,
-    remoteOption,
-    remote,
     remoteControlOption,
     remoteControl,
     remoteControlName,

@@ -32,12 +32,6 @@ import {
   updateAgentProgress as updateAsyncAgentProgress,
   updateProgressFromMessage,
 } from '../../tasks/local-agent-task/LocalAgentTask.js'
-import {
-  checkRemoteAgentEligibility,
-  formatPreconditionError,
-  getRemoteTaskSessionUrl,
-  registerRemoteAgentTask,
-} from '../../tasks/remote-agent-task/RemoteAgentTask.js'
 import { assembleToolPool } from '../../tools/tools.js'
 import { asAgentId } from '../../types/ids.js'
 import { runWithAgentContext } from '../../services/agent/agentContext.js'
@@ -65,7 +59,6 @@ import { buildEffectiveSystemPrompt } from '../../services/messages/systemPrompt
 import { asSystemPrompt } from '../../services/api/systemPromptType.js'
 import { getParentSessionId, isTeammate } from '../../services/swarm/teammate.js'
 import { isInProcessTeammate } from '../../services/swarm/teammateContext.js'
-import { teleportToRemote } from '../../services/teleport/teleport.js'
 import { getAssistantMessageContentLength } from '../../services/api/tokens.js'
 import { createAgentId } from '../../utils/uuid.js'
 import {
@@ -191,12 +184,11 @@ const fullInputSchema = lazySchema(() => {
   return baseInputSchema()
     .merge(multiAgentInputSchema)
     .extend({
-      isolation: (isInternalBuild() ? z.enum(['worktree', 'remote']) : z.enum(['worktree']))
+      isolation: z
+        .enum(['worktree'])
         .optional()
         .describe(
-          isInternalBuild()
-            ? 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo. "remote" launches the agent in a remote CCR environment (always runs in background).'
-            : 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo.',
+          'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo.',
         ),
       cwd: z
         .string()
@@ -243,7 +235,7 @@ type AgentToolInput = z.infer<ReturnType<typeof baseInputSchema>> & {
   name?: string
   team_name?: string
   mode?: z.infer<ReturnType<typeof permissionModeSchema>>
-  isolation?: 'worktree' | 'remote'
+  isolation?: 'worktree'
   cwd?: string
 }
 
@@ -288,20 +280,8 @@ type TeammateSpawnedOutput = {
   plan_mode_required?: boolean
 }
 
-// Combined output type including both public and internal types
-// Note: TeammateSpawnedOutput type is fine - TypeScript types are erased at compile time
-// Private type for remote-launched results — excluded from exported schema
-// like TeammateSpawnedOutput for dead code elimination purposes. Exported
-// for UI.tsx to do proper discriminated-union narrowing instead of ad-hoc casts.
-export type RemoteLaunchedOutput = {
-  status: 'remote_launched'
-  taskId: string
-  sessionUrl: string
-  description: string
-  prompt: string
-  outputFile: string
-}
-type InternalOutput = Output | TeammateSpawnedOutput | RemoteLaunchedOutput
+// Combined output type including public and teammate-only internal results.
+type InternalOutput = Output | TeammateSpawnedOutput
 
 import type { AgentToolProgress, ShellProgress } from '../../types/tools.js'
 // AgentTool forwards both its own progress events and shell progress
@@ -628,54 +608,6 @@ export const AgentTool = buildTool({
     // Resolve effective isolation mode (explicit param overrides agent def)
     const effectiveIsolation = isolation ?? selectedAgent.isolation
 
-    // Remote isolation: delegate to CCR. Gated ant-only — the guard enables
-    // dead code elimination of the entire block for external builds.
-    if (isInternalBuild() && effectiveIsolation === 'remote') {
-      const eligibility = await checkRemoteAgentEligibility()
-      if (!eligibility.eligible) {
-        const reasons = eligibility.errors.map(formatPreconditionError).join('\n')
-        throw new Error(`Cannot launch remote agent:\n${reasons}`)
-      }
-      let bundleFailHint: string | undefined
-      const session = await teleportToRemote({
-        initialMessage: prompt,
-        description,
-        signal: toolUseContext.abortController.signal,
-        onBundleFail: (msg) => {
-          bundleFailHint = msg
-        },
-      })
-      if (!session) {
-        throw new Error(bundleFailHint ?? 'Failed to create remote session')
-      }
-      const { taskId, sessionId } = registerRemoteAgentTask({
-        remoteTaskType: 'remote-agent',
-        session: {
-          id: session.id,
-          title: session.title || description,
-        },
-        command: prompt,
-        context: toolUseContext,
-        toolUseId: toolUseContext.toolUseId,
-      })
-      logEvent('zy_agent_tool_remote_launched', {
-        agent_type:
-          selectedAgent.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      const remoteResult: RemoteLaunchedOutput = {
-        status: 'remote_launched',
-        taskId,
-        sessionUrl: getRemoteTaskSessionUrl(sessionId),
-        description,
-        prompt,
-        outputFile: getTaskOutputPath(taskId),
-      }
-      return {
-        data: remoteResult,
-      } as unknown as {
-        data: Output
-      }
-    }
     // System prompt + prompt messages: branch on fork path.
     //
     // Fork path: child inherits the PARENT's system prompt (not FORK_AGENT's)
@@ -1665,19 +1597,6 @@ agent_id: ${spawnData.teammate_id}
 name: ${spawnData.name}
 team_name: ${spawnData.team_name}
 The agent is now running and will receive instructions via mailbox.`,
-          },
-        ],
-      }
-    }
-    if ('status' in internalData && internalData.status === 'remote_launched') {
-      const r = internalData
-      return {
-        toolCallId: toolUseID,
-        type: 'tool_result',
-        content: [
-          {
-            type: 'text',
-            text: `Remote agent launched in CCR.\ntaskId: ${r.taskId}\nsession_url: ${r.sessionUrl}\noutput_file: ${r.outputFile}\nThe agent is running remotely. You will be notified automatically when it completes.\nBriefly tell the user what you launched and end your response.`,
           },
         ],
       }

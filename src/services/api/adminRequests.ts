@@ -1,7 +1,27 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
+import { getOrganizationUUID, getZyAIOAuthTokens } from '../auth/auth.js'
 import { buildOAuthApiHeaders } from '../http/authHeaders.js'
-import { prepareApiRequest } from '../teleport/api.js'
+
+/**
+ * 解析 zy.ai 账号请求所需的 OAuth 凭证（access token + 组织 UUID）。
+ * admin_requests 是账号体系轻功能，不依赖任何远端会话设施。
+ */
+async function prepareApiRequest(): Promise<{ accessToken: string; orgUUID: string }> {
+  const accessToken = getZyAIOAuthTokens()?.accessToken
+  if (accessToken === undefined) {
+    throw new Error(
+      'ZY Code web sessions require authentication with a Zy.ai account. API key authentication is not sufficient. Please run /login to authenticate, or check your authentication status with /status.',
+    )
+  }
+
+  const orgUUID = await getOrganizationUUID()
+  if (!orgUUID) {
+    throw new Error('Unable to get organization UUID')
+  }
+
+  return { accessToken, orgUUID }
+}
 
 export type AdminRequestType = 'limit_increase' | 'seat_upgrade'
 

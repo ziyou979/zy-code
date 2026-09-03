@@ -97,7 +97,6 @@ export interface HeadlessModeParams {
   // SDK / 集成
   betas: string[]
   sdkUrl: string | undefined
-  teleport: string | true | null
   effectiveReplayUserMessages: boolean
   effectiveIncludePartialMessages: boolean
 
@@ -142,7 +141,6 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
     zyaiConfigPromise,
     betas,
     sdkUrl,
-    teleport,
     effectiveReplayUserMessages,
     effectiveIncludePartialMessages,
     setupTrigger,
@@ -166,13 +164,13 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
   // MCP 连接 + 插件初始化 + 下方 print.ts 导入重叠。
   // loadInitialMessages 在 print.ts:4397 连接此 promise。
   // 守卫与 loadInitialMessages 相同 ——
-  // continue/resume/teleport 路径不触发启动钩子
+  // continue/resume 路径不触发启动钩子
   //（或在 resume 分支内有条件地触发它们，此 promise 为
   // undefined 且 ?? 回退运行）。当 setupTrigger 设置时也跳过
   // —— 那些路径先运行 setup 钩子（print.ts:544），且会话
   // 启动钩子必须等待 setup 完成。
   const sessionStartHooksPromise =
-    options.continue || options.resume || teleport || setupTrigger
+    options.continue || options.resume || setupTrigger
       ? undefined
       : processSessionStartHooks('startup')
   // 如果这在 loadInitialMessages 等待之前拒绝，抑制瞬态 unhandledRejection。
@@ -432,7 +430,6 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
       appendSystemPrompt,
       userSpecifiedModel: effectiveModel,
       fallbackModel: userSpecifiedFallbackModel,
-      teleport,
       sdkUrl,
       replayUserMessages: effectiveReplayUserMessages,
       includePartialMessages: effectiveIncludePartialMessages,

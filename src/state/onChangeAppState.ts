@@ -68,15 +68,11 @@ export function onChangeAppState({
     const prevExternal = toExternalPermissionMode(prevMode)
     const newExternal = toExternalPermissionMode(newMode)
     if (prevExternal !== newExternal) {
-      // Ultraplan 只适用于首轮 plan。初始 control_request 会原子设置 mode 与
-      // isUltraplanMode，因此用 flag 的变化门控。按 RFC 7396 使用 null 删除 key。
-      const isUltraplan =
-        newExternal === 'plan' && newState.isUltraplanMode && !oldState.isUltraplanMode
-          ? true
-          : null
+      // CCR external_metadata 不得收到仅内部使用的模式名（bubble、未门控 auto）。
+      // 先外部化；若外部模式未改变则跳过 CCR 通知，例如 default→bubble→default
+      // 在 CCR 看来都是 default，只是噪声。
       notifySessionMetadataChanged({
         permission_mode: newExternal,
-        is_ultraplan_mode: isUltraplan,
       })
     }
     notifyPermissionModeChanged(newMode)

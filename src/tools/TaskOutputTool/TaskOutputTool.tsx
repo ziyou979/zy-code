@@ -13,7 +13,6 @@ import type { Tool } from '../../tools/tool.js'
 import { buildTool, type ToolDef } from '../../tools/tool.js'
 import type { LocalAgentTaskState } from '../../tasks/local-agent-task/LocalAgentTask.js'
 import type { LocalShellTaskState } from '../../tasks/local-shell-task/guards.js'
-import type { RemoteAgentTaskState } from '../../tasks/remote-agent-task/RemoteAgentTask.js'
 import type { TaskState } from '../../tasks/types.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
@@ -106,13 +105,6 @@ async function getTaskOutputData(task: TaskState): Promise<TaskOutput> {
       result: cleanResult || output,
       output: cleanResult || output,
       error: agentTask.error,
-    }
-  }
-  if (task.type === 'remote_agent') {
-    const remoteTask = task as RemoteAgentTaskState
-    return {
-      ...baseOutput,
-      prompt: remoteTask.command,
     }
   }
   return baseOutput
@@ -451,31 +443,6 @@ function TaskOutputResultDisplay({
       <MessageResponse>
         <Text dimColor={true}>Task not ready</Text>
       </MessageResponse>
-    )
-  }
-  if (task.task_type === 'remote_agent') {
-    return (
-      <Box flexDirection="column">
-        {
-          <Text>
-              {task.description} [{task.status}]
-          </Text>
-        }
-        {task.output && verbose && (
-          <Box paddingLeft={4} marginTop={1}>
-            <Text>{task.output}</Text>
-          </Box>
-        )}
-        {!verbose && task.output && (
-          <Text dimColor={true}>
-            {'     '}
-            {tSync('shortcut.hintParens', {
-              shortcut: expandShortcut,
-              action: tSync('common.expand'),
-            })}
-          </Text>
-        )}
-      </Box>
     )
   }
   return (

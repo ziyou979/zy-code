@@ -17,7 +17,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { maybeActivateBrief } from '../activate/brief.js'
 import { maybeActivateProactive } from '../activate/proactive.js'
-import { pendingAssistantChat, pendingConnect, pendingSSH } from '../argvDispatch.js'
+import { pendingConnect, pendingSSH } from '../argvDispatch.js'
 import { logSessionTelemetry, logStartupTelemetry } from '../bootstrap/telemetry.js'
 import { coordinatorModeModule, getTeammateUtils } from '../lazyModules.js'
 import { addToHistory } from '../../services/session-storage/history.js'
@@ -45,7 +45,6 @@ import { getInitialSettings } from '../../services/settings/settings.js'
 import {
   dispatchResumeMode,
   launchResumedSessionRepl,
-  runAssistantChatMode,
   runDirectConnectMode,
   runHeadlessMode,
   runInteractiveMode,
@@ -103,9 +102,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
     storedTeammateOpts,
     sdkUrl,
     effectiveIncludePartialMessages,
-    teleport,
-    remoteOption,
-    remote,
     remoteControlOption,
     remoteControl,
     remoteControlName,
@@ -222,7 +218,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
       zyaiConfigPromise,
       betas,
       sdkUrl,
-      teleport,
       effectiveReplayUserMessages,
       effectiveIncludePartialMessages,
       setupTrigger,
@@ -572,30 +567,7 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
       },
     })
     return
-  } else if (
-    feature('KAIROS')
-      ? Boolean(
-          pendingAssistantChat && (pendingAssistantChat.sessionId || pendingAssistantChat.discover),
-        )
-      : false
-  ) {
-    await runAssistantChatMode({
-      root,
-      renderAndRun,
-      getFpsMetrics,
-      stats,
-      initialState,
-      pendingAssistantChat: pendingAssistantChat!,
-      commands,
-      debug,
-      debugToStderr,
-      ide,
-      mainThreadAgentDefinition,
-      disableSlashCommands,
-      thinkingConfig,
-    })
-    return
-  } else if (options.resume || options.fromPr || teleport || remote !== null) {
+  } else if (options.resume || options.fromPr) {
     await dispatchResumeMode({
       root,
       renderAndRun,
@@ -606,13 +578,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
       sessionConfig,
       resumeContext,
       mainThreadAgentDefinition,
-      teleport,
-      remote,
-      commands,
-      debug,
-      debugToStderr,
-      ide,
-      disableSlashCommands,
       thinkingConfig,
       fileDownloadPromise,
     })

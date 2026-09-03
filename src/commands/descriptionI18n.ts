@@ -51,7 +51,6 @@ export const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   tag: 'commands.tag',
   theme: 'commands.theme',
   feedback: 'commands.feedback',
-  ultrareview: 'commands.ultrareview',
   rewind: 'commands.rewind',
   'terminal-setup': 'commands.terminalSetup',
   upgrade: 'commands.upgrade',

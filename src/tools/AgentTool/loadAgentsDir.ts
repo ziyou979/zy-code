@@ -13,7 +13,7 @@ import { type McpServerConfig, McpServerConfigSchema } from '../../services/mcp/
 import type { ToolUseContext } from '../../tools/tool.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { EFFORT_LEVELS, type EffortLevel, parseEffortValue } from '../../services/effort/effort.js'
-import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { parsePositiveIntFromFrontmatter } from '../../services/markdown/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../services/infra/log.js'
@@ -73,10 +73,7 @@ const AgentJsonSchema = lazySchema(() =>
     initialPrompt: z.string().optional(),
     memory: z.enum(['user', 'project', 'local']).optional(),
     background: z.boolean().optional(),
-    isolation: (isInternalBuild()
-      ? z.enum(['worktree', 'remote'])
-      : z.enum(['worktree'])
-    ).optional(),
+    isolation: z.enum(['worktree']).optional(),
   }),
 )
 
@@ -106,7 +103,7 @@ export type BaseAgentDefinition = {
   background?: boolean // Always run as background task when spawned
   initialPrompt?: string // Prepended to the first user turn (slash commands work)
   memory?: AgentMemoryScope // Persistent memory scope
-  isolation?: 'worktree' | 'remote' // Run in an isolated git worktree, or remotely in CCR (ant-only)
+  isolation?: 'worktree' // Run in an isolated git worktree
   pendingSnapshotUpdate?: { snapshotTimestamp: string }
   /** Omit AGENTS.md hierarchy from the agent's userContext. Read-only agents
    * (Explore, Plan) don't need commit/PR/lint guidelines — the main agent has
@@ -510,11 +507,9 @@ export function parseAgentFromMarkdown(
       }
     }
 
-    // Parse isolation mode. 'remote' is ant-only; external builds reject it at parse time.
-    type IsolationMode = 'worktree' | 'remote'
-    const VALID_ISOLATION_MODES: readonly IsolationMode[] = isInternalBuild()
-      ? ['worktree', 'remote']
-      : ['worktree']
+    // 解析 worktree 隔离模式；远端隔离已随远端会话栈移除。
+    type IsolationMode = 'worktree'
+    const VALID_ISOLATION_MODES: readonly IsolationMode[] = ['worktree']
     const isolationRaw = frontmatter.isolation as string | undefined
     let isolation: IsolationMode | undefined
     if (isolationRaw !== undefined) {

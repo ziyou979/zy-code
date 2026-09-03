@@ -14,7 +14,7 @@ import { isInternalBuild } from '../../services/infra/envUtils.js'
  * - INNER-ONLY：--delegate-permissions、--dangerously-skip-permissions-with-classifiers、--afk、--tasks、--agent-teams
  * - feature gate 系：--enable-auto-mode、--proactive、--messaging-socket-path、--brief、--assistant、--channels、--dangerously-load-development-channels
  * - 队友身份（hidden）：--agent-id、--agent-name、--team-name、--agent-color、--plan-mode-required、--parent-session-id、--teammate-mode、--agent-type
- * - SDK / teleport（hidden）：--sdk-url、--teleport、--remote
+ * - SDK（hidden）：--sdk-url
  * - BRIDGE_MODE 系：--remote-control、--rc
  * - HARD_FAIL：--hard-fail
  */
@@ -138,19 +138,6 @@ export function applyRuntimeOptions(program: Command<any, any, any>): void {
     ).hideHelp(),
   )
 
-  // 为所有构建启用 teleport/remote 标志，但在 GA 之前保持未文档化
-  program.addOption(
-    new Option(
-      '--teleport [session]',
-      'Resume a teleport session, optionally specify session ID',
-    ).hideHelp(),
-  )
-  program.addOption(
-    new Option(
-      '--remote [description]',
-      'Create a remote session with the given description',
-    ).hideHelp(),
-  )
   if (feature('BRIDGE_MODE')) {
     program.addOption(
       new Option(

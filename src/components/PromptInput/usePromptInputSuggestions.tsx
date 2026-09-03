@@ -1,8 +1,6 @@
-import { feature } from 'bun:bundle'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
 import { logEvent } from 'src/services/analytics/index.js'
-import { isUltrareviewEnabled } from '../../commands/review/ultrareviewEnabled.js'
 import { parseReferences } from '../../services/session-storage/history.js'
 import { type HistoryMode, useArrowKeyHistory } from '../../hooks/useArrowKeyHistory.js'
 import { useInputBuffer } from '../../hooks/useInputBuffer.js'
@@ -165,10 +163,6 @@ export function usePromptInputSuggestions(context: ReturnType<typeof usePromptIn
     markShown,
     displayedValue,
     thinkTriggers,
-    ultraplanSessionUrl,
-    ultraplanLaunching,
-    ultraplanTriggers,
-    ultrareviewTriggers,
     btwTriggers,
     slashCommandTriggers,
     tokenBudgetTriggers,
@@ -350,34 +344,6 @@ export function usePromptInputSuggestions(context: ReturnType<typeof usePromptIn
       }
     }
 
-    // Same rainbow treatment for the ultraplan keyword
-    if (feature('ULTRAPLAN')) {
-      for (const trigger of ultraplanTriggers) {
-        for (let i = trigger.start; i < trigger.end; i++) {
-          highlights.push({
-            start: i,
-            end: i + 1,
-            color: getRainbowColor(i - trigger.start),
-            shimmerColor: getRainbowColor(i - trigger.start, true),
-            priority: 10,
-          })
-        }
-      }
-    }
-
-    // Same rainbow treatment for the ultrareview keyword
-    for (const trigger of ultrareviewTriggers) {
-      for (let i = trigger.start; i < trigger.end; i++) {
-        highlights.push({
-          start: i,
-          end: i + 1,
-          color: getRainbowColor(i - trigger.start),
-          shimmerColor: getRainbowColor(i - trigger.start, true),
-          priority: 10,
-        })
-      }
-    }
-
     return highlights
   }, [
     isSearchingHistory,
@@ -393,8 +359,6 @@ export function usePromptInputSuggestions(context: ReturnType<typeof usePromptIn
     slackChannelTriggers,
     voiceInterimRange,
     thinkTriggers,
-    ultraplanTriggers,
-    ultrareviewTriggers,
   ])
 
   const { addNotification, removeNotification } = useNotifications()
@@ -412,30 +376,6 @@ export function usePromptInputSuggestions(context: ReturnType<typeof usePromptIn
       removeNotification('ultrathink-active')
     }
   }, [addNotification, removeNotification, thinkTriggers.length])
-
-  useEffect(() => {
-    if (feature('ULTRAPLAN') ? ultraplanTriggers.length > 0 : false) {
-      addNotification({
-        key: 'ultraplan-active',
-        text: 'This prompt will launch an ultraplan session in ZY Code on the web',
-        priority: 'immediate',
-        timeoutMs: 5000,
-      })
-    } else {
-      removeNotification('ultraplan-active')
-    }
-  }, [addNotification, removeNotification, ultraplanTriggers.length])
-
-  useEffect(() => {
-    if (isUltrareviewEnabled() && ultrareviewTriggers.length) {
-      addNotification({
-        key: 'ultrareview-active',
-        text: 'Run /ultrareview after Zy finishes to review these changes in the cloud',
-        priority: 'immediate',
-        timeoutMs: 5000,
-      })
-    }
-  }, [addNotification, ultrareviewTriggers.length])
 
   // Track input length for stash hint
   const prevInputLengthRef = useRef(input.length)

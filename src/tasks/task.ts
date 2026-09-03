@@ -6,7 +6,6 @@ import type { AgentId } from '../types/ids.js'
 export type TaskType =
   | 'local_bash'
   | 'local_agent'
-  | 'remote_agent'
   | 'in_process_teammate'
   | 'local_workflow'
   | 'monitor_mcp'
@@ -72,7 +71,6 @@ export type Task = {
 const TASK_ID_PREFIXES: Record<string, string> = {
   local_bash: 'b', // 保持 'b' 以兼容旧数据
   local_agent: 'a',
-  remote_agent: 'r',
   in_process_teammate: 't',
   local_workflow: 'w',
   monitor_mcp: 'm',

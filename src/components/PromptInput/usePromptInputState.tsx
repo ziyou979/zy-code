@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { useCommandQueue } from 'src/hooks/useCommandQueue.js'
 import { useAppState, useAppStateStore, useSetAppState } from 'src/state/AppState.js'
 import type { FooterItem } from 'src/state/AppStateStore.js'
-import { isUltrareviewEnabled } from '../../commands/review/ultrareviewEnabled.js'
 import { hasCommand } from '../../commands/index.js'
 import { useIsModalOverlayActive } from '../../context/OverlayContext.js'
 import { parseReferences } from '../../services/session-storage/history.js'
@@ -20,10 +19,6 @@ import {
   subscribeKnownChannels,
 } from '../../services/suggestions/slackChannelSuggestions.js'
 import { isInProcessEnabled } from '../../services/swarm/backends/registry.js'
-import {
-  findUltraplanTriggerPositions,
-  findUltrareviewTriggerPositions,
-} from '../../services/ultraplan/keyword.js'
 import { getViewedTeammateTask } from '../../state/selectors.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'
 import { getRunningTeammatesSorted } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
@@ -549,25 +544,6 @@ export function usePromptInputState({
     [displayedValue],
   )
 
-  const ultraplanSessionUrl = useAppState((s) => s.ultraplanSessionUrl)
-
-  const ultraplanLaunching = useAppState((s) => s.ultraplanLaunching)
-
-  const ultraplanTriggers = useMemo(
-    () =>
-      feature('ULTRAPLAN')
-        ? !ultraplanSessionUrl && !ultraplanLaunching
-          ? findUltraplanTriggerPositions(displayedValue)
-          : []
-        : [],
-    [displayedValue, ultraplanSessionUrl, ultraplanLaunching],
-  )
-
-  const ultrareviewTriggers = useMemo(
-    () => (isUltrareviewEnabled() ? findUltrareviewTriggerPositions(displayedValue) : []),
-    [displayedValue],
-  )
-
   const btwTriggers = useMemo(() => findBtwTriggerPositions(displayedValue), [displayedValue])
 
   const slashCommandTriggers = useMemo(() => {
@@ -737,10 +713,6 @@ export function usePromptInputState({
     markShown,
     displayedValue,
     thinkTriggers,
-    ultraplanSessionUrl,
-    ultraplanLaunching,
-    ultraplanTriggers,
-    ultrareviewTriggers,
     btwTriggers,
     slashCommandTriggers,
     tokenBudgetTriggers,

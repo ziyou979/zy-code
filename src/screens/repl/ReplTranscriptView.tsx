@@ -204,7 +204,7 @@ export function ReplTranscriptView(props: ReplTranscriptViewProps): React.ReactN
       {transcriptScrollRef ? (
         <ScrollKeybindingHandler
           scrollRef={scrollRef}
-          isActive={focusedInputDialog !== 'ultraplan-choice'}
+          isActive={true}
           isModal={!searchOpen}
           onScroll={() => jumpRef.current?.disarmSearch()}
         />

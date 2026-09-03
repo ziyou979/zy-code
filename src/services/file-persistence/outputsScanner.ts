@@ -10,9 +10,11 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import type { Dirent } from 'node:fs'
-import type { EnvironmentKind } from 'src/services/teleport/environments.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import type { TurnStartTime } from './types.js'
+
+/** 容器环境类别（由 env-manager 经 ZY_CODE_ENVIRONMENT_KIND 注入）。 */
+export type EnvironmentKind = 'anthropic_cloud' | 'byoc'
 
 /** Shared debug logger for file persistence modules */
 export function logDebug(message: string): void {

@@ -331,7 +331,6 @@ export async function runHeadless(
     appendSystemPrompt: string | undefined
     userSpecifiedModel: string | undefined
     fallbackModel: string | undefined
-    teleport: string | true | null | undefined
     sdkUrl: string | undefined
     replayUserMessages: boolean | undefined
     includePartialMessages: boolean | undefined
@@ -504,7 +503,6 @@ export async function runHeadless(
     agentSetting: resumedAgentSetting,
   } = await loadInitialMessages(setAppState, {
     continue: options.continue,
-    teleport: options.teleport,
     resume: options.resume,
     resumeSessionAt: options.resumeSessionAt,
     forkSession: options.forkSession,
@@ -1924,7 +1922,6 @@ async function loadInitialMessages(
   setAppState: (f: (prev: AppState) => AppState) => void,
   options: {
     continue: boolean | undefined
-    teleport: string | true | null | undefined
     resume: string | boolean | undefined
     resumeSessionAt: string | undefined
     forkSession: boolean | undefined
@@ -1996,38 +1993,6 @@ async function loadInitialMessages(
           turnInterruptionState: result.turnInterruptionState,
           agentSetting: result.agentSetting,
         }
-      }
-    } catch (error) {
-      logError(error)
-      gracefulShutdownSync(1)
-      return { messages: [] }
-    }
-  }
-
-  // 处理 print 模式下的 teleport。
-  if (options.teleport) {
-    try {
-      if (!isPolicyAllowed('allow_remote_sessions')) {
-        throw new Error("Remote sessions are disabled by your organization's policy.")
-      }
-
-      logEvent('zy_teleport_print', {})
-
-      if (typeof options.teleport !== 'string') {
-        throw new Error('No session ID provided for teleport')
-      }
-
-      const {
-        checkOutTeleportedSessionBranch,
-        processMessagesForTeleportResume,
-        teleportResumeCodeSession,
-        validateGitState,
-      } = await import('src/services/teleport/teleport.js')
-      await validateGitState()
-      const teleportResult = await teleportResumeCodeSession(options.teleport)
-      const { branchError } = await checkOutTeleportedSessionBranch(teleportResult.branch)
-      return {
-        messages: processMessagesForTeleportResume(teleportResult.log, branchError),
       }
     } catch (error) {
       logError(error)

@@ -374,22 +374,6 @@ export type AppState = DeepImmutable<{
   activeOverlays: ReadonlySet<string>
   // 投入程度值
   effortValue?: EffortLevel
-  // 在 launchUltraplan 中同步设置，在 detached 流程开始之前。
-  // 在 ultraplanSessionUrl 被 teleportToRemote 设置之前的约 5 秒窗口内
-  // 防止重复启动。一旦 URL 设置完成或失败，由 launchDetached 清除。
-  ultraplanLaunching?: boolean
-  // 活跃的 ultraplan CCR 会话 URL。在 RemoteAgentTask 运行时设置；
-  // 为真时禁用关键字触发 + 彩虹效果。轮询到达终止状态时清除。
-  ultraplanSessionUrl?: string
-  // 已批准等待用户选择的 ultraplan（在此处实现而非新建会话）。
-  // 由 RemoteAgentTask 轮询在批准时设置；由 UltraplanChoiceDialog 清除。
-  ultraplanPendingChoice?: { plan: string; sessionId: string; taskId: string }
-  // 启动前权限对话框。由 /ultraplan（斜杠或关键字）设置；
-  // 由 UltraplanLaunchDialog 在用户选择后清除。
-  ultraplanLaunchPending?: { blurb: string }
-  // 远程 harness 侧：通过 set_permission_mode control_request 设置，
-  // 由 onChangeAppState 推送到 CCR external_metadata.is_ultraplan_mode。
-  isUltraplanMode?: boolean
   // 常开 bridge：双向权限检查的权限回调
   replWirePermissionCallbacks?: WirePermissionCallbacks
 }
