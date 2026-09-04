@@ -6,7 +6,7 @@ import {
   computeGlimmerIndex,
   computeShimmerSegments,
   SHIMMER_INTERVAL_MS,
-} from '../bridge/bridgeStatusUtil.js'
+} from '../utils/textShimmer.js'
 import { feature } from 'bun:bundle'
 import { getKairosActive, getUserMsgOptIn } from '../bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'

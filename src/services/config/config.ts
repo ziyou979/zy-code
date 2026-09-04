@@ -36,10 +36,6 @@ import type {
 const teamMemPaths = feature('TEAMMEM')
   ? (require('../../memdir/teamMemPaths.js') as typeof import('../../memdir/teamMemPaths.js'))
   : null
-const ccrAutoConnect = feature('CCR_AUTO_CONNECT')
-  ? (require('../../bridge/bridgeEnabled.js') as typeof import('../../bridge/bridgeEnabled.js'))
-  : null
-
 import type { ModelOption } from 'src/services/model/modelOptions.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { HistoryEntry, PastedContent } from '../../types/inputContent.js'
@@ -1019,18 +1015,12 @@ export function getGlobalConfig(): GlobalConfig {
 /**
  * 返回 remoteControlAtStartup 的有效值。优先级：
  *   1. 用户的显式配置值（始终获胜 — 尊重 opt-out）
- *   2. CCR 自动连接默认值（ant-only 构建，GrowthBook 门控）
- *   3. false（Remote Control 必须显式 opt-in）
+ *   2. false（Remote Control 必须显式 opt-in）
  */
 export function getRemoteControlAtStartup(): boolean {
   const explicit = getGlobalConfig().remoteControlAtStartup
   if (explicit !== undefined) {
     return explicit
-  }
-  if (feature('CCR_AUTO_CONNECT')) {
-    if (ccrAutoConnect?.getCcrAutoConnectDefault()) {
-      return true
-    }
   }
   return false
 }

@@ -24,7 +24,6 @@ import { LspRecommendationMenu } from '../../components/LspRecommendation/LspRec
 import { ElicitationDialog } from '../../components/mcp/ElicitationDialog.js'
 import { SandboxPermissionRequest } from '../../components/permissions/SandboxPermissionRequest.js'
 import { WorkerPendingPermission } from '../../components/permissions/WorkerPendingPermission.js'
-import { RemoteCallout } from '../../components/RemoteCallout.js'
 import { type ResumeReturnAction, ResumeReturnDialog } from '../../components/ResumeReturnDialog.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -392,27 +391,6 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
           }}
         />
       )}
-      {dialog === 'remote-callout' && (
-        <RemoteCallout
-          onDone={(selection) => {
-            setAppState((prev) => {
-              if (!prev.showRemoteCallout) {
-                return prev
-              }
-              return {
-                ...prev,
-                showRemoteCallout: false,
-                ...(selection === 'enable' && {
-                  replBridgeEnabled: true,
-                  replWireExplicit: true,
-                  replBridgeOutboundOnly: false,
-                }),
-              }
-            })
-          }}
-        />
-      )}
-
       {exitFlow}
 
       {dialog === 'plugin-hint' && hintRecommendation && (

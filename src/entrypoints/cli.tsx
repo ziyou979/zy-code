@@ -116,57 +116,6 @@ async function main(): Promise<void> {
     return
   }
 
-  // `zy remote-control` 快速路径（也接受旧版 `zy remote` / `zy sync` / `zy bridge`）：
-  // 将本地机器作为 bridge 环境提供服务。
-  // feature() 必须保持内联以实现构建时死代码消除；
-  // isBridgeEnabled() 检查运行时 GrowthBook 门控。
-  if (
-    feature('BRIDGE_MODE') &&
-    (args[0] === 'remote-control' ||
-      args[0] === 'rc' ||
-      args[0] === 'remote' ||
-      args[0] === 'sync' ||
-      args[0] === 'bridge')
-  ) {
-    profileCheckpoint('cli_bridge_path')
-    const { enableConfigs } = await import('../services/config/config.js')
-    enableConfigs()
-    const { getWireDisabledReason, checkWireMinVersion } = await import(
-      '../bridge/bridgeEnabled.js'
-    )
-    const { BRIDGE_LOGIN_ERROR } = await import('../bridge/types.js')
-    const { bridgeMain } = await import('../bridge/bridgeMain.js')
-    const { exitWithError } = await import('../services/shell/process.js')
-
-    // 认证检查必须放在 GrowthBook 门控检查之前 —— 没有认证，
-    // GrowthBook 没有用户上下文，会返回过期/默认的 false。
-    // getWireDisabledReason 会等待 GB 初始化，因此返回值是最新的
-    //（而非过期的磁盘缓存），但 init 仍需要认证头才能工作。
-    const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
-    if (!getZyAIOAuthTokens()?.accessToken) {
-      exitWithError(BRIDGE_LOGIN_ERROR)
-    }
-    const disabledReason = await getWireDisabledReason()
-    if (disabledReason) {
-      exitWithError(`Error: ${disabledReason}`)
-    }
-    const versionError = checkWireMinVersion()
-    if (versionError) {
-      exitWithError(versionError)
-    }
-
-    // Bridge 是一个远程控制功能 —— 检查策略限制
-    const { waitForPolicyLimitsToLoad, isPolicyAllowed } = await import(
-      '../services/policy-limits/index.js'
-    )
-    await waitForPolicyLimitsToLoad()
-    if (!isPolicyAllowed('allow_remote_control')) {
-      exitWithError("Error: Remote Control is disabled by your organization's policy.")
-    }
-    await bridgeMain(args.slice(1))
-    return
-  }
-
   // `zy daemon [subcommand]` 快速路径：长期运行的 supervisor。
   if (feature('DAEMON') && args[0] === 'daemon') {
     profileCheckpoint('cli_daemon_path')

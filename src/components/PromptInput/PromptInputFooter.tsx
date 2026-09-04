@@ -1,8 +1,5 @@
-import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { memo, type ReactNode, useMemo, useRef } from 'react'
-import { isBridgeEnabled } from '../../bridge/bridgeEnabled.js'
-import { getWireStatus } from '../../bridge/bridgeStatusUtil.js'
 import { useSetPromptOverlay } from '../../context/PromptOverlayContext.js'
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
@@ -228,7 +225,6 @@ function PromptInputFooter({
             />
           )}
           {isInternalBuild() && isUndercover() && <Text dimColor>undercover</Text>}
-          <WireStatusIndicator bridgeSelected={bridgeSelected} />
         </Box>
       </Box>
       <CoordinatorTaskPanel />
@@ -236,48 +232,3 @@ function PromptInputFooter({
   )
 }
 export default memo(PromptInputFooter)
-type WireStatusProps = {
-  bridgeSelected: boolean
-}
-function WireStatusIndicator({ bridgeSelected }: WireStatusProps): React.ReactNode {
-  if (!feature('BRIDGE_MODE')) {
-    return null
-  }
-
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const enabled = useAppState((s) => s.replBridgeEnabled)
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const connected = useAppState((s_0) => s_0.replWireConnected)
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const sessionActive = useAppState((s_1) => s_1.replWireSessionActive)
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const reconnecting = useAppState((s_2) => s_2.replWireReconnecting)
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const explicit = useAppState((s_3) => s_3.replWireExplicit)
-
-  // Failed state is surfaced via notification (useReplBridge), not a footer pill.
-  if (!isBridgeEnabled() || !enabled) {
-    return null
-  }
-  const status = getWireStatus({
-    error: undefined,
-    connected,
-    sessionActive,
-    reconnecting,
-  })
-
-  // For implicit (config-driven) remote, only show the reconnecting state
-  if (!explicit && status.label !== 'Remote Control reconnecting') {
-    return null
-  }
-  return (
-    <Text
-      color={bridgeSelected ? 'background' : status.color}
-      inverse={bridgeSelected}
-      wrap="truncate"
-    >
-      {status.label}
-      {bridgeSelected && <Text dimColor> · Enter to view</Text>}
-    </Text>
-  )
-}

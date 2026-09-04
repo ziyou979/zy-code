@@ -10,7 +10,6 @@ import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import { getTeammateColor } from '../../services/swarm/teammate.js'
 import { isInProcessTeammate } from '../../services/swarm/teammateContext.js'
 import type { Theme } from '../../services/environment/theme.js'
-import { BridgeDialog } from '../BridgeDialog.js'
 import TextInput from '../TextInput.js'
 import VimTextInput from '../VimTextInput.js'
 import { getValueFromInput } from './inputModes.js'
@@ -255,17 +254,6 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
 
   if (thinkingToggleElement) {
     return thinkingToggleElement
-  }
-
-  if (showBridgeDialog) {
-    return (
-      <BridgeDialog
-        onDone={() => {
-          setShowBridgeDialog(false)
-          selectFooterItem(null)
-        }}
-      />
-    )
   }
 
   const historyNavigation = resolvePromptHistoryNavigation(

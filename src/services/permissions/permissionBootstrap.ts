@@ -83,6 +83,7 @@ export function initialPermissionModeFromCLI({
   const settings = getInitialSettings() || {}
 
   // 首先检查 GrowthBook 门控 — 最高优先级
+  permLog('initializing permission feature gates')
   const growthBookDisableBypassPermissionsMode = checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
     'zy_disable_bypass_permissions_mode',
   )
@@ -269,7 +270,9 @@ export async function initializeToolPermissionContext({
     !settingsDisableBypassPermissionsMode
 
   // 从磁盘加载所有权限规则
+  permLog('loading permission rules from disk')
   const rulesFromDisk = loadAllPermissionRulesFromDisk()
+  permLog('permission rules loaded')
 
   // 仅 Ant：检测所有模式下过于宽泛的 shell 放行规则。
   // Bash(*) 或 PowerShell(*) 对于该 shell 等同于 YOLO 模式。
@@ -295,6 +298,9 @@ export async function initializeToolPermissionContext({
     dangerousPermissions = findDangerousClassifierPermissions(rulesFromDisk, parsedAllowedToolsCli)
   }
 
+  permLog('resolving auto mode availability')
+  const isAutoModeAvailable = isAutoModeGateEnabled()
+  permLog('building permission context')
   let toolPermissionContext = applyPermissionRulesToPermissionContext(
     {
       mode: permissionMode,
@@ -303,7 +309,7 @@ export async function initializeToolPermissionContext({
       alwaysDenyRules: { cliArg: parsedDisallowedToolsCli },
       alwaysAskRules: {},
       isBypassPermissionsModeAvailable,
-      ...(true ? { isAutoModeAvailable: isAutoModeGateEnabled() } : {}),
+      isAutoModeAvailable,
     },
     rulesFromDisk,
   )
@@ -317,6 +323,7 @@ export async function initializeToolPermissionContext({
   // validateDirectoryForWorkspace 仅读取 permissionContext 以检查目录是否已被覆盖 —
   // 与并行化的行为差异是无害的（两个重叠的 --add-dir 都成功，
   // 而不是其中一个被标记为 alreadyInWorkingDirectory，这本来也被静默跳过了）。
+  permLog(`validating additional working directories (count: ${allAdditionalDirectories.length})`)
   const validationResults = await Promise.all(
     allAdditionalDirectories.map((dir) =>
       validateDirectoryForWorkspace(dir, toolPermissionContext),
@@ -340,6 +347,7 @@ export async function initializeToolPermissionContext({
     }
   }
 
+  permLog('permission context initialized')
   return {
     toolPermissionContext,
     warnings,

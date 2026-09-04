@@ -26,11 +26,7 @@ import { computeInitialTeamContext } from '../../services/swarm/reconnection.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { uniq } from '../../utils/array.js'
-import {
-  getGlobalConfig,
-  getRemoteControlAtStartup,
-  saveGlobalConfig,
-} from '../../services/config/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { loadConversationForResume } from '../../services/session-storage/conversationRecovery.js'
 import { resolveInitialEffortSetting } from '../../services/effort/effort.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
@@ -81,7 +77,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
     sessionId,
     includeHookEvents,
     includePartialMessages,
-    fileDownloadPromise,
     agentsJson,
     agentCli,
     outputFormat,
@@ -100,12 +95,7 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
     worktreePRNumber,
     tmuxEnabled,
     storedTeammateOpts,
-    sdkUrl,
     effectiveIncludePartialMessages,
-    remoteControlOption,
-    remoteControl,
-    remoteControlName,
-    fileSpecs,
     isNonInteractiveSession,
     systemPrompt,
     appendSystemPrompt,
@@ -217,7 +207,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
       sdkMcpConfigs,
       zyaiConfigPromise,
       betas,
-      sdkUrl,
       effectiveReplayUserMessages,
       effectiveIncludePartialMessages,
       setupTrigger,
@@ -278,18 +267,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
   const initialIsBriefOnly =
     feature('KAIROS') || feature('KAIROS_BRIEF') ? getUserMsgOptIn() : false
 
-  const fullRemoteControl = remoteControl || getRemoteControlAtStartup() || kairosEnabled
-
-  let ccrMirrorEnabled = false
-
-  if (feature('CCR_MIRROR') ? !fullRemoteControl : false) {
-    /* eslint-disable @typescript-eslint/no-require-imports */
-    const { isCcrMirrorEnabled } =
-      require('../../bridge/bridgeEnabled.js') as typeof import('../../bridge/bridgeEnabled.js')
-    /* eslint-enable @typescript-eslint/no-require-imports */
-    ccrMirrorEnabled = isCcrMirrorEnabled()
-  }
-
   const initialState: AppState = {
     settings: getInitialSettings(),
     tasks: {},
@@ -333,9 +310,9 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
     remoteSessionUrl: undefined,
     remoteConnectionStatus: 'connecting',
     remoteBackgroundTaskCount: 0,
-    replBridgeEnabled: fullRemoteControl || ccrMirrorEnabled,
-    replWireExplicit: remoteControl,
-    replBridgeOutboundOnly: ccrMirrorEnabled,
+    replBridgeEnabled: false,
+    replWireExplicit: false,
+    replBridgeOutboundOnly: false,
     replWireConnected: false,
     replWireSessionActive: false,
     replWireReconnecting: false,
@@ -344,7 +321,7 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
     replWireEnvironmentId: undefined,
     replWireSessionId: undefined,
     replWireError: undefined,
-    replWireInitialName: remoteControlName,
+    replWireInitialName: undefined,
     showRemoteCallout: false,
     notifications: {
       current: null,
@@ -579,7 +556,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
       resumeContext,
       mainThreadAgentDefinition,
       thinkingConfig,
-      fileDownloadPromise,
     })
   } else {
     await runInteractiveMode({

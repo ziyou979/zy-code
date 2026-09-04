@@ -11,7 +11,6 @@ import type {
 } from '../../services/mcp/types.js'
 import { extractAgentMcpServers, filterToolsByServer } from '../../services/mcp/utils.js'
 import { useAppState } from '../../state/AppState.js'
-import { getSessionIngressAuthToken } from '../../services/auth/sessionIngressAuth.js'
 import { MCPAgentServerMenu } from './MCPAgentServerMenu.js'
 import { MCPListPanel } from './MCPListPanel.js'
 import { MCPRemoteServerMenu } from './MCPRemoteServerMenu.js'
@@ -63,11 +62,9 @@ export function MCPSettings({ onComplete }: Props) {
               client.config as McpSSEServerConfig | McpHTTPServerConfig,
             )
             const tokens = await authProvider.tokens()
-            const hasSessionAuth =
-              getSessionIngressAuthToken() !== null && client.type === 'connected'
             const hasToolsAndConnected =
               client.type === 'connected' && filterToolsByServer(mcp.tools, client.name).length > 0
-            isAuthenticated = Boolean(tokens) || hasSessionAuth || hasToolsAndConnected
+            isAuthenticated = Boolean(tokens) || hasToolsAndConnected
           }
           const baseInfo = {
             name: client.name,

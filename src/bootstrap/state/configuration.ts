@@ -21,14 +21,6 @@ export function setFlagSettingsInline(settings: Record<string, unknown> | null):
   STATE.flagSettingsInline = settings
 }
 
-export function getSessionIngressToken(): string | null | undefined {
-  return STATE.sessionIngressToken
-}
-
-export function setSessionIngressToken(token: string | null): void {
-  STATE.sessionIngressToken = token
-}
-
 export function getOauthTokenFromFd(): string | null | undefined {
   return STATE.oauthTokenFromFd
 }

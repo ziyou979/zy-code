@@ -19,7 +19,6 @@ import {
   getGlobalConfig,
   getAutoUpdaterDisabledReason,
   formatAutoUpdaterDisabledReason,
-  getRemoteControlAtStartup,
 } from '../../services/config/config.js'
 import chalk from 'chalk'
 import {
@@ -41,7 +40,6 @@ import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from 'src/services/analytics/index.js'
-import { isBridgeEnabled } from '../../bridge/bridgeEnabled.js'
 import { ThemePicker } from '../ThemePicker.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState.js'
 import { ModelPicker } from '../ModelPicker.js'
@@ -1065,67 +1063,6 @@ export function Config({
           ]
         })()
       : []),
-    // Remote at startup toggle — gated on build flag + GrowthBook + policy
-    ...(feature('BRIDGE_MODE') && isBridgeEnabled()
-      ? [
-          {
-            id: 'remoteControlAtStartup',
-            label: tSync('settings.enableRemoteControl'),
-            value:
-              globalConfig.remoteControlAtStartup === undefined
-                ? 'default'
-                : String(globalConfig.remoteControlAtStartup),
-            options: ['true', 'false', 'default'],
-            type: 'enum' as const,
-            onChange(selected_0: string) {
-              if (selected_0 === 'default') {
-                // Unset the config key so it falls back to the platform default
-                saveGlobalConfig((current_20) => {
-                  if (current_20.remoteControlAtStartup === undefined) {
-                    return current_20
-                  }
-                  const next_0 = {
-                    ...current_20,
-                  }
-                  delete next_0.remoteControlAtStartup
-                  return next_0
-                })
-                setGlobalConfig({
-                  ...getGlobalConfig(),
-                  remoteControlAtStartup: undefined,
-                })
-              } else {
-                const enabled_6 = selected_0 === 'true'
-                saveGlobalConfig((current_21) => {
-                  if (current_21.remoteControlAtStartup === enabled_6) {
-                    return current_21
-                  }
-                  return {
-                    ...current_21,
-                    remoteControlAtStartup: enabled_6,
-                  }
-                })
-                setGlobalConfig({
-                  ...getGlobalConfig(),
-                  remoteControlAtStartup: enabled_6,
-                })
-              }
-              // Sync to AppState so useReplBridge reacts immediately
-              const resolved = getRemoteControlAtStartup()
-              setAppState((prev_20) => {
-                if (prev_20.replBridgeEnabled === resolved && !prev_20.replBridgeOutboundOnly) {
-                  return prev_20
-                }
-                return {
-                  ...prev_20,
-                  replBridgeEnabled: resolved,
-                  replBridgeOutboundOnly: false,
-                }
-              })
-            },
-          },
-        ]
-      : []),
     ...(shouldShowExternalIncludesToggle
       ? [
           {
@@ -1375,15 +1312,6 @@ export function Config({
           ? tSync('settings.enabledTurnDuration')
           : tSync('settings.disabledTurnDuration'),
       )
-    }
-    if (globalConfig.remoteControlAtStartup !== initialConfig.current.remoteControlAtStartup) {
-      const remoteLabel =
-        globalConfig.remoteControlAtStartup === undefined
-          ? tSync('settings.resetRemoteControlDefault')
-          : globalConfig.remoteControlAtStartup
-            ? tSync('settings.enabledRemoteControl')
-            : tSync('settings.disabledRemoteControl')
-      formattedChanges.push(remoteLabel)
     }
     if (settingsData?.autoUpdatesChannel !== initialSettingsData.current?.autoUpdatesChannel) {
       formattedChanges.push(

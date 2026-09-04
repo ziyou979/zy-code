@@ -32,7 +32,6 @@ import {
 } from '../services/swarm/leaderPermissionBridge.js'
 import { endInteractionSpan } from '../services/telemetry/sessionTracing.js'
 import { useLogMessages } from '../hooks/useLogMessages.js'
-import { useReplBridge } from '../hooks/useReplBridge.js'
 import { type Command } from '../commands/index.js'
 import type { QueuedCommand } from '../types/textInputTypes.js'
 import { useIdeLogging } from '../hooks/useIdeLogging.js'
@@ -971,14 +970,6 @@ export function REPL({
   useCostSummary(useFpsMetrics())
   useLogMessages(messages, messages.length === initialMessages?.length)
 
-  const { sendWireResult } = useReplBridge(
-    messages,
-    setMessages,
-    abortControllerRef,
-    commands,
-    mainLoopModel,
-  )
-  sendWireResultRef.current = sendWireResult
   useAfterFirstRender()
 
   const hasCountedQueueUseRef = useRef(false)

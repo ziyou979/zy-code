@@ -1,7 +1,5 @@
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
-import { isReplWireActive } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getReplWireHandle } from '../../bridge/replBridgeHandle.js'
 import type { BackendType } from '../../services/swarm/backends/types.js'
 import { TEAM_LEAD_NAME } from '../../services/swarm/constants.js'
 import { readTeamFileAsync } from '../../services/swarm/teamHelpers.js'
@@ -609,7 +607,7 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
       }
     }
     const addr = parseAddress(input.to)
-    if ((addr.scheme === 'bridge' || addr.scheme === 'uds') && addr.target.trim().length === 0) {
+    if (addr.scheme === 'uds' && addr.target.trim().length === 0) {
       return {
         result: false,
         message: 'address target must not be empty',
@@ -622,31 +620,6 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
         message: 'to must be a bare teammate name or "*" — there is only one team per session',
         errorCode: 9,
       }
-    }
-    if (feature('UDS_INBOX') && parseAddress(input.to).scheme === 'bridge') {
-      // Structured-message rejection first — it's the permanent constraint.
-      // Showing "not connected" first would make the user reconnect only to
-      // hit this error on retry.
-      if (typeof input.message !== 'string') {
-        return {
-          result: false,
-          message: 'structured messages cannot be sent cross-session — only plain text',
-          errorCode: 9,
-        }
-      }
-      // postInterZyMessage derives from= via getReplWireHandle() —
-      // check handle directly for the init-timing window. Also check
-      // isReplWireActive() to reject outbound-only (CCR mirror) mode
-      // where the bridge is write-only and peer messaging is unsupported.
-      if (!getReplWireHandle() || !isReplWireActive()) {
-        return {
-          result: false,
-          message:
-            'Remote Control is not connected — cannot send to a bridge: target. Reconnect with /remote-control first.',
-          errorCode: 9,
-        }
-      }
-      return { result: true }
     }
     if (
       feature('UDS_INBOX') &&
@@ -731,38 +704,6 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> = buildTo
   async call(input, context, canUseTool, assistantMessage) {
     if (feature('UDS_INBOX') && typeof input.message === 'string') {
       const addr = parseAddress(input.to)
-      if (addr.scheme === 'bridge') {
-        // Re-check handle — checkPermissions blocks on user approval (can be
-        // minutes). validateInput's check is stale if the bridge dropped
-        // during the prompt wait; without this, from="unknown" ships.
-        // Also re-check isReplWireActive for outbound-only mode.
-        if (!getReplWireHandle() || !isReplWireActive()) {
-          return {
-            data: {
-              success: false,
-              message: `Remote Control disconnected before send — cannot deliver to ${input.to}`,
-            },
-          }
-        }
-        /* eslint-disable @typescript-eslint/no-require-imports */
-        const { postInterZyMessage } = require('../../bridge/peerSessions.js')
-        /* eslint-enable @typescript-eslint/no-require-imports */
-        const result = await (
-          postInterZyMessage as (
-            target: string,
-            message: string,
-          ) => Promise<{ ok: boolean; error?: string }>
-        )(addr.target, input.message)
-        const preview = input.summary || truncate(input.message, 50)
-        return {
-          data: {
-            success: result.ok,
-            message: result.ok
-              ? `“${preview}” → ${input.to}`
-              : `Failed to send to ${input.to}: ${result.error ?? 'unknown'}`,
-          },
-        }
-      }
       if (addr.scheme === 'uds') {
         /* eslint-disable @typescript-eslint/no-require-imports */
         const { sendToUdsSocket } = require('../../services/bridge/udsClient.js')

@@ -59,27 +59,4 @@ export function registerAutomationCommands(program: Command<any, any, any>): voi
         process.exit()
       })
   }
-
-  // Remote Control command — connect local environment to zy.ai/code.
-  // The actual command is intercepted by the fast-path in cli.tsx before
-  // Commander.js runs, so this registration exists only for help output.
-  // Always hidden: isBridgeEnabled() at this point (before enableConfigs)
-  // would throw → getGlobalConfig and return
-  // false via the try/catch — but not before paying ~65ms of side effects
-  // (25ms settings Zod parse + 40ms sync `security` keychain subprocess).
-  // The dynamic visibility never worked; the command was always hidden.
-  if (feature('BRIDGE_MODE')) {
-    program
-      .command('remote-control', {
-        hidden: true,
-      })
-      .alias('rc')
-      .description('Connect your local environment for remote-control sessions via zy.ai/code')
-      .action(async () => {
-        // Unreachable — cli.tsx fast-path handles this command before main.tsx loads.
-        // If somehow reached, delegate to bridgeMain.
-        const { bridgeMain } = await import('../../bridge/bridgeMain.js')
-        await bridgeMain(process.argv.slice(3))
-      })
-  }
 }

@@ -1,6 +1,5 @@
 import type { Notification } from 'src/context/notifications.js'
 import type { TodoList } from 'src/services/todo/types.js'
-import type { WirePermissionCallbacks } from '../bridge/bridgePermissionCallbacks.js'
 import type { Command } from '../commands/index.js'
 import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler.js'
 import type { MCPServerConnection, ServerResource } from '../services/mcp/types.js'
@@ -374,8 +373,6 @@ export type AppState = DeepImmutable<{
   activeOverlays: ReadonlySet<string>
   // 投入程度值
   effortValue?: EffortLevel
-  // 常开 bridge：双向权限检查的权限回调
-  replWirePermissionCallbacks?: WirePermissionCallbacks
 }
 
 export type AppStateStore = Store<AppState>

@@ -34,7 +34,7 @@ import { asAgentId } from '../types/ids.js'
 import type { Message } from '../types/message.js'
 import { createAbortController } from '../utils/abortController.js'
 import { runWithAgentContext, type SubagentContext } from '../services/agent/agentContext.js'
-import { emitTaskTerminatedBridge } from '../services/bridge/bridgeEventQueue.js'
+import { emitTaskTerminatedSdkEvent } from '../services/task-runtime/sdkEventQueue.js'
 import { registerCleanup } from '../services/cleanup/cleanupRegistry.js'
 import { logForDebugging } from '../services/infra/debug.js'
 import { logError } from '../services/infra/log.js'
@@ -193,7 +193,7 @@ export function completeMainSessionTask(
     // generateTaskAttachments 的淘汰保护；后台路径会在
     // enqueueMainSessionNotification 的检查并设置过程中写入该值。
     updateTaskState(taskId, setAppState, (task) => ({ ...task, notified: true }))
-    emitTaskTerminatedBridge(taskId, success ? 'completed' : 'failed', {
+    emitTaskTerminatedSdkEvent(taskId, success ? 'completed' : 'failed', {
       toolUseId,
       summary: 'Background session',
     })
@@ -357,7 +357,7 @@ export function startBackgroundSession({
             return alreadyNotified ? task : { ...task, notified: true }
           })
           if (!alreadyNotified) {
-            emitTaskTerminatedBridge(taskId, 'stopped', {
+            emitTaskTerminatedSdkEvent(taskId, 'stopped', {
               summary: description,
             })
           }

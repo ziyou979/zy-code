@@ -7,6 +7,7 @@ import {
 import { getMainLoopModel } from 'src/services/model/model.js'
 import {
   getAPIProvider,
+  getEffectiveApiFormat,
   isAnthropicModel,
   providerHasCapability,
 } from 'src/services/model/providers.js'
@@ -94,12 +95,22 @@ function modelSupports1MContext(model: string): boolean {
 // @[MODEL LAUNCH]: Add the new model ID to this list if it supports structured outputs.
 export function modelSupportsStructuredOutputs(model: string): boolean {
   // 移除 provider 级别 fallback，能力仅从模型配置查询
-  return localModelHasCapability(model, 'structured_outputs')
+  const provider = getAPIProvider()
+  return localModelHasCapability(model, 'structured_outputs', {
+    provider,
+    apiFormat: getEffectiveApiFormat(provider, model),
+  })
 }
 
 // @[MODEL LAUNCH]: Add the new model if it supports auto mode (specifically PI probes) — ask in #proj-zy-code-safety-research.
 export function modelSupportsAutoMode(model: string): boolean {
-  if (localModelHasCapability(model, 'auto_mode')) {
+  const provider = getAPIProvider()
+  if (
+    localModelHasCapability(model, 'auto_mode', {
+      provider,
+      apiFormat: getEffectiveApiFormat(provider, model),
+    })
+  ) {
     return true
   }
   // GrowthBook override: zy_auto_mode_config.allowModels

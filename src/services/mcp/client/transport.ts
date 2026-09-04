@@ -32,7 +32,6 @@ import {
   getWebSocketProxyAgent,
   getWebSocketProxyUrl,
 } from '../../../services/http/proxy.js'
-import { getSessionIngressAuthToken } from '../../auth/sessionIngressAuth.js'
 import { subprocessEnv } from '../../environment/subprocessEnv.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -98,9 +97,6 @@ export const connectToServer = memoize(
       | undefined
     try {
       let transport
-
-      // 如果有 session ingress JWT，我们将通过 session ingress 连接而非直接连接远程 MCP。
-      const sessionIngressToken = getSessionIngressAuthToken()
 
       if (serverRef.type === 'sse') {
         // 为此服务器创建认证提供者
@@ -219,9 +215,6 @@ export const connectToServer = memoize(
         const tlsOptions = getWebSocketTLSOptions()
         const wsHeaders = {
           'User-Agent': getMCPUserAgent(),
-          ...(sessionIngressToken && {
-            Authorization: `Bearer ${sessionIngressToken}`,
-          }),
           ...combinedHeaders,
         }
 
@@ -235,7 +228,6 @@ export const connectToServer = memoize(
           `WebSocket transport options: ${jsonStringify({
             url: serverRef.url,
             headers: wsHeadersForLogging,
-            hasSessionAuth: !!sessionIngressToken,
           })}`,
         )
 
@@ -277,13 +269,6 @@ export const connectToServer = memoize(
         // 获取组合的请求头（静态 + 动态）
         const combinedHeaders = await getMcpServerHeaders(name, serverRef)
 
-        // 检查此服务器是否存储了 OAuth token。如果是，SDK 的
-        // authProvider 将设置 Authorization — 不要用 session ingress token
-        // 覆盖（SDK 在 authProvider 之后合并 requestInit）。
-        // CCR 代理 URL（ccr_shttp_mcp）没有存储 OAuth，所以它们
-        // 仍然获取 ingress token。见 PR #24454 讨论。
-        const hasOAuthTokens = !!(await authProvider.tokens())
-
         // 将认证提供者与 StreamableHTTPClientTransport 配合使用
         const proxyOptions = getProxyFetchOptions()
         logMCPDebug(
@@ -303,10 +288,6 @@ export const connectToServer = memoize(
             ...proxyOptions,
             headers: {
               'User-Agent': getMCPUserAgent(),
-              ...(sessionIngressToken &&
-                !hasOAuthTokens && {
-                  Authorization: `Bearer ${sessionIngressToken}`,
-                }),
               ...combinedHeaders,
             },
           },

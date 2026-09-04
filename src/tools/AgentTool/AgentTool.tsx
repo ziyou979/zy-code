@@ -36,7 +36,7 @@ import { assembleToolPool } from '../../tools/tools.js'
 import { asAgentId } from '../../types/ids.js'
 import { runWithAgentContext } from '../../services/agent/agentContext.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
-import { enqueueWireEvent } from '../../services/bridge/bridgeEventQueue.js'
+import { enqueueSdkEvent } from '../../services/task-runtime/sdkEventQueue.js'
 import { getCwd, runWithCwdOverride } from '../../services/environment/cwd.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
@@ -1415,7 +1415,7 @@ export const AgentTool = buildTool({
               // NOT trigger the print.ts XML task_notification parser or the LLM loop.
               if (!wasBackgrounded) {
                 const progress = getProgressUpdate(syncTracker)
-                enqueueWireEvent({
+                enqueueSdkEvent({
                   type: 'system',
                   subtype: 'task_notification',
                   task_id: foregroundTaskId,

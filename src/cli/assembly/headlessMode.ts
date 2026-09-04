@@ -96,7 +96,6 @@ export interface HeadlessModeParams {
 
   // SDK / 集成
   betas: string[]
-  sdkUrl: string | undefined
   effectiveReplayUserMessages: boolean
   effectiveIncludePartialMessages: boolean
 
@@ -140,7 +139,6 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
     sdkMcpConfigs,
     zyaiConfigPromise,
     betas,
-    sdkUrl,
     effectiveReplayUserMessages,
     effectiveIncludePartialMessages,
     setupTrigger,
@@ -430,7 +428,6 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
       appendSystemPrompt,
       userSpecifiedModel: effectiveModel,
       fallbackModel: userSpecifiedFallbackModel,
-      sdkUrl,
       replayUserMessages: effectiveReplayUserMessages,
       includePartialMessages: effectiveIncludePartialMessages,
       forkSession: options.forkSession || false,

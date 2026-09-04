@@ -1,6 +1,5 @@
 import type { UUID } from 'node:crypto'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getWireBaseUrlOverride, getWireTokenOverride } from '../../bridge/bridgeConfig.js'
 import { tSync } from '../../i18n/index.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import type { LocalJSXCommandContext } from '../types.js'
@@ -59,19 +58,6 @@ export async function performRename(
 
   // 始终写 custom title（用户显式命名优先于任何 ai-title）
   await saveCustomTitle(sessionId, newName, fullPath)
-
-  // 同步到 zy.ai/code 远端 bridge 会话（best-effort，不阻塞）
-  const appState = context.getAppState()
-  const bridgeSessionId = appState.replWireSessionId
-  if (bridgeSessionId) {
-    const tokenOverride = getWireTokenOverride()
-    void import('../../bridge/createSession.js').then(({ updateWireSessionTitle }) =>
-      updateWireSessionTitle(bridgeSessionId, newName, {
-        baseUrl: getWireBaseUrlOverride(),
-        getAccessToken: tokenOverride ? () => tokenOverride : undefined,
-      }).catch(() => {}),
-    )
-  }
 
   // 同步落 agent name（prompt-bar 显示用）
   await saveAgentName(sessionId, newName, fullPath)

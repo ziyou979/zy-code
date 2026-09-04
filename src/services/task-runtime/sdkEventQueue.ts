@@ -1,6 +1,5 @@
-import type { UUID } from 'node:crypto'
-import { randomUUID } from 'node:crypto'
-import { getIsNonInteractiveSession, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
+import { randomUUID, type UUID } from 'node:crypto'
+import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import type { WireWorkflowProgress } from '../../types/tools.js'
 
 type TaskStartedEvent = {
@@ -20,17 +19,13 @@ type TaskProgressEvent = {
   task_id: string
   tool_use_id?: string
   description: string
-  usage: {
-    total_tokens: number
-    tool_uses: number
-    duration_ms: number
-  }
+  usage: { total_tokens: number; tool_uses: number; duration_ms: number }
   last_tool_name?: string
   summary?: string
   workflow_progress?: WireWorkflowProgress[]
 }
 
-type TaskNotificationWireEvent = {
+type TaskNotificationEvent = {
   type: 'system'
   subtype: 'task_notification'
   task_id: string
@@ -38,11 +33,7 @@ type TaskNotificationWireEvent = {
   status: 'completed' | 'failed' | 'stopped'
   output_file: string
   summary: string
-  usage?: {
-    total_tokens: number
-    tool_uses: number
-    duration_ms: number
-  }
+  usage?: { total_tokens: number; tool_uses: number; duration_ms: number }
 }
 
 type SessionStateChangedEvent = {
@@ -51,16 +42,16 @@ type SessionStateChangedEvent = {
   state: 'idle' | 'running' | 'requires_action'
 }
 
-export type WireEvent =
+export type SdkEvent =
   | TaskStartedEvent
   | TaskProgressEvent
-  | TaskNotificationWireEvent
+  | TaskNotificationEvent
   | SessionStateChangedEvent
 
 const MAX_QUEUE_SIZE = 1000
-const queue: WireEvent[] = []
+const queue: SdkEvent[] = []
 
-export function enqueueWireEvent(event: WireEvent): void {
+export function enqueueSdkEvent(event: SdkEvent): void {
   if (!getIsNonInteractiveSession()) {
     return
   }
@@ -70,19 +61,16 @@ export function enqueueWireEvent(event: WireEvent): void {
   queue.push(event)
 }
 
-export function drainWireEvents(): Array<WireEvent & { uuid: UUID; session_id: string }> {
-  if (queue.length === 0) {
-    return []
-  }
+export function drainSdkEvents(): Array<SdkEvent & { uuid: UUID; session_id: string }> {
   const events = queue.splice(0)
-  return events.map((e) => ({
-    ...e,
+  return events.map((event) => ({
+    ...event,
     uuid: randomUUID(),
     session_id: getSessionId(),
   }))
 }
 
-export function emitTaskTerminatedBridge(
+export function emitTaskTerminatedSdkEvent(
   taskId: string,
   status: 'completed' | 'failed' | 'stopped',
   opts?: {
@@ -92,7 +80,7 @@ export function emitTaskTerminatedBridge(
     usage?: { total_tokens: number; tool_uses: number; duration_ms: number }
   },
 ): void {
-  enqueueWireEvent({
+  enqueueSdkEvent({
     type: 'system',
     subtype: 'task_notification',
     task_id: taskId,

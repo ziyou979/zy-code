@@ -12,7 +12,6 @@ import type { StatsStore } from '../../context/stats.js'
 import { launchResumeChooser } from '../../cli/DialogLaunchers.js'
 import type { Root } from '../../ink/index.js'
 import { exitWithError } from '../../cli/InteractiveHelpers.js'
-import type { DownloadResult } from '../../services/api/filesApi.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import type {
   AgentDefinition,
@@ -69,7 +68,6 @@ export interface ResumeDispatchParams {
   }
   mainThreadAgentDefinition: AgentDefinition | undefined
   thinkingConfig: ThinkingConfig
-  fileDownloadPromise: Promise<DownloadResult[]> | undefined
 }
 
 /**
@@ -86,7 +84,6 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
     sessionConfig,
     resumeContext,
     thinkingConfig,
-    fileDownloadPromise,
   } = params
 
   // mainThreadAgentDefinition 在分支内部可能被 restoredAgentDef 覆盖
@@ -233,21 +230,6 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
       })
       logError(error)
       await exitWithError(root, `Failed to resume session ${sessionId}`)
-    }
-  }
-
-  // 在渲染 REPL 之前等待文件下载（文件必须可用）
-  if (fileDownloadPromise) {
-    try {
-      const results = await fileDownloadPromise
-      const failedCount = count(results, (r) => !r.success)
-      if (failedCount > 0) {
-        process.stderr.write(
-          chalk.yellow(`Warning: ${failedCount}/${results.length} file(s) failed to download.\n`),
-        )
-      }
-    } catch (error) {
-      return await exitWithError(root, `Error downloading files: ${errorMessage(error)}`)
     }
   }
 

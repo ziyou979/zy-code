@@ -403,12 +403,6 @@ export const setLastAPIRequest: StateModule['setLastAPIRequest'] = (...args) =>
 export const setLastAPIRequestMessages: StateModule['setLastAPIRequestMessages'] = (...args) =>
   resolveRuntimeFunction('setLastAPIRequestMessages')(...args)
 
-export const getSessionIngressToken: StateModule['getSessionIngressToken'] = (...args) =>
-  resolveRuntimeFunction('getSessionIngressToken')(...args)
-
-export const setSessionIngressToken: StateModule['setSessionIngressToken'] = (...args) =>
-  resolveRuntimeFunction('setSessionIngressToken')(...args)
-
 export const addSlowOperation: StateModule['addSlowOperation'] = (...args) =>
   resolveRuntimeFunction('addSlowOperation')(...args)
 

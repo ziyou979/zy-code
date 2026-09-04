@@ -23,7 +23,7 @@ import {
   markAgentsNotified,
 } from '../tasks/local-agent-task/LocalAgentTask.js'
 import type { PromptInputMode, VimMode } from '../types/textInputTypes.js'
-import { emitTaskTerminatedBridge } from '../services/bridge/bridgeEventQueue.js'
+import { emitTaskTerminatedSdkEvent } from '../services/task-runtime/sdkEventQueue.js'
 import {
   clearCommandQueue,
   enqueuePendingNotification,
@@ -167,7 +167,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     for (const [taskId, task] of running) {
       markAgentsNotified(taskId, setAppState)
       descriptions.push(task.description)
-      emitTaskTerminatedBridge(taskId, 'stopped', {
+      emitTaskTerminatedSdkEvent(taskId, 'stopped', {
         toolUseId: task.toolUseId,
         summary: task.description,
       })

@@ -117,7 +117,6 @@ export async function loadRootResources(
     sessionId,
     includeHookEvents,
     includePartialMessages,
-    fileDownloadPromise,
     agentsJson,
     agentCli,
     outputFormat,
@@ -136,12 +135,7 @@ export async function loadRootResources(
     worktreePRNumber,
     tmuxEnabled,
     storedTeammateOpts,
-    sdkUrl,
     effectiveIncludePartialMessages,
-    remoteControlOption,
-    remoteControl,
-    remoteControlName,
-    fileSpecs,
     isNonInteractiveSession,
     systemPrompt,
     appendSystemPrompt,
@@ -411,17 +405,6 @@ export async function loadRootResources(
     )
 
     logForDebugging(`[STARTUP] showSetupScreens() completed in ${Date.now() - setupScreensStart}ms`)
-
-    // 现在信任已建立且 GrowthBook 有认证头，
-    // 解析 --remote-control / --rc 授权门。
-    if (feature('BRIDGE_MODE') ? remoteControlOption !== undefined : false) {
-      const { getWireDisabledReason } = await import('../../bridge/bridgeEnabled.js')
-      const disabledReason = await getWireDisabledReason()
-      remoteControl = disabledReason === null
-      if (disabledReason) {
-        process.stderr.write(chalk.yellow(`${disabledReason}\n--rc flag ignored.\n`))
-      }
-    }
 
     // 检查待处理的代理内存快照更新（仅限 --agent 模式，仅限 ant）
     if (

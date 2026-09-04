@@ -111,8 +111,7 @@ export async function main() {
   const cliArgs = process.argv.slice(2)
   const hasPrintFlag = cliArgs.includes('-p') || cliArgs.includes('--print')
   const hasInitOnlyFlag = cliArgs.includes('--init-only')
-  const hasSdkUrl = cliArgs.some((arg) => arg.startsWith('--sdk-url'))
-  const isNonInteractive = hasPrintFlag || hasInitOnlyFlag || hasSdkUrl || !process.stdout.isTTY
+  const isNonInteractive = hasPrintFlag || hasInitOnlyFlag || !process.stdout.isTTY
 
   // 停止为非交互模式捕获早期输入
   if (isNonInteractive) {

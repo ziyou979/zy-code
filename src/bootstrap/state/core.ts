@@ -115,7 +115,6 @@ export type State = {
   flagSettingsPath: string | undefined
   flagSettingsInline: Record<string, unknown> | null
   allowedSettingSources: SettingSource[]
-  sessionIngressToken: string | null | undefined
   oauthTokenFromFd: string | null | undefined
   apiKeyFromFd: string | null | undefined
   // 遥测状态
@@ -327,7 +326,6 @@ function getInitialState(): State {
     clientType: 'cli',
     sessionSource: undefined,
     questionPreviewFormat: undefined,
-    sessionIngressToken: undefined,
     oauthTokenFromFd: undefined,
     apiKeyFromFd: undefined,
     flagSettingsPath: undefined,

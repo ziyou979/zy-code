@@ -19,8 +19,8 @@ import { basename, extname } from 'node:path'
 import axios from 'axios'
 import { z } from 'zod/v4'
 
-import { getWireAccessToken, getWireBaseUrlOverride } from '../../bridge/bridgeConfig.js'
 import { getOauthConfig } from '../../constants/oauth.js'
+import { getZyAIOAuthTokens } from '../../services/auth/auth.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
@@ -64,7 +64,7 @@ function debug(msg: string): void {
  * skip → web viewer sees inert cards with no file_uuid.
  */
 function getWireBaseUrl(): string {
-  return getWireBaseUrlOverride() ?? process.env.ZY_CODE_BASE_URL ?? getOauthConfig().BASE_API_URL
+  return process.env.ZY_CODE_BASE_URL ?? getOauthConfig().BASE_API_URL
 }
 
 // /api/oauth/file_upload returns one of ChatMessage{Image,Blob,Document}FileSchema.
@@ -97,7 +97,7 @@ export async function uploadBriefAttachment(
       return undefined
     }
 
-    const token = getWireAccessToken()
+    const token = process.env.ZY_CODE_OAUTH_TOKEN ?? getZyAIOAuthTokens()?.accessToken
     if (!token) {
       debug('skip: no oauth token')
       return undefined
