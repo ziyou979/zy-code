@@ -5,7 +5,7 @@ import { Text } from '../../ink/index.js'
 import { truncate } from '../../utils/truncate.js'
 import type { CreateOutput } from './cronCreateTool.js'
 import type { DeleteOutput } from './cronDeleteTool.js'
-import type { ListOutput } from './cronListTool.js'
+import type { ListOutput } from './CronListTool.js'
 
 // --- CronCreate -------------------------------------------------------------
 

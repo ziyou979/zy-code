@@ -36,7 +36,7 @@ import { BackgroundTask as BackgroundTaskComponent } from './BackgroundTask.js'
 import { DreamDetailDialog } from './DreamDetailDialog.js'
 import { InProcessTeammateDetailDialog } from './InProcessTeammateDetailDialog.js'
 import { ShellDetailDialog } from './ShellDetailDialog.js'
-import { Item, type ListItem, TeammateTaskGroups, toListItem } from './TaskListRenderers.js'
+import { Item, type ListItem, TeammateTaskGroups, toListItem } from './taskListRenderers.js'
 
 type ViewState =
   | {

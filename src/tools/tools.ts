@@ -70,7 +70,7 @@ if (feature('PROACTIVE') || feature('KAIROS')) {
 if (feature('AGENT_TRIGGERS')) {
   require('../tools/ScheduleCronTool/cronCreateTool.js')
   require('../tools/ScheduleCronTool/cronDeleteTool.js')
-  require('../tools/ScheduleCronTool/cronListTool.js')
+  require('../tools/ScheduleCronTool/CronListTool.js')
   require('../tools/ScheduleWakeupTool/ScheduleWakeupTool.js')
 }
 if (feature('MONITOR_TOOL')) {
