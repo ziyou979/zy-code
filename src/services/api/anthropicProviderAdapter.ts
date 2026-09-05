@@ -119,7 +119,8 @@ export class anthropicProviderAdapter implements LLMAdapter {
         isOAuth: true,
       }
     }
-    // 主请求基础设施会预先创建普通客户端；OAuth 分支必须优先，避免误用注入的 API Key 客户端。
+    // 这里只识别 Anthropic 自己的 OAuth。xAI、Codex、Copilot 已在 adapter 工厂中按
+    // 各自格式分派，不会进入本类。Anthropic OAuth 必须优先于注入的 API-key fallback。
     if (this.injectedClient) {
       return { client: this.injectedClient, isOAuth: false }
     }

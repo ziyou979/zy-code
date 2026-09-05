@@ -32,12 +32,10 @@ import {
 } from '../services/swarm/leaderPermissionBridge.js'
 import { endInteractionSpan } from '../services/telemetry/sessionTracing.js'
 import { useLogMessages } from '../hooks/useLogMessages.js'
-import { useReplBridge } from '../hooks/useReplBridge.js'
 import { type Command } from '../commands/index.js'
 import type { QueuedCommand } from '../types/textInputTypes.js'
 import { useIdeLogging } from '../hooks/useIdeLogging.js'
 import type { DirectConnectConfig } from '../server/directConnectManager.js'
-import { useAssistantHistory } from '../hooks/useAssistantHistory.js'
 import type { SSHSession } from '../ssh/createSSHSession.js'
 import { useMoreRight } from '../moreright/useMoreRight.js'
 import { startBackgroundHousekeeping } from '../services/background/backgroundHousekeeping.js'
@@ -136,7 +134,6 @@ import {
 import { useFileHistorySnapshotInit } from 'src/hooks/useFileHistorySnapshotInit.js'
 import { useMcpConnectivityStatus } from 'src/hooks/notifs/useMcpConnectivityStatus.js'
 import { performStartupChecks } from 'src/services/plugins/PerformStartupChecks.js'
-import type { RemoteSessionConfig } from '../remote/remoteSessionManager.js'
 import { useUnseenDivider, computeUnseenDivider } from '../components/FullscreenLayout.js'
 import {
   isFullscreenEnvEnabled,
@@ -150,7 +147,6 @@ import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import { ReplMainView } from './repl/ReplMainView.js'
 import { getResumeReturnPrompt } from '../services/session-storage/resumeReturn.js'
 
-const EMPTY_MCP_CLIENTS: MCPServerConnection[] = []
 const HISTORY_STUB = { maybeLoadOlder: (_: ScrollBoxHandle) => {} }
 
 export type Props = {
@@ -175,7 +171,6 @@ export type Props = {
   mainThreadAgentDefinition?: AgentDefinition
   disableSlashCommands?: boolean
   taskListId?: string
-  remoteSessionConfig?: RemoteSessionConfig
   directConnectConfig?: DirectConnectConfig
   sshSession?: SSHSession
   thinkingConfig: ThinkingConfig
@@ -201,13 +196,10 @@ export function REPL({
   mainThreadAgentDefinition: initialMainThreadAgentDefinition,
   disableSlashCommands = false,
   taskListId,
-  remoteSessionConfig,
   directConnectConfig,
   sshSession,
   thinkingConfig,
 }: Props): React.ReactNode {
-  const isRemoteSession = !!remoteSessionConfig
-
   const titleDisabled = useMemo(() => isEnvTruthy(process.env.ZY_CODE_DISABLE_TERMINAL_TITLE), [])
   const moreRightEnabled = useMemo(
     () => isInternalBuild() && isEnvTruthy(process.env.CLAUDE_MORERIGHT),
@@ -237,8 +229,6 @@ export function REPL({
   const pendingWorkerRequest = useAppState((s) => s.pendingWorkerRequest)
   const pendingSandboxRequest = useAppState((s) => s.pendingSandboxRequest)
   const tasks = useAppState((s) => s.tasks)
-  const ultraplanPendingChoice = useAppState((s) => s.ultraplanPendingChoice)
-  const ultraplanLaunchPending = useAppState((s) => s.ultraplanLaunchPending)
   const workerSandboxPermissions = useAppState((s) => s.workerSandboxPermissions)
   const elicitation = useAppState((s) => s.elicitation)
   const setAppState = useSetAppState()
@@ -248,7 +238,7 @@ export function REPL({
   const mainLoopModel = useMainLoopModel()
 
   const [localCommands, setLocalCommands] = useState(initialCommands)
-  useSkillsChange(isRemoteSession ? undefined : getProjectRoot(), setLocalCommands)
+  useSkillsChange(getProjectRoot(), setLocalCommands)
 
   const proactiveActive = React.useSyncExternalStore(
     proactiveModule?.subscribeToProactiveChanges ?? PROACTIVE_NO_OP_SUBSCRIBE,
@@ -281,7 +271,7 @@ export function REPL({
     setShowIdeOnboarding,
   } = useReplIdeState({
     autoConnectIdeFlag,
-    isRemoteSession,
+    isRemoteSession: false,
     mcpClients,
     rawMcpClients: mcp.clients,
     setDynamicMcpConfig: (v) => setDynamicMcpConfigRef.current(v),
@@ -292,20 +282,14 @@ export function REPL({
     () => [...localTools, ...initialTools],
     [localTools, initialTools],
   )
-  useManagePlugins({ enabled: !isRemoteSession })
+  useManagePlugins({ enabled: true })
 
   useEffect(() => {
-    if (isRemoteSession) {
-      return
-    }
     void performStartupChecks(setAppState)
-  }, [setAppState, isRemoteSession])
+  }, [setAppState])
 
-  usePromptsFromClaudeInChrome(
-    isRemoteSession ? EMPTY_MCP_CLIENTS : mcpClients,
-    toolPermissionContext.mode,
-  )
-  useSwarmInitialization(setAppState, initialMessages, { enabled: !isRemoteSession })
+  usePromptsFromClaudeInChrome(mcpClients, toolPermissionContext.mode)
+  useSwarmInitialization(setAppState, initialMessages, { enabled: true })
 
   const mergedTools = useMergedTools(combinedInitialTools, mcp.tools, toolPermissionContext)
   const commandsWithPlugins = useMergedCommands(localCommands, plugins.commands as Command[])
@@ -314,7 +298,7 @@ export function REPL({
     () => (disableSlashCommands ? [] : mergedCommands),
     [disableSlashCommands, mergedCommands],
   )
-  useIdeLogging(isRemoteSession ? EMPTY_MCP_CLIENTS : mcp.clients)
+  useIdeLogging(mcp.clients)
   const [theme] = useTheme()
 
   const [initialReadFileState] = useState(() =>
@@ -333,7 +317,7 @@ export function REPL({
       initialMessages,
       initialMainThreadAgentDefinition,
       initialDynamicMcpConfig,
-      initialExternalLoading: remoteSessionConfig?.hasInitialPrompt ?? false,
+      initialExternalLoading: false,
       queryGuard,
       titleGenerationAttempted: (initialMessages?.length ?? 0) > 0,
       readFileState: initialReadFileState,
@@ -427,7 +411,7 @@ export function REPL({
     resetLoadingState,
   } = useReplLoadingState({
     queryGuard,
-    initialExternalLoading: remoteSessionConfig?.hasInitialPrompt ?? false,
+    initialExternalLoading: false,
     theme,
     replStore,
     onResetAdditional: () => onResetAdditionalRef.current(),
@@ -579,15 +563,7 @@ export function REPL({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId])
 
-  const { maybeLoadOlder } = feature('KAIROS')
-    ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useAssistantHistory({
-        config: remoteSessionConfig,
-        setMessages,
-        scrollRef,
-        onPrepend: shiftDivider,
-      })
-    : HISTORY_STUB
+  const { maybeLoadOlder } = HISTORY_STUB
 
   const composedOnScroll = useCallback(
     (sticky: boolean, handle: ScrollBoxHandle) => {
@@ -639,15 +615,8 @@ export function REPL({
   const [isExiting, _setIsExiting] = useState(false)
   const [exitFlow, _setExitFlow] = useState<React.ReactNode>(null)
 
-  useEffect(() => {
-    if (ultraplanPendingChoice && showBashesDialog) {
-      setShowBashesDialog(false)
-    }
-  }, [ultraplanPendingChoice, showBashesDialog, setShowBashesDialog])
-
   // ── remote / 响应长度 ──
   const activeRemote = useReplActiveRemote({
-    remoteSessionConfig,
     directConnectConfig,
     sshSession,
     setMessages,
@@ -657,7 +626,6 @@ export function REPL({
     setStreamingToolUses,
     setStreamMode,
     setInProgressToolUseIDs,
-    setLocalCommands,
   })
   const setResponseLength = useCallback(
     (f: (prev: number) => number) => {
@@ -716,7 +684,6 @@ export function REPL({
     handleHintResponse,
     showEffortCallout,
     setShowEffortCallout,
-    showRemoteCallout,
     showDesktopUpsellStartup,
     setShowDesktopUpsellStartup,
     showFullscreenUpsell,
@@ -770,11 +737,8 @@ export function REPL({
     idleReturnPending,
     resumeReturnPending,
     isLoading,
-    ultraplanPendingChoice,
-    ultraplanLaunchPending,
     showIdeOnboarding,
     showEffortCallout,
-    showRemoteCallout,
     lspRecommendation,
     hintRecommendation,
     showFullscreenUpsell,
@@ -1004,14 +968,6 @@ export function REPL({
   useCostSummary(useFpsMetrics())
   useLogMessages(messages, messages.length === initialMessages?.length)
 
-  const { sendWireResult } = useReplBridge(
-    messages,
-    setMessages,
-    abortControllerRef,
-    commands,
-    mainLoopModel,
-  )
-  sendWireResultRef.current = sendWireResult
   useAfterFirstRender()
 
   const hasCountedQueueUseRef = useRef(false)
@@ -1325,7 +1281,7 @@ export function REPL({
       onCancel={onCancel}
       handleQueuedCommandOnCancel={handleQueuedCommandOnCancel}
       abortController={abortController}
-      isRemoteSession={isRemoteSession}
+      isRemoteSession={false}
       voice={voice}
       handleBackgroundSession={handleBackgroundSession}
       mrRender={mrRender}
@@ -1346,7 +1302,6 @@ export function REPL({
       setShowIdeOnboarding={setShowIdeOnboarding}
       showEffortCallout={showEffortCallout}
       setShowEffortCallout={setShowEffortCallout}
-      showRemoteCallout={showRemoteCallout}
       showDesktopUpsellStartup={showDesktopUpsellStartup}
       setShowDesktopUpsellStartup={setShowDesktopUpsellStartup}
       showFullscreenUpsell={showFullscreenUpsell}

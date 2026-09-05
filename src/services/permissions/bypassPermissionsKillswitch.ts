@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react'
 import type { AppState } from 'src/state/AppStateStore.js'
 import { useAppState, useAppStateStore, useSetAppState } from 'src/state/AppState.js'
 import type { ToolPermissionContext } from 'src/tools/tool.js'
-import { getIsRemoteMode } from '../../bootstrap/runtime/runtimeContext.js'
 import {
   createDisabledBypassPermissionsContext,
   shouldDisableBypassPermissions,
@@ -54,9 +53,6 @@ export function useKickOffCheckAndDisableBypassPermissionsIfNeeded(): void {
 
   // Run once, when the component mounts
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     void checkAndDisableBypassPermissionsIfNeeded(toolPermissionContext, setAppState)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setAppState, toolPermissionContext])
@@ -124,9 +120,6 @@ export function useKickOffCheckAndDisableAutoModeIfNeeded(): void {
   // The print.ts headless paths are covered by the sync
   // isAutoModeGateEnabled() check.
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (isFirstRunRef.current) {
       isFirstRunRef.current = false
     } else {

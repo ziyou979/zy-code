@@ -4,6 +4,7 @@ import stripAnsi from 'strip-ansi'
 import { color } from '../components/design-system/color.js'
 import { BLOCKQUOTE_BAR } from '../constants/figures.js'
 import { stringWidth } from '../utils/stringWidth.js'
+import { padVisual } from '../utils/truncate.js'
 import { supportsHyperlinks } from '../ink/supportsHyperlinks.js'
 import type { CliHighlight } from '../services/terminal/cliHighlight.js'
 import { logForDebugging } from '../services/infra/debug.js'
@@ -263,7 +264,7 @@ export function formatToken(
         const displayText = getDisplayText(header.tokens)
         const width = columnWidths[index]!
         const align = tableToken.align?.[index]
-        tableOutput += `${padAligned(content, stringWidth(displayText), width, align)} | `
+        tableOutput += `${padVisual(content, stringWidth(displayText), width, align ?? undefined)} | `
       })
       tableOutput = tableOutput.trimEnd() + EOL
 
@@ -285,7 +286,7 @@ export function formatToken(
           const displayText = getDisplayText(cell.tokens)
           const width = columnWidths[index]!
           const align = tableToken.align?.[index]
-          tableOutput += `${padAligned(content, stringWidth(displayText), width, align)} | `
+          tableOutput += `${padVisual(content, stringWidth(displayText), width, align ?? undefined)} | `
         })
         tableOutput = tableOutput.trimEnd() + EOL
       })
@@ -377,23 +378,7 @@ function getListNumber(listDepth: number, orderedListNumber: number): string {
 }
 
 /**
- * 根据对齐方式将 `content` 填充至 `targetWidth`。`displayWidth` 为 `content`
- * 的可见宽度（由调用方计算，例如对 stripAnsi 后的文本调用 stringWidth，
- * 使得 `content` 中的 ANSI 转义码不影响填充计算）。
+ * 重导出 padVisual 以保持向后兼容（markdown 表格渲染使用）。
+ * 实际实现在 utils/truncate.ts。
  */
-export function padAligned(
-  content: string,
-  displayWidth: number,
-  targetWidth: number,
-  align: 'left' | 'center' | 'right' | null | undefined,
-): string {
-  const padding = Math.max(0, targetWidth - displayWidth)
-  if (align === 'center') {
-    const leftPad = Math.floor(padding / 2)
-    return ' '.repeat(leftPad) + content + ' '.repeat(padding - leftPad)
-  }
-  if (align === 'right') {
-    return ' '.repeat(padding) + content
-  }
-  return content + ' '.repeat(padding)
-}
+export { padVisual } from '../utils/truncate.js'

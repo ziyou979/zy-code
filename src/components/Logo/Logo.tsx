@@ -20,7 +20,7 @@ import {
   shouldShowProjectOnboarding,
 } from '../../services/settings/projectOnboardingState.js'
 import { getDisplayPath } from '../../services/infra/file.js'
-import { truncate } from '../../utils/format.js'
+import { truncate } from '../../utils/truncate.js'
 import {
   calculateLayoutDimensions,
   calculateOptimalLeftWidth,

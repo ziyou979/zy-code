@@ -1,11 +1,10 @@
 import { feature } from 'bun:bundle'
 import {
+  addToTotalDecodeMs,
   addToTotalDurationState,
   consumePostCompaction,
   getIsNonInteractiveSession,
   getLastApiCompletionTimestamp,
-  getTeleportedSessionInfo,
-  markFirstTeleportMessageLogged,
   setLastApiCompletionTimestamp,
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getAPIProviderForStatsig } from 'src/services/model/providers.js'
@@ -361,17 +360,6 @@ export function logAPIError({
     error: errStr,
     attempt,
   })
-
-  // 记录远程传送会话的首次错误（可靠性跟踪）
-  const teleportInfo = getTeleportedSessionInfo()
-  if (teleportInfo?.isTeleported && !teleportInfo.hasLoggedFirstMessage) {
-    logEvent('zy_teleport_first_message_error', {
-      session_id:
-        teleportInfo.sessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      error_type: errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    markFirstTeleportMessageLogged()
-  }
 }
 
 function logAPISuccess({
@@ -645,6 +633,11 @@ export function logAPISuccessAndDuration({
   const durationMs = Date.now() - start
   const durationMsIncludingRetries = Date.now() - startIncludingRetries
   addToTotalDurationState(durationMsIncludingRetries, durationMs)
+  // 解码时长 = 总时长 - TTFT（首 token 前的排队/提示处理）。仅流式请求有
+  // ttftMs；非流式一次性返回，无法拆分，不计入 tok/s 口径。
+  if (ttftMs !== null) {
+    addToTotalDecodeMs(durationMs - ttftMs)
+  }
 
   logAPISuccess({
     model,
@@ -732,14 +725,4 @@ export function logAPISuccessAndDuration({
     requestSetupMs,
     attemptStartTimes,
   })
-
-  // 记录远程传送会话的首次成功消息（可靠性跟踪）
-  const teleportInfo = getTeleportedSessionInfo()
-  if (teleportInfo?.isTeleported && !teleportInfo.hasLoggedFirstMessage) {
-    logEvent('zy_teleport_first_message_success', {
-      session_id:
-        teleportInfo.sessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    markFirstTeleportMessageLogged()
-  }
 }

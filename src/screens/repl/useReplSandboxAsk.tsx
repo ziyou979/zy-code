@@ -4,7 +4,7 @@
 // 1. sandboxAskCallback：sandbox-adapter 的网络放行回调。两条路径：
 //    - swarm worker：通过 mailbox 把请求转发给 leader，注册回调等响应；
 //      mailbox 不可达则回退本地处理
-//    - 非 worker：本地排队 sandboxPermissionRequestQueue 渲染 UI；BRIDGE_MODE
+//    - 非 worker：本地排队 sandboxPermissionRequestQueue 渲染 UI
 //      下并发把请求转发给 REPL bridge（远程控制），任一侧先响应就解掉
 //      所有相同 host 的待处理请求，并清掉所有兄弟 bridge 订阅
 // 2. SandboxManager.getSandboxUnavailableReason effect：mount 时检查依赖缺失
@@ -15,10 +15,7 @@
 // `sandboxWireCleanupRef` 由 hook 内部 useRef 创建并 export，因为本地
 // 对话框 approval 处理（REPL JSX 中）也要遍历清理同 host 的兄弟订阅。
 
-import { feature } from 'bun:bundle'
-import { randomUUID } from 'node:crypto'
 import { useCallback, useEffect, useRef } from 'react'
-import { SANDBOX_NETWORK_ACCESS_TOOL_NAME } from '../../cli/structuredIO.js'
 import type { Notification } from '../../context/notifications.js'
 import { registerSandboxPermissionCallback } from '../../hooks/useSwarmPermissionPoller.js'
 import { Text } from '../../ink/index.js'
@@ -32,7 +29,7 @@ import {
   isSwarmWorker,
   sendSandboxPermissionRequestViaMailbox,
 } from '../../services/swarm/permissionSync.js'
-import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
+import { useSetAppState } from '../../state/AppState.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -58,7 +55,6 @@ export function useReplSandboxAsk({
   addNotification,
 }: UseReplSandboxAskParams): UseReplSandboxAskResult {
   const setAppState = useSetAppState()
-  const store = useAppStateStore()
   const sandboxWireCleanupRef = useRef<Map<string, Array<() => void>>>(new Map())
 
   const sandboxAskCallback: SandboxAskCallback = useCallback(
@@ -103,51 +99,9 @@ export function useReplSandboxAsk({
           ...prev,
           { hostPattern, resolvePromise: resolveOnce },
         ])
-
-        // BRIDGE_MODE：把请求作为 can_use_tool control_request 转给远端
-        if (feature('BRIDGE_MODE')) {
-          const bridgeCallbacks = store.getState().replWirePermissionCallbacks
-          if (bridgeCallbacks) {
-            const bridgeRequestId = randomUUID()
-            bridgeCallbacks.sendRequest(
-              bridgeRequestId,
-              SANDBOX_NETWORK_ACCESS_TOOL_NAME,
-              { host: hostPattern.host },
-              randomUUID(),
-              `Allow network connection to ${hostPattern.host}?`,
-            )
-            const unsubscribe = bridgeCallbacks.onResponse(bridgeRequestId, (response) => {
-              unsubscribe()
-              const allow = response.behavior === 'allow'
-              // 解析 ALL 同 host 的待处理请求，镜像本地对话框路径
-              setSandboxPermissionRequestQueue((queue) => {
-                queue
-                  .filter((item) => item.hostPattern.host === hostPattern.host)
-                  .forEach((item) => item.resolvePromise(allow))
-                return queue.filter((item) => item.hostPattern.host !== hostPattern.host)
-              })
-              const siblingCleanups = sandboxWireCleanupRef.current.get(hostPattern.host)
-              if (siblingCleanups) {
-                for (const fn of siblingCleanups) {
-                  fn()
-                }
-                sandboxWireCleanupRef.current.delete(hostPattern.host)
-              }
-            })
-
-            // 注册清理：本地对话框先响应时取消远程订阅
-            const cleanup = () => {
-              unsubscribe()
-              bridgeCallbacks.cancelRequest(bridgeRequestId)
-            }
-            const existing = sandboxWireCleanupRef.current.get(hostPattern.host) ?? []
-            existing.push(cleanup)
-            sandboxWireCleanupRef.current.set(hostPattern.host, existing)
-          }
-        }
       })
     },
-    [setAppState, setSandboxPermissionRequestQueue, store],
+    [setAppState, setSandboxPermissionRequestQueue],
   )
 
   // #34044：sandbox.enabled=true 但依赖缺失时 isSandboxingEnabled 静默返回

@@ -37,6 +37,7 @@ import {
   formatGoToDefinitionResult,
   formatHoverResult,
   formatIncomingCallsResult,
+  isLocationLink,
   formatOutgoingCallsResult,
   formatPrepareCallHierarchyResult,
   formatWorkspaceSymbolResult,
@@ -570,13 +571,6 @@ async function filterGitIgnoredLocations<T extends Location>(
     const filePath = uriToPath.get(loc.uri)
     return !filePath || !ignoredPaths.has(filePath)
   })
-}
-
-/**
- * Checks if item is LocationLink (has targetUri) vs Location (has uri)
- */
-function isLocationLink(item: Location | LocationLink): item is LocationLink {
-  return 'targetUri' in item
 }
 
 /**

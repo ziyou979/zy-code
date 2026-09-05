@@ -35,20 +35,6 @@ export function getPillLabel(tasks: BackgroundTaskState[]): string {
       }
       case 'local_agent':
         return tSync(n === 1 ? 'pill.localAgent_one' : 'pill.localAgent_other', { count: n })
-      case 'remote_agent': {
-        const first = tasks[0]!
-        if (n === 1 && first.type === 'remote_agent' && first.isUltraplan) {
-          switch (first.ultraplanPhase) {
-            case 'plan_ready':
-              return `${DIAMOND_FILLED} ${tSync('pill.ultraplanReady')}`
-            case 'needs_input':
-              return `${DIAMOND_OPEN} ${tSync('pill.ultraplanNeedsInput')}`
-            default:
-              return `${DIAMOND_OPEN} ${tSync('pill.ultraplan')}`
-          }
-        }
-        return tSync(n === 1 ? 'pill.cloudSession_one' : 'pill.cloudSession_other', { count: n })
-      }
       case 'local_workflow':
         return tSync(n === 1 ? 'pill.backgroundWorkflow_one' : 'pill.backgroundWorkflow_other', {
           count: n,
@@ -68,10 +54,7 @@ export function getPillLabel(tasks: BackgroundTaskState[]): string {
  * 按状态图，只有 needs_input、plan_ready 两种需关注状态显示 CTA；
  * 普通 running 状态只显示菱形和标签。
  */
-export function pillNeedsCta(tasks: BackgroundTaskState[]): boolean {
-  if (tasks.length !== 1) {
-    return false
-  }
-  const t = tasks[0]!
-  return t.type === 'remote_agent' && t.isUltraplan === true && t.ultraplanPhase !== undefined
+export function pillNeedsCta(_tasks: BackgroundTaskState[]): boolean {
+  // 唯一触发 CTA 的任务类型（remote_agent/ultraplan）已随远端会话栈移除。
+  return false
 }

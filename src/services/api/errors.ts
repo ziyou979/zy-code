@@ -1,10 +1,7 @@
 import { AFK_MODE_BETA_HEADER } from 'src/constants/betas.js'
 import { getDefaultMainLoopModelSetting } from 'src/services/model/model.js'
-import {
-  getAPIProvider,
-  isAnthropicProvider,
-  isOpenAIProvider,
-} from 'src/services/model/providers.js'
+import { isAnthropicProvider, isOpenAIProvider } from 'src/services/model/providers.js'
+import { getProviderForModel } from 'src/services/model/model.js'
 import type { WireAssistantMessageError } from 'src/types/index.js'
 import type { AssistantMessage, Message, UserMessage } from 'src/types/message.js'
 import {
@@ -131,11 +128,14 @@ export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL = 'Invalid API key · Fix ex
 
 /**
  * 运行时检查无效 API 密钥消息。
- * 不能是模块级常量，因为 `getAPIProvider()` 依赖于
+ * 不能是模块级常量，因为模型与 provider 路由依赖于
  * 导入时未加载的 settings.json。
  */
 export function getInvalidApiKeyErrorMessage(): string {
-  return isAnthropicProvider(getAPIProvider()) ? 'Not logged in · Please run /login' : ''
+  const model = getDefaultMainLoopModelSetting()
+  return isAnthropicProvider(getProviderForModel(model), model)
+    ? 'Not logged in · Please run /login'
+    : ''
 }
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH =
   'Your API key belongs to a disabled organization · Unset the environment variable to use your subscription instead'

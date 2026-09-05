@@ -10,7 +10,7 @@ import {
 import type { AppState } from '../../state/AppStateStore.js'
 import { isTerminalTaskStatus, type TaskStatus, type TaskType } from '../../tasks/task.js'
 import type { TaskState } from '../../tasks/types.js'
-import { enqueueWireEvent } from '../bridge/bridgeEventQueue.js'
+import { enqueueSdkEvent } from './sdkEventQueue.js'
 import { enqueuePendingNotification } from '../../services/input/messageQueueManager.js'
 import { getTaskOutputDelta, getTaskOutputPath } from './diskOutput.js'
 
@@ -99,7 +99,7 @@ export function registerTask(task: TaskState, setAppState: SetAppState): void {
     return
   }
 
-  enqueueWireEvent({
+  enqueueSdkEvent({
     type: 'system',
     subtype: 'task_started',
     task_id: task.id,

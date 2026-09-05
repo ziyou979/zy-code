@@ -15,7 +15,7 @@ import { logEvent } from '../analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/metadata.js'
 import { scanForSecrets } from './secretScanner.js'
 import type { SkippedSecretFile } from './types.js'
-import { isErrnoException, MAX_FILE_SIZE_BYTES } from './teamMemorySyncShared.js'
+import { isNodeError, MAX_FILE_SIZE_BYTES } from './teamMemorySyncShared.js'
 
 export async function readLocalTeamMemory(maxEntries: number | null): Promise<{
   entries: Record<string, string>
@@ -69,7 +69,7 @@ export async function readLocalTeamMemory(maxEntries: number | null): Promise<{
         }),
       )
     } catch (e) {
-      if (isErrnoException(e)) {
+      if (isNodeError(e)) {
         if (e.code !== 'ENOENT' && e.code !== 'EACCES' && e.code !== 'EPERM') {
           throw e
         }
@@ -130,7 +130,7 @@ export async function writeRemoteEntriesToLocal(entries: Record<string, string>)
           return false
         }
       } catch (e) {
-        if (isErrnoException(e) && e.code !== 'ENOENT' && e.code !== 'ENOTDIR') {
+        if (isNodeError(e) && e.code !== 'ENOENT' && e.code !== 'ENOTDIR') {
           logForDebugging(`team-memory-sync: unexpected read error for "${relPath}": ${e.code}`, {
             level: 'debug',
           })

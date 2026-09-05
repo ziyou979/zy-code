@@ -4,7 +4,6 @@
  */
 
 import * as React from 'react'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { TICK } from '../constants/figures.js'
 import type { useNotifications } from '../context/notifications.js'
 import { Text } from '../ink/index.js'
@@ -23,9 +22,6 @@ export function usePluginRecommendationBase<T>() {
   const [recommendation, setRecommendation] = React.useState<T | null>(null)
   const isCheckingRef = React.useRef(false)
   const tryResolve = (resolve: () => Promise<T | null | undefined>) => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (recommendation) {
       return
     }

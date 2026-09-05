@@ -75,7 +75,6 @@ export type ReplNotificationsCluster = {
   // 横幅
   showEffortCallout: boolean
   setShowEffortCallout: (next: boolean) => void
-  showRemoteCallout: boolean
   showDesktopUpsellStartup: boolean
   setShowDesktopUpsellStartup: (next: boolean) => void
   showFullscreenUpsell: boolean
@@ -133,7 +132,6 @@ export function useReplNotificationsCluster({
     const settings = getSettingsForSource('userSettings')
     return !settings?.effortLevel
   })
-  const showRemoteCallout = useAppState((s) => s.showRemoteCallout)
   const [showDesktopUpsellStartup, setShowDesktopUpsellStartup] = useState(() =>
     shouldShowDesktopUpsellStartup(),
   )
@@ -240,7 +238,6 @@ export function useReplNotificationsCluster({
     handleHintResponse,
     showEffortCallout,
     setShowEffortCallout,
-    showRemoteCallout,
     showDesktopUpsellStartup,
     setShowDesktopUpsellStartup,
     showFullscreenUpsell,

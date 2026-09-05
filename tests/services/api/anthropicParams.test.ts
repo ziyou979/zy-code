@@ -219,6 +219,20 @@ describe('buildAnthropicCreateParams: 出站 Anthropic 请求构造', () => {
     expect(result.output_config).toEqual({ effort: 'max' })
   })
 
+  test('内部 on 档位只开启思考，不写入 output_config.effort', () => {
+    const result = buildAnthropicCreateParams({
+      model: 'anthropic/claude-sonnet',
+      maxTokens: 100,
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+      messages: [{ role: 'user', content: 'hi' } as any],
+      thinking: { type: 'enabled', budgetTokens: 1024 },
+      reasoningEffort: 'on',
+      // biome-ignore lint/suspicious/noExplicitAny: 测试 mock 对象构造
+    } as any)
+    expect(result.thinking).toEqual({ type: 'enabled', budget_tokens: 1024 })
+    expect(result.output_config).toBeUndefined()
+  })
+
   test('responseFormat + reasoningEffort → output_config', () => {
     const result = buildAnthropicCreateParams({
       model: 'claude-sonnet-4',

@@ -3,11 +3,8 @@
  */
 
 import axios from 'axios'
-import {
-  getAPIProvider,
-  isAnthropicProvider,
-  isOpenAIProvider,
-} from 'src/services/model/providers.js'
+import { isAnthropicProvider, isOpenAIProvider } from 'src/services/model/providers.js'
+import { getMainLoopModel, getProviderForModel } from 'src/services/model/model.js'
 import { getApiKey, getZyAIOAuthTokens, handleOAuth401Error } from '../auth/auth.js'
 import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 import { getWorkload } from '../swarm/workloadContext.js'
@@ -61,15 +58,18 @@ export type AuthHeaders = {
 }
 
 /**
- * 获取 API 请求的认证 headers
- * 为 Max/Pro 用户返回 OAuth headers，为普通用户返回 API key headers
- * 支持百炼 DashScope API Key
+ * 为调用 Zy 辅助服务的旧路径，按当前模型连接构造认证 header。
+ *
+ * 凭证可能是 API key，也可能是命名连接中 OAuth provider 导出的 access token；
+ * OpenAI 格式连接使用 Bearer，Anthropic 格式连接使用 x-api-key。模型推理请求
+ * 由各 adapter 独立鉴权，不应把本函数视为多 Provider OAuth 的统一传输层。
  */
 export function getAuthHeaders(): AuthHeaders {
-  const apiProvider = getAPIProvider()
+  const model = getMainLoopModel()
+  const apiProvider = getProviderForModel(model)
 
-  // 使用 OpenAI SDK 的平台（百炼、Ollama、智谱、Kimi、OpenAI 等）
-  if (isOpenAIProvider(apiProvider)) {
+  // OpenAI 格式连接既可能使用 API key，也可能使用 xAI、Codex、Copilot 等 OAuth token。
+  if (isOpenAIProvider(apiProvider, model)) {
     const apiKey = getApiKey()
     if (apiKey) {
       return {
@@ -81,7 +81,7 @@ export function getAuthHeaders(): AuthHeaders {
   }
 
   // Anthropic 原生 / 兼容端点使用 x-api-key
-  if (isAnthropicProvider(apiProvider)) {
+  if (isAnthropicProvider(apiProvider, model)) {
     const apiKey = getApiKey()
     if (apiKey) {
       return {
@@ -100,8 +100,11 @@ export function getAuthHeaders(): AuthHeaders {
 }
 
 /**
- * 处理 OAuth 401 错误的包装器，通过强制刷新 token 并重试一次。
+ * 处理 Zy 账户 OAuth 401 的包装器，通过强制刷新 token 并重试一次。
  * 解决本地过期检查与服务器不一致的时钟漂移场景。
+ *
+ * 这不是多 Provider OAuth 的通用刷新入口；xAI、OpenAI Codex、GitHub Copilot
+ * 由各自 OAuthProviderInterface.refreshToken 实现负责刷新。
  *
  * 重试时会再次调用请求闭包，因此它应重新读取认证信息
  * （例如通过 getAuthHeaders()）以获取刷新后的 token。

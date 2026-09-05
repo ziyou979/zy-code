@@ -113,7 +113,7 @@ function locationLinkToLocation(link: LocationLink): Location {
 /**
  * Checks if an object is a LocationLink (has targetUri) vs Location (has uri)
  */
-function isLocationLink(item: Location | LocationLink): item is LocationLink {
+export function isLocationLink(item: Location | LocationLink): item is LocationLink {
   return 'targetUri' in item
 }
 

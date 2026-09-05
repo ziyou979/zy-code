@@ -10,12 +10,6 @@ export type PendingConnect = {
   dangerouslySkipPermissions: boolean
 }
 
-/** `zy assistant [sessionId]` 早期解析后暂存的会话/发现意图。 */
-export type PendingAssistantChat = {
-  sessionId?: string
-  discover: boolean
-}
-
 /** `zy ssh <host> [dir]` 早期解析后暂存的远程会话参数。 */
 export type PendingSSH = {
   host: string | undefined
@@ -33,13 +27,6 @@ export const pendingConnect: PendingConnect | undefined = feature('DIRECT_CONNEC
       url: undefined,
       authToken: undefined,
       dangerouslySkipPermissions: false,
-    }
-  : undefined
-
-export const pendingAssistantChat: PendingAssistantChat | undefined = feature('KAIROS')
-  ? {
-      sessionId: undefined,
-      discover: false,
     }
   : undefined
 
@@ -129,35 +116,6 @@ async function rewriteArgvForDeepLink(): Promise<void> {
     const urlSchemeResult = await handleUrlSchemeLaunch()
     process.exit(urlSchemeResult ?? 1)
   }
-}
-
-/**
- * `zy assistant [sessionId]` —— 暂存并剥离，以便主命令处理它，
- * 提供完整的交互式 TUI。仅限位置 0（与下方 ssh 模式匹配）——
- * indexOf 会对 `zy -p "explain assistant"` 产生误判。
- * 根标志在子命令前（例如 `--debug assistant`）会透传到存根，打印用法说明。
- */
-function rewriteArgvForAssistant(): void {
-  if (!(feature('KAIROS') && pendingAssistantChat)) {
-    return
-  }
-
-  const rawArgs = process.argv.slice(2)
-  if (rawArgs[0] !== 'assistant') {
-    return
-  }
-
-  const nextArg = rawArgs[1]
-  if (nextArg && !nextArg.startsWith('-')) {
-    pendingAssistantChat.sessionId = nextArg
-    rawArgs.splice(0, 2) // drop 'assistant' and sessionId
-    process.argv = [process.argv[0]!, process.argv[1]!, ...rawArgs]
-  } else if (!nextArg) {
-    pendingAssistantChat.discover = true
-    rawArgs.splice(0, 1) // drop 'assistant'
-    process.argv = [process.argv[0]!, process.argv[1]!, ...rawArgs]
-  }
-  // else: `zy assistant --help` → fall through to stub
 }
 
 /**
@@ -273,6 +231,5 @@ function rewriteArgvForSsh(): boolean {
 export async function rewriteArgv(): Promise<boolean> {
   await rewriteArgvForCcUrl()
   await rewriteArgvForDeepLink()
-  rewriteArgvForAssistant()
   return rewriteArgvForSsh()
 }

@@ -31,7 +31,7 @@ import type {
 } from '../../tasks/in-process-teammate-task/types.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { formatAgentId } from '../../services/agent/agentId.js'
-import { emitTaskTerminatedBridge } from '../bridge/bridgeEventQueue.js'
+import { emitTaskTerminatedSdkEvent } from '../task-runtime/sdkEventQueue.js'
 import { registerCleanup } from '../cleanup/cleanupRegistry.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { createTeammateContext } from './teammateContext.js'
@@ -319,7 +319,7 @@ export function killInProcessTeammate(taskId: string, setAppState: SetAppStateFn
     // task_started bookend directly. The in-process runner's own
     // completion/failure emit guards on status==='running' so it won't
     // double-emit after seeing status:killed.
-    emitTaskTerminatedBridge(taskId, 'stopped', {
+    emitTaskTerminatedSdkEvent(taskId, 'stopped', {
       toolUseId,
       summary: description,
     })

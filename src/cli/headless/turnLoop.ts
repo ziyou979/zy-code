@@ -1,7 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
 import { StructuredIO } from 'src/cli/structuredIO.js'
-import { RemoteIO } from 'src/cli/remoteIO.js'
 import type { ThinkingConfig } from 'src/services/messages/thinking.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { logEvent } from 'src/services/analytics/index.js'
@@ -19,14 +18,12 @@ import {
   mergeFileStateCaches,
 } from 'src/services/file-persistence/fileStateCache.js'
 import { extractReadFilesFromMessages } from 'src/services/query/queryHelpers.js'
-import { executeFilePersistence } from 'src/services/file-persistence/filePersistence.js'
 import { finalizePendingAsyncHooks } from 'src/services/hooks/asyncHookRegistry.js'
 import { gracefulShutdownSync, isShuttingDown } from 'src/bootstrap/lifecycle/gracefulShutdown.js'
 import { createIdleTimeoutManager } from 'src/services/session/idleTimeout.js'
 import type { WireStatus, WireUserMessageReplay } from 'src/types/index.js'
 import type { StdoutMessage } from 'src/types/wire/control.js'
 import { cwd } from 'node:process'
-import type { ReplWireHandle } from 'src/bridge/replBridge.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import { createAbortController } from 'src/utils/abortController.js'
 import { TEAMMATE_MESSAGE_TAG } from 'src/constants/xml.js'
@@ -64,7 +61,7 @@ import { removeTeammateFromTeamFile } from '../../services/swarm/teamHelpers.js'
 import { unassignTeammateTasks } from '../../services/tasks-service/tasks.js'
 import { getRunningTasks } from '../../services/task-runtime/framework.js'
 import { isBackgroundTask } from '../../tasks/types.js'
-import { drainWireEvents } from '../../services/bridge/bridgeEventQueue.js'
+import { drainSdkEvents } from '../../services/task-runtime/sdkEventQueue.js'
 import { errorMessage, toError } from '../../utils/errors.js'
 import { sleep } from '../../utils/sleep.js'
 import { createHeadlessSession } from './headlessSession.js'
@@ -153,19 +150,16 @@ export interface TurnLoopDeps {
   suggestionState: SuggestionState
   pendingSeeds: ReturnType<typeof createFileStateCacheWithSizeLimit>
   buildAllTools: (appState: AppState) => Tools
-  forwardMessagesToBridge: () => void
   idleTimeout: ReturnType<typeof createIdleTimeoutManager>
   scheduleProactiveTick: (() => void) | undefined
   unsubscribeSkillChanges: () => void
   unsubscribeAuthStatus: (() => void) | undefined
   rateLimitListener: (limits: ZyAILimits) => void
   kickRun: () => void
-  getBridgeHandle: () => ReplWireHandle | null
 }
 
 // Phase 4b: 主对话循环外提自 print.ts runHeadlessStreaming。所有闭包依赖经 deps
-// 注入(参照 mcpRuntime 约定);loopState 共享可变状态;kickRun 处理 run 自递归;
-// getBridgeHandle 取活引用(bridgeHandle 会被 remote_control 控制 handler 重赋值)。
+// 注入(参照 mcpRuntime 约定);loopState 共享可变状态;kickRun 处理 run 自递归。
 export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
   const {
     loopState,
@@ -180,14 +174,12 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
     suggestionState,
     pendingSeeds,
     buildAllTools,
-    forwardMessagesToBridge,
     idleTimeout,
     scheduleProactiveTick,
     unsubscribeSkillChanges,
     unsubscribeAuthStatus,
     rateLimitListener,
     kickRun,
-    getBridgeHandle,
   } = deps
   if (loopState.running) {
     return
@@ -353,7 +345,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           // 仅当存在 <status> 标签时发送 task_notification SDK 事件，说明这是终态通知
           //（completed/failed/stopped）。enqueueStreamEvent 的流事件不含 <status>，只是进度 ping；
           // 若在此发送会默认成 'completed'，导致 SDK 消费方错误关闭任务。终态边界事件现由
-          // emitTaskTerminatedBridge 直接发送，因此安全跳过无 status 的事件。
+          // 任务终态由 SDK 事件队列单独发送，因此安全跳过无 status 的事件。
           if (statusMatch) {
             output.enqueue({
               type: 'system',
@@ -379,12 +371,6 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
         }
 
         const input = command.value
-
-        if (structuredIO instanceof RemoteIO && command.mode === 'prompt') {
-          logEvent('zy_bridge_message_received', {
-            is_repl: false,
-          })
-        }
 
         // 中止正在进行的建议生成并跟踪接受情况
         suggestionState.abortController?.abort()
@@ -416,9 +402,6 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
         }
 
         loopState.abortController = createAbortController()
-        const turnStartTime = feature('FILE_PERSISTENCE')
-          ? { wallMs: Date.now(), processMs: performance.now() }
-          : undefined
 
         headlessProfilerCheckpoint('before_ask')
         startQueryProfile()
@@ -492,12 +475,9 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
               })
             },
           })) {
-            // turn 进行中增量向 bridge 转发消息，让 zy.ai 能看到进度，并在等待权限请求时保持连接。
-            forwardMessagesToBridge()
-
             if (message.type === 'result') {
               // flush 待发送的 SDK 事件，使其在流中的 result 前出现。
-              for (const event of drainWireEvents()) {
+              for (const event of drainSdkEvents()) {
                 output.enqueue(event)
               }
 
@@ -518,7 +498,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
             } else {
               // flush SDK 事件（task_started、task_progress），实时流式发送后台 agent 进度，而不是
               // 等到 result 时批量发送。
-              for (const event of drainWireEvents()) {
+              for (const event of drainSdkEvents()) {
                 output.enqueue(event)
               }
               output.enqueue(message)
@@ -528,24 +508,6 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
 
         for (const uuid of batchUuids) {
           notifyCommandLifecycle(uuid, 'completed')
-        }
-
-        // 每个 turn 后向 bridge 转发消息
-        forwardMessagesToBridge()
-        getBridgeHandle()?.sendResult()
-
-        if (feature('FILE_PERSISTENCE') && turnStartTime !== undefined) {
-          void executeFilePersistence(turnStartTime, loopState.abortController.signal, (result) => {
-            output.enqueue({
-              type: 'system' as const,
-              subtype: 'files_persisted' as const,
-              files: result.files,
-              failed: result.failed,
-              processed_at: new Date().toISOString(),
-              uuid: randomUUID(),
-              session_id: getSessionId(),
-            })
-          })
         }
 
         // 为 SDK 消费方生成并发送 prompt 建议
@@ -637,7 +599,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
     do {
       // 在 command 队列前清空 SDK 事件（task_started、task_progress），使流中的进度事件先于
       // task_notification。
-      for (const event of drainWireEvents()) {
+      for (const event of drainSdkEvents()) {
         output.enqueue(event)
       }
 
@@ -710,8 +672,6 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
     return
   } finally {
     loopState.runPhase = 'finally_flush'
-    // 进入空闲前 flush 待发送的内部事件
-    await structuredIO.flushInternalEvents()
     loopState.runPhase = 'finally_post_flush'
     if (!isShuttingDown()) {
       notifySessionStateChanged('idle')
@@ -719,7 +679,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
       // task_notification 边界事件，在等待下个 command 前到达输出流。上方 do-while 只在
       // waitingForAgents 时清空；执行到此处后，下一次清空要等到下次 run() 开头，而输入空闲时
       // 不会触发。
-      for (const event of drainWireEvents()) {
+      for (const event of drainSdkEvents()) {
         output.enqueue(event)
       }
     }

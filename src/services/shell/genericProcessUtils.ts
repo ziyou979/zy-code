@@ -13,9 +13,8 @@ import {
  *
  * PID ≤ 1 returns false (0 is current process group, 1 is init).
  *
- * Note: `process.kill(pid, 0)` throws EPERM when the process exists but is
- * owned by another user. This reports such processes as NOT running, which
- * is conservative for lock recovery (we won't steal a live lock).
+ * `process.kill(pid, 0)` 在进程存在但无权限访问时会抛出 EPERM；此时必须视为存活，
+ * 否则锁恢复逻辑可能窃取仍在使用的锁。
  */
 export function isProcessRunning(pid: number): boolean {
   if (pid <= 1) {
@@ -24,8 +23,13 @@ export function isProcessRunning(pid: number): boolean {
   try {
     process.kill(pid, 0)
     return true
-  } catch {
-    return false
+  } catch (error) {
+    return (
+      !!error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code?: unknown }).code === 'EPERM'
+    )
   }
 }
 

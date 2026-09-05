@@ -6,7 +6,8 @@ import { stringWidth } from '../ink/stringWidth.js'
 import { wrapAnsi } from '../ink/wrapAnsi.js'
 import { Ansi, useTheme } from '../ink/index.js'
 import type { CliHighlight } from '../services/terminal/cliHighlight.js'
-import { formatToken, padAligned } from '../markdown/markdown.js'
+import { formatToken } from '../markdown/markdown.js'
+import { padVisual } from '../utils/truncate.js'
 
 /** Accounts for parent indentation (e.g. message dot prefix) and terminal
  *  resize races. Without enough margin the table overflows its layout box
@@ -228,7 +229,7 @@ export function MarkdownTable({ token, highlight, forceWidth }: Props): React.Re
         const width = columnWidths[colIndex]!
         // Headers always centered; data uses table alignment
         const align = isHeader ? 'center' : (token.align?.[colIndex] ?? 'left')
-        line += ` ${padAligned(lineText, stringWidth(lineText), width, align)} │`
+        line += ` ${padVisual(lineText, stringWidth(lineText), width, align)} │`
       }
       result.push(line)
     }

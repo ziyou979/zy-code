@@ -17,7 +17,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { maybeActivateBrief } from '../activate/brief.js'
 import { maybeActivateProactive } from '../activate/proactive.js'
-import { pendingAssistantChat, pendingConnect, pendingSSH } from '../argvDispatch.js'
+import { pendingConnect, pendingSSH } from '../argvDispatch.js'
 import { logSessionTelemetry, logStartupTelemetry } from '../bootstrap/telemetry.js'
 import { coordinatorModeModule, getTeammateUtils } from '../lazyModules.js'
 import { addToHistory } from '../../services/session-storage/history.js'
@@ -26,11 +26,7 @@ import { computeInitialTeamContext } from '../../services/swarm/reconnection.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { uniq } from '../../utils/array.js'
-import {
-  getGlobalConfig,
-  getRemoteControlAtStartup,
-  saveGlobalConfig,
-} from '../../services/config/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { loadConversationForResume } from '../../services/session-storage/conversationRecovery.js'
 import { resolveInitialEffortSetting } from '../../services/effort/effort.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
@@ -45,7 +41,6 @@ import { getInitialSettings } from '../../services/settings/settings.js'
 import {
   dispatchResumeMode,
   launchResumedSessionRepl,
-  runAssistantChatMode,
   runDirectConnectMode,
   runHeadlessMode,
   runInteractiveMode,
@@ -82,7 +77,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
     sessionId,
     includeHookEvents,
     includePartialMessages,
-    fileDownloadPromise,
     agentsJson,
     agentCli,
     outputFormat,
@@ -101,15 +95,7 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
     worktreePRNumber,
     tmuxEnabled,
     storedTeammateOpts,
-    sdkUrl,
     effectiveIncludePartialMessages,
-    teleport,
-    remoteOption,
-    remote,
-    remoteControlOption,
-    remoteControl,
-    remoteControlName,
-    fileSpecs,
     isNonInteractiveSession,
     systemPrompt,
     appendSystemPrompt,
@@ -221,8 +207,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
       sdkMcpConfigs,
       zyaiConfigPromise,
       betas,
-      sdkUrl,
-      teleport,
       effectiveReplayUserMessages,
       effectiveIncludePartialMessages,
       setupTrigger,
@@ -283,18 +267,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
   const initialIsBriefOnly =
     feature('KAIROS') || feature('KAIROS_BRIEF') ? getUserMsgOptIn() : false
 
-  const fullRemoteControl = remoteControl || getRemoteControlAtStartup() || kairosEnabled
-
-  let ccrMirrorEnabled = false
-
-  if (feature('CCR_MIRROR') ? !fullRemoteControl : false) {
-    /* eslint-disable @typescript-eslint/no-require-imports */
-    const { isCcrMirrorEnabled } =
-      require('../../bridge/bridgeEnabled.js') as typeof import('../../bridge/bridgeEnabled.js')
-    /* eslint-enable @typescript-eslint/no-require-imports */
-    ccrMirrorEnabled = isCcrMirrorEnabled()
-  }
-
   const initialState: AppState = {
     settings: getInitialSettings(),
     tasks: {},
@@ -335,22 +307,6 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
       needsRefresh: false,
     },
     kairosEnabled,
-    remoteSessionUrl: undefined,
-    remoteConnectionStatus: 'connecting',
-    remoteBackgroundTaskCount: 0,
-    replBridgeEnabled: fullRemoteControl || ccrMirrorEnabled,
-    replWireExplicit: remoteControl,
-    replBridgeOutboundOnly: ccrMirrorEnabled,
-    replWireConnected: false,
-    replWireSessionActive: false,
-    replWireReconnecting: false,
-    replWireConnectUrl: undefined,
-    replWireSessionUrl: undefined,
-    replWireEnvironmentId: undefined,
-    replWireSessionId: undefined,
-    replWireError: undefined,
-    replWireInitialName: remoteControlName,
-    showRemoteCallout: false,
     notifications: {
       current: null,
       queue: initialNotifications,
@@ -572,30 +528,7 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
       },
     })
     return
-  } else if (
-    feature('KAIROS')
-      ? Boolean(
-          pendingAssistantChat && (pendingAssistantChat.sessionId || pendingAssistantChat.discover),
-        )
-      : false
-  ) {
-    await runAssistantChatMode({
-      root,
-      renderAndRun,
-      getFpsMetrics,
-      stats,
-      initialState,
-      pendingAssistantChat: pendingAssistantChat!,
-      commands,
-      debug,
-      debugToStderr,
-      ide,
-      mainThreadAgentDefinition,
-      disableSlashCommands,
-      thinkingConfig,
-    })
-    return
-  } else if (options.resume || options.fromPr || teleport || remote !== null) {
+  } else if (options.resume || options.fromPr) {
     await dispatchResumeMode({
       root,
       renderAndRun,
@@ -606,15 +539,7 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
       sessionConfig,
       resumeContext,
       mainThreadAgentDefinition,
-      teleport,
-      remote,
-      commands,
-      debug,
-      debugToStderr,
-      ide,
-      disableSlashCommands,
       thinkingConfig,
-      fileDownloadPromise,
     })
   } else {
     await runInteractiveMode({

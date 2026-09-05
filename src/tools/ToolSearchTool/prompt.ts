@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import { isReplWireActive } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import type { Tool } from '../../tools/tool.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
@@ -98,14 +97,8 @@ export function isDeferredTool(tool: Tool): boolean {
     return false
   }
 
-  // SendUserFile is a file-delivery communication channel (sibling of Brief).
-  // Must be immediately available without a ToolSearch round-trip.
-  if (
-    feature('KAIROS') &&
-    SEND_USER_FILE_TOOL_NAME &&
-    tool.name === SEND_USER_FILE_TOOL_NAME &&
-    isReplWireActive()
-  ) {
+  // SendUserFile 是文件投递通道（与 Brief 同级），无需 ToolSearch 往返即可用。
+  if (feature('KAIROS') && SEND_USER_FILE_TOOL_NAME && tool.name === SEND_USER_FILE_TOOL_NAME) {
     return false
   }
 

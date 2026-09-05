@@ -98,6 +98,10 @@ export function isAutoModeGateEnabled(): boolean {
   if (isAutoModeDisabledBySettings()) {
     return false
   }
+  // 先检查全局开关，避免在功能未启用时进入模型能力解析及其 provider 初始化链。
+  if (getAutoModeEnabledState() !== 'enabled') {
+    return false
+  }
   return modelSupportsAutoMode(getMainLoopModel()!)
 }
 

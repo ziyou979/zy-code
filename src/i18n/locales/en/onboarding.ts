@@ -88,6 +88,8 @@ export const enOnboarding: TranslationResource = {
   'onboarding.platform.togetherDesc': 'Together AI inference platform',
   'onboarding.platform.vertex': 'Google Vertex AI',
   'onboarding.platform.vertexDesc': 'Google Vertex AI model inference',
+  'onboarding.platform.xai': 'xAI Grok',
+  'onboarding.platform.xaiDesc': 'xAI API (Grok models)',
   'onboarding.platform.ark': 'Volcengine ARK',
   'onboarding.platform.arkDesc': 'ByteDance Volcengine ARK Platform',
   'onboarding.platform.zhipu': 'ZHIPU AI',

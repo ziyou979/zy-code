@@ -20,7 +20,7 @@ import type {
 } from '../../types/llm.js'
 import { createDebugLog } from '../../services/infra/debug.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
-import { countMessagesTokensLocally } from '../tokenEstimation.js'
+import { countTokensWithAdapter } from './shared/countTokens.js'
 import { getOpenAIClient } from './client.js'
 import {
   buildResponsesRequestParams,
@@ -119,14 +119,9 @@ export class OpenAIResponsesProviderAdapter implements LLMAdapter {
   }
 
   async countTokens(messages: LLMMessage[], tools: ToolDefinition[]): Promise<number | null> {
-    try {
-      const model = getMainLoopModel() ?? ''
-      const normalizedModel = normalizeModelStringForAPI(model)
-      return countMessagesTokensLocally(messages, tools, normalizedModel)
-    } catch (error) {
+    return countTokensWithAdapter(messages, tools, (error) => {
       log(`countTokens error: ${error}`)
-      return null
-    }
+    })
   }
 
   async verifyApiKey(apiKey: string): Promise<boolean> {

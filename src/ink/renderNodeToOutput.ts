@@ -1,4 +1,5 @@
 import indentString from 'indent-string'
+import { wrapWithOsc8Link } from '../utils/hyperlink.js'
 import { applyTextStyles } from './colorize.js'
 import type { DOMElement } from './dom.js'
 import getMaxWidth from './getMaxWidth.js'
@@ -164,15 +165,9 @@ function drainProportional(node: DOMElement, pending: number, innerHeight: numbe
   return applied
 }
 
-// OSC 8 超链接转义序列。空参数 (;;) — ansi-tokenize 仅
-// 识别这个确切前缀。id= 参数（用于分组换行）
-// 在 termio/osc.ts link() 中的终端输出时添加。
-const OSC = '\u001B]'
-const BEL = '\u0007'
-
-function wrapWithOsc8Link(text: string, url: string): string {
-  return `${OSC}8;;${url}${BEL}${text}${OSC}8;;${BEL}`
-}
+// OSC 8 超链接转义序列收敛到 utils/hyperlink.ts 的 wrapWithOsc8Link
+// （空参数 ;; 形式，ansi-tokenize 兼容）。带 id= 参数的分组变体
+// 见 termio/osc.ts link()，用于直接终端输出场景。
 
 /**
  * 构建纯文本中每个字符位置到其 segment 索引的映射。
@@ -883,8 +878,29 @@ function renderNodeToOutput(
           const scrollHeight = contentYoga.getComputedHeight()
           const prevHeight = contentCached?.height ?? scrollHeight
           const heightDelta = scrollHeight - prevHeight
-          const safeForFastPath =
-            !hint || heightDelta === 0 || (hint.delta > 0 && heightDelta === hint.delta)
+          // 中间子节点展开时，内容增高量也可能恰好等于 sticky scroll 的位移量，
+          // 但这不是底部追加：硬件滚动会把后续正文的旧像素上移到透明段落间距中，
+          // 留下重复末行。只有高度变化来自尾部时才可走 shift 快路径。
+          let hasMiddleHeightChange = false
+          if (heightDelta !== 0 && content.dirty) {
+            const lastChildIndex = content.childNodes.length - 1
+            for (let index = 0; index < lastChildIndex; index++) {
+              const child = content.childNodes[index] as DOMElement
+              if (!child.dirty || !child.yogaNode) {
+                continue
+              }
+              const previous = nodeCache.get(child)
+              if (previous && previous.height !== child.yogaNode.getComputedHeight()) {
+                hasMiddleHeightChange = true
+                break
+              }
+            }
+          }
+          const safeForFastPath = canUseScrollShiftFastPath(
+            hint?.delta,
+            heightDelta,
+            hasMiddleHeightChange,
+          )
           // scrollHint 在捕获提示时在上方设置。如果 safeForFastPath
           // 为 false，完整路径渲染的 next.screen 与
           // DECSTBM 偏移不匹配 — 发出 DECSTBM 会留下陈旧行（表现为
@@ -1232,6 +1248,22 @@ function renderNodeToOutput(
     }
     node.dirty = false
   }
+}
+
+/**
+ * 判断 ScrollBox 是否可将上一帧整块平移复用。
+ * 中间项目改变高度时，即使总高度增量与滚动量相等，也必须完整重绘透明间隙。
+ */
+export function canUseScrollShiftFastPath(
+  delta: number | undefined,
+  heightDelta: number,
+  hasMiddleHeightChange: boolean,
+): boolean {
+  return (
+    delta === undefined ||
+    heightDelta === 0 ||
+    (delta > 0 && heightDelta === delta && !hasMiddleHeightChange)
+  )
 }
 
 // 溢出污染：内容向右/下溢出，因此干净兄弟节点

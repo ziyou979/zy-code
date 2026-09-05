@@ -4,20 +4,6 @@ import { feature } from 'bun:bundle'
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 process.env.COREPACK_ENABLE_AUTO_PIN = '0'
 
-// 为 CCR 环境的子进程设置最大堆大小（容器有 16GB 内存）。
-// NODE_OPTIONS --max-old-space-size 是 V8 参数，Bun(JSC) 会忽略，仅对 Node 子进程
-// （如 node 实现的 MCP server）有效。进程启动时读取，此处设置仅通过 env 继承
-// 影响之后派生的子进程，对已在运行的主进程无效。
-// eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level, custom-rules/safe-env-boolean-check
-if (process.env.ZY_CODE_REMOTE === 'true') {
-  // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level
-  const existing = process.env.NODE_OPTIONS || ''
-  // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level
-  process.env.NODE_OPTIONS = existing
-    ? `${existing} --max-old-space-size=4096`
-    : '--max-old-space-size=4096'
-}
-
 // 对照实验基线。内联在此处（而非 init.ts），因为
 // BashTool/AgentTool/PowerShellTool 在导入时会将 DISABLE_BACKGROUND_TASKS 捕获到
 // 模块级常量中 —— init() 执行得太晚。feature() 门控
@@ -116,57 +102,6 @@ async function main(): Promise<void> {
     return
   }
 
-  // `zy remote-control` 快速路径（也接受旧版 `zy remote` / `zy sync` / `zy bridge`）：
-  // 将本地机器作为 bridge 环境提供服务。
-  // feature() 必须保持内联以实现构建时死代码消除；
-  // isBridgeEnabled() 检查运行时 GrowthBook 门控。
-  if (
-    feature('BRIDGE_MODE') &&
-    (args[0] === 'remote-control' ||
-      args[0] === 'rc' ||
-      args[0] === 'remote' ||
-      args[0] === 'sync' ||
-      args[0] === 'bridge')
-  ) {
-    profileCheckpoint('cli_bridge_path')
-    const { enableConfigs } = await import('../services/config/config.js')
-    enableConfigs()
-    const { getWireDisabledReason, checkWireMinVersion } = await import(
-      '../bridge/bridgeEnabled.js'
-    )
-    const { BRIDGE_LOGIN_ERROR } = await import('../bridge/types.js')
-    const { bridgeMain } = await import('../bridge/bridgeMain.js')
-    const { exitWithError } = await import('../services/shell/process.js')
-
-    // 认证检查必须放在 GrowthBook 门控检查之前 —— 没有认证，
-    // GrowthBook 没有用户上下文，会返回过期/默认的 false。
-    // getWireDisabledReason 会等待 GB 初始化，因此返回值是最新的
-    //（而非过期的磁盘缓存），但 init 仍需要认证头才能工作。
-    const { getZyAIOAuthTokens } = await import('../services/auth/auth.js')
-    if (!getZyAIOAuthTokens()?.accessToken) {
-      exitWithError(BRIDGE_LOGIN_ERROR)
-    }
-    const disabledReason = await getWireDisabledReason()
-    if (disabledReason) {
-      exitWithError(`Error: ${disabledReason}`)
-    }
-    const versionError = checkWireMinVersion()
-    if (versionError) {
-      exitWithError(versionError)
-    }
-
-    // Bridge 是一个远程控制功能 —— 检查策略限制
-    const { waitForPolicyLimitsToLoad, isPolicyAllowed } = await import(
-      '../services/policy-limits/index.js'
-    )
-    await waitForPolicyLimitsToLoad()
-    if (!isPolicyAllowed('allow_remote_control')) {
-      exitWithError("Error: Remote Control is disabled by your organization's policy.")
-    }
-    await bridgeMain(args.slice(1))
-    return
-  }
-
   // `zy daemon [subcommand]` 快速路径：长期运行的 supervisor。
   if (feature('DAEMON') && args[0] === 'daemon') {
     profileCheckpoint('cli_daemon_path')
@@ -233,31 +168,6 @@ async function main(): Promise<void> {
     // 循环句柄阻止自然退出。
     // eslint-disable-next-line custom-rules/no-process-exit
     process.exit(0)
-  }
-
-  // `zy environment-runner` 快速路径：无头 BYOC 运行器。
-  // feature() 必须保持内联以实现构建时死代码消除。
-  if (feature('BYOC_ENVIRONMENT_RUNNER') && args[0] === 'environment-runner') {
-    profileCheckpoint('cli_environment_runner_path')
-    const { environmentRunnerMain } = (await import(
-      '../environment-runner/main.js'
-    )) as unknown as {
-      environmentRunnerMain: (args: string[]) => Promise<void>
-    }
-    await environmentRunnerMain(args.slice(1))
-    return
-  }
-
-  // `zy self-hosted-runner` 快速路径：无头自托管运行器，
-  // 面向 SelfHostedRunnerWorkerService API（注册 + 轮询；轮询即为心跳）。
-  // feature() 必须保持内联以实现构建时死代码消除。
-  if (feature('SELF_HOSTED_RUNNER') && args[0] === 'self-hosted-runner') {
-    profileCheckpoint('cli_self_hosted_runner_path')
-    const { selfHostedRunnerMain } = (await import('../self-hosted-runner/main.js')) as unknown as {
-      selfHostedRunnerMain: (args: string[]) => Promise<void>
-    }
-    await selfHostedRunnerMain(args.slice(1))
-    return
   }
 
   // --worktree --tmux 快速路径：在加载完整 CLI 之前 exec 进入 tmux

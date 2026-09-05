@@ -36,10 +36,6 @@ import type {
 const teamMemPaths = feature('TEAMMEM')
   ? (require('../../memdir/teamMemPaths.js') as typeof import('../../memdir/teamMemPaths.js'))
   : null
-const ccrAutoConnect = feature('CCR_AUTO_CONNECT')
-  ? (require('../../bridge/bridgeEnabled.js') as typeof import('../../bridge/bridgeEnabled.js'))
-  : null
-
 import type { ModelOption } from 'src/services/model/modelOptions.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { HistoryEntry, PastedContent } from '../../types/inputContent.js'
@@ -488,10 +484,6 @@ export type GlobalConfig = {
   // 与 zy_cicada_nap_ms 配合使用以限制 API 调用
   startupPrefetchedAt?: number
 
-  // 启动时运行 Remote Control（需要 BRIDGE_MODE）
-  // undefined = 使用默认值（优先级见 getRemoteControlAtStartup()）
-  remoteControlAtStartup?: boolean
-
   // 缓存的额外额度禁用原因（来自上次 API 响应）
   // undefined = 无缓存，null = 已启用额外额度，string = 禁用原因。
   cachedExtraUsageDisabledReason?: string | null
@@ -604,7 +596,6 @@ export const GLOBAL_CONFIG_KEYS = [
   'copyOnSelect',
   'permissionExplainerEnabled',
   'prStatusFooterEnabled',
-  'remoteControlAtStartup',
   'remoteDialogSeen',
 ] as const
 
@@ -1017,24 +1008,8 @@ export function getGlobalConfig(): GlobalConfig {
 }
 
 /**
- * 返回 remoteControlAtStartup 的有效值。优先级：
- *   1. 用户的显式配置值（始终获胜 — 尊重 opt-out）
- *   2. CCR 自动连接默认值（ant-only 构建，GrowthBook 门控）
- *   3. false（Remote Control 必须显式 opt-in）
+ * 根据 truncatedApiKey 判断 API key 的批准状态。
  */
-export function getRemoteControlAtStartup(): boolean {
-  const explicit = getGlobalConfig().remoteControlAtStartup
-  if (explicit !== undefined) {
-    return explicit
-  }
-  if (feature('CCR_AUTO_CONNECT')) {
-    if (ccrAutoConnect?.getCcrAutoConnectDefault()) {
-      return true
-    }
-  }
-  return false
-}
-
 export function getApiKeyStatus(truncatedApiKey: string): 'approved' | 'rejected' | 'new' {
   const config = getGlobalConfig()
   if (config.apiKeyResponses?.approved?.includes(truncatedApiKey)) {
@@ -1044,6 +1019,54 @@ export function getApiKeyStatus(truncatedApiKey: string): 'approved' | 'rejected
     return 'rejected'
   }
   return 'new'
+}
+
+/**
+ * 合并 approved 列表：幂等追加 fingerprint，并保证 approved/rejected 互斥
+ * （同一 fingerprint 从 rejected 中移除）。纯函数，便于组合进一次配置写入。
+ */
+export function withApprovedFingerprint(
+  responses: GlobalConfig['apiKeyResponses'] | undefined,
+  fingerprint: string,
+): NonNullable<GlobalConfig['apiKeyResponses']> {
+  const approved = responses?.approved ?? []
+  const rejected = responses?.rejected ?? []
+  return {
+    approved: approved.includes(fingerprint) ? approved : [...approved, fingerprint],
+    rejected: rejected.filter((k) => k !== fingerprint),
+  }
+}
+
+/**
+ * 合并 rejected 列表：幂等追加 fingerprint，并保证 approved/rejected 互斥
+ * （同一 fingerprint 从 approved 中移除）。纯函数，便于组合进一次配置写入。
+ */
+export function withRejectedFingerprint(
+  responses: GlobalConfig['apiKeyResponses'] | undefined,
+  fingerprint: string,
+): NonNullable<GlobalConfig['apiKeyResponses']> {
+  const approved = responses?.approved ?? []
+  const rejected = responses?.rejected ?? []
+  return {
+    approved: approved.filter((k) => k !== fingerprint),
+    rejected: rejected.includes(fingerprint) ? rejected : [...rejected, fingerprint],
+  }
+}
+
+/** 记录一个 API key 指纹为"已批准"（幂等，并从 rejected 中移除）。 */
+export function approveApiKeyFingerprint(fingerprint: string): void {
+  saveGlobalConfig((current) => ({
+    ...current,
+    apiKeyResponses: withApprovedFingerprint(current.apiKeyResponses, fingerprint),
+  }))
+}
+
+/** 记录一个 API key 指纹为"已拒绝"（幂等，并从 approved 中移除）。 */
+export function rejectApiKeyFingerprint(fingerprint: string): void {
+  saveGlobalConfig((current) => ({
+    ...current,
+    apiKeyResponses: withRejectedFingerprint(current.apiKeyResponses, fingerprint),
+  }))
 }
 
 function saveConfig<A extends object>(file: string, config: A, defaultConfig: A): void {

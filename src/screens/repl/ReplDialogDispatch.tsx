@@ -3,7 +3,7 @@
 //
 // 包含 14 个对话框分支：sandbox-permission / prompt / worker-pending ×2 /
 // worker-sandbox-permission / elicitation / idle-return / ide-onboarding /
-// effort-callout / remote-callout / plugin-hint / lsp-recommendation /
+// effort-callout / plugin-hint / lsp-recommendation /
 // desktop-upsell / ultraplan-choice / ultraplan-launch。
 //
 // 复杂内联回调已提取为具名 handler 函数（handleSandboxResponse /
@@ -11,7 +11,6 @@
 //
 // AppState 衍生值由组件内部 useAppState 自取，REPL 只传本地 state / refs。
 
-import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { getTotalInputTokens } from 'src/bootstrap/runtime/runtimeContext.js'
 import { DesktopUpsellStartup } from '../../components/DesktopUpsell/DesktopUpsellStartup.js'
@@ -25,9 +24,7 @@ import { LspRecommendationMenu } from '../../components/LspRecommendation/LspRec
 import { ElicitationDialog } from '../../components/mcp/ElicitationDialog.js'
 import { SandboxPermissionRequest } from '../../components/permissions/SandboxPermissionRequest.js'
 import { WorkerPendingPermission } from '../../components/permissions/WorkerPendingPermission.js'
-import { RemoteCallout } from '../../components/RemoteCallout.js'
 import { type ResumeReturnAction, ResumeReturnDialog } from '../../components/ResumeReturnDialog.js'
-import { LOCAL_COMMAND_STDOUT_TAG } from '../../constants/xml.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -41,16 +38,10 @@ import { WEB_FETCH_TOOL_NAME } from '../../tools/WebFetchTool/prompt.js'
 import { saveGlobalConfig } from '../../services/config/config.js'
 import type { PromptInputHelpers } from '../../services/input/handlePromptSubmit.js'
 import type { IDEExtensionInstallationStatus } from '../../services/ide/ide.js'
-import { logError } from '../../services/infra/log.js'
-import {
-  createCommandInputMessage,
-  formatCommandInputTags,
-} from '../../services/messages/./constructors.js'
 import {
   applyPermissionUpdate,
   persistPermissionUpdate,
 } from '../../services/permissions/permissionUpdate.js'
-import { escapeXml } from '../../utils/xml.js'
 import { tSync } from '../../i18n/index.js'
 import type { ReplNotificationsCluster } from './useReplNotificationsCluster.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'
@@ -73,13 +64,8 @@ export type ReplDialogDispatchProps = {
   handleLspResponse: ReplNotificationsCluster['handleLspResponse']
   setShowDesktopUpsellStartup: (next: boolean) => void
   setShowFullscreenUpsell: (next: boolean) => void
-  createAbortController: () => AbortController
   exitFlow: React.ReactNode
 }
-
-// ── stub 组件（feature('ULTRAPLAN') 关闭时 DCE）──
-const UltraplanChoiceDialogStub: React.FC<Record<string, unknown>> = () => null
-const UltraplanLaunchDialogStub: React.FC<Record<string, unknown>> = () => null
 
 // ── 组件 ──────────────────────────────────────────────
 
@@ -100,7 +86,6 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
     handleLspResponse,
     setShowDesktopUpsellStartup,
     setShowFullscreenUpsell,
-    createAbortController,
     exitFlow,
   } = props
 
@@ -118,8 +103,6 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
   const elicitation = useAppState((s) => s.elicitation)
   const pendingWorkerRequest = useAppState((s) => s.pendingWorkerRequest)
   const pendingSandboxRequest = useAppState((s) => s.pendingSandboxRequest)
-  const ultraplanPendingChoice = useAppState((s) => s.ultraplanPendingChoice)
-  const ultraplanLaunchPending = useAppState((s) => s.ultraplanLaunchPending)
 
   // ── 处理器：sandbox 权限 ──
   const handleSandboxResponse = React.useCallback(
@@ -297,58 +280,6 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
     [onSubmitRef, replStore, resumeReturnPending],
   )
 
-  // ── 处理器：启动 ultraplan ──
-  const handleUltraplanChoice = React.useCallback(
-    (choice: string, opts?: { disconnectedBridge?: boolean }) => {
-      const blurb = ultraplanLaunchPending?.blurb
-      setAppState((prev) =>
-        prev.ultraplanLaunchPending ? { ...prev, ultraplanLaunchPending: undefined } : prev,
-      )
-      if (choice === 'cancel' || !blurb) {
-        return
-      }
-      replStore.setMessages((prev) => [
-        ...prev,
-        createCommandInputMessage(formatCommandInputTags('ultraplan', blurb)),
-      ])
-      const appendStdout = (msg: string) =>
-        replStore.setMessages((prev) => [
-          ...prev,
-          createCommandInputMessage(
-            `<${LOCAL_COMMAND_STDOUT_TAG}>${escapeXml(msg)}</${LOCAL_COMMAND_STDOUT_TAG}>`,
-          ),
-        ])
-      const appendWhenIdle = (msg: string) => {
-        if (!queryGuard.isActive) {
-          appendStdout(msg)
-          return
-        }
-        const unsub = queryGuard.subscribe(() => {
-          if (queryGuard.isActive) {
-            return
-          }
-          unsub()
-          if (!store.getState().ultraplanSessionUrl) {
-            return
-          }
-          appendStdout(msg)
-        })
-      }
-      // @ts-expect-error -- ant-only: launchUltraplan is conditionally imported
-      void launchUltraplan({
-        blurb,
-        getAppState: () => store.getState(),
-        setAppState,
-        signal: createAbortController().signal,
-        disconnectedBridge: opts?.disconnectedBridge,
-        onSessionReady: appendWhenIdle,
-      })
-        .then(appendStdout)
-        .catch(logError)
-    },
-    [ultraplanLaunchPending, setAppState, replStore, queryGuard, store, createAbortController],
-  )
-
   return (
     <>
       {dialog === 'sandbox-permission' && sandboxPermissionRequestQueue[0] && (
@@ -460,27 +391,6 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
           }}
         />
       )}
-      {dialog === 'remote-callout' && (
-        <RemoteCallout
-          onDone={(selection) => {
-            setAppState((prev) => {
-              if (!prev.showRemoteCallout) {
-                return prev
-              }
-              return {
-                ...prev,
-                showRemoteCallout: false,
-                ...(selection === 'enable' && {
-                  replBridgeEnabled: true,
-                  replWireExplicit: true,
-                  replBridgeOutboundOnly: false,
-                }),
-              }
-            })
-          }}
-        />
-      )}
-
       {exitFlow}
 
       {dialog === 'plugin-hint' && hintRecommendation && (
@@ -506,26 +416,6 @@ export function ReplDialogDispatch(props: ReplDialogDispatchProps): React.ReactN
       {dialog === 'desktop-upsell' && (
         <DesktopUpsellStartup onDone={() => setShowDesktopUpsellStartup(false)} />
       )}
-
-      {feature('ULTRAPLAN')
-        ? dialog === 'ultraplan-choice' &&
-          ultraplanPendingChoice && (
-            <UltraplanChoiceDialogStub
-              plan={ultraplanPendingChoice.plan}
-              sessionId={ultraplanPendingChoice.sessionId}
-              taskId={ultraplanPendingChoice.taskId}
-              setMessages={replStore.setMessages}
-              readFileState={replStore.mutable.readFileState}
-              getAppState={() => store.getState()}
-              setConversationId={replStore.setConversationId}
-            />
-          )
-        : null}
-
-      {feature('ULTRAPLAN')
-        ? dialog === 'ultraplan-launch' &&
-          ultraplanLaunchPending && <UltraplanLaunchDialogStub onChoice={handleUltraplanChoice} />
-        : null}
     </>
   )
 }

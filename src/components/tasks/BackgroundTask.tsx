@@ -1,12 +1,11 @@
 import { Text } from 'src/ink/index.js'
 import type { BackgroundTaskState } from 'src/tasks/types.js'
 import type { DeepImmutable } from 'src/types/utils.js'
-import { truncate } from 'src/utils/format.js'
+import { truncate } from 'src/utils/truncate.js'
 import { toInkColor } from 'src/services/environment/ink.js'
 import { plural } from 'src/utils/stringUtils.js'
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js'
 import { tSync } from '../../i18n/index.js'
-import { RemoteSessionProgress } from './RemoteSessionProgress.js'
 import { ShellProgress, TaskStatusText } from './ShellProgress.js'
 import { describeTeammateActivity } from './TaskStatusUtils.js'
 
@@ -24,29 +23,6 @@ export function BackgroundTask({ task, maxActivityWidth }: Props) {
       return (
         <Text>
           {truncatedDescription} {progressElement}
-        </Text>
-      )
-    }
-    case 'remote_agent': {
-      if (task.isRemoteReview) {
-        return (
-          <Text>
-            <RemoteSessionProgress session={task} />
-          </Text>
-        )
-      }
-      const running = task.status === 'running' || task.status === 'pending'
-      const statusIcon = running ? DIAMOND_OPEN : DIAMOND_FILLED
-      const iconElement = <Text dimColor={true}>{statusIcon} </Text>
-      const titleText = truncate(task.title, activityLimit, true)
-      const separator = <Text dimColor={true}> · </Text>
-      const progressElement = <RemoteSessionProgress session={task} />
-      return (
-        <Text>
-          {iconElement}
-          {titleText}
-          {separator}
-          {progressElement}
         </Text>
       )
     }

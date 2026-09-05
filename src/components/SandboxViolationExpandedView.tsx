@@ -2,18 +2,10 @@ import { useEffect, useState } from 'react'
 import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink/index.js'
 import { SandboxManager } from '../services/sandbox/sandboxAdapter.js'
+import { formatTimestamp12h } from '../utils/formatTimestamp.js'
 
-/**
- * 将时间戳格式化为 "h:mm:ssa"（例如 "1:30:45pm"）。
- * 代替 date-fns format()，避免为一次调用引入 39MB 依赖。
- */
-function formatTime(date: Date): string {
-  const h = date.getHours() % 12 || 12
-  const m = String(date.getMinutes()).padStart(2, '0')
-  const s = String(date.getSeconds()).padStart(2, '0')
-  const ampm = date.getHours() < 12 ? 'am' : 'pm'
-  return `${h}:${m}:${s}${ampm}`
-}
+// "h:mm:ssa" 时间戳收敛到 utils/formatTimestamp.ts（同样避免引入 date-fns）
+const formatTime = (date: Date): string => formatTimestamp12h(date)
 
 import { getPlatform } from 'src/services/shell/platform.js'
 export function SandboxViolationExpandedView() {

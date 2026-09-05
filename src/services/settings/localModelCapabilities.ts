@@ -49,6 +49,10 @@ export type ModelCapabilityKind =
   | 'auto_mode' // 自动模式
   | 'prompt_caching' // prompt 缓存（"implicit" | "explicit"）
 
+/** 模型可接收的输入模态。 */
+export const MODEL_INPUT_MODALITIES = ['text', 'image', 'document'] as const
+export type ModelInputModality = (typeof MODEL_INPUT_MODALITIES)[number]
+
 /**
  * effort 配置（档位 + 可选的 API 映射）。
  */
@@ -77,6 +81,8 @@ export type ThinkingCapabilityConfig = {
  * 模型能力对象 — 所有能力维度聚合在一个字段中。
  */
 export type ModelCapabilities = {
+  /** 输入模态；未声明表示未知，保持历史兼容，不做前置拦截。 */
+  input?: ModelInputModality[]
   thinking?: ThinkingCapabilityConfig
   structured_outputs?: boolean
   auto_mode?: boolean
@@ -248,6 +254,9 @@ const EffortLevelSchema = z.enum(PERSISTABLE_EFFORT_LEVELS)
 /** API 协议格式枚举 */
 const ApiFormatSchema = z.enum(API_FORMATS)
 
+/** 输入模态枚举 */
+const ModelInputModalitySchema = z.enum(MODEL_INPUT_MODALITIES)
+
 /** provider / apiFormat 选择器支持单值或多值。 */
 const ProviderSelectorSchema = z.union([z.string(), z.array(z.string())])
 const ApiFormatSelectorSchema = z.union([ApiFormatSchema, z.array(ApiFormatSchema)])
@@ -292,6 +301,12 @@ const ThinkingConfigSchema = z.object({
 const ModelCapabilitiesSchema = lazySchema(() =>
   z
     .object({
+      input: z
+        .array(ModelInputModalitySchema)
+        .min(1)
+        .describe(
+          '模型支持的输入模态，按实际能力声明，例如纯文本模型为 ["text"]，视觉模型为 ["text", "image"]。',
+        ),
       thinking: ThinkingConfigSchema.describe(
         'thinking 能力配置（始终为对象）。' +
           'effort 含非 "off" 档位表示支持思考，仅 ["off"] 表示不支持。',
@@ -909,6 +924,18 @@ export function localModelHasCapability(
   }
 
   return true
+}
+
+/**
+ * 获取模型声明的输入模态。
+ *
+ * 返回 undefined 表示配置未声明，调用方应保持历史兼容；返回数组时必须严格遵守。
+ */
+export function getLocalModelInputModalities(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): readonly ModelInputModality[] | undefined {
+  return getLocalModelCapability(model, context)?.capabilities.input
 }
 
 // ---------------------------------------------------------------------------

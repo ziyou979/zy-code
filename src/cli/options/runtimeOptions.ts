@@ -14,8 +14,6 @@ import { isInternalBuild } from '../../services/infra/envUtils.js'
  * - INNER-ONLY：--delegate-permissions、--dangerously-skip-permissions-with-classifiers、--afk、--tasks、--agent-teams
  * - feature gate 系：--enable-auto-mode、--proactive、--messaging-socket-path、--brief、--assistant、--channels、--dangerously-load-development-channels
  * - 队友身份（hidden）：--agent-id、--agent-name、--team-name、--agent-color、--plan-mode-required、--parent-session-id、--teammate-mode、--agent-type
- * - SDK / teleport（hidden）：--sdk-url、--teleport、--remote
- * - BRIDGE_MODE 系：--remote-control、--rc
  * - HARD_FAIL：--hard-fail
  */
 // biome-ignore lint/suspicious/noExplicitAny: program 类型链跨函数边界不可保留
@@ -130,42 +128,6 @@ export function applyRuntimeOptions(program: Command<any, any, any>): void {
     new Option('--agent-type <type>', 'Custom agent type for this teammate').hideHelp(),
   )
 
-  // 为所有构建启用 SDK URL 但从帮助中隐藏
-  program.addOption(
-    new Option(
-      '--sdk-url <url>',
-      'Use remote WebSocket endpoint for SDK I/O streaming (only with -p and stream-json format)',
-    ).hideHelp(),
-  )
-
-  // 为所有构建启用 teleport/remote 标志，但在 GA 之前保持未文档化
-  program.addOption(
-    new Option(
-      '--teleport [session]',
-      'Resume a teleport session, optionally specify session ID',
-    ).hideHelp(),
-  )
-  program.addOption(
-    new Option(
-      '--remote [description]',
-      'Create a remote session with the given description',
-    ).hideHelp(),
-  )
-  if (feature('BRIDGE_MODE')) {
-    program.addOption(
-      new Option(
-        '--remote-control [name]',
-        'Start an interactive session with Remote Control enabled (optionally named)',
-      )
-        .argParser((value) => value || true)
-        .hideHelp(),
-    )
-    program.addOption(
-      new Option('--rc [name]', 'Alias for --remote-control')
-        .argParser((value) => value || true)
-        .hideHelp(),
-    )
-  }
   if (feature('HARD_FAIL')) {
     program.addOption(
       new Option('--hard-fail', 'Crash on logError calls instead of silently logging').hideHelp(),

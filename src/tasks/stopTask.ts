@@ -4,7 +4,7 @@
 import type { AppState } from '../state/AppStateStore.js'
 import type { TaskStateBase } from '../tasks/task.js'
 import { getTaskByType } from './index.js'
-import { emitTaskTerminatedBridge } from '../services/bridge/bridgeEventQueue.js'
+import { emitTaskTerminatedSdkEvent } from '../services/task-runtime/sdkEventQueue.js'
 import { isLocalShellTask } from './local-shell-task/guards.js'
 
 export class StopTaskError extends Error {
@@ -75,7 +75,7 @@ export async function stopTask(taskId: string, context: StopTaskContext): Promis
     // 抑制 XML 通知也会抑制 print.ts 解析出的 task_notification SDK 事件，
     // 因此这里直接发出，使 SDK consumer 能看到 task 关闭。
     if (suppressed) {
-      emitTaskTerminatedBridge(taskId, 'stopped', {
+      emitTaskTerminatedSdkEvent(taskId, 'stopped', {
         toolUseId: task.toolUseId,
         summary: task.description,
       })

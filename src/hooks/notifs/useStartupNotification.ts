@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { type Notification, useNotifications } from '../../context/notifications.js'
 import { logError } from '../../services/infra/log.js'
 
@@ -19,7 +18,7 @@ export function useStartupNotification(compute: () => Result | Promise<Result>):
   computeRef.current = compute
 
   useEffect(() => {
-    if (getIsRemoteMode() || hasRunRef.current) {
+    if (hasRunRef.current) {
       return
     }
     hasRunRef.current = true

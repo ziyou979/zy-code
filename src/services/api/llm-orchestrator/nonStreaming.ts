@@ -25,7 +25,7 @@ import type {
 import { isEnvTruthy, isInternalBuild } from '../../../services/infra/envUtils.js'
 import { normalizeContentFromAPI } from '../../messages/normalize.js'
 import { type SystemPrompt } from '../systemPromptType.js'
-import { getLLMAdapter } from '../client.js'
+import { createLLMAdapter } from '../client.js'
 import type { QuerySource } from 'src/constants/querySource.js'
 import type { Notification } from 'src/context/notifications.js'
 import type { AgentId } from 'src/types/ids.js'
@@ -47,7 +47,6 @@ import {
   sanitizeAssistantCompletionContent,
   validateAssistantCompletion,
 } from '../assistantCompletionValidator.js'
-import { getAnthropicClient } from '../client.js'
 import { type RetryContext, withRetry } from '../withRetry.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 export const apiLog = createDebugLog('api')
@@ -160,13 +159,13 @@ export async function* executeNonStreamingRequest(
   const fallbackTimeoutMs = getNonstreamingFallbackTimeoutMs()
   const generator = withRetry(
     () =>
-      getAnthropicClient({
+      createLLMAdapter({
         maxRetries: 0,
         model: clientOptions.model,
         fetchOverride: clientOptions.fetchOverride,
         source: clientOptions.source,
       }),
-    async (anthropic, attempt, context) => {
+    async (adapter, attempt, context) => {
       const start = Date.now()
       const retryParams = paramsFromContext(context)
       captureRequest(retryParams)
@@ -177,10 +176,6 @@ export async function* executeNonStreamingRequest(
       try {
         // biome-ignore lint/plugin: non-streaming API call
         // 统一的非流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
-        const adapter = getLLMAdapter({
-          anthropicClient: anthropic,
-          model: adjustedParams.model,
-        })
         const result = await adapter.createMessage(
           adjustedParams,
           retryOptions.signal,

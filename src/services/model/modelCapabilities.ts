@@ -12,12 +12,8 @@ import { lazySchema } from '../../utils/lazySchema.js'
 import { isEssentialTrafficOnly } from '../telemetry/privacyLevel.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import type { APIProvider } from './providers.js'
-import {
-  getAPIProvider,
-  getModelCostsFromSettings,
-  isAnthropicBaseUrl,
-  providerHasCapability,
-} from './providers.js'
+import { getAPIProvider, getModelCostsFromSettings, providerHasCapability } from './providers.js'
+import { isAnthropicOfficialEndpointForModel } from '../api/baseUrlResolution.js'
 
 // .strip() —— 不将内部专用字段（mycro_deployments 等）持久化到磁盘
 const ModelCapabilitySchema = lazySchema(() =>
@@ -64,7 +60,7 @@ function isModelCapabilitiesEligible(): boolean {
   if (!providerHasCapability(getAPIProvider(), 'context_management')) {
     return false
   }
-  if (!isAnthropicBaseUrl()) {
+  if (!isAnthropicOfficialEndpointForModel()) {
     return false
   }
   return true

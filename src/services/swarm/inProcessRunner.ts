@@ -72,7 +72,7 @@ import type { PermissionDecision } from '../../types/permissions.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { type AgentContext, runWithAgentContext } from '../../services/agent/agentContext.js'
 import { count } from '../../utils/array.js'
-import { emitTaskTerminatedBridge } from '../bridge/bridgeEventQueue.js'
+import { emitTaskTerminatedSdkEvent } from '../task-runtime/sdkEventQueue.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { cloneFileStateCache } from '../file-persistence/fileStateCache.js'
@@ -1681,7 +1681,7 @@ export async function runInProcessTeammate(
     // 预先设置 notified:true → 无 XML 通知 → print.ts 不会发送
     // SDK task_notification。直接关闭 task_started 收尾事件。
     if (!alreadyTerminal) {
-      emitTaskTerminatedBridge(taskId, 'completed', {
+      emitTaskTerminatedSdkEvent(taskId, 'completed', {
         toolUseId,
         summary: identity.agentId,
       })
@@ -1730,7 +1730,7 @@ export async function runInProcessTeammate(
     evictTerminalTask(taskId, setAppState)
     // 预先设置 notified:true → 无 XML 通知 → 直接关闭 SDK 收尾事件。
     if (!alreadyTerminal) {
-      emitTaskTerminatedBridge(taskId, 'failed', {
+      emitTaskTerminatedSdkEvent(taskId, 'failed', {
         toolUseId,
         summary: identity.agentId,
       })

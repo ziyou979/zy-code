@@ -439,28 +439,6 @@ export const WireAuthStatusMessageSchema = lazySchema(() =>
   }),
 )
 
-export const WireFilesPersistedEventSchema = lazySchema(() =>
-  z.object({
-    type: z.literal('system'),
-    subtype: z.literal('files_persisted'),
-    files: z.array(
-      z.object({
-        filename: z.string(),
-        file_id: z.string(),
-      }),
-    ),
-    failed: z.array(
-      z.object({
-        filename: z.string(),
-        error: z.string(),
-      }),
-    ),
-    processed_at: z.string(),
-    uuid: UUIDPlaceholder(),
-    session_id: z.string(),
-  }),
-)
-
 export const WireTaskNotificationMessageSchema = lazySchema(() =>
   z.object({
     type: z.literal('system'),
@@ -626,7 +604,6 @@ export const WireMessageSchema = lazySchema(() =>
     WireTaskStartedMessageSchema(),
     WireTaskProgressMessageSchema(),
     WireSessionStateChangedMessageSchema(),
-    WireFilesPersistedEventSchema(),
     WireToolUseSummaryMessageSchema(),
     WireRateLimitEventSchema(),
     WireElicitationCompleteMessageSchema(),

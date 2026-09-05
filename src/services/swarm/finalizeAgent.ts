@@ -17,7 +17,7 @@ import {
 } from '../telemetry/perfettoTracing.js'
 import type { AppState } from '../../state/AppStateStore.js'
 import { isTerminalTaskStatus } from '../../tasks/task.js'
-import { emitTaskTerminatedBridge } from '../bridge/bridgeEventQueue.js'
+import { emitTaskTerminatedSdkEvent } from '../task-runtime/sdkEventQueue.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { getTask, updateTaskCAS } from '../../services/tasks-service/tasks.js'
 import { clearExternalToolResults } from './externalToolResult.js'
@@ -170,7 +170,7 @@ export async function finalizeInProcessAgent(
   // 关闭 SDK 事件
   const terminatedStatus: 'completed' | 'failed' | 'stopped' =
     status === 'killed' ? 'stopped' : status
-  emitTaskTerminatedBridge(taskId, terminatedStatus, {
+  emitTaskTerminatedSdkEvent(taskId, terminatedStatus, {
     toolUseId: capturedToolUseId,
     summary: capturedAgentId,
   })

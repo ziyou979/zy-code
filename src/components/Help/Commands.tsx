@@ -1,6 +1,6 @@
 import { type Command, formatDescriptionWithSource } from '../../commands/index.js'
 import { Box, Text } from '../../ink/index.js'
-import { truncate } from '../../utils/format.js'
+import { truncate } from '../../utils/truncate.js'
 import { Select } from '../CustomSelect/select.js'
 import { useTabHeaderFocus } from '../design-system/Tabs.js'
 

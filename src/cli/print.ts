@@ -3,7 +3,6 @@ import { feature } from 'bun:bundle'
 import { dirname } from 'node:path'
 import { downloadUserSettings } from 'src/services/settings-sync/index.js'
 import { StructuredIO } from 'src/cli/structuredIO.js'
-import { RemoteIO } from 'src/cli/remoteIO.js'
 import { type Command, formatDescriptionWithSource, getCommandName } from 'src/commands/index.js'
 import { createStreamlinedTransformer } from 'src/services/compact/streamlinedTransform.js'
 import { installStreamJsonStdoutGuard } from 'src/services/telemetry/streamJsonStdoutGuard.js'
@@ -36,9 +35,7 @@ import {
   notifySessionStateChanged,
   setPermissionModeChangedListener,
   type RequiresActionDetails,
-  type SessionExternalMetadata,
 } from 'src/services/session-state/sessionState.js'
-import { externalMetadataToAppState } from 'src/state/onChangeAppState.js'
 import { logError, logMCPDebug } from 'src/services/infra/log.js'
 import { writeToStdout, registerProcessOutputErrorHandlers } from 'src/services/shell/process.js'
 import type { Stream } from 'src/utils/stream.js'
@@ -95,7 +92,6 @@ import type { PermissionMode as InternalPermissionMode } from 'src/types/permiss
 import { cwd } from 'node:process'
 import { getCwd } from 'src/services/environment/cwd.js'
 import { isPolicyAllowed } from 'src/services/policy-limits/index.js'
-import type { ReplWireHandle } from 'src/bridge/replBridge.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import { hasPermissionsToUseTool } from 'src/services/permissions/permissions.js'
 import { safeParseJSON } from 'src/utils/json.js'
@@ -135,8 +131,6 @@ import {
 import { createSyntheticOutputTool } from 'src/tools/SyntheticOutputTool/SyntheticOutputTool.js'
 import { parseSessionIdentifier } from 'src/services/session-storage/sessionUrl.js'
 import {
-  hydrateRemoteSession,
-  hydrateFromCCRv2InternalEvents,
   resetSessionFilePointer,
   findUnresolvedToolUse,
   saveAgentSetting,
@@ -168,7 +162,6 @@ import { getSessionId, switchSession } from 'src/bootstrap/runtime/runtimeContex
 import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   setMainThreadAgentType,
-  getIsRemoteMode,
   getMainThreadAgentType,
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { isSessionPersistenceDisabled } from 'src/bootstrap/runtime/runtimeContext.js'
@@ -331,8 +324,6 @@ export async function runHeadless(
     appendSystemPrompt: string | undefined
     userSpecifiedModel: string | undefined
     fallbackModel: string | undefined
-    teleport: string | true | null | undefined
-    sdkUrl: string | undefined
     replayUserMessages: boolean | undefined
     includePartialMessages: boolean | undefined
     forkSession: boolean | undefined
@@ -354,10 +345,7 @@ export async function runHeadless(
   // 立即启动用户 settings 下载，使其与下方 MCP/tool 设置重叠。managed settings 已在 main.tsx
   // preAction 中启动；此处给用户 settings 类似的提前量。plugin 安装读取 enabledPlugins 前，
   // installPluginsAndApplyMcpInBackground 会等待缓存的 promise。
-  if (
-    feature('DOWNLOAD_USER_SETTINGS') &&
-    (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode())
-  ) {
+  if (feature('DOWNLOAD_USER_SETTINGS')) {
     void downloadUserSettings()
   }
 
@@ -504,13 +492,11 @@ export async function runHeadless(
     agentSetting: resumedAgentSetting,
   } = await loadInitialMessages(setAppState, {
     continue: options.continue,
-    teleport: options.teleport,
     resume: options.resume,
     resumeSessionAt: options.resumeSessionAt,
     forkSession: options.forkSession,
     outputFormat: options.outputFormat,
     sessionStartHooksPromise: options.sessionStartHooksPromise,
-    restoredWorkerState: structuredIO.restoredWorkerState,
   })
 
   // SessionStart hook 可发送 initialUserMessage，作为 headless orchestrator 会话的首个用户 turn。
@@ -581,13 +567,12 @@ export async function runHeadless(
     return
   }
 
-  // 检查是否需要输入 prompt；使用有效 session ID/JSONL 文件恢复或使用 SDK URL 时跳过
+  // 检查是否需要输入 prompt；使用有效 session ID/JSONL 文件恢复时跳过
   const hasValidResumeSessionId =
     typeof options.resume === 'string' &&
     (Boolean(validateUuid(options.resume)) || options.resume.endsWith('.jsonl'))
-  const isUsingSdkUrl = Boolean(options.sdkUrl)
 
-  if (!inputPrompt && !hasValidResumeSessionId && !isUsingSdkUrl) {
+  if (!inputPrompt && !hasValidResumeSessionId) {
     process.stderr.write(
       `Error: Input must be provided either through stdin or as a prompt argument when using --print\n`,
     )
@@ -607,10 +592,7 @@ export async function runHeadless(
   const allowedMcpTools = filterToolsByDenyRules(appState.mcp.tools, appState.toolPermissionContext)
   let filteredTools = [...tools, ...allowedMcpTools]
 
-  // 使用 SDK URL 时始终通过 stdio 权限 prompt 委托给 SDK
-  const effectivePermissionPromptToolName = options.sdkUrl
-    ? 'stdio'
-    : options.permissionPromptToolName
+  const effectivePermissionPromptToolName = options.permissionPromptToolName
 
   // 权限 prompt 显示时的 callback
   const onPermissionPrompt = (details: RequiresActionDetails) => {
@@ -849,7 +831,6 @@ function runHeadlessStreaming(
       run_active: loopState.running,
       run_phase: loopState.runPhase,
       worker_status: getSessionState(),
-      internal_events_pending: structuredIO.internalEventsPending,
       bg_tasks: bg,
     })
   })
@@ -1059,38 +1040,6 @@ function runHeadlessStreaming(
     return allTools
   }
 
-  // 远程控制（SDK 控制消息）所用的桥接句柄。
-  // 与 REPL 的 useReplBridge hook 一致：启用 `remote_control` 时创建，禁用时销毁。
-  // 桥接句柄与转发游标收进共享容器(Phase 5a):controlLoop(写)、turnLoop(经
-  // getBridgeHandle 读)、forwardMessagesToBridge(读写)三处共享同一引用,外提后
-  // 值拷贝会读到陈旧值。
-  // lastForwardedIndex 是 session.messages 的游标，用于记录已转发的位置；
-  // 差量算法与 useReplBridge 的 lastWrittenIndexRef 相同。
-  const bridgeState = {
-    handle: null as ReplWireHandle | null,
-    lastForwardedIndex: 0,
-  }
-
-  // 将 session.messages 中的新消息转发至桥接。
-  // 每轮执行期间会增量调用（使 zy.ai 能看到进度，并在等待权限时保持活跃），轮次结束后再调用一次。
-  //
-  // writeMessages 自带基于 UUID 的去重（initialMessageUUIDs、recentPostedUUIDs）；
-  // 此处的索引游标作为前置过滤，避免每次调用都以 O(n) 复杂度重扫已发送消息。
-  function forwardMessagesToBridge(): void {
-    if (!bridgeState.handle) {
-      return
-    }
-    // 防止 session.messages 因 compact 截断而缩短。
-    const startIndex = Math.min(bridgeState.lastForwardedIndex, session.messages.length)
-    const newMessages = session.messages
-      .slice(startIndex)
-      .filter((m) => m.type === 'user' || m.type === 'assistant')
-    bridgeState.lastForwardedIndex = session.messages.length
-    if (newMessages.length > 0) {
-      bridgeState.handle.writeMessages(newMessages)
-    }
-  }
-
   // 为所有 headless 用户在后台安装插件。
   // 安装 extraKnownMarketplaces 中的 marketplace，以及已启用但缺失的插件。
   // ZY_CODE_SYNC_PLUGIN_INSTALL=true 时，会在首次查询前于 run() 中等待安装完成，
@@ -1152,7 +1101,7 @@ function runHeadlessStreaming(
 
   let run: () => Promise<void>
   // Phase 4b: 主循环已外提到 turnLoop.ts。deps 注入全部闭包依赖;loopState 共享
-  // 可变状态;kickRun 处理自递归;getBridgeHandle 取活引用(remote_control 会重赋值)。
+  // 可变状态;kickRun 处理自递归。
   const turnLoopDeps: TurnLoopDeps = {
     loopState,
     structuredIO,
@@ -1166,14 +1115,12 @@ function runHeadlessStreaming(
     suggestionState,
     pendingSeeds,
     buildAllTools,
-    forwardMessagesToBridge,
     idleTimeout,
     scheduleProactiveTick,
     unsubscribeSkillChanges,
     unsubscribeAuthStatus,
     rateLimitListener,
     kickRun: () => void run(),
-    getBridgeHandle: () => bridgeState.handle,
   }
   run = () => runTurnLoop(turnLoopDeps)
 
@@ -1224,7 +1171,6 @@ function runHeadlessStreaming(
 
   void runControlLoop({
     loopState,
-    bridgeState,
     structuredIO,
     options,
     sdkMcpConfigs,
@@ -1543,8 +1489,9 @@ export async function handleInitializeRequest(
       subscriptionType: accountInfo?.subscription,
       tokenSource: accountInfo?.tokenSource,
       apiKeySource: accountInfo?.apiKeySource,
-      // 使用第三方提供商时 getAccountInformation() 返回 undefined，因此其他字段均缺失。
-      // apiProvider 用于区分“未登录”（直连 API 且 tokenSource:none）与“第三方提供商不适用登录”。
+      // getAccountInformation() 只返回当前连接可表达的账户字段；不同 OAuth provider
+      // 暴露的资料并不相同。apiProvider 用于让调用方解释这些可选字段，而不是判断
+      // “是否支持 OAuth”。
       apiProvider: getAPIProvider() as AccountInfo['apiProvider'],
     } satisfies AccountInfo,
     pid: process.pid,
@@ -1923,13 +1870,11 @@ async function loadInitialMessages(
   setAppState: (f: (prev: AppState) => AppState) => void,
   options: {
     continue: boolean | undefined
-    teleport: string | true | null | undefined
     resume: string | boolean | undefined
     resumeSessionAt: string | undefined
     forkSession: boolean | undefined
     outputFormat: string | undefined
     sessionStartHooksPromise?: ReturnType<typeof processSessionStartHooks>
-    restoredWorkerState: Promise<SessionExternalMetadata | null>
   },
 ): Promise<LoadInitialMessagesResult> {
   const persistSession = !isSessionPersistenceDisabled()
@@ -2003,38 +1948,6 @@ async function loadInitialMessages(
     }
   }
 
-  // 处理 print 模式下的 teleport。
-  if (options.teleport) {
-    try {
-      if (!isPolicyAllowed('allow_remote_sessions')) {
-        throw new Error("Remote sessions are disabled by your organization's policy.")
-      }
-
-      logEvent('zy_teleport_print', {})
-
-      if (typeof options.teleport !== 'string') {
-        throw new Error('No session ID provided for teleport')
-      }
-
-      const {
-        checkOutTeleportedSessionBranch,
-        processMessagesForTeleportResume,
-        teleportResumeCodeSession,
-        validateGitState,
-      } = await import('src/services/teleport/teleport.js')
-      await validateGitState()
-      const teleportResult = await teleportResumeCodeSession(options.teleport)
-      const { branchError } = await checkOutTeleportedSessionBranch(teleportResult.branch)
-      return {
-        messages: processMessagesForTeleportResume(teleportResult.log, branchError),
-      }
-    } catch (error) {
-      logError(error)
-      gracefulShutdownSync(1)
-      return { messages: [] }
-    }
-  }
-
   // 处理 print 模式下的 resume（接受会话 ID 或 URL）。
   // URL 仅供内部使用。
   if (options.resume) {
@@ -2056,53 +1969,19 @@ async function loadInitialMessages(
         return { messages: [] }
       }
 
-      // 加载前先从远端填充本地会话记录。
-      if (isEnvTruthy(process.env.ZY_CODE_)) {
-        // 填充时一并等待恢复完成，使 SSE 追赶写入恢复后的状态，而非全新默认状态。
-        const [, metadata] = await Promise.all([
-          hydrateFromCCRv2InternalEvents(parsedSessionId.sessionId),
-          options.restoredWorkerState,
-        ])
-        if (metadata) {
-          setAppState(externalMetadataToAppState(metadata))
-          if (typeof metadata.model === 'string') {
-            setMainLoopModelOverride(metadata.model)
-          }
-        }
-      } else if (
-        parsedSessionId.isUrl &&
-        parsedSessionId.ingressUrl &&
-        isEnvTruthy(process.env.ENABLE_SESSION_PERSISTENCE)
-      ) {
-        // v1：从 Session Ingress 获取会话日志。
-        await hydrateRemoteSession(parsedSessionId.sessionId, parsedSessionId.ingressUrl)
-      }
-
       // 使用指定会话 ID 加载对话。
       const result = await loadConversationForResume(
         parsedSessionId.sessionId,
         parsedSessionId.jsonlFile || undefined,
       )
 
-      // hydrateFromCCRv2InternalEvents 会为新会话写入空的会话记录文件
-      //（零事件时执行 writeFile(sessionFile, '')），因此 loadConversationForResume
-      // 返回 {messages: []} 而非 null。空记录应与 null 同等处理，确保仍触发 SessionStart。
       if (!result || result.messages.length === 0) {
-        // 通过 URL 或 CCR v2 恢复时，若填充结果为空则从空会话开始。
-        if (parsedSessionId.isUrl || isEnvTruthy(process.env.ZY_CODE_)) {
-          // 当前实际启动的是新会话，因此执行 SessionStart hooks。
-          return {
-            messages: await (options.sessionStartHooksPromise ??
-              processSessionStartHooks('startup')),
-          }
-        } else {
-          emitLoadError(
-            `No conversation found with session ID: ${parsedSessionId.sessionId}`,
-            options.outputFormat,
-          )
-          gracefulShutdownSync(1)
-          return { messages: [] }
-        }
+        emitLoadError(
+          `No conversation found with session ID: ${parsedSessionId.sessionId}`,
+          options.outputFormat,
+        )
+        gracefulShutdownSync(1)
+        return { messages: [] }
       }
 
       // 处理 resumeSessionAt 功能。
@@ -2193,7 +2072,6 @@ async function loadInitialMessages(
 function getStructuredIO(
   inputPrompt: string | AsyncIterable<string>,
   options: {
-    sdkUrl: string | undefined
     replayUserMessages?: boolean
   },
 ): StructuredIO {
@@ -2223,10 +2101,7 @@ function getStructuredIO(
     inputStream = inputPrompt
   }
 
-  // 提供 sdkUrl 时使用 RemoteIO，否则使用普通 StructuredIO。
-  return options.sdkUrl
-    ? new RemoteIO(options.sdkUrl, inputStream, options.replayUserMessages)
-    : new StructuredIO(inputStream, options.replayUserMessages)
+  return new StructuredIO(inputStream, options.replayUserMessages)
 }
 
 /**

@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { useInterval } from 'usehooks-ts'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getIsScrollDraining } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../../context/notifications.js'
 import { Text } from '../../ink/index.js'
@@ -74,9 +73,6 @@ export function useLspInitializationNotification() {
     })
   }
   const poll = () => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (getIsScrollDraining()) {
       return
     }
@@ -101,7 +97,7 @@ export function useLspInitializationNotification() {
   }
   useInterval(poll, shouldPoll ? LSP_POLL_INTERVAL_MS : null)
   React.useEffect(() => {
-    if (getIsRemoteMode() || !shouldPoll) {
+    if (!shouldPoll) {
       return
     }
     poll()

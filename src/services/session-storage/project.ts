@@ -14,7 +14,6 @@ import {
   writeFile,
 } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { logEvent } from 'src/services/analytics/index.js'
 import {
   getPlanSlugCache,
   getPromptId,
@@ -45,14 +44,12 @@ import { isFsInaccessible } from '../../utils/errors.js'
 import type { FileHistorySnapshot } from '../file-persistence/fileHistory.js'
 import { formatFileSize } from '../../utils/format.js'
 import { getBranch } from '../../services/infra/git.js'
-import { gracefulShutdownSync, isShuttingDown } from '../../bootstrap/lifecycle/gracefulShutdown.js'
 import { logError } from '../../services/infra/log.js'
 import { isCompactBoundaryMessage } from '../messages/predicates.js'
 import { extractLastJsonStringField, LITE_READ_BUF_SIZE } from './sessionStoragePortable.js'
 import { getInitialSettings } from '../settings/settings.js'
 import { jsonParse, jsonStringify } from '../../services/infra/slowOperations.js'
 import type { ContentReplacementRecord } from '../../services/mcp/toolResultStorage.js'
-import * as sessionIngress from '../api/sessionIngress.js'
 import { getFirstMeaningfulUserMessageTextContent } from './chain.js'
 import { getEntrypoint, getNodeEnv, getUserType } from './env.js'
 import { getSessionMessages, MAX_TOMBSTONE_REWRITE_BYTES } from './logLoading.js'
@@ -116,48 +113,6 @@ export function setSessionFileForTesting(path: string): void {
   getProject().sessionFile = path
 }
 
-type InternalEventWriter = (
-  eventType: string,
-  payload: Record<string, unknown>,
-  options?: { isCompaction?: boolean; agentId?: string },
-) => Promise<void>
-
-/**
- * 注册 CCR v2 内部事件写入器，用于 transcript 持久化。
- * 设置后，transcript 消息将作为内部 worker 事件写入，
- * 而非通过 v1 Session Ingress。
- */
-export function setInternalEventWriter(writer: InternalEventWriter): void {
-  getProject().setInternalEventWriter(writer)
-}
-
-type InternalEventReader = () => Promise<
-  { payload: Record<string, unknown>; agent_id?: string }[] | null
->
-
-/**
- * 注册 CCR v2 内部事件读取器，用于 session 恢复。
- * 设置后，hydrateFromCCRv2InternalEvents() 可获取前台和
- * 子代理内部事件，以在重连时重建对话状态。
- */
-export function setInternalEventReader(
-  reader: InternalEventReader,
-  subagentReader: InternalEventReader,
-): void {
-  getProject().setInternalEventReader(reader)
-  getProject().setInternalSubagentEventReader(subagentReader)
-}
-
-/**
- * 为当前 Project 设置远程 ingress URL，用于测试。
- * 模拟 hydrateRemoteSession 在生产环境中的行为。
- */
-export function setRemoteIngressUrlForTesting(url: string): void {
-  getProject().setRemoteIngressUrl(url)
-}
-
-const REMOTE_FLUSH_INTERVAL_MS = 10
-
 class Project {
   // 仅当前 session 的最小缓存（非所有 session）
   currentSessionTag: string | undefined
@@ -180,10 +135,6 @@ class Project {
   // sessionFile 为 null 时缓冲的 entry。由 materializeSessionFile
   // 在首条 user/assistant 消息时 flush — 防止产生仅含 metadata 的 session 文件。
   private pendingEntries: Entry[] = []
-  private remoteIngressUrl: string | null = null
-  private internalEventWriter: InternalEventWriter | null = null
-  private internalEventReader: InternalEventReader | null = null
-  private internalSubagentEventReader: InternalEventReader | null = null
   private pendingWriteCount: number = 0
   private flushResolvers: Array<() => void> = []
   // 按文件的写入队列。每个 entry 携带一个 resolve 回调，
@@ -816,10 +767,6 @@ class Project {
             // 远程也有相同约束（上面的 inc-4718）：sidechain 持久化了
             // 主线程尚未写入的 UUID → 主线程写入时 409。
             messageSet.add(entry.uuid)
-
-            if (isTranscriptMessage(entry)) {
-              await this.persistToRemote(sessionId, entry)
-            }
           }
         }
       }
@@ -861,71 +808,5 @@ class Project {
       }
       throw e
     }
-  }
-
-  private async persistToRemote(sessionId: UUID, entry: TranscriptMessage) {
-    if (isShuttingDown()) {
-      return
-    }
-
-    // CCR v2 路径：作为内部 worker 事件写入
-    if (this.internalEventWriter) {
-      try {
-        await this.internalEventWriter('transcript', entry as unknown as Record<string, unknown>, {
-          ...(isCompactBoundaryMessage(entry) && { isCompaction: true }),
-          ...(entry.agentId && { agentId: entry.agentId }),
-        })
-      } catch {
-        logEvent('zy_session_persistence_failed', {})
-        logForDebugging('Failed to write transcript as internal event')
-      }
-      return
-    }
-
-    // v1 Session Ingress 路径
-    if (!isEnvTruthy(process.env.ENABLE_SESSION_PERSISTENCE) || !this.remoteIngressUrl) {
-      return
-    }
-
-    const success = await sessionIngress.appendSessionLog(sessionId, entry, this.remoteIngressUrl)
-
-    if (!success) {
-      logEvent('zy_session_persistence_failed', {})
-      gracefulShutdownSync(1, 'other')
-    }
-  }
-
-  setRemoteIngressUrl(url: string): void {
-    this.remoteIngressUrl = url
-    logForDebugging(`Remote persistence enabled with URL: ${url}`)
-    if (url) {
-      // 如果使用 CCR，消息延迟不超过 10ms。
-      this.FLUSH_INTERVAL_MS = REMOTE_FLUSH_INTERVAL_MS
-    }
-  }
-
-  setInternalEventWriter(writer: InternalEventWriter): void {
-    this.internalEventWriter = writer
-    logForDebugging('CCR v2 internal event writer registered for transcript persistence')
-    // 为 CCR v2 使用快速 flush 间隔
-    this.FLUSH_INTERVAL_MS = REMOTE_FLUSH_INTERVAL_MS
-  }
-
-  setInternalEventReader(reader: InternalEventReader): void {
-    this.internalEventReader = reader
-    logForDebugging('CCR v2 internal event reader registered for session resume')
-  }
-
-  setInternalSubagentEventReader(reader: InternalEventReader): void {
-    this.internalSubagentEventReader = reader
-    logForDebugging('CCR v2 subagent event reader registered for session resume')
-  }
-
-  getInternalEventReader(): InternalEventReader | null {
-    return this.internalEventReader
-  }
-
-  getInternalSubagentEventReader(): InternalEventReader | null {
-    return this.internalSubagentEventReader
   }
 }

@@ -7,6 +7,7 @@ import {
   getLocalModelApiFormat,
   getLocalModelCapability,
   getLocalModelCosts,
+  getLocalModelInputModalities,
   getZonedMinutes,
   isMinuteInWindow,
   localModelHasCapability,
@@ -27,6 +28,7 @@ beforeEach(() => {
         {
           pattern: 'shared-model',
           capabilities: {
+            input: ['text'],
             thinking: { effort: ['off'] },
             structured_outputs: false,
           },
@@ -36,6 +38,7 @@ beforeEach(() => {
             'opencode-go': {
               apiFormat: 'openai-chat',
               capabilities: {
+                input: ['text', 'image'],
                 structured_outputs: true,
               },
               tokens: { contextWindow: '512k' },
@@ -53,6 +56,7 @@ beforeEach(() => {
           provider: 'openrouter',
           apiFormat: 'openai-chat',
           capabilities: {
+            input: ['text', 'document'],
             thinking: { effort: ['off', 'balanced'] },
             structured_outputs: true,
           },
@@ -149,6 +153,28 @@ describe('localModelCapabilities', () => {
         apiFormat: 'openai-chat',
       })?.inputTokens,
     ).toBe(3)
+  })
+
+  test('输入模态可按 provider 覆盖且未声明时返回 undefined', () => {
+    expect(
+      getLocalModelInputModalities('vendor/shared-model', {
+        provider: 'anthropic',
+        apiFormat: 'anthropic',
+      }),
+    ).toEqual(['text'])
+    expect(
+      getLocalModelInputModalities('vendor/shared-model', {
+        provider: 'opencode-go',
+        apiFormat: 'openai-chat',
+      }),
+    ).toEqual(['text', 'image'])
+    expect(
+      getLocalModelInputModalities('vendor/shared-model', {
+        provider: 'openrouter',
+        apiFormat: 'openai-chat',
+      }),
+    ).toEqual(['text', 'document'])
+    expect(getLocalModelInputModalities('unknown-model')).toBeUndefined()
   })
 
   test('Grok 模型在 opencode-go 下覆盖价格并保留上下文窗口', () => {

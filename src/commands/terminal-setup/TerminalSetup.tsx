@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import chalk from 'chalk'
 import type { ThemeName } from 'src/services/environment/theme.js'
-import { supportsHyperlinks } from '../../ink/supportsHyperlinks.js'
+import { createHyperlink } from '../../utils/hyperlink.js'
 import { color } from '../../ink/index.js'
 import { maybeMarkProjectOnboardingComplete } from '../../services/settings/projectOnboardingState.js'
 import type { ToolUseContext } from '../../tools/tool.js'
@@ -78,12 +78,9 @@ export function getNativeCSIuTerminalDisplayName(): string | null {
  * path inherits the parent's styling (e.g., chalk.dim).
  */
 function formatPathLink(filePath: string): string {
-  if (!supportsHyperlinks()) {
-    return filePath
-  }
   const fileUrl = pathToFileURL(filePath).href
-  // OSC 8 hyperlink: \e]8;;URL\a TEXT \e]8;;\a
-  return `\x1b]8;;${fileUrl}\x07${filePath}\x1b]8;;\x07`
+  // 能力检测与序列构造收敛到 utils/hyperlink.ts 的 createHyperlink
+  return createHyperlink(fileUrl, filePath)
 }
 export function shouldOfferTerminalSetup(): boolean {
   // iTerm2, WezTerm, Ghostty, Kitty, and Warp natively support CSI u / Kitty

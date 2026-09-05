@@ -15,17 +15,17 @@ import { createHash } from 'node:crypto'
 import { open, unlink } from 'node:fs/promises'
 import axios from 'axios'
 import { getIsInteractive } from '../../bootstrap/runtime/runtimeContext.js'
-import { getOauthConfig, OAUTH_BETA_HEADER } from '../../constants/oauth.js'
+import { getOauthConfig } from '../../constants/oauth.js'
+import { buildAuthHeaders } from '../http/authHeaders.js'
 import { registerCleanup } from '../cleanup/cleanupRegistry.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { classifyAxiosError, getErrnoCode } from '../../utils/errors.js'
 import { settingsChangeDetector } from '../settings/changeDetector.js'
 import { type SettingsJson, SettingsSchema } from '../settings/types.js'
-import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { getZyCodeUserAgent } from '../../services/http/userAgent.js'
 import { logEvent } from '../analytics/index.js'
-import { getRetryDelay } from '../api/withRetry.js'
+import { retryWithBackoffLoop } from '../http/retryLoop.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getApiKeyWithSource,
@@ -190,78 +190,39 @@ export async function waitForRemoteManagedSettingsToLoad(): Promise<void> {
  * 这避免了设置加载期间的循环依赖
  * 支持 API 密钥和 OAuth 认证
  */
-function getRemoteSettingsAuthHeaders(): {
-  headers: Record<string, string>
-  error?: string
-} {
+function getRemoteSettingsAuthHeaders() {
   // 先尝试 API 密钥（适用于控制台用户）
   // 跳过 apiKeyHelper 以避免与 getSettings() 的循环依赖
   // 用 try-catch 包装，因为 getApiKeyWithSource 在 CI/测试环境中会抛出异常
+  let apiKey: string | undefined
   try {
-    const { key: apiKey } = getApiKeyWithSource({
+    const { key } = getApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })
-    if (apiKey) {
-      return {
-        headers: {
-          'x-api-key': apiKey,
-        },
-      }
-    }
+    apiKey = key ?? undefined
   } catch {
     // 无 API 密钥可用 - 继续检查 OAuth
   }
 
-  // 回退到 OAuth 令牌（适用于 Zy.ai 用户）
-  const oauthTokens = getZyAIOAuthTokens()
-  if (oauthTokens?.accessToken) {
-    return {
-      headers: {
-        Authorization: `Bearer ${oauthTokens.accessToken}`,
-        'anthropic-beta': OAUTH_BETA_HEADER,
-      },
-    }
-  }
-
-  return {
-    headers: {},
-    error: 'No authentication available',
-  }
+  return buildAuthHeaders({
+    apiKey,
+    oauthToken: getZyAIOAuthTokens()?.accessToken,
+    errorMessage: 'No authentication available',
+  })
 }
 
 /**
  * 使用重试逻辑和指数退避获取远程设置
- * 使用现有的代码库重试工具以保持一致性
+ * 重试骨架收敛到 http/retryLoop.ts（fail-open 语义与原实现一致）
  */
 async function fetchWithRetry(cachedChecksum?: string): Promise<RemoteManagedSettingsFetchResult> {
-  let lastResult: RemoteManagedSettingsFetchResult | null = null
-
-  for (let attempt = 1; attempt <= DEFAULT_MAX_RETRIES + 1; attempt++) {
-    lastResult = await fetchRemoteManagedSettings(cachedChecksum)
-
-    // 成功立即返回
-    if (lastResult.success) {
-      return lastResult
-    }
-
-    // 如果错误不可重试，则不重试（例如认证错误）
-    if (lastResult.skipRetry) {
-      return lastResult
-    }
-
-    // 如果已耗尽重试次数，返回最后一个错误
-    if (attempt > DEFAULT_MAX_RETRIES) {
-      return lastResult
-    }
-
-    // 计算延迟并在下次重试前等待
-    const delayMs = getRetryDelay(attempt)
-    logForDebugging(`Remote settings: Retry ${attempt}/${DEFAULT_MAX_RETRIES} after ${delayMs}ms`)
-    await sleep(delayMs)
-  }
-
-  // 绝不应到达这里，但 TypeScript 需要它
-  return lastResult!
+  return retryWithBackoffLoop({
+    maxRetries: DEFAULT_MAX_RETRIES,
+    fetchOnce: () => fetchRemoteManagedSettings(cachedChecksum),
+    onRetry: (attempt, delayMs) => {
+      logForDebugging(`Remote settings: Retry ${attempt}/${DEFAULT_MAX_RETRIES} after ${delayMs}ms`)
+    },
+  })
 }
 
 /**

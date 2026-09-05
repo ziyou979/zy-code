@@ -4,12 +4,7 @@ import type { QuerySource } from 'src/constants/querySource.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getContentText } from 'src/services/messages/predicates.js'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
-import {
-  findCommand,
-  getCommandName,
-  isBridgeSafeCommand,
-  type LocalJSXCommandContext,
-} from '../../commands/index.js'
+import { type LocalJSXCommandContext } from '../../commands/index.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { IDESelection } from '../../hooks/useIdeSelection.js'
 import type { SetToolJSXFn, ToolUseContext } from '../../tools/tool.js'
@@ -47,7 +42,6 @@ import {
 } from '../attachments/attachments.js'
 import type { PastedContent } from '../config/config.js'
 import { executeUserPromptSubmitHooks, getUserPromptSubmitHookBlockingMessage } from '../hooks.js'
-import { hasUltraplanKeyword, replaceUltraplanKeyword } from '../ultraplan/keyword.js'
 import { hasWorkflowKeyword } from '../workflow/keyword.js'
 import { processTextPrompt } from './processTextPrompt.js'
 export type ProcessUserInputContext = ToolUseContext & LocalJSXCommandContext
@@ -93,7 +87,6 @@ export async function processUserInput({
   querySource,
   canUseTool,
   skipSlashCommands,
-  bridgeOrigin,
   isMeta,
   skipAttachments,
   processBashCommand,
@@ -122,11 +115,6 @@ export async function processUserInput({
    * trigger local slash commands or skills.
    */
   skipSlashCommands?: boolean
-  /**
-   * When true, slash commands matching isBridgeSafeCommand() execute even
-   * though skipSlashCommands is set. See QueuedCommand.bridgeOrigin.
-   */
-  bridgeOrigin?: boolean
   /**
    * When true, the resulting UserMessage gets `isMeta: true` (user-hidden,
    * model-visible). Propagated from `QueuedCommand.isMeta` for queued
@@ -163,7 +151,6 @@ export async function processUserInput({
     canUseTool,
     appState.toolPermissionContext.mode,
     skipSlashCommands,
-    bridgeOrigin,
     isMeta,
     skipAttachments,
     preExpansionInput,
@@ -340,7 +327,6 @@ async function processUserInputBase(
   canUseTool?: CanUseToolFn,
   permissionMode?: PermissionMode,
   skipSlashCommands?: boolean,
-  bridgeOrigin?: boolean,
   isMeta?: boolean,
   skipAttachments?: boolean,
   preExpansionInput?: string,
@@ -453,77 +439,7 @@ async function processUserInputBase(
   }
   queryCheckpoint('query_pasted_image_processing_end')
 
-  // Bridge-safe slash command override: mobile/web clients set bridgeOrigin
-  // with skipSlashCommands still true (defense-in-depth against exit words and
-  // immediate-command fast paths). Resolve the command here — if it passes
-  // isBridgeSafeCommand, clear the skip so the gate below opens. If it's a
-  // known-but-unsafe command (local-jsx UI or terminal-only), short-circuit
-  // with a helpful message rather than letting the model see raw "/config".
-  let effectiveSkipSlash = skipSlashCommands
-  if (bridgeOrigin && inputString?.startsWith('/')) {
-    const parsed = parseSlashCommand(inputString)
-    const cmd = parsed ? findCommand(parsed.commandName, context.options.commands) : undefined
-    if (cmd) {
-      if (isBridgeSafeCommand(cmd)) {
-        effectiveSkipSlash = false
-      } else {
-        const msg = `/${getCommandName(cmd)} isn't available over Remote Control.`
-        return {
-          messages: [
-            createUserMessage({
-              content: [{ type: 'text' as const, text: inputString }],
-              uuid,
-            }),
-            createCommandInputMessage(`<local-command-stdout>${msg}</local-command-stdout>`),
-          ],
-          shouldQuery: false,
-          resultText: msg,
-        }
-      }
-    }
-    // Unknown /foo or unparseable — fall through to plain text, same as
-    // pre-#19134. A mobile user typing "/shrug" shouldn't see "Unknown skill".
-  }
-
-  // Ultraplan keyword — route through /ultraplan. Detect on the
-  // pre-expansion input so pasted content containing the word cannot
-  // trigger a CCR session; replace with "plan" in the expanded input so
-  // the CCR prompt receives paste contents and stays grammatical. See
-  // keyword.ts for the quote/path exclusions. Interactive prompt mode +
-  // non-slash-prefixed only:
-  // headless/print mode filters local-jsx commands out of context.options,
-  // so routing to /ultraplan there yields "Unknown skill" — and there's no
-  // rainbow animation in print mode anyway.
-  // Runs before attachment extraction so this path matches the slash-command
-  // path below (no await between setUserInputOnProcessing and setAppState —
-  // React batches both into one render, no flash).
-  if (
-    feature('ULTRAPLAN') &&
-    mode === 'prompt' &&
-    !context.options.isNonInteractiveSession &&
-    inputString !== null &&
-    !effectiveSkipSlash &&
-    !inputString.startsWith('/') &&
-    !context.getAppState().ultraplanSessionUrl &&
-    !context.getAppState().ultraplanLaunching &&
-    hasUltraplanKeyword(preExpansionInput ?? inputString)
-  ) {
-    logEvent('zy_ultraplan_keyword', {})
-    const rewritten = replaceUltraplanKeyword(inputString).trim()
-    const { ProcessSlashCommand } = await import('./ProcessSlashCommand.js')
-    const slashResult = await ProcessSlashCommand(
-      `/ultraplan ${rewritten}`,
-      precedingInputBlocks,
-      imageContentBlocks,
-      [],
-      context,
-      setToolJSX,
-      uuid,
-      isAlreadyProcessing,
-      canUseTool,
-    )
-    return addImageMetadataMessage(slashResult, imageMetadataTexts)
-  }
+  const effectiveSkipSlash = skipSlashCommands
 
   if (
     feature('WORKFLOW_SCRIPTS') &&

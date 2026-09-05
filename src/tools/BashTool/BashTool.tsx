@@ -50,7 +50,7 @@ import {
   fileHistoryEnabled,
   fileHistoryTrackEdit,
 } from '../../services/file-persistence/fileHistory.js'
-import { truncate } from '../../utils/format.js'
+import { truncate } from '../../utils/truncate.js'
 import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { expandPath } from '../../utils/path.js'

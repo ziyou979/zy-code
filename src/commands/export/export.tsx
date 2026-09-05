@@ -7,16 +7,10 @@ import type { Message } from '../../types/message.js'
 import { getCwd } from '../../services/environment/cwd.js'
 import { renderMessagesToPlainText } from '../../components/Runtime/ExportRenderer.js'
 import { writeFileSync_DEPRECATED } from '../../services/infra/slowOperations.js'
+import { formatFileTimestamp } from '../../utils/formatTimestamp.js'
 
-function formatTimestamp(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  return `${year}-${month}-${day}-${hours}${minutes}${seconds}`
-}
+// 文件名时间戳收敛到 utils/formatTimestamp.ts
+const formatTimestamp = (date: Date): string => formatFileTimestamp(date)
 export function extractFirstPrompt(messages: Message[]): string {
   const firstUserMessage = messages.find((msg) => msg.type === 'user')
   if (!firstUserMessage || firstUserMessage.type !== 'user') {

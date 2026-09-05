@@ -1,4 +1,5 @@
 import { formatMonthYear } from '../utils/format.js'
+import { formatLocalISODate } from '../utils/formatTimestamp.js'
 import memoize from 'lodash-es/memoize.js'
 
 // 确保得到 ISO 格式的本地日期。
@@ -8,11 +9,8 @@ export function getLocalISODate(): string {
     return process.env.ZY_CODE_OVERRIDE_DATE
   }
 
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  // 日期格式化收敛到 utils/formatTimestamp.ts
+  return formatLocalISODate()
 }
 
 // 为保持 prompt cache 稳定而记忆化：会话开始时只获取一次日期。

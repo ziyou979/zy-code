@@ -48,7 +48,7 @@ export async function validateModel(model: string): Promise<{ valid: boolean; er
     const apiProvider = getAPIProvider()
 
     // 仅 Anthropic 原生格式支持 cache_control 参数
-    const messageContent = isAnthropicProvider(apiProvider)
+    const messageContent = isAnthropicProvider(apiProvider, normalizedModel)
       ? [{ type: 'text' as const, text: 'Hi', cache_control: { type: 'ephemeral' as const } }]
       : [{ type: 'text' as const, text: 'Hi' }]
 

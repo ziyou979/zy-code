@@ -87,7 +87,7 @@ export const SettingsSchema = lazySchema(() =>
         .literal(ZY_CODE_SETTINGS_SCHEMA_URL)
         .optional()
         .describe('JSON Schema reference for ZY Code settings'),
-      /** API 提供商：取值需与 src/services/model/providerRegistry.ts 中的 provider id 对齐 */
+      /** 旧版默认 API provider；新配置应在模型引用中填写连接 id。 */
       provider: z
         .enum([
           'anthropic',
@@ -122,23 +122,14 @@ export const SettingsSchema = lazySchema(() =>
           'local',
         ])
         .optional()
-        .describe('API provider to use. Overrides onboarding config and env vars.'),
+        .describe(
+          'Deprecated compatibility field. Bind models to auth.json connection ids with { provider, model } instead.',
+        ),
       providers: z
         .record(z.string(), ProviderScopedSettingsSchema())
         .optional()
         .describe(
-          'Provider-scoped configuration. Keys are provider ids; values override baseUrl, apiFormat and model settings only for that provider.',
-        ),
-      apiFormat: z
-        .enum(['anthropic', 'openai-chat', 'openai-responses', 'google'])
-        .optional()
-        .describe(
-          'API protocol format for providers supporting multiple formats. ' +
-            '"anthropic" uses independent system field + tool_result inside user messages (better caching). ' +
-            '"openai-chat" uses chat/completions format. ' +
-            '"google" uses Google Generative AI native format (for Gemini models). ' +
-            '"openai-responses" uses OpenAI Responses API (/responses, recommended for gpt-5 / o-series models). ' +
-            'Default: depends on provider (google for Gemini, openai-chat for others).',
+          'Provider-scoped configuration. Keys are provider ids; values override baseUrl and model settings only for that provider.',
         ),
       /** API 基地址：与 provider 配合使用，覆盖 registry 默认值 */
       baseUrl: z

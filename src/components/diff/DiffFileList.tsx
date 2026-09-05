@@ -3,7 +3,7 @@ import type { DiffFile } from '../../hooks/useDiffData.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
-import { truncateStartToWidth } from '../../utils/format.js'
+import { truncateStartToWidth } from '../../utils/truncate.js'
 import { plural } from '../../utils/stringUtils.js'
 
 const MAX_VISIBLE_FILES = 5

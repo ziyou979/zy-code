@@ -40,13 +40,10 @@ export type FocusedInputDialog =
   | 'init-onboarding'
   | 'ide-onboarding'
   | 'effort-callout'
-  | 'remote-callout'
   | 'lsp-recommendation'
   | 'plugin-hint'
   | 'fullscreen-upsell'
   | 'desktop-upsell'
-  | 'ultraplan-choice'
-  | 'ultraplan-launch'
   | undefined
 
 export type UseReplOnCancelParams = {

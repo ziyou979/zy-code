@@ -14,6 +14,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../../services/infra/envUtils.js'
 import { isENOENT, toError } from '../../utils/errors.js'
+import { isProcessRunning } from '../shell/genericProcessUtils.js'
 import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { getProcessCommand } from '../shell/genericProcessUtils.js'
 import { logError } from '../../services/infra/log.js'
@@ -71,25 +72,6 @@ export type LockInfo = {
 // This is much shorter than the previous 30-day timeout but still allows
 // for edge cases like network filesystems where PID check might fail
 const FALLBACK_STALE_MS = 2 * 60 * 60 * 1000
-
-/**
- * Check if a process with the given PID is currently running
- * Uses signal 0 which doesn't actually send a signal but checks if we can
- */
-export function isProcessRunning(pid: number): boolean {
-  // PID 0 is special - it refers to the current process group, not a real process
-  // PID 1 is init/systemd and is always running but shouldn't be considered for locks
-  if (pid <= 1) {
-    return false
-  }
-
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch {
-    return false
-  }
-}
 
 /**
  * Validate that a running process is actually a ZY process

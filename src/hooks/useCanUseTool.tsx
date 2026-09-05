@@ -254,9 +254,6 @@ function useCanUseTool(
                   result,
                   awaitAutomatedChecksBeforeDialog:
                     appState.toolPermissionContext.awaitAutomatedChecksBeforeDialog,
-                  bridgeCallbacks: feature('BRIDGE_MODE')
-                    ? appState.replWirePermissionCallbacks
-                    : undefined,
                   channelCallbacks:
                     feature('KAIROS') || feature('KAIROS_CHANNELS')
                       ? getChannelPermissionCallbacks()

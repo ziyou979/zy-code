@@ -25,13 +25,6 @@ import {
   kairosGate,
 } from '../lazyModules.js'
 import { extractTeammateOptions, type TeammateOptions } from '../options/teammate.js'
-import { getOauthConfig } from '../../constants/oauth.js'
-import {
-  type DownloadResult,
-  downloadSessionFiles,
-  type FilesApiConfig,
-  parseFileSpecs,
-} from '../../services/api/filesApi.js'
 import {
   shouldAutoEnableClaudeInChrome,
   shouldEnableClaudeInChrome,
@@ -46,7 +39,6 @@ import { safeParseJSON } from '../../utils/json.js'
 import { initialPermissionModeFromCLI } from '../../services/permissions/permissionBootstrap.js'
 import { isDefaultPermissionModeAuto } from '../../services/permissions/autoModePolicy.js'
 import { getPlatform } from '../../services/shell/platform.js'
-import { getSessionIngressAuthToken } from '../../services/auth/sessionIngressAuth.js'
 import { sessionIdExists } from '../../services/sessionStorage.js'
 import type { ValidationError } from '../../services/settings/validation.js'
 import { profileCheckpoint } from '../../services/telemetry/startupProfiler.js'
@@ -192,9 +184,6 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
     seedEarlyInput(options.prefill)
   }
 
-  // 文件下载 promise 提前启动，并在 REPL 渲染前等待完成
-  let fileDownloadPromise: Promise<DownloadResult[]> | undefined
-
   const agentsJson = options.agents
 
   const agentCli = options.agent
@@ -320,123 +309,14 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
     }
   }
 
-  // 提取远程 SDK 选项
-  const sdkUrl = options.sdkUrl ?? undefined
-
   // 允许环境变量启用部分消息（用于沙箱网关的 baku）
   const effectiveIncludePartialMessages =
     includePartialMessages || isEnvTruthy(process.env.ZY_CODE_INCLUDE_PARTIAL_MESSAGES)
 
-  // 通过 SDK 选项明确要求时启用所有钩子事件类型
-  // 或在 ZY_CODE_REMOTE 模式下运行时（CCR 需要它们）。
+  // 通过 SDK 选项明确要求时启用所有钩子事件类型。
   // 否则，只发射 SessionStart 和 Setup 事件。
-  if (includeHookEvents || isEnvTruthy(process.env.ZY_CODE_REMOTE)) {
+  if (includeHookEvents) {
     setAllHookEventsEnabled(true)
-  }
-
-  // 当提供 SDK URL 时自动设置输入/输出格式、详细模式和打印模式
-  if (sdkUrl) {
-    // 如果提供了 SDK URL，自动使用 stream-json 格式，除非明确设置
-    if (!inputFormat) {
-      inputFormat = 'stream-json'
-    }
-    if (!outputFormat) {
-      outputFormat = 'stream-json'
-    }
-    // 自动启用详细模式，除非明确禁用或已设置
-    if (options.verbose === undefined) {
-      verbose = true
-    }
-    // 自动启用打印模式，除非明确禁用
-    if (!options.print) {
-      print = true
-    }
-  }
-
-  // 提取 teleport 选项
-  const teleport = options.teleport ?? null
-
-  // 提取 remote 选项（如果没有提供描述可以为 true，或为字符串）
-  const remoteOption = options.remote
-
-  const remote = remoteOption === true ? '' : (remoteOption ?? null)
-
-  // 提取 --remote-control / --rc 标志（在交互会话中启用桥接）
-  const remoteControlOption = options.remoteControl ?? options.rc
-
-  // 实际的桥接检查延迟到 showSetupScreens() 之后，以便
-  // 建立信任且 GrowthBook 有认证头。
-  const remoteControl = false
-
-  const remoteControlName =
-    typeof remoteControlOption === 'string' && remoteControlOption.length > 0
-      ? remoteControlOption
-      : undefined
-
-  // 如果提供了会话 ID，则验证它
-  if (sessionId) {
-    // 检查冲突的标志
-    // --session-id 可以与 --continue 或 --resume 一起使用，当同时提供了 --fork-session 时
-    //（用于指定叉会话的自定义 ID）
-    if ((options.continue || options.resume) && !options.forkSession) {
-      process.stderr.write(
-        chalk.red(
-          'Error: --session-id can only be used with --continue or --resume if --fork-session is also specified.\n',
-        ),
-      )
-      process.exit(1)
-    }
-
-    // 当提供 --sdk-url 时（桥接/远程模式），会话 ID 是
-    // 服务器分配的标记 ID（例如 "session_local_01..."）而不是
-    // UUID。跳过 UUID 验证和本地存在性检查。
-    if (!sdkUrl) {
-      const validatedSessionId = validateUuid(sessionId)
-      if (!validatedSessionId) {
-        process.stderr.write(chalk.red('Error: Invalid session ID. Must be a valid UUID.\n'))
-        process.exit(1)
-      }
-
-      // 检查会话 ID 是否已存在
-      if (sessionIdExists(validatedSessionId)) {
-        process.stderr.write(
-          chalk.red(`Error: Session ID ${validatedSessionId} is already in use.\n`),
-        )
-        process.exit(1)
-      }
-    }
-  }
-
-  // 如果通过 --file 标志指定了文件资源，则下载它们
-  const fileSpecs = options.file
-
-  if (fileSpecs && fileSpecs.length > 0) {
-    // 获取会话入口令牌（由 EnvManager 通过 ZY_CODE_SESSION_ACCESS_TOKEN 提供）
-    const sessionToken = getSessionIngressAuthToken()
-    if (!sessionToken) {
-      process.stderr.write(
-        chalk.red(
-          'Error: Session token required for file downloads. ZY_CODE_SESSION_ACCESS_TOKEN must be set.\n',
-        ),
-      )
-      process.exit(1)
-    }
-
-    // 解析会话 ID：优先使用远程会话 ID，回退到内部会话 ID
-    const fileSessionId = process.env.ZY_CODE_REMOTE_SESSION_ID || getSessionId()
-    const files = parseFileSpecs(fileSpecs)
-    if (files.length > 0) {
-      // 如果设置了 ZY_CODE_BASE_URL（由 EnvManager 设置），否则使用 OAuth 配置
-      // 这确保在所有环境中与会话入口 API 保持一致
-      const config: FilesApiConfig = {
-        baseUrl: process.env.ZY_CODE_BASE_URL || getOauthConfig().BASE_API_URL,
-        oauthToken: sessionToken,
-        sessionId: fileSessionId,
-      }
-
-      // 开始下载而不阻塞启动 —— 在 REPL 渲染之前等待
-      fileDownloadPromise = downloadSessionFiles(files, config)
-    }
   }
 
   // 从状态获取 isNonInteractiveSession（在 init() 之前设置）
@@ -694,7 +574,6 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
     sessionId,
     includeHookEvents,
     includePartialMessages,
-    fileDownloadPromise,
     agentsJson,
     agentCli,
     outputFormat,
@@ -713,15 +592,7 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
     worktreePRNumber,
     tmuxEnabled,
     storedTeammateOpts,
-    sdkUrl,
     effectiveIncludePartialMessages,
-    teleport,
-    remoteOption,
-    remote,
-    remoteControlOption,
-    remoteControl,
-    remoteControlName,
-    fileSpecs,
     isNonInteractiveSession,
     systemPrompt,
     appendSystemPrompt,

@@ -1,5 +1,5 @@
 import type { WireWorkflowProgress } from '../../types/tools.js'
-import { enqueueWireEvent } from '../bridge/bridgeEventQueue.js'
+import { enqueueSdkEvent } from './sdkEventQueue.js'
 
 /**
  * Emit a `task_progress` SDK event. Shared by background agents (per tool_use
@@ -18,7 +18,7 @@ export function emitTaskProgress(params: {
   summary?: string
   workflowProgress?: WireWorkflowProgress[]
 }): void {
-  enqueueWireEvent({
+  enqueueSdkEvent({
     type: 'system',
     subtype: 'task_progress',
     task_id: params.taskId,

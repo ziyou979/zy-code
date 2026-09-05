@@ -33,11 +33,6 @@ import type {
 import { cwd } from 'node:process'
 import omit from 'lodash-es/omit.js'
 import reject from 'lodash-es/reject.js'
-import type { ReplWireHandle } from 'src/bridge/replBridge.js'
-import { getRemoteSessionUrl } from 'src/constants/product.js'
-import { buildWireConnectUrl } from 'src/bridge/bridgeStatusUtil.js'
-import { extractInboundMessageFields } from 'src/bridge/inboundMessages.js'
-import { resolveAndPrepend } from 'src/bridge/inboundAttachments.js'
 import { createAbortController } from 'src/utils/abortController.js'
 import { generateSessionTitle } from 'src/services/session-storage/sessionTitle.js'
 import { buildSideQuestionFallbackParams } from 'src/services/query/queryContext.js'
@@ -66,7 +61,6 @@ import { getDefaultMainLoopModel, getMainLoopModel } from 'src/services/model/mo
 import { modelSupportsEffort, resolveAppliedEffort } from 'src/services/effort/effort.js'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   getFlagSettingsInline,
   setFlagSettingsInline,
@@ -75,7 +69,6 @@ import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
 import type { AppState } from 'src/state/AppStateStore.js'
 import { getCommands } from '../../commands/index.js'
-import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { refreshActivePlugins } from '../../services/plugins/refresh.js'
 import { loadAllPluginsCacheOnly } from '../../services/plugins/pluginLoader.js'
 import type { PluginLoadResult } from '../../services/plugins/types.js'
@@ -100,7 +93,6 @@ import type { SuggestionState, HeadlessStreamingOptions } from './turnLoop.js'
 
 export interface ControlLoopDeps {
   loopState: LoopState
-  bridgeState: { handle: ReplWireHandle | null; lastForwardedIndex: number }
   structuredIO: StructuredIO
   options: HeadlessStreamingOptions
   sdkMcpConfigs: Record<string, McpSdkServerConfig>
@@ -126,12 +118,11 @@ export interface ControlLoopDeps {
 }
 
 // Phase 5b: 控制消息循环外提自 print.ts runHeadlessStreaming 的 IIFE。
-// deps 注入闭包依赖;loopState/bridgeState 共享可变状态;kickRun 处理 run 自递归;
+// deps 注入闭包依赖;loopState 共享可变状态;kickRun 处理 run 自递归;
 // zyOAuth/OAuth state/initialized/sendControlResponse* 为本循环私有,留函数内部。
 export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
   const {
     loopState,
-    bridgeState,
     structuredIO,
     options,
     sdkMcpConfigs,
@@ -301,7 +292,6 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
           prev.toolPermissionContext,
           output,
         ),
-        isUltraplanMode: m.ultraplan ?? prev.isUltraplanMode,
       }))
       // handleSetPermissionMode 会发送 control_response；此前紧随其后的
       // notifySessionMetadataChanged 现由 onChangeAppState 触发，并使用外部模式名。
@@ -502,7 +492,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
     reload_plugins: async (message) => {
       try {
         if (feature('DOWNLOAD_USER_SETTINGS')) {
-          if (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode()) {
+          {
             // 重新拉取用户 settings，使本地 CLI 推送的 enabledPlugins 在清扫缓存前生效。
             const applied = await redownloadUserSettings()
             if (applied) {
@@ -1091,123 +1081,6 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
         }
       })()
     },
-    remote_control: async (message) => {
-      const req = message.request as unknown as { enabled: boolean }
-      if (req.enabled) {
-        if (bridgeState.handle) {
-          // 已连接
-          sendControlResponseSuccess(message, {
-            session_url: getRemoteSessionUrl(
-              bridgeState.handle.bridgeSessionId,
-              bridgeState.handle.sessionIngressUrl,
-            ),
-            connect_url: buildWireConnectUrl(
-              bridgeState.handle.environmentId,
-              bridgeState.handle.sessionIngressUrl,
-            ),
-            environment_id: bridgeState.handle.environmentId,
-          })
-        } else {
-          // initReplBridge 返回 null 前，会通过 onStateChange('failed', detail) 暴露开关失败原因。
-          // 捕获该原因，使 control-response 错误包含可操作信息（如 "/login"、组织策略已禁用），
-          // 而非泛泛的“初始化失败”。
-          let bridgeFailureDetail: string | undefined
-          try {
-            const { initReplBridge } = await import('src/bridge/initReplBridge.js')
-            const handle = await initReplBridge({
-              onInboundMessage(msg) {
-                const fields = extractInboundMessageFields(msg)
-                if (!fields) {
-                  return
-                }
-                const { content, uuid } = fields
-                enqueue({
-                  value: content,
-                  mode: 'prompt' as const,
-                  uuid,
-                  skipSlashCommands: true,
-                })
-                kickRun()
-              },
-              onPermissionResponse(response) {
-                // 将 bridge 权限响应转发到 stdin 处理循环，以解决 SDK 消费方待处理的权限请求。
-                structuredIO.injectControlResponse(response)
-              },
-              onInterrupt() {
-                loopState.abortController?.abort()
-              },
-              onSetModel(model) {
-                const resolved = model === 'default' ? getDefaultMainLoopModel() : model
-                loopState.activeUserSpecifiedModel = resolved
-                setMainLoopModelOverride(resolved)
-              },
-              onSetMaxThinkingTokens(maxTokens) {
-                if (maxTokens === null) {
-                  options.thinkingConfig = undefined
-                } else if (maxTokens === 0) {
-                  options.thinkingConfig = { type: 'disabled' }
-                } else {
-                  options.thinkingConfig = {
-                    type: 'enabled',
-                    budgetTokens: maxTokens,
-                  }
-                }
-              },
-              onStateChange(state, detail) {
-                if (state === 'failed') {
-                  bridgeFailureDetail = detail
-                }
-                logForDebugging(
-                  `[bridge:sdk] State change: ${state}${detail ? ` — ${detail}` : ''}`,
-                )
-                output.enqueue({
-                  type: 'system' as StdoutMessage['type'],
-                  subtype: 'bridge_state' as string,
-                  state,
-                  detail,
-                  uuid: randomUUID(),
-                  session_id: getSessionId(),
-                } as StdoutMessage)
-              },
-              initialMessages: session.messages.length > 0 ? session.messages : undefined,
-            })
-            if (!handle) {
-              sendControlResponseError(
-                message,
-                bridgeFailureDetail ?? 'Remote Control initialization failed',
-              )
-            } else {
-              bridgeState.handle = handle
-              bridgeState.lastForwardedIndex = session.messages.length
-              // 将权限请求转发到 bridge
-              structuredIO.setOnControlRequestSent((request) => {
-                handle.sendControlRequest(request)
-              })
-              // SDK 消费方先解决 can_use_tool 请求时，取消陈旧的 bridge 权限 prompt。
-              structuredIO.setOnControlRequestResolved((requestId) => {
-                handle.sendControlCancelRequest(requestId)
-              })
-              sendControlResponseSuccess(message, {
-                session_url: getRemoteSessionUrl(handle.bridgeSessionId, handle.sessionIngressUrl),
-                connect_url: buildWireConnectUrl(handle.environmentId, handle.sessionIngressUrl),
-                environment_id: handle.environmentId,
-              })
-            }
-          } catch (err) {
-            sendControlResponseError(message, errorMessage(err))
-          }
-        }
-      } else {
-        // 禁用
-        if (bridgeState.handle) {
-          structuredIO.setOnControlRequestSent(undefined)
-          structuredIO.setOnControlRequestResolved(undefined)
-          await bridgeState.handle.teardown()
-          bridgeState.handle = null
-        }
-        sendControlResponseSuccess(message)
-      }
-    },
     // set_proactive 仅在 PROACTIVE/KAIROS feature 开启时注册;feature 关时此 key 不
     // 存在,落到下方「未知 subtype」错误响应,与迁移前的内联 else-if 行为一致。
     ...(feature('PROACTIVE')
@@ -1335,9 +1208,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
 
     enqueue({
       mode: 'prompt' as const,
-      // file_attachments 通过 Web composer 的 protobuf catchall 传入。缺失时没有
-      // 'file_attachments' key，保持同一引用且不操作。
-      value: await resolveAndPrepend(message, message.message.content),
+      value: message.message.content,
       uuid: message.uuid as UUID,
       priority: message.priority,
     })

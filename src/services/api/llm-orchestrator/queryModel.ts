@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { isAnthropicBaseUrl } from 'src/services/model/providers.js'
+import { isAnthropicOfficialEndpointForModel } from '../baseUrlResolution.js'
 import { type Tools } from '../../../tools/tool.js'
 import { type ConnectorTextBlock, type ConnectorTextDelta } from '../../../types/connectorText.js'
 import type {
@@ -33,7 +33,7 @@ import { normalizeContentFromAPI } from '../../messages/normalize.js'
 import { type SystemPrompt } from '../systemPromptType.js'
 import { tokenCountFromLastAPIResponse } from '../../../services/api/tokens.js'
 import { extractQuotaStatusFromError, extractQuotaStatusFromHeaders } from '../../zyAiLimits.js'
-import { getLLMAdapter } from '../client.js'
+import { createLLMAdapter } from '../client.js'
 import { feature } from 'bun:bundle'
 import { setLastMainRequestId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { addToTotalSessionCost } from 'src/services/cost/costTracker.js'
@@ -63,7 +63,6 @@ import {
   sanitizeAssistantCompletionContent,
   validateAssistantCompletion,
 } from '../assistantCompletionValidator.js'
-import { getAnthropicClient } from '../client.js'
 import {
   API_ERROR_MESSAGE_PREFIX,
   getAPIErrorSeverity,
@@ -140,13 +139,13 @@ export async function* queryModel(
     queryCheckpoint('query_client_creation_start')
     const generator = withRetry(
       () =>
-        getAnthropicClient({
+        createLLMAdapter({
           maxRetries: 0, // 禁用自动重试，改用手动实现
           model: options.model,
           fetchOverride: options.fetchOverride,
           source: options.querySource,
         }),
-      async (anthropic, attempt, context) => {
+      async (adapter, attempt, context) => {
         attemptNumber = attempt
         start = Date.now()
         attemptStartTimes.push(start)
@@ -173,11 +172,14 @@ export async function* queryModel(
           headlessProfilerCheckpoint('api_request_sent')
         }
 
+        const requestParams = params as unknown as CreateParams
+
         // 生成并跟踪客户端请求 ID，使超时（不返回服务端请求 ID）
         // 仍可与服务端日志关联。仅限第一方 — 第三方提供商不记录它
         //（inc-4029 类）。
-        clientRequestId =
-          apiProvider === 'anthropic' && isAnthropicBaseUrl() ? randomUUID() : undefined
+        clientRequestId = isAnthropicOfficialEndpointForModel(requestParams.model)
+          ? randomUUID()
+          : undefined
 
         // 使用原始流而非 BetaMessageStream，避免 O(n²) 的部分 JSON 解析
         // BetaMessageStream 在每个 input_json_delta 上调用 partialParse()，我们不需要它
@@ -185,11 +187,6 @@ export async function* queryModel(
         // biome-ignore lint/plugin: main conversation loop handles attribution separately
 
         // 统一的流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
-        const requestParams = params as unknown as CreateParams
-        const adapter = getLLMAdapter({
-          anthropicClient: anthropic,
-          model: requestParams.model,
-        })
         const streamResult = await adapter.createStream(requestParams, signal, clientRequestId)
         queryCheckpoint('query_response_headers_received')
         streamRequestId = streamResult.requestId

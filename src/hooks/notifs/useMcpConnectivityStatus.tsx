@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink/index.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'
@@ -13,9 +12,6 @@ const EMPTY_MCP_CLIENTS: MCPServerConnection[] = []
 export function useMcpConnectivityStatus({ mcpClients = EMPTY_MCP_CLIENTS }: Props) {
   const { addNotification } = useNotifications()
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     const failedLocalClients = mcpClients.filter(
       (client) =>
         client.type === 'failed' &&

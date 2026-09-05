@@ -16,7 +16,7 @@ import {
   createSyntheticAssistantMessage,
   createToolStub,
 } from '../remote/remotePermissionBridge.js'
-import type { RemoteMessageContent } from '../services/teleport/api.js'
+import type { RemoteMessageContent } from '../remote/messageAdapter.js'
 import type { SSHSession } from '../ssh/createSSHSession.js'
 // @ts-expect-error
 import type { SSHSessionManager } from '../ssh/sshSessionManager.js'

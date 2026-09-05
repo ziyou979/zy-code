@@ -180,30 +180,6 @@ export const init = memoize(async (): Promise<void> => {
     // 场景跳过，因为 SDK 的 dispatcher 不会复用全局连接池。
     preconnectAnthropicApi()
 
-    // CCR upstreamproxy：启动本地 CONNECT 中继，使 agent 子进程
-    // 能够通过凭证注入访问组织配置的上游服务。受
-    // ZY_CODE_REMOTE + GrowthBook 门控；任何错误时 fail-open。延迟导入，
-    // 因此非 CCR 启动不会承担模块加载开销。getUpstreamProxyEnv
-    // 函数注册到 subprocessEnv.ts，因此子进程派生时可以
-    // 注入代理变量，无需静态导入 upstreamproxy 模块。
-    if (isEnvTruthy(process.env.ZY_CODE_REMOTE)) {
-      try {
-        const { initUpstreamProxy, getUpstreamProxyEnv } = await import(
-          '../upstreamproxy/upstreamproxy.js'
-        )
-        const { registerUpstreamProxyEnvFn } = await import(
-          '../services/environment/subprocessEnv.js'
-        )
-        registerUpstreamProxyEnvFn(getUpstreamProxyEnv)
-        await initUpstreamProxy()
-      } catch (err) {
-        log(
-          `[init] upstreamproxy init failed: ${err instanceof Error ? err.message : String(err)}; continuing without proxy`,
-          { level: 'warn' },
-        )
-      }
-    }
-
     // 设置 git-bash（如适用）
     setShellIfWindows()
 

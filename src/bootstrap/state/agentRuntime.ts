@@ -9,11 +9,3 @@ export function getMainThreadAgentType(): string | undefined {
 export function setMainThreadAgentType(agentType: string | undefined): void {
   STATE.mainThreadAgentType = agentType
 }
-
-export function getIsRemoteMode(): boolean {
-  return STATE.isRemoteMode
-}
-
-export function setIsRemoteMode(value: boolean): void {
-  STATE.isRemoteMode = value
-}

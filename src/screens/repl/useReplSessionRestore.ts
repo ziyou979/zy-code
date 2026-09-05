@@ -33,7 +33,6 @@ import {
 } from '../../services/session-storage/transcript.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import type { ReplStoreInstance } from '../../state/replStore.js'
-import { restoreRemoteAgentTasks } from '../../tasks/remote-agent-task/RemoteAgentTask.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { ResumeEntrypoint } from '../../commands/types.js'
 import { asSessionId } from '../../types/ids.js'
@@ -219,11 +218,6 @@ export function useReplSessionRestore({
           exitRestoredWorktree()
           restoreWorktreeForResume(log.worktreeSession)
           adoptResumedSessionFile()
-          void restoreRemoteAgentTasks({
-            abortController: new AbortController(),
-            getAppState: () => store.getState(),
-            setAppState,
-          })
         } else {
           const ws = getCurrentWorktreeSession()
           if (ws) {
@@ -285,11 +279,6 @@ export function useReplSessionRestore({
   useEffect(() => {
     if (initialMessages && initialMessages.length > 0) {
       restoreReadFileState(initialMessages, getOriginalCwd())
-      void restoreRemoteAgentTasks({
-        abortController: new AbortController(),
-        getAppState: () => store.getState(),
-        setAppState,
-      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMessages?.length, store.getState, setAppState, restoreReadFileState, initialMessages])

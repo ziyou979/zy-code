@@ -55,6 +55,24 @@ type KeybindingContextName = (typeof KEYBINDING_CONTEXTS)[number]
 /** 快捷键 action 名称的字符串类型，例如 `app:toggleTranscript`。 */
 type KeybindingAction = string
 
+/** 检查未知值是否为快捷键配置块。 */
+export function isKeybindingBlock(value: unknown): value is KeybindingBlock {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+  const block = value as Record<string, unknown>
+  return (
+    typeof block.context === 'string' &&
+    typeof block.bindings === 'object' &&
+    block.bindings !== null
+  )
+}
+
+/** 检查未知值是否为快捷键配置块数组。 */
+export function isKeybindingBlockArray(value: unknown): value is KeybindingBlock[] {
+  return Array.isArray(value) && value.every(isKeybindingBlock)
+}
+
 export type {
   Chord,
   KeybindingAction,

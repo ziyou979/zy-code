@@ -3,10 +3,14 @@ import { tSync } from '../i18n/index.js'
 import { Box, Text } from '../ink/index.js'
 import { setAuthConfigConnection } from '../services/auth/authConfig.js'
 import { normalizeApiKeyForConfig } from '../services/auth/authPortable.js'
-import { saveGlobalConfig } from '../services/config/config.js'
-import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
-import { updateSettingsForSource } from '../services/settings/settings.js'
-import type { SettingsJson } from '../services/settings/types.js'
+import { approveApiKeyFingerprint } from '../services/config/config.js'
+import {
+  getDefaultBaseUrl,
+  getDefaultBaseUrlForFormat,
+  getSupportedFormats,
+  PROVIDER_REGISTRY,
+  type ProviderEntry,
+} from '../services/model/providerRegistry.js'
 import { Select } from './CustomSelect/select.js'
 
 export type ApiKeyProvider = (typeof PROVIDER_REGISTRY)[number]['id']
@@ -18,28 +22,28 @@ interface PlatformConfig {
   description: string
   apiKeyLabel: string
   baseUrlHint?: string
-  defaultBaseUrls?: {
-    'openai-chat'?: string
-    'openai-responses'?: string
-    anthropic?: string
-    google?: string
-  }
+  entry?: ProviderEntry
 }
 
 /** 每次渲染时重新读取翻译，确保引导过程中切换语言后文案立即更新。 */
 function getPlatforms(): PlatformConfig[] {
-  return PROVIDER_REGISTRY.filter((entry) => entry.showInOnboarding !== false).map((entry) => ({
-    id: entry.id,
-    provider: entry.id,
-    label: tSync(`onboarding.platform.${entry.id}`),
-    description: tSync(`onboarding.platform.${entry.id}Desc`),
-    apiKeyLabel:
-      entry.id === 'local'
-        ? tSync('onboarding.platform.localApiKey')
-        : (entry.apiKeyLabel ?? tSync('onboarding.defaultApiKeyLabel')),
-    baseUrlHint: entry.baseUrlHint,
-    defaultBaseUrls: entry.defaultBaseUrls,
-  }))
+  return (
+    PROVIDER_REGISTRY.filter((entry) => entry.showInOnboarding !== false)
+      .map((entry) => ({
+        id: entry.id,
+        provider: entry.id,
+        label: tSync(`onboarding.platform.${entry.id}`),
+        description: tSync(`onboarding.platform.${entry.id}Desc`),
+        apiKeyLabel:
+          entry.id === 'local'
+            ? tSync('onboarding.platform.localApiKey')
+            : (entry.apiKeyLabel ?? tSync('onboarding.defaultApiKeyLabel')),
+        baseUrlHint: entry.baseUrlHint,
+        entry,
+      }))
+      // 注册表顺序是按接入时间排列的，列表展示按本地化名称的字母序更易查找。
+      .sort((a, b) => a.label.localeCompare(b.label))
+  )
 }
 
 function saveApiKeyConnection(platformId: string, apiKey: string): ApiKeyProvider {
@@ -49,28 +53,16 @@ function saveApiKeyConnection(platformId: string, apiKey: string): ApiKeyProvide
 
   let baseUrl: string | undefined
   let apiFormat: 'anthropic' | 'openai-chat' | 'openai-responses' | 'google' | undefined
-  if (platform?.defaultBaseUrls) {
-    const entry = PROVIDER_REGISTRY.find((candidate) => candidate.id === platform.provider)
-    const primaryFormat = (entry?.supportedFormats ?? (['anthropic'] as const))[0]
-    apiFormat = primaryFormat
-    baseUrl =
-      (primaryFormat ? platform.defaultBaseUrls[primaryFormat] : undefined) ??
-      platform.defaultBaseUrls['openai-chat'] ??
-      platform.defaultBaseUrls.google ??
-      platform.defaultBaseUrls.anthropic
+  const entry = platform?.entry
+  if (entry && entry.formatEndpoints.some(({ baseUrl }) => baseUrl)) {
+    // 首位声明的格式即默认格式；端点缺失时按统一回落规则取其他格式端点
+    apiFormat = getSupportedFormats(entry)[0]
+    baseUrl = getDefaultBaseUrl(entry, apiFormat) ?? getDefaultBaseUrlForFormat(entry, apiFormat)
   }
 
-  saveGlobalConfig((current) => ({
-    ...current,
-    apiKeyResponses: {
-      ...current.apiKeyResponses,
-      approved: [...(current.apiKeyResponses?.approved ?? []), normalizedKey],
-    },
-  }))
+  approveApiKeyFingerprint(normalizedKey)
   setAuthConfigConnection(provider, { provider, baseUrl, apiFormat, apiKey })
-  updateSettingsForSource('userSettings', {
-    provider: provider as SettingsJson['provider'],
-  })
+  // 此步骤只保存连接；完整 onboarding 会在模型选择完成后把连接 id 写入模型引用。
   return provider
 }
 

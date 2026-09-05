@@ -1,7 +1,6 @@
 import { feature } from 'bun:bundle'
 import { useEffect, useRef } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useAppState } from '../../state/AppState.js'
 import type { PermissionMode } from '../../services/permissions/permissionMode.js'
 import {
@@ -27,9 +26,6 @@ export function useAutoModeUnavailableNotification(): void {
     prevModeRef.current = mode
 
     if (!true) {
-      return
-    }
-    if (getIsRemoteMode()) {
       return
     }
     if (shownRef.current) {

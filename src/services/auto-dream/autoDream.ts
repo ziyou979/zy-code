@@ -24,7 +24,6 @@ import { getProjectDir } from '../sessionStorage.js'
 import {
   getOriginalCwd,
   getKairosActive,
-  getIsRemoteMode,
   getSessionId,
 } from '../../bootstrap/runtime/runtimeContext.js'
 import { createAutoMemCanUseTool } from '../extract-memories/extractMemories.js'
@@ -86,9 +85,6 @@ function getConfig(): AutoDreamConfig {
 function isGateOpen(): boolean {
   if (getKairosActive()) {
     return false // KAIROS mode uses disk-skill dream
-  }
-  if (getIsRemoteMode()) {
-    return false
   }
   if (!isAutoMemoryEnabled()) {
     return false

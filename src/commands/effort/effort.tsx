@@ -8,6 +8,7 @@ import {
 import { getMainLoopModel } from '../../services/model/model.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
+import { COMMON_HELP_ARGS } from '../../constants/xml.js'
 import {
   type EffortLevel,
   getDisplayedEffortLevel,
@@ -20,7 +21,6 @@ import {
 import { updateSettingsForSource } from '../../services/settings/settings.js'
 import { EffortPicker } from './effortPicker.js'
 
-const COMMON_HELP_ARGS = ['help', '-h', '--help']
 type EffortCommandResult = {
   message: string
   effortUpdate?: {

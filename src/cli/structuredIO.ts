@@ -37,7 +37,6 @@ import { normalizeControlMessageKeys } from '../services/messages/controlMessage
 import {
   notifySessionStateChanged,
   type RequiresActionDetails,
-  type SessionExternalMetadata,
 } from '../services/session-state/sessionState.js'
 import { jsonParse } from '../services/infra/slowOperations.js'
 import { Stream } from '../utils/stream.js'
@@ -117,9 +116,6 @@ export class StructuredIO {
   readonly structuredInput: AsyncGenerator<StdinMessage | WireMessage>
   private readonly pendingRequests = new Map<string, PendingRequest<unknown>>()
 
-  // worker 启动时读回的 CCR external_metadata；transport 未恢复时为 null。由 RemoteIO 赋值。
-  restoredWorkerState: Promise<SessionExternalMetadata | null> = Promise.resolve(null)
-
   private inputClosed = false
   private unexpectedResponseCallback?: (response: WireControlResponse) => Promise<void>
 
@@ -157,16 +153,6 @@ export class StructuredIO {
         }
       }
     }
-  }
-
-  /** flush 待处理的内部事件。非远程 IO 不操作，由 RemoteIO 覆盖。 */
-  flushInternalEvents(): Promise<void> {
-    return Promise.resolve()
-  }
-
-  /** 内部事件队列深度。由 RemoteIO 覆盖，其他情况为零。 */
-  get internalEventsPending(): number {
-    return 0
   }
 
   /**

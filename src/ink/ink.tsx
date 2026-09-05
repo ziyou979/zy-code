@@ -854,7 +854,11 @@ export default class Ink {
       DECSTBM_FAST_PATH_SUPPORTED,
       this.altScreenActive ? ALT_SCREEN_ANCHOR_CURSOR : undefined,
       this.usesWideCellRenderAnchor &&
-        canAnchorWideCellsForFrame(layoutShifted, this.altScreenActive)
+        canAnchorWideCellsForFrame(
+          layoutShifted,
+          this.altScreenActive,
+          this.usesJediTermLayoutQuirks,
+        )
         ? layoutShifted && this.usesJediTermLayoutQuirks && this.altScreenActive
           ? JEDITERM_LAYOUT_SHIFT_QUIRKS
           : WIDE_CELL_RENDER_QUIRKS

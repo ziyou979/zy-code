@@ -75,7 +75,7 @@ interface OpenAICompat {
 
 ### 现状
 
-zy-code 有 `AnthropicProviderAdapter` 和 `OpenAIProviderAdapter` 两个 adapter。26 个 provider 全部通过 `isOpenAIProvider()` 二选一。双格式 provider（dashscope/zhipu/kimi 等）通过 `settings.apiFormat` 切换。
+zy-code 有 `AnthropicProviderAdapter` 和 `OpenAIProviderAdapter` 两个 adapter。26 个 provider 全部通过 `isOpenAIProvider()` 二选一。双格式 provider（dashscope/zhipu/kimi 等）通过 auth.json 命名连接的 `apiFormat` 切换。
 
 声明式 compat 层已消除了 `conversions/openai.ts` 中的 provider 条件分支，但 `llmOrchestrator.ts` 中仍有 5 处 provider 名称判断：
 

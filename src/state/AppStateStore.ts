@@ -1,6 +1,5 @@
 import type { Notification } from 'src/context/notifications.js'
 import type { TodoList } from 'src/services/todo/types.js'
-import type { WirePermissionCallbacks } from '../bridge/bridgePermissionCallbacks.js'
 import type { Command } from '../commands/index.js'
 import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler.js'
 import type { MCPServerConnection, ServerResource } from '../services/mcp/types.js'
@@ -35,7 +34,7 @@ import { createTaskSlice } from './slices/taskSlice.js'
 import { createUiSlice } from './slices/uiSlice.js'
 import { IDLE_SPECULATION_STATE, type SpeculationState } from './speculationState.js'
 
-export type FooterItem = 'tasks' | 'tmux' | 'bagel' | 'teams' | 'bridge'
+export type FooterItem = 'tasks' | 'tmux' | 'bagel' | 'teams'
 
 export type AppState = DeepImmutable<{
   settings: SettingsJson
@@ -62,42 +61,6 @@ export type AppState = DeepImmutable<{
   // 单一事实来源 - 在 main.tsx 中于 option 变更之前计算一次，
   // 消费者读取此值而非重新调用 isAssistantMode()。
   kairosEnabled: boolean
-  // --remote 模式的远程会话 URL（在 footer 指示器中显示）
-  remoteSessionUrl: string | undefined
-  // 远程会话 WS 状态（`zy assistant` 查看器）。'connected' 表示
-  // 实时事件流已打开；'reconnecting' = 临时 WS 断开，正在进行退避重试；
-  // 'disconnected' = 永久关闭或重试次数已耗尽。
-  remoteConnectionStatus: 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
-  // `zy assistant`：运行在远程守护进程子进程中的后台任务
-  //（Agent 调用、teammates、workflows）数量。通过 WS 上的
-  // system/task_started 和 system/task_notification 事件驱动。
-  // 本地 AppState.tasks 在查看器模式下始终为空 —— 任务位于不同的进程中。
-  remoteBackgroundTaskCount: number
-  // 常开 bridge：期望状态（由 /config 或 footer 切换控制）
-  replBridgeEnabled: boolean
-  // 常开 bridge：通过 /remote-control 命令激活时为 true，由配置驱动时为 false
-  replWireExplicit: boolean
-  // 仅出站模式：将事件转发到 CCR 但拒绝入站提示/控制
-  replBridgeOutboundOnly: boolean
-  // 常开 bridge：环境已注册 + 会话已创建（= "就绪"）
-  replWireConnected: boolean
-  // 常开 bridge：入站 WebSocket 已打开（= "已连接" - 用户在 zy.ai 上）
-  replWireSessionActive: boolean
-  // 常开 bridge：轮询循环处于错误退避状态（= "重新连接中"）
-  replWireReconnecting: boolean
-  // 常开 bridge：就绪状态的连接 URL（?bridge=envId）
-  replWireConnectUrl: string | undefined
-  // 常开 bridge：zy.ai 上的会话 URL（连接后设置）
-  replWireSessionUrl: string | undefined
-  // 常开 bridge：用于调试的 ID（在 --verbose 时在对话框中显示）
-  replWireEnvironmentId: string | undefined
-  replWireSessionId: string | undefined
-  // 常开 bridge：连接失败时的错误消息（在 BridgeDialog 中显示）
-  replWireError: string | undefined
-  // 常开 bridge：通过 `/remote-control <name>` 设置的会话名称（用作会话标题）
-  replWireInitialName: string | undefined
-  // 常开 bridge：首次远程对话框待处理（由 /remote-control 命令设置）
-  showRemoteCallout: boolean
 }> & {
   // 统一 task 状态 - 从 DeepImmutable 中排除，因为 TaskState 包含函数类型
   tasks: { [taskId: string]: TaskState }
@@ -374,24 +337,6 @@ export type AppState = DeepImmutable<{
   activeOverlays: ReadonlySet<string>
   // 投入程度值
   effortValue?: EffortLevel
-  // 在 launchUltraplan 中同步设置，在 detached 流程开始之前。
-  // 在 ultraplanSessionUrl 被 teleportToRemote 设置之前的约 5 秒窗口内
-  // 防止重复启动。一旦 URL 设置完成或失败，由 launchDetached 清除。
-  ultraplanLaunching?: boolean
-  // 活跃的 ultraplan CCR 会话 URL。在 RemoteAgentTask 运行时设置；
-  // 为真时禁用关键字触发 + 彩虹效果。轮询到达终止状态时清除。
-  ultraplanSessionUrl?: string
-  // 已批准等待用户选择的 ultraplan（在此处实现而非新建会话）。
-  // 由 RemoteAgentTask 轮询在批准时设置；由 UltraplanChoiceDialog 清除。
-  ultraplanPendingChoice?: { plan: string; sessionId: string; taskId: string }
-  // 启动前权限对话框。由 /ultraplan（斜杠或关键字）设置；
-  // 由 UltraplanLaunchDialog 在用户选择后清除。
-  ultraplanLaunchPending?: { blurb: string }
-  // 远程 harness 侧：通过 set_permission_mode control_request 设置，
-  // 由 onChangeAppState 推送到 CCR external_metadata.is_ultraplan_mode。
-  isUltraplanMode?: boolean
-  // 常开 bridge：双向权限检查的权限回调
-  replWirePermissionCallbacks?: WirePermissionCallbacks
 }
 
 export type AppStateStore = Store<AppState>
@@ -415,22 +360,6 @@ export function getDefaultAppState(): AppState {
     mainLoopModelForSession: null,
     ...createUiSlice(),
     kairosEnabled: false,
-    remoteSessionUrl: undefined,
-    remoteConnectionStatus: 'connecting',
-    remoteBackgroundTaskCount: 0,
-    replBridgeEnabled: false,
-    replWireExplicit: false,
-    replBridgeOutboundOnly: false,
-    replWireConnected: false,
-    replWireSessionActive: false,
-    replWireReconnecting: false,
-    replWireConnectUrl: undefined,
-    replWireSessionUrl: undefined,
-    replWireEnvironmentId: undefined,
-    replWireSessionId: undefined,
-    replWireError: undefined,
-    replWireInitialName: undefined,
-    showRemoteCallout: false,
     ...createPermissionSlice(initialMode),
     agent: undefined,
     agentDefinitions: { activeAgents: [], allAgents: [] },

@@ -6,12 +6,10 @@ import type { LocalAgentTaskState } from './local-agent-task/LocalAgentTask.js'
 import type { LocalShellTaskState } from './local-shell-task/guards.js'
 import type { LocalWorkflowTaskState } from './local-workflow-task/localWorkflowTask.js'
 import type { MonitorMcpTaskState } from './monitor-mcp-task/monitorMcpTask.js'
-import type { RemoteAgentTaskState } from './remote-agent-task/RemoteAgentTask.js'
 
 export type TaskState =
   | LocalShellTaskState
   | LocalAgentTaskState
-  | RemoteAgentTaskState
   | InProcessTeammateTaskState
   | LocalWorkflowTaskState
   | MonitorMcpTaskState
@@ -21,7 +19,6 @@ export type TaskState =
 export type BackgroundTaskState =
   | LocalShellTaskState
   | LocalAgentTaskState
-  | RemoteAgentTaskState
   | InProcessTeammateTaskState
   | LocalWorkflowTaskState
   | MonitorMcpTaskState

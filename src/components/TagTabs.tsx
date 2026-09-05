@@ -2,7 +2,7 @@ import React from 'react'
 import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text } from '../ink/index.js'
-import { truncateToWidth } from '../utils/format.js'
+import { truncateToWidth } from '../utils/truncate.js'
 
 // 宽度计算常量——来源于实际渲染的字符串
 const ALL_TAB_LABEL = 'All'

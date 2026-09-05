@@ -38,7 +38,6 @@ cli/assembly/
   ├─ resumedSession.ts          恢复历史会话
   ├─ directConnectMode.ts       远程 server 直连
   ├─ sshMode.ts                 SSH 隧道会话
-  └─ remoteSession.ts           远程/桥接会话
       │
       ▼
 replLauncher.tsx → screens/REPL.tsx (1338 行)
@@ -50,12 +49,10 @@ replLauncher.tsx → screens/REPL.tsx (1338 行)
 |------|----------|
 | `KAIROS` / `KAIROS_BRIEF` / `KAIROS_CHANNELS` | Kairos 功能族 |
 | `COORDINATOR_MODE` | 多 worker 编排 |
-| `BRIDGE_MODE` | 远程桥接会话 |
 | `DIRECT_CONNECT` | 远程 server 直连 |
 | `SSH_REMOTE` | SSH 远程 |
 | `BG_SESSIONS` | 后台会话 |
 | `PROACTIVE` | 主动触发 |
-| `CCR_MIRROR` | CCR 镜像 |
 | `WEB_BROWSER_TOOL` | 浏览器工具 |
 | `CHICAGO_MCP` / `UDS_INBOX` | MCP 相关 |
 | `AGENT_MEMORY_SNAPSHOT` | Agent 记忆快照 |
@@ -108,7 +105,7 @@ tools/<ToolName>/               三文件模式
   └─ prompt.ts                  LLM 提示词
       │
       ├─ 权限校验   ← services/policyLimits/
-      ├─ 执行       ← services/sandbox/ | shell-eval/ | bridge/
+      ├─ 执行       ← services/sandbox/ | shell-eval/
       │
       ▼
   tool_result → 进入下一轮 queryLoop
@@ -158,7 +155,6 @@ bootstrap/state/
 | 外部工具协议接入 | MCP Server | 配 `mcpConfig` + `services/mcp/` |
 | 后台异步任务 | Background Job | `services/background/` 或 `services/jobs/` |
 | 多 worker 编排 | Coordinator | `coordinator/` (COORDINATOR_MODE) |
-| 远程会话 | Bridge | `bridge/` (BRIDGE_MODE) |
 | 快捷键/按键行为 | Keybinding | `keybindings/` |
 | 主动触发行为 | Proactive | `proactive/` (PROACTIVE flag) |
 
@@ -168,7 +164,7 @@ bootstrap/state/
 
 ```
 src/
-├─ cli/                   CLI 框架：bootstrap / commands / handlers / options / transports / assembly
+├─ cli/                   CLI 框架：bootstrap / commands / handlers / options / assembly
 ├─ screens/               顶层页面（REPL.tsx、Doctor.tsx）
 ├─ components/            React (Ink) 组件
 ├─ hooks/                 React hooks
@@ -192,7 +188,6 @@ src/
 ├─ state/                 React 共享状态 (AppStateStore)
 │
 ├─ shell-eval/            Shell 解析与执行（bash / powershell / shared）
-├─ bridge/                远程桥接（transport、JWT、webhook）
 ├─ coordinator/           多 worker 编排
 ├─ proactive/             主动触发
 ├─ memdir/                记忆目录（查找/扫描/团队记忆）
@@ -202,14 +197,13 @@ src/
 │   ├─ LocalAgentTask/
 │   ├─ LocalShellTask/
 │   ├─ LocalWorkflowTask/
-│   ├─ RemoteAgentTask/
 │   ├─ InProcessTeammateTask/
 │   ├─ LocalMainSessionTask.ts
 │   └─ MonitorMcpTask/
 │
 ├─ daemon/                后台守护进程
 ├─ server/                内置服务器
-├─ remote/                远程连接
+├─ remote/                SSH/直连会话的消息适配与权限桥
 ├─ ssh/                   SSH 支持
 ├─ assistant/             助手会话历史
 ├─ goal/                  目标驱动工作流
@@ -260,7 +254,6 @@ src/
 | | `background/` | 后台任务 |
 | | `jobs/` | 作业管理 |
 | | `workflow/` | 工作流（reminder/keyword） |
-| | `ultraplan/` | 复杂任务编排 |
 | | `autoDream/` | 自动 Dream 触发 |
 | **UI** | `suggestions/` | 补全/推荐 |
 | | `tips/` | 使用技巧 |
@@ -270,7 +263,6 @@ src/
 | **集成** | `github/` | GitHub |
 | | `claudeInChrome/` | Chrome 扩展 |
 | | `deepLink/` | 深度链接 |
-| | `teleport/` | Teleport |
 | | `dxt/` | DXT 扩展 |
 | **其他** | `oauth/` | 认证流程 |
 | | `plugins/` | 插件系统 |

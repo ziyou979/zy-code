@@ -102,10 +102,6 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
     store,
     setAppState,
     tasks,
-    replWireConnected,
-    replWireExplicit,
-    replWireReconnecting,
-    bridgeFooterVisible,
     hasTungstenSession,
     tmuxFooterVisible,
     bagelFooterVisible,
@@ -136,8 +132,6 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
     pendingSpaceAfterPillRef,
     showTeamsDialog,
     setShowTeamsDialog,
-    showBridgeDialog,
-    setShowBridgeDialog,
     teammateFooterIndex,
     setTeammateFooterIndex,
     coordinatorTaskIndex,
@@ -177,7 +171,6 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
     tmuxSelected,
     _bagelSelected,
     teamsSelected,
-    bridgeSelected,
     selectFooterItem,
     navigateFooter,
     promptSuggestion,
@@ -186,10 +179,6 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
     markShown,
     displayedValue,
     thinkTriggers,
-    ultraplanSessionUrl,
-    ultraplanLaunching,
-    ultraplanTriggers,
-    ultrareviewTriggers,
     btwTriggers,
     slashCommandTriggers,
     tokenBudgetTriggers,
@@ -349,10 +338,6 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
             break
           case 'teams':
             setShowTeamsDialog(true)
-            selectFooterItem(null)
-            break
-          case 'bridge':
-            setShowBridgeDialog(true)
             selectFooterItem(null)
             break
         }

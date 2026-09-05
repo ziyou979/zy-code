@@ -106,7 +106,6 @@ export async function initializeRootRuntime(
     sessionId,
     includeHookEvents,
     includePartialMessages,
-    fileDownloadPromise,
     agentsJson,
     agentCli,
     outputFormat,
@@ -125,15 +124,7 @@ export async function initializeRootRuntime(
     worktreePRNumber,
     tmuxEnabled,
     storedTeammateOpts,
-    sdkUrl,
     effectiveIncludePartialMessages,
-    teleport,
-    remoteOption,
-    remote,
-    remoteControlOption,
-    remoteControl,
-    remoteControlName,
-    fileSpecs,
     isNonInteractiveSession,
     systemPrompt,
     appendSystemPrompt,
@@ -368,6 +359,7 @@ export async function initializeRootRuntime(
   // 此 await 替换了启动路径中已有的阻塞 existsSync/statSync 调用。
   // 挂钟时间不变；我们只是在 fs I/O 期间让出事件循环
   // 而不是阻塞它。参见 #19661。
+  logForDebugging('[STARTUP] Initializing tool permissions...')
   const initResult = await initializeToolPermissionContext({
     allowedToolsCli: allowedTools,
     disallowedToolsCli: disallowedTools,
@@ -376,6 +368,7 @@ export async function initializeRootRuntime(
     allowDangerouslySkipPermissions,
     addDirs: addDir,
   })
+  logForDebugging('[STARTUP] Tool permissions initialized')
 
   let toolPermissionContext = initResult.toolPermissionContext
 
@@ -465,17 +458,6 @@ export async function initializeRootRuntime(
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.error(`Error: --input-format=stream-json requires output-format=stream-json.`)
     process.exit(1)
-  }
-
-  // 验证 sdkUrl 仅与适当的格式一起使用（格式在上面自动设置）
-  if (sdkUrl) {
-    if (inputFormat !== 'stream-json' || outputFormat !== 'stream-json') {
-      // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.error(
-        `Error: --sdk-url requires both --input-format=stream-json and --output-format=stream-json.`,
-      )
-      process.exit(1)
-    }
   }
 
   // 验证 replayUserMessages 仅与 stream-json 格式一起使用

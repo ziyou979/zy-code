@@ -100,7 +100,6 @@ export interface RootActionOptions {
   taskBudget?: number
 
   // 远程/桥接
-  sdkUrl?: string
   remote?: string | true
   remoteControl?: string | true
   rc?: string | true

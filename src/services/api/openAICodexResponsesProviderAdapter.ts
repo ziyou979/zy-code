@@ -24,7 +24,7 @@ import type {
 } from '../../types/llm.js'
 import { createDebugLog } from '../../services/infra/debug.js'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
-import { countMessagesTokensLocally } from '../tokenEstimation.js'
+import { countTokensWithAdapter } from './shared/countTokens.js'
 import { getUserAgent } from '../http/http.js'
 import { buildProxiedFetch } from '../http/proxy.js'
 import { getOpenAICodexAccountId } from '../oauth/providers/openaiCodex.js'
@@ -235,13 +235,9 @@ export class OpenAICodexResponsesProviderAdapter implements LLMAdapter {
   }
 
   async countTokens(messages: LLMMessage[], tools: ToolDefinition[]): Promise<number | null> {
-    try {
-      const model = normalizeModelStringForAPI(getMainLoopModel() ?? '')
-      return countMessagesTokensLocally(messages, tools, model)
-    } catch (error) {
+    return countTokensWithAdapter(messages, tools, (error) => {
       log(`countTokens error: ${error}`)
-      return null
-    }
+    })
   }
 
   async verifyApiKey(apiKey: string): Promise<boolean> {

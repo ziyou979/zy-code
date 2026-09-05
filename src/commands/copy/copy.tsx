@@ -11,6 +11,7 @@ import { Pane } from '../../components/design-system/Pane.js'
 import { tSync } from '../../i18n/index.js'
 import { KeyboardEvent } from '../../ink/events/keyboardEvent.js'
 import { stringWidth } from '../../ink/stringWidth.js'
+import { truncateToWidth } from '../../utils/truncate.js'
 import { setClipboard } from '../../ink/termio/osc.js'
 import { Box, Text } from '../../ink/index.js'
 import { logEvent } from '../../services/analytics/index.js'
@@ -104,23 +105,10 @@ async function copyOrWriteToFile(text: string, filename: string): Promise<string
     return tSync('copy.copiedToClipboard', { charCount, lineCount })
   }
 }
+// 使用共享的 truncateToWidth（按 grapheme 迭代，正确处理 ZWJ emoji）
 function truncateLine(text: string, maxLen: number): string {
   const firstLine = text.split('\n')[0] ?? ''
-  if (stringWidth(firstLine) <= maxLen) {
-    return firstLine
-  }
-  let result = ''
-  let width = 0
-  const targetWidth = maxLen - 1
-  for (const char of firstLine) {
-    const charWidth = stringWidth(char)
-    if (width + charWidth > targetWidth) {
-      break
-    }
-    result += char
-    width += charWidth
-  }
-  return `${result}\u2026`
+  return truncateToWidth(firstLine, maxLen)
 }
 type PickerProps = {
   fullText: string

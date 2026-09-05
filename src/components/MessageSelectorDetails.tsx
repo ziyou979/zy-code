@@ -9,7 +9,7 @@ import type { ContentBlock, TextBlock } from '../types/llm.js'
 import type { UserMessage } from '../types/message.js'
 import { stripDisplayTags } from '../services/messages/xmlTagUtils.js'
 import { extractTag, isEmptyMessageText } from '../services/messages/./predicates.js'
-import { truncate } from '../utils/format.js'
+import { truncate } from '../utils/truncate.js'
 import type { RestoreOption } from './messageSelectorUtils.js'
 import { isSummarizeOption } from './messageSelectorUtils.js'
 

@@ -37,7 +37,6 @@ import {
 } from '../../services/file-persistence/fileRead.js'
 import { formatFileSize } from '../../utils/format.js'
 import { getFsImplementation } from '../../services/infra/fsOperations.js'
-import { fetchSingleFileGitDiff, type ToolUseDiff } from '../../services/git/gitDiff.js'
 import { logError } from '../../services/infra/log.js'
 import { expandPath } from '../../utils/path.js'
 import {
@@ -497,23 +496,6 @@ export const FileEditTool = buildTool({
       replaceAll: replace_all,
     })
 
-    let gitDiff: ToolUseDiff | undefined
-    if (
-      isEnvTruthy(process.env.ZY_CODE_REMOTE) &&
-      getFeatureValue_CACHED_MAY_BE_STALE('zy_remote_git_diff', false)
-    ) {
-      const startTime = Date.now()
-      const diff = await fetchSingleFileGitDiff(absoluteFilePath)
-      if (diff) {
-        gitDiff = diff
-      }
-      logEvent('zy_tool_use_diff_computed', {
-        isEditTool: true,
-        durationMs: Date.now() - startTime,
-        hasDiff: !!diff,
-      })
-    }
-
     // 8. Yield result
     const data = {
       filePath: file_path,
@@ -523,7 +505,6 @@ export const FileEditTool = buildTool({
       structuredPatch: patch,
       userModified: userModified ?? false,
       replaceAll: replace_all,
-      ...(gitDiff && { gitDiff }),
     }
     return {
       data,

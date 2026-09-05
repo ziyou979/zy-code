@@ -5,7 +5,6 @@ import type { RefObject } from 'react'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { every } from 'src/utils/set.js'
-import { getIsRemoteMode } from '../bootstrap/runtime/runtimeContext.js'
 import type { Command } from '../commands/index.js'
 import { BLACK_CIRCLE } from '../constants/figures.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
@@ -816,9 +815,7 @@ const MessagesImpl = ({
   const { progress } = useTerminalNotification()
   const prevProgressState = useRef<string | null>(null)
   const progressEnabled =
-    getGlobalConfig().terminalProgressBarEnabled &&
-    !getIsRemoteMode() &&
-    !(proactiveModule?.isProactiveActive() ?? false)
+    getGlobalConfig().terminalProgressBarEnabled && !(proactiveModule?.isProactiveActive() ?? false)
   useEffect(() => {
     const state = progressEnabled ? (hasToolsInProgress ? 'indeterminate' : 'completed') : null
     if (prevProgressState.current === state) {

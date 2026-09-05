@@ -84,9 +84,6 @@ export {
 export {
   resetProjectFlushStateForTesting,
   resetProjectForTesting,
-  setInternalEventReader,
-  setInternalEventWriter,
-  setRemoteIngressUrlForTesting,
   setSessionFileForTesting,
 } from './session-storage/project.js'
 export {
@@ -123,8 +120,6 @@ export {
   adoptResumedSessionFile,
   appendEntryToFile,
   flushSessionStorage,
-  hydrateFromCCRv2InternalEvents,
-  hydrateRemoteSession,
   readFileTailSync,
   recordAttributionSnapshot,
   recordContentReplacement,

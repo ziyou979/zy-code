@@ -5,7 +5,7 @@ import { generateFileSuggestions } from 'src/hooks/fileSuggestions.js'
 import type { ServerResource } from 'src/services/mcp/types.js'
 import { getAgentColor } from 'src/tools/AgentTool/agentColorManager.js'
 import type { AgentDefinition } from 'src/tools/AgentTool/loadAgentsDir.js'
-import { truncateToWidth } from 'src/utils/format.js'
+import { truncateToWidth } from 'src/utils/truncate.js'
 import { logError } from 'src/services/infra/log.js'
 import type { Theme } from 'src/services/environment/theme.js'
 

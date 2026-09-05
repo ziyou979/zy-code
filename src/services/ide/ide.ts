@@ -40,6 +40,7 @@ import { errorMessage, isFsInaccessible } from '../../utils/errors.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { checkWSLDistroMatch, WindowsToWSLConverter } from '../ide/idePathConversion.js'
 import { sleep } from '../../utils/sleep.js'
+import { isProcessRunning } from '../shell/genericProcessUtils.js'
 import { jsonParse } from '../../services/infra/slowOperations.js'
 import { installIDEExtensionForType } from './extensionInstaller.js'
 import {
@@ -48,15 +49,6 @@ import {
   isVSCodeInstalled,
   isWindsurfInstalled,
 } from './editorDiscovery.js'
-
-function isProcessRunning(pid: number): boolean {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch {
-    return false
-  }
-}
 
 // Returns a function that lazily fetches our process's ancestor PID chain,
 // caching within the closure's lifetime. Callers should scope this to a

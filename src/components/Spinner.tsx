@@ -6,7 +6,7 @@ import {
   computeGlimmerIndex,
   computeShimmerSegments,
   SHIMMER_INTERVAL_MS,
-} from '../bridge/bridgeStatusUtil.js'
+} from '../utils/textShimmer.js'
 import { feature } from 'bun:bundle'
 import { getKairosActive, getUserMsgOptIn } from '../bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
@@ -386,7 +386,6 @@ function BriefSpinner({ mode, overrideMessage }: BriefSpinnerProps) {
   const reducedMotion = settings.prefersReducedMotion ?? false
   const [randomVerb] = useState(() => tSync('common.spinnerVerb'))
   const verb = overrideMessage ?? randomVerb
-  const connStatus = useAppState((s) => s.remoteConnectionStatus)
   useEffect(() => {
     const operationId = `spinner-${mode}`
     activityManager.startCLIActivity(operationId)
@@ -395,19 +394,13 @@ function BriefSpinner({ mode, overrideMessage }: BriefSpinnerProps) {
     }
   }, [mode])
   const [, time] = useAnimationFrame(reducedMotion ? null : 120)
-  const runningCount = useAppState(
-    (s_0) => count(Object.values(s_0.tasks), isBackgroundTask) + s_0.remoteBackgroundTaskCount,
-  )
-  const showConnWarning = connStatus === 'reconnecting' || connStatus === 'disconnected'
-  const connText =
-    connStatus === 'reconnecting' ? tSync('spinner.reconnecting') : tSync('spinner.disconnected')
+  const runningCount = useAppState((s_0) => count(Object.values(s_0.tasks), isBackgroundTask))
   const dotFrame = Math.floor(time / 300) % 3
   const dots = reducedMotion ? '\u2026  ' : '.'.repeat(dotFrame + 1).padEnd(3)
   const verbWidth = stringWidth(verb)
-  const glimmerIndex =
-    reducedMotion || showConnWarning
-      ? -100
-      : computeGlimmerIndex(Math.floor(time / SHIMMER_INTERVAL_MS), verbWidth)
+  const glimmerIndex = reducedMotion
+    ? -100
+    : computeGlimmerIndex(Math.floor(time / SHIMMER_INTERVAL_MS), verbWidth)
   const { before, shimmer, after } = computeShimmerSegments(verb, glimmerIndex)
   const { columns } = useTerminalSize()
   const rightText =
@@ -416,21 +409,16 @@ function BriefSpinner({ mode, overrideMessage }: BriefSpinnerProps) {
           count: runningCount,
         })
       : ''
-  const textWidth = showConnWarning ? stringWidth(connText) : verbWidth
-  const leftWidth = textWidth + 3
+  const leftWidth = verbWidth + 3
   const pad = Math.max(1, columns - 2 - leftWidth - stringWidth(rightText))
   return (
     <Box flexDirection="row" width="100%" marginTop={1} paddingLeft={2}>
-      {showConnWarning ? (
-        <Text color="error">{connText + dots}</Text>
-      ) : (
-        <>
-          {before ? <Text dimColor={true}>{before}</Text> : null}
-          {shimmer ? <Text>{shimmer}</Text> : null}
-          {after ? <Text dimColor={true}>{after}</Text> : null}
-          <Text dimColor={true}>{dots}</Text>
-        </>
-      )}
+      <>
+        {before ? <Text dimColor={true}>{before}</Text> : null}
+        {shimmer ? <Text>{shimmer}</Text> : null}
+        {after ? <Text dimColor={true}>{after}</Text> : null}
+        <Text dimColor={true}>{dots}</Text>
+      </>
       {rightText ? (
         <>
           <Text>{' '.repeat(pad)}</Text>
@@ -446,17 +434,9 @@ function BriefSpinner({ mode, overrideMessage }: BriefSpinnerProps) {
 // 有关 Notifications 覆盖耦合，请参阅 BriefSpinner 的注释。
 
 export function BriefIdleStatus() {
-  const connStatus = useAppState((s) => s.remoteConnectionStatus)
-  const runningCount = useAppState(
-    (s_0) => count(Object.values(s_0.tasks), isBackgroundTask) + s_0.remoteBackgroundTaskCount,
-  )
+  const runningCount = useAppState((s_0) => count(Object.values(s_0.tasks), isBackgroundTask))
   const { columns } = useTerminalSize()
-  const showConnWarning = connStatus === 'reconnecting' || connStatus === 'disconnected'
-  const connText =
-    connStatus === 'reconnecting'
-      ? `${tSync('spinner.reconnecting')}\u2026`
-      : tSync('spinner.disconnected')
-  const leftText = showConnWarning ? connText : ''
+  const leftText = ''
   const rightText =
     runningCount > 0
       ? tSync('spinner.inBackground', {

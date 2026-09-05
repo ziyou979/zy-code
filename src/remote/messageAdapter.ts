@@ -28,6 +28,9 @@ import { createUserMessage } from '../services/messages/./constructors.js'
  * 此适配器负责衔接两者。
  */
 
+/** 远端/直连/SSH 会话中用户消息内容的通用形态（纯文本或 content block 数组）。 */
+export type RemoteMessageContent = string | Array<{ type: string; [key: string]: unknown }>
+
 /**
  * 将 WireAssistantMessage 转换为 AssistantMessage。
  */

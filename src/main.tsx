@@ -29,7 +29,6 @@ import {
   setClientType,
   setIsInteractive,
   setQuestionPreviewFormat,
-  setSessionSource,
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setInlinePlugins } from 'src/bootstrap/runtime/runtimeContext.js'
 import { rewriteArgv } from './cli/argvDispatch.js'
@@ -111,8 +110,7 @@ export async function main() {
   const cliArgs = process.argv.slice(2)
   const hasPrintFlag = cliArgs.includes('-p') || cliArgs.includes('--print')
   const hasInitOnlyFlag = cliArgs.includes('--init-only')
-  const hasSdkUrl = cliArgs.some((arg) => arg.startsWith('--sdk-url'))
-  const isNonInteractive = hasPrintFlag || hasInitOnlyFlag || hasSdkUrl || !process.stdout.isTTY
+  const isNonInteractive = hasPrintFlag || hasInitOnlyFlag || !process.stdout.isTTY
 
   // 停止为非交互模式捕获早期输入
   if (isNonInteractive) {
@@ -150,12 +148,6 @@ export async function main() {
       return 'zy-desktop'
     }
 
-    // 检查是否提供了会话入口令牌（表示远程会话）
-    const hasSessionIngressToken =
-      process.env.ZY_CODE_SESSION_ACCESS_TOKEN || process.env.ZY_CODE_WEBSOCKET_AUTH_FILE_DESCRIPTOR
-    if (process.env.ZY_CODE_ENTRYPOINT === 'remote' || hasSessionIngressToken) {
-      return 'remote'
-    }
     return 'cli'
   })()
   setClientType(clientType)
@@ -167,16 +159,11 @@ export async function main() {
     // Desktop 和 CCR 通过 toolConfig 传递 previewFormat；当功能被
     // 关闭时它们传递 undefined —— 不要用 markdown 覆盖它。
     clientType !== 'zy-desktop' &&
-    clientType !== 'local-agent' &&
-    clientType !== 'remote'
+    clientType !== 'local-agent'
   ) {
     setQuestionPreviewFormat('markdown')
   }
 
-  // 标记通过 `zy remote-control` 创建的会话，以便后端识别它们
-  if (process.env.ZY_CODE_ENVIRONMENT_KIND === 'bridge') {
-    setSessionSource('remote-control')
-  }
   profileCheckpoint('main_client_type_determined')
 
   // 早期解析并加载设置标志，在 init() 之前
@@ -293,7 +280,7 @@ async function run(): Promise<CommanderCommand<any, any, any>> {
   program.version(`${MACRO.VERSION} (ZY Code)`, '-v, --version', 'Output the version number')
 
   // 运行时 / feature-gate 决定是否注册的根命令选项（worktree、advisor、teammate
-  // 身份、teleport、KAIROS / BRIDGE_MODE 系等）。需要 .action 之后调用以保留原
+  // 身份、KAIROS 系等）。需要 .action 之后调用以保留原
   // 注册顺序，避免被静态选项组提前覆盖类型推断。
   applyRuntimeOptions(program)
   profileCheckpoint('run_main_options_built')
@@ -324,7 +311,7 @@ async function run(): Promise<CommanderCommand<any, any, any>> {
 
   // plugin / marketplace —— 插件命令组
   registerPluginCommands(program)
-  // agents / auto-mode / remote-control / assistant —— 自动化与桥接命令组
+  // agents / auto-mode —— 自动化命令组
   registerAutomationCommands(program)
 
   // doctor / update / install / up / rollback —— 实用命令

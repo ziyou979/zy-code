@@ -10,11 +10,7 @@ import {
   isAutoCompactEnabled,
   MANUAL_COMPACT_BUFFER_TOKENS,
 } from '../compact/autoCompact.js'
-import {
-  countMessagesTokensWithAPI,
-  countTokensViaHaikuFallback,
-  roughTokenCountEstimation,
-} from '../tokenEstimation.js'
+import { countMessagesTokensWithAPI, roughTokenCountEstimation } from '../tokenEstimation.js'
 import { estimateSkillFrontmatterTokens } from '../../skills/loadSkillsDir.js'
 import {
   findToolByName,
@@ -71,13 +67,19 @@ async function countTokensWithFallback(
   messages: LLMMessage[],
   tools: ToolDefinition[],
 ): Promise<number | null> {
+  // 第一次尝试（带 VCR）。原实现失败后走 countTokensViaHaikuFallback
+  // 再试一次 adapter——该函数与 countMessagesTokensWithAPI 逻辑相同且命名
+  // 过时（并不使用 haiku），已在 tokenEstimation 中删除。此处保留
+  // "瞬时失败重试一次" 的语义，直接再调 countMessagesTokensWithAPI：
+  // 非测试环境 VCR 透传，等价于重试 adapter；测试环境 VCR 命中缓存，
+  // 返回与首次一致的结果。
   try {
     const result = await countMessagesTokensWithAPI(messages, tools)
     if (result !== null) {
       return result
     }
     logForDebugging(
-      `countTokensWithFallback: API returned null, trying haiku fallback (${tools.length} tools)`,
+      `countTokensWithFallback: API returned null, retrying once (${tools.length} tools)`,
     )
   } catch (err) {
     logForDebugging(`countTokensWithFallback: API failed: ${errorMessage(err)}`)
@@ -85,15 +87,13 @@ async function countTokensWithFallback(
   }
 
   try {
-    const fallbackResult = await countTokensViaHaikuFallback(messages, tools)
+    const fallbackResult = await countMessagesTokensWithAPI(messages, tools)
     if (fallbackResult === null) {
-      logForDebugging(
-        `countTokensWithFallback: haiku fallback also returned null (${tools.length} tools)`,
-      )
+      logForDebugging(`countTokensWithFallback: retry also returned null (${tools.length} tools)`)
     }
     return fallbackResult
   } catch (err) {
-    logForDebugging(`countTokensWithFallback: haiku fallback failed: ${errorMessage(err)}`)
+    logForDebugging(`countTokensWithFallback: retry failed: ${errorMessage(err)}`)
     logError(err)
     return null
   }

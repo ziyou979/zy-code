@@ -73,9 +73,6 @@ if (feature('AGENT_TRIGGERS')) {
   require('../tools/ScheduleCronTool/cronListTool.js')
   require('../tools/ScheduleWakeupTool/ScheduleWakeupTool.js')
 }
-if (feature('AGENT_TRIGGERS_REMOTE')) {
-  require('../tools/RemoteTriggerTool/RemoteTriggerTool.js')
-}
 if (feature('MONITOR_TOOL')) {
   require('../tools/MonitorTool/MonitorTool.js')
 }

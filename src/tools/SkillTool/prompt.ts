@@ -15,7 +15,7 @@ import { count } from '../../utils/array.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { toError } from '../../utils/errors.js'
-import { truncate } from '../../utils/format.js'
+import { truncate } from '../../utils/truncate.js'
 import { logError } from '../../services/infra/log.js'
 
 // Skill listing gets 1% of the context window (in characters)

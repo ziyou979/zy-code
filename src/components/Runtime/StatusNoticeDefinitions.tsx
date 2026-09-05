@@ -12,11 +12,8 @@ import { relative } from 'node:path'
 import { formatNumber } from '../../utils/format.js'
 import { getApiKeyWithSource, getAuthTokenSource } from '../../services/auth/auth.js'
 import { getGlobalConfig } from '../../services/config/config.js'
-import {
-  getAPIProvider,
-  isAnthropicProvider,
-  isOpenAIProvider,
-} from 'src/services/model/providers.js'
+import { isAnthropicProvider } from 'src/services/model/providers.js'
+import { getMainLoopModel, getProviderForModel } from 'src/services/model/model.js'
 import type { AgentDefinitionsResult } from '../../tools/AgentTool/loadAgentsDir.js'
 import {
   getAgentDescriptionsTotalTokens,
@@ -90,8 +87,10 @@ const apiKeyConflictNotice: StatusNoticeDefinition = {
   id: 'api-key-conflict',
   type: 'warning',
   isActive: () => {
-    // Anthropic 直连平台才涉及 Anthropic Console key 冲突；OpenAI / Google 等平台忽略
-    if (!isAnthropicProvider(getAPIProvider())) {
+    // 此通知专门处理旧 primaryApiKey（Anthropic Console key）残留；其他 provider
+    // 的 API key / OAuth 都按命名连接存储，不共享该旧字段。
+    const model = getMainLoopModel()
+    if (!isAnthropicProvider(getProviderForModel(model), model)) {
       return false
     }
 
@@ -124,8 +123,10 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
   id: 'both-auth-methods',
   type: 'warning',
   isActive: () => {
-    // Anthropic 直连平台才涉及 OAuth / API key 双认证冲突；OpenAI / Google 等平台忽略
-    if (!isAnthropicProvider(getAPIProvider())) {
+    // 此通知检查旧 Anthropic 认证来源之间的冲突。xAI、OpenAI Codex、GitHub Copilot
+    // 等 OAuth 已按命名连接隔离，不应套用旧的全局 token 冲突规则。
+    const model = getMainLoopModel()
+    if (!isAnthropicProvider(getProviderForModel(model), model)) {
       return false
     }
 

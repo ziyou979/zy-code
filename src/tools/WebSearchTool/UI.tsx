@@ -5,7 +5,7 @@ import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
 import type { ProgressMessage } from '../../types/message.js'
 import type { WebSearchProgress } from '../../types/tools.js'
-import { truncate } from '../../utils/format.js'
+import { truncate } from '../../utils/truncate.js'
 import type { Output, SearchResult } from './WebSearchTool.js'
 
 function getSearchSummary(results: (SearchResult | string | null | undefined)[]): {

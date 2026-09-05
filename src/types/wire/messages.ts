@@ -306,22 +306,6 @@ export interface WireAuthStatusMessage {
   session_id: string
 }
 
-export interface WireFilesPersistedEvent {
-  type: 'system'
-  subtype: 'files_persisted'
-  files: Array<{
-    filename: string
-    file_id: string
-  }>
-  failed: Array<{
-    filename: string
-    error: string
-  }>
-  processed_at: string
-  uuid: string
-  session_id: string
-}
-
 export interface WireTaskNotificationMessage {
   type: 'system'
   subtype: 'task_notification'
@@ -442,7 +426,6 @@ export type WireMessage =
   | WireTaskStartedMessage
   | WireTaskProgressMessage
   | WireSessionStateChangedMessage
-  | WireFilesPersistedEvent
   | WireToolUseSummaryMessage
   | WireRateLimitEvent
   | WireElicitationCompleteMessage

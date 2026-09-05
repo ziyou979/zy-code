@@ -8,7 +8,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { MODEL_ALIASES } from '../../services/model/aliases.js'
+import { isKnownModelAlias } from '../../services/model/aliases.js'
 import {
   getDefaultMainLoopModelSetting,
   renderDefaultModelSetting,
@@ -19,6 +19,7 @@ import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandCall, LocalJSXCommandOnDone } from '../types.js'
 import { resolveEffortForModelSetting } from '../../services/effort/effort.js'
 import { shouldEnableThinkingByDefault } from '../../services/messages/thinking.js'
+import { renderModelLabel } from './performModelChange.js'
 
 function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
   const mainLoopModel = useAppState((s) => s.mainLoopModel)
@@ -98,7 +99,7 @@ function SetModelAndClose({
       }
 
       // Skip validation for known aliases - they're predefined and should work
-      if (isKnownAlias(model)) {
+      if (isKnownModelAlias(model)) {
         setModel(model)
         return
       }
@@ -139,9 +140,6 @@ function SetModelAndClose({
     void handleModelChange()
   }, [model, onDone, setAppState])
   return null
-}
-function isKnownAlias(model: string): boolean {
-  return (MODEL_ALIASES as readonly string[]).includes(model.toLowerCase().trim())
 }
 function ShowModelAndClose(props: { onDone: LocalJSXCommandOnDone }) {
   const { onDone } = props
@@ -184,8 +182,4 @@ export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
     return <SetModelAndClose args={args} onDone={onDone} />
   }
   return <ModelPickerWrapper onDone={onDone} />
-}
-function renderModelLabel(model: string | null): string {
-  const rendered = renderDefaultModelSetting((model ?? getDefaultMainLoopModelSetting())!)
-  return model === null ? `${rendered}${tSync('modelCommand.default')}` : rendered
 }

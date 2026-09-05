@@ -298,13 +298,6 @@ export type QueuedCommand = {
    */
   skipSlashCommands?: boolean
   /**
-   * 为 true 时仍分发 slash command，但先经 isBridgeSafeCommand() 过滤；'local-jsx'
-   * 和仅终端命令会返回说明性错误，而非执行。Remote Control bridge 入站路径会设置此项，
-   * 使移动端/Web client 能运行 skill 和安全命令，同时避免再次暴露 PR #19134
-   *（/model 弹出本地选择器）问题。
-   */
-  bridgeOrigin?: boolean
-  /**
    * 为 true 时，生成的 UserMessage 会带 `isMeta: true`：在 transcript UI 中隐藏，
    * 但模型可见。用于通过队列路由、而非直接调用 `onQuery` 的系统 prompt
    *（proactive tick、teammate 消息、资源更新）。

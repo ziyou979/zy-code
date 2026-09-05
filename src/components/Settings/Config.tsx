@@ -11,13 +11,14 @@ import {
   saveGlobalConfig,
   getCurrentProjectConfig,
   type OutputStyle,
+  approveApiKeyFingerprint,
+  rejectApiKeyFingerprint,
 } from '../../services/config/config.js'
 import { normalizeApiKeyForConfig } from '../../services/auth/authPortable.js'
 import {
   getGlobalConfig,
   getAutoUpdaterDisabledReason,
   formatAutoUpdaterDisabledReason,
-  getRemoteControlAtStartup,
 } from '../../services/config/config.js'
 import chalk from 'chalk'
 import {
@@ -39,7 +40,6 @@ import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from 'src/services/analytics/index.js'
-import { isBridgeEnabled } from '../../bridge/bridgeEnabled.js'
 import { ThemePicker } from '../ThemePicker.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState.js'
 import { ModelPicker } from '../ModelPicker.js'
@@ -213,8 +213,6 @@ export function Config({
       thinkingEnabled: s_4.thinkingEnabled,
       promptSuggestionEnabled: s_4.promptSuggestionEnabled,
       isBriefOnly: s_4.isBriefOnly,
-      replBridgeEnabled: s_4.replBridgeEnabled,
-      replBridgeOutboundOnly: s_4.replBridgeOutboundOnly,
       settings: s_4.settings,
     }
   })
@@ -1063,67 +1061,6 @@ export function Config({
           ]
         })()
       : []),
-    // Remote at startup toggle — gated on build flag + GrowthBook + policy
-    ...(feature('BRIDGE_MODE') && isBridgeEnabled()
-      ? [
-          {
-            id: 'remoteControlAtStartup',
-            label: tSync('settings.enableRemoteControl'),
-            value:
-              globalConfig.remoteControlAtStartup === undefined
-                ? 'default'
-                : String(globalConfig.remoteControlAtStartup),
-            options: ['true', 'false', 'default'],
-            type: 'enum' as const,
-            onChange(selected_0: string) {
-              if (selected_0 === 'default') {
-                // Unset the config key so it falls back to the platform default
-                saveGlobalConfig((current_20) => {
-                  if (current_20.remoteControlAtStartup === undefined) {
-                    return current_20
-                  }
-                  const next_0 = {
-                    ...current_20,
-                  }
-                  delete next_0.remoteControlAtStartup
-                  return next_0
-                })
-                setGlobalConfig({
-                  ...getGlobalConfig(),
-                  remoteControlAtStartup: undefined,
-                })
-              } else {
-                const enabled_6 = selected_0 === 'true'
-                saveGlobalConfig((current_21) => {
-                  if (current_21.remoteControlAtStartup === enabled_6) {
-                    return current_21
-                  }
-                  return {
-                    ...current_21,
-                    remoteControlAtStartup: enabled_6,
-                  }
-                })
-                setGlobalConfig({
-                  ...getGlobalConfig(),
-                  remoteControlAtStartup: enabled_6,
-                })
-              }
-              // Sync to AppState so useReplBridge reacts immediately
-              const resolved = getRemoteControlAtStartup()
-              setAppState((prev_20) => {
-                if (prev_20.replBridgeEnabled === resolved && !prev_20.replBridgeOutboundOnly) {
-                  return prev_20
-                }
-                return {
-                  ...prev_20,
-                  replBridgeEnabled: resolved,
-                  replBridgeOutboundOnly: false,
-                }
-              })
-            },
-          },
-        ]
-      : []),
     ...(shouldShowExternalIncludesToggle
       ? [
           {
@@ -1163,60 +1100,15 @@ export function Config({
             ),
             type: 'boolean' as const,
             onChange(useCustomKey: boolean) {
-              saveGlobalConfig((current_22) => {
-                const updated = {
-                  ...current_22,
+              if (process.env.ZY_API_KEY) {
+                const truncatedKey = normalizeApiKeyForConfig(process.env.ZY_API_KEY)
+                // 与 ApproveApiKey / ApiKeySetup / auth.saveApiKey 共用同一写入路径
+                if (useCustomKey) {
+                  approveApiKeyFingerprint(truncatedKey)
+                } else {
+                  rejectApiKeyFingerprint(truncatedKey)
                 }
-                if (!updated.apiKeyResponses) {
-                  updated.apiKeyResponses = {
-                    approved: [],
-                    rejected: [],
-                  }
-                }
-                if (!updated.apiKeyResponses.approved) {
-                  updated.apiKeyResponses = {
-                    ...updated.apiKeyResponses,
-                    approved: [],
-                  }
-                }
-                if (!updated.apiKeyResponses.rejected) {
-                  updated.apiKeyResponses = {
-                    ...updated.apiKeyResponses,
-                    rejected: [],
-                  }
-                }
-                if (process.env.ZY_API_KEY) {
-                  const truncatedKey = normalizeApiKeyForConfig(process.env.ZY_API_KEY)
-                  if (useCustomKey) {
-                    updated.apiKeyResponses = {
-                      ...updated.apiKeyResponses,
-                      approved: [
-                        ...(updated.apiKeyResponses.approved ?? []).filter(
-                          (k) => k !== truncatedKey,
-                        ),
-                        truncatedKey,
-                      ],
-                      rejected: (updated.apiKeyResponses.rejected ?? []).filter(
-                        (k_0) => k_0 !== truncatedKey,
-                      ),
-                    }
-                  } else {
-                    updated.apiKeyResponses = {
-                      ...updated.apiKeyResponses,
-                      approved: (updated.apiKeyResponses.approved ?? []).filter(
-                        (k_1) => k_1 !== truncatedKey,
-                      ),
-                      rejected: [
-                        ...(updated.apiKeyResponses.rejected ?? []).filter(
-                          (k_2) => k_2 !== truncatedKey,
-                        ),
-                        truncatedKey,
-                      ],
-                    }
-                  }
-                }
-                return updated
-              })
+              }
               setGlobalConfig(getGlobalConfig())
             },
           },
@@ -1419,15 +1311,6 @@ export function Config({
           : tSync('settings.disabledTurnDuration'),
       )
     }
-    if (globalConfig.remoteControlAtStartup !== initialConfig.current.remoteControlAtStartup) {
-      const remoteLabel =
-        globalConfig.remoteControlAtStartup === undefined
-          ? tSync('settings.resetRemoteControlDefault')
-          : globalConfig.remoteControlAtStartup
-            ? tSync('settings.enabledRemoteControl')
-            : tSync('settings.disabledRemoteControl')
-      formattedChanges.push(remoteLabel)
-    }
     if (settingsData?.autoUpdatesChannel !== initialSettingsData.current?.autoUpdatesChannel) {
       formattedChanges.push(
         tSync('settings.setAutoUpdateChannel', {
@@ -1520,8 +1403,6 @@ export function Config({
       thinkingEnabled: ia.thinkingEnabled,
       promptSuggestionEnabled: ia.promptSuggestionEnabled,
       isBriefOnly: ia.isBriefOnly,
-      replBridgeEnabled: ia.replBridgeEnabled,
-      replBridgeOutboundOnly: ia.replBridgeOutboundOnly,
       settings: ia.settings,
       // Reconcile auto-mode state after useAutoModeDuringPlan revert above —
       // the onChange handler may have activated/deactivated auto mid-plan.

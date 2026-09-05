@@ -7,7 +7,7 @@ import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink/index.js'
 import type { ToolResultBlock } from '../../types/llm.js'
 import { FILE_NOT_FOUND_CWD_NOTE, getDisplayPath } from '../../services/infra/file.js'
-import { truncate } from '../../utils/format.js'
+import { truncate } from '../../utils/truncate.js'
 import { GrepTool } from '../GrepTool/GrepTool.js'
 export function userFacingName(): string {
   // 工具名固定为英文标识，不走 i18n（与命令名一致，如 Bash/Read）

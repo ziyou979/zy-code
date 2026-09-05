@@ -41,18 +41,6 @@ export const hunkSchema = lazySchema(() =>
   }),
 )
 
-export const gitDiffSchema = lazySchema(() =>
-  z.object({
-    filename: z.string(),
-    status: z.enum(['modified', 'added']),
-    additions: z.number(),
-    deletions: z.number(),
-    changes: z.number(),
-    patch: z.string(),
-    repository: z.string().nullable().optional().describe('GitHub owner/repo when available'),
-  }),
-)
-
 // Output schema for FileEditTool
 const outputSchema = lazySchema(() =>
   z.object({
@@ -63,7 +51,6 @@ const outputSchema = lazySchema(() =>
     structuredPatch: z.array(hunkSchema()).describe('Diff patch showing the changes'),
     userModified: z.boolean().describe('Whether the user modified the proposed changes'),
     replaceAll: z.boolean().describe('Whether all occurrences were replaced'),
-    gitDiff: gitDiffSchema().optional(),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>

@@ -10,7 +10,6 @@ import * as durationState from '../state/duration.js'
 import * as hooksState from '../state/hooks.js'
 import * as modelState from '../state/model.js'
 import * as promptState from '../state/prompt.js'
-import * as replWireState from '../state/replWire.js'
 import * as scrollState from '../state/scroll.js'
 import * as sessionMetadataState from '../state/sessionMetadata.js'
 import * as sessionState from '../state/session.js'
@@ -35,7 +34,6 @@ const state = {
   ...hooksState,
   ...modelState,
   ...promptState,
-  ...replWireState,
   ...scrollState,
   ...sessionMetadataState,
   ...sessionState,
@@ -150,9 +148,6 @@ export const getIsInteractive: StateModule['getIsInteractive'] = (...args) =>
 export const getIsNonInteractiveSession: StateModule['getIsNonInteractiveSession'] = (...args) =>
   resolveRuntimeFunction('getIsNonInteractiveSession')(...args)
 
-export const getIsRemoteMode: StateModule['getIsRemoteMode'] = (...args) =>
-  resolveRuntimeFunction('getIsRemoteMode')(...args)
-
 export const getAllowedSettingSources: StateModule['getAllowedSettingSources'] = (...args) =>
   resolveRuntimeFunction('getAllowedSettingSources')(...args)
 
@@ -230,9 +225,6 @@ export const getSessionTrustAccepted: StateModule['getSessionTrustAccepted'] = (
 export const getStatsStore: StateModule['getStatsStore'] = (...args) =>
   resolveRuntimeFunction('getStatsStore')(...args)
 
-export const getTeleportedSessionInfo: StateModule['getTeleportedSessionInfo'] = (...args) =>
-  resolveRuntimeFunction('getTeleportedSessionInfo')(...args)
-
 export const getThinkingClearLatched: StateModule['getThinkingClearLatched'] = (...args) =>
   resolveRuntimeFunction('getThinkingClearLatched')(...args)
 
@@ -271,10 +263,6 @@ export const hasExitedPlanModeInSession: StateModule['hasExitedPlanModeInSession
 export const isSessionPersistenceDisabled: StateModule['isSessionPersistenceDisabled'] = (
   ...args
 ) => resolveRuntimeFunction('isSessionPersistenceDisabled')(...args)
-
-export const markFirstTeleportMessageLogged: StateModule['markFirstTeleportMessageLogged'] = (
-  ...args
-) => resolveRuntimeFunction('markFirstTeleportMessageLogged')(...args)
 
 export const markPostCompaction: StateModule['markPostCompaction'] = (...args) =>
   resolveRuntimeFunction('markPostCompaction')(...args)
@@ -403,12 +391,6 @@ export const setLastAPIRequest: StateModule['setLastAPIRequest'] = (...args) =>
 export const setLastAPIRequestMessages: StateModule['setLastAPIRequestMessages'] = (...args) =>
   resolveRuntimeFunction('setLastAPIRequestMessages')(...args)
 
-export const getSessionIngressToken: StateModule['getSessionIngressToken'] = (...args) =>
-  resolveRuntimeFunction('getSessionIngressToken')(...args)
-
-export const setSessionIngressToken: StateModule['setSessionIngressToken'] = (...args) =>
-  resolveRuntimeFunction('setSessionIngressToken')(...args)
-
 export const addSlowOperation: StateModule['addSlowOperation'] = (...args) =>
   resolveRuntimeFunction('addSlowOperation')(...args)
 
@@ -497,9 +479,6 @@ export const getSdkBetas: StateModule['getSdkBetas'] = (...args) =>
 export const getSessionCounter: StateModule['getSessionCounter'] = (...args) =>
   resolveRuntimeFunction('getSessionCounter')(...args)
 
-export const getSessionSource: StateModule['getSessionSource'] = (...args) =>
-  resolveRuntimeFunction('getSessionSource')(...args)
-
 export const getStrictToolResultPairing: StateModule['getStrictToolResultPairing'] = (...args) =>
   resolveRuntimeFunction('getStrictToolResultPairing')(...args)
 
@@ -515,6 +494,12 @@ export const getTotalAPIDuration: StateModule['getTotalAPIDuration'] = (...args)
 export const getTotalAPIDurationWithoutRetries: StateModule['getTotalAPIDurationWithoutRetries'] = (
   ...args
 ) => resolveRuntimeFunction('getTotalAPIDurationWithoutRetries')(...args)
+
+export const addToTotalDecodeMs: StateModule['addToTotalDecodeMs'] = (...args) =>
+  resolveRuntimeFunction('addToTotalDecodeMs')(...args)
+
+export const getTotalDecodeMs: StateModule['getTotalDecodeMs'] = (...args) =>
+  resolveRuntimeFunction('getTotalDecodeMs')(...args)
 
 export const getTotalCostByCurrency: StateModule['getTotalCostByCurrency'] = (...args) =>
   resolveRuntimeFunction('getTotalCostByCurrency')(...args)
@@ -564,9 +549,6 @@ export const hasUnknownModelCost: StateModule['hasUnknownModelCost'] = (...args)
 export const incrementBudgetContinuationCount: StateModule['incrementBudgetContinuationCount'] = (
   ...args
 ) => resolveRuntimeFunction('incrementBudgetContinuationCount')(...args)
-
-export const isReplWireActive: StateModule['isReplWireActive'] = (...args) =>
-  resolveRuntimeFunction('isReplWireActive')(...args)
 
 export const markScrollActivity: StateModule['markScrollActivity'] = (...args) =>
   resolveRuntimeFunction('markScrollActivity')(...args)
@@ -648,9 +630,6 @@ export const setInlinePlugins: StateModule['setInlinePlugins'] = (...args) =>
 export const setIsInteractive: StateModule['setIsInteractive'] = (...args) =>
   resolveRuntimeFunction('setIsInteractive')(...args)
 
-export const setIsRemoteMode: StateModule['setIsRemoteMode'] = (...args) =>
-  resolveRuntimeFunction('setIsRemoteMode')(...args)
-
 export const setKairosActive: StateModule['setKairosActive'] = (...args) =>
   resolveRuntimeFunction('setKairosActive')(...args)
 
@@ -692,9 +671,6 @@ export const setSessionPersistenceDisabled: StateModule['setSessionPersistenceDi
   ...args
 ) => resolveRuntimeFunction('setSessionPersistenceDisabled')(...args)
 
-export const setSessionSource: StateModule['setSessionSource'] = (...args) =>
-  resolveRuntimeFunction('setSessionSource')(...args)
-
 export const setChannelPermissionCallbacks: StateModule['setChannelPermissionCallbacks'] = (
   ...args
 ) => resolveRuntimeFunction('setChannelPermissionCallbacks')(...args)
@@ -708,9 +684,6 @@ export const setStrictToolResultPairing: StateModule['setStrictToolResultPairing
 export const setSystemPromptSectionCacheEntry: StateModule['setSystemPromptSectionCacheEntry'] = (
   ...args
 ) => resolveRuntimeFunction('setSystemPromptSectionCacheEntry')(...args)
-
-export const setTeleportedSessionInfo: StateModule['setTeleportedSessionInfo'] = (...args) =>
-  resolveRuntimeFunction('setTeleportedSessionInfo')(...args)
 
 export const setUseCoworkPlugins: StateModule['setUseCoworkPlugins'] = (...args) =>
   resolveRuntimeFunction('setUseCoworkPlugins')(...args)

@@ -4,6 +4,7 @@ import { chordToString, parseChord, parseKeystroke } from './parser.js'
 import { getReservedShortcuts, normalizeKeyForComparison } from './reservedShortcuts.js'
 import {
   KEYBINDING_CONTEXTS,
+  isKeybindingBlockArray,
   type KeybindingBlock,
   type KeybindingContextName,
   type ParsedBinding,
@@ -30,24 +31,6 @@ export type KeybindingWarning = {
   context?: string
   action?: string
   suggestion?: string
-}
-
-/**
- * 检查对象是否为有效 KeybindingBlock 的类型守卫。
- */
-function isKeybindingBlock(obj: unknown): obj is KeybindingBlock {
-  if (typeof obj !== 'object' || obj === null) {
-    return false
-  }
-  const b = obj as Record<string, unknown>
-  return typeof b.context === 'string' && typeof b.bindings === 'object' && b.bindings !== null
-}
-
-/**
- * 检查数组是否只包含有效 KeybindingBlock 的类型守卫。
- */
-function isKeybindingBlockArray(arr: unknown): arr is KeybindingBlock[] {
-  return Array.isArray(arr) && arr.every(isKeybindingBlock)
 }
 
 /**

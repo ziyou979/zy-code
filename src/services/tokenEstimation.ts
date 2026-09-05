@@ -192,26 +192,6 @@ export function roughTokenCountEstimationForFileType(
   return roughTokenCountEstimation(content, bytesPerTokenForFileType(fileExtension))
 }
 
-/**
- * 通过 adapter 进行 token 计数。
- * 如果 adapter 不支持 countTokens，则返回 null。
- */
-export async function countTokensViaHaikuFallback(
-  messages: LLMMessage[],
-  tools: ToolDefinition[],
-): Promise<number | null> {
-  try {
-    const adapter = getLLMAdapter()
-    if (adapter.countTokens) {
-      return adapter.countTokens(messages, tools)
-    }
-    return null
-  } catch (error) {
-    logError(error)
-    return null
-  }
-}
-
 export function roughTokenCountEstimationForMessages(
   messages: readonly {
     type: string
@@ -273,7 +253,7 @@ function roughTokenCountEstimationForContent(
   return totalTokens
 }
 
-function roughTokenCountEstimationForBlock(
+export function roughTokenCountEstimationForBlock(
   block: string | import('../types/llm.js').ContentBlock | import('../types/llm.js').ContentBlock,
 ): number {
   if (typeof block === 'string') {

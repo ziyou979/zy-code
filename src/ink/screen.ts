@@ -1244,6 +1244,49 @@ type DiffCallback = (
  * 如果回调曾经返回 true，则返回 true（提前退出信号）。
  */
 export function diffEach(prev: Screen, next: Screen, cb: DiffCallback): boolean {
+  const { startX, endX, startY, endY } = getDiffRegion(prev, next)
+
+  if (prev.width === next.width) {
+    return diffSameWidth(prev, next, startX, endX, startY, endY, cb)
+  }
+  return diffDifferentWidth(prev, next, startX, endX, startY, endY, cb)
+}
+
+/**
+ * 与 diffEach() 相同，但宽字符头发生变化时会继续检查其占用或覆盖的后续列。
+ *
+ * 终端写入宽字符会同时改变两个物理单元格；仅依赖逻辑 damage 可能漏掉
+ * 已被缓冲区提前清空的 SpacerTail。这里沿用 Ratatui 的 invalidated/toSkip
+ * 不变量，让宽字符变窄、左移或覆盖相邻宽字符时都能清理完整视觉范围。
+ */
+export function diffEachWideInvalidated(prev: Screen, next: Screen, cb: DiffCallback): boolean {
+  const region = getDiffRegion(prev, next)
+
+  if (prev.width !== next.width) {
+    return diffDifferentWidth(
+      prev,
+      next,
+      region.startX,
+      region.endX,
+      region.startY,
+      region.endY,
+      cb,
+    )
+  }
+  if (region.startX >= region.endX || region.startY >= region.endY) {
+    return false
+  }
+
+  // damage 可能从 SpacerTail 开始或在宽字符头结束，因此左右各扩一列。
+  const startX = Math.max(0, region.startX - 1)
+  const endX = Math.min(next.width, region.endX + 1)
+  return diffSameWidthWideInvalidated(prev, next, startX, endX, region.startY, region.endY, cb)
+}
+
+function getDiffRegion(
+  prev: Screen,
+  next: Screen,
+): { startX: number; endX: number; startY: number; endY: number } {
   const prevWidth = prev.width
   const nextWidth = next.width
   const prevHeight = prev.height
@@ -1284,11 +1327,7 @@ export function diffEach(prev: Screen, next: Screen, cb: DiffCallback): boolean 
   const maxWidth = Math.max(prevWidth, nextWidth)
   const endY = Math.min(region.y + region.height, maxHeight)
   const endX = Math.min(region.x + region.width, maxWidth)
-
-  if (prevWidth === nextWidth) {
-    return diffSameWidth(prev, next, region.x, endX, region.y, endY, cb)
-  }
-  return diffDifferentWidth(prev, next, region.x, endX, region.y, endY, cb)
+  return { startX: region.x, endX, startY: region.y, endY }
 }
 
 /**
@@ -1460,6 +1499,82 @@ function diffSameWidth(
     }
 
     rowCI += stride
+  }
+
+  return false
+}
+
+function cellVisualWidth(width: CellWidth): number {
+  if (width === CellWidth.Wide) {
+    return 2
+  }
+  if (width === CellWidth.SpacerTail || width === CellWidth.SpacerHead) {
+    return 0
+  }
+  return 1
+}
+
+/**
+ * 扫描 damage 行并传播宽字符造成的物理单元格失效。
+ * toSkip 防止单独输出当前宽字符的尾格；invalidated 确保旧宽字符覆盖过的
+ * 后续列即使逻辑值未变，也会重新写入以恢复终端的真实屏幕状态。
+ */
+function diffSameWidthWideInvalidated(
+  prev: Screen,
+  next: Screen,
+  startX: number,
+  endX: number,
+  startY: number,
+  endY: number,
+  cb: DiffCallback,
+): boolean {
+  const width = prev.width
+  const prevCell: Cell = {
+    char: ' ',
+    styleId: 0,
+    width: CellWidth.Narrow,
+    hyperlink: undefined,
+  }
+  const nextCell: Cell = { ...prevCell }
+
+  for (let y = startY; y < endY; y++) {
+    const prevIn = y < prev.height
+    const nextIn = y < next.height
+    if (!prevIn || !nextIn) {
+      const ci = (y * width + startX) << 1
+      if (prevIn && diffRowRemoved(prev, ci, y, startX, endX, prevCell, cb)) {
+        return true
+      }
+      if (nextIn && diffRowAdded(next.cells, next, ci, y, startX, endX, nextCell, cb)) {
+        return true
+      }
+      continue
+    }
+
+    let toSkip = 0
+    let invalidated = 0
+    let ci = (y * width + startX) << 1
+    for (let x = startX; x < endX; x++, ci += 2) {
+      const prevWord1 = prev.cells[ci + 1]!
+      const nextWord1 = next.cells[ci + 1]!
+      const prevWidth = prevWord1 & WIDTH_MASK
+      const nextWidth = nextWord1 & WIDTH_MASK
+      const changed = prev.cells[ci] !== next.cells[ci] || prevWord1 !== nextWord1
+      const nextIsSpacer = nextWidth === CellWidth.SpacerTail || nextWidth === CellWidth.SpacerHead
+
+      if (!nextIsSpacer && toSkip === 0 && (changed || invalidated > 0)) {
+        cellAtCI(prev, ci, prevCell)
+        cellAtCI(next, ci, nextCell)
+        if (cb(x, y, prevCell, nextCell)) {
+          return true
+        }
+      }
+
+      const nextVisualWidth = cellVisualWidth(nextWidth)
+      const prevVisualWidth = cellVisualWidth(prevWidth)
+      toSkip = Math.max(0, nextVisualWidth - 1)
+      invalidated = Math.max(0, Math.max(nextVisualWidth, prevVisualWidth, invalidated) - 1)
+    }
   }
 
   return false

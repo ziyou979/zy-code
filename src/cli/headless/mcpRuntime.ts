@@ -16,7 +16,6 @@ import {
   ElicitRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 import uniqBy from 'lodash-es/uniqBy.js'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { StructuredIO } from 'src/cli/structuredIO.js'
 import type { Command } from 'src/commands/index.js'
@@ -51,7 +50,6 @@ import type { WireControlMcpSetServersResponse } from 'src/types/wire/control.js
 import { uniq } from 'src/utils/array.js'
 import { logForDebugging } from 'src/services/infra/debug.js'
 import { withDiagnosticsTiming } from 'src/services/telemetry/diagLogs.js'
-import { isEnvTruthy } from 'src/services/infra/envUtils.js'
 import { executeNotificationHooks } from 'src/services/hooks.js'
 import { logError, logMCPDebug } from 'src/services/infra/log.js'
 import { installPluginsForHeadless } from 'src/services/plugins/headlessPluginInstall.js'
@@ -452,8 +450,7 @@ export class McpRuntime {
       // settings (fired in main.tsx preAction). downloadUserSettings() caches
       // its promise so this awaits the same in-flight request.
       await Promise.all([
-        feature('DOWNLOAD_USER_SETTINGS') &&
-        (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode())
+        feature('DOWNLOAD_USER_SETTINGS')
           ? withDiagnosticsTiming('headless_user_settings_download', () => downloadUserSettings())
           : Promise.resolve(),
         withDiagnosticsTiming('headless_managed_settings_wait', () =>

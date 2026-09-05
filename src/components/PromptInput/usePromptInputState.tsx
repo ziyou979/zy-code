@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { useCommandQueue } from 'src/hooks/useCommandQueue.js'
 import { useAppState, useAppStateStore, useSetAppState } from 'src/state/AppState.js'
 import type { FooterItem } from 'src/state/AppStateStore.js'
-import { isUltrareviewEnabled } from '../../commands/review/ultrareviewEnabled.js'
 import { hasCommand } from '../../commands/index.js'
 import { useIsModalOverlayActive } from '../../context/OverlayContext.js'
 import { parseReferences } from '../../services/session-storage/history.js'
@@ -20,10 +19,6 @@ import {
   subscribeKnownChannels,
 } from '../../services/suggestions/slackChannelSuggestions.js'
 import { isInProcessEnabled } from '../../services/swarm/backends/registry.js'
-import {
-  findUltraplanTriggerPositions,
-  findUltrareviewTriggerPositions,
-} from '../../services/ultraplan/keyword.js'
 import { getViewedTeammateTask } from '../../state/selectors.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'
 import { getRunningTeammatesSorted } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
@@ -193,17 +188,6 @@ export function usePromptInputState({
 
   const tasks = useAppState((s) => s.tasks)
 
-  const replWireConnected = useAppState((s) => s.replWireConnected)
-
-  const replWireExplicit = useAppState((s) => s.replWireExplicit)
-
-  const replWireReconnecting = useAppState((s) => s.replWireReconnecting)
-
-  // Must match WireStatusIndicator's render condition (PromptInputFooter.tsx) —
-  // the pill returns null for implicit-and-not-reconnecting, so nav must too,
-  // otherwise bridge becomes an invisible selection stop.
-  const bridgeFooterVisible = replWireConnected && (replWireExplicit || replWireReconnecting)
-
   // Tmux pill (ant-only) — visible when there's an active tungsten session
   const hasTungstenSession = useAppState(
     (s) => isInternalBuild() && s.tungstenActiveSession !== undefined,
@@ -316,8 +300,6 @@ export function usePromptInputState({
   const pendingSpaceAfterPillRef = useRef(false)
 
   const [showTeamsDialog, setShowTeamsDialog] = useState(false)
-
-  const [showBridgeDialog, setShowBridgeDialog] = useState(false)
 
   const [teammateFooterIndex, setTeammateFooterIndex] = useState(0)
 
@@ -451,15 +433,8 @@ export function usePromptInputState({
         tmuxFooterVisible && 'tmux',
         bagelFooterVisible && 'bagel',
         teamsFooterVisible && 'teams',
-        bridgeFooterVisible && 'bridge',
       ].filter(Boolean) as FooterItem[],
-    [
-      tasksFooterVisible,
-      tmuxFooterVisible,
-      bagelFooterVisible,
-      teamsFooterVisible,
-      bridgeFooterVisible,
-    ],
+    [tasksFooterVisible, tmuxFooterVisible, bagelFooterVisible, teamsFooterVisible],
   )
 
   // Effective selection: null if the selected pill stopped rendering (bridge
@@ -491,8 +466,6 @@ export function usePromptInputState({
   const _bagelSelected = footerItemSelected === 'bagel'
 
   const teamsSelected = footerItemSelected === 'teams'
-
-  const bridgeSelected = footerItemSelected === 'bridge'
 
   function selectFooterItem(item: FooterItem | null): void {
     setAppState((prev) =>
@@ -546,25 +519,6 @@ export function usePromptInputState({
 
   const thinkTriggers = useMemo(
     () => findThinkingTriggerPositions(displayedValue),
-    [displayedValue],
-  )
-
-  const ultraplanSessionUrl = useAppState((s) => s.ultraplanSessionUrl)
-
-  const ultraplanLaunching = useAppState((s) => s.ultraplanLaunching)
-
-  const ultraplanTriggers = useMemo(
-    () =>
-      feature('ULTRAPLAN')
-        ? !ultraplanSessionUrl && !ultraplanLaunching
-          ? findUltraplanTriggerPositions(displayedValue)
-          : []
-        : [],
-    [displayedValue, ultraplanSessionUrl, ultraplanLaunching],
-  )
-
-  const ultrareviewTriggers = useMemo(
-    () => (isUltrareviewEnabled() ? findUltrareviewTriggerPositions(displayedValue) : []),
     [displayedValue],
   )
 
@@ -653,10 +607,6 @@ export function usePromptInputState({
     store,
     setAppState,
     tasks,
-    replWireConnected,
-    replWireExplicit,
-    replWireReconnecting,
-    bridgeFooterVisible,
     hasTungstenSession,
     tmuxFooterVisible,
     bagelFooterVisible,
@@ -687,8 +637,6 @@ export function usePromptInputState({
     pendingSpaceAfterPillRef,
     showTeamsDialog,
     setShowTeamsDialog,
-    showBridgeDialog,
-    setShowBridgeDialog,
     teammateFooterIndex,
     setTeammateFooterIndex,
     coordinatorTaskIndex,
@@ -728,7 +676,6 @@ export function usePromptInputState({
     tmuxSelected,
     _bagelSelected,
     teamsSelected,
-    bridgeSelected,
     selectFooterItem,
     navigateFooter,
     promptSuggestion,
@@ -737,10 +684,6 @@ export function usePromptInputState({
     markShown,
     displayedValue,
     thinkTriggers,
-    ultraplanSessionUrl,
-    ultraplanLaunching,
-    ultraplanTriggers,
-    ultrareviewTriggers,
     btwTriggers,
     slashCommandTriggers,
     tokenBudgetTriggers,

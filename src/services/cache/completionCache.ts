@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import chalk from 'chalk'
+import { createHyperlink } from '../../utils/hyperlink.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { isENOENT } from '../../utils/errors.js'
@@ -55,11 +56,10 @@ function detectShell(): ShellInfo | null {
   return null
 }
 function formatPathLink(filePath: string): string {
-  if (!process.stdout.isTTY) {
-    return filePath
-  }
   const fileUrl = pathToFileURL(filePath).href
-  return `\x1b]8;;${fileUrl}\x07${filePath}\x1b]8;;\x07`
+  // 能力检测（supportsHyperlinks，比 process.stdout.isTTY 更能排除不支持 OSC 8 的终端）
+  // 与序列构造收敛到 utils/hyperlink.ts 的 createHyperlink
+  return createHyperlink(fileUrl, filePath)
 }
 
 /**

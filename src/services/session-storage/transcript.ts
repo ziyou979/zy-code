@@ -1,34 +1,21 @@
-// transcript 写路径 + hydrate：record* / flush / hydrateRemoteSession / hydrateFromCCRv2InternalEvents。
+// transcript 写路径：record* / flush 与文件写入原子助手。
 // 文件写入原子助手 appendEntryToFile / readFileTailSync。
 
 import type { UUID } from 'node:crypto'
 import { closeSync, fstatSync, openSync, readSync } from 'node:fs'
-import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import {
-  getOriginalCwd,
-  getSessionId,
-  switchSession,
-} from '../../bootstrap/runtime/runtimeContext.js'
-import { type AgentId, asAgentId, asSessionId } from '../../types/ids.js'
+import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
+import type { AgentId } from '../../types/ids.js'
 import type { AttributionSnapshotMessage } from '../../types/logs.js'
 import type { Message } from '../../types/message.js'
 import type { QueueOperationMessage } from '../../types/messageQueueTypes.js'
-import { logForDebugging } from '../../services/infra/debug.js'
-import { logForDiagnosticsNoPII } from '../telemetry/diagLogs.js'
 import type { FileHistorySnapshot } from '../file-persistence/fileHistory.js'
 import { getFsImplementation } from '../../services/infra/fsOperations.js'
 import { LITE_READ_BUF_SIZE } from './sessionStoragePortable.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import type { ContentReplacementRecord } from '../../services/mcp/toolResultStorage.js'
-import * as sessionIngress from '../api/sessionIngress.js'
 import { cleanMessagesForLogging, getSessionMessages } from './logLoading.js'
-import {
-  getAgentTranscriptPath,
-  getProjectDir,
-  getTranscriptPath,
-  getTranscriptPathForSession,
-} from './paths.js'
+import { getTranscriptPath } from './paths.js'
 import { isChainParticipant } from './predicates.js'
 import { getProject } from './project.js'
 
@@ -224,134 +211,6 @@ export async function recordContextCollapseSnapshot(snapshot: {
 
 export async function flushSessionStorage(): Promise<void> {
   await getProject().flush()
-}
-
-export async function hydrateRemoteSession(
-  sessionId: string,
-  ingressUrl: string,
-): Promise<boolean> {
-  switchSession(asSessionId(sessionId))
-
-  const project = getProject()
-
-  try {
-    const remoteLogs = (await sessionIngress.getSessionLogs(sessionId, ingressUrl)) || []
-
-    // 确保项目目录和 session 文件存在
-    const projectDir = getProjectDir(getOriginalCwd())
-    await mkdir(projectDir, { recursive: true, mode: 0o700 })
-
-    const sessionFile = getTranscriptPathForSession(sessionId)
-
-    // 用远程日志替换本地日志。writeFile 会截断，因此无需
-    // unlink；空的 remoteLogs 数组会产生空文件。
-    const content = remoteLogs.map((e) => `${jsonStringify(e)}\n`).join('')
-    await writeFile(sessionFile, content, { encoding: 'utf8', mode: 0o600 })
-
-    logForDebugging(`Hydrated ${remoteLogs.length} entries from remote`)
-    return remoteLogs.length > 0
-  } catch (error) {
-    logForDebugging(`Error hydrating session from remote: ${error}`)
-    logForDiagnosticsNoPII('error', 'hydrate_remote_session_fail')
-    return false
-  } finally {
-    // 在 hydrate 远程 session 之后设置远程 ingress URL，
-    // 确保在启用持久化之前始终已与远程 session 同步
-    project.setRemoteIngressUrl(ingressUrl)
-  }
-}
-
-/**
- * 从 CCR v2 内部事件 hydrate session 状态。
- * 通过已注册的读取器获取前台和子代理事件，
- * 从 payload 中提取 transcript entry，并写入本地 transcript 文件
- * （主文件 + 每个代理）。服务器处理压缩过滤 — 它返回从
- * 最新压缩边界开始的事件。
- */
-export async function hydrateFromCCRv2InternalEvents(sessionId: string): Promise<boolean> {
-  const startMs = Date.now()
-  switchSession(asSessionId(sessionId))
-
-  const project = getProject()
-  const reader = project.getInternalEventReader()
-  if (!reader) {
-    logForDebugging('No internal event reader registered for CCR v2 resume')
-    return false
-  }
-
-  try {
-    // 获取前台事件
-    const events = await reader()
-    if (!events) {
-      logForDebugging('Failed to read internal events for resume')
-      logForDiagnosticsNoPII('error', 'hydrate_ccr_v2_read_fail')
-      return false
-    }
-
-    const projectDir = getProjectDir(getOriginalCwd())
-    await mkdir(projectDir, { recursive: true, mode: 0o700 })
-
-    // 写入前台 transcript
-    const sessionFile = getTranscriptPathForSession(sessionId)
-    const fgContent = events.map((e) => `${jsonStringify(e.payload)}\n`).join('')
-    await writeFile(sessionFile, fgContent, { encoding: 'utf8', mode: 0o600 })
-
-    logForDebugging(`Hydrated ${events.length} foreground entries from CCR v2 internal events`)
-
-    // 获取并写入子代理事件
-    let subagentEventCount = 0
-    const subagentReader = project.getInternalSubagentEventReader()
-    if (subagentReader) {
-      const subagentEvents = await subagentReader()
-      if (subagentEvents && subagentEvents.length > 0) {
-        subagentEventCount = subagentEvents.length
-        // 按 agent_id 分组
-        const byAgent = new Map<string, Record<string, unknown>[]>()
-        for (const e of subagentEvents) {
-          const agentId = e.agent_id || ''
-          if (!agentId) {
-            continue
-          }
-          let list = byAgent.get(agentId)
-          if (!list) {
-            list = []
-            byAgent.set(agentId, list)
-          }
-          list.push(e.payload)
-        }
-
-        // 将每个代理的 transcript 写入其自己的文件
-        for (const [agentId, entries] of byAgent) {
-          const agentFile = getAgentTranscriptPath(asAgentId(agentId))
-          await mkdir(dirname(agentFile), { recursive: true, mode: 0o700 })
-          const agentContent = entries.map((p) => `${jsonStringify(p)}\n`).join('')
-          await writeFile(agentFile, agentContent, {
-            encoding: 'utf8',
-            mode: 0o600,
-          })
-        }
-
-        logForDebugging(
-          `Hydrated ${subagentEvents.length} subagent entries across ${byAgent.size} agents`,
-        )
-      }
-    }
-
-    logForDiagnosticsNoPII('info', 'hydrate_ccr_v2_completed', {
-      duration_ms: Date.now() - startMs,
-      event_count: events.length,
-      subagent_event_count: subagentEventCount,
-    })
-    return events.length > 0
-  } catch (error) {
-    // 重新抛出 epoch 不匹配，以免 worker 与 gracefulShutdown 竞争
-    if (error instanceof Error && error.message === 'CCRClient: Epoch mismatch (409)') {
-      throw error
-    }
-    logForDebugging(`Error hydrating session from CCR v2: ${error}`)
-    logForDiagnosticsNoPII('error', 'hydrate_ccr_v2_fail')
-    return false
-  }
 }
 
 /**

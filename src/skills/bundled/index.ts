@@ -55,12 +55,6 @@ export function initBundledSkills(): void {
     // the skill's own isEnabled callback decides visibility.
     registerLoopSkill()
   }
-  if (feature('AGENT_TRIGGERS_REMOTE')) {
-    /* eslint-disable @typescript-eslint/no-require-imports */
-    const { registerScheduleRemoteAgentsSkill } = require('./scheduleRemoteAgents.js')
-    /* eslint-enable @typescript-eslint/no-require-imports */
-    registerScheduleRemoteAgentsSkill()
-  }
   if (shouldAutoEnableClaudeInChrome()) {
     registerClaudeInChromeSkill()
   }

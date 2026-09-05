@@ -389,7 +389,7 @@ export const AccountInfoSchema = lazySchema(() =>
         ])
         .optional()
         .describe(
-          'Active API backend. Anthropic OAuth login only applies when "anthropic"; for 3P providers the other fields are absent and auth is external (AWS creds, gcloud ADC, etc.).',
+          'Active API backend for this legacy account summary. OAuth is supported by multiple named providers; account fields are present only when the active provider exposes them.',
         ),
     })
     .describe("Information about the logged in user's account."),

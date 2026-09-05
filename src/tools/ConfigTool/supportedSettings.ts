@@ -1,7 +1,6 @@
 import { feature } from 'bun:bundle'
 import { getModelOptions } from '../../services/model/modelOptions.js'
 import { validateModel } from '../../services/model/validateModel.js'
-import { getRemoteControlAtStartup } from '../../services/config/config.js'
 import {
   EDITOR_MODES,
   NOTIFICATION_CHANNELS,
@@ -33,12 +32,6 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
     type: 'string',
     description: 'Color theme for the UI',
     options: feature('AUTO_THEME') ? THEME_SETTINGS : THEME_NAMES,
-  },
-  provider: {
-    source: 'settings',
-    type: 'string',
-    description: 'API provider to use (anthropic, dashscope, opencode-go, openrouter, generic)',
-    options: ['anthropic', 'dashscope', 'opencode-go', 'openrouter', 'generic'],
   },
   editorMode: {
     source: 'global',
@@ -179,16 +172,6 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
           source: 'settings' as const,
           type: 'boolean' as const,
           description: 'Enable voice dictation (hold-to-talk)',
-        },
-      }
-    : {}),
-  ...(feature('BRIDGE_MODE')
-    ? {
-        remoteControlAtStartup: {
-          source: 'global' as const,
-          type: 'boolean' as const,
-          description: 'Enable Remote Control for all sessions (true | false | default)',
-          formatOnRead: () => getRemoteControlAtStartup(),
         },
       }
     : {}),
