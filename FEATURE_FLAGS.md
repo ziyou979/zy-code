@@ -33,14 +33,12 @@
 | Flag | 默认值 | 说明 | 文件 |
 |------|--------|------|------|
 | `zy_bash_treesitter_shadow` | `true` | Tree-sitter Bash shadow mode 的 kill-switch | `src/tools/BashTool/bashPermissions.ts` |
-| `zy_remote_git_diff` | `false` | 远程模式下计算 git diff | `src/tools/FileEditTool/FileEditTool.ts`, `src/tools/FileWriteTool/FileWriteTool.ts` |
 | `zy_deferred_tool_reminder` | `false` | 延迟工具在 system-reminder 中显示 | `src/tools/ToolSearchTool/prompt.ts` |
 | `zy_read_dedup_killswitch` | `false` | FileRead 去重功能的 kill-switch（false=去重启用） | `src/tools/FileReadTool/FileReadTool.ts` |
-| `zy_remote_trigger` | `false` | 远程触发工具启用开关 | `src/tools/RemoteTriggerTool/RemoteTriggerTool.ts` |
 | `zy_websearch_compact_model` | `false` | WebSearch 使用 Compact 模型 | `src/tools/WebSearchTool/WebSearchTool.ts` |
-| `zy_strict_tools` | gate | Strict tools 功能（Statsig 门控） | `src/utils/betas.ts` |
-| `zy_json_tools_beta` | `false` | Token-efficient tools beta 功能 | `src/utils/betas.ts` |
-| `zy_toolref_defer` | gate | Tool reference 延迟处理 | `src/utils/messages.ts` |
+| `zy_strict_tools` | gate | Strict tools 功能（Statsig 门控） | `src/services/feature-flags/betas.ts` |
+| `zy_json_tools_beta` | `false` | Token-efficient tools beta 功能 | `src/services/feature-flags/betas.ts` |
+| `zy_toolref_defer_j8m` | gate | Tool reference 延迟处理 | `src/services/messages/normalize.ts` |
 
 ## 模型与推理
 
@@ -49,16 +47,6 @@
 | `zy_otk_slot_v1` | `false` | OTK slot 容量升级重试（8k→64k） | `src/query.ts` |
 | `zy_ant_model_override` | N/A | 模型别名映射覆盖 | `src/main.tsx` |
 | `zy_startup_throttle_ms` | `0` | 启动预取节流（毫秒），0=禁用 | `src/main.tsx` |
-| `zy_sdk_agent_summary` | `true` | SDK Agent 进度摘要启用 | `src/cli/print.ts`, `src/utils/betas.ts` |
-
-## 远程 / 桥接 / CCR
-
-| Flag | 默认值 | 说明 | 文件 |
-|------|--------|------|------|
-| `zy_remote_backend` | `false` | 远程后端 TUI 模式启用 | `src/main.tsx` |
-| `zy_bridge_system_init` | `false` | REPL bridge 发送 system/init 消息 | `src/hooks/useReplBridge.tsx` |
-| `zy_ccr_bundle_seed` | gate | CCR bundle seed 功能启用 | `src/utils/teleport.tsx`, `src/utils/background/remote/remoteSession.ts` |
-| `zy_ccr_bridge_multi_session` | gate | 多会话桥接功能启用 | `src/bridge/bridgeMain.ts` |
 
 ## UI / 交互
 
@@ -67,14 +55,14 @@
 | `zy_terminal_panel` | `false` | 内置终端面板功能（meta+j 切换） | `src/hooks/useGlobalKeybindings.tsx` |
 | `zy_away_summary` | `false` | Away Summary 功能启用 | `src/hooks/useAwaySummary.ts` |
 | `zy_thinkback` | gate | Thinkback 年度回顾功能 | `src/commands/thinkback/index.ts` |
-| `zy_sysreminder_smoosh` | gate | System reminder 兄弟节点合并处理 | `src/utils/messages.ts` |
+| `zy_sysreminder_smoosh` | gate | System reminder 兄弟节点合并处理 | `src/services/messages/normalize.ts` |
 
 ## 权限 / 安全
 
 | Flag | 默认值 | 说明 | 文件 |
 |------|--------|------|------|
-| `zy_disable_bypass_permissions` | gate | 禁用 bypass permissions 模式 | `src/utils/permissions/permissionSetup.ts` |
-| `zy_scratch_dir` | gate | 暂存目录功能启用 | `src/utils/permissions/filesystem.ts`, `src/coordinator/coordinatorMode.ts` |
+| `zy_disable_bypass_permissions_mode` | gate | 禁用 bypass permissions 模式 | `src/services/permissions/permissionBootstrap.ts` |
+| `zy_scratch_dir` | gate | 暂存目录功能启用 | `src/coordinator/coordinatorMode.ts`, `src/services/permissions/scratchpadStorage.ts` |
 
 ## Channels / 插件
 
@@ -89,7 +77,7 @@
 
 | Flag | 默认值 | 说明 | 文件 |
 |------|--------|------|------|
-| `zy_fullscreen_rollout` | `false` | 控制外部用户全屏模式灰度推广百分比 | `src/utils/fullscreen.ts` |
+| `zy_fullscreen_rollout` | `false` | 控制外部用户全屏模式灰度推广百分比 | `src/services/terminal/fullscreen.ts` |
 
 ---
 
@@ -99,7 +87,7 @@
 |------|--------|------|------|
 | `zy_log_datadog_events` | N/A | 控制是否向 Datadog 发送事件 | `src/services/analytics/sink.ts` |
 | `zy_event_sampling_config` | N/A | 事件采样率配置 | `src/services/analytics/sink.ts` |
-| `enhanced_telemetry_beta` | `false` | 增强遥测 beta（仅内部构建）。**例外**：此 flag 为外部兼容遗留名称，不遵循 `zy_` 前缀约定 | `src/utils/telemetry/sessionTracing.ts` |
+| `enhanced_telemetry_beta` | `false` | 增强遥测 beta（仅内部构建）。**例外**：此 flag 为外部兼容遗留名称，不遵循 `zy_` 前缀约定 | `src/services/telemetry/sessionTracing.ts` |
 
 ---
 

@@ -521,7 +521,6 @@ export const enMisc: TranslationResource = {
   'notebookEdit.rejectedEditCell': 'User rejected {mode} cell in',
   'notebookEdit.updatedCell': 'Updated cell {cellId}:',
   'notif.apiKeyHelperSlow': 'apiKeyHelper is taking a while',
-  'notif.authError': 'Authentication error · Try again',
   'notif.chromeEnabled': 'Claude in Chrome enabled · /chrome',
   'notif.chromeNotDetected': 'Chrome extension not detected · https://zy.ai/chrome to install',
   'notif.debugMode': 'Debug mode',
@@ -713,7 +712,6 @@ export const enMisc: TranslationResource = {
   'promptInput.optionMetaHint':
     'To enable {shortcut}, set Option as Meta in {terminalName} preferences (⌘,)',
   'promptInput.optionMetaHintSetup': 'To enable {shortcut}, run /terminal-setup',
-  'promptInput.remoteControlReconnecting': 'Remote Control reconnecting',
   'promptInput.sandboxBlocked_one':
     'Sandbox blocked {count} operation · {shortcut} for details · /sandbox to disable',
   'promptInput.sandboxBlocked_other':
@@ -730,7 +728,6 @@ export const enMisc: TranslationResource = {
   'promptInput.pasting': 'Pasting text\u2026',
   'promptInput.vimInsert': '-- INSERT --',
   'promptInput.vimVisual': '-- VISUAL --',
-  'promptInput.remote': 'remote',
   'promptInput.selectionMacOption': 'set macOptionClickForcesSelection in VS Code settings',
   'promptInput.voiceHint': 'hold {shortcut} to speak',
   'codeReview.title': 'Code Review',
@@ -895,13 +892,11 @@ export const enMisc: TranslationResource = {
   'spinner.compactStage.attachments': 'Restoring files',
   'spinner.compactStage.sessionStart': 'SessionStart',
   'spinner.compactStage.postHooks': 'PostCompact',
-  'spinner.disconnected': 'Disconnected',
   'spinner.hooksRunning': 'Running {hookType} hooks…',
   'spinner.idle': 'Idle',
   'spinner.idleFor': 'Idle for {duration}',
   'spinner.inBackground': '{count} in background',
   'spinner.next': 'Next: {subject}',
-  'spinner.reconnecting': 'Reconnecting',
   'spinner.targetPercent': 'Target: {used} / {budget} ({pct}%){eta}',
   'spinner.targetUsed': 'Target: {used} used ({budget} min {tick})',
   'spinner.teammatesRunning': 'teammates running',

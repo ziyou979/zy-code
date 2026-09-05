@@ -4,7 +4,7 @@
 // 1. sandboxAskCallback：sandbox-adapter 的网络放行回调。两条路径：
 //    - swarm worker：通过 mailbox 把请求转发给 leader，注册回调等响应；
 //      mailbox 不可达则回退本地处理
-//    - 非 worker：本地排队 sandboxPermissionRequestQueue 渲染 UI；BRIDGE_MODE
+//    - 非 worker：本地排队 sandboxPermissionRequestQueue 渲染 UI
 //      下并发把请求转发给 REPL bridge（远程控制），任一侧先响应就解掉
 //      所有相同 host 的待处理请求，并清掉所有兄弟 bridge 订阅
 // 2. SandboxManager.getSandboxUnavailableReason effect：mount 时检查依赖缺失

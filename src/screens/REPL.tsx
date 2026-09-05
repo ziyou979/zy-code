@@ -684,7 +684,6 @@ export function REPL({
     handleHintResponse,
     showEffortCallout,
     setShowEffortCallout,
-    showRemoteCallout,
     showDesktopUpsellStartup,
     setShowDesktopUpsellStartup,
     showFullscreenUpsell,
@@ -740,7 +739,6 @@ export function REPL({
     isLoading,
     showIdeOnboarding,
     showEffortCallout,
-    showRemoteCallout,
     lspRecommendation,
     hintRecommendation,
     showFullscreenUpsell,
@@ -1304,7 +1302,6 @@ export function REPL({
       setShowIdeOnboarding={setShowIdeOnboarding}
       showEffortCallout={showEffortCallout}
       setShowEffortCallout={setShowEffortCallout}
-      showRemoteCallout={showRemoteCallout}
       showDesktopUpsellStartup={showDesktopUpsellStartup}
       setShowDesktopUpsellStartup={setShowDesktopUpsellStartup}
       showFullscreenUpsell={showFullscreenUpsell}

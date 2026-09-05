@@ -61,7 +61,6 @@ import { getDefaultMainLoopModel, getMainLoopModel } from 'src/services/model/mo
 import { modelSupportsEffort, resolveAppliedEffort } from 'src/services/effort/effort.js'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   getFlagSettingsInline,
   setFlagSettingsInline,
@@ -70,7 +69,6 @@ import type { UUID } from 'node:crypto'
 import { randomUUID } from 'node:crypto'
 import type { AppState } from 'src/state/AppStateStore.js'
 import { getCommands } from '../../commands/index.js'
-import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { refreshActivePlugins } from '../../services/plugins/refresh.js'
 import { loadAllPluginsCacheOnly } from '../../services/plugins/pluginLoader.js'
 import type { PluginLoadResult } from '../../services/plugins/types.js'
@@ -494,7 +492,7 @@ export async function runControlLoop(deps: ControlLoopDeps): Promise<void> {
     reload_plugins: async (message) => {
       try {
         if (feature('DOWNLOAD_USER_SETTINGS')) {
-          if (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode()) {
+          {
             // 重新拉取用户 settings，使本地 CLI 推送的 enabledPlugins 在清扫缓存前生效。
             const applied = await redownloadUserSettings()
             if (applied) {

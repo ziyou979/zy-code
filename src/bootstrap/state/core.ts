@@ -31,7 +31,6 @@ import type { PluginHookMatcher } from '../../services/settings/types.js'
 import { createSignal } from 'src/utils/signal.js'
 import { createSessionId } from 'src/utils/uuid.js'
 import type { CreateParams } from '../../types/llm.js'
-import { isInternalBuild } from '../../services/infra/envUtils.js'
 
 // 已注册钩子的联合类型 — 可以是 SDK 回调或原生插件钩子
 export type RegisteredHookMatcher = HookCallbackMatcher | PluginHookMatcher
@@ -110,7 +109,6 @@ export type State = {
   sdkAgentProgressSummariesEnabled: boolean
   userMsgOptIn: boolean
   clientType: string
-  sessionSource: string | undefined
   questionPreviewFormat: 'markdown' | 'html' | undefined
   flagSettingsPath: string | undefined
   flagSettingsInline: Record<string, unknown> | null
@@ -198,14 +196,6 @@ export type State = {
   registeredHooks: Partial<Record<HookEvent, RegisteredHookMatcher[]>> | null
   // 计划 slug 缓存：sessionId -> wordSlug
   planSlugCache: Map<string, string>
-  // 追踪传送的会话，用于可靠性日志
-  teleportedSessionInfo: {
-    isTeleported: boolean
-    hasLoggedFirstMessage: boolean
-    sessionId: string | null
-  } | null
-  // 追踪已调用的技能，以便在压缩后保留
-  // key 是组合的：`${agentId ?? ''}:${skillName}`，防止跨 agent 覆盖
   invokedSkills: Map<string, InvokedSkillInfo>
   // 追踪慢速操作，用于 dev bar 显示（仅 ant）
   slowOperations: Array<{
@@ -217,8 +207,6 @@ export type State = {
   sdkBetas: string[] | undefined
   // 主线程 agent 类型（来自 --agent 标志或设置）
   mainThreadAgentType: string | undefined
-  // 远程模式（--remote 标志）
-  isRemoteMode: boolean
   // 直连服务器 URL（用于在标题栏显示）
   directConnectServerUrl: string | undefined
   // 系统提示词部分缓存状态
@@ -324,7 +312,6 @@ function getInitialState(): State {
     sdkAgentProgressSummariesEnabled: false,
     userMsgOptIn: false,
     clientType: 'cli',
-    sessionSource: undefined,
     questionPreviewFormat: undefined,
     oauthTokenFromFd: undefined,
     apiKeyFromFd: undefined,
@@ -396,8 +383,6 @@ function getInitialState(): State {
     registeredHooks: null,
     // 计划 slug 缓存
     planSlugCache: new Map(),
-    // 追踪传送的会话，用于可靠性日志
-    teleportedSessionInfo: null,
     // 追踪已调用的技能，以便在压缩后保留
     invokedSkills: new Map(),
     // 追踪慢速操作，用于 dev bar 显示
@@ -406,13 +391,6 @@ function getInitialState(): State {
     sdkBetas: undefined,
     // 主线程 agent 类型
     mainThreadAgentType: undefined,
-    // 远程模式
-    isRemoteMode: false,
-    ...(isInternalBuild()
-      ? {
-          replWireActive: false,
-        }
-      : {}),
     // 直接连接服务器 URL
     directConnectServerUrl: undefined,
     // 系统提示词部分缓存状态

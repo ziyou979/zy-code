@@ -58,14 +58,6 @@ export function setUserMsgOptIn(value: boolean): void {
   STATE.userMsgOptIn = value
 }
 
-export function getSessionSource(): string | undefined {
-  return STATE.sessionSource
-}
-
-export function setSessionSource(source: string): void {
-  STATE.sessionSource = source
-}
-
 export function getQuestionPreviewFormat(): 'markdown' | 'html' | undefined {
   return STATE.questionPreviewFormat
 }

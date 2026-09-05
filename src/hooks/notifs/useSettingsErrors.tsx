@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getSettingsWithAllErrors } from '../../services/settings/allErrors.js'
 import { useSettingsChange } from '../useSettingsChange.js'
 
@@ -17,9 +16,6 @@ export function useSettingsErrors() {
   }
   useSettingsChange(handleSettingsChange)
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (settingsErrors.length > 0) {
       const message = `Found ${settingsErrors.length} settings ${settingsErrors.length === 1 ? 'issue' : 'issues'} · /doctor for details`
       addNotification({

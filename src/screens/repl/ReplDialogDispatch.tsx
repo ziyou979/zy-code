@@ -3,7 +3,7 @@
 //
 // 包含 14 个对话框分支：sandbox-permission / prompt / worker-pending ×2 /
 // worker-sandbox-permission / elicitation / idle-return / ide-onboarding /
-// effort-callout / remote-callout / plugin-hint / lsp-recommendation /
+// effort-callout / plugin-hint / lsp-recommendation /
 // desktop-upsell / ultraplan-choice / ultraplan-launch。
 //
 // 复杂内联回调已提取为具名 handler 函数（handleSandboxResponse /

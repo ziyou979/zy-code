@@ -283,9 +283,7 @@ function NotificationContent({
       {(apiKeyStatus === 'invalid' || apiKeyStatus === 'missing') && (
         <Box>
           <Text color="error" wrap="truncate">
-            {isEnvTruthy(process.env.ZY_CODE_REMOTE)
-              ? tSync('notif.authError')
-              : tSync('notif.notLoggedIn')}
+            {tSync('notif.notLoggedIn')}
           </Text>
         </Box>
       )}

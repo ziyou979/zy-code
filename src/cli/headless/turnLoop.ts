@@ -372,12 +372,6 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
 
         const input = command.value
 
-        if (command.mode === 'prompt') {
-          logEvent('zy_bridge_message_received', {
-            is_repl: false,
-          })
-        }
-
         // 中止正在进行的建议生成并跟踪接受情况
         suggestionState.abortController?.abort()
         suggestionState.abortController = null

@@ -5,7 +5,6 @@ import type { MCPServerConnection } from 'src/services/mcp/types.js'
 import { getGlobalConfig, saveGlobalConfig } from 'src/services/config/config.js'
 import { isJetBrainsIde, isSupportedTerminal } from 'src/services/ide/ideCatalog.js'
 import { detectIDEs, type IDEExtensionInstallationStatus } from 'src/services/ide/ide.js'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useIdeConnectionStatus } from '../useIdeConnectionStatus.js'
 import type { IDESelection } from '../useIdeSelection.js'
 
@@ -36,9 +35,6 @@ export function useIDEStatusIndicator({ ideSelection, mcpClients, ideInstallatio
     !shouldShowConnected &&
     !shouldShowIdeSelection
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (isSupportedTerminal() || ideStatus !== null || showJetBrainsInfo) {
       removeNotification('ide-status-hint')
       return
@@ -78,9 +74,6 @@ export function useIDEStatusIndicator({ ideSelection, mcpClients, ideInstallatio
     return () => clearTimeout(timeoutId)
   }, [addNotification, removeNotification, ideStatus, showJetBrainsInfo])
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (showIDEInstallError || showJetBrainsInfo || ideStatus !== 'disconnected' || !ideName) {
       removeNotification('ide-status-disconnected')
       return
@@ -100,9 +93,6 @@ export function useIDEStatusIndicator({ ideSelection, mcpClients, ideInstallatio
     showJetBrainsInfo,
   ])
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (!showJetBrainsInfo) {
       removeNotification('ide-status-jetbrains-disconnected')
       return
@@ -114,9 +104,6 @@ export function useIDEStatusIndicator({ ideSelection, mcpClients, ideInstallatio
     })
   }, [addNotification, removeNotification, showJetBrainsInfo])
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (!showIDEInstallError) {
       removeNotification('ide-status-install-error')
       return

@@ -4,20 +4,6 @@ import { feature } from 'bun:bundle'
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 process.env.COREPACK_ENABLE_AUTO_PIN = '0'
 
-// 为 CCR 环境的子进程设置最大堆大小（容器有 16GB 内存）。
-// NODE_OPTIONS --max-old-space-size 是 V8 参数，Bun(JSC) 会忽略，仅对 Node 子进程
-// （如 node 实现的 MCP server）有效。进程启动时读取，此处设置仅通过 env 继承
-// 影响之后派生的子进程，对已在运行的主进程无效。
-// eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level, custom-rules/safe-env-boolean-check
-if (process.env.ZY_CODE_REMOTE === 'true') {
-  // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level
-  const existing = process.env.NODE_OPTIONS || ''
-  // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level
-  process.env.NODE_OPTIONS = existing
-    ? `${existing} --max-old-space-size=4096`
-    : '--max-old-space-size=4096'
-}
-
 // 对照实验基线。内联在此处（而非 init.ts），因为
 // BashTool/AgentTool/PowerShellTool 在导入时会将 DISABLE_BACKGROUND_TASKS 捕获到
 // 模块级常量中 —— init() 执行得太晚。feature() 门控
@@ -182,31 +168,6 @@ async function main(): Promise<void> {
     // 循环句柄阻止自然退出。
     // eslint-disable-next-line custom-rules/no-process-exit
     process.exit(0)
-  }
-
-  // `zy environment-runner` 快速路径：无头 BYOC 运行器。
-  // feature() 必须保持内联以实现构建时死代码消除。
-  if (feature('BYOC_ENVIRONMENT_RUNNER') && args[0] === 'environment-runner') {
-    profileCheckpoint('cli_environment_runner_path')
-    const { environmentRunnerMain } = (await import(
-      '../environment-runner/main.js'
-    )) as unknown as {
-      environmentRunnerMain: (args: string[]) => Promise<void>
-    }
-    await environmentRunnerMain(args.slice(1))
-    return
-  }
-
-  // `zy self-hosted-runner` 快速路径：无头自托管运行器，
-  // 面向 SelfHostedRunnerWorkerService API（注册 + 轮询；轮询即为心跳）。
-  // feature() 必须保持内联以实现构建时死代码消除。
-  if (feature('SELF_HOSTED_RUNNER') && args[0] === 'self-hosted-runner') {
-    profileCheckpoint('cli_self_hosted_runner_path')
-    const { selfHostedRunnerMain } = (await import('../self-hosted-runner/main.js')) as unknown as {
-      selfHostedRunnerMain: (args: string[]) => Promise<void>
-    }
-    await selfHostedRunnerMain(args.slice(1))
-    return
   }
 
   // --worktree --tmux 快速路径：在加载完整 CLI 之前 exec 进入 tmux

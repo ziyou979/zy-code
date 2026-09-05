@@ -4,7 +4,6 @@ import { Text } from 'src/ink/index.js'
 import { getRateLimitWarning, getUsingOverageText } from 'src/services/zyAiLimits.js'
 import { useZyAiLimits } from 'src/services/zyAiLimitsHook.js'
 import { hasZyAiBillingAccess } from 'src/services/billing/billing.js'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 export function useRateLimitWarningNotification(model: string) {
   const { addNotification } = useNotifications()
   const zyAiLimits = useZyAiLimits()
@@ -15,9 +14,6 @@ export function useRateLimitWarningNotification(model: string) {
   const isTeamOrEnterprise = false
   const [hasShownOverageNotification, setHasShownOverageNotification] = useState(false)
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (
       zyAiLimits.isUsingOverage &&
       !hasShownOverageNotification &&
@@ -42,9 +38,6 @@ export function useRateLimitWarningNotification(model: string) {
     hasBillingAccess,
   ])
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (rateLimitWarning && rateLimitWarning !== shownWarningRef.current) {
       shownWarningRef.current = rateLimitWarning
       addNotification({

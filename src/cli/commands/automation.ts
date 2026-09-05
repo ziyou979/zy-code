@@ -1,13 +1,10 @@
-import { feature } from 'bun:bundle'
 import type { Command } from '@commander-js/extra-typings'
 import { getAutoModeEnabledStateIfCached } from '../../services/permissions/autoModePolicy.js'
 
 /**
- * 注册自动化/桥接相关命令：
+ * 注册自动化相关命令：
  * - agents（列出已配置 agents）
  * - auto-mode <defaults|config|critique>（TRANSCRIPT_CLASSIFIER）
- * - remote-control / rc（BRIDGE_MODE，hidden 占位）
- * - assistant [sessionId]（KAIROS，stub）
  */
 // biome-ignore lint/suspicious/noExplicitAny: program 类型链跨函数边界不可保留
 export function registerAutomationCommands(program: Command<any, any, any>): void {

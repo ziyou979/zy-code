@@ -484,10 +484,6 @@ export type GlobalConfig = {
   // 与 zy_cicada_nap_ms 配合使用以限制 API 调用
   startupPrefetchedAt?: number
 
-  // 启动时运行 Remote Control（需要 BRIDGE_MODE）
-  // undefined = 使用默认值（优先级见 getRemoteControlAtStartup()）
-  remoteControlAtStartup?: boolean
-
   // 缓存的额外额度禁用原因（来自上次 API 响应）
   // undefined = 无缓存，null = 已启用额外额度，string = 禁用原因。
   cachedExtraUsageDisabledReason?: string | null
@@ -600,7 +596,6 @@ export const GLOBAL_CONFIG_KEYS = [
   'copyOnSelect',
   'permissionExplainerEnabled',
   'prStatusFooterEnabled',
-  'remoteControlAtStartup',
   'remoteDialogSeen',
 ] as const
 
@@ -1013,18 +1008,8 @@ export function getGlobalConfig(): GlobalConfig {
 }
 
 /**
- * 返回 remoteControlAtStartup 的有效值。优先级：
- *   1. 用户的显式配置值（始终获胜 — 尊重 opt-out）
- *   2. false（Remote Control 必须显式 opt-in）
+ * 根据 truncatedApiKey 判断 API key 的批准状态。
  */
-export function getRemoteControlAtStartup(): boolean {
-  const explicit = getGlobalConfig().remoteControlAtStartup
-  if (explicit !== undefined) {
-    return explicit
-  }
-  return false
-}
-
 export function getApiKeyStatus(truncatedApiKey: string): 'approved' | 'rejected' | 'new' {
   const config = getGlobalConfig()
   if (config.apiKeyResponses?.approved?.includes(truncatedApiKey)) {

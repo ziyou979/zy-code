@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../../context/notifications.js'
 import { Text } from '../../ink/index.js'
 import { useAppState } from '../../state/AppState.js'
@@ -26,9 +25,6 @@ export function usePluginInstallationStatus() {
   }
   const { totalFailed, failedMarketplacesCount, failedPluginsCount } = config
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (!installationStatus) {
       logForDebugging('No installation status to monitor')
       return

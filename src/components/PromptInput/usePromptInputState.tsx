@@ -188,17 +188,6 @@ export function usePromptInputState({
 
   const tasks = useAppState((s) => s.tasks)
 
-  const replWireConnected = useAppState((s) => s.replWireConnected)
-
-  const replWireExplicit = useAppState((s) => s.replWireExplicit)
-
-  const replWireReconnecting = useAppState((s) => s.replWireReconnecting)
-
-  // Must match WireStatusIndicator's render condition (PromptInputFooter.tsx) —
-  // the pill returns null for implicit-and-not-reconnecting, so nav must too,
-  // otherwise bridge becomes an invisible selection stop.
-  const bridgeFooterVisible = replWireConnected && (replWireExplicit || replWireReconnecting)
-
   // Tmux pill (ant-only) — visible when there's an active tungsten session
   const hasTungstenSession = useAppState(
     (s) => isInternalBuild() && s.tungstenActiveSession !== undefined,
@@ -311,8 +300,6 @@ export function usePromptInputState({
   const pendingSpaceAfterPillRef = useRef(false)
 
   const [showTeamsDialog, setShowTeamsDialog] = useState(false)
-
-  const [showBridgeDialog, setShowBridgeDialog] = useState(false)
 
   const [teammateFooterIndex, setTeammateFooterIndex] = useState(0)
 
@@ -446,15 +433,8 @@ export function usePromptInputState({
         tmuxFooterVisible && 'tmux',
         bagelFooterVisible && 'bagel',
         teamsFooterVisible && 'teams',
-        bridgeFooterVisible && 'bridge',
       ].filter(Boolean) as FooterItem[],
-    [
-      tasksFooterVisible,
-      tmuxFooterVisible,
-      bagelFooterVisible,
-      teamsFooterVisible,
-      bridgeFooterVisible,
-    ],
+    [tasksFooterVisible, tmuxFooterVisible, bagelFooterVisible, teamsFooterVisible],
   )
 
   // Effective selection: null if the selected pill stopped rendering (bridge
@@ -486,8 +466,6 @@ export function usePromptInputState({
   const _bagelSelected = footerItemSelected === 'bagel'
 
   const teamsSelected = footerItemSelected === 'teams'
-
-  const bridgeSelected = footerItemSelected === 'bridge'
 
   function selectFooterItem(item: FooterItem | null): void {
     setAppState((prev) =>
@@ -629,10 +607,6 @@ export function usePromptInputState({
     store,
     setAppState,
     tasks,
-    replWireConnected,
-    replWireExplicit,
-    replWireReconnecting,
-    bridgeFooterVisible,
     hasTungstenSession,
     tmuxFooterVisible,
     bagelFooterVisible,
@@ -663,8 +637,6 @@ export function usePromptInputState({
     pendingSpaceAfterPillRef,
     showTeamsDialog,
     setShowTeamsDialog,
-    showBridgeDialog,
-    setShowBridgeDialog,
     teammateFooterIndex,
     setTeammateFooterIndex,
     coordinatorTaskIndex,
@@ -704,7 +676,6 @@ export function usePromptInputState({
     tmuxSelected,
     _bagelSelected,
     teamsSelected,
-    bridgeSelected,
     selectFooterItem,
     navigateFooter,
     promptSuggestion,

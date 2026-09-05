@@ -15,7 +15,6 @@
 
 import { feature } from 'bun:bundle'
 import { basename } from 'node:path'
-import { getIsRemoteMode } from '../../bootstrap/runtime/runtimeContext.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { ENTRYPOINT_NAME } from '../../memdir/memdir.js'
 import { formatMemoryManifest, scanMemoryFiles } from '../../memdir/memoryScan.js'
@@ -495,9 +494,6 @@ export function initExtractMemories(): void {
     }
 
     // Skip in remote mode
-    if (getIsRemoteMode()) {
-      return
-    }
 
     // If an extraction is already in progress, stash this context for a
     // trailing run (overwrites any previously stashed context — only the

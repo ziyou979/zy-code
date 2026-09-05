@@ -1,17 +1,12 @@
 /**
- * Shared attachment validation + resolution for SendUserMessage and
- * SendUserFile. Lives in BriefTool/ so the dynamic `./upload.js` import
- * inside the feature('BRIDGE_MODE') guard stays relative and upload.ts
- * (axios, crypto, auth utils) remains tree-shakeable from non-bridge builds.
+ * Brief 附件的本地校验与解析（路径/大小/图片类型）。
  */
 
-import { feature } from 'bun:bundle'
 import { stat } from 'node:fs/promises'
 
 import type { ValidationResult } from '../../tools/tool.js'
 
 import { getCwd } from '../../services/environment/cwd.js'
-import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { IMAGE_EXTENSION_REGEX } from '../../services/attachments/imagePaste.js'
 import { expandPath } from '../../utils/path.js'
@@ -20,7 +15,6 @@ export type ResolvedAttachment = {
   path: string
   size: number
   isImage: boolean
-  file_uuid?: string
 }
 
 export async function validateAttachmentPaths(rawPaths: string[]): Promise<ValidationResult> {
@@ -60,11 +54,9 @@ export async function validateAttachmentPaths(rawPaths: string[]): Promise<Valid
 
 export async function resolveAttachments(
   rawPaths: string[],
-  uploadCtx: { replBridgeEnabled: boolean; signal?: AbortSignal },
+  uploadCtx: { signal?: AbortSignal },
 ): Promise<ResolvedAttachment[]> {
-  // Stat serially (local, fast) to keep ordering deterministic, then upload
-  // in parallel (network, slow). Upload failures resolve undefined — the
-  // attachment still carries {path, size, isImage} for local renderers.
+  // Stat serially (local, fast) to keep ordering deterministic.
   const stated: ResolvedAttachment[] = []
   for (const rawPath of rawPaths) {
     const fullPath = expandPath(rawPath)
@@ -77,29 +69,6 @@ export async function resolveAttachments(
       size: stats.size,
       isImage: IMAGE_EXTENSION_REGEX.test(fullPath),
     })
-  }
-  // Dynamic import inside the feature() guard so upload.ts (axios, crypto,
-  // zod, auth utils, MIME map) is fully eliminated from non-BRIDGE_MODE
-  // builds. A static import would force module-scope evaluation regardless
-  // of the guard inside uploadBriefAttachment — AGENTS.md: "helpers defined
-  // outside remain in the build even if never called".
-  if (feature('BRIDGE_MODE')) {
-    // Headless/SDK callers never set appState.replBridgeEnabled (only the TTY
-    // REPL does, at main.tsx init). ZY_CODE_BRIEF_UPLOAD lets a host that
-    // runs the CLI as a subprocess opt in — e.g. the cowork desktop bridge,
-    // which already passes ZY_CODE_OAUTH_TOKEN for auth.
-    const shouldUpload =
-      uploadCtx.replBridgeEnabled || isEnvTruthy(process.env.ZY_CODE_BRIEF_UPLOAD)
-    const { uploadBriefAttachment } = await import('./upload.js')
-    const uuids = await Promise.all(
-      stated.map((a) =>
-        uploadBriefAttachment(a.path, a.size, {
-          replBridgeEnabled: shouldUpload,
-          signal: uploadCtx.signal,
-        }),
-      ),
-    )
-    return stated.map((a, i) => (uuids[i] === undefined ? a : { ...a, file_uuid: uuids[i] }))
   }
   return stated
 }

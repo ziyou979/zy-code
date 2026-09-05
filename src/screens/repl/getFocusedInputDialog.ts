@@ -30,7 +30,6 @@ export interface GetFocusedInputDialogParams {
   isLoading: boolean
   showIdeOnboarding: boolean
   showEffortCallout: boolean
-  showRemoteCallout: boolean
   lspRecommendation: unknown
   hintRecommendation: unknown
   showFullscreenUpsell: boolean
@@ -89,9 +88,6 @@ export function getFocusedInputDialog(p: GetFocusedInputDialogParams): FocusedIn
   }
 
   // 远程 callout（首次启用桥之前显示一次）
-  if (allowDialogsWithAnimation && p.showRemoteCallout) {
-    return 'remote-callout'
-  }
 
   // LSP 插件推荐（最低优先级 - 非阻塞建议）
   if (allowDialogsWithAnimation && p.lspRecommendation) {

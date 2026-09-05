@@ -213,8 +213,6 @@ export function Config({
       thinkingEnabled: s_4.thinkingEnabled,
       promptSuggestionEnabled: s_4.promptSuggestionEnabled,
       isBriefOnly: s_4.isBriefOnly,
-      replBridgeEnabled: s_4.replBridgeEnabled,
-      replBridgeOutboundOnly: s_4.replBridgeOutboundOnly,
       settings: s_4.settings,
     }
   })
@@ -1405,8 +1403,6 @@ export function Config({
       thinkingEnabled: ia.thinkingEnabled,
       promptSuggestionEnabled: ia.promptSuggestionEnabled,
       isBriefOnly: ia.isBriefOnly,
-      replBridgeEnabled: ia.replBridgeEnabled,
-      replBridgeOutboundOnly: ia.replBridgeOutboundOnly,
       settings: ia.settings,
       // Reconcile auto-mode state after useAutoModeDuringPlan revert above —
       // the onChange handler may have activated/deactivated auto mid-plan.

@@ -41,7 +41,6 @@ import pr_comments from '../commands/pr-comments/index.js'
 import releaseNotes from '../commands/release-notes/index.js'
 import rename, { renameLocal } from '../commands/rename/index.js'
 import resume from '../commands/resume/index.js'
-import session from '../commands/session/index.js'
 import share from '../commands/share/index.js'
 import skills from '../commands/skills/index.js'
 import status from '../commands/status/index.js'
@@ -252,7 +251,6 @@ const COMMANDS = memoize((): Command[] => [
   // 同名 local 变体：仅在非交互过滤后生效（交互模式 findCommand 命中紧靠在前的 rename）
   renameLocal,
   resume,
-  session,
   skills,
   status,
   statusline,
@@ -537,77 +535,6 @@ getSlashCommandToolSkills = memoize(async (cwd: string): Promise<Command[]> => {
 })
 
 /**
- * 在远程模式 (--remote) 下可安全使用的命令。
- * 这些命令仅影响本地 TUI 状态，不依赖本地文件系统、
- * git、shell、IDE、MCP 或其他本地执行上下文。
- *
- * 在两个地方使用：
- * 1. REPL 渲染前在 main.tsx 中预过滤命令（防止与 CCR 初始化竞争）
- * 2. CCR 过滤后在 REPL 的 handleRemoteInit 中保留本地专属命令
- */
-export const REMOTE_SAFE_COMMANDS: Set<Command> = new Set([
-  session, // 显示远程会话的二维码 / URL
-  exit, // 退出 TUI
-  clear, // 清屏
-  help, // 显示帮助
-  theme, // 更改终端主题
-  color, // 更改代理颜色
-  tui, // 切换全屏 TUI 模式
-  vim, // 切换 vim 模式
-  usage, // 显示会话成本 + 使用信息（别名 /cost）
-  copy, // 复制最后一条消息
-  btw, // 快速备注
-  feedback, // 发送反馈
-  plan, // 切换计划模式
-  keybindings, // 快捷键管理
-  statusline, // 状态栏切换
-  stickers, // 贴纸
-  mobile, // 移动端二维码
-])
-
-/**
- * 类型为 'local' 的内置命令，在通过远控桥接收时可以安全执行。
- * 这些命令产生文本输出并流式返回到移动端/Web 客户端，
- * 且没有仅限终端的副作用。
- *
- * 'local-jsx' 命令按类型阻止（它们渲染 Ink UI），
- * 'prompt' 命令按类型允许（它们展开为发送给模型的文本） —
- * 此集合仅控制 'local' 命令。
- *
- * 当添加新的应从移动端工作的 'local' 命令时，添加到此处。
- * 默认情况下被阻止。
- */
-export const BRIDGE_SAFE_COMMANDS: Set<Command> = new Set(
-  [
-    compact, // 缩减上下文 — 在会话中从手机操作时很有用
-    clear, // 清除对话记录
-    summary, // 总结对话
-    releaseNotes, // 显示变更日志
-    files, // 列出跟踪的文件
-  ].filter((c): c is Command => c !== null),
-)
-
-/**
- * 判断斜杠命令在其输入通过远控桥（移动端/Web 客户端）到达时是否可以安全执行。
- *
- * PR #19134  blanket-blocked 所有来自桥接入站的斜杠命令，
- * 因为来自 iOS 的 `/model` 会弹出本地 Ink 选择器。
- * 此谓词通过显式允许列表放宽了该限制：
- * 'prompt' 命令（技能）展开为文本，从结构上就是安全的；
- * 'local' 命令需要通过 BRIDGE_SAFE_COMMANDS 显式启用；
- * 'local-jsx' 命令渲染 Ink UI，保持阻止。
- */
-export function isBridgeSafeCommand(cmd: Command): boolean {
-  if (cmd.type === 'local-jsx') {
-    return false
-  }
-  if (cmd.type === 'prompt') {
-    return true
-  }
-  return BRIDGE_SAFE_COMMANDS.has(cmd)
-}
-
-/**
  * Narrow list of command names that render interactive Ink UI unsuitable for
  * background (tmux) sessions.  Matches CC 2.1.209 behavior — most commands
  * work fine in bg; only truly interactive flows (OAuth, installer wizards)
@@ -627,15 +554,6 @@ export function getBgSessionBlockReason(cmd: Command): string | null {
     return `/${cmd.name} is not available in background sessions`
   }
   return null
-}
-
-/**
- * 筛选命令，仅包含在远程模式下安全的命令。
- * 用于在 --remote 模式下渲染 REPL 时预过滤命令，
- * 防止本地专属命令在 CCR 初始化消息到达前短暂可用。
- */
-export function filterCommandsForRemoteMode(commands: Command[]): Command[] {
-  return commands.filter((cmd) => REMOTE_SAFE_COMMANDS.has(cmd))
 }
 
 export function findCommand(commandName: string, commands: Command[]): Command | undefined {

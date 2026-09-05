@@ -33,7 +33,6 @@
 P8 大文件治理后的主要内部边界：
 
 - `components/PromptInput/`：状态、建议、提交、快捷键、视图模型与渲染分离，`PromptInput.tsx` 只按固定顺序组合各阶段
-- `bridge/bridge-main/`：CLI 参数、headless 启动、轮询循环和生命周期辅助逻辑分离
 - `services/plugins/plugin-loader/`、`services/plugins/marketplace-manager/`：缓存、来源安装、清单构建、市场加载与注册职责分离
 - `services/attachments/attachment-pipeline/`：附件类型、收集、模式提醒、上下文增量、记忆、技能和任务提醒分离
 - `commands/insights/`：远程采集、会话分析、聚合、洞察生成、报告渲染和导出分离
@@ -47,14 +46,13 @@ P8 大文件治理后的主要内部边界：
 | 目录 | 职责 |
 |------|------|
 | `src/shell-eval/` | **Shell 解析与执行**（从 `utils/` 提升）：`bash/`（parser、AST、命令注册）、`powershell/`（parser、危险 cmdlet）、`shared/`（provider、输出限制、只读校验） |
-| `src/bridge/` | 远程会话桥接（REPL bridge、transport、JWT、webhook） |
 | `src/coordinator/` | 协调器模式（多 worker 编排，`AgentTool` 调度） |
 | `src/assistant/` | 助手会话发现与历史 |
 | `src/goal/` | 目标驱动工作流 |
-| `src/tasks/` | 任务类型（Dream、LocalAgent、LocalShell、Remote、Workflow 等） |
+| `src/tasks/` | 任务类型（Dream、LocalAgent、LocalShell、Workflow 等） |
 | `src/daemon/` | 后台守护进程 |
 | `src/server/` | 内置服务器（含 `backends/`） |
-| `src/remote/` | 远程连接 |
+| `src/remote/` | SSH/直连会话的消息适配与权限桥（无 zy.ai 后端依赖） |
 | `src/ssh/` | SSH 支持 |
 
 ## 服务层（`src/services/`）
@@ -77,7 +75,7 @@ P8 大文件治理后的主要内部边界：
 | `todo/` | TODO 管理 |
 | `plugins/` | 插件系统 |
 | `settings/` | 持久化设置、校验、变更检测与状态栏配置 |
-| `session-state/` | bridge/headless 会话状态通知契约 |
+| `session-state/` | headless 会话状态通知契约 |
 | `session-storage/` | 会话元数据、日志与 transcript 持久化实现 |
 | `file-search/` | glob 与文件搜索领域入口 |
 | `markdown/` | markdown frontmatter 解析 |
@@ -88,7 +86,6 @@ P8 大文件治理后的主要内部边界：
 | `jobs/` | 后台作业管理（从 `utils/` 迁移） |
 | `dxt/` | DXT 扩展支持（从 `utils/` 迁移） |
 | `claude-in-chrome/` | Chrome 扩展集成（从 `utils/` 迁移） |
-| `teleport/` | Teleport 支持（从 `utils/` 迁移） |
 | `deep-link/` | 深度链接处理（从 `utils/` 迁移） |
 | `compact/context-collapse/` | 上下文折叠（智能裁剪对话历史） |
 | `file-persistence/` | 文件持久化（会话/配置存储） |

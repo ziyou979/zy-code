@@ -234,7 +234,6 @@ export interface ReplMainViewProps {
   // 通知集合（仅包含驱动 dialog 的子集）
   showEffortCallout: boolean
   setShowEffortCallout: (v: boolean) => void
-  showRemoteCallout: boolean
   showDesktopUpsellStartup: boolean
   setShowDesktopUpsellStartup: (v: boolean) => void
   showFullscreenUpsell: boolean
@@ -344,7 +343,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
     setShowIdeOnboarding,
     showEffortCallout,
     setShowEffortCallout,
-    showRemoteCallout,
     showDesktopUpsellStartup,
     setShowDesktopUpsellStartup,
     showFullscreenUpsell,

@@ -5,8 +5,6 @@ import {
   consumePostCompaction,
   getIsNonInteractiveSession,
   getLastApiCompletionTimestamp,
-  getTeleportedSessionInfo,
-  markFirstTeleportMessageLogged,
   setLastApiCompletionTimestamp,
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getAPIProviderForStatsig } from 'src/services/model/providers.js'
@@ -362,17 +360,6 @@ export function logAPIError({
     error: errStr,
     attempt,
   })
-
-  // 记录远程传送会话的首次错误（可靠性跟踪）
-  const teleportInfo = getTeleportedSessionInfo()
-  if (teleportInfo?.isTeleported && !teleportInfo.hasLoggedFirstMessage) {
-    logEvent('zy_teleport_first_message_error', {
-      session_id:
-        teleportInfo.sessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      error_type: errorType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    markFirstTeleportMessageLogged()
-  }
 }
 
 function logAPISuccess({
@@ -738,14 +725,4 @@ export function logAPISuccessAndDuration({
     requestSetupMs,
     attemptStartTimes,
   })
-
-  // 记录远程传送会话的首次成功消息（可靠性跟踪）
-  const teleportInfo = getTeleportedSessionInfo()
-  if (teleportInfo?.isTeleported && !teleportInfo.hasLoggedFirstMessage) {
-    logEvent('zy_teleport_first_message_success', {
-      session_id:
-        teleportInfo.sessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    markFirstTeleportMessageLogged()
-  }
 }

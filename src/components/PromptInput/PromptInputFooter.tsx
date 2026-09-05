@@ -53,7 +53,6 @@ type Props = {
   isLoading: boolean
   tasksSelected: boolean
   teamsSelected: boolean
-  bridgeSelected: boolean
   tmuxSelected: boolean
   teammateFooterIndex?: number
   ideSelection: IDESelection | undefined
@@ -91,7 +90,6 @@ function PromptInputFooter({
   isLoading,
   tasksSelected,
   teamsSelected,
-  bridgeSelected,
   tmuxSelected,
   teammateFooterIndex,
   ideSelection,

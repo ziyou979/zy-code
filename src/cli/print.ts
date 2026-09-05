@@ -162,7 +162,6 @@ import { getSessionId, switchSession } from 'src/bootstrap/runtime/runtimeContex
 import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   setMainThreadAgentType,
-  getIsRemoteMode,
   getMainThreadAgentType,
 } from 'src/bootstrap/runtime/runtimeContext.js'
 import { isSessionPersistenceDisabled } from 'src/bootstrap/runtime/runtimeContext.js'
@@ -346,10 +345,7 @@ export async function runHeadless(
   // 立即启动用户 settings 下载，使其与下方 MCP/tool 设置重叠。managed settings 已在 main.tsx
   // preAction 中启动；此处给用户 settings 类似的提前量。plugin 安装读取 enabledPlugins 前，
   // installPluginsAndApplyMcpInBackground 会等待缓存的 promise。
-  if (
-    feature('DOWNLOAD_USER_SETTINGS') &&
-    (isEnvTruthy(process.env.ZY_CODE_REMOTE) || getIsRemoteMode())
-  ) {
+  if (feature('DOWNLOAD_USER_SETTINGS')) {
     void downloadUserSettings()
   }
 

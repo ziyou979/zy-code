@@ -1,7 +1,6 @@
 import { stat } from 'node:fs/promises'
 import * as platformPath from 'node:path'
 import chokidar, { type FSWatcher } from 'chokidar'
-import { getIsRemoteMode } from '../../bootstrap/runtime/runtimeContext.js'
 import { registerCleanup } from '../cleanup/cleanupRegistry.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -78,9 +77,6 @@ let testOverrides: {
  * Initialize file watching
  */
 export async function initialize(): Promise<void> {
-  if (getIsRemoteMode()) {
-    return
-  }
   if (initialized || disposed) {
     return
   }

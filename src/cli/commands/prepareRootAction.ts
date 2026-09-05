@@ -313,10 +313,9 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
   const effectiveIncludePartialMessages =
     includePartialMessages || isEnvTruthy(process.env.ZY_CODE_INCLUDE_PARTIAL_MESSAGES)
 
-  // 通过 SDK 选项明确要求时启用所有钩子事件类型
-  // 或在 ZY_CODE_REMOTE 模式下运行时（CCR 需要它们）。
+  // 通过 SDK 选项明确要求时启用所有钩子事件类型。
   // 否则，只发射 SessionStart 和 Setup 事件。
-  if (includeHookEvents || isEnvTruthy(process.env.ZY_CODE_REMOTE)) {
+  if (includeHookEvents) {
     setAllHookEventsEnabled(true)
   }
 

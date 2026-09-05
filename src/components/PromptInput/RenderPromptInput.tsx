@@ -81,10 +81,6 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
     store,
     setAppState,
     tasks,
-    replWireConnected,
-    replWireExplicit,
-    replWireReconnecting,
-    bridgeFooterVisible,
     hasTungstenSession,
     tmuxFooterVisible,
     bagelFooterVisible,
@@ -115,8 +111,6 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
     pendingSpaceAfterPillRef,
     showTeamsDialog,
     setShowTeamsDialog,
-    showBridgeDialog,
-    setShowBridgeDialog,
     teammateFooterIndex,
     setTeammateFooterIndex,
     coordinatorTaskIndex,
@@ -156,7 +150,6 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
     tmuxSelected,
     _bagelSelected,
     teamsSelected,
-    bridgeSelected,
     selectFooterItem,
     navigateFooter,
     promptSuggestion,
@@ -458,7 +451,6 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
         isLoading={isLoading}
         tasksSelected={tasksSelected}
         teamsSelected={teamsSelected}
-        bridgeSelected={bridgeSelected}
         tmuxSelected={tmuxSelected}
         teammateFooterIndex={teammateFooterIndex}
         ideSelection={ideSelection}

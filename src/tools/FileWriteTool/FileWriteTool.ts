@@ -28,7 +28,6 @@ import {
 import { logFileOperation } from '../../services/analytics/fileOperationAnalytics.js'
 import { readFileSyncWithMetadata } from '../../services/file-persistence/fileRead.js'
 import { getFsImplementation } from '../../services/infra/fsOperations.js'
-import { fetchSingleFileGitDiff, type ToolUseDiff } from '../../services/git/gitDiff.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../services/infra/log.js'
 import { expandPath } from '../../utils/path.js'
@@ -39,7 +38,7 @@ import {
 import type { PermissionDecision } from 'src/types/permissions.js'
 import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
 import { FILE_UNEXPECTEDLY_MODIFIED_ERROR } from '../FileEditTool/constants.js'
-import { gitDiffSchema, hunkSchema } from '../FileEditTool/types.js'
+import { hunkSchema } from '../FileEditTool/types.js'
 import { FILE_WRITE_TOOL_NAME, getWriteToolDescription } from './prompt.js'
 import {
   getToolUseSummary,
@@ -73,7 +72,6 @@ const outputSchema = lazySchema(() =>
       .string()
       .nullable()
       .describe('The original file content before the write (null for new files)'),
-    gitDiff: gitDiffSchema().optional(),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -332,23 +330,6 @@ export const FileWriteTool = buildTool({
       logEvent('zy_write_ZYmd', {})
     }
 
-    let gitDiff: ToolUseDiff | undefined
-    if (
-      isEnvTruthy(process.env.ZY_CODE_REMOTE) &&
-      getFeatureValue_CACHED_MAY_BE_STALE('zy_remote_git_diff', false)
-    ) {
-      const startTime = Date.now()
-      const diff = await fetchSingleFileGitDiff(fullFilePath)
-      if (diff) {
-        gitDiff = diff
-      }
-      logEvent('zy_tool_use_diff_computed', {
-        isWriteTool: true,
-        durationMs: Date.now() - startTime,
-        hasDiff: !!diff,
-      })
-    }
-
     if (oldContent) {
       const patch = getPatchForDisplay({
         filePath: file_path,
@@ -368,7 +349,6 @@ export const FileWriteTool = buildTool({
         content,
         structuredPatch: patch,
         originalFile: oldContent,
-        ...(gitDiff && { gitDiff }),
       }
       // Track lines added and removed for file updates, right before yielding result
       countLinesChanged(patch)
@@ -391,7 +371,6 @@ export const FileWriteTool = buildTool({
       content,
       structuredPatch: [],
       originalFile: null,
-      ...(gitDiff && { gitDiff }),
     }
 
     // For creation of new files, count all lines as additions, right before yielding the result

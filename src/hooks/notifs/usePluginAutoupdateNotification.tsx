@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { getIsRemoteMode } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../../context/notifications.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink/index.js'
@@ -13,9 +12,6 @@ export function usePluginAutoupdateNotification() {
   const { addNotification } = useNotifications()
   const [updatedPlugins, setUpdatedPlugins] = useState<string[]>([])
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     const unsubscribe = onPluginsAutoUpdated((plugins) => {
       logForDebugging(`Plugin autoupdate notification: ${plugins.length} plugin(s) updated`)
       setUpdatedPlugins(plugins)
@@ -23,9 +19,6 @@ export function usePluginAutoupdateNotification() {
     return unsubscribe
   }, [])
   useEffect(() => {
-    if (getIsRemoteMode()) {
-      return
-    }
     if (updatedPlugins.length === 0) {
       return
     }
