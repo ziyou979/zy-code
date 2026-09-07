@@ -63,15 +63,14 @@ export const CIRCLE_UPPER_RIGHT = '\u25d4' // ◔
 export const CIRCLE_ALL_BUT_UPPER_LEFT = '\u25d5' // ◕
 
 // ── Media / trigger ────────────────────────────────────────
-// JetBrains 终端（DirectWrite 主字体命中）能正确按 VS15 文本变体渲染 emoji 区
-// 符号；Windows Terminal 的字体回退链会把这些码点交给 Segoe UI Emoji，其
-// VS15 支持不完整，渲染为带背景色块的双格宽彩色字形。因此按终端自适应：
-// windows-terminal 用纯文本区替代码点，其余终端保留原符号。
-export const PLAY_ICON =
-  env.terminal === 'windows-terminal' ? SMALL_RIGHT_TRIANGLE : '\u23f5' + VS15 // ▸ / ⏵
-export const REVERSE_PLAY_ICON = env.terminal === 'windows-terminal' ? '\u25c2' : '\u25c0' + VS15 // ◂ / ◀
-export const PAUSE_ICON = env.terminal === 'windows-terminal' ? '\u2551' : '\u23f8' + VS15 // ║ / ⏸
-export const FAST_FORWARD_ICON = env.terminal === 'windows-terminal' ? '\u00bb' : '\u23e9' + VS15 // » / ⏩
+// emoji 区双呈现字符 + VS15 请求文本变体。JetBrains 终端等回退策略
+// 友好的环境渲染正常；Windows Terminal 会交给 Segoe UI Emoji 呈现
+// 彩色字形——根治办法是在 WT 配置含这些字形的等宽字体（如更纱黑体
+// Sarasa Mono SC / DejaVu Sans Mono），文本区替代码点观感均不如原符号。
+export const PLAY_ICON = '\u23f5' + VS15 // ⏵
+export const REVERSE_PLAY_ICON = '\u25c0' + VS15 // ◀
+export const PAUSE_ICON = '\u23f8' + VS15 // ⏸
+export const FAST_FORWARD_ICON = '\u23e9' + VS15 // ⏩
 
 // ── MCP ────────────────────────────────────────────────────
 export const REFRESH_ARROW = '\u21bb' // ↻
