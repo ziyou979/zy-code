@@ -8,6 +8,7 @@
  */
 
 import { basename } from 'node:path'
+import { stringWidth } from '../../ink/stringWidth.js'
 import {
   CIRCLE_ALL_BUT_UPPER_LEFT,
   CIRCLE_FILLED,
@@ -17,6 +18,7 @@ import {
   RADIO_OFF,
   RADIO_ON,
   SLASHED_CIRCLE,
+  TAU,
 } from '../../constants/figures.js'
 import { getAverageTTFTMs } from '../../bootstrap/runtime/runtimeContext.js'
 import {
@@ -241,8 +243,8 @@ const RENDERERS: Record<ModuleId, Renderer> = {
       // < 10s 显示小数秒（TTFT 常态在百毫秒级），更长时回退整秒
       parts.push(
         avgTTFTMs < 10_000
-          ? `⏱ ${tSync('statusline.ttft')} ${(avgTTFTMs / 1000).toFixed(1)}s`
-          : `⏱ ${tSync('statusline.ttft')} ${Math.round(avgTTFTMs / 1000)}s`,
+          ? `${TAU} ${tSync('statusline.ttft')} ${(avgTTFTMs / 1000).toFixed(1)}s`
+          : `${TAU} ${tSync('statusline.ttft')} ${Math.round(avgTTFTMs / 1000)}s`,
       )
     }
     return { text: withIcon(icon, parts.join('  ')), colorToken: effectiveColor(module) }
@@ -316,4 +318,50 @@ export function renderStatusbarSegments(
     }
   }
   return out
+}
+
+/** 段间分隔符 ' │ ' 的显示宽度，与渲染侧保持同一事实源。 */
+export const STATUSBAR_SEPARATOR_WIDTH = 3
+
+/**
+ * 按可用宽度把段贪心装进最多 maxRows 行：一行装不下时换行继续，
+ * 最后一行也装不下的尾部段丢弃（保持既有的"从末尾截断"前缀语义）。
+ * 空行无条件接受超宽段（由调用方的 truncate 兜底截断），保证极窄终端
+ * 下至少能渲染出首段而不是整栏消失。BuiltInStatusBar 与 /statusline
+ * 预览共用此布局，保证配置预览与实际渲染一致。
+ */
+export function layoutStatusbarRows(
+  segments: readonly Segment[],
+  availableColumns: number,
+  maxRows = 2,
+): Segment[][] {
+  const rows: Segment[][] = []
+  let current: Segment[] = []
+  let currentWidth = 0
+  for (const seg of segments) {
+    const w = stringWidth(seg.text)
+    const widthWithSep = current.length > 0 ? currentWidth + STATUSBAR_SEPARATOR_WIDTH + w : w
+    const canPlace =
+      widthWithSep <= availableColumns ||
+      // 单个超宽段：行首无条件放入（truncate 兜底截断），保证极窄终端
+      // 下至少渲染出首段而不是整栏消失
+      current.length === 0
+    if (canPlace) {
+      current.push(seg)
+      currentWidth = widthWithSep
+      continue
+    }
+    // 当前行放不下且非行首。已到最大行数则从尾部丢弃（保持既有
+    // "从末尾截断"的前缀优先语义）。
+    if (rows.length + 1 >= maxRows) {
+      break
+    }
+    rows.push(current)
+    current = [seg]
+    currentWidth = w
+  }
+  if (current.length > 0) {
+    rows.push(current)
+  }
+  return rows
 }

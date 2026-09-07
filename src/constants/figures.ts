@@ -103,6 +103,9 @@ export const CHECKBOX_CHECKED = '\u2611' // ☑ — ballot box with check
 
 // ── Refresh / retry ────────────────────────────────────────
 export const CLOCKWISE_ARROWS = '\u27F3' // ⟳
+// 希腊字母 tau：时间常数记号，用于 TTFT 显示。不用 ⏱（U+23F1）——
+// JetBrains 内置终端等环境下会缺字形或宽度错乱，希腊字母区各等宽字体覆盖稳定
+export const TAU = '\u03c4' // τ
 
 // ── Terminal title animation ───────────────────────────────
 export const TITLE_FRAME_A = '\u2802' // ⠂
