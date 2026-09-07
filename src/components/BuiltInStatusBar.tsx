@@ -2,7 +2,6 @@ import * as React from 'react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useSettings } from '../hooks/useSettings.js'
 import { useTerminalSize } from '../hooks/useTerminalSize.js'
-import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text } from '../ink/index.js'
 import { type ModelName } from '../services/model/model.js'
 import { useAppState } from '../state/AppState.js'
@@ -13,13 +12,11 @@ import { resolveThemeSetting } from '../services/environment/systemTheme.js'
 import { getTheme, type Theme } from '../services/environment/theme.js'
 import {
   collectTokenSpeed,
+  layoutStatusbarRows,
   renderStatusbarSegments,
   type StatusbarContext,
 } from './statusbar/renderSegments.js'
 import { mergeWithDefaults } from './statusbar/statusbarModuleDefaults.js'
-
-/** 分隔符宽度 */
-const SEPARATOR_WIDTH = 3 // ' │ '
 
 type Props = {
   messages: Message[]
@@ -105,41 +102,32 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
     return renderStatusbarSegments(modules, ctx)
   }, [modules, messages, mainLoopModel, effortValue, thinkingEnabled, branch, gitClean, memoryRss])
 
-  // 自适应宽度：用户排序优先，超宽时从末尾开始丢弃
-  const visibleSegments = useMemo(() => {
-    if (segments.length === 0) {
-      return segments
-    }
-    const available = columns - 2
-    let cut = segments.length
-    while (cut > 1) {
-      const w =
-        segments.slice(0, cut).reduce((sum, s) => sum + stringWidth(s.text), 0) +
-        Math.max(0, cut - 1) * SEPARATOR_WIDTH
-      if (w <= available) {
-        break
-      }
-      cut -= 1
-    }
-    return segments.slice(0, cut)
-  }, [segments, columns])
+  // 自适应宽度：用户排序优先，一行装不下时贪心换行（最多两行），
+  // 两行仍装不下的尾部段丢弃
+  const rows = useMemo(() => layoutStatusbarRows(segments, columns - 2), [segments, columns])
 
   if (!enabled) {
     return null
   }
 
   return (
-    <Box gap={2}>
-      <Text wrap="truncate">
-        {visibleSegments.map((seg, i) => (
-          <React.Fragment key={i}>
-            {i > 0 && <Text dimColor> │ </Text>}
-            <Text color={resolveColor(theme, seg.colorToken) as import('../ink/styles.js').Color}>
-              {seg.text}
-            </Text>
-          </React.Fragment>
-        ))}
-      </Text>
+    <Box flexDirection="column">
+      {rows.map((row, rowIndex) => (
+        <Box key={rowIndex}>
+          <Text wrap="truncate">
+            {row.map((seg, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <Text dimColor> │ </Text>}
+                <Text
+                  color={resolveColor(theme, seg.colorToken) as import('../ink/styles.js').Color}
+                >
+                  {seg.text}
+                </Text>
+              </React.Fragment>
+            ))}
+          </Text>
+        </Box>
+      ))}
     </Box>
   )
 }

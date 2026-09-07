@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Select } from '../../components/CustomSelect/select.js'
 import { Pane } from '../../components/design-system/Pane.js'
 import {
+  layoutStatusbarRows,
   renderStatusbarSegments,
   type Segment,
   type StatusbarContext,
@@ -20,6 +21,7 @@ import {
 import { BALLOT_BOX, CHECKBOX_CHECKED } from '../../constants/figures.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useSettings } from '../../hooks/useSettings.js'
+import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { padVisual } from '../../utils/truncate.js'
@@ -218,6 +220,7 @@ function StatusbarPreview({ modules }: { modules: readonly ModuleConfig[] }): Re
   const mainLoopModel = useMainLoopModel()
   const effortValue = useAppState((s) => s.effortValue)
   const thinkingEnabled = useAppState((s) => s.thinkingEnabled)
+  const { columns } = useTerminalSize()
   const theme = getTheme(resolveThemeSetting(getGlobalConfig().theme))
 
   // Preview uses mock-but-plausible context values so users can see the
@@ -235,24 +238,32 @@ function StatusbarPreview({ modules }: { modules: readonly ModuleConfig[] }): Re
     avgTTFTMs: 850,
   }
   const segments: Segment[] = renderStatusbarSegments(modules, ctx)
+  // 与 BuiltInStatusBar 共用分行布局：预览里用户在窄终端看到的换行
+  // 行为与实际渲染一致。Pane 有左右 paddingX=2，再留 2 列余量。
+  const rows = useMemo(
+    () => layoutStatusbarRows(segments, Math.max(10, columns - 6)),
+    [segments, columns],
+  )
 
   return (
     <Box flexDirection="column">
       <Text dimColor>{tSync('statusline.dialog.previewLabel')}</Text>
-      <Box>
-        <Text wrap="truncate">
-          {segments.length === 0 ? (
-            <Text dimColor>{tSync('statusline.dialog.previewEmpty')}</Text>
-          ) : (
-            segments.map((seg, i) => (
-              <React.Fragment key={i}>
-                {i > 0 && <Text dimColor> │ </Text>}
-                <Text color={resolveColor(theme, seg.colorToken) as never}>{seg.text}</Text>
-              </React.Fragment>
-            ))
-          )}
-        </Text>
-      </Box>
+      {segments.length === 0 ? (
+        <Text dimColor>{tSync('statusline.dialog.previewEmpty')}</Text>
+      ) : (
+        rows.map((row, rowIndex) => (
+          <Box key={rowIndex}>
+            <Text wrap="truncate">
+              {row.map((seg, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <Text dimColor> │ </Text>}
+                  <Text color={resolveColor(theme, seg.colorToken) as never}>{seg.text}</Text>
+                </React.Fragment>
+              ))}
+            </Text>
+          </Box>
+        ))
+      )}
     </Box>
   )
 }
