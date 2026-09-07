@@ -9,6 +9,13 @@
 import { cpSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
+// NODE_ENV 必须在进程启动时就为 production（由 package.json 的 build 脚本
+// 设置）。react/react-reconciler 的 CJS 入口按
+// `process.env.NODE_ENV === 'production'` 选择构建变体，而 Bun.build 解析
+// 依赖时读取的是进程启动环境快照——运行时再改 process.env.NODE_ENV 无效，
+// 会导致生产 bundle 只含 React development 构建（全套 dev 校验，交互热路径
+// 开销成倍放大）且 production 变体被 DCE。
+
 const root = import.meta.dir
 const srcDir = join(root, 'src')
 const outDir = join(root, 'dist')
