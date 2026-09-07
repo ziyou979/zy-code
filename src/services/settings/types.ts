@@ -11,6 +11,7 @@ import {
   ProviderScopedSettingsSchema,
 } from './settingsModelSchemas.js'
 import { ZY_CODE_SETTINGS_SCHEMA_URL } from './constants.js'
+import { STATUSLINE_MODULE_IDS } from './statuslineTypes.js'
 import { MarketplaceSourceSchema } from '../plugins/schemas.js'
 import {
   AllowedMcpServerEntrySchema,
@@ -460,7 +461,7 @@ export const SettingsSchema = lazySchema(() =>
           modules: z
             .array(
               z.object({
-                id: z.enum(['directory', 'model', 'context', 'tokens', 'cost', 'memory']),
+                id: z.enum(STATUSLINE_MODULE_IDS),
                 visible: z.boolean().optional().default(true),
                 icon: z.string().optional().describe('Override icon (1-cell unicode)'),
                 color: z

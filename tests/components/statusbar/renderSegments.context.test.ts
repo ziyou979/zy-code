@@ -37,6 +37,8 @@ function baseCtx(messages: StatusbarContext['messages']): StatusbarContext {
     branch: null,
     gitClean: null,
     memoryRss: 0,
+    tokensPerSecond: null,
+    avgTTFTMs: null,
   }
 }
 
