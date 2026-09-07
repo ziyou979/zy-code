@@ -70,7 +70,7 @@ export const CIRCLE_ALL_BUT_UPPER_LEFT = '\u25d5' // ◕
 export const PLAY_ICON =
   env.terminal === 'windows-terminal' ? SMALL_RIGHT_TRIANGLE : '\u23f5' + VS15 // ▸ / ⏵
 export const REVERSE_PLAY_ICON = env.terminal === 'windows-terminal' ? '\u25c2' : '\u25c0' + VS15 // ◂ / ◀
-export const PAUSE_ICON = env.terminal === 'windows-terminal' ? '\u2016' : '\u23f8' + VS15 // ‖ / ⏸
+export const PAUSE_ICON = env.terminal === 'windows-terminal' ? '\u2551' : '\u23f8' + VS15 // ║ / ⏸
 export const FAST_FORWARD_ICON = env.terminal === 'windows-terminal' ? '\u00bb' : '\u23e9' + VS15 // » / ⏩
 
 // ── MCP ────────────────────────────────────────────────────
