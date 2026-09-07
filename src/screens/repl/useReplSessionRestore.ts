@@ -32,7 +32,7 @@ import {
   resetSessionFilePointer,
 } from '../../services/session-storage/transcript.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
-import type { ReplStoreInstance } from '../../state/replStore.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { ResumeEntrypoint } from '../../commands/types.js'
 import { asSessionId } from '../../types/ids.js'

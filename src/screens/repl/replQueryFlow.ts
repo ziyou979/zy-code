@@ -61,7 +61,7 @@ import { prependToShellHistoryCache } from '../../services/suggestions/shellHist
 import { setMemberActive } from '../../services/swarm/teamHelpers.js'
 import type { RemoteMessageContent } from '../../remote/messageAdapter.js'
 import type { AppState, AppStateStore } from '../../state/AppStateStore.js'
-import type { ReplStoreInstance, ToolJSXState } from '../../state/replStore.js'
+import type { ReplStoreInstance, ToolJSXState } from '../../state/ReplStore.js'
 import type { CompactProgressEvent, Tool } from '../../tools/tool.js'
 import { getAllInProcessTeammateTasks } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import { resolveAgentTools } from '../../tools/AgentTool/agentToolUtils.js'

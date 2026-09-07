@@ -19,7 +19,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { sendNotification } from '../../services/notifier.js'
-import type { ReplStoreInstance, ToolJSXState } from '../../state/replStore.js'
+import type { ReplStoreInstance, ToolJSXState } from '../../state/ReplStore.js'
 import type { HookProgress } from '../../types/hooks/index.js'
 import type { Message as MessageType, ProgressMessage } from '../../types/message.js'
 import { count } from '../../utils/array.js'

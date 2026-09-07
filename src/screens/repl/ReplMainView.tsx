@@ -63,7 +63,7 @@ import type { ActiveSpeculationState } from '../../services/prompt-suggestion/sp
 import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import { useReplState } from '../../state/ReplState.js'
-import type { ReplStoreInstance } from '../../state/replStore.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import type { Tool, ToolPermissionContext } from '../../tools/tool.js'
 import { getAllInProcessTeammateTasks } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
 import type { InProcessTeammateTaskState } from '../../tasks/in-process-teammate-task/types.js'

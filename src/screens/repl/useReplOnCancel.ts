@@ -16,7 +16,7 @@ import { snapshotOutputTokensForTurn } from 'src/bootstrap/runtime/runtimeContex
 import { proactiveModule } from '../../cli/lazyModules.js'
 import type { ToolUseConfirm } from '../../components/permissions/PermissionRequest.js'
 import type { SpinnerMode } from '../../types/spinner.js'
-import type { ReplStoreInstance } from '../../state/replStore.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import type { Message as MessageType } from '../../types/message.js'
 import type { PromptInputMode } from '../../types/textInputTypes.js'
 import type { PastedContent } from '../../services/config/config.js'

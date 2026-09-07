@@ -3,7 +3,7 @@
 
 import * as React from 'react'
 import { useSyncExternalStore } from 'react'
-import type { ReplState, ReplStoreInstance } from './replStore.js'
+import type { ReplState, ReplStoreInstance } from './ReplStore.js'
 
 const ReplStoreContext = React.createContext<ReplStoreInstance | null>(null)
 

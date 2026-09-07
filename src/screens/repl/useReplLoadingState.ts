@@ -23,7 +23,7 @@ import {
 } from '../../services/compact/compactProgress.js'
 import { getTipToShowOnSpinner, recordShownTip } from '../../components/tips/tipScheduler.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import type { ReplStoreInstance } from '../../state/replStore.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import type { CompactProgressEvent } from '../../tools/tool.js'
 import type { Message as MessageType } from '../../types/message.js'
 import { StreamingThinking } from '../../services/messages/./streaming.js'
