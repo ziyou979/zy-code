@@ -63,13 +63,15 @@ export const CIRCLE_UPPER_RIGHT = '\u25d4' // ◔
 export const CIRCLE_ALL_BUT_UPPER_LEFT = '\u25d5' // ◕
 
 // ── Media / trigger ────────────────────────────────────────
-// 均取自纯文本区（拉丁/数学/几何），不用 emoji 区码点（⏩⏸⏵◀）：Windows
-// Terminal 的字体回退会把 emoji 区落到 Segoe UI Emoji 彩色字形，呈现为
-// 带背景色块的双格宽字形，且对 VS15 文本变体请求支持不完整。
-export const PLAY_ICON = SMALL_RIGHT_TRIANGLE // ▸
-export const REVERSE_PLAY_ICON = '\u25c2' // ◂
-export const PAUSE_ICON = '\u2016' // ‖
-export const FAST_FORWARD_ICON = '\u00bb' // »
+// JetBrains 终端（DirectWrite 主字体命中）能正确按 VS15 文本变体渲染 emoji 区
+// 符号；Windows Terminal 的字体回退链会把这些码点交给 Segoe UI Emoji，其
+// VS15 支持不完整，渲染为带背景色块的双格宽彩色字形。因此按终端自适应：
+// windows-terminal 用纯文本区替代码点，其余终端保留原符号。
+export const PLAY_ICON =
+  env.terminal === 'windows-terminal' ? SMALL_RIGHT_TRIANGLE : '\u23f5' + VS15 // ▸ / ⏵
+export const REVERSE_PLAY_ICON = env.terminal === 'windows-terminal' ? '\u25c2' : '\u25c0' + VS15 // ◂ / ◀
+export const PAUSE_ICON = env.terminal === 'windows-terminal' ? '\u2016' : '\u23f8' + VS15 // ‖ / ⏸
+export const FAST_FORWARD_ICON = env.terminal === 'windows-terminal' ? '\u00bb' : '\u23e9' + VS15 // » / ⏩
 
 // ── MCP ────────────────────────────────────────────────────
 export const REFRESH_ARROW = '\u21bb' // ↻
