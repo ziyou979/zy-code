@@ -1641,7 +1641,12 @@ export default class Ink {
     if (this.prevOverlayRect && !hasSelection(this.selection)) {
       this.prevFrameContaminated = true
     }
-    this.onRender()
+    // 走 throttle 而非同步 onRender：拖选时终端以远超帧率的频率发 mousemove，
+    // 每事件同步整帧（renderNodeToOutput + diff + write）会造成明显掉帧。
+    // throttle leading=同 tick 微任务内出帧（单击无感知延迟），trailing 把
+    // 高频拖选合并到 ≤16ms/帧。selection 状态本身已同步更新，读取
+    // getSelectedText/frontFrame 的调用方不依赖本帧渲染结果。
+    this.scheduleRender()
     for (const cb of this.selectionListeners) {
       cb()
     }

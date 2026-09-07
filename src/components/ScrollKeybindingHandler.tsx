@@ -1,6 +1,7 @@
 import React, { type RefObject, useEffect, useRef } from 'react'
 import { useNotifications } from '../context/notifications.js'
 import { useCopyOnSelect, useSelectionBgColor } from '../hooks/useCopyOnSelect.js'
+import { tSync } from '../i18n/index.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import { useSelection } from '../ink/hooks/useSelection.js'
 import {
@@ -10,7 +11,7 @@ import {
   selectionBounds,
 } from '../ink/selection.js'
 import { isXtermJs } from '../ink/terminal.js'
-import { getClipboardPath } from '../ink/termio/osc.js'
+import { type ClipboardPath, getClipboardPath } from '../ink/termio/osc.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- Esc needs conditional propagation based on selection state
 import { type Key, useInput } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
@@ -390,6 +391,17 @@ const AUTOSCROLL_INTERVAL_MS = 50
 // 事件通过 check()→start() 重新会计数。
 const AUTOSCROLL_MAX_TICKS = 200 // 10s @ 50ms
 
+export function getSelectionCopiedMessage(path: ClipboardPath, charCount: number): string {
+  switch (path) {
+    case 'native':
+      return tSync('selection.copiedNative', { charCount })
+    case 'tmux-buffer':
+      return tSync('selection.copiedTmux', { charCount })
+    case 'osc52':
+      return tSync('selection.copiedOsc52', { charCount })
+  }
+}
+
 /**
  * Keyboard scroll navigation for the fullscreen layout's message scroll box.
  * PgUp/PgDn scroll by half-viewport. Mouse wheel scrolls by a few lines.
@@ -417,23 +429,9 @@ export function ScrollKeybindingHandler({
     // did (native pbcopy / tmux load-buffer / raw OSC 52) so we can tell
     // the user whether paste will Just Work or needs prefix+].
     const path = getClipboardPath()
-    const n = text.length
-    let msg: string
-    // TODO
-    switch (path) {
-      case 'native':
-        msg = `copied ${n} chars to clipboard`
-        break
-      case 'tmux-buffer':
-        msg = `copied ${n} chars to tmux buffer · paste with prefix + ]`
-        break
-      case 'osc52':
-        msg = `sent ${n} chars via OSC 52 · check terminal clipboard settings if paste fails`
-        break
-    }
     addNotification({
       key: 'selection-copied',
-      text: msg,
+      text: getSelectionCopiedMessage(path, text.length),
       color: 'suggestion',
       priority: 'immediate',
       timeoutMs: path === 'native' ? 2000 : 4000,

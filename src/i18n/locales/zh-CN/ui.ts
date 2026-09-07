@@ -166,4 +166,8 @@ export const zhUi: TranslationResource = {
   'feedbackSurvey.thanksTranscript': '感谢分享你的会话记录！',
   'feedbackSurvey.useCommandToShare': '随时使用 {command} 分享详细反馈。',
   'feedbackSurvey.useIssueToReport': '使用 /issue 报告模型行为问题。',
+  'selection.copiedNative': '已复制 {charCount} 个字符到剪贴板',
+  'selection.copiedOsc52':
+    '已通过 OSC 52 发送 {charCount} 个字符 · 若无法粘贴，请检查终端剪贴板设置',
+  'selection.copiedTmux': '已复制 {charCount} 个字符到 tmux 缓冲区 · 使用 prefix + ] 粘贴',
 }

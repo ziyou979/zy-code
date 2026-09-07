@@ -167,5 +167,9 @@ export const enUi: TranslationResource = {
   'feedbackSurvey.thanksTranscript': 'Thanks for sharing your transcript!',
   'feedbackSurvey.useCommandToShare': 'Use {command} to share detailed feedback anytime.',
   'feedbackSurvey.useIssueToReport': 'Use /issue to report model behavior issues.',
+  'selection.copiedNative': 'Copied {charCount} characters to clipboard',
+  'selection.copiedOsc52':
+    'Sent {charCount} characters via OSC 52 · check terminal clipboard settings if paste fails',
+  'selection.copiedTmux': 'Copied {charCount} characters to tmux buffer · paste with prefix + ]',
   'common.noContent': '(No content)',
 }
