@@ -330,6 +330,7 @@ export function REPL({
             mainLoopModel,
           )
         : null,
+      initialInputValue: '',
     }),
   )
   // 订阅整个 ReplState 而非按字段选择器：REPL 在自身派生逻辑中读取
@@ -584,13 +585,11 @@ export function REPL({
   const deferredMessages = useDeferredValue(messages)
 
   const {
-    inputValue,
     setInputValueRaw,
     setInputValue,
     inputValueRef,
     insertTextRef,
     isPromptInputActive,
-    setIsPromptInputActive,
     inputMode,
     setInputMode,
     stashedPrompt,
@@ -608,10 +607,16 @@ export function REPL({
     isTerminalFocused,
     terminalFocusRef,
   } = useReplInput({
+    replStore,
     repinScroll,
     lastUserScrollTsRef,
     trySuggestBgPRIntercept: SUGGEST_BG_PR_NOOP,
   })
+  const moreRightInputValue = React.useSyncExternalStore(
+    moreRightEnabled ? replStore.input.subscribe : PROACTIVE_NO_OP_SUBSCRIBE,
+    replStore.input.getValue,
+    replStore.input.getValue,
+  )
   const [isExiting, _setIsExiting] = useState(false)
   const [exitFlow, _setExitFlow] = useState<React.ReactNode>(null)
 
@@ -667,7 +672,7 @@ export function REPL({
   } = useMoreRight({
     enabled: moreRightEnabled,
     setMessages,
-    inputValue,
+    inputValue: moreRightInputValue,
     setInputValue,
     setToolJSX,
   })
@@ -799,7 +804,7 @@ export function REPL({
     setPromptQueue,
     activeRemote,
     mrOnTurnComplete,
-    inputValue,
+    inputValueRef,
     setInputValue,
     setInputMode,
     setPastedContents,
@@ -819,7 +824,7 @@ export function REPL({
     isSearchingHistory,
     isHelpOpen,
     inputMode,
-    inputValue,
+    inputValue: inputValueRef.current,
     streamMode,
   }
 
@@ -1237,7 +1242,6 @@ export function REPL({
       handleExitTranscript={handleExitTranscript}
       searchBarOpen={searchOpen}
       virtualScrollActive={virtualScrollActive}
-      inputValue={inputValue}
       setInputValue={setInputValue}
       inputMode={inputMode}
       setInputMode={setInputMode}

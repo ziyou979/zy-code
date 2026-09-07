@@ -95,6 +95,7 @@ export type ReplMutable = {
 
 export type ReplStoreInstance = Store<ReplState> & {
   mutable: ReplMutable
+  input: ReplInputStore
   update(partial: Partial<ReplState>): void
   setField<K extends keyof ReplState>(key: K, action: React.SetStateAction<ReplState[K]>): void
   setMessages(action: React.SetStateAction<MessageType[]>): void
@@ -119,6 +120,16 @@ export type ReplStoreInstance = Store<ReplState> & {
   setMainThreadAgentDefinition(v: React.SetStateAction<AgentDefinition | undefined>): void
 }
 
+/**
+ * 输入框是远高于其余 REPL 状态的高频更新源，因此使用独立订阅通道。
+ * 它仍归 ReplStore 管理，但输入变化不会唤醒订阅整个 ReplState 的 REPL 根组件。
+ */
+export type ReplInputStore = {
+  getValue: () => string
+  setValue: (value: string) => void
+  subscribe: (listener: () => void) => () => void
+}
+
 // ── 工厂参数 ──
 
 export type CreateReplStoreParams = {
@@ -131,6 +142,7 @@ export type CreateReplStoreParams = {
   readFileState: FileStateCache
   contentReplacementState: ContentReplacementState | null
   initialResumeReturnPending?: ResumeReturnPrompt | null
+  initialInputValue: string
 }
 
 // ── 工厂函数 ──
@@ -188,9 +200,19 @@ export function createReplStore(params: CreateReplStoreParams): ReplStoreInstanc
     lastThinkingDurationMs: 0,
   }
 
+  const inputStore = createStore(params.initialInputValue)
+  const input: ReplInputStore = {
+    getValue: inputStore.getState,
+    subscribe: inputStore.subscribe,
+    setValue(value) {
+      inputStore.setState((previous) => (previous === value ? previous : value))
+    },
+  }
+
   const instance: ReplStoreInstance = {
     ...store,
     mutable,
+    input,
     setMessages(action) {
       const prev = store.getState().messages
       const next = typeof action === 'function' ? action(prev) : action

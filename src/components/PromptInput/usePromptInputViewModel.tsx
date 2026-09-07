@@ -484,9 +484,10 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
   // Show effort notification on startup and when effort changes.
   // Suppressed in brief/assistant mode — the value reflects the local
   // client's effort, not the connected agent's.
-  const effortNotificationText = briefOwnsGap
-    ? undefined
-    : getEffortNotificationText(effortValue, mainLoopModel)
+  const effortNotificationText = useMemo(
+    () => (briefOwnsGap ? undefined : getEffortNotificationText(effortValue, mainLoopModel)),
+    [briefOwnsGap, effortValue, mainLoopModel],
+  )
 
   useEffect(() => {
     if (!effortNotificationText) {

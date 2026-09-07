@@ -6,23 +6,41 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTerminalFocus } from '../../ink/index.js'
 import type { PromptInputMode, VimMode } from '../../types/textInputTypes.js'
 import type { PastedContent } from '../../services/config/config.js'
+import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import { consumeEarlyInput } from '../../services/input/earlyInput.js'
 
 const RECENT_SCROLL_REPIN_WINDOW_MS = 3000
 const PROMPT_SUPPRESSION_MS = 1500
 
 export type UseReplInputParams = {
+  replStore: ReplStoreInstance
   repinScroll: () => void
   lastUserScrollTsRef: React.RefObject<number>
   trySuggestBgPRIntercept: (prev: string, next: string) => boolean
 }
 
 export function useReplInput(params: UseReplInputParams) {
-  const { repinScroll, lastUserScrollTsRef, trySuggestBgPRIntercept } = params
+  const { replStore, repinScroll, lastUserScrollTsRef, trySuggestBgPRIntercept } = params
 
-  const [inputValue, setInputValueRaw] = useState(() => consumeEarlyInput())
-  const inputValueRef = useRef(inputValue)
-  inputValueRef.current = inputValue
+  const [initialInputValue] = useState(() => consumeEarlyInput())
+  const inputValueRef = useRef(initialInputValue)
+  const inputStoreInitializedRef = useRef(false)
+  if (!inputStoreInitializedRef.current) {
+    replStore.input.setValue(initialInputValue)
+    inputStoreInitializedRef.current = true
+  }
+  const setInputValueRaw = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (action) => {
+      const previous = inputValueRef.current
+      const value = typeof action === 'function' ? action(previous) : action
+      if (value === previous) {
+        return
+      }
+      inputValueRef.current = value
+      replStore.input.setValue(value)
+    },
+    [replStore],
+  )
 
   const insertTextRef = useRef<{
     insert: (text: string) => void
@@ -31,6 +49,31 @@ export function useReplInput(params: UseReplInputParams) {
   } | null>(null)
 
   const [isPromptInputActive, setIsPromptInputActive] = useState(false)
+  const promptSuppressionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const updatePromptSuppression = useCallback((value: string) => {
+    if (promptSuppressionTimerRef.current !== null) {
+      clearTimeout(promptSuppressionTimerRef.current)
+      promptSuppressionTimerRef.current = null
+    }
+    const active = value.trim().length > 0
+    setIsPromptInputActive(active)
+    if (active) {
+      promptSuppressionTimerRef.current = setTimeout(() => {
+        promptSuppressionTimerRef.current = null
+        setIsPromptInputActive(false)
+      }, PROMPT_SUPPRESSION_MS)
+    }
+  }, [])
+
+  useEffect(
+    () => () => {
+      if (promptSuppressionTimerRef.current !== null) {
+        clearTimeout(promptSuppressionTimerRef.current)
+      }
+    },
+    [],
+  )
 
   const setInputValue = useCallback(
     (value: string) => {
@@ -44,21 +87,17 @@ export function useReplInput(params: UseReplInputParams) {
       ) {
         repinScroll()
       }
-      inputValueRef.current = value
       setInputValueRaw(value)
-      setIsPromptInputActive(value.trim().length > 0)
+      updatePromptSuppression(value)
     },
-    [repinScroll, trySuggestBgPRIntercept, lastUserScrollTsRef.current],
+    [
+      repinScroll,
+      trySuggestBgPRIntercept,
+      lastUserScrollTsRef,
+      setInputValueRaw,
+      updatePromptSuppression,
+    ],
   )
-
-  // 用户停止输入后解除抑制
-  useEffect(() => {
-    if (inputValue.trim().length === 0) {
-      return
-    }
-    const timer = setTimeout(setIsPromptInputActive, PROMPT_SUPPRESSION_MS, false)
-    return () => clearTimeout(timer)
-  }, [inputValue])
 
   const [inputMode, setInputMode] = useState<PromptInputMode>('prompt')
   const [stashedPrompt, setStashedPrompt] = useState<
@@ -76,13 +115,11 @@ export function useReplInput(params: UseReplInputParams) {
   terminalFocusRef.current = isTerminalFocused
 
   return {
-    inputValue,
     setInputValueRaw,
     setInputValue,
     inputValueRef,
     insertTextRef,
     isPromptInputActive,
-    setIsPromptInputActive,
     inputMode,
     setInputMode,
     stashedPrompt,

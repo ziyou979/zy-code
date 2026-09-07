@@ -57,7 +57,7 @@ type Props = {
   isInputWrapped?: boolean
   isNarrow?: boolean
 }
-export function Notifications({
+function NotificationsImpl({
   apiKeyStatus,
   autoUpdaterResult,
   debug,
@@ -162,6 +162,11 @@ export function Notifications({
     </SentryErrorBoundary>
   )
 }
+
+// 输入值本身不参与通知栏渲染；props 未变化时跳过每次按键带来的父组件更新。
+// 组件内部的 AppState、IDE、限额和自动更新订阅仍会独立触发渲染。
+export const Notifications = React.memo(NotificationsImpl)
+
 function NotificationContent({
   ideSelection,
   mcpClients,

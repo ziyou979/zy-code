@@ -46,6 +46,14 @@ export function useReplStore(): ReplStoreInstance {
 }
 
 /**
+ * 仅订阅输入框值。输入是独立高频通道，不会触发 ReplState 的其他订阅者。
+ */
+export function useReplInputValue(): string {
+  const store = useReplStoreInternal()
+  return useSyncExternalStore(store.input.subscribe, store.input.getValue, store.input.getValue)
+}
+
+/**
  * 获取 ReplStore 的 setState 更新器。稳定引用，不触发 re-render。
  */
 export function useSetReplState() {

@@ -62,7 +62,7 @@ import type { MCPServerConnection } from '../../services/mcp/types.js'
 import type { ActiveSpeculationState } from '../../services/prompt-suggestion/speculation.js'
 import type { ProcessUserInputContext } from '../../services/process-user-input/processUserInput.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import { useReplState } from '../../state/ReplState.js'
+import { useReplInputValue, useReplState } from '../../state/ReplState.js'
 import type { ReplStoreInstance } from '../../state/ReplStore.js'
 import type { Tool, ToolPermissionContext } from '../../tools/tool.js'
 import { getAllInProcessTeammateTasks } from '../../tasks/in-process-teammate-task/InProcessTeammateTask.js'
@@ -132,7 +132,6 @@ export interface ReplMainViewProps {
   searchBarOpen: boolean
   virtualScrollActive: boolean
   // 输入状态
-  inputValue: string
   setInputValue: (v: string) => void
   inputMode: PromptInputMode
   setInputMode: React.Dispatch<React.SetStateAction<PromptInputMode>>
@@ -262,6 +261,15 @@ export interface ReplMainViewProps {
 //  Component
 // ────────────────────────────────────────────────────────
 
+function ReplInputValueBoundary({
+  children,
+}: {
+  children: (inputValue: string) => React.ReactNode
+}): React.ReactNode {
+  const inputValue = useReplInputValue()
+  return children(inputValue)
+}
+
 export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
   const {
     replStore,
@@ -278,7 +286,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
     handleExitTranscript,
     searchBarOpen,
     virtualScrollActive,
-    inputValue,
     setInputValue,
     inputMode,
     setInputMode,
@@ -693,7 +700,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
     isSearchingHistory,
     isHelpOpen,
     inputMode,
-    inputValue,
     streamMode,
   }
 
@@ -729,7 +735,9 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
       {feature('MESSAGE_ACTIONS') && isFullscreenEnvEnabled() && !disableMessageActions ? (
         <MessageActionsKeybindings handlers={messageActionHandlers} isActive={cursor !== null} />
       ) : null}
-      <CancelRequestHandler {...cancelRequestProps} />
+      <ReplInputValueBoundary>
+        {(inputValue) => <CancelRequestHandler {...cancelRequestProps} inputValue={inputValue} />}
+      </ReplInputValueBoundary>
       <MCPConnectionManager
         key={remountKey}
         dynamicMcpConfig={dynamicMcpConfig}
@@ -870,122 +878,126 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                   !isExiting &&
                   !disabled &&
                   !cursor && (
-                    <>
-                      {autoRunIssueReason && (
-                        <AutoRunIssueNotification
-                          onRun={handleAutoRunIssue}
-                          onCancel={handleCancelAutoRunIssue}
-                          reason={getAutoRunIssueReasonText(autoRunIssueReason)}
-                        />
+                    <ReplInputValueBoundary>
+                      {(inputValue) => (
+                        <>
+                          {autoRunIssueReason && (
+                            <AutoRunIssueNotification
+                              onRun={handleAutoRunIssue}
+                              onCancel={handleCancelAutoRunIssue}
+                              reason={getAutoRunIssueReasonText(autoRunIssueReason)}
+                            />
+                          )}
+                          {postCompactSurvey.state !== 'closed' ? (
+                            <FeedbackSurvey
+                              state={postCompactSurvey.state}
+                              lastResponse={postCompactSurvey.lastResponse}
+                              handleSelect={postCompactSurvey.handleSelect}
+                              inputValue={inputValue}
+                              setInputValue={setInputValue}
+                              onRequestFeedback={handleSurveyRequestFeedback}
+                            />
+                          ) : memorySurvey.state !== 'closed' ? (
+                            <FeedbackSurvey
+                              state={memorySurvey.state}
+                              lastResponse={memorySurvey.lastResponse}
+                              handleSelect={memorySurvey.handleSelect}
+                              handleTranscriptSelect={memorySurvey.handleTranscriptSelect}
+                              inputValue={inputValue}
+                              setInputValue={setInputValue}
+                              onRequestFeedback={handleSurveyRequestFeedback}
+                              message={tSync('misc.repl.memorySurvey.question')}
+                            />
+                          ) : (
+                            <FeedbackSurvey
+                              state={feedbackSurvey.state}
+                              lastResponse={feedbackSurvey.lastResponse}
+                              handleSelect={feedbackSurvey.handleSelect}
+                              handleTranscriptSelect={feedbackSurvey.handleTranscriptSelect}
+                              inputValue={inputValue}
+                              setInputValue={setInputValue}
+                              onRequestFeedback={
+                                didAutoRunIssueRef.current ? undefined : handleSurveyRequestFeedback
+                              }
+                            />
+                          )}
+                          {frustrationDetection.state !== 'closed' && (
+                            <FeedbackSurvey
+                              state={frustrationDetection.state}
+                              lastResponse={null}
+                              handleSelect={() => {}}
+                              handleTranscriptSelect={frustrationDetection.handleTranscriptSelect}
+                              inputValue={inputValue}
+                              setInputValue={setInputValue}
+                            />
+                          )}
+                          {isInternalBuild() && skillImprovementSurvey.suggestion && (
+                            <SkillImprovementSurvey
+                              isOpen={skillImprovementSurvey.isOpen}
+                              skillName={skillImprovementSurvey.suggestion.skillName}
+                              updates={skillImprovementSurvey.suggestion.updates}
+                              handleSelect={skillImprovementSurvey.handleSelect}
+                              inputValue={inputValue}
+                              setInputValue={setInputValue}
+                            />
+                          )}
+                          {showIssueFlagBanner && <IssueFlagBanner />}
+                          {}
+                          <PromptInput
+                            debug={debug}
+                            ideSelection={ideSelection}
+                            hasSuppressedDialogs={!!hasSuppressedDialogs}
+                            isLocalJSXCommandActive={isShowingLocalJSXCommand}
+                            getToolUseContext={getToolUseContext}
+                            toolPermissionContext={toolPermissionContext}
+                            setToolPermissionContext={setToolPermissionContext}
+                            apiKeyStatus={apiKeyStatus}
+                            commands={commands}
+                            agents={agentDefinitions.activeAgents}
+                            isLoading={isLoading}
+                            onExit={handleExit}
+                            verbose={verbose}
+                            messages={messages}
+                            onAutoUpdaterResult={setAutoUpdaterResult}
+                            autoUpdaterResult={autoUpdaterResult}
+                            input={inputValue}
+                            onInputChange={setInputValue}
+                            mode={inputMode}
+                            onModeChange={setInputMode}
+                            stashedPrompt={stashedPrompt}
+                            setStashedPrompt={setStashedPrompt}
+                            submitCount={submitCount}
+                            onShowMessageSelector={handleShowMessageSelector}
+                            onMessageActionsEnter={
+                              feature('MESSAGE_ACTIONS') &&
+                              isFullscreenEnvEnabled() &&
+                              !disableMessageActions
+                                ? enterMessageActions
+                                : undefined
+                            }
+                            mcpClients={mcpClients}
+                            pastedContents={pastedContents}
+                            setPastedContents={setPastedContents}
+                            vimMode={vimMode}
+                            setVimMode={setVimMode}
+                            showBashesDialog={showBashesDialog}
+                            setShowBashesDialog={setShowBashesDialog}
+                            onSubmit={onSubmit}
+                            onAgentSubmit={onAgentSubmit}
+                            isSearchingHistory={isSearchingHistory}
+                            setIsSearchingHistory={setIsSearchingHistory}
+                            helpOpen={isHelpOpen}
+                            setHelpOpen={setIsHelpOpen}
+                            insertTextRef={insertTextRef}
+                            voiceInterimRange={voice.interimRange}
+                          />
+                          <SessionBackgroundHint
+                            onBackgroundSession={handleBackgroundSession}
+                            isLoading={isLoading}
+                          />
+                        </>
                       )}
-                      {postCompactSurvey.state !== 'closed' ? (
-                        <FeedbackSurvey
-                          state={postCompactSurvey.state}
-                          lastResponse={postCompactSurvey.lastResponse}
-                          handleSelect={postCompactSurvey.handleSelect}
-                          inputValue={inputValue}
-                          setInputValue={setInputValue}
-                          onRequestFeedback={handleSurveyRequestFeedback}
-                        />
-                      ) : memorySurvey.state !== 'closed' ? (
-                        <FeedbackSurvey
-                          state={memorySurvey.state}
-                          lastResponse={memorySurvey.lastResponse}
-                          handleSelect={memorySurvey.handleSelect}
-                          handleTranscriptSelect={memorySurvey.handleTranscriptSelect}
-                          inputValue={inputValue}
-                          setInputValue={setInputValue}
-                          onRequestFeedback={handleSurveyRequestFeedback}
-                          message={tSync('misc.repl.memorySurvey.question')}
-                        />
-                      ) : (
-                        <FeedbackSurvey
-                          state={feedbackSurvey.state}
-                          lastResponse={feedbackSurvey.lastResponse}
-                          handleSelect={feedbackSurvey.handleSelect}
-                          handleTranscriptSelect={feedbackSurvey.handleTranscriptSelect}
-                          inputValue={inputValue}
-                          setInputValue={setInputValue}
-                          onRequestFeedback={
-                            didAutoRunIssueRef.current ? undefined : handleSurveyRequestFeedback
-                          }
-                        />
-                      )}
-                      {frustrationDetection.state !== 'closed' && (
-                        <FeedbackSurvey
-                          state={frustrationDetection.state}
-                          lastResponse={null}
-                          handleSelect={() => {}}
-                          handleTranscriptSelect={frustrationDetection.handleTranscriptSelect}
-                          inputValue={inputValue}
-                          setInputValue={setInputValue}
-                        />
-                      )}
-                      {isInternalBuild() && skillImprovementSurvey.suggestion && (
-                        <SkillImprovementSurvey
-                          isOpen={skillImprovementSurvey.isOpen}
-                          skillName={skillImprovementSurvey.suggestion.skillName}
-                          updates={skillImprovementSurvey.suggestion.updates}
-                          handleSelect={skillImprovementSurvey.handleSelect}
-                          inputValue={inputValue}
-                          setInputValue={setInputValue}
-                        />
-                      )}
-                      {showIssueFlagBanner && <IssueFlagBanner />}
-                      {}
-                      <PromptInput
-                        debug={debug}
-                        ideSelection={ideSelection}
-                        hasSuppressedDialogs={!!hasSuppressedDialogs}
-                        isLocalJSXCommandActive={isShowingLocalJSXCommand}
-                        getToolUseContext={getToolUseContext}
-                        toolPermissionContext={toolPermissionContext}
-                        setToolPermissionContext={setToolPermissionContext}
-                        apiKeyStatus={apiKeyStatus}
-                        commands={commands}
-                        agents={agentDefinitions.activeAgents}
-                        isLoading={isLoading}
-                        onExit={handleExit}
-                        verbose={verbose}
-                        messages={messages}
-                        onAutoUpdaterResult={setAutoUpdaterResult}
-                        autoUpdaterResult={autoUpdaterResult}
-                        input={inputValue}
-                        onInputChange={setInputValue}
-                        mode={inputMode}
-                        onModeChange={setInputMode}
-                        stashedPrompt={stashedPrompt}
-                        setStashedPrompt={setStashedPrompt}
-                        submitCount={submitCount}
-                        onShowMessageSelector={handleShowMessageSelector}
-                        onMessageActionsEnter={
-                          feature('MESSAGE_ACTIONS') &&
-                          isFullscreenEnvEnabled() &&
-                          !disableMessageActions
-                            ? enterMessageActions
-                            : undefined
-                        }
-                        mcpClients={mcpClients}
-                        pastedContents={pastedContents}
-                        setPastedContents={setPastedContents}
-                        vimMode={vimMode}
-                        setVimMode={setVimMode}
-                        showBashesDialog={showBashesDialog}
-                        setShowBashesDialog={setShowBashesDialog}
-                        onSubmit={onSubmit}
-                        onAgentSubmit={onAgentSubmit}
-                        isSearchingHistory={isSearchingHistory}
-                        setIsSearchingHistory={setIsSearchingHistory}
-                        helpOpen={isHelpOpen}
-                        setHelpOpen={setIsHelpOpen}
-                        insertTextRef={insertTextRef}
-                        voiceInterimRange={voice.interimRange}
-                      />
-                      <SessionBackgroundHint
-                        onBackgroundSession={handleBackgroundSession}
-                        isLoading={isLoading}
-                      />
-                    </>
+                    </ReplInputValueBoundary>
                   )}
                 {cursor && <MessageActionsBar cursor={cursor} />}
                 {focusedInputDialog === 'message-selector' && (

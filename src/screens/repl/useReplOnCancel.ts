@@ -60,7 +60,7 @@ export type UseReplOnCancelParams = {
   activeRemote: ActiveRemote
   mrOnTurnComplete: (messages: MessageType[], aborted: boolean) => void | Promise<void>
   // 排队命令恢复依赖
-  inputValue: string
+  inputValueRef: React.RefObject<string>
   setInputValue: (value: string) => void
   setInputMode: React.Dispatch<React.SetStateAction<PromptInputMode>>
   setPastedContents: React.Dispatch<React.SetStateAction<Record<number, PastedContent>>>
@@ -82,7 +82,7 @@ export function useReplOnCancel(params: UseReplOnCancelParams): ReplOnCancelApi 
 
   // ── 排队命令恢复（cancelRequestProps.popCommandFromQueue）──
   const handleQueuedCommandOnCancel = useCallback(() => {
-    const result = popAllEditable(params.inputValue, 0)
+    const result = popAllEditable(params.inputValueRef.current, 0)
     if (!result) {
       return
     }
@@ -97,7 +97,7 @@ export function useReplOnCancel(params: UseReplOnCancelParams): ReplOnCancelApi 
         return newContents
       })
     }
-  }, [params.inputValue, params.setInputValue, params.setInputMode, params.setPastedContents])
+  }, [params.inputValueRef, params.setInputValue, params.setInputMode, params.setPastedContents])
 
   // ── onCancel 主流程（无 useCallback，每次渲染重建闭包读取最新值）──
   function onCancel() {
