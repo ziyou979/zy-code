@@ -53,6 +53,11 @@ import {
   createUserMessage,
 } from '../services/messages/constructors.js'
 import { stripSignatureBlocks } from '../services/messages/prune.js'
+import {
+  CANCEL_MESSAGE,
+  INTERRUPT_MESSAGE_FOR_TOOL_USE,
+  REJECT_MESSAGE,
+} from '../services/messages/constants.js'
 import { prependUserContext } from '../services/api/api.js'
 import {
   createAttachmentMessage,
@@ -133,6 +138,44 @@ function* yieldMissingToolResultBlocks(
       })
     }
   }
+}
+
+/**
+ * 该消息是否为"工具结果已携带用户拒绝/中断反馈"。
+ *
+ * 中止一个正在执行的工具时，StreamingToolExecutor 会为它合成
+ * REJECT_MESSAGE / CANCEL_MESSAGE 前缀的 tool_result，UI 将其渲染为
+ * <InterruptedByUser />（"已中断 · ZY 接下来应该做什么？"），模型上下文
+ * 也已包含拒绝原因。此时查询循环若再追加 createUserInterruptionMessage，
+ * UI 会渲染两行相同的"已中断"，模型上下文也收到重复信号。
+ * 用此判定跳过循环级的中断消息。
+ */
+function isInterruptFeedbackToolResult(message: Message): boolean {
+  if (message.type !== 'user') {
+    return false
+  }
+  const content = message.message.content
+  if (!Array.isArray(content)) {
+    return false
+  }
+  return content.some((block) => {
+    if (
+      typeof block !== 'object' ||
+      block === null ||
+      (block as ToolResultBlock).type !== 'tool_result'
+    ) {
+      return false
+    }
+    const text = (block as ToolResultBlock).content
+    if (typeof text !== 'string') {
+      return false
+    }
+    return (
+      text.startsWith(REJECT_MESSAGE) ||
+      text.startsWith(CANCEL_MESSAGE) ||
+      text === INTERRUPT_MESSAGE_FOR_TOOL_USE
+    )
+  })
 }
 
 /**
@@ -863,16 +906,30 @@ async function* queryLoop(
         `terminating after model stream turn=${turnCount} reason=aborted_streaming abortReason=${String(toolUseContext.abortController.signal.reason ?? 'none')} assistantMessages=${assistantMessages.length} toolUses=${toolUseBlocks.length}`,
         { level: 'warn' },
       )
+      // 消费剩余结果时记录是否已产出"拒绝/中断"反馈的 tool_result：
+      // 有则下方不再追加中断消息，否则 UI 渲染两行相同的"已中断"。
+      let interruptFeedbackYielded = false
       if (streamingToolExecutor) {
         // 消费剩余结果 — 执行器为中止的工具生成合成 tool_results，
         // 因为它在 executeTool() 中检查中止信号
         for await (const update of streamingToolExecutor.getRemainingResults()) {
           if (update.message) {
+            if (isInterruptFeedbackToolResult(update.message)) {
+              interruptFeedbackYielded = true
+            }
             yield update.message
           }
         }
       } else {
-        yield* yieldMissingToolResultBlocks(assistantMessages, 'Interrupted by user')
+        for (const message of yieldMissingToolResultBlocks(
+          assistantMessages,
+          'Interrupted by user',
+        )) {
+          if (isInterruptFeedbackToolResult(message)) {
+            interruptFeedbackYielded = true
+          }
+          yield message
+        }
       }
       // chicago MCP：中断时自动取消隐藏 + 释放锁。
       // 与 stopHooks.ts 中的自然轮次结束路径相同的清理。
@@ -890,7 +947,11 @@ async function* queryLoop(
 
       // 为提交中断跳过中断消息 — 随后的排队
       // 用户消息提供足够的上下文。
-      if (toolUseContext.abortController.signal.reason !== 'interrupt') {
+      // 工具结果已携带拒绝/中断反馈时同样跳过（interruptFeedbackYielded）。
+      if (
+        toolUseContext.abortController.signal.reason !== 'interrupt' &&
+        !interruptFeedbackYielded
+      ) {
         yield createUserInterruptionMessage({
           toolUse: false,
         })
@@ -1248,6 +1309,7 @@ async function* queryLoop(
       // 隐式 abort（reason=undefined）导致 turn 被静默结束。
       // 已知的合法中断 reason（与 StreamingToolExecutor 的白名单保持一致）：
       //   - 'interrupt': 用户在 REPL 中按 ESC / 发送 'now' 优先级新消息
+      //   - 'user-cancel': REPL onCancel（useReplOnCancel）发出的取消
       //   - 'user_rejected_permission': 用户在权限对话框中拒绝
       //   - 'hook_interrupt': PermissionRequest hook 返回 decision.interrupt
       //   - 'sigint': cli/print.ts 收到 SIGINT 信号
@@ -1259,6 +1321,7 @@ async function* queryLoop(
       )
       const isKnownUserAbort =
         abortReason === 'interrupt' ||
+        abortReason === 'user-cancel' ||
         abortReason === 'user_rejected_permission' ||
         abortReason === 'hook_interrupt' ||
         abortReason === 'sigint' ||
@@ -1296,7 +1359,9 @@ async function* queryLoop(
       }
       // 为提交中断跳过中断消息 — 随后的排队
       // 用户消息提供足够的上下文。
-      if (abortReason !== 'interrupt') {
+      // 工具结果已携带拒绝/中断反馈（REJECT/CANCEL tool_result）时同样跳过：
+      // UI 已渲染 <InterruptedByUser />，再追加会出现两行"已中断"。
+      if (abortReason !== 'interrupt' && !toolResults.some(isInterruptFeedbackToolResult)) {
         yield createUserInterruptionMessage({
           toolUse: true,
         })
