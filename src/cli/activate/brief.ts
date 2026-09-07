@@ -27,11 +27,9 @@ export function maybeActivateBrief(options: unknown): void {
   // 变量也授予授权（isBriefEntitled() 读取它），所以设置
   // ZY_CODE_BRIEF=1  alone 为开发/测试强制启用 —— 不需要 GB 门
   //。initialIsBriefOnly 直接读取 getUserMsgOptIn()。
-  // 条件导入：静态导入会将工具名称字符串泄漏到
-  // 外部构建中，通过 BriefTool.ts → prompt.ts。
   /* eslint-disable @typescript-eslint/no-require-imports */
   const { isBriefEntitled } =
-    require('../../tools/BriefTool/BriefTool.js') as typeof import('../../tools/BriefTool/BriefTool.js')
+    require('../../tools/BriefTool/briefGate.js') as typeof import('../../tools/BriefTool/briefGate.js')
   /* eslint-enable @typescript-eslint/no-require-imports */
   const entitled = isBriefEntitled()
   if (entitled) {

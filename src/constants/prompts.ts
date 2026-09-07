@@ -63,9 +63,9 @@ const BRIEF_PROACTIVE_SECTION: string | null =
     ? (require('../tools/BriefTool/prompt.js') as typeof import('../tools/BriefTool/prompt.js'))
         .BRIEF_PROACTIVE_SECTION
     : null
-const briefToolModule =
+const briefGateModule =
   feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? (require('../tools/BriefTool/BriefTool.js') as typeof import('../tools/BriefTool/BriefTool.js'))
+    ? (require('../tools/BriefTool/briefGate.js') as typeof import('../tools/BriefTool/briefGate.js'))
     : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import type { OutputStyleConfig } from './outputStyles.js'
@@ -590,7 +590,7 @@ function getBriefSection(): string | null {
   // tool 可用时始终告知模型使用。下方的
   // /brief toggle and --brief flag now only control the isBriefOnly
   // display filter；它们不再控制面向模型的行为。
-  if (!briefToolModule?.isBriefEnabled()) {
+  if (!briefGateModule?.isBriefEnabled()) {
     return null
   }
   // proactive 启用时，getProactiveSection() 已内联追加该 section；这里跳过，
@@ -658,5 +658,5 @@ Do not narrate each step, list every file you read, or explain routine actions. 
 
 The user context may include a \`terminalFocus\` field indicating whether the user's terminal is focused or unfocused. Use this to calibrate how autonomous you are:
 - **Unfocused**: The user is away. Lean heavily into autonomous action — make decisions, explore, commit, push. Only pause for genuinely irreversible or high-risk actions.
-- **Focused**: The user is watching. Be more collaborative — surface choices, ask before committing to large changes, and keep your output concise so it's easy to follow in real time.${BRIEF_PROACTIVE_SECTION && briefToolModule?.isBriefEnabled() ? `\n\n${BRIEF_PROACTIVE_SECTION}` : ''}`
+- **Focused**: The user is watching. Be more collaborative — surface choices, ask before committing to large changes, and keep your output concise so it's easy to follow in real time.${BRIEF_PROACTIVE_SECTION && briefGateModule?.isBriefEnabled() ? `\n\n${BRIEF_PROACTIVE_SECTION}` : ''}`
 }

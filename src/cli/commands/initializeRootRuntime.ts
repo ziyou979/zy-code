@@ -345,7 +345,7 @@ export async function initializeRootRuntime(
     const { BRIEF_TOOL_NAME, LEGACY_BRIEF_TOOL_NAME } =
       require('../../tools/BriefTool/prompt.js') as typeof import('../../tools/BriefTool/prompt.js')
     const { isBriefEntitled } =
-      require('../../tools/BriefTool/BriefTool.js') as typeof import('../../tools/BriefTool/BriefTool.js')
+      require('../../tools/BriefTool/briefGate.js') as typeof import('../../tools/BriefTool/briefGate.js')
     /* eslint-enable @typescript-eslint/no-require-imports */
     const parsed = parseToolListFromCLI(baseTools)
     if (

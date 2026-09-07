@@ -17,21 +17,21 @@ type PrefetchedMcpResources = Awaited<ReturnType<typeof prefetchAllMcpResources>
 
 type ThinkingModeOption = 'adaptive' | 'enabled' | 'disabled' | undefined
 
-function getBriefToolModule() {
+function getBriefGateModule() {
   /* eslint-disable @typescript-eslint/no-require-imports */
-  return require('../../tools/BriefTool/BriefTool.js') as typeof import('../../tools/BriefTool/BriefTool.js')
+  return require('../../tools/BriefTool/briefGate.js') as typeof import('../../tools/BriefTool/briefGate.js')
   /* eslint-enable @typescript-eslint/no-require-imports */
 }
 
 function getBriefVisibilityMessage() {
   if (feature('KAIROS')) {
-    return getBriefToolModule().isBriefEnabled()
+    return getBriefGateModule().isBriefEnabled()
       ? 'Call SendUserMessage at checkpoints to mark where things stand.'
       : 'The user will see any text you output.'
   }
 
   if (feature('KAIROS_BRIEF')) {
-    return getBriefToolModule().isBriefEnabled()
+    return getBriefGateModule().isBriefEnabled()
       ? 'Call SendUserMessage at checkpoints to mark where things stand.'
       : 'The user will see any text you output.'
   }
@@ -48,7 +48,7 @@ export function maybeEnableBriefOptInFromDefaultView() {
     return
   }
 
-  if (getBriefToolModule().isBriefEntitled()) {
+  if (getBriefGateModule().isBriefEntitled()) {
     setUserMsgOptIn(true)
   }
 }

@@ -7,7 +7,6 @@ import {
   logEvent,
 } from '../services/analytics/index.js'
 import type { ToolUseContext } from '../tools/tool.js'
-import { isBriefEntitled } from '../tools/BriefTool/BriefTool.js'
 import { BRIEF_TOOL_NAME } from '../tools/BriefTool/prompt.js'
 import type { Command, LocalJSXCommandContext, LocalJSXCommandOnDone } from './types.js'
 import { lazySchema } from '../utils/lazySchema.js'
@@ -62,6 +61,10 @@ const brief = {
 
         // Entitlement check only gates the on-transition — off is always
         // allowed so a user whose GB gate flipped mid-session isn't stuck.
+        /* eslint-disable @typescript-eslint/no-require-imports */
+        const { isBriefEntitled } =
+          require('../tools/BriefTool/briefGate.js') as typeof import('../tools/BriefTool/briefGate.js')
+        /* eslint-enable @typescript-eslint/no-require-imports */
         if (newState && !isBriefEntitled()) {
           logEvent('zy_brief_mode_toggled', {
             enabled: false,

@@ -106,7 +106,7 @@ export function GlobalKeybindingHandlers({
       // （Messages.tsx 过滤器以 !isTranscriptMode 为门控）。
       /* eslint-disable @typescript-eslint/no-require-imports */
       const { isBriefEnabled } =
-        require('../tools/BriefTool/BriefTool.js') as typeof import('../tools/BriefTool/BriefTool.js')
+        require('../tools/BriefTool/briefGate.js') as typeof import('../tools/BriefTool/briefGate.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
       if (!isBriefEnabled() && isBriefOnly && screen !== 'transcript') {
         setAppState((prev) => {
@@ -177,7 +177,7 @@ export function GlobalKeybindingHandlers({
     if (feature('KAIROS') || feature('KAIROS_BRIEF')) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       const { isBriefEnabled: checkBriefEnabled } =
-        require('../tools/BriefTool/BriefTool.js') as typeof import('../tools/BriefTool/BriefTool.js')
+        require('../tools/BriefTool/briefGate.js') as typeof import('../tools/BriefTool/briefGate.js')
       /* eslint-enable @typescript-eslint/no-require-imports */
       if (!checkBriefEnabled() && !isBriefOnly) {
         return
