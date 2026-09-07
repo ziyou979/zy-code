@@ -139,8 +139,8 @@ export function getDeclaredMarketplaces(): Record<string, DeclaredMarketplace> {
   }
 
   // 最低优先级：隐式 < --add-dir < 合并的 settings。
-  // --add-dir 或 settings 中对 zy-plugins-official 的显式
-  // extraKnownMarketplaces 条目胜出。
+  // --add-dir 或 settings 中对 claude-plugins-official（当前官方
+  // marketplace）的显式 extraKnownMarketplaces 条目胜出。
   return {
     ...implicit,
     ...getAddDirExtraMarketplaces(),

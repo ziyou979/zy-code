@@ -255,7 +255,7 @@ export async function refreshMarketplace(
           source.source === 'github' ? source.repo : redactUrlCredentials(source.url)
         const reason =
           name === 'zy-code-plugins'
-            ? `We've deprecated "zy-code-plugins" in favor of "zy-plugins-official".`
+            ? `We've deprecated "zy-code-plugins" in favor of "claude-plugins-official".`
             : `This marketplace may have been deprecated or moved to a new location.`
         throw new Error(
           `The marketplace.json file is no longer present in this repository.\n\n` +

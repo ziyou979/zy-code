@@ -30,6 +30,7 @@ import {
   removeMarketplaceSource,
   setMarketplaceAutoUpdate,
 } from '../../services/plugins/marketplaceManager.js'
+import { OFFICIAL_MARKETPLACE_NAME } from '../../services/plugins/officialMarketplace.js'
 import { updatePluginsForMarketplaces } from '../../services/plugins/pluginAutoupdate.js'
 import { loadAllPlugins } from '../../services/plugins/pluginLoader.js'
 import { isMarketplaceAutoUpdate } from '../../services/plugins/schemas.js'
@@ -877,9 +878,9 @@ export function ManageMarketplaces({
               <Box flexDirection="column" flexGrow={1}>
                 <Box flexDirection="row" gap={1}>
                   <Text bold strikethrough={state.pendingRemove} dimColor={state.pendingRemove}>
-                    {state.name === 'zy-plugins-official' && <Text color="zy">✻ </Text>}
+                    {state.name === OFFICIAL_MARKETPLACE_NAME && <Text color="zy">✻ </Text>}
                     {state.name}
-                    {state.name === 'zy-plugins-official' && <Text color="zy"> ✻</Text>}
+                    {state.name === OFFICIAL_MARKETPLACE_NAME && <Text color="zy"> ✻</Text>}
                   </Text>
                   {indicators.length > 0 && <Text color="warning">[{indicators.join(', ')}]</Text>}
                 </Box>

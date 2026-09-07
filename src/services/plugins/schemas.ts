@@ -20,6 +20,7 @@ export const ALLOWED_OFFICIAL_MARKETPLACE_NAMES = new Set([
   'zy-code-marketplace',
   'zy-code-plugins',
   'zy-plugins-official',
+  'claude-plugins-official',
   'anthropic-marketplace',
   'anthropic-plugins',
   'agent-skills',

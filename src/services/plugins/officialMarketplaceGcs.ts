@@ -21,16 +21,19 @@ import { logEvent } from '../analytics/index.js'
 type SafeString = AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 
 // CDN-fronted domain for the public GCS bucket (same bucket the native
-// binary ships from — nativeInstaller/download.ts:24 uses the raw GCS URL).
+// binary ships from — nativeInstaller/download.ts uses the raw GCS URL).
 // `{sha}.zip` is content-addressed so CDN can cache it indefinitely;
 // `latest` has Cache-Control: max-age=300 so CDN staleness is bounded.
 // Backend (anthropic#317037) populates this prefix.
-const GCS_BASE = 'https://downloads.zy.ai/zy-code-releases/plugins/zy-plugins-official'
+// TODO: 目前没有自建 marketplace，此处沿用 Claude 官方 CDN 的发布前缀
+// （与 officialMarketplace.ts 的临时指向一致）。自建 marketplace 上线后
+// 换成自有 CDN 域名与前缀。
+const GCS_BASE = 'https://downloads.claude.ai/claude-code-releases/plugins/claude-plugins-official'
 
-// Zip arc paths are seed-dir-relative (marketplaces/zy-plugins-official/…)
+// Zip arc paths are seed-dir-relative (marketplaces/claude-plugins-official/…)
 // so the titanium seed machinery can use the same zip. Strip this prefix when
 // extracting for a laptop install.
-const ARC_PREFIX = 'marketplaces/zy-plugins-official/'
+const ARC_PREFIX = 'marketplaces/claude-plugins-official/'
 
 /**
  * Fetch the official marketplace from GCS and extract to installLocation.
@@ -158,7 +161,7 @@ export async function fetchOfficialMarketplaceFromGcs(
     // values below are static enums or a git SHA — not code/filepaths/PII.
     logEvent('zy_plugin_remote_fetch', {
       source: 'marketplace_gcs' as SafeString,
-      host: 'downloads.zy.ai' as SafeString,
+      host: 'downloads.claude.ai' as SafeString,
       is_official: true,
       outcome: outcome as SafeString,
       duration_ms: Math.round(performance.now() - start),

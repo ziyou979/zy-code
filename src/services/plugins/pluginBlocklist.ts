@@ -5,7 +5,8 @@
  * that have been removed, and auto-uninstalls them.
  *
  * The security.json fetch was removed (see #25447) — ~29.5M/week GitHub hits
- * for UI reason/text only. If re-introduced, serve from downloads.zy.ai.
+ * for UI reason/text only. If re-introduced, serve from downloads.zy.ai
+ * （自建 CDN 域名，目前尚未启用）.
  */
 
 import { logForDebugging } from '../../services/infra/debug.js'
@@ -21,7 +22,7 @@ import type { InstalledPluginsFileV2, PluginMarketplace } from './schemas.js'
  *
  * @param installedPlugins All installed plugins
  * @param marketplace The marketplace to check against
- * @param marketplaceName The marketplace name suffix (e.g. "zy-plugins-official")
+ * @param marketplaceName The marketplace name suffix (e.g. "claude-plugins-official")
  * @returns List of delisted plugin IDs in "name@marketplace" format
  */
 export function detectDelistedPlugins(
