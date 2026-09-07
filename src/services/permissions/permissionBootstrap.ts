@@ -17,7 +17,7 @@ import { permissionModeFromString, type PermissionMode } from './permissionMode.
 import { applyPermissionRulesToPermissionContext } from './permissionRuleSync.js'
 import { loadAllPermissionRulesFromDisk } from './permissionsLoader.js'
 import { parseToolListFromCLI, parseBaseToolsFromCLI } from './permissionCli.js'
-import { getAutoModeEnabledStateIfCached, isAutoModeGateEnabled } from './autoModePolicy.js'
+import { getAutoModeEnabledStateIfCached, isAutoModeInitiallyAvailable } from './autoModePolicy.js'
 import { resolve } from 'node:path'
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import {
@@ -299,7 +299,7 @@ export async function initializeToolPermissionContext({
   }
 
   permLog('resolving auto mode availability')
-  const isAutoModeAvailable = isAutoModeGateEnabled()
+  const isAutoModeAvailable = isAutoModeInitiallyAvailable()
   permLog('building permission context')
   let toolPermissionContext = applyPermissionRulesToPermissionContext(
     {

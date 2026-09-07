@@ -106,6 +106,34 @@ export function isAutoModeGateEnabled(): boolean {
 }
 
 /**
+ * 返回启动阶段可安全使用的 auto 模式初始可用性。
+ *
+ * 冷启动时 provider/model 能力上下文尚未完成注入；此时同步调用
+ * modelSupportsAutoMode 会反向加载 provider 初始化链，阻塞在欢迎页渲染之前。
+ * 因此这里只处理已经可同步确定的本地状态，模型能力由挂载后的
+ * verifyAutoModeGateAccess 异步校正。
+ */
+export function isAutoModeInitiallyAvailable(): boolean {
+  if (autoModeStateModule?.isAutoModeCircuitBroken() ?? false) {
+    return false
+  }
+  if (isAutoModeDisabledBySettings()) {
+    return false
+  }
+
+  const enabledState = getAutoModeEnabledStateIfCached()
+  if (enabledState === 'disabled') {
+    return false
+  }
+  if (enabledState === 'opt-in') {
+    return hasAutoModeOptInAnySource()
+  }
+
+  // 缓存缺失表示 GrowthBook 尚未初始化，先采用默认可用值，挂载后再校正。
+  return true
+}
+
+/**
  * 返回 auto 模式当前不可用的原因，如果可用则返回 null。
  * 同步 — 使用由 verifyAutoModeGateAccess 填充的状态。
  */
