@@ -63,10 +63,13 @@ export const CIRCLE_UPPER_RIGHT = '\u25d4' // ◔
 export const CIRCLE_ALL_BUT_UPPER_LEFT = '\u25d5' // ◕
 
 // ── Media / trigger ────────────────────────────────────────
-export const PLAY_ICON = '\u23f5' + VS15 // ⏵
-export const REVERSE_PLAY_ICON = '\u25c0' + VS15 // ◀
-export const PAUSE_ICON = '\u23f8' + VS15 // ⏸
-export const FAST_FORWARD_ICON = '\u23e9' + VS15 // ⏩
+// 均取自纯文本区（拉丁/数学/几何），不用 emoji 区码点（⏩⏸⏵◀）：Windows
+// Terminal 的字体回退会把 emoji 区落到 Segoe UI Emoji 彩色字形，呈现为
+// 带背景色块的双格宽字形，且对 VS15 文本变体请求支持不完整。
+export const PLAY_ICON = SMALL_RIGHT_TRIANGLE // ▸
+export const REVERSE_PLAY_ICON = '\u25c2' // ◂
+export const PAUSE_ICON = '\u2016' // ‖
+export const FAST_FORWARD_ICON = '\u00bb' // »
 
 // ── MCP ────────────────────────────────────────────────────
 export const REFRESH_ARROW = '\u21bb' // ↻
