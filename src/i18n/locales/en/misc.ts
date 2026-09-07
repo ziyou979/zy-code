@@ -525,6 +525,11 @@ export const enMisc: TranslationResource = {
   'notif.chromeNotDetected': 'Chrome extension not detected · https://zy.ai/chrome to install',
   'notif.debugMode': 'Debug mode',
   'notif.deniedByAutoMode': '{tool} denied by auto mode',
+  'notif.marketplaceConfigSaveFailed':
+    'Failed to save marketplace retry info · Check ~/.zy.json permissions',
+  'notif.marketplaceInstallFailed':
+    'Failed to install Claude marketplace · Will retry on next startup',
+  'notif.marketplaceInstalled': '✓ Claude marketplace installed · /plugin to see available plugins',
   'notif.mcpServerFailed': '{count} MCP server failed',
   'notif.mcpServerNeedsAuth': '{count} MCP server needs auth',
   'notif.mcpServersFailed': '{count} MCP servers failed',

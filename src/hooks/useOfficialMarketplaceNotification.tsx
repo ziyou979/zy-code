@@ -1,4 +1,5 @@
 import { Text } from '../ink/index.js'
+import { tSync } from '../i18n/index.js'
 import { logForDebugging } from '../services/infra/debug.js'
 import { checkAndInstallOfficialMarketplace } from '../services/plugins/officialMarketplaceStartupCheck.js'
 import { useStartupNotification } from './notifs/useStartupNotification.js'
@@ -16,11 +17,7 @@ async function _temp() {
     logForDebugging('Showing marketplace config save failure notification')
     notifs.push({
       key: 'marketplace-config-save-failed',
-      jsx: (
-        <Text color="error">
-          Failed to save marketplace retry info · Check ~/.zy.json permissions
-        </Text>
-      ),
+      jsx: <Text color="error">{tSync('notif.marketplaceConfigSaveFailed')}</Text>,
       priority: 'immediate',
       timeoutMs: 10000,
     })
@@ -29,9 +26,7 @@ async function _temp() {
     logForDebugging('Showing marketplace installation success notification')
     notifs.push({
       key: 'marketplace-installed',
-      jsx: (
-        <Text color="success">✓ ZY marketplace installed · /plugin to see available plugins</Text>
-      ),
+      jsx: <Text color="success">{tSync('notif.marketplaceInstalled')}</Text>,
       priority: 'immediate',
       timeoutMs: 7000,
     })
@@ -40,9 +35,7 @@ async function _temp() {
       logForDebugging('Showing marketplace installation failure notification')
       notifs.push({
         key: 'marketplace-install-failed',
-        jsx: (
-          <Text color="warning">Failed to install ZY marketplace · Will retry on next startup</Text>
-        ),
+        jsx: <Text color="warning">{tSync('notif.marketplaceInstallFailed')}</Text>,
         priority: 'immediate',
         timeoutMs: 8000,
       })
