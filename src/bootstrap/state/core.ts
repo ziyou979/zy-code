@@ -83,6 +83,10 @@ export type State = {
   totalAPIDurationWithoutRetries: number
   /** 累计解码时长（首 token 之后到响应结束），供状态栏 tok/s 使用；null = 无 TTFT 记录 */
   totalDecodeMs: number
+  /** 累计 TTFT（首 token 前的等待），供状态栏显示平均首 token 耗时 */
+  totalTTFTMs: number
+  /** 有 TTFT 记录的 API 请求次数（totalTTFTMs 的分母） */
+  ttftSampleCount: number
   totalToolDuration: number
   turnHookDurationMs: number
   turnToolDurationMs: number
@@ -289,6 +293,8 @@ function getInitialState(): State {
     totalAPIDuration: 0,
     totalAPIDurationWithoutRetries: 0,
     totalDecodeMs: 0,
+    totalTTFTMs: 0,
+    ttftSampleCount: 0,
     totalToolDuration: 0,
     turnHookDurationMs: 0,
     turnToolDurationMs: 0,

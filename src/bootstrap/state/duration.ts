@@ -37,6 +37,22 @@ export function getTotalDecodeMs(): number {
   return STATE.totalDecodeMs
 }
 
+/**
+ * 累计单次请求的 TTFT（首 token 前的等待时长）。与 totalDecodeMs 分开累计，
+ * 供状态栏显示平均首 token 耗时；非流式请求（ttftMs 为 null）不计入。
+ */
+export function addToTotalTTFT(ttftMs: number): void {
+  if (Number.isFinite(ttftMs) && ttftMs >= 0) {
+    STATE.totalTTFTMs += ttftMs
+    STATE.ttftSampleCount++
+  }
+}
+
+/** 平均 TTFT（ms）；无样本时返回 null。 */
+export function getAverageTTFTMs(): number | null {
+  return STATE.ttftSampleCount > 0 ? STATE.totalTTFTMs / STATE.ttftSampleCount : null
+}
+
 export function getTotalToolDuration(): number {
   return STATE.totalToolDuration
 }

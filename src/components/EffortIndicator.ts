@@ -7,6 +7,7 @@ import {
   RADIO_ON,
   SLASHED_CIRCLE,
 } from '../constants/figures.js'
+import { tSync } from '../i18n/index.js'
 import {
   type EffortLevel,
   getDisplayedEffortLevel,
@@ -14,7 +15,7 @@ import {
 } from '../services/effort/effort.js'
 
 /**
- * Build the text for the effort-changed notification, e.g. "◐ medium · /effort".
+ * Build the text for the effort-changed notification, e.g. "◐ 深度 · /effort".
  * Returns undefined if the model doesn't support effort.
  */
 export function getEffortNotificationText(
@@ -25,7 +26,11 @@ export function getEffortNotificationText(
     return undefined
   }
   const level = getDisplayedEffortLevel(model, effortValue)
-  return `${effortLevelToSymbol(level)} ${level} · /effort`
+  // 档位名走 i18n（effort.<level>），避免通知栏直接输出英文枚举标识符；
+  // 模板复用 effort.levelWithShortcut（孤儿 key，本就为此通知准备）
+  return tSync('effort.levelWithShortcut', {
+    level: `${effortLevelToSymbol(level)} ${tSync(`effort.${level}`)}`,
+  })
 }
 
 export function effortLevelToSymbol(level: EffortLevel): string {

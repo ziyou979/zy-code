@@ -3,6 +3,8 @@ export const STATUSLINE_MODULE_IDS = [
   'model',
   'context',
   'tokens',
+  'speed',
+  'turns',
   'cost',
   'memory',
 ] as const

@@ -230,6 +230,9 @@ function StatusbarPreview({ modules }: { modules: readonly ModuleConfig[] }): Re
     branch: 'main',
     gitClean: true,
     memoryRss: 312 * 1024 * 1024,
+    // speed/turns 无真实会话数据，用代表值让预览可见可配置
+    tokensPerSecond: 42,
+    avgTTFTMs: 850,
   }
   const segments: Segment[] = renderStatusbarSegments(modules, ctx)
 

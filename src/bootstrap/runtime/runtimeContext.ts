@@ -498,6 +498,12 @@ export const getTotalAPIDurationWithoutRetries: StateModule['getTotalAPIDuration
 export const addToTotalDecodeMs: StateModule['addToTotalDecodeMs'] = (...args) =>
   resolveRuntimeFunction('addToTotalDecodeMs')(...args)
 
+export const addToTotalTTFT: StateModule['addToTotalTTFT'] = (...args) =>
+  resolveRuntimeFunction('addToTotalTTFT')(...args)
+
+export const getAverageTTFTMs: StateModule['getAverageTTFTMs'] = (...args) =>
+  resolveRuntimeFunction('getAverageTTFTMs')(...args)
+
 export const getTotalDecodeMs: StateModule['getTotalDecodeMs'] = (...args) =>
   resolveRuntimeFunction('getTotalDecodeMs')(...args)
 

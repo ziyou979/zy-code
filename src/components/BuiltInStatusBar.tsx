@@ -11,7 +11,11 @@ import { getGlobalConfig } from '../services/config/config.js'
 import { getBranch, getIsClean } from '../services/infra/git.js'
 import { resolveThemeSetting } from '../services/environment/systemTheme.js'
 import { getTheme, type Theme } from '../services/environment/theme.js'
-import { renderStatusbarSegments, type StatusbarContext } from './statusbar/renderSegments.js'
+import {
+  collectTokenSpeed,
+  renderStatusbarSegments,
+  type StatusbarContext,
+} from './statusbar/renderSegments.js'
 import { mergeWithDefaults } from './statusbar/statusbarModuleDefaults.js'
 
 /** 分隔符宽度 */
@@ -96,6 +100,7 @@ function BuiltInStatusBarInner({ messages, isLoading, mainLoopModel }: Props): R
       branch,
       gitClean,
       memoryRss,
+      ...collectTokenSpeed(),
     }
     return renderStatusbarSegments(modules, ctx)
   }, [modules, messages, mainLoopModel, effortValue, thinkingEnabled, branch, gitClean, memoryRss])

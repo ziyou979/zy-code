@@ -18,6 +18,7 @@ import {
   RADIO_ON,
   SLASHED_CIRCLE,
 } from '../../constants/figures.js'
+import { getAverageTTFTMs } from '../../bootstrap/runtime/runtimeContext.js'
 import {
   getTotalAPIDuration,
   getTotalCost,
@@ -37,6 +38,7 @@ import {
 } from '../../services/context/modelContext.js'
 import { getCwd } from '../../services/environment/cwd.js'
 import { getDisplayedEffortLevel, modelSupportsEffort } from '../../services/effort/effort.js'
+import { isHumanTurn } from '../../services/messages/messagePredicates.js'
 import { formatTokens } from '../../utils/format.js'
 import { getDisplayContextUsage } from '../../services/api/tokens.js'
 import {
@@ -65,6 +67,25 @@ export type StatusbarContext = {
   branch: string | null
   gitClean: boolean | null
   memoryRss: number
+  /** 每秒输出 token（null = 无解码数据可算） */
+  tokensPerSecond: number | null
+  /** 平均首 token 耗时 ms（null = 会话中还没有流式请求） */
+  avgTTFTMs: number | null
+}
+
+/**
+ * 汇总 speed 模块的读数。tok/s 只按解码时长（首 token 之后）计算，避免
+ * TTFT/重试等待稀释读数；无解码记录时回退总 API 时长，保证非流式通道仍有参考值。
+ */
+export function collectTokenSpeed(): {
+  tokensPerSecond: number | null
+  avgTTFTMs: number | null
+} {
+  const totalOut = getTotalOutputTokens()
+  const decodeMs = getTotalDecodeMs()
+  const durationMs = decodeMs > 0 ? decodeMs : getTotalAPIDuration()
+  const tokensPerSecond = totalOut > 0 && durationMs > 0 ? totalOut / (durationMs / 1000) : null
+  return { tokensPerSecond, avgTTFTMs: getAverageTTFTMs() }
 }
 
 const BAR_WIDTH = 8
@@ -113,6 +134,17 @@ function formatMemory(bytes: number): string {
 
 function withIcon(icon: string, body: string): string {
   return icon ? `${icon} ${body}` : body
+}
+
+/** 会话轮数：human turn 计数（排除 meta/tool_result 派生的 user 消息）。 */
+function countHumanTurns(messages: readonly Message[]): number {
+  let n = 0
+  for (const m of messages) {
+    if (isHumanTurn(m)) {
+      n++
+    }
+  }
+  return n
 }
 
 type Renderer = (module: ModuleConfig, ctx: StatusbarContext) => Segment | null
@@ -188,16 +220,46 @@ const RENDERERS: Record<ModuleId, Renderer> = {
     }
     const icon = effectiveIcon(module)
     // 输入/输出分开统计：↑ 累计输入（含缓存读写），↓ 累计输出。
-    let body = `↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`
-    // tok/s 只按解码时长（首 token 之后）计算，避免 TTFT/重试等待稀释读数；
-    // 无解码记录时回退总 API 时长，保证非流式通道仍有参考值。
-    const decodeMs = getTotalDecodeMs()
-    const durationMs = decodeMs > 0 ? decodeMs : getTotalAPIDuration()
-    if (totalOut > 0 && durationMs > 0) {
-      const tps = totalOut / (durationMs / 1000)
-      body += `  » ${tps >= 1000 ? `${(tps / 1000).toFixed(1)}k` : `${Math.round(tps)}`} tok/s`
-    }
+    // tok/s 拆到独立的 speed 模块，两者可分别配置显隐与位置。
+    const body = `↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`
     return { text: withIcon(icon, body), colorToken: effectiveColor(module) }
+  },
+
+  speed(module, ctx) {
+    const { tokensPerSecond, avgTTFTMs } = ctx
+    if (tokensPerSecond === null && avgTTFTMs === null) {
+      return null
+    }
+    const icon = effectiveIcon(module)
+    const parts: string[] = []
+    if (tokensPerSecond !== null) {
+      parts.push(
+        `» ${tokensPerSecond >= 1000 ? `${(tokensPerSecond / 1000).toFixed(1)}k` : `${Math.round(tokensPerSecond)}`} tok/s`,
+      )
+    }
+    if (avgTTFTMs !== null) {
+      // < 10s 显示小数秒（TTFT 常态在百毫秒级），更长时回退整秒
+      parts.push(
+        avgTTFTMs < 10_000
+          ? `⏱ ${tSync('statusline.ttft')} ${(avgTTFTMs / 1000).toFixed(1)}s`
+          : `⏱ ${tSync('statusline.ttft')} ${Math.round(avgTTFTMs / 1000)}s`,
+      )
+    }
+    return { text: withIcon(icon, parts.join('  ')), colorToken: effectiveColor(module) }
+  },
+
+  turns(module, ctx) {
+    // 会话轮数 = human turn 计数（压缩/resume 后随消息列表重建，口径与
+    // plan-reminder 等一致）。0 表示会话还没有用户轮次，不显示。
+    const turns = countHumanTurns(ctx.messages)
+    if (turns === 0) {
+      return null
+    }
+    const icon = effectiveIcon(module)
+    return {
+      text: withIcon(icon, `${turns} ${tSync('statusline.turns')}`),
+      colorToken: effectiveColor(module),
+    }
   },
 
   cost(module) {

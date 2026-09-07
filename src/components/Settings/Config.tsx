@@ -173,20 +173,25 @@ export function Config({
   // Show auto in the default-mode dropdown when the user has opted in OR the
   // config is fully 'enabled' — even if currently circuit-broken ('disabled'),
   // an opted-in user should still see it in settings (it's a temporary state).
-  const showAutoInDefaultModePicker = true
-    ? hasAutoModeOptInAnySource() || getAutoModeEnabledState() === 'enabled'
-    : false
+  // 这两个远端门控在面板存续期间没有订阅机制；按挂载快照读取，避免搜索输入和
+  // 方向键导航时重复访问 GrowthBook 与设置来源。重新打开面板即可获得最新值。
+  const [showAutoInDefaultModePicker] = useState(
+    () => hasAutoModeOptInAnySource() || getAutoModeEnabledState() === 'enabled',
+  )
   // Chat/Transcript view picker is visible to entitled users (pass the GB
   // gate) even if they haven't opted in this session — it IS the persistent
   // opt-in. 'chat' written here is read at next startup by main.tsx which
   // sets userMsgOptIn if still entitled.
+  // 保持 feature 条件内懒加载：静态导入会把 runtimeContext 门控提前带入全局模块图，
+  // 而直接加载 BriefTool 又会把设置页带回工具 UI/注册循环。
   /* eslint-disable @typescript-eslint/no-require-imports */
-  const showDefaultViewPicker =
+  const [showDefaultViewPicker] = useState(() =>
     feature('KAIROS') || feature('KAIROS_BRIEF')
       ? (
-          require('../../tools/BriefTool/BriefTool.js') as typeof import('../../tools/BriefTool/BriefTool.js')
+          require('../../tools/BriefTool/briefGate.js') as typeof import('../../tools/BriefTool/briefGate.js')
         ).isBriefEntitled()
-      : false
+      : false,
+  )
   /* eslint-enable @typescript-eslint/no-require-imports */
   const setAppState = useSetAppState()
   const [changes, setChanges] = useState<{

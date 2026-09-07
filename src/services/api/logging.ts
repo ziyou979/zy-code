@@ -2,6 +2,7 @@ import { feature } from 'bun:bundle'
 import {
   addToTotalDecodeMs,
   addToTotalDurationState,
+  addToTotalTTFT,
   consumePostCompaction,
   getIsNonInteractiveSession,
   getLastApiCompletionTimestamp,
@@ -637,6 +638,7 @@ export function logAPISuccessAndDuration({
   // ttftMs；非流式一次性返回，无法拆分，不计入 tok/s 口径。
   if (ttftMs !== null) {
     addToTotalDecodeMs(durationMs - ttftMs)
+    addToTotalTTFT(ttftMs)
   }
 
   logAPISuccess({

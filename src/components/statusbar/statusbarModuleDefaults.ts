@@ -28,6 +28,8 @@ export const DEFAULT_MODULES: readonly ModuleConfig[] = [
   { id: 'model', visible: true, icon: '', color: 'rainbow_violet_shimmer' },
   { id: 'context', visible: true, icon: '⛁', color: 'success' },
   { id: 'tokens', visible: true, icon: '', color: 'suggestion' },
+  { id: 'speed', visible: true, icon: '', color: 'rainbow_orange_shimmer' },
+  { id: 'turns', visible: true, icon: '', color: 'rainbow_indigo_shimmer' },
   { id: 'cost', visible: true, icon: '¥', color: 'warning' },
   { id: 'memory', visible: true, icon: '≡', color: 'inactive' },
 ]
@@ -42,6 +44,8 @@ export const ICON_LIBRARY: Record<ModuleId, readonly string[]> = {
   model: ['◆', '◇', '◈', '★', '✦', '◉', '⊙', '⊚', ''],
   context: ['⛁', '▦', '▤', '▥', '◰', '◱', '◲', '◳', '▒', '▓', ''],
   tokens: ['↕', '⇅', '⇡', '⇣', '◆', '◇', ''],
+  speed: ['»', '↯', '⏱', '▶', '›', ''],
+  turns: ['#', '⟳', '⇄', 'T', ''],
   cost: ['¥', '$', '€', '£', '₩', '₹', '₽', '₿', ''],
   memory: ['☰', '▤', '≡', '▥', '▣', '◫', '☱', '☷', ''],
 }

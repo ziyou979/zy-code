@@ -16,13 +16,13 @@ import { safeParseJSON } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../services/infra/log.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
-import type { StatuslineModuleConfig } from './statuslineTypes.js'
+import { STATUSLINE_MODULE_IDS, type StatuslineModuleConfig } from './statuslineTypes.js'
 
 // ─── Schema ────────────────────────────────────────────────────────
 
 const StatuslineModuleSchema = lazySchema(() =>
   z.object({
-    id: z.enum(['directory', 'model', 'context', 'tokens', 'cost', 'memory']),
+    id: z.enum(STATUSLINE_MODULE_IDS),
     visible: z.boolean().optional().default(true),
     icon: z.string().optional(),
     color: z.string().optional(),
