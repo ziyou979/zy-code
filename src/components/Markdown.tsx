@@ -1,10 +1,10 @@
-import { marked, type Token, type Tokens } from 'marked'
+import type { Tokens } from 'marked'
 import React, { Suspense, use, useRef } from 'react'
 import { useSettings } from '../hooks/useSettings.js'
 import { Ansi, Box, useTheme } from '../ink/index.js'
 import type { CliHighlight } from '../services/terminal/cliHighlight.js'
 import { getCliHighlightPromise } from '../services/terminal/cliHighlight.js'
-import { hashContent } from '../utils/hash.js'
+import { cachedLexer } from '../markdown/lexerCache.js'
 import {
   advanceStreamingMarkdownBoundary,
   configureMarked,
@@ -21,68 +21,6 @@ type Props = {
 
 type MarkdownBodyProps = Props & {
   highlight: CliHighlight | null
-}
-
-// 模块级 token 缓存——marked.lexer 是虚拟滚动重新挂载时的热点成本
-//（每条消息约 3ms）。useMemo 在 unmount→remount 时不存活，所以
-// 滚动回之前可见的消息会重新解析。消息在历史中是不可变的；
-// 相同内容 → 相同 token。按 hash 键控以避免保留完整内容字符串
-//（turn50→turn99 RSS 回归，#24180）。
-const TOKEN_CACHE_MAX = 500
-const tokenCache = new Map<string, Token[]>()
-
-// 表示 markdown 语法的字符。如果不存在，完全跳过
-// 约 3ms 的 marked.lexer 调用——渲染为单个段落。涵盖
-// 大多数短助手回复和用户提示，它们都是普通句子。
-// 通过 indexOf 检查（非正则）以提高速度。
-// 单个正则：匹配任何 MD 标记或有序列表开始（行首的 N.）。
-// 一次扫描代替 10 次 includes 扫描。
-const MD_SYNTAX_RE = /[#*`|[>\-_~]|\n\n|^\d+\. |\n\d+\. /
-function hasMarkdownSyntax(s: string): boolean {
-  // 采样前 500 个字符——如果存在 markdown，通常在早期（标题、代码围栏、列表）。
-  // 长工具输出大多是纯文本尾部。
-  return MD_SYNTAX_RE.test(s.length > 500 ? s.slice(0, 500) : s)
-}
-
-function cachedLexer(content: string): Token[] {
-  // 快速路径：没有 markdown 语法的纯文本 → 单个段落 token。
-  // 跳过 marked.lexer 的完整 GFM 解析（长内容约 3ms）。不缓存——
-  // 重建是单次对象分配，缓存会保留 4 倍内容的 raw/text 字段
-  // 加上 hash 键，零收益。
-  if (!hasMarkdownSyntax(content)) {
-    return [
-      {
-        type: 'paragraph',
-        raw: content,
-        text: content,
-        tokens: [
-          {
-            type: 'text',
-            raw: content,
-            text: content,
-          },
-        ],
-      } as Token,
-    ]
-  }
-  const key = hashContent(content)
-  const hit = tokenCache.get(key)
-  if (hit) {
-    // 提升为 MRU——没有这个的话驱逐是 FIFO（滚动回早期消息会驱逐你正在看的项目）。
-    tokenCache.delete(key)
-    tokenCache.set(key, hit)
-    return hit
-  }
-  const tokens = marked.lexer(content)
-  if (tokenCache.size >= TOKEN_CACHE_MAX) {
-    // 类 LRU：丢弃最老的。Map 保留插入顺序。
-    const first = tokenCache.keys().next().value
-    if (first !== undefined) {
-      tokenCache.delete(first)
-    }
-  }
-  tokenCache.set(key, tokens)
-  return tokens
 }
 
 /**
