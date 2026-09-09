@@ -3,6 +3,7 @@ export const STATUSLINE_MODULE_IDS = [
   'model',
   'context',
   'tokens',
+  'cache',
   'speed',
   'turns',
   'cost',

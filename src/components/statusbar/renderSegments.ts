@@ -23,6 +23,8 @@ import {
 import { getAverageTTFTMs } from '../../bootstrap/runtime/runtimeContext.js'
 import {
   getTotalAPIDuration,
+  getTotalCacheCreationInputTokens,
+  getTotalCacheReadInputTokens,
   getTotalCost,
   getTotalCostByCurrency,
   getTotalDecodeMs,
@@ -225,6 +227,27 @@ const RENDERERS: Record<ModuleId, Renderer> = {
     // tok/s 拆到独立的 speed 模块，两者可分别配置显隐与位置。
     const body = `↑ ${formatTokens(totalIn)}  ↓ ${formatTokens(totalOut)}`
     return { text: withIcon(icon, body), colorToken: effectiveColor(module) }
+  },
+
+  cache(module) {
+    const cacheRead = getTotalCacheReadInputTokens()
+    const cacheCreation = getTotalCacheCreationInputTokens()
+    // 完全没有缓存活动（provider 不支持 prompt cache / 会话刚开始）时不显示，
+    // 避免用恒定的 0% 占据状态栏。
+    if (cacheRead + cacheCreation === 0) {
+      return null
+    }
+    // 总输入口径归一化：Anthropic 原生 input_tokens 不含缓存（缓存量在
+    // cache_read/cache_creation 字段里），而 OpenAI/Google 的 prompt_tokens
+    // 已含 cached_tokens。取 max(input, cacheRead + cacheCreation) 使两种口径
+    // 都落在合理区间——OpenAI 侧不重复计入命中量，Anthropic 侧覆盖缓存主体，
+    // 且命中率恒 <= 100%。
+    const totalInput = Math.max(getTotalInputTokens(), cacheRead + cacheCreation)
+    const hitRate = Math.round((cacheRead / totalInput) * 100)
+    return {
+      text: withIcon(effectiveIcon(module), `${hitRate}%`),
+      colorToken: effectiveColor(module),
+    }
   },
 
   speed(module, ctx) {

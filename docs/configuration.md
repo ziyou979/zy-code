@@ -154,7 +154,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 | `language` | string | — | 响应/听写/UI 语言(如 `Chinese`) |
 | `outputStyle` | string | — | 助手输出风格 |
 | `showThinkingSummaries` | boolean | `false` | transcript 显示思考摘要 |
-| `builtInStatusBar.{enabled,modules}` | object | — | 底部状态栏(模块:directory/model/context/tokens/cost/memory) |
+| `builtInStatusBar.{enabled,modules}` | object | — | 底部状态栏(模块:directory/model/context/tokens/cache/speed/turns/cost/memory) |
 | `spinnerTipsEnabled` / `spinnerTipsOverride` | — | — | spinner 提示 |
 | `prefersReducedMotion` / `syntaxHighlightingDisabled` | boolean | — | 无障碍 / 关语法高亮 |
 | `terminalTitleFromRename` | boolean | `true` | `/rename` 改终端标题 |
