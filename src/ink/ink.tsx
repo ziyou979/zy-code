@@ -24,6 +24,7 @@ import type { Rectangle } from './layout/geometry.js'
 import * as dom from './dom.js'
 import { KeyboardEvent } from './events/keyboardEvent.js'
 import { FocusManager } from './focus.js'
+import { getTerminalFocusState, subscribeTerminalFocus } from './terminalFocusState.js'
 import { emptyFrame, type Frame, type FrameEvent } from './frame.js'
 import { dispatchClick, dispatchHover, hitTest } from './hitTest.js'
 import instances from './instances.js'
@@ -106,6 +107,8 @@ import {
   ENTER_ALT_SCREEN,
   EXIT_ALT_SCREEN,
   SHOW_CURSOR,
+  BLINKING_BAR_CURSOR,
+  DEFAULT_CURSOR,
 } from './termio/dec.js'
 import {
   CLEAR_ITERM2_PROGRESS,
@@ -295,6 +298,8 @@ export default class Ink {
   // 原生光标的已知终端状态。仅在状态变化时发序列，避免 JediTerm
   // 在每帧重复显示/隐藏光标时重启 IME 预编辑绘制。
   private nativeCursorVisible: boolean
+  // 终端焦点/模式恢复可改变样式，但不改变逻辑插入位置。
+  private nativeCursorStyleDirty = true
   constructor(private readonly options: Options) {
     autoBind(this)
     // 启动时记录 quirk 决策：JediTerm 上的渲染路径与普通终端不同
@@ -369,7 +374,11 @@ export default class Ink {
     if (options.stdout.isTTY) {
       options.stdout.on('resize', this.handleResize)
       process.on('SIGCONT', this.handleResume)
+      const unsubscribeFocus = subscribeTerminalFocus(() => {
+        if (getTerminalFocusState() === 'focused') this.restoreNativeCursorStyle()
+      })
       this.unsubscribeTTYHandlers = () => {
+        unsubscribeFocus()
         options.stdout.off('resize', this.handleResize)
         process.off('SIGCONT', this.handleResume)
       }
@@ -956,7 +965,18 @@ export default class Ink {
       target !== null &&
       decl !== null &&
       (decl.visible || isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)) !== this.nativeCursorVisible
-    if (hasDiff || targetMoved || nativeCursorChanged || (target === null && parked !== null)) {
+    const nativeCursorStyleChanged =
+      this.options.nativeCursor === true &&
+      this.nativeCursorStyleDirty &&
+      target !== null &&
+      (decl?.visible === true || isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY))
+    if (
+      hasDiff ||
+      targetMoved ||
+      nativeCursorChanged ||
+      nativeCursorStyleChanged ||
+      (target === null && parked !== null)
+    ) {
       // Main-screen preamble: log-update's relative moves assume the
       // physical cursor is at prevFrame.cursor. If last frame parked it
       // elsewhere, move back before the diff runs. Alt-screen's CSI H
@@ -1014,13 +1034,25 @@ export default class Ink {
         if (this.options.nativeCursor === true) {
           const shouldShow =
             decl?.visible === true || isEnvTruthy(process.env.ZY_CODE_ACCESSIBILITY)
-          // 与 Claude Code 一致：先隐藏旧位置的原生光标，再在新的停靠
-          // 位置显示，避免移动过程中留下 JediTerm 的组合装饰。
-          if (this.nativeCursorVisible) {
+          // 仅内容重绘时隐藏旧位置。单纯移动插入点不切换可见性，
+          // 避免 Reworked 重建光标装饰和反复重置闪烁计时。
+          if (this.nativeCursorVisible && (hasDiff || !shouldShow)) {
             optimized.unshift({ type: 'cursorHide' })
           }
           if (shouldShow) {
-            optimized.push({ type: 'cursorShow' })
+            // 首次显示或终端重置后恢复样式；repaint/备用屏幕重置会清空 parked。
+            if (!this.nativeCursorVisible || parked === null || nativeCursorStyleChanged) {
+              optimized.push({ type: 'stdout', content: BLINKING_BAR_CURSOR })
+              this.nativeCursorStyleDirty = false
+            }
+            if (
+              hasDiff ||
+              !this.nativeCursorVisible ||
+              parked === null ||
+              nativeCursorStyleChanged
+            ) {
+              optimized.push({ type: 'cursorShow' })
+            }
           }
           this.nativeCursorVisible = shouldShow
         }
@@ -1217,6 +1249,12 @@ export default class Ink {
     return this.altScreenActive
   }
 
+  private restoreNativeCursorStyle(): void {
+    if (this.isPaused || this.isUnmounted || !this.options.nativeCursor) return
+    this.nativeCursorStyleDirty = true
+    this.scheduleRender()
+  }
+
   /**
    * 出现间隔（stdin 静默超过 5 秒或 event loop 停顿）后重新声明终端模式。
    * 用于捕获 tmux detach→attach、ssh 重连和笔记本睡眠/唤醒；这些情况都不会发送 SIGCONT。
@@ -1243,6 +1281,7 @@ export default class Ink {
     if (this.isPaused) {
       return
     }
+    this.restoreNativeCursorStyle()
     // Extended keys — re-assert if enabled (App.tsx enables these on
     // allowlisted terminals at raw-mode entry; a terminal reset clears them).
     // Pop-before-push keeps Kitty stack depth at 1 instead of accumulating
@@ -2040,7 +2079,7 @@ export default class Ink {
       // Disable bracketed paste mode
       writeSync(1, DBP)
       // Show cursor
-      writeSync(1, SHOW_CURSOR)
+      writeSync(1, (this.options.nativeCursor ? DEFAULT_CURSOR : '') + SHOW_CURSOR)
       // Clear iTerm2 progress bar
       writeSync(1, CLEAR_ITERM2_PROGRESS)
       // Clear tab status (OSC 21337) so a stale dot doesn't linger

@@ -74,6 +74,7 @@ export function BaseTextInput({
     eraseToEnd:
       nativeCursorEnabled &&
       !cursorCellPainted &&
+      !showPlaceholder &&
       inputState.offset >= (props.value?.length ?? 0) &&
       !props.inlineGhostText &&
       !showArgumentHint,

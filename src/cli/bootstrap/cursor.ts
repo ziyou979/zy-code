@@ -1,4 +1,4 @@
-import { SHOW_CURSOR } from '../../ink/termio/dec.js'
+import { DEFAULT_CURSOR, SHOW_CURSOR } from '../../ink/termio/dec.js'
 /**
  * 在退出前向 TTY 写入 SHOW_CURSOR，避免 Ink 渲染异常退出时光标残缺。
  */
@@ -8,5 +8,5 @@ export function resetCursor(): void {
     : process.stdout.isTTY
       ? process.stdout
       : undefined
-  terminal?.write(SHOW_CURSOR)
+  terminal?.write(DEFAULT_CURSOR + SHOW_CURSOR)
 }

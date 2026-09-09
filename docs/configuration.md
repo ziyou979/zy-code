@@ -423,6 +423,12 @@ SDK 把 betas 摘出 body → HTTP 头: anthropic-beta: a,b,c
 
 ---
 
+## 终端输入光标
+
+现代终端默认显示原生竖线光标，退出时恢复终端默认样式。`TERM=dumb` 默认回退到软件光标。
+设置环境变量 `ZY_CODE_NATIVE_CURSOR=0` 可恢复反色方块，`ZY_CODE_NATIVE_CURSOR=1` 可强制启用原生光标。
+无障碍模式 `ZY_CODE_ACCESSIBILITY=1` 优先使用原生光标。Windows JediTerm 继续为中文输入法预编辑预留行宽。
+
 ## 7. Provider 注册表
 
 定义于 `src/services/model/providerRegistry.ts`。`activationEnvVar` 为空者通过 onboarding / `settings.provider` 选择。

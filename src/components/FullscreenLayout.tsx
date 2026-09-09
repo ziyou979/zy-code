@@ -25,6 +25,8 @@ import ScrollBox, { type ScrollBoxHandle } from '../ink/components/ScrollBox.js'
 import type { DOMElement } from '../ink/dom.js'
 import instances from '../ink/instances.js'
 import { nodeCache } from '../ink/nodeCache.js'
+import { shouldUseNativeCursor } from '../ink/nativeCursor.js'
+import { DECSTBM_FAST_PATH_SUPPORTED } from '../ink/terminal.js'
 import { VtPlusPlusRenderer } from '../ink/vtplus/vtPlusPlusRenderer.js'
 import { Box, Text } from '../ink/index.js'
 import { findStickyHeaderHitMeta, registerStickyHeaderHitTarget } from '../ink/messageHitTarget.js'
@@ -410,6 +412,9 @@ export function FullscreenLayout({
   const vtppRef = useRef<VtPlusPlusRenderer | null>(null)
   useInsertionEffect(() => {
     if (!isFullscreenEnvEnabled()) return
+    // VtPlusPlus 不消费原生光标声明，setup 还会直接隐藏物理光标。
+    // 原生光标和不支持区域滚动的终端统一由 Ink 差量路径管理输出。
+    if (shouldUseNativeCursor() || !DECSTBM_FAST_PATH_SUPPORTED) return
     const ink = instances.get(process.stdout)
     if (!ink) return
     const vtpp = new VtPlusPlusRenderer(process.stdout, columns, terminalRows)

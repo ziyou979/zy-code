@@ -42,6 +42,9 @@ export const EFE = decset(DEC.FOCUS_EVENTS)
 export const DFE = decreset(DEC.FOCUS_EVENTS)
 export const SHOW_CURSOR = decset(DEC.CURSOR_VISIBLE)
 export const HIDE_CURSOR = decreset(DEC.CURSOR_VISIBLE)
+// DECSCUSR：闪烁由终端自身驱动，无需应用定时刷新；退出时恢复默认样式。
+export const BLINKING_BAR_CURSOR = csi('5 q')
+export const DEFAULT_CURSOR = csi('0 q')
 export const ENTER_ALT_SCREEN = decset(DEC.ALT_SCREEN_CLEAR)
 export const EXIT_ALT_SCREEN = decreset(DEC.ALT_SCREEN_CLEAR)
 // 鼠标跟踪：1000 报告按键按下/释放/滚轮，1002 增加拖拽

@@ -21,8 +21,9 @@ export function shouldUseNativeCursor(): boolean {
     return isEnvTruthy(process.env.ZY_CODE_NATIVE_CURSOR)
   }
 
+  // 现代终端默认使用物理插入符；保留显式关闭开关供旧终端回退。
   return (
-    process.platform === 'win32' && process.env.TERMINAL_EMULATOR?.includes('JetBrains') === true
+    process.env.TERMINAL_EMULATOR?.includes('JetBrains') === true || process.env.TERM !== 'dumb'
   )
 }
 
