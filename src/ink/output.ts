@@ -1,3 +1,4 @@
+import { LRUCache } from 'lru-cache'
 import {
   type AnsiCode,
   type StyledChar,
@@ -201,7 +202,13 @@ export default class Output {
 
   private readonly operations: Operation[] = []
 
-  private charCache: Map<string, ClusteredChar[]> = new Map()
+  // 按字素对象和字符串估算容量，避免少量超长行突破仅按条数的限制。
+  private charCache = new LRUCache<string, ClusteredChar[]>({
+    max: 16384,
+    maxSize: 8 * 1024 * 1024,
+    maxEntrySize: 256 * 1024,
+    sizeCalculation: (characters, line) => line.length * 2 + characters.length * 64 + 128,
+  })
 
   constructor(options: Options) {
     const { width, height, stylePool, screen } = options
@@ -227,16 +234,6 @@ export default class Output {
     this.screen = screen
     this.operations.length = 0
     resetScreen(screen, width, height)
-    if (this.charCache.size > 16384) {
-      // 淘汰最旧 1/4 而非全清：全清会让下一帧的
-      // tokenize + grapheme 聚类全部重新执行（冷启动尖峰）
-      const keys = this.charCache.keys()
-      for (let i = 0; i < 4096; i++) {
-        const next = keys.next()
-        if (next.done) break
-        this.charCache.delete(next.value)
-      }
-    }
   }
 
   /**
@@ -755,7 +752,7 @@ function writeLineToScreen(
   y: number,
   screenWidth: number,
   stylePool: StylePool,
-  charCache: Map<string, ClusteredChar[]>,
+  charCache: LRUCache<string, ClusteredChar[]>,
 ): number {
   let characters = charCache.get(line)
   if (!characters) {
