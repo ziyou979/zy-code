@@ -103,6 +103,8 @@ export type PromptInputHelpers = {
 }
 
 export type HandlePromptSubmitParams = BaseExecutionParams & {
+  /** REPL 已开始计时，保留等待启动 hooks 的耗时。 */
+  profileStarted?: boolean
   // Direct user input path (set when called from onSubmit, absent for queue processor)
   input?: string
   mode?: PromptInputMode
@@ -359,8 +361,8 @@ export async function handlePromptSubmit(params: HandlePromptSubmitParams): Prom
     return
   }
 
-  // Start query profiling for this query
-  startQueryProfile()
+  // 直接调用方自行开始计时；REPL 路径保留前置 hooks 的检查点。
+  if (!params.profileStarted) startQueryProfile()
 
   // Construct a QueuedCommand from the direct user input so both paths
   // go through the same executeUserInput loop. This ensures images get

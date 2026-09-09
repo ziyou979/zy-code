@@ -108,7 +108,11 @@ import {
   isScratchpadEnabled,
 } from '../../services/permissions/scratchpadStorage.js'
 import { getQuerySourceForREPL } from '../../services/analytics/querySource.js'
-import { logQueryProfileReport, queryCheckpoint } from '../../services/query/queryProfiler.js'
+import {
+  logQueryProfileReport,
+  queryCheckpoint,
+  startQueryProfile,
+} from '../../services/query/queryProfiler.js'
 import {
   cacheSessionTitle,
   isEphemeralToolProgress,
@@ -1240,9 +1244,16 @@ export async function handleSubmit(
     return
   }
 
-  // 正常提交路径
+  // 排队输入不能重置正在执行的查询计时；正常提交需包含前置 hooks 等待。
+  const profileStarted = !queryGuard.isActive && !ctx.isExternalLoading
+  if (profileStarted) {
+    startQueryProfile()
+    queryCheckpoint('query_pending_hooks_start')
+  }
   await ctx.awaitPendingHooks()
+  if (profileStarted) queryCheckpoint('query_pending_hooks_end')
   await handlePromptSubmit({
+    profileStarted,
     input,
     helpers,
     queryGuard,
