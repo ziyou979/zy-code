@@ -38,10 +38,13 @@ export function normalizeMessages(
 ): (AssistantMessage | UserMessage)[]
 export function normalizeMessages(messages: Message[]): Message[]
 export function normalizeMessages(messages: Message[]): Message[] {
+  return normalizeMessageSequence(messages)
+}
+
+function normalizeMessageSequence(messages: Message[], isNewChain = false): Message[] {
   // isNewChain：当消息含多内容块时拆分成多条单内容块消息，
   // 此时后续消息需新生 UUID 以维持排序并防 UUID 重复。
   // 一旦遇到多块消息此标志为 true，并对所有后续消息保持为 true。
-  let isNewChain = false
   return messages.flatMap<Message>((message) => {
     switch (message.type) {
       case 'assistant': {
@@ -121,6 +124,40 @@ export function normalizeMessages(messages: Message[]): Message[] {
         return []
     }
   })
+}
+
+/**
+ * 仅用于不可变消息列表的渲染路径。追加消息时保持历史行引用稳定，
+ * 避免 React.memo 因全量对象重建失效；WeakMap 不延长已删除消息的生命周期。
+ * UUID 派生取决于前面是否出现过多块消息，所以分别缓存两种上下文。
+ */
+export function createMessageNormalizer(): (messages: Message[]) => Message[] {
+  const cache = new WeakMap<Message, { original?: Message[]; derived?: Message[] }>()
+  return (messages) => {
+    let derived = false
+    const result: Message[] = []
+    for (const message of messages) {
+      if (
+        (message.type === 'assistant' || message.type === 'user') &&
+        Array.isArray(message.message.content) &&
+        message.message.content.length > 1
+      )
+        derived = true
+      const key = derived ? 'derived' : 'original'
+      let entry = cache.get(message)
+      if (!entry) {
+        entry = {}
+        cache.set(message, entry)
+      }
+      let normalized = entry[key]
+      if (!normalized) {
+        normalized = normalizeMessageSequence([message], derived)
+        entry[key] = normalized
+      }
+      for (const row of normalized) result.push(row)
+    }
+    return result
+  }
 }
 
 export function mergeUserMessagesAndToolResults(a: UserMessage, b: UserMessage): UserMessage {

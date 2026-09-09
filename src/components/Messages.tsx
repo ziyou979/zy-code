@@ -37,6 +37,7 @@ import {
   buildMessageLookups,
   getToolUseIDs,
   hasUnresolvedHooksFromLookup,
+  scopeMessageLookups,
 } from '../services/messages/./lookups.js'
 import { createAssistantMessage } from '../services/messages/./constructors.js'
 import {
@@ -46,7 +47,7 @@ import {
   shouldShowUserMessage,
 } from '../services/messages/./predicates.js'
 import { getDisplayMessages } from '../services/messages/projections.js'
-import { normalizeMessages } from '../services/messages/./normalize.js'
+import { createMessageNormalizer, normalizeMessages } from '../services/messages/./normalize.js'
 import { reorderMessagesInUI } from '../services/messages/./api.js'
 import type { StreamingThinking, StreamingToolUse } from '../services/messages/./streaming.js'
 import { plural } from '../utils/stringUtils.js'
@@ -419,13 +420,14 @@ const MessagesImpl = ({
     'Transcript',
     'Ctrl+E',
   )
+  const normalizeForDisplay = useMemo(() => createMessageNormalizer(), [])
   const normalizedMessages = useMemo(
     () =>
-      normalizeMessages(messages)
+      normalizeForDisplay(messages)
         .filter(isNotEmptyMessage)
         // MessageDisplay hook 的 display-only 隐藏：仅从渲染中移除，消息仍在上下文/转录中。
         .filter((m) => !m.displayOverride?.hide),
-    [messages],
+    [messages, normalizeForDisplay],
   )
 
   // 已落盘消息中记录的思考时长累计（与折叠组聚合逻辑一致）。
@@ -864,7 +866,7 @@ const MessagesImpl = ({
         latestBashOutputUUID={latestBashOutputUUID}
         columns={columns}
         isLoading={isLoading}
-        lookups={lookups}
+        lookups={scopeMessageLookups(message, lookups)}
         streamingThinkingSummary={
           isStreamingThinkingVisible ? streamingThinking?.thinking : undefined
         }

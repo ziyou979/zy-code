@@ -5,6 +5,7 @@ import type {
   AttachmentMessage,
   Message,
   ProgressMessage,
+  RenderableMessage,
   UserMessage,
 } from '../../types/message.js'
 import { count } from '../../utils/array.js'
@@ -295,6 +296,63 @@ export const EMPTY_LOOKUPS: MessageLookups = {
   normalizedMessageCount: 0,
   resolvedToolUseIDs: new Set(),
   erroredToolUseIDs: new Set(),
+}
+
+/**
+ * 在进入 memo/OffscreenFreeze 行组件之前裁剪索引。静态行会保留旧 props，
+ * 若传入全会话索引，每行都钉住一份历史快照，累计条目数会呈平方增长。
+ * 同级工具只需要完成状态；不能把同级工具的大结果也复制到每一行。
+ */
+export function scopeMessageLookups(
+  message: RenderableMessage,
+  lookups: MessageLookups,
+): MessageLookups {
+  const ids = new Set<string>()
+  function collect(msg: RenderableMessage): void {
+    if (msg.type === 'grouped_tool_use' || msg.type === 'collapsed_read_search') {
+      for (const child of msg.messages ?? []) collect(child)
+    } else if (msg.type === 'assistant' || msg.type === 'user') {
+      if (msg.type === 'user' && msg.sourceToolUseID) ids.add(msg.sourceToolUseID)
+      for (const block of msg.message.content) {
+        if ('id' in block && typeof block.id === 'string') ids.add(block.id)
+        if ('toolCallId' in block && typeof block.toolCallId === 'string') {
+          ids.add(block.toolCallId)
+        }
+      }
+    } else if (msg.type === 'progress') {
+      ids.add(msg.parentToolUseID)
+    } else if (msg.type === 'attachment' || msg.type === 'system') {
+      const id = getToolUseID(msg)
+      if (id) ids.add(id)
+    }
+  }
+  collect(message)
+  if (ids.size === 0) {
+    return { ...EMPTY_LOOKUPS, normalizedMessageCount: lookups.normalizedMessageCount }
+  }
+  function pick<T>(source: Map<string, T>): Map<string, T> {
+    const selected = new Map<string, T>()
+    for (const id of ids) {
+      if (source.has(id)) selected.set(id, source.get(id)!)
+    }
+    return selected
+  }
+  const siblingToolUseIDs = pick(lookups.siblingToolUseIDs)
+  const statusIDs = new Set(ids)
+  for (const siblings of siblingToolUseIDs.values()) {
+    for (const id of siblings) statusIDs.add(id)
+  }
+  return {
+    siblingToolUseIDs,
+    progressMessagesByToolUseID: pick(lookups.progressMessagesByToolUseID),
+    inProgressHookCounts: pick(lookups.inProgressHookCounts),
+    resolvedHookCounts: pick(lookups.resolvedHookCounts),
+    toolResultByToolUseID: pick(lookups.toolResultByToolUseID),
+    toolUseByToolUseID: pick(lookups.toolUseByToolUseID),
+    normalizedMessageCount: lookups.normalizedMessageCount,
+    resolvedToolUseIDs: new Set([...statusIDs].filter((id) => lookups.resolvedToolUseIDs.has(id))),
+    erroredToolUseIDs: new Set([...ids].filter((id) => lookups.erroredToolUseIDs.has(id))),
+  }
 }
 
 /**
