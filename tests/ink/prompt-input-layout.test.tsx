@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 import { Writable } from 'node:stream'
 import React, { useMemo } from 'react'
+import { PromptInputModeIndicator } from '../../src/components/PromptInput/PromptInputModeIndicator.js'
+import { POINTER } from '../../src/constants/figures.js'
 import { Ansi } from '../../src/ink/Ansi.js'
 import Box from '../../src/ink/components/Box.js'
 import Text from '../../src/ink/components/Text.js'
@@ -55,7 +57,7 @@ function PromptLayout({
 
   return (
     <Box width={columns} flexDirection="row">
-      <Text>{'❯ '}</Text>
+      <PromptInputModeIndicator mode="prompt" isLoading={false} />
       <Box ref={inputRef} width={textInputColumns + 1} flexShrink={0} minHeight={1}>
         <Box minHeight={1}>
           <Box>
@@ -152,7 +154,7 @@ describe('提示输入框布局', () => {
     ink.render(<PromptLayout columns={columns} value="" inputRef={inputRef} nativeCursor={true} />)
 
     expect(nodeCache.get(inputRef.current!)).toMatchObject({ height: 1 })
-    expect(frameToLines(frames.at(-1)!)[0]).toBe('❯')
+    expect(frameToLines(frames.at(-1)!)[0]).toBe(POINTER)
     ink.unmount()
   })
 

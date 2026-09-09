@@ -953,6 +953,7 @@ export const zhMisc: TranslationResource = {
   'statusline.enabled': '状态栏已启用',
   'statusline.icon.none': '（无图标）',
   'statusline.iconPicker.title': '为 {module} 选择图标',
+  'statusline.module.cache': '缓存命中',
   'statusline.module.context': '上下文',
   'statusline.module.cost': '费用',
   'statusline.module.directory': '目录',

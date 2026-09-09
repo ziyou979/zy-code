@@ -8,6 +8,7 @@ const coordinatorModule = feature('COORDINATOR_MODE')
   : undefined
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { Box, Text, Link } from '../../ink/index.js'
+import { stringWidth } from '../../ink/stringWidth.js'
 import * as React from 'react'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { VimMode, PromptInputMode } from '../../types/textInputTypes.js'
@@ -344,11 +345,15 @@ function ModeIndicator({
   // the local permission mode shown here doesn't reflect the agent's state.
   // Rendered before the tasks pill so a long pill label (e.g. ultraplan URL)
   // doesn't push the mode indicator off-screen.
+  // 按渲染器列宽补齐图标区域，保持图标和模式名称的逻辑列起点一致。
+  // 字体的实际字形宽度可能与列宽不同，此处不能保证跨字体的视觉间距相同。
+  const modeSymbol = currentMode ? permissionModeSymbol(currentMode) : ''
+  const modeSymbolPadding = ' '.repeat(Math.max(0, 2 - stringWidth(modeSymbol)))
   const modePart =
     currentMode && hasActiveMode ? (
       <Text color={getModeColor(currentMode)} key="mode">
-        {permissionModeSymbol(currentMode)} {permissionModeIndicator(currentMode)}{' '}
-        {tSync('permissionMode.on')}
+        {modeSymbol}
+        {modeSymbolPadding} {permissionModeIndicator(currentMode)} {tSync('permissionMode.on')}
         {shouldShowModeHint && (
           <Text dimColor>
             {' '}

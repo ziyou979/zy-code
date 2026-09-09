@@ -976,6 +976,7 @@ export const enMisc: TranslationResource = {
   'statusline.enabled': 'Status bar enabled',
   'statusline.icon.none': '(no icon)',
   'statusline.iconPicker.title': 'Choose icon for {module}',
+  'statusline.module.cache': 'cache hit',
   'statusline.module.context': 'context',
   'statusline.module.cost': 'cost',
   'statusline.module.directory': 'directory',

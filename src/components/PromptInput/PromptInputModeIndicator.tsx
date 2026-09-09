@@ -49,7 +49,7 @@ function PromptChar({ isLoading, themeColor }: PromptCharProps) {
   const color = teammateColor ?? (false ? 'subtle' : undefined)
   return (
     <Text color={color} dimColor={isLoading}>
-      {POINTER} 
+      {POINTER}
     </Text>
   )
 }
@@ -65,6 +65,9 @@ export function PromptInputModeIndicator({
     : undefined
   return (
     <Box
+      width={2}
+      flexShrink={0}
+      paddingRight={1}
       alignItems="flex-start"
       alignSelf="flex-start"
       flexWrap="nowrap"
@@ -74,7 +77,7 @@ export function PromptInputModeIndicator({
         <PromptChar isLoading={isLoading} themeColor={viewedTeammateThemeColor} />
       ) : mode === 'bash' ? (
         <Text color="bashBorder" dimColor={isLoading}>
-          ! 
+          !
         </Text>
       ) : (
         <PromptChar

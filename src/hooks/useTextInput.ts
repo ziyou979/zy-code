@@ -1,6 +1,7 @@
 import { isInputModeCharacter } from 'src/components/PromptInput/inputModes.js'
 import { useNotifications } from 'src/context/notifications.js'
 import stripAnsi from 'strip-ansi'
+import { useMemo } from 'react'
 import { markBackslashReturnUsed } from '../commands/terminal-setup/TerminalSetup.js'
 import { addToHistory } from '../services/session-storage/history.js'
 import instances from '../ink/instances.js'
@@ -98,7 +99,12 @@ export function useTextInput({
 
   const offset = externalOffset
   const setOffset = onOffsetChange
-  const cursor = Cursor.fromText(originalValue, columns, offset)
+  // 插入位置变化不影响分词和换行；长按方向键时复用整段文本的测量结果。
+  const measuredText = useMemo(
+    () => Cursor.fromText(originalValue, columns).measuredText,
+    [originalValue, columns],
+  )
+  const cursor = useMemo(() => new Cursor(measuredText, offset), [measuredText, offset])
   const { addNotification, removeNotification } = useNotifications()
 
   const handleCtrlC = useDoublePress(
