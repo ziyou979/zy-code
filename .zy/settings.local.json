@@ -349,7 +349,8 @@
       "Bash(echo \"---filter-exit:$?\")",
       "Bash(mkdir -p /tmp/zy-split)",
       "Bash(awk '/^@@/{exit} {print}' /tmp/zy-split/config_full.patch)",
-      "Bash(awk '/^@@/{h++} h==2{print}' /tmp/zy-split/config_full.patch)"
+      "Bash(awk '/^@@/{h++} h==2{print}' /tmp/zy-split/config_full.patch)",
+      "Bash(echo \"exit: $?\")"
     ]
   },
   "spinnerTipsEnabled": true
