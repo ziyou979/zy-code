@@ -213,7 +213,7 @@ export async function generateFileAttachment(
   // 读取前检查文件大小（跳过 PDF — 它们有自己的大小/页数处理）
   if (
     mode === 'at-mention' &&
-    !isFileWithinReadSizeLimit(filename, getDefaultFileReadingLimits().maxSizeBytes)
+    !(await isFileWithinReadSizeLimit(filename, getDefaultFileReadingLimits().maxSizeBytes))
   ) {
     const ext = parse(filename).ext.toLowerCase()
     if (!isPDFExtension(ext)) {

@@ -523,12 +523,12 @@ export function getDesktopPath(): string {
  * @param maxSizeBytes The maximum allowed file size in bytes
  * @returns true if file size is within limit, false otherwise
  */
-export function isFileWithinReadSizeLimit(
+export async function isFileWithinReadSizeLimit(
   filePath: string,
   maxSizeBytes: number = MAX_OUTPUT_SIZE,
-): boolean {
+): Promise<boolean> {
   try {
-    const stats = getFsImplementation().statSync(filePath)
+    const stats = await getFsImplementation().stat(filePath)
     return stats.size <= maxSizeBytes
   } catch {
     // If we can't stat the file, return false to indicate validation failure
