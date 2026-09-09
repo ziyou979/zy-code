@@ -1,5 +1,6 @@
 import { detectFileEncoding } from '../../services/infra/file.js'
 import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { LRUCache } from 'lru-cache'
 
 type CachedFileData = {
   content: string
@@ -8,8 +9,14 @@ type CachedFileData = {
 }
 
 class FileReadCache_ {
-  private cache = new Map<string, CachedFileData>()
-  private readonly maxCacheSize = 1000
+  // 按 UTF-16 内容、路径和固定开销保守估算；不是进程堆内存的精确值。
+  // 单个大文件不挤掉热点小文件，命中会更新 LRU 顺序。
+  private cache = new LRUCache<string, CachedFileData>({
+    max: 1000,
+    maxSize: 32 * 1024 * 1024,
+    maxEntrySize: 2 * 1024 * 1024,
+    sizeCalculation: (value, key) => value.content.length * 2 + key.length * 2 + 128,
+  })
 
   readFile(filePath: string): { content: string; encoding: BufferEncoding } {
     const fs = getFsImplementation()
@@ -40,13 +47,6 @@ class FileReadCache_ {
       encoding,
       mtime: stats.mtimeMs,
     })
-
-    if (this.cache.size > this.maxCacheSize) {
-      const firstKey = this.cache.keys().next().value
-      if (firstKey) {
-        this.cache.delete(firstKey)
-      }
-    }
 
     return { content, encoding }
   }

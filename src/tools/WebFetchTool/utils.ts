@@ -57,13 +57,14 @@ type CacheEntry = {
 }
 
 // URL 内容缓存：15 分钟 TTL，50MB 大小限制
-// LRUCache 自动处理过期和淘汰
+// 主动清理过期项，避免闲置会话一直保留已过期的页面内容。
 const CACHE_TTL_MS = 15 * 60 * 1000 // 15 分钟
 const MAX_CACHE_SIZE_BYTES = 50 * 1024 * 1024 // 50MB
 
 const URL_CACHE = new LRUCache<string, CacheEntry>({
   maxSize: MAX_CACHE_SIZE_BYTES,
   ttl: CACHE_TTL_MS,
+  ttlAutopurge: true,
 })
 
 // 域名预检独立缓存。URL_CACHE 以 URL 为键，因此同一域名的两个路径
