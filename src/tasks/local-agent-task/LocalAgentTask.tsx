@@ -18,6 +18,7 @@ import {
   initTaskOutputAsSymlink,
 } from '../../services/task-runtime/diskOutput.js'
 import {
+  evictTerminalTask,
   PANEL_GRACE_MS,
   registerTask,
   updateTaskState,
@@ -239,6 +240,22 @@ export function drainPendingMessages(
 }
 
 /**
+ * 调度终端态任务从 AppState.tasks 中驱逐。
+ * 任务进入终态后，保留一段宽限期（PANEL_GRACE_MS）以供 UI 展示，
+ * 宽限期过后将任务从 AppState 中清理，避免子代理历史在内存中永久堆积。
+ */
+export function scheduleTerminalEviction(
+  taskId: string,
+  setAppState: SetAppState,
+  delayMs = PANEL_GRACE_MS,
+): void {
+  const timer = setTimeout(() => {
+    evictTerminalTask(taskId, setAppState)
+  }, delayMs + 100)
+  timer.unref?.()
+}
+
+/**
  * Enqueue an agent notification to the message queue.
  */
 export function enqueueAgentNotification({
@@ -315,6 +332,7 @@ export function enqueueAgentNotification({
     value: message,
     mode: 'task-notification',
   })
+  scheduleTerminalEviction(taskId, setAppState)
 }
 
 /**
@@ -351,10 +369,12 @@ export function killAsyncAgent(taskId: string, setAppState: SetAppState): void {
       abortController: undefined,
       unregisterCleanup: undefined,
       selectedAgent: undefined,
+      messages: task.retain ? task.messages : undefined,
     }
   })
   if (killed) {
     void evictTaskOutput(taskId)
+    scheduleTerminalEviction(taskId, setAppState)
   }
 }
 
@@ -388,6 +408,7 @@ export function markAgentsNotified(taskId: string, setAppState: SetAppState): vo
       notified: true,
     }
   })
+  scheduleTerminalEviction(taskId, setAppState)
 }
 
 /**
@@ -489,9 +510,12 @@ export function completeAgentTask(result: AgentToolResult, setAppState: SetAppSt
       abortController: undefined,
       unregisterCleanup: undefined,
       selectedAgent: undefined,
+      // 终端态且未被 UI 保持时卸载消息对象，释放大内存
+      messages: task.retain ? task.messages : undefined,
     }
   })
   void evictTaskOutput(taskId)
+  scheduleTerminalEviction(taskId, setAppState)
   // Note: Notification is sent by AgentTool via enqueueAgentNotification
 }
 
@@ -513,9 +537,12 @@ export function failAgentTask(taskId: string, error: string, setAppState: SetApp
       abortController: undefined,
       unregisterCleanup: undefined,
       selectedAgent: undefined,
+      // 终端态且未被 UI 保持时卸载消息对象，释放大内存
+      messages: task.retain ? task.messages : undefined,
     }
   })
   void evictTaskOutput(taskId)
+  scheduleTerminalEviction(taskId, setAppState)
   // Note: Notification is sent by AgentTool via enqueueAgentNotification
 }
 

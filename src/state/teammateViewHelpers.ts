@@ -1,6 +1,7 @@
 import { logEvent } from '../services/analytics/index.js'
 import { isTerminalTaskStatus } from '../tasks/task.js'
 import type { LocalAgentTaskState } from '../tasks/local-agent-task/LocalAgentTask.js'
+import { evictTerminalTask } from '../services/task-runtime/framework.js'
 
 // Inlined from framework.ts — importing creates a cycle through
 // BackgroundTasksDialog. Keep in sync with PANEL_GRACE_MS there.
@@ -58,6 +59,12 @@ export function enterTeammateView(
       tasks = { ...prev.tasks }
       if (switching) {
         tasks[prevId] = release(prevTask)
+        if (isTerminalTaskStatus(prevTask.status)) {
+          const timer = setTimeout(() => {
+            evictTerminalTask(prevId, setAppState)
+          }, PANEL_GRACE_MS + 100)
+          timer.unref?.()
+        }
       }
       if (needsRetain) {
         tasks[taskId] = { ...task, retain: true, evictAfter: undefined }
@@ -81,6 +88,7 @@ export function exitTeammateView(
   setAppState: (updater: (prev: AppState) => AppState) => void,
 ): void {
   logEvent('zy_transcript_view_exit', {})
+  let evictedId: string | undefined
   setAppState((prev) => {
     const id = prev.viewingAgentTaskId
     const cleared = {
@@ -95,11 +103,20 @@ export function exitTeammateView(
     if (!isLocalAgent(task) || !task.retain) {
       return cleared
     }
+    if (isTerminalTaskStatus(task.status)) {
+      evictedId = id
+    }
     return {
       ...cleared,
       tasks: { ...prev.tasks, [id]: release(task) },
     }
   })
+  if (evictedId) {
+    const timer = setTimeout(() => {
+      evictTerminalTask(evictedId!, setAppState)
+    }, PANEL_GRACE_MS + 100)
+    timer.unref?.()
+  }
 }
 
 /**
@@ -111,6 +128,7 @@ export function stopOrDismissAgent(
   taskId: string,
   setAppState: (updater: (prev: AppState) => AppState) => void,
 ): void {
+  let shouldEvict = false
   setAppState((prev) => {
     const task = prev.tasks[taskId]
     if (!isLocalAgent(task)) {
@@ -123,6 +141,7 @@ export function stopOrDismissAgent(
     if (task.evictAfter === 0) {
       return prev
     }
+    shouldEvict = true
     const viewingThis = prev.viewingAgentTaskId === taskId
     return {
       ...prev,
@@ -136,4 +155,7 @@ export function stopOrDismissAgent(
       }),
     }
   })
+  if (shouldEvict) {
+    evictTerminalTask(taskId, setAppState)
+  }
 }

@@ -439,7 +439,8 @@ async function getProjectFiles(
   const startTime = Date.now()
   const rgArgs = [
     '--files',
-    '--follow',
+    // Windows NTFS 下目录 Junction 可能形成循环递归并撑爆内存，故在 win32 下省略 --follow
+    ...(process.platform === 'win32' ? [] : ['--follow']),
     '--hidden',
     '--glob',
     '!.git/',
@@ -497,7 +498,11 @@ export async function getPathsForSuggestions(): Promise<FileIndex> {
     // 缓存供 mergeUntrackedIntoNormalizedCache 使用
     cachedConfigFiles = configFiles
 
-    const allFiles = [...projectFiles, ...configFiles]
+    // 限制单次索引的最大文件数量，防止超大仓库或异常深层结构耗尽内存
+    const MAX_INDEXED_FILES = 50_000
+    const rawFiles = [...projectFiles, ...configFiles]
+    const allFiles =
+      rawFiles.length > MAX_INDEXED_FILES ? rawFiles.slice(0, MAX_INDEXED_FILES) : rawFiles
     const directories = await getDirectoryNamesAsync(allFiles)
     cachedTrackedDirs = directories
     const allPathsList = [...directories, ...allFiles]
@@ -583,7 +588,9 @@ function findMatchingFiles(fileIndex: FileIndex, partialPath: string): Suggestio
  * 否则跳过刷新。这防止每次按键都启动 git ls-files
  * 并重建 nucleo 索引。
  */
-const REFRESH_THROTTLE_MS = 5_000
+// Windows 下子进程启动开销大（git ls-files 耗时可达数秒），放宽节流间隔至 30s，
+// 避免高频空转导致内存和 CPU 飙升；已跟踪文件变更仍由 indexMtime 毫秒级即时触发。
+const REFRESH_THROTTLE_MS = process.platform === 'win32' ? 30_000 : 5_000
 export function startBackgroundCacheRefresh(): void {
   if (fileListRefreshPromise) {
     return
