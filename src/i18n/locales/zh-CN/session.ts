@@ -88,6 +88,19 @@ export const zhSession: TranslationResource = {
   'oauth.providerGithubCopilotDesc': 'GitHub Copilot 订阅',
   'oauth.providerXaiOauth': 'xAI Grok OAuth（SuperGrok / X Premium+）',
   'oauth.providerXaiOauthDesc': 'SuperGrok 或 X Premium+ 订阅',
+  'oauth.providerGeminiOauth': 'Google AI（AI Pro/Ultra 订阅）',
+  'oauth.providerGeminiOauthDesc': 'Google AI Pro/Ultra 订阅（Gemini 模型）',
+  'oauth.gemini.browserInstructions':
+    '浏览器窗口将自动打开，请完成 Google 登录。若浏览器在另一台机器上，请将最终回调 URL 粘贴到此处。',
+  'oauth.gemini.pasteCodePrompt': '粘贴授权码（或完整的回调 URL）：',
+  'oauth.gemini.exchangingToken': '正在用授权码换取令牌…',
+  'oauth.gemini.fetchingProfile': '正在获取 Google 账号信息…',
+  'oauth.gemini.loadingProject': '正在加载 Code Assist 项目…',
+  'oauth.gemini.onboardingProject': '正在开通 Code Assist 项目（首次使用约需 10 秒）…',
+  'oauth.gemini.portInUse':
+    '端口 {port} 被其他进程占用，而 Google OAuth 客户端仅接受固定的回调地址。请结束占用该端口的进程后重试。',
+  'oauth.gemini.projectMissing':
+    'Google 订阅凭证缺少 Code Assist 项目 ID，请重新执行 `zy auth login --provider gemini-oauth`',
   'oauth.providerApikey': 'API 密钥',
   'oauth.providerApikeyDesc': '使用自己的 API 密钥',
   'oauth.openaiCodex.browserInstructions': '浏览器窗口将自动打开，请在其中完成登录。',

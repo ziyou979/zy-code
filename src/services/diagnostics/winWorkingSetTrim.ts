@@ -100,7 +100,7 @@ export function trimWorkingSetNow(now = Date.now(), cooldownMs = DEFAULT_COOLDOW
  */
 export function trimWorkingSetIfHigh(
   thresholdBytes = DEFAULT_TRIM_THRESHOLD_BYTES,
-  cooldownMs = 30_000,
+  cooldownMs = DEFAULT_COOLDOWN_MS,
 ): boolean {
   if (process.platform !== 'win32' || isEnvTruthy(process.env.ZY_CODE_DISABLE_WORKING_SET_TRIM)) {
     return false

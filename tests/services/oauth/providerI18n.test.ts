@@ -18,4 +18,13 @@ describe('OAuth provider i18n', () => {
     expect(zhSession['oauth.openaiCodex.browserLogin']).toBe('浏览器登录（默认）')
     expect(zhSession['oauth.openaiCodex.deviceCodeLogin']).toBe('设备码登录（无浏览器环境）')
   })
+
+  test('Gemini 订阅登录进度具有对称的中英文资源', () => {
+    expect(enSession['oauth.providerGeminiOauth']).toBe('Google AI (AI Pro/Ultra subscription)')
+    expect(zhSession['oauth.providerGeminiOauth']).toBe('Google AI（AI Pro/Ultra 订阅）')
+    expect(enSession['oauth.gemini.loadingProject']).toBe('Loading Code Assist project…')
+    expect(zhSession['oauth.gemini.loadingProject']).toBe('正在加载 Code Assist 项目…')
+    expect(enSession['oauth.gemini.portInUse']).toContain('Port {port}')
+    expect(zhSession['oauth.gemini.portInUse']).toContain('端口 {port}')
+  })
 })

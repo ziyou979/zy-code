@@ -7,9 +7,12 @@ import {
   failAgentTask,
   killAsyncAgent,
   type LocalAgentTaskState,
-  scheduleTerminalEviction,
 } from '../../src/tasks/local-agent-task/LocalAgentTask.js'
-import { evictTerminalTask, registerTask } from '../../src/services/task-runtime/framework.js'
+import {
+  evictTerminalTask,
+  registerTask,
+  scheduleTerminalEviction,
+} from '../../src/services/task-runtime/framework.js'
 import { stopOrDismissAgent } from '../../src/state/teammateViewHelpers.js'
 import type { AppState } from '../../src/state/AppStateStore.js'
 

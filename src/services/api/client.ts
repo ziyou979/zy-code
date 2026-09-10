@@ -19,6 +19,7 @@ import { OpenAIProviderAdapter } from './openAIProviderAdapter.js'
 import { OpenAICodexResponsesProviderAdapter } from './openAICodexResponsesProviderAdapter.js'
 import { OpenAIResponsesProviderAdapter } from './openAIResponsesProviderAdapter.js'
 import { isOfficialAnthropicApiBaseUrl, resolveApiBaseUrl } from './baseUrlResolution.js'
+import { CodeAssistProviderAdapter } from './codeAssistProviderAdapter.js'
 
 /**
  * 不同客户端类型的环境变量：
@@ -454,6 +455,12 @@ function createAdapterFromContext(
   // 同一个 openai provider 使用 API key 时仍走 api.openai.com，不受此分支影响。
   if (getOAuthProviderIdForConnection(authProfile ?? apiProvider) === 'openai-codex') {
     return new OpenAICodexResponsesProviderAdapter()
+  }
+
+  // 同理：gemini-oauth 订阅走 v1internal Code Assist 端点（Bearer + 信封请求），
+  // 与公开 Gemini API 的 SDK 路径不兼容，必须在通用 google 分派前单独识别。
+  if (getOAuthProviderIdForConnection(authProfile ?? apiProvider) === 'gemini-oauth') {
+    return new CodeAssistProviderAdapter()
   }
 
   switch (apiFormat) {

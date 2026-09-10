@@ -141,6 +141,31 @@ export function evictTerminalTask(taskId: string, setAppState: SetAppState): voi
   })
 }
 
+/** 已调度但尚未触发的驱逐 taskId 集合，防止对同一任务重复设 timer */
+const pendingEvictions = new Set<string>()
+
+/**
+ * 调度终端态任务从 AppState.tasks 中驱逐。
+ * 任务进入终态后，保留一段宽限期（PANEL_GRACE_MS）以供 UI 展示，
+ * 宽限期过后将任务从 AppState 中清理，避免子代理历史在内存中永久堆积。
+ * 同一 taskId 只会存在一个活跃 timer，重复调用会被静默忽略。
+ */
+export function scheduleTerminalEviction(
+  taskId: string,
+  setAppState: SetAppState,
+  delayMs = PANEL_GRACE_MS,
+): void {
+  if (pendingEvictions.has(taskId)) {
+    return
+  }
+  pendingEvictions.add(taskId)
+  const timer = setTimeout(() => {
+    pendingEvictions.delete(taskId)
+    evictTerminalTask(taskId, setAppState)
+  }, delayMs + 100)
+  timer.unref?.()
+}
+
 /**
  * Get all running tasks.
  */

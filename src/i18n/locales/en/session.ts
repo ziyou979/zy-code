@@ -96,6 +96,19 @@ export const enSession: TranslationResource = {
   'oauth.providerGithubCopilotDesc': 'GitHub Copilot subscription',
   'oauth.providerXaiOauth': 'xAI Grok OAuth (SuperGrok / X Premium+)',
   'oauth.providerXaiOauthDesc': 'SuperGrok or X Premium+ subscription',
+  'oauth.providerGeminiOauth': 'Google AI (AI Pro/Ultra subscription)',
+  'oauth.providerGeminiOauthDesc': 'Google AI Pro/Ultra subscription (Gemini models)',
+  'oauth.gemini.browserInstructions':
+    'A browser window should open. Complete Google login to finish. If the browser is on another machine, paste the final redirect URL here.',
+  'oauth.gemini.pasteCodePrompt': 'Paste the authorization code (or full redirect URL):',
+  'oauth.gemini.exchangingToken': 'Exchanging authorization code for tokens…',
+  'oauth.gemini.fetchingProfile': 'Fetching Google account profile…',
+  'oauth.gemini.loadingProject': 'Loading Code Assist project…',
+  'oauth.gemini.onboardingProject': 'Onboarding Code Assist project (may take ~10s on first use)…',
+  'oauth.gemini.portInUse':
+    'Port {port} is occupied by another process, and the Google OAuth client only accepts the fixed callback URL. Close the conflicting process and retry.',
+  'oauth.gemini.projectMissing':
+    'Google subscription credentials are missing the Code Assist project ID. Re-run `zy auth login --provider gemini-oauth`',
   'oauth.providerApikey': 'API Key',
   'oauth.providerApikeyDesc': 'Use your own API key',
   'oauth.openaiCodex.browserInstructions':
