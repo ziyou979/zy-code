@@ -20,14 +20,14 @@ import { isEnvTruthy } from '../infra/envUtils.js'
 const MB = 1024 * 1024
 const GB = 1024 * MB
 
-/** RSS 超过该值才触发 trim（与 memoryMonitor 的 warn 阈值一致） */
-const DEFAULT_TRIM_THRESHOLD_BYTES = 1.5 * GB
+/** RSS 超过该值才触发 trim（默认 1.2GB） */
+const DEFAULT_TRIM_THRESHOLD_BYTES = 1.2 * GB
 /** 检查间隔 */
-const DEFAULT_CHECK_INTERVAL_MS = 30_000
-/** 两次 trim 之间的最小间隔，避免频繁清空工作集造成抖动 */
-const DEFAULT_COOLDOWN_MS = 5 * 60_000
-/** 连续空闲达到该时长后才允许驱逐，避免流式响应期间制造 page fault 抖动。 */
-const DEFAULT_MIN_IDLE_MS = 30_000
+const DEFAULT_CHECK_INTERVAL_MS = 15_000
+/** 两次 trim 之间的最小间隔，避免频繁清空工作集造成抖动（默认 60s） */
+const DEFAULT_COOLDOWN_MS = 60_000
+/** 连续空闲达到该时长后才允许驱逐，避免流式响应期间制造 page fault 抖动（默认 10s）。 */
+const DEFAULT_MIN_IDLE_MS = 10_000
 
 type TrimApi = {
   GetCurrentProcess: () => Pointer | null
@@ -89,6 +89,28 @@ export function trimWorkingSetNow(now = Date.now(), cooldownMs = DEFAULT_COOLDOW
     }
   } catch {
     // 静默失败
+  }
+  return false
+}
+
+/**
+ * 当 RSS 高于阈值时，触发工作集 trim。
+ * 供 turn 结束等关键空闲时机主动调用，迅速将 dead pages 还给操作系统。
+ * 仅在 Windows 下生效。
+ */
+export function trimWorkingSetIfHigh(
+  thresholdBytes = DEFAULT_TRIM_THRESHOLD_BYTES,
+  cooldownMs = 30_000,
+): boolean {
+  if (process.platform !== 'win32' || isEnvTruthy(process.env.ZY_CODE_DISABLE_WORKING_SET_TRIM)) {
+    return false
+  }
+  try {
+    if (process.memoryUsage().rss > thresholdBytes) {
+      return trimWorkingSetNow(Date.now(), cooldownMs)
+    }
+  } catch {
+    // 采样失败忽略
   }
   return false
 }

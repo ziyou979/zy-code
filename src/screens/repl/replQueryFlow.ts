@@ -838,6 +838,13 @@ export async function runQuery(
         }
       }
       ctx.setAbortController(null)
+      if (process.platform === 'win32') {
+        void import('../../services/diagnostics/winWorkingSetTrim.js').then(
+          ({ trimWorkingSetIfHigh }) => {
+            trimWorkingSetIfHigh()
+          },
+        )
+      }
     }
 
     // 自动恢复
