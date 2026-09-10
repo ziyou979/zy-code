@@ -64,6 +64,12 @@
 | `zy_disable_bypass_permissions_mode` | gate | 禁用 bypass permissions 模式 | `src/services/permissions/permissionBootstrap.ts` |
 | `zy_scratch_dir` | gate | 暂存目录功能启用 | `src/coordinator/coordinatorMode.ts`, `src/services/permissions/scratchpadStorage.ts` |
 
+## 认证 / OAuth
+
+| Flag | 默认值 | 说明 | 文件 |
+|------|--------|------|------|
+| `zy_gemini_oauth_login` | `false` | Google AI Pro/Ultra 订阅 OAuth 登录入口（gemini-oauth）灰度开关；仅控制登录入口暴露，已登录用户的凭证刷新与推理不受影响 | `src/services/oauth/providers/registry.ts` |
+
 ## Channels / 插件
 
 | Flag | 默认值 | 说明 | 文件 |

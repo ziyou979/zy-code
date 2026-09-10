@@ -6,14 +6,21 @@
  */
 
 import { anthropicOAuthProvider } from './anthropic.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../analytics/growthbook.js'
+import { isEnvTruthy } from '../../infra/envUtils.js'
+import { geminiOAuthProvider } from './geminiOauth.js'
 import { githubCopilotOAuthProvider } from './githubCopilot.js'
 import { openaiCodexOAuthProvider } from './openaiCodex.js'
 import type { OAuthCredentials, OAuthProviderId, OAuthProviderInterface } from './types.js'
 import { xaiOAuthProvider } from './xai.js'
 
+/** gemini-oauth 登录入口的发布门控（已登录用户不受影响，见 getOAuthProviders） */
+const GEMINI_OAUTH_LOGIN_GATE = 'zy_gemini_oauth_login'
+
 /** 内置 OAuth Provider 列表 */
 const BUILT_IN_OAUTH_PROVIDERS: OAuthProviderInterface[] = [
   anthropicOAuthProvider,
+  geminiOAuthProvider,
   githubCopilotOAuthProvider,
   openaiCodexOAuthProvider,
   xaiOAuthProvider,
@@ -57,9 +64,28 @@ export function resetOAuthProviders(): void {
   }
 }
 
-/** 获取所有已注册的 OAuth Provider */
+/**
+ * 获取所有已注册的 OAuth Provider。
+ *
+ * gemini-oauth 的登录入口受 `zy_gemini_oauth_login` 门控（v1internal 为非公开
+ * 接口，需要灰度开关控制暴露面）；按 id 精确获取（getOAuthProvider）不过滤，
+ * 保证 flag 关闭后已登录用户仍可刷新凭证、继续使用。
+ */
 export function getOAuthProviders(): OAuthProviderInterface[] {
-  return Array.from(oauthProviderRegistry.values())
+  const all = Array.from(oauthProviderRegistry.values())
+  if (isGeminiOAuthLoginEnabled()) {
+    return all
+  }
+  return all.filter((provider) => provider.id !== 'gemini-oauth')
+}
+
+/** gemini-oauth 登录入口是否开放（缓存读取，不阻塞启动） */
+function isGeminiOAuthLoginEnabled(): boolean {
+  // env 覆盖用于测试与灰度前的手动启用（远程 gate 不一定及时下发）
+  if (isEnvTruthy(process.env.ZY_CODE_ENABLE_GEMINI_OAUTH)) {
+    return true
+  }
+  return getFeatureValue_CACHED_MAY_BE_STALE(GEMINI_OAUTH_LOGIN_GATE, false)
 }
 
 /**

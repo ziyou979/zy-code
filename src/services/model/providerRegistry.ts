@@ -390,6 +390,22 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     ],
   },
   {
+    // Google AI Pro/Ultra 订阅走 OAuth（gemini-oauth，Antigravity 流程）。
+    // v1internal Code Assist 端点的鉴权（Bearer）与请求信封（{model,project,request}）
+    // 不同于公开 Gemini API，推理由 codeAssistProviderAdapter 单独处理
+    id: 'gemini-oauth',
+    formatEndpoints: [
+      { format: 'google', baseUrl: 'https://cloudcode-pa.googleapis.com/v1internal' },
+    ],
+    endpointType: ['default'],
+    capabilities: ['context_management'],
+    suggestedModels: [
+      { label: 'gemini-3.1-pro-preview', value: 'gemini-3.1-pro-preview', tier: 'advanced' },
+      { label: 'gemini-3.7-flash', value: 'gemini-3.7-flash', tier: 'standard' },
+      { label: 'gemini-3.5-flash-lite', value: 'gemini-3.5-flash-lite', tier: 'compact' },
+    ],
+  },
+  {
     id: 'generic',
     formatEndpoints: [{ format: 'anthropic' }, { format: 'openai-chat' }],
     endpointType: ['custom'],

@@ -1,10 +1,10 @@
 import { logEvent } from '../services/analytics/index.js'
 import { isTerminalTaskStatus } from '../tasks/task.js'
 import type { LocalAgentTaskState } from '../tasks/local-agent-task/LocalAgentTask.js'
-import { evictTerminalTask } from '../services/task-runtime/framework.js'
+import { evictTerminalTask, scheduleTerminalEviction } from '../services/task-runtime/framework.js'
 
-// Inlined from framework.ts — importing creates a cycle through
-// BackgroundTasksDialog. Keep in sync with PANEL_GRACE_MS there.
+// 内联 PANEL_GRACE_MS 常量以供 release() 使用。虽然 framework.ts 已有导出，
+// 但该值在 setAppState 纯函数内使用，保持内联可避免模块级依赖链变化。
 const PANEL_GRACE_MS = 30_000
 
 import type { AppState } from './AppStateStore.js'
@@ -42,6 +42,7 @@ export function enterTeammateView(
   setAppState: (updater: (prev: AppState) => AppState) => void,
 ): void {
   logEvent('zy_transcript_view_enter', {})
+  let switchedFromId: string | undefined
   setAppState((prev) => {
     const task = prev.tasks[taskId]
     const prevId = prev.viewingAgentTaskId
@@ -60,10 +61,7 @@ export function enterTeammateView(
       if (switching) {
         tasks[prevId] = release(prevTask)
         if (isTerminalTaskStatus(prevTask.status)) {
-          const timer = setTimeout(() => {
-            evictTerminalTask(prevId, setAppState)
-          }, PANEL_GRACE_MS + 100)
-          timer.unref?.()
+          switchedFromId = prevId
         }
       }
       if (needsRetain) {
@@ -77,6 +75,9 @@ export function enterTeammateView(
       tasks,
     }
   })
+  if (switchedFromId) {
+    scheduleTerminalEviction(switchedFromId, setAppState)
+  }
 }
 
 /**
@@ -112,10 +113,7 @@ export function exitTeammateView(
     }
   })
   if (evictedId) {
-    const timer = setTimeout(() => {
-      evictTerminalTask(evictedId!, setAppState)
-    }, PANEL_GRACE_MS + 100)
-    timer.unref?.()
+    scheduleTerminalEviction(evictedId, setAppState)
   }
 }
 
@@ -129,13 +127,15 @@ export function stopOrDismissAgent(
   setAppState: (updater: (prev: AppState) => AppState) => void,
 ): void {
   let shouldEvict = false
+  let abortController: AbortController | undefined
   setAppState((prev) => {
     const task = prev.tasks[taskId]
     if (!isLocalAgent(task)) {
       return prev
     }
     if (task.status === 'running') {
-      task.abortController?.abort()
+      // 记录 controller 引用，在回调外执行 abort 以保持 updater 无副作用
+      abortController = task.abortController
       return prev
     }
     if (task.evictAfter === 0) {
@@ -155,6 +155,7 @@ export function stopOrDismissAgent(
       }),
     }
   })
+  abortController?.abort()
   if (shouldEvict) {
     evictTerminalTask(taskId, setAppState)
   }
