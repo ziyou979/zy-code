@@ -11,7 +11,7 @@
 import { join } from 'node:path'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { isEnvTruthy } from '../../services/infra/envUtils.js'
-import { toError } from '../../utils/errors.js'
+import { errorMessage, toError } from '../../utils/errors.js'
 import { logError } from '../../services/infra/log.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
@@ -64,6 +64,26 @@ function calculateNextRetryDelay(retryCount: number): number {
 }
 
 /**
+ * 判断自动安装重试预算是否已耗尽。
+ *
+ * 与 `shouldRetryInstallation` 内的短路检查保持一致：一旦耗尽，git clone
+ * 不再自动重试（避免每次启动都发起重量级克隆拖垮网络/磁盘）；但允许
+ * 一次轻量的 GCS 镜像恢复尝试，防止旧版本累积的失败计数把安装永久锁死
+ * （例如 9/7 修复指向 Claude 官方源后，7 月烧完的 10 次预算会跳过新代码）。
+ */
+// 参数收窄为实际读取的两个字段：既兼容调用方传入完整 GlobalConfig，
+// 也让测试可以只构造相关字段（Partial 结构可赋值）
+export function isRetryBudgetExhausted(config: {
+  officialMarketplaceAutoInstalled?: boolean
+  officialMarketplaceAutoInstallRetryCount?: number
+}): boolean {
+  return (
+    !config.officialMarketplaceAutoInstalled &&
+    (config.officialMarketplaceAutoInstallRetryCount || 0) >= RETRY_CONFIG.MAX_ATTEMPTS
+  )
+}
+
+/**
  * Determine if installation should be retried based on failure reason and retry state
  */
 function shouldRetryInstallation(config: ReturnType<typeof getGlobalConfig>): boolean {
@@ -78,12 +98,11 @@ function shouldRetryInstallation(config: ReturnType<typeof getGlobalConfig>): bo
   }
 
   const failReason = config.officialMarketplaceAutoInstallFailReason
-  const retryCount = config.officialMarketplaceAutoInstallRetryCount || 0
   const nextRetryTime = config.officialMarketplaceAutoInstallNextRetryTime
   const now = Date.now()
 
   // Check if we've exceeded max attempts
-  if (retryCount >= RETRY_CONFIG.MAX_ATTEMPTS) {
+  if (isRetryBudgetExhausted(config)) {
     return false
   }
 
@@ -108,6 +127,44 @@ function shouldRetryInstallation(config: ReturnType<typeof getGlobalConfig>): bo
 }
 
 /**
+ * 将官方 marketplace 标记为已安装，并清理指数退避的重试元数据。
+ * 主路径的 GCS/git 成功分支与恢复路径共用，避免重复写 6 个字段的样板代码。
+ */
+function markAutoInstalledSuccess(): void {
+  saveGlobalConfig((current) => ({
+    ...current,
+    officialMarketplaceAutoInstallAttempted: true,
+    officialMarketplaceAutoInstalled: true,
+    officialMarketplaceAutoInstallFailReason: undefined,
+    officialMarketplaceAutoInstallRetryCount: undefined,
+    officialMarketplaceAutoInstallLastAttemptTime: undefined,
+    officialMarketplaceAutoInstallNextRetryTime: undefined,
+  }))
+}
+
+/**
+ * 从 GCS 镜像拉取并注册官方 marketplace。
+ * 成功返回 SHA 并已写入 `known_marketplaces.json`；失败（网络/404/解压）
+ * 返回 null，交由调用方决定是否回退或走恢复路径。
+ */
+async function installOfficialMarketplaceViaGcs(): Promise<string | null> {
+  const cacheDir = getMarketplacesCacheDir()
+  const installLocation = join(cacheDir, OFFICIAL_MARKETPLACE_NAME)
+  const gcsSha = await fetchOfficialMarketplaceFromGcs(installLocation, cacheDir)
+  if (gcsSha === null) {
+    return null
+  }
+  const known = await loadKnownMarketplacesConfig()
+  known[OFFICIAL_MARKETPLACE_NAME] = {
+    source: OFFICIAL_MARKETPLACE_SOURCE,
+    installLocation,
+    lastUpdated: new Date().toISOString(),
+  }
+  await saveKnownMarketplacesConfig(known)
+  return gcsSha
+}
+
+/**
  * Result of the auto-install check
  */
 export type OfficialMarketplaceCheckResult = {
@@ -119,6 +176,84 @@ export type OfficialMarketplaceCheckResult = {
   reason?: OfficialMarketplaceSkipReason
   /** Whether saving retry metadata to config failed */
   configSaveFailed?: boolean
+}
+
+/**
+ * 重试预算耗尽后的 GCS-only 恢复尝试。
+ *
+ * git 克隆的指数退避预算封顶后不再自动重开，但仍允许一次轻量的 GCS 镜像
+ * 探测：它只有 40 字节的 latest 指针 + sentinel 比对，幂等且设计上就是每次
+ * 启动可重复调用的。成功则安装并清空重试元数据；失败则保持静默（返回
+ * gcs_unavailable，不触发失败通知，也不再累加计数），下次启动继续尝试。
+ *
+ * 该函数完全自包含、不向外抛出，避免把恢复路径的磁盘/IO 异常混进主路径的
+ * 失败计数逻辑（那会误触发一次“安装失败”通知）。
+ */
+async function attemptGcsOnlyRecovery(
+  config: ReturnType<typeof getGlobalConfig>,
+): Promise<OfficialMarketplaceCheckResult> {
+  try {
+    // 恢复路径同样受 env kill switch 与企业策略约束
+    if (isOfficialMarketplaceAutoInstallDisabled()) {
+      logForDebugging('Official marketplace auto-install disabled via env var (recovery), skipping')
+      saveGlobalConfig((current) => ({
+        ...current,
+        officialMarketplaceAutoInstallFailReason: 'policy_blocked',
+      }))
+      return { installed: false, skipped: true, reason: 'policy_blocked' }
+    }
+    if (!isSourceAllowedByPolicy(OFFICIAL_MARKETPLACE_SOURCE)) {
+      logForDebugging('Official marketplace blocked by enterprise policy (recovery), skipping')
+      saveGlobalConfig((current) => ({
+        ...current,
+        officialMarketplaceAutoInstallFailReason: 'policy_blocked',
+      }))
+      return { installed: false, skipped: true, reason: 'policy_blocked' }
+    }
+
+    // 已被其他路径注册（如用户手动 `/plugin marketplace add`）：补齐状态即可，不再拉取
+    const knownMarketplaces = await loadKnownMarketplacesConfig()
+    if (knownMarketplaces[OFFICIAL_MARKETPLACE_NAME]) {
+      logForDebugging(
+        `Official marketplace '${OFFICIAL_MARKETPLACE_NAME}' already installed (recovery), marking installed`,
+      )
+      markAutoInstalledSuccess()
+      return { installed: false, skipped: true, reason: 'already_installed' }
+    }
+
+    const gcsSha = await installOfficialMarketplaceViaGcs()
+    if (gcsSha === null) {
+      logForDebugging(
+        'Official marketplace recovery via GCS failed; will retry next startup (no backoff increment)',
+      )
+      logEvent('zy_official_marketplace_auto_install', {
+        installed: false,
+        skipped: true,
+        gcs_unavailable: true,
+        // 计数封顶：沿用当前值（至少 MAX_ATTEMPTS），不再累加
+        retry_count: config.officialMarketplaceAutoInstallRetryCount || RETRY_CONFIG.MAX_ATTEMPTS,
+      })
+      return { installed: false, skipped: true, reason: 'gcs_unavailable' }
+    }
+
+    logForDebugging(
+      'Successfully recovered official marketplace via GCS after retry budget exhausted',
+    )
+    markAutoInstalledSuccess()
+    logEvent('zy_official_marketplace_auto_install', {
+      installed: true,
+      skipped: false,
+      via_gcs: true,
+    })
+    return { installed: true, skipped: false }
+  } catch (recoveryError) {
+    // 磁盘/IO 异常：保持静默、不累加计数、下次启动继续尝试
+    logForDebugging(
+      `Official marketplace recovery failed unexpectedly: ${errorMessage(recoveryError)}`,
+      { level: 'warn' },
+    )
+    return { installed: false, skipped: true, reason: 'gcs_unavailable' }
+  }
 }
 
 /**
@@ -142,6 +277,12 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
   if (!shouldRetryInstallation(config)) {
     const reason: OfficialMarketplaceSkipReason =
       config.officialMarketplaceAutoInstallFailReason ?? 'already_attempted'
+    // 重试预算耗尽且非策略阻断：退而求其次走一次 GCS 恢复尝试。预算封顶只应
+    // 封住重量级的 git 克隆重试，不应把轻量幂等的 GCS 探测一起永久锁死——
+    // 否则历史失败计数会吞掉后续修复（如源指向变更、网络恢复）。
+    if (isRetryBudgetExhausted(config) && reason !== 'policy_blocked') {
+      return await attemptGcsOnlyRecovery(config)
+    }
     logForDebugging(`Official marketplace auto-install skipped: ${reason}`)
     return {
       installed: false,
@@ -174,12 +315,8 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
       logForDebugging(
         `Official marketplace '${OFFICIAL_MARKETPLACE_NAME}' already installed, skipping`,
       )
-      // Mark as attempted so we don't check again
-      saveGlobalConfig((current) => ({
-        ...current,
-        officialMarketplaceAutoInstallAttempted: true,
-        officialMarketplaceAutoInstalled: true,
-      }))
+      // Mark as installed & clear retry metadata so we don't check again
+      markAutoInstalledSuccess()
       return { installed: false, skipped: true, reason: 'already_installed' }
     }
 
@@ -205,27 +342,9 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
     // bucket as the native binary. If GCS succeeds, register the marketplace
     // with source:'github' (still true — GCS is a mirror) and skip git
     // entirely.
-    const cacheDir = getMarketplacesCacheDir()
-    const installLocation = join(cacheDir, OFFICIAL_MARKETPLACE_NAME)
-    const gcsSha = await fetchOfficialMarketplaceFromGcs(installLocation, cacheDir)
+    const gcsSha = await installOfficialMarketplaceViaGcs()
     if (gcsSha !== null) {
-      const known = await loadKnownMarketplacesConfig()
-      known[OFFICIAL_MARKETPLACE_NAME] = {
-        source: OFFICIAL_MARKETPLACE_SOURCE,
-        installLocation,
-        lastUpdated: new Date().toISOString(),
-      }
-      await saveKnownMarketplacesConfig(known)
-
-      saveGlobalConfig((current) => ({
-        ...current,
-        officialMarketplaceAutoInstallAttempted: true,
-        officialMarketplaceAutoInstalled: true,
-        officialMarketplaceAutoInstallFailReason: undefined,
-        officialMarketplaceAutoInstallRetryCount: undefined,
-        officialMarketplaceAutoInstallLastAttemptTime: undefined,
-        officialMarketplaceAutoInstallNextRetryTime: undefined,
-      }))
+      markAutoInstalledSuccess()
       logEvent('zy_official_marketplace_auto_install', {
         installed: true,
         skipped: false,
@@ -314,16 +433,7 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
     // Success
     logForDebugging('Successfully auto-installed official marketplace')
     const previousRetryCount = config.officialMarketplaceAutoInstallRetryCount || 0
-    saveGlobalConfig((current) => ({
-      ...current,
-      officialMarketplaceAutoInstallAttempted: true,
-      officialMarketplaceAutoInstalled: true,
-      // Clear retry metadata on success
-      officialMarketplaceAutoInstallFailReason: undefined,
-      officialMarketplaceAutoInstallRetryCount: undefined,
-      officialMarketplaceAutoInstallLastAttemptTime: undefined,
-      officialMarketplaceAutoInstallNextRetryTime: undefined,
-    }))
+    markAutoInstalledSuccess()
     logEvent('zy_official_marketplace_auto_install', {
       installed: true,
       skipped: false,
@@ -332,7 +442,7 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
     return { installed: true, skipped: false }
   } catch (error) {
     // Handle installation failure
-    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorText = error instanceof Error ? error.message : String(error)
 
     // On macOS, /usr/bin/git is an xcrun shim that always exists on PATH, so
     // checkGitAvailable() (which only does `which git`) passes even without
@@ -341,7 +451,7 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
     // availability check so other git callers in this session skip cleanly,
     // then return silently without recording any attempt state — next startup
     // tries fresh (no backoff machinery for what is effectively "git absent").
-    if (errorMessage.includes('xcrun: error:')) {
+    if (errorText.includes('xcrun: error:')) {
       markGitUnavailable()
       logForDebugging(
         'Official marketplace auto-install: git is a non-functional macOS xcrun shim, treating as git_unavailable',
@@ -359,7 +469,7 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
       }
     }
 
-    logForDebugging(`Failed to auto-install official marketplace: ${errorMessage}`, {
+    logForDebugging(`Failed to auto-install official marketplace: ${errorText}`, {
       level: 'error',
     })
     logError(toError(error))
