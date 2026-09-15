@@ -7,6 +7,7 @@ import { Box, Text } from '../../ink/index.js'
 import { getSSLErrorHint } from '../../services/api/errorUtils.js'
 import { getUserAgent } from '../../services/http/http.js'
 import { logError } from '../../services/infra/log.js'
+import { tSync } from '../../i18n/index.js'
 export interface PreflightCheckResult {
   success: boolean
   error?: string
@@ -100,13 +101,13 @@ export function PreflightStep({ onSuccess }: PreflightStepProps) {
     isChecking && showSpinner ? (
       <Box paddingLeft={1}>
         <Spinner />
-        <Text>Checking connectivity...</Text>
+        <Text>{tSync('ui.preflight.checking')}</Text>
       </Box>
     ) : (
       !result?.success &&
       !isChecking && (
         <Box flexDirection="column" gap={1}>
-          <Text color="error">Unable to connect to API services</Text>
+          <Text color="error">{tSync('ui.preflight.unableToConnect')}</Text>
           <Text color="error">{result?.error}</Text>
           {result?.sslHint ? (
             <Box flexDirection="column" gap={1}>
@@ -115,11 +116,8 @@ export function PreflightStep({ onSuccess }: PreflightStepProps) {
             </Box>
           ) : (
             <Box flexDirection="column" gap={1}>
-              <Text>Please check your internet connection and network settings.</Text>
-              <Text>
-                Note: ZY Code might not be available in your country. Check supported countries at{' '}
-                <Text color="suggestion">https://zy.ai/supported-countries</Text>
-              </Text>
+              <Text>{tSync('ui.preflight.checkNetwork')}</Text>
+              <Text>{tSync('ui.preflight.countryNotSupported')}</Text>
             </Box>
           )}
         </Box>

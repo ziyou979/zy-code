@@ -363,7 +363,7 @@ export function Logo() {
       )}
       {showSandboxStatus && (
         <Box paddingLeft={2} flexDirection="column">
-          <Text color="warning">Your bash commands will be sandboxed. Disable with /sandbox.</Text>
+          <Text color="warning">{tSync('ui.sandboxNotice.sandboxed')}</Text>
         </Box>
       )}
       {false && !process.env.DEMO_VERSION && (

@@ -42,7 +42,9 @@ Format your review with clear sections and bullet points.`
  */
 export const reviewSkill: BundledSkillDefinition = {
   name: 'review',
-  description: tSync('commands.review'),
+  get description() {
+    return tSync('commands.review')
+  },
   whenToUse:
     'When the user wants to review a pull request, asks for a code review, or says things like "review PR 123", "check this PR", "code review".',
   argumentHint: '[pr number]',

@@ -322,7 +322,7 @@ export function getUsingOverageText(limits: ZyAILimits): string {
   }
 
   const resetMessage = resetTime
-    ? ` · 你的 ${limitName} ${tSync('rateLimit.resetsAt', { time: resetTime })}`
+    ? tSync('rateLimit.resetsAtWithSubject', { limitName, time: resetTime })
     : ''
   return tSync('rateLimit.nowUsingExtraUsage') + resetMessage
 }
@@ -333,7 +333,7 @@ function formatLimitReachedText(limit: string, resetMessage: string, _model: str
     return (
       tSync('rateLimit.hit', { limit }) +
       resetMessage +
-      `. 如果对此限额有反馈，请发布到 ${FEEDBACK_CHANNEL_ANT}。你可以使用 /reset-limits 重置限额`
+      tSync('rateLimit.feedbackAntChannel', { channel: FEEDBACK_CHANNEL_ANT })
     )
   }
 

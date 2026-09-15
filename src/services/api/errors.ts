@@ -23,6 +23,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
+import { tSync } from '../../i18n/index.js'
 import { shouldProcessRateLimits } from '../rateLimitMocking.js' // 供 /mock-limits 命令使用
 import {
   getRateLimitErrorMessage,
@@ -145,7 +146,11 @@ export const TOKEN_REVOKED_ERROR_MESSAGE = 'OAuth token revoked · Please run /l
 export const CCR_AUTH_ERROR_MESSAGE =
   'Authentication error · This may be a temporary network issue, please try again'
 export const REPEATED_529_ERROR_MESSAGE = 'Repeated 529 Overloaded errors'
-export const CUSTOM_OFF_SWITCH_MESSAGE = '当前模型负载较高，请使用 /model 切换到其他模型'
+// 持久化匹配 token：错误分类的 includes 与 AssistantTextMessage 的 case 都以它
+// 为键，旧会话 jsonl 回放依赖该值稳定，不可变更、不可 i18n 化；用户可见文案由
+// 渲染层经 tSync('rateLimit.offSwitch*') 翻译。
+export const CUSTOM_OFF_SWITCH_MESSAGE =
+  'Current model is experiencing high demand. Please use /model to switch to another model.'
 export const API_TIMEOUT_ERROR_MESSAGE = 'Request timed out'
 export function getPdfTooLargeErrorMessage(): string {
   const limits = `max ${API_PDF_MAX_PAGES} pages, ${formatFileSize(PDF_TARGET_RAW_SIZE)}`
@@ -521,7 +526,7 @@ export function getAssistantMessageFromError(
     const innerMessage = stripped.match(/"message"\s*:\s*"([^"]*)"/)?.[1]
     const detail = innerMessage || stripped
     return createAssistantAPIErrorMessage({
-      content: `${API_ERROR_MESSAGE_PREFIX}: Request rejected (429) · ${detail || '这可能是临时容量问题，请稍后重试'}`,
+      content: `${API_ERROR_MESSAGE_PREFIX}: Request rejected (429) · ${detail || tSync('rateLimit.temporaryCapacity')}`,
       error: 'rate_limit',
     })
   }

@@ -59,4 +59,5 @@ export const zhShell: TranslationResource = {
   'exitWorktree.keptWorktree': '已保留工作树',
   'exitWorktree.removedWorktree': '已移除工作树',
   'exitWorktree.returnedTo': '已返回到',
+  'bash.permission.denied': '权限被拒绝：执行 {tool} 命令 "{command}" 被拒绝',
 }

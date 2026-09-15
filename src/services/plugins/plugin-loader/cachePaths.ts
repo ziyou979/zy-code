@@ -359,7 +359,7 @@ export function validateGitUrl(url: string): string {
     if (!['https:', 'http:', 'file:'].includes(parsed.protocol)) {
       if (!/^git@[a-zA-Z0-9.-]+:/.test(url)) {
         throw new Error(
-          `无效的 git URL 协议: ${parsed.protocol}。仅支持 HTTPS、HTTP、file:// 和 SSH (git@) URL。`,
+          `Invalid git URL protocol: ${parsed.protocol}. Only HTTPS, HTTP, file://, and SSH (git@) URLs are supported.`,
         )
       }
     }

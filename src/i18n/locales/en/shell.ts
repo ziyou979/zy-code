@@ -73,4 +73,5 @@ export const enShell: TranslationResource = {
   'exitWorktree.keptWorktree': 'Kept worktree',
   'exitWorktree.removedWorktree': 'Removed worktree',
   'exitWorktree.returnedTo': 'Returned to',
+  'bash.permission.denied': 'Permission denied: {tool} execution of "{command}" was rejected',
 }

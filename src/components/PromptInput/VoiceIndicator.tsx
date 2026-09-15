@@ -2,6 +2,7 @@ import { feature } from 'bun:bundle'
 import { useSettings } from '../../hooks/useSettings.js'
 import { Box, Text, useAnimationFrame } from '../../ink/index.js'
 import { interpolateColor, toRGBColor } from '../Spinner/utils.js'
+import { tSync } from '../../i18n/index.js'
 
 type Props = {
   voiceState: 'idle' | 'recording' | 'processing'
@@ -29,7 +30,7 @@ export function VoiceIndicator(props: Props) {
 function VoiceIndicatorImpl({ voiceState }: { voiceState: string }) {
   switch (voiceState) {
     case 'recording': {
-      return <Text dimColor={true}>listening…</Text>
+      return <Text dimColor={true}>{tSync('ui.voice.listening')}</Text>
     }
     case 'processing': {
       return <ProcessingShimmer />
@@ -48,17 +49,17 @@ export function VoiceWarmupHint() {
   if (!feature('VOICE_MODE')) {
     return null
   }
-  return <Text dimColor={true}>keep holding…</Text>
+  return <Text dimColor={true}>{tSync('ui.voice.keepHolding')}</Text>
 }
 function ProcessingShimmer() {
   const settings = useSettings()
   const reducedMotion = settings.prefersReducedMotion ?? false
   const [ref, time] = useAnimationFrame(reducedMotion ? null : 50)
   if (reducedMotion) {
-    return <Text color="warning">Voice: processing…</Text>
+    return <Text color="warning">{tSync('ui.voice.processing')}</Text>
   }
   const elapsedSec = time / 1000
   const opacity = (Math.sin((elapsedSec * Math.PI * 2) / PULSE_PERIOD_S) + 1) / 2
   const color = toRGBColor(interpolateColor(PROCESSING_DIM, PROCESSING_BRIGHT, opacity))
-  return <Box ref={ref}>{<Text color={color}>Voice: processing…</Text>}</Box>
+  return <Box ref={ref}>{<Text color={color}>{tSync('ui.voice.processing')}</Text>}</Box>
 }

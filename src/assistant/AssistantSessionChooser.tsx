@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Box, Text, useInput } from '../ink/index.js'
+import { tSync } from '../i18n/index.js'
 
 type AssistantSession = { id: string; name: string }
 
@@ -48,19 +49,19 @@ export function AssistantSessionChooser({
   }, [sessions.length, onCancel])
 
   if (sessions.length === 0) {
-    return <Text>No sessions available.</Text>
+    return <Text>{tSync('ui.assistantSession.noSessions')}</Text>
   }
 
   return (
     <Box flexDirection="column" paddingY={1}>
-      <Text bold>Select a session to resume:</Text>
+      <Text bold>{tSync('ui.assistantSession.selectSession')}</Text>
       {sessions.map((s, i) => (
         <Text key={s.id} color={i === safeSelected ? 'ansi:cyan' : undefined}>
           {i === safeSelected ? '> ' : '  '}
           {s.name || s.id}
         </Text>
       ))}
-      <Text dimColor>↑↓ to choose · Enter to select · Esc to cancel</Text>
+      <Text dimColor>{tSync('ui.assistantSession.guide')}</Text>
     </Box>
   )
 }

@@ -211,7 +211,9 @@ async function isGitRepository(): Promise<boolean> {
  */
 export const securityReviewSkill: BundledSkillDefinition = {
   name: 'security-review',
-  description: tSync('commands.securityReview'),
+  get description() {
+    return tSync('commands.securityReview')
+  },
   whenToUse:
     'When the user wants a security review of their code changes, asks to check for vulnerabilities in a PR or branch, or says things like "security review", "check for vulnerabilities", "audit this branch".',
   allowedTools: ['Bash', 'PowerShell', 'Read', 'Glob', 'Grep', 'LS', AGENT_TOOL_NAME],

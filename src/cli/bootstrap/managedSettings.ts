@@ -4,6 +4,7 @@ import {
   setAllowedSettingSources,
   setFlagSettingsPath,
 } from 'src/bootstrap/runtime/runtimeContext.js'
+import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -53,7 +54,7 @@ function loadSettingsFromFlag(settingsFile: string): void {
       // 这是 JSON 字符串 —— 验证并创建临时文件
       const parsedJson = safeParseJSON(trimmedSettings)
       if (!parsedJson) {
-        process.stderr.write(chalk.red('错误：提供给 --settings 的 JSON 无效\n'))
+        process.stderr.write(chalk.red(tSync('cli.managedSettings.invalidJson')))
         process.exit(1)
       }
 
@@ -80,7 +81,9 @@ function loadSettingsFromFlag(settingsFile: string): void {
         readFileSync(resolvedSettingsPath, 'utf8')
       } catch (e) {
         if (isENOENT(e)) {
-          process.stderr.write(chalk.red(`错误：找不到设置文件：${resolvedSettingsPath}\n`))
+          process.stderr.write(
+            chalk.red(tSync('cli.managedSettings.fileNotFound', { path: resolvedSettingsPath })),
+          )
           process.exit(1)
         }
         throw e
@@ -93,7 +96,9 @@ function loadSettingsFromFlag(settingsFile: string): void {
     if (error instanceof Error) {
       logError(error)
     }
-    process.stderr.write(chalk.red(`处理设置时出错：${errorMessage(error)}\n`))
+    process.stderr.write(
+      chalk.red(tSync('cli.managedSettings.processError', { error: errorMessage(error) })),
+    )
     process.exit(1)
   }
 }
@@ -107,7 +112,9 @@ function loadSettingSourcesFromFlag(settingSourcesArg: string): void {
     if (error instanceof Error) {
       logError(error)
     }
-    process.stderr.write(chalk.red(`处理 --setting-sources 时出错：${errorMessage(error)}\n`))
+    process.stderr.write(
+      chalk.red(tSync('cli.managedSettings.settingSourcesError', { error: errorMessage(error) })),
+    )
     process.exit(1)
   }
 }

@@ -1,5 +1,6 @@
 import { stringWidth } from '../../ink/stringWidth.js'
 import { Box, Text } from '../../ink/index.js'
+import { tSync } from '../../i18n/index.js'
 import {
   AGENT_COLOR_TO_THEME_COLOR,
   AGENT_COLORS,
@@ -353,7 +354,7 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
       {!isFullscreenEnvEnabled() && <PromptInputQueuedCommands />}
       {hasSuppressedDialogs && (
         <Box marginTop={1} marginLeft={2}>
-          <Text dimColor>Waiting for permission…</Text>
+          <Text dimColor>{tSync('promptInput.waitingForPermission')}</Text>
         </Box>
       )}
       <PromptInputStashNotice hasStash={stashedPrompt !== undefined} />

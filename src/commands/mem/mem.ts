@@ -1,4 +1,5 @@
 import { getHeapStatistics } from 'node:v8'
+import { tSync } from '../../i18n/index.js'
 
 const MB = 1024 * 1024
 const GB = 1024 * MB
@@ -35,9 +36,9 @@ export async function call(args: string): Promise<{ type: 'text'; value: string 
 
   // 生成内存报告
   const lines: string[] = []
-  lines.push('━━━ 内存使用报告 ━━━')
+  lines.push(tSync('commands.mem.reportHeader'))
   lines.push('')
-  lines.push('进程内存:')
+  lines.push(tSync('commands.mem.processMemory'))
   lines.push(`  RSS:         ${fmt(usage.rss)}  ${bar(usage.rss, Math.max(usage.rss, 2 * GB))}`)
   lines.push(
     `  Heap Used:   ${fmt(usage.heapUsed)}  ${bar(usage.heapUsed, Math.max(usage.heapTotal, 1))}`,
@@ -47,39 +48,41 @@ export async function call(args: string): Promise<{ type: 'text'; value: string 
   if (usage.arrayBuffers) {
     lines.push(`  ArrayBuffer: ${fmt(usage.arrayBuffers)}`)
   }
-  lines.push(`  Native:      ${fmt(nativeMem)} (RSS - heapUsed, 含 native addon)`)
+  lines.push(`  Native:      ${fmt(nativeMem)} ${tSync('commands.mem.nativeDesc')}`)
   lines.push(`  Heap Limit:  ${fmt(heapLimit)}`)
   lines.push('')
-  lines.push('V8 堆详情:')
+  lines.push(tSync('commands.mem.v8HeapDetails'))
   lines.push(`  Detached Contexts: ${heapStats.number_of_detached_contexts}`)
   lines.push(`  Native Contexts:   ${heapStats.number_of_native_contexts}`)
   lines.push(`  Malloced Memory:   ${fmt(heapStats.malloced_memory)}`)
   lines.push(`  Peak Malloced:     ${fmt(heapStats.peak_malloced_memory)}`)
   lines.push('')
-  lines.push('系统信息:')
-  lines.push(`  运行时间: ${Math.floor(uptime / 60)} 分钟`)
-  lines.push(`  最大 RSS: ${fmt(resourceUsage.maxRSS * 1024)}`)
-  lines.push(`  内存增长率: ${mbPerHour.toFixed(1)} MB/小时`)
+  lines.push(tSync('commands.mem.systemInfo'))
+  lines.push(tSync('commands.mem.uptime', { minutes: Math.floor(uptime / 60) }))
+  lines.push(tSync('commands.mem.maxRss', { size: fmt(resourceUsage.maxRSS * 1024) }))
+  lines.push(tSync('commands.mem.growthRate', { rate: mbPerHour.toFixed(1) }))
   lines.push('')
 
   // 分析与警告
   const warnings: string[] = []
 
   if (usage.rss > 1.5 * GB) {
-    warnings.push(`⚠  RSS (${fmt(usage.rss)}) 超过 1.5GB，内存压力较大`)
+    warnings.push(tSync('commands.mem.rssWarning', { size: fmt(usage.rss) }))
   }
   if (heapUsedRatio > 0.8) {
-    warnings.push(`⚠  堆使用率达到 ${(heapUsedRatio * 100).toFixed(0)}%，接近限制`)
+    warnings.push(tSync('commands.mem.heapWarning', { percent: (heapUsedRatio * 100).toFixed(0) }))
   }
   if (mbPerHour > 200) {
-    warnings.push(`⚠  内存增长率高 (${mbPerHour.toFixed(0)} MB/小时)，可能存在内存泄漏`)
+    warnings.push(tSync('commands.mem.growthWarning', { rate: mbPerHour.toFixed(0) }))
   }
   if (heapStats.number_of_detached_contexts > 5) {
-    warnings.push(`⚠  检测到 ${heapStats.number_of_detached_contexts} 个 detached context`)
+    warnings.push(
+      tSync('commands.mem.detachedWarning', { count: heapStats.number_of_detached_contexts }),
+    )
   }
 
   if (warnings.length > 0) {
-    lines.push('警告:')
+    lines.push(tSync('commands.mem.warnings'))
     for (const w of warnings) {
       lines.push(`  ${w}`)
     }
@@ -89,27 +92,27 @@ export async function call(args: string): Promise<{ type: 'text'; value: string 
   // 建议
   const tips: string[] = []
   if (usage.rss > 1.5 * GB) {
-    tips.push('• 运行 /heapdump 捕获堆快照以便离线分析')
-    tips.push('• 运行 /compact 压缩对话上下文')
+    tips.push(tSync('commands.mem.tipHeapdump'))
+    tips.push(tSync('commands.mem.tipCompact'))
   }
   if (heapLimit > 4 * GB) {
-    tips.push('• 当前 max-old-space-size 较大，可考虑降低 (当前上限 ' + fmt(heapLimit) + ')')
+    tips.push(tSync('commands.mem.tipHeapLimit', { limit: fmt(heapLimit) }))
   }
   if (uptime > 600 && mbPerHour > 100) {
-    tips.push('• 会话已运行较久且内存持续增长，考虑重启会话')
+    tips.push(tSync('commands.mem.tipRestart'))
   }
-  tips.push('• 检查 FileStateCache: ~25MB max')
-  tips.push('• 检查 TaskOutput buffer: ~8MB max (溢出后落盘)')
+  tips.push(tSync('commands.mem.tipFileState'))
+  tips.push(tSync('commands.mem.tipTaskOutput'))
 
   if (tips.length > 0) {
-    lines.push('建议:')
+    lines.push(tSync('commands.mem.suggestions'))
     for (const t of tips) {
       lines.push(`  ${t}`)
     }
     lines.push('')
   }
 
-  lines.push('━━━ 如需完整诊断，请运行 /heapdump ━━━')
+  lines.push(tSync('commands.mem.reportFooter'))
 
   return { type: 'text', value: lines.join('\n') }
 }

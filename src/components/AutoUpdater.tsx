@@ -7,6 +7,7 @@ import {
 import { useInterval } from 'usehooks-ts'
 import { useUpdateNotification } from '../hooks/useUpdateNotification.js'
 import { Box, Text } from '../ink/index.js'
+import { tSync } from '../i18n/index.js'
 import { removeInstalledSymlink } from '../services/native-installer/index.js'
 import {
   type AutoUpdaterResult,
@@ -211,7 +212,7 @@ export function AutoUpdater({
       {isUpdating ? (
         <Box>
           <Text color="text" dimColor wrap="truncate">
-            Auto-updating…
+            {tSync('ui.autoUpdater.updating')}
           </Text>
         </Box>
       ) : (
@@ -219,19 +220,14 @@ export function AutoUpdater({
         showSuccessMessage &&
         updateSemver && (
           <Text color="success" wrap="truncate">
-            ✓ Update installed · Restart to apply
+            {tSync('ui.autoUpdater.installed')}
           </Text>
         )
       )}
       {(autoUpdaterResult?.status === 'install_failed' ||
         autoUpdaterResult?.status === 'no_permissions') && (
         <Text color="error" wrap="truncate">
-          ✗ Auto-update failed &middot; Try <Text bold>zy doctor</Text> or{' '}
-          <Text bold>
-            {hasLocalInstall
-              ? `cd ~/.zy/local && npm update ${MACRO.PACKAGE_URL}`
-              : `npm i -g ${MACRO.PACKAGE_URL}`}
-          </Text>
+          {tSync('ui.autoUpdater.failed')}
         </Text>
       )}
     </Box>

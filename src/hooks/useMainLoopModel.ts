@@ -6,6 +6,7 @@ import {
   parseUserSpecifiedModel,
 } from '../services/model/model.js'
 import { useAppState } from '../state/AppState.js'
+import { tSync } from '../i18n/index.js'
 
 // The value of the selector is a full model name that can be used directly in
 // API calls. Use this over getMainLoopModel() when the component needs to
@@ -27,9 +28,7 @@ export function useMainLoopModel(): ModelName {
 
   const resolvedModel = mainLoopModelForSession ?? mainLoopModel ?? getDefaultMainLoopModelSetting()
   if (!resolvedModel) {
-    throw new Error(
-      '未配置默认模型。请在 settings.json 中设置 "models.standard" 或通过 /model 命令指定模型。',
-    )
+    throw new Error(tSync('settings.noDefaultModel'))
   }
   const model = parseUserSpecifiedModel(resolvedModel)
   return model

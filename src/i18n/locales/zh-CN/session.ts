@@ -237,4 +237,28 @@ export const zhSession: TranslationResource = {
   'worktree.tmuxTerminated': ' Tmux session terminated.',
   'worktree.was': 'was',
   'worktree.were': 'were',
+  'auth.login.successful': '登录成功！',
+  'auth.login.failed': '登录失败：{error}',
+  'auth.status.apiKeyEnvVar': '通过 API Key 环境变量完成认证',
+  'auth.status.notLoggedIn': '未登录。使用 /login 进行登录。',
+  'auth.logout.successful': '已成功退出登录',
+  'auth.logout.failed': '退出登录失败：{error}',
+  'managedSettings.requireApproval': '受管设置需要确认',
+  'managedSettings.orgConfiguredWarning': '你的组织已为此仓库配置了受管设置。',
+  'managedSettings.requiringApproval': '这些设置将覆盖本地配置，需要你的明确许可。',
+  'managedSettings.onlyAcceptIfTrust': '仅在信任来源组织时接受。',
+  'managedSettings.yesTrust': '是的，我信任并应用设置',
+  'managedSettings.noExit': '不，退出且不应用',
+  'managedSettings.pressAgainToExit': '再次按下 {keyName} 退出',
+  'managedSettings.enterConfirmEscExit': 'Enter 确认 · Esc 退出',
+  'rateLimit.resetsAtWithSubject': ' · 你的 {limitName} 将在 {time} 重置',
+  'rateLimit.feedbackAntChannel':
+    '。如果对此限额有反馈，请发布到 {channel}。你可以使用 /reset-limits 重置限额',
+  'rateLimit.offSwitchHighDemand': 'Opus 4 当前请求量较高。',
+  'rateLimit.offSwitchContinue': '如需立即继续，请使用 /model 切换到 {model} 并继续编码。',
+  'rateLimit.temporaryCapacity': '这可能是临时容量问题，请稍后重试。',
+  'agent.capacity.maxConcurrentReached':
+    '已达到最大并发 agent 数 ({max})。请等待当前 agent 完成后重试。',
+  'agent.capacity.maxResidentReached':
+    '已达到最大驻留 agent 数 ({max})，且所有 agent 均在运行中。无法创建新 agent。',
 }

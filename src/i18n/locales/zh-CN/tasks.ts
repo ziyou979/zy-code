@@ -87,4 +87,5 @@ export const zhTasks: TranslationResource = {
   'bg.disabled': '后台任务已被禁用',
   'bg.movedToBackground': '已将前台任务转为后台运行',
   'bg.noForegroundTasks': '没有可转为后台的前台任务',
+  'backgroundTasks.earlierTurns': '轮更早的对话',
 }

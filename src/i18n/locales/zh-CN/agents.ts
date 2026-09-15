@@ -112,4 +112,5 @@ export const zhAgents: TranslationResource = {
   'agentView.pending': '等待中',
   'agentView.running': '运行中',
   'agentView.title': '\u{1f916}\uFE0E Agent 会话',
+  'agents.toolSelector.toolCount': '个工具',
 }

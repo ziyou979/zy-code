@@ -87,4 +87,5 @@ export const enTasks: TranslationResource = {
   'bg.disabled': 'Background tasks are disabled',
   'bg.movedToBackground': 'Moved foreground tasks to background',
   'bg.noForegroundTasks': 'No foreground tasks to move to background',
+  'backgroundTasks.earlierTurns': 'earlier turns',
 }
