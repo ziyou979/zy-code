@@ -154,7 +154,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 | `language` | string | — | 响应/听写/UI 语言(如 `Chinese`) |
 | `outputStyle` | string | — | 助手输出风格 |
 | `showThinkingSummaries` | boolean | `false` | transcript 显示思考摘要 |
-| `builtInStatusBar.{enabled,modules}` | object | — | 底部状态栏(模块:directory/model/context/tokens/cache/speed/turns/cost/memory) |
+| `builtInStatusBar.{enabled,modules}` | object | — | 底部状态栏(模块:directory/model/context/tokens/cache/speed/turns/cost/memory)。模块级选项:`pathMode`(directory:`name`项目名/`full`全路径,默认`name`)、`ttftSymbol`(speed:首token前缀符号,默认空不显示,「首token」文案已自解释)。推荐用 `/statusline` 配置,持久化于 `~/.zy/statusline.json` |
 | `spinnerTipsEnabled` / `spinnerTipsOverride` | — | — | spinner 提示 |
 | `prefersReducedMotion` / `syntaxHighlightingDisabled` | boolean | — | 无障碍 / 关语法高亮 |
 | `terminalTitleFromRename` | boolean | `true` | `/rename` 改终端标题 |
@@ -361,12 +361,16 @@ provider 解析优先级：sticky 多 auth 候选 > 模型引用中的连接 > �
 | `ZY_CONFIG_DIR` | 配置目录(默认 `~/.zy`) |
 | `ZY_CODE_SIMPLE`(= `--bare`) | 精简模式,跳过 hooks/LSP/插件/凭证 |
 | `ZY_CODE_DISABLE_CLAUDE_MDS` / `_AUTO_MEMORY` / `_GIT_INSTRUCTIONS` / `_BACKGROUND_TASKS` | 关闭对应特性 |
-| `ZY_CODE_UI_LANG` / `ZY_CODE_SHELL` / `ZY_CODE_VCS`(`git\|perforce`) | UI 语言 / shell / VCS |
+| `ZY_CODE_SHELL` / `ZY_CODE_VCS`(`git\|perforce`) | shell / VCS |
 | `BASH_MAX_OUTPUT_LENGTH` / `TASK_MAX_OUTPUT_LENGTH` | 输出长度上限 |
 | `DISABLE_TELEMETRY` / `ZY_CODE_DISABLE_NONESSENTIAL_TRAFFIC` / `DISABLE_ERROR_REPORTING` | 隐私 / 遥测 |
 | `CLAUDE_DEBUG` / `ZY_CODE_DEBUG_LOG_LEVEL` / `ZY_CODE_DEBUG_LOGS_DIR` | 调试 |
 | `ZY_CODE_PROFILE_STARTUP` | `1` 时输出启动时间线（含 `tti_ready` / `first_query_start` / `first_token`）到 `~/.zy/startup-perf/` |
 | `ZY_CODE_DISABLE_WORKING_SET_TRIM` | `1` 时禁用 Windows 空闲高 RSS Working Set 驱逐（任务管理器 RSS 虚高的主治理路径） |
+| `ZY_CODE_AUTO_HEAP_DUMP` | `1` 时每秒检查 RSS，达到 1.5 GiB 自动向桌面保存诊断 JSON 和堆快照；每个进程最多尝试一次，默认关闭 |
+| `ZY_CODE_REACT_PERFORMANCE_TRACKS` | 仅 `bun run dev`：默认跳过 React Components/Scheduler 的原生测量记录创建，避免 detail 序列化造成内存膨胀；设为 `1` 恢复原生记录及 PerformanceObserver 通知用于性能分析，长会话可能占用较多内存 |
+
+抓取运行中短暂的内存峰值时，可在 PowerShell 启动前执行 `$env:ZY_CODE_AUTO_HEAP_DUMP = '1'`，再按平常方式启动程序。文件名为 `<sessionId>-dump1-diagnostics.json`、`<sessionId>-dump1.heapsnapshot`，Bun 下另有 `<sessionId>-dump1-after-gc.heapsnapshot`。诊断 JSON 在堆快照前写入，保存抓取开始时的 RSS、heap、external 和 Bun/JSC 分配器信息。快照本身会暂停执行并增加临时内存占用；抓取后可执行 `Remove-Item Env:ZY_CODE_AUTO_HEAP_DUMP`，后续启动恢复默认行为。主线程长时间阻塞或不足一秒的峰值仍可能错过。
 
 ### 5.6 Bridge / CCR / 会话
 
