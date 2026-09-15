@@ -18,7 +18,6 @@ import {
   RADIO_OFF,
   RADIO_ON,
   SLASHED_CIRCLE,
-  TAU,
 } from '../../constants/figures.js'
 import { getAverageTTFTMs } from '../../bootstrap/runtime/runtimeContext.js'
 import {
@@ -48,6 +47,8 @@ import { getDisplayContextUsage } from '../../services/api/tokens.js'
 import {
   effectiveColor,
   effectiveIcon,
+  effectivePathMode,
+  effectiveTtftSymbol,
   type ModuleConfig,
   type ModuleId,
 } from './statusbarModuleDefaults.js'
@@ -156,7 +157,8 @@ type Renderer = (module: ModuleConfig, ctx: StatusbarContext) => Segment | null
 const RENDERERS: Record<ModuleId, Renderer> = {
   directory(module, ctx) {
     const icon = effectiveIcon(module)
-    let body = basename(getCwd())
+    // pathMode: 'name'（默认）只显示项目目录名，'full' 显示 cwd 全路径
+    let body = effectivePathMode(module) === 'full' ? getCwd() : basename(getCwd())
     if (ctx.branch) {
       body += ` · ${FORK_GLYPH} ${ctx.branch}`
       if (ctx.gitClean === true) {
@@ -263,11 +265,14 @@ const RENDERERS: Record<ModuleId, Renderer> = {
       )
     }
     if (avgTTFTMs !== null) {
+      // TTFT 前缀符号可配置（默认不显示，「首token」文案已自解释）；
       // < 10s 显示小数秒（TTFT 常态在百毫秒级），更长时回退整秒
+      const ttftSymbol = effectiveTtftSymbol(module)
+      const prefix = ttftSymbol ? `${ttftSymbol} ` : ''
       parts.push(
         avgTTFTMs < 10_000
-          ? `${TAU} ${tSync('statusline.ttft')} ${(avgTTFTMs / 1000).toFixed(1)}s`
-          : `${TAU} ${tSync('statusline.ttft')} ${Math.round(avgTTFTMs / 1000)}s`,
+          ? `${prefix}${tSync('statusline.ttft')} ${(avgTTFTMs / 1000).toFixed(1)}s`
+          : `${prefix}${tSync('statusline.ttft')} ${Math.round(avgTTFTMs / 1000)}s`,
       )
     }
     return { text: withIcon(icon, parts.join('  ')), colorToken: effectiveColor(module) }

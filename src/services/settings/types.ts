@@ -11,7 +11,7 @@ import {
   ProviderScopedSettingsSchema,
 } from './settingsModelSchemas.js'
 import { ZY_CODE_SETTINGS_SCHEMA_URL } from './constants.js'
-import { STATUSLINE_MODULE_IDS } from './statuslineTypes.js'
+import { STATUSLINE_MODULE_IDS, STATUSLINE_PATH_MODES } from './statuslineTypes.js'
 import { MarketplaceSourceSchema } from '../plugins/schemas.js'
 import {
   AllowedMcpServerEntrySchema,
@@ -468,6 +468,10 @@ export const SettingsSchema = lazySchema(() =>
                   .string()
                   .optional()
                   .describe('Override color: a theme token name (e.g. "success")'),
+                // directory 模块：路径显示方式（默认项目名）
+                pathMode: z.enum(STATUSLINE_PATH_MODES).optional(),
+                // speed 模块：TTFT 前缀符号（1 格 unicode，'' = 不显示）
+                ttftSymbol: z.string().optional(),
               }),
             )
             .optional()
