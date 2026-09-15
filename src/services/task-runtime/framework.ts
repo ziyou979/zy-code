@@ -141,28 +141,34 @@ export function evictTerminalTask(taskId: string, setAppState: SetAppState): voi
   })
 }
 
-/** 已调度但尚未触发的驱逐 taskId 集合，防止对同一任务重复设 timer */
-const pendingEvictions = new Set<string>()
+/** 定时器按 store 的更新入口隔离，不让不同会话的同名任务互相覆盖。 */
+const pendingEvictions = new WeakMap<SetAppState, Map<string, ReturnType<typeof setTimeout>>>()
 
 /**
  * 调度终端态任务从 AppState.tasks 中驱逐。
  * 任务进入终态后，保留一段宽限期（PANEL_GRACE_MS）以供 UI 展示，
  * 宽限期过后将任务从 AppState 中清理，避免子代理历史在内存中永久堆积。
- * 同一 taskId 只会存在一个活跃 timer，重复调用会被静默忽略。
+ * 同一 store 内每个任务只保留一个 timer；再次释放任务时重设宽限期。
  */
 export function scheduleTerminalEviction(
   taskId: string,
   setAppState: SetAppState,
   delayMs = PANEL_GRACE_MS,
 ): void {
-  if (pendingEvictions.has(taskId)) {
-    return
+  let timers = pendingEvictions.get(setAppState)
+  if (!timers) {
+    timers = new Map()
+    pendingEvictions.set(setAppState, timers)
   }
-  pendingEvictions.add(taskId)
+  const existing = timers.get(taskId)
+  if (existing) {
+    clearTimeout(existing)
+  }
   const timer = setTimeout(() => {
-    pendingEvictions.delete(taskId)
+    timers.delete(taskId)
     evictTerminalTask(taskId, setAppState)
   }, delayMs + 100)
+  timers.set(taskId, timer)
   timer.unref?.()
 }
 

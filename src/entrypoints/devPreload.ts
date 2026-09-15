@@ -8,12 +8,18 @@
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { installReactPerformanceEntryCleanup } from '../services/diagnostics/reactPerformanceEntries.js'
 
 // 源码入口必须使用 React development runtime。Bun 直接执行 TSX 时若在 preload
 // 中切到 production，react-reconciler 不会提交 Ink 首帧，终端只完成清屏而没有
 // 欢迎页。dist 仍由 build 脚本在 NODE_ENV=production 下生成，两条路径各自使用
 // 与其执行方式匹配的 React 变体。
 process.env.NODE_ENV = 'development'
+
+// 调试组件时仍使用 React 开发版；性能轨道只有主动分析时才创建原生记录。
+if (process.env.ZY_CODE_REACT_PERFORMANCE_TRACKS !== '1') {
+  installReactPerformanceEntryCleanup()
+}
 
 process.env.USER_TYPE = 'external'
 

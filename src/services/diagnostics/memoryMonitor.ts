@@ -49,6 +49,7 @@ export class MemoryMonitor {
   private maxRss = 0
   private warnedRss = false
   private warningCooldown = 0
+  private heapDumpTriggered = false
 
   constructor(config?: Partial<MemoryMonitorConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config }
@@ -90,7 +91,7 @@ export class MemoryMonitor {
     if (this.timer) return
 
     // 立即采样一次
-    this.recordSample()
+    this.tick()
 
     this.timer = setInterval(() => {
       this.tick()
@@ -158,7 +159,9 @@ export class MemoryMonitor {
           `[MemoryMonitor] CRITICAL: RSS=${Math.round(usage.rss / MB)}MB exceeds ` +
             `${Math.round(this.config.criticalThresholdRss / MB)}MB threshold`,
         )
-        if (this.config.autoHeapDump && this.config.onHeapDump) {
+        if (this.config.autoHeapDump && this.config.onHeapDump && !this.heapDumpTriggered) {
+          // 在调用前锁定：每个监控实例只尝试一次，防止并发快照和失败重试放大内存峰值。
+          this.heapDumpTriggered = true
           void this.config.onHeapDump().catch((err) => logError(err))
         }
         this.warnedRss = true
