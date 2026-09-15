@@ -1,7 +1,7 @@
 /**
  * 语言状态叶子 —— i18n 的当前语言单一事实来源（对标 i18next 的 current lng）。
  *
- * 仅依赖 ./types（纯函数，只读 process.env），**不 import settings 或任何业务模块**。
+ * 仅依赖 ./types（纯函数，env 读取已移除），**不 import settings 或任何业务模块**。
  * 因此 settings 与 i18n 都能安全地依赖它而不构成循环 —— 这是断开
  * 「settings ↔ i18n」循环初始化（历史上的 TDZ 崩溃）的关键叶子。
  *
@@ -13,7 +13,7 @@
 import type { UiLanguage } from './types.js'
 import { resolveUiLanguage } from './types.js'
 
-// 推送之前的默认值：env（ZY_CODE_UI_LANG）或 'en'，与 i18next init 前的默认 lng 同义。
+// 推送之前的默认值：'en'，与 i18next init 前的默认 lng 同义。
 let current: UiLanguage = resolveUiLanguage(undefined)
 
 type Listener = (lang: UiLanguage) => void
@@ -25,8 +25,8 @@ export function getLanguage(): UiLanguage {
 }
 
 /**
- * 推送语言来源（settings 的原始 language 字段，或 undefined 表示未配置）。
- * env 始终优先（见 resolveUiLanguage）。值未变化则 no-op；变化时通知订阅者
+ * 推送语言来源（settings 的原始 language 字段，或 undefined 表示未配置 → 默认 en）。
+ * 值未变化则 no-op；变化时通知订阅者
  * （如 i18n 重新预热消息缓存）。
  */
 export function setLanguage(settingsLanguage?: string): void {

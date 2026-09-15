@@ -11,11 +11,12 @@ export const SUPPORTED_UI_LANGUAGES: UiLanguage[] = ['en', 'zh-CN']
 
 /**
  * 将自由格式的语言设置映射为受支持的 UI 语言。
- * 优先级：环境变量 > 语言设置 > 默认的 'en'
+ * 优先级：语言设置 > 默认的 'en'
+ * （曾有 ZY_CODE_UI_LANG env 最高优先，但会使 setLanguage 静默失效、
+ * 与语言选择器契约矛盾，且无脚本/测试依赖，故移除。）
  */
 export function resolveUiLanguage(settingsLanguage?: string): UiLanguage {
-  const envLang = process.env.ZY_CODE_UI_LANG
-  const raw = (envLang ?? settingsLanguage ?? 'en').trim().toLowerCase()
+  const raw = (settingsLanguage ?? 'en').trim().toLowerCase()
 
   // Check exact supported UI languages first
   if (SUPPORTED_UI_LANGUAGES.includes(raw as UiLanguage)) {
