@@ -1,4 +1,5 @@
 import { CHECKBOX_OFF, CHECKBOX_ON, TICK } from '../../../constants/figures.js'
+import { tSync } from '../../../i18n/index.js'
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js'
 import { stringWidth } from '../../../ink/stringWidth.js'
 import { Box, Text } from '../../../ink/index.js'
@@ -10,16 +11,21 @@ type Props = {
   currentQuestionIndex: number
   answers: Record<string, string>
   hideSubmitTab?: boolean
+  onNavigate?: (index: number) => void
+  onSubmit?: () => void
 }
 export function QuestionNavigationBar({
   questions,
   currentQuestionIndex,
   answers,
   hideSubmitTab = false,
+  onNavigate,
+  onSubmit,
 }: Props) {
   const { columns } = useTerminalSize()
   let tabDisplayTexts
-  const submitText = hideSubmitTab ? '' : ` ${TICK} Submit `
+  const submitText = hideSubmitTab ? '' : ` ${TICK} ${tSync('permissionRules.submit')} `
+  const maxIndex = hideSubmitTab ? questions.length - 1 : questions.length
   const fixedWidth = stringWidth('\u2190 ') + stringWidth(' \u2192') + stringWidth(submitText)
   const availableForTabs = columns - fixedWidth
   if (availableForTabs <= 0) {
@@ -58,7 +64,7 @@ export function QuestionNavigationBar({
     const checkbox = isAnswered ? CHECKBOX_ON : CHECKBOX_OFF
     const displayText = tabDisplayTexts[index_2] || q_1?.header || `Q${index_2 + 1}`
     return (
-      <Box key={q_1?.question || `question-${index_2}`}>
+      <Box key={q_1?.question || `question-${index_2}`} onClick={() => onNavigate?.(index_2)}>
         {isSelected ? (
           <Text backgroundColor="permission" color="inverseText">
             {' '}
@@ -75,22 +81,36 @@ export function QuestionNavigationBar({
   })
   return (
     <Box flexDirection="row" marginBottom={1}>
-      {!hideArrows && <Text color={currentQuestionIndex === 0 ? 'inactive' : undefined}>← </Text>}
+      {!hideArrows && (
+        <Box onClick={() => currentQuestionIndex > 0 && onNavigate?.(currentQuestionIndex - 1)}>
+          <Text color={currentQuestionIndex === 0 ? 'inactive' : undefined}>← </Text>
+        </Box>
+      )}
       {tabElements}
       {!hideSubmitTab && (
-        <Box key="submit">
+        <Box
+          key="submit"
+          onClick={() => {
+            // 问题页先进入检查页；检查页再次点击提交，避免跳过回答确认。
+            if (currentQuestionIndex === questions.length) onSubmit?.()
+            else onNavigate?.(questions.length)
+          }}
+        >
           {currentQuestionIndex === questions.length ? (
             <Text backgroundColor="permission" color="inverseText">
-              {' '}
-              {TICK} Submit{' '}
+              {submitText}
             </Text>
           ) : (
-            <Text> {TICK} Submit </Text>
+            <Text>{submitText}</Text>
           )}
         </Box>
       )}
       {!hideArrows && (
-        <Text color={currentQuestionIndex === questions.length ? 'inactive' : undefined}> →</Text>
+        <Box
+          onClick={() => currentQuestionIndex < maxIndex && onNavigate?.(currentQuestionIndex + 1)}
+        >
+          <Text color={currentQuestionIndex === maxIndex ? 'inactive' : undefined}> →</Text>
+        </Box>
       )}
     </Box>
   )

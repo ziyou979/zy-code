@@ -46,6 +46,7 @@ type Props = {
   onSubmit: () => void
   onTabPrev?: () => void
   onTabNext?: () => void
+  onNavigate?: (index: number) => void
   onRespondToZy: () => void
   onFinishPlanInterview: () => void
   onImagePaste?: (
@@ -75,6 +76,7 @@ export function QuestionView({
   onSubmit,
   onTabPrev,
   onTabNext,
+  onNavigate,
   onRespondToZy,
   onFinishPlanInterview,
   onImagePaste,
@@ -192,6 +194,7 @@ export function QuestionView({
         onCancel={onCancel}
         onTabPrev={onTabPrev}
         onTabNext={onTabNext}
+        onNavigate={onNavigate}
         onRespondToZy={onRespondToZy}
         onFinishPlanInterview={onFinishPlanInterview}
       />
@@ -227,6 +230,7 @@ export function QuestionView({
               currentQuestionIndex={currentQuestionIndex}
               answers={answers}
               hideSubmitTab={hideSubmitTab}
+              onNavigate={onNavigate}
             />
           }
           {<PermissionRequestTitle title={question.question} color="text" />}

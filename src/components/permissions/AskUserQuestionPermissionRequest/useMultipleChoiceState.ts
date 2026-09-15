@@ -15,6 +15,7 @@ type State = {
 }
 
 type Action =
+  | { type: 'go-to-question'; index: number }
   | { type: 'next-question' }
   | { type: 'prev-question' }
   | {
@@ -33,6 +34,8 @@ type Action =
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
+    case 'go-to-question':
+      return { ...state, currentQuestionIndex: action.index, isInTextInput: false }
     case 'next-question':
       return {
         ...state,
@@ -108,6 +111,7 @@ export type MultipleChoiceState = {
   isInTextInput: boolean
   nextQuestion: () => void
   prevQuestion: () => void
+  goToQuestion: (index: number) => void
   updateQuestionState: (
     questionText: string,
     updates: Partial<QuestionState>,
@@ -119,6 +123,9 @@ export type MultipleChoiceState = {
 
 export function useMultipleChoiceState(): MultipleChoiceState {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
+  const goToQuestion = useCallback((index: number) => {
+    dispatch({ type: 'go-to-question', index })
+  }, [])
 
   const nextQuestion = useCallback(() => {
     dispatch({ type: 'next-question' })
@@ -163,6 +170,7 @@ export function useMultipleChoiceState(): MultipleChoiceState {
     isInTextInput: state.isInTextInput,
     nextQuestion,
     prevQuestion,
+    goToQuestion,
     updateQuestionState,
     setAnswer,
     setTextInputMode,

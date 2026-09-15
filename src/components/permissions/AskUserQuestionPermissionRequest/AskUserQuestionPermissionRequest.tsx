@@ -155,6 +155,7 @@ function AskUserQuestionPermissionRequestBody({
     isInTextInput,
     nextQuestion,
     prevQuestion,
+    goToQuestion,
     updateQuestionState,
     setAnswer,
     setTextInputMode,
@@ -372,6 +373,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
         onSubmit={nextQuestion}
         onTabPrev={handleTabPrev}
         onTabNext={handleTabNext}
+        onNavigate={goToQuestion}
         onRespondToZy={handleRespondToZy}
         onFinishPlanInterview={handleFinishPlanInterview}
         onImagePaste={(base64, mediaType_0, filename_0, dims, path) =>
@@ -400,6 +402,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`
         minContentHeight={globalContentHeight}
         outerMinHeight={globalOuterMinHeight}
         onFinalResponse={handleFinalResponse}
+        onNavigate={goToQuestion}
       />
     )
   }

@@ -1030,16 +1030,16 @@ export async function handleSubmit(
           ctx.mainLoopModel,
         )
         const mod = await matchingCommand.load()
-        const jsx = await mod.call(
+        const commandJsx = await mod.call(
           onDone,
           { ...context, invokedAs: commandName },
           commandArgs,
           commandName,
         )
 
-        if (jsx && !doneWasCalled) {
+        if (commandJsx && !doneWasCalled) {
           ctx.setToolJSX({
-            jsx,
+            jsx: commandJsx,
             shouldHidePromptInput: false,
             isLocalJSXCommand: true,
           })
@@ -1257,6 +1257,19 @@ export async function handleSubmit(
     startQueryProfile()
     queryCheckpoint('query_pending_hooks_start')
   }
+
+  // 让出宏任务事件循环：确保输入框清空与占位消息在进入重型前置钩子和附件准备之前，
+  // 能在当前 tick 立即完成终端重绘，彻底消除回车后的视觉停顿。
+  if (submitsNow && !isSlashCommand) {
+    await new Promise<void>((resolve) => {
+      if (typeof setImmediate === 'function') {
+        setImmediate(resolve)
+      } else {
+        setTimeout(resolve, 0)
+      }
+    })
+  }
+
   await ctx.awaitPendingHooks()
   if (profileStarted) queryCheckpoint('query_pending_hooks_end')
   await handlePromptSubmit({
