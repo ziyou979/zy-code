@@ -1,0 +1,4 @@
+[test]
+# 裸 `bun test` 也必须满足 src 的两处 NODE_ENV==='test' 测试契约，
+# 强制逻辑见 tests/_helpers/setup.ts 的注释。
+preload = ["./tests/_helpers/setup.ts"]
