@@ -149,3 +149,20 @@ describe('gemini OAuth', () => {
     expect(defaultTierId(null)).toBe('free-tier')
   })
 })
+
+test('取消浏览器回调等待后释放端口并允许重新登录', async () => {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const controller = new AbortController()
+    const pending = geminiOAuthProvider.login({
+      signal: controller.signal,
+      onAuth: () => {
+        setTimeout(() => controller.abort(), 10)
+      },
+      onPrompt: () => new Promise(() => {}),
+      onManualCodeInput: () => new Promise(() => {}),
+      onDeviceCode: () => {},
+      onSelect: async () => undefined,
+    })
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
+  }
+})

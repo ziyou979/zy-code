@@ -1,10 +1,13 @@
 import { describe, expect, test } from 'bun:test'
 import {
   buildCodeAssistEnvelope,
+  buildCodeAssistCountRequest,
+  unwrapCodeAssistResponse,
   parseSseStream,
 } from '../../../src/services/api/codeAssistProviderAdapter.js'
 import {
   googleStreamToStandard,
+  googleResponseToStandard,
   type GoogleGenerateContentResponse,
 } from '../../../src/services/api/conversions/google.js'
 import type { LLMStreamEvent } from '../../../src/types/llm.js'
@@ -66,9 +69,9 @@ describe('parseSseStream', () => {
     const body = sseBody(
       [
         ': keep-alive comment',
-        'data: {"candidates":[{"content":{"parts":[{"text":"he"}],"role":"model"}}]}',
+        'data: {"response":{"candidates":[{"content":{"parts":[{"text":"he"}],"role":"model"}}]}}',
         '',
-        'data: {"candidates":[{"content":{"parts":[{"text":"llo"}],"role":"model"}}]}',
+        'data: {"response":{"candidates":[{"content":{"parts":[{"text":"llo"}],"role":"model"}}]}}',
         'data: [DONE]',
       ].join('\n'),
     )
@@ -81,7 +84,7 @@ describe('parseSseStream', () => {
   test('与 googleStreamToStandard 集成产出标准事件', async () => {
     const body = sseBody(
       [
-        'data: {"responseId":"r1","candidates":[{"content":{"role":"model","parts":[{"text":"hello"}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":3,"candidatesTokenCount":2}}',
+        'data: {"traceId":"r1","response":{"candidates":[{"content":{"role":"model","parts":[{"text":"hello"}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":3,"candidatesTokenCount":2}}}',
       ].join('\n'),
     )
     const events = await collect(googleStreamToStandard(parseSseStream(body), 'gemini-test'))
@@ -91,5 +94,35 @@ describe('parseSseStream', () => {
       (event) => event.type === 'chunk_delta' && event.delta.type === 'text_delta',
     )
     expect(textDelta).toMatchObject({ delta: { type: 'text_delta', text: 'hello' } })
+  })
+})
+
+test('非流式信封保留文本、用量与请求标识', () => {
+  const result = googleResponseToStandard(
+    unwrapCodeAssistResponse({
+      traceId: 'trace',
+      response: {
+        candidates: [
+          { content: { role: 'model', parts: [{ text: 'hello' }] }, finishReason: 'STOP' },
+        ],
+        usageMetadata: { promptTokenCount: 3, candidatesTokenCount: 2 },
+      },
+    }),
+    'gemini-test',
+  )
+  expect(result.id).toBe('trace')
+  expect(result.content).toContainEqual({ type: 'text', text: 'hello' })
+  expect(result.usage.inputTokens).toBe(3)
+  expect(result.usage.outputTokens).toBe(2)
+})
+test('计数请求将模型放入内层并保留消息', () => {
+  const body = buildCodeAssistCountRequest('gemini-test', [
+    { role: 'user', content: [{ type: 'text', text: 'hello' }] },
+  ])
+  expect(body).toEqual({
+    request: {
+      model: 'models/gemini-test',
+      contents: [{ role: 'user', parts: [{ text: 'hello' }] }],
+    },
   })
 })

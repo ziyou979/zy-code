@@ -18,6 +18,7 @@ import {
 import { getAuthConfigForProvider } from '../auth/authConfig.js'
 import {
   antigravityRequestUserAgent,
+  verifyGeminiSubscriptionAccess,
   type GeminiOAuthCredentials,
 } from '../oauth/providers/geminiOauth.js'
 import type {
@@ -44,6 +45,20 @@ import {
 const log = createDebugLog('code-assist')
 
 const DEFAULT_CODE_ASSIST_BASE_URL = 'https://cloudcode-pa.googleapis.com/v1internal'
+
+/** Code Assist 的信封只在适配边界解包，公共 Google 转换器不感知传输协议。 */
+export function unwrapCodeAssistResponse(data: {
+  response?: GoogleGenerateContentResponse
+  traceId?: string
+}): GoogleGenerateContentResponse {
+  return { ...data.response, responseId: data.response?.responseId ?? data.traceId }
+}
+
+/** countTokens 与生成接口的请求结构不同，模型属于内层 request。 */
+export function buildCodeAssistCountRequest(model: string, messages: LLMMessage[]) {
+  const { contents } = messagesToGoogle(messages)
+  return { request: { model: `models/${model.replace(/^models\//, '')}`, contents } }
+}
 
 /**
  * 构建 v1internal 请求信封。
@@ -164,7 +179,7 @@ function parseSseDataLine(line: string): GoogleGenerateContentResponse | undefin
   const payload = line.slice(5).trim()
   if (!payload || payload === '[DONE]') return undefined
   try {
-    return JSON.parse(payload) as GoogleGenerateContentResponse
+    return unwrapCodeAssistResponse(JSON.parse(payload))
   } catch (error) {
     log(`Failed to parse SSE chunk: ${error}`)
     return undefined
@@ -239,34 +254,24 @@ export class CodeAssistProviderAdapter implements LLMAdapter {
       throw await toUpstreamError(response, url)
     }
 
-    const data = (await response.json()) as GoogleGenerateContentResponse
-    return googleResponseToStandard(data, params.model)
+    const data = await response.json()
+    return googleResponseToStandard(unwrapCodeAssistResponse(data), params.model)
   }
 
   async countTokens(messages: LLMMessage[], tools: ToolDefinition[]): Promise<number | null> {
     try {
       const model = getMainLoopModel() ?? ''
-      const { token, project, baseUrl } = await resolveCodeAssistContext(model)
-      const { contents } = messagesToGoogle(messages)
-      const request: GoogleGenerateContentRequest = { contents }
+      // 此端点不能计入工具定义；交还调用方估算，避免返回偏低的精确计数。
       if (tools.length > 0) {
-        // countTokens 同样接受信封内的标准工具声明
-        request.tools = [
-          {
-            functionDeclarations: tools.map((tool) => ({
-              name: tool.name,
-              ...(tool.description && { description: tool.description }),
-              ...(tool.inputSchema && { parameters: tool.inputSchema as Record<string, unknown> }),
-            })),
-          },
-        ]
+        return null
       }
+      const { token, baseUrl } = await resolveCodeAssistContext(model)
       const url = `${baseUrl}:countTokens`
       const doFetch = buildProxiedFetch() ?? fetch
       const response = await doFetch(url, {
         method: 'POST',
         headers: codeAssistHeaders(token),
-        body: JSON.stringify(buildCodeAssistEnvelope(model, project, request)),
+        body: JSON.stringify(buildCodeAssistCountRequest(model, messages)),
         signal: AbortSignal.timeout(30_000),
       })
       if (!response.ok) {
@@ -283,7 +288,6 @@ export class CodeAssistProviderAdapter implements LLMAdapter {
   async verifyApiKey(apiKey: string): Promise<boolean> {
     // OAuth 路径的 apiKey 参数即 access token；loadCodeAssist 轻量且不消耗
     // 生成配额，适合做凭证有效性探测
-    const { verifyGeminiSubscriptionAccess } = await import('../oauth/providers/geminiOauth.js')
     return verifyGeminiSubscriptionAccess(apiKey)
   }
 }

@@ -9,7 +9,8 @@
  */
 
 import { randomBytes } from 'node:crypto'
-import type { Server } from 'node:http'
+import { setTimeout as sleep } from 'node:timers/promises'
+import { createServer, type Server } from 'node:http'
 import { tSync } from '../../../i18n/index.js'
 import { oauthErrorHtml, oauthSuccessHtml } from './oauthPage.js'
 import type {
@@ -115,8 +116,6 @@ type CallbackServerInfo = {
 
 /** 启动本地回调服务器（端口被占用时直接失败，redirect URI 无法变更） */
 async function startCallbackServer(expectedState: string): Promise<CallbackServerInfo> {
-  const { createServer } = await import('node:http')
-
   return new Promise((resolve, reject) => {
     let settleWait: ((value: { code: string; state: string } | null) => void) | undefined
     const waitForCodePromise = new Promise<{ code: string; state: string } | null>(
@@ -186,8 +185,34 @@ async function startCallbackServer(expectedState: string): Promise<CallbackServe
   })
 }
 
+/** 交互回调没有取消 API，在等待边界监听并及时移除监听器。 */
+async function waitForLoginInput<T>(pending: Promise<T>, signal?: AbortSignal): Promise<T> {
+  signal?.throwIfAborted()
+  let onAbort: (() => void) | undefined
+  const aborted = new Promise<never>((_, reject) => {
+    onAbort = () => reject(signal?.reason)
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+  try {
+    return await Promise.race([pending, aborted])
+  } finally {
+    if (onAbort) {
+      signal?.removeEventListener('abort', onAbort)
+    }
+  }
+}
+
+function requestSignal(signal?: AbortSignal): AbortSignal {
+  const timeout = AbortSignal.timeout(30_000)
+  return signal ? AbortSignal.any([signal, timeout]) : timeout
+}
+
 /** 发送 form-urlencoded POST 请求（Google OAuth 端点要求该编码） */
-async function postForm(url: string, body: Record<string, string>): Promise<string> {
+async function postForm(
+  url: string,
+  body: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<string> {
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -195,7 +220,7 @@ async function postForm(url: string, body: Record<string, string>): Promise<stri
       Accept: 'application/json',
     },
     body: new URLSearchParams(body).toString(),
-    signal: AbortSignal.timeout(30_000),
+    signal: requestSignal(signal),
   })
 
   const responseBody = await response.text()
@@ -213,6 +238,7 @@ async function postCodeAssistJson(
   body: Record<string, unknown>,
   accessToken: string,
   userAgent: string,
+  signal?: AbortSignal,
 ): Promise<{ status: number; text: string }> {
   const response = await fetch(url, {
     method: 'POST',
@@ -224,7 +250,7 @@ async function postCodeAssistJson(
       'X-Goog-Api-Client': X_GOOG_API_CLIENT_UA,
     },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(30_000),
+    signal: requestSignal(signal),
   })
   const text = await response.text()
   if (!response.ok) {
@@ -281,14 +307,21 @@ export function defaultTierId(loadResponse: unknown): string {
 }
 
 /** 用授权码交换 token（Google 标准 form 编码端点） */
-async function exchangeAuthorizationCode(code: string): Promise<TokenResponse> {
-  const responseBody = await postForm(TOKEN_URL, {
-    grant_type: 'authorization_code',
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    code,
-    redirect_uri: REDIRECT_URI,
-  })
+async function exchangeAuthorizationCode(
+  code: string,
+  signal?: AbortSignal,
+): Promise<TokenResponse> {
+  const responseBody = await postForm(
+    TOKEN_URL,
+    {
+      grant_type: 'authorization_code',
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      code,
+      redirect_uri: REDIRECT_URI,
+    },
+    signal,
+  )
 
   const data = JSON.parse(responseBody) as Partial<TokenResponse> & { error?: string }
   if (!data.access_token) {
@@ -304,13 +337,13 @@ type TokenResponse = {
 }
 
 /** 获取登录账号 email（仅用于展示） */
-async function fetchUserInfo(accessToken: string): Promise<string> {
+async function fetchUserInfo(accessToken: string, signal?: AbortSignal): Promise<string> {
   const response = await fetch(USERINFO_URL, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'User-Agent': antigravityRequestUserAgent(),
     },
-    signal: AbortSignal.timeout(30_000),
+    signal: requestSignal(signal),
   })
   const text = await response.text()
   if (!response.ok) {
@@ -325,12 +358,14 @@ async function fetchUserInfo(accessToken: string): Promise<string> {
 /** loadCodeAssist 获取 cloudaicompanionProject 与默认 tier；project 缺失时走 onboardUser */
 async function loadCodeAssistProject(
   accessToken: string,
+  signal?: AbortSignal,
 ): Promise<{ project: string; tier: string }> {
   const { text } = await postCodeAssistJson(
     `${CODE_ASSIST_BASE_URL}/${API_VERSION}:loadCodeAssist`,
     { metadata: { ideType: 'ANTIGRAVITY' } },
     accessToken,
     antigravityRequestUserAgent(),
+    signal,
   )
   const loadResponse = JSON.parse(text) as unknown
   const project = extractCloudaicompanionProject(loadResponse)
@@ -342,7 +377,11 @@ async function loadCodeAssistProject(
 }
 
 /** onboardUser 按默认 tier 开通项目并轮询直到完成（最多 5 次 × 2s） */
-async function onboardUserProject(accessToken: string, tierId: string): Promise<string> {
+async function onboardUserProject(
+  accessToken: string,
+  tierId: string,
+  signal?: AbortSignal,
+): Promise<string> {
   const body = {
     tier_id: tierId,
     metadata: {
@@ -358,6 +397,7 @@ async function onboardUserProject(accessToken: string, tierId: string): Promise<
       body,
       accessToken,
       antigravityOnboardUserUserAgent(),
+      signal,
     )
     const data = JSON.parse(text) as Record<string, unknown>
 
@@ -370,7 +410,7 @@ async function onboardUserProject(accessToken: string, tierId: string): Promise<
     }
 
     // LRO 未完成，等待后重试
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await sleep(2000, undefined, { signal })
   }
 
   throw new Error('onboardUser did not complete after 5 attempts')
@@ -386,13 +426,18 @@ export async function loginGeminiOAuth(options: {
   onPrompt: (prompt: OAuthPrompt) => Promise<string>
   onProgress?: (message: string) => void
   onManualCodeInput?: () => Promise<string>
+  signal?: AbortSignal
 }): Promise<OAuthCredentials> {
   const state = randomBytes(16).toString('hex')
-  const server = await startCallbackServer(state)
+  const { signal } = options
+  signal?.throwIfAborted()
+  let server: CallbackServerInfo | undefined
 
   let code: string | undefined
 
   try {
+    server = await startCallbackServer(state)
+    signal?.throwIfAborted()
     const authParams = new URLSearchParams({
       access_type: 'offline',
       client_id: CLIENT_ID,
@@ -416,14 +461,14 @@ export async function loginGeminiOAuth(options: {
         .onManualCodeInput()
         .then((input) => {
           manualInput = input
-          server.cancelWait()
+          server?.cancelWait()
         })
         .catch((err) => {
           manualError = err instanceof Error ? err : new Error(String(err))
-          server.cancelWait()
+          server?.cancelWait()
         })
 
-      const result = await server.waitForCode()
+      const result = await waitForLoginInput(server.waitForCode(), signal)
       if (manualError) {
         throw manualError
       }
@@ -434,7 +479,7 @@ export async function loginGeminiOAuth(options: {
       }
 
       if (!code) {
-        await manualPromise
+        await waitForLoginInput(manualPromise, signal)
         if (manualError) {
           throw manualError
         }
@@ -443,7 +488,7 @@ export async function loginGeminiOAuth(options: {
         }
       }
     } else {
-      const result = await server.waitForCode()
+      const result = await waitForLoginInput(server.waitForCode(), signal)
       if (result?.code) {
         code = result.code
       }
@@ -451,10 +496,13 @@ export async function loginGeminiOAuth(options: {
 
     // 最终回退：提示用户手动输入
     if (!code) {
-      const input = await options.onPrompt({
-        message: tSync('oauth.gemini.pasteCodePrompt'),
-        placeholder: REDIRECT_URI,
-      })
+      const input = await waitForLoginInput(
+        options.onPrompt({
+          message: tSync('oauth.gemini.pasteCodePrompt'),
+          placeholder: REDIRECT_URI,
+        }),
+        signal,
+      )
       code = parseAndValidateCode(input, state)
     }
 
@@ -463,20 +511,21 @@ export async function loginGeminiOAuth(options: {
     }
 
     options.onProgress?.(tSync('oauth.gemini.exchangingToken'))
-    const tokens = await exchangeAuthorizationCode(code)
+    const tokens = await exchangeAuthorizationCode(code, signal)
 
     options.onProgress?.(tSync('oauth.gemini.fetchingProfile'))
-    const email = await fetchUserInfo(tokens.access_token)
+    const email = await fetchUserInfo(tokens.access_token, signal)
 
     options.onProgress?.(tSync('oauth.gemini.loadingProject'))
-    const loaded = await loadCodeAssistProject(tokens.access_token)
+    const loaded = await loadCodeAssistProject(tokens.access_token, signal)
     let project = loaded?.project ?? ''
     const tier = loaded?.tier ?? 'free-tier'
     if (!project) {
       options.onProgress?.(tSync('oauth.gemini.onboardingProject'))
-      project = await onboardUserProject(tokens.access_token, tier)
+      project = await onboardUserProject(tokens.access_token, tier, signal)
     }
 
+    signal?.throwIfAborted()
     return {
       refresh: tokens.refresh_token,
       access: tokens.access_token,
@@ -494,7 +543,14 @@ export async function loginGeminiOAuth(options: {
     }
     throw error
   } finally {
-    server.server.close()
+    if (server) {
+      server.cancelWait()
+      const callbackServer = server.server
+      await new Promise<void>((resolve) => {
+        callbackServer.close(() => resolve())
+        callbackServer.closeAllConnections()
+      })
+    }
   }
 }
 
@@ -574,6 +630,7 @@ export const geminiOAuthProvider: OAuthProviderInterface = {
       onPrompt: callbacks.onPrompt,
       onProgress: callbacks.onProgress,
       onManualCodeInput: callbacks.onManualCodeInput,
+      signal: callbacks.signal,
     })
   },
 

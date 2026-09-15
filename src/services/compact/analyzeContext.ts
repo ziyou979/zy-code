@@ -244,8 +244,15 @@ export async function countToolDefinitionTokens(
     logForDebugging(
       `countToolDefinitionTokens returned ${result} for ${tools.length} tools: ${toolNames.slice(0, 100)}${toolNames.length > 100 ? '...' : ''}`,
     )
+    // 服务端 countTokens 不可用（如 Code Assist 拒绝对含 tools 的请求计数、
+    // 或 API 瞬时失败）时回退本地粗估，/context 工具类别不再静默归零；
+    // 粗估口径与 api.ts 的 MCP 工具统计一致（schema 序列化 JSON 后按字节/4）。
+    return toolSchemas.reduce(
+      (acc, schema) => acc + roughTokenCountEstimation(jsonStringify(schema)),
+      0,
+    )
   }
-  return result ?? 0
+  return result
 }
 
 /** 从 system prompt 段落的内容中提取一个可读名称 */
