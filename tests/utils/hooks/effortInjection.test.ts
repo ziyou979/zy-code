@@ -28,8 +28,13 @@ async function setupMocks() {
     getLocalModelEffortLevels: () => LEVELS,
   })
   // 不 mock providerRegistry（mock.restore 无法可靠恢复 ESM 缓存会导致跨文件污染）。
-  // 改为 mock providers.js 的 getAPIProvider 返回不存在的 provider，
-  // 让 getProviderEntry 自然返回 undefined，effort 走 localModelCapabilities 路径。
+  // 这里只 fake getAPIProvider（返回不存在的 provider），保留真实 getProviderAttr：
+  // 真实 getProviderEntry('test-no-effort-provider') → undefined → 不注入 thinking
+  // 属性，effort 走 localModelCapabilities 路径。历史版本还要求钉死
+  // getEffectiveApiFormat（providers.js 内部 getProviderAttr 经由同模块的
+  // getEffectiveApiFormat 判格式，被其他文件全局 mock 如 betas.test.ts 强制
+  // 'openai-chat' 劫持时会凭空注入默认 thinking 属性，让"模型不支持 effort"
+  // 用例误判为支持 ['off','on']）；改走 undefined-entry 路径后该依赖已切断。
   await spread('../../../src/services/model/providers.js', {
     getAPIProvider: () => 'test-no-effort-provider',
   })

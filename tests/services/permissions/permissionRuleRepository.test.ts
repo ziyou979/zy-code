@@ -8,23 +8,47 @@
  *   - session/cliArg 来源不触发磁盘写入
  *   - 删除后内存上下文同步
  */
-import { beforeEach, describe, expect, test, mock } from 'bun:test'
+import { afterAll, afterEach, beforeEach, describe, expect, test, mock } from 'bun:test'
 import type { ToolPermissionContext } from '../../../src/tools/tool.js'
 import type { PermissionRule } from 'src/types/permissions.js'
+// Bun 的 mock.module factory 内不能 import 被 mock 的目标模块（返回空对象，
+// 透传失效甚至卡死加载链），真实导出必须在 factory 外顶层加载。
+import * as permissionsLoaderActual from '../../../src/services/permissions/permissionsLoader.js'
+import * as permissionUpdateActual from '../../../src/services/permissions/permissionUpdate.js'
+
+// mock.module 是进程级全局替换且 mock.restore() 不撤销它：此前窄面 mock
+// （permissionsLoader / permissionUpdate 各只给一个导出）丢失其余导出
+// （如 createReadRuleSuggestion），泄漏给同 worker 后续文件报
+// "Export named ... not found"。统一改为真实快照 spread + 仅覆盖所需导出；
+// fake 只在测试体内登记，afterEach 恢复真实快照、afterAll 兜底。
+const MOCK_PATHS = {
+  permissionsLoader: '../../../src/services/permissions/permissionsLoader.js',
+  permissionUpdate: '../../../src/services/permissions/permissionUpdate.js',
+} as const
 
 // 模拟 permissionsLoader 中的 deletePermissionRuleFromSettings
 const mockDeleteFromSettings = mock<(rule: { source: string }) => boolean>(() => true)
-mock.module('../../../src/services/permissions/permissionsLoader.js', () => ({
-  deletePermissionRuleFromSettings: mockDeleteFromSettings,
-}))
 
 // 模拟 permissionUpdate 中的 applyPermissionUpdate
 const mockApplyUpdate = mock<
   (ctx: ToolPermissionContext, update: unknown) => ToolPermissionContext
 >((ctx, _update) => ctx)
-mock.module('../../../src/services/permissions/permissionUpdate.js', () => ({
-  applyPermissionUpdate: mockApplyUpdate,
-}))
+
+function registerMocks() {
+  mock.module(MOCK_PATHS.permissionsLoader, () => ({
+    ...permissionsLoaderActual,
+    deletePermissionRuleFromSettings: mockDeleteFromSettings,
+  }))
+  mock.module(MOCK_PATHS.permissionUpdate, () => ({
+    ...permissionUpdateActual,
+    applyPermissionUpdate: mockApplyUpdate,
+  }))
+}
+
+function restoreRealModules() {
+  mock.module(MOCK_PATHS.permissionsLoader, () => ({ ...permissionsLoaderActual }))
+  mock.module(MOCK_PATHS.permissionUpdate, () => ({ ...permissionUpdateActual }))
+}
 
 // 在所有 mock 之后导入被测模块
 const { deletePermissionRule } = await import(
@@ -47,11 +71,17 @@ describe('deletePermissionRule', () => {
   let setContext: ReturnType<typeof mock>
 
   beforeEach(() => {
+    registerMocks()
     mockDeleteFromSettings.mockClear()
     mockDeleteFromSettings.mockImplementation(() => true)
     mockApplyUpdate.mockClear()
     mockApplyUpdate.mockReturnValue(createMockContext())
     setContext = mock<(ctx: ToolPermissionContext) => void>(() => {})
+  })
+
+  afterEach(() => {
+    mock.restore()
+    restoreRealModules()
   })
 
   // -----------------------------------------------------------------------
@@ -262,4 +292,8 @@ describe('deletePermissionRule', () => {
     })
     expect(setContext).toHaveBeenCalledWith(updatedContext)
   })
+})
+
+afterAll(() => {
+  restoreRealModules()
 })

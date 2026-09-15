@@ -1,5 +1,11 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
+import { afterAll, afterEach, describe, expect, mock, test } from 'bun:test'
 import { lstat as lstatCallback, realpath as realpathCallback } from 'node:fs'
+// Bun 的 mock.module factory 内不能 import 被 mock 的目标模块，真实导出必须在
+// factory 外顶层加载。此前本文件把 node:fs/promises 窄面替换成只含 lstat/
+// realpath 的对象，丢失 rmdir/unlink 等其余导出且无恢复——泄漏给同 worker 任何
+// 使用 fs/promises 的文件（报 "Export named 'rmdir'/'unlink' not found"）。
+// 改为真实快照 spread + 仅覆盖所需两函数，afterAll 尽力恢复真实快照。
+import * as fsPromisesActual from 'node:fs/promises'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
 
@@ -8,6 +14,7 @@ const realRealpath = promisify(realpathCallback)
 const deniedMarker = 'permission-denied-memory'
 
 mock.module('node:fs/promises', () => ({
+  ...fsPromisesActual,
   lstat: async (path: string) => {
     if (path.includes(deniedMarker)) {
       throw Object.assign(new Error('permission denied'), { code: 'EACCES' })
@@ -21,6 +28,10 @@ mock.module('node:fs/promises', () => ({
     return realRealpath(path)
   },
 }))
+
+afterAll(() => {
+  mock.module('node:fs/promises', () => ({ ...fsPromisesActual }))
+})
 
 const { getAutoMemPath } = await import('../../src/memdir/paths.js')
 const { isTeamMemPath, PathTraversalError, validateTeamMemWritePath } = await import(
