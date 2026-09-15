@@ -118,4 +118,5 @@ export const enAgents: TranslationResource = {
   'agentView.pending': 'pending',
   'agentView.running': 'running',
   'agentView.title': '\u{1f916}\uFE0E Agent Sessions',
+  'agents.toolSelector.toolCount': 'tools',
 }

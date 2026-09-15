@@ -2,6 +2,7 @@ import { resolve } from 'node:path'
 import type { StructuredPatchHunk } from 'diff'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { Box, Text } from '../../ink/index.js'
+import { tSync } from '../../i18n/index.js'
 import { getCwd } from '../../services/environment/cwd.js'
 import { readFileSafe } from '../../services/infra/file.js'
 import { Divider } from '../design-system/Divider.js'
@@ -52,7 +53,7 @@ export function DiffDetailView({
         {
           <Box>
             {<Text bold={true}>{filePath}</Text>}
-            {<Text dimColor={true}> (untracked)</Text>}
+            {<Text dimColor={true}> {tSync('ui.diff.untracked')}</Text>}
           </Box>
         }
         {<Divider padding={4} />}
@@ -111,7 +112,7 @@ export function DiffDetailView({
   }
   const textElement =
     hunks.length === 0 ? (
-      <Text dimColor={true}>No diff content</Text>
+      <Text dimColor={true}>{tSync('ui.diff.noContent')}</Text>
     ) : (
       hunks.map((hunk, index) => (
         <StructuredDiff
@@ -130,14 +131,14 @@ export function DiffDetailView({
       {
         <Box>
           {<Text bold={true}>{filePath}</Text>}
-          {isTruncated && <Text dimColor={true}> (truncated)</Text>}
+          {isTruncated && <Text dimColor={true}> {tSync('ui.diff.truncated')}</Text>}
         </Box>
       }
       {<Divider padding={4} />}
       {<Box flexDirection="column">{textElement}</Box>}
       {isTruncated && (
         <Text dimColor={true} italic={true}>
-          … diff truncated (exceeded 400 line limit)
+          {tSync('ui.diff.truncatedLimit')}
         </Text>
       )}
     </Box>

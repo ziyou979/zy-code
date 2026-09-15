@@ -2,7 +2,7 @@
  * getAPIErrorSeverity 测试：验证 terminal / retryable 分类正确。
  */
 import { describe, expect, test } from 'bun:test'
-import { getAPIErrorSeverity } from '../../../src/services/api/errors.js'
+import { CUSTOM_OFF_SWITCH_MESSAGE, getAPIErrorSeverity } from '../../../src/services/api/errors.js'
 
 describe('getAPIErrorSeverity', () => {
   // isAPIError 使用鸭子类型：Error 实例 + 数值 status 字段
@@ -25,9 +25,9 @@ describe('getAPIErrorSeverity', () => {
   })
 
   test('terminal: 紧急容量关闭', () => {
-    expect(getAPIErrorSeverity(new Error('当前模型负载较高，请使用 /model 切换到其他模型'))).toBe(
-      'terminal',
-    )
+    // 分类以 CUSTOM_OFF_SWITCH_MESSAGE 常量为匹配键（文案已改英文、与
+    // AssistantTextMessage 的 case 匹配共用），断言直接引用常量避免绑定措辞。
+    expect(getAPIErrorSeverity(new Error(CUSTOM_OFF_SWITCH_MESSAGE))).toBe('terminal')
   })
 
   test('terminal: 401 认证错误', () => {

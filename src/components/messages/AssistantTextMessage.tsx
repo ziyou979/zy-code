@@ -2,6 +2,7 @@ import { useContext } from 'react'
 import { ERROR_MESSAGE_USER_ABORT } from 'src/services/compact/compact.js'
 import { isRateLimitErrorMessage } from 'src/services/rateLimitMessages.js'
 import { BLACK_CIRCLE } from '../../constants/figures.js'
+import { tSync } from '../../i18n/index.js'
 import { Box, NoSelect, Text } from '../../ink/index.js'
 import {
   API_ERROR_MESSAGE_PREFIX,
@@ -124,16 +125,16 @@ export function AssistantTextMessage({
       )
     }
     case CUSTOM_OFF_SWITCH_MESSAGE: {
-      const highDemandMessage = (
-        <Text color="error">We are experiencing high demand for Opus 4.</Text>
-      )
+      // 常量只是持久化的匹配 token（content 键，错误分类与旧会话回放依赖它，
+      // 值不可变更）；用户可见文案在渲染时经 i18n 取词，切换语言不会漏翻译。
       return (
         <MessageResponse>
           <Box flexDirection="column" gap={1}>
-            {highDemandMessage}
+            <Text color="error">{tSync('rateLimit.offSwitchHighDemand')}</Text>
             <Text>
-              To continue immediately, use /model to switch to{' '}
-              {renderModelName(getDefaultStandardModel()!)} and continue coding.
+              {tSync('rateLimit.offSwitchContinue', {
+                model: renderModelName(getDefaultStandardModel()!),
+              })}
             </Text>
           </Box>
         </MessageResponse>

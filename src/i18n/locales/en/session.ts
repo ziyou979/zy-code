@@ -254,4 +254,32 @@ export const enSession: TranslationResource = {
   'worktree.tmuxTerminated': ' Tmux session terminated.',
   'worktree.was': 'was',
   'worktree.were': 'were',
+  'auth.login.successful': 'Login successful!',
+  'auth.login.failed': 'Login failed: {error}',
+  'auth.status.apiKeyEnvVar': 'Authenticated via API key environment variable',
+  'auth.status.notLoggedIn': 'Not logged in. Use /login to sign in.',
+  'auth.logout.successful': 'Logged out successfully',
+  'auth.logout.failed': 'Logout failed: {error}',
+  'managedSettings.requireApproval': 'Managed Settings Require Approval',
+  'managedSettings.orgConfiguredWarning':
+    'Your organization has configured managed settings for this repository.',
+  'managedSettings.requiringApproval':
+    'These settings will override local configurations and require your explicit approval.',
+  'managedSettings.onlyAcceptIfTrust': 'Only accept if you trust the source organization.',
+  'managedSettings.yesTrust': 'Yes, I trust and apply settings',
+  'managedSettings.noExit': 'No, exit without applying',
+  'managedSettings.pressAgainToExit': 'Press {keyName} again to exit',
+  'managedSettings.enterConfirmEscExit': 'Enter to confirm · Esc to exit',
+  'rateLimit.resetsAtWithSubject': ' · Your {limitName} resets at {time}',
+  'rateLimit.feedbackAntChannel':
+    '. If you have feedback about this limit, please post in {channel}. You can use /reset-limits to reset limits',
+  'rateLimit.offSwitchHighDemand': 'We are experiencing high demand for Opus 4.',
+  'rateLimit.offSwitchContinue':
+    'To continue immediately, use /model to switch to {model} and continue coding.',
+  'rateLimit.temporaryCapacity':
+    'This might be a temporary capacity issue, please try again shortly.',
+  'agent.capacity.maxConcurrentReached':
+    'Maximum concurrent agent limit reached ({max}). Please wait for current agents to finish and try again.',
+  'agent.capacity.maxResidentReached':
+    'Maximum resident agent limit reached ({max}), and all agents are running. Cannot create new agent.',
 }

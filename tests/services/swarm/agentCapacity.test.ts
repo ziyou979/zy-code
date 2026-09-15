@@ -6,6 +6,7 @@ import {
   checkSpawnCapacity,
   findOldestIdleAgent,
 } from '../../../src/services/swarm/agentCapacity.js'
+import { tSync } from '../../../src/i18n/index.js'
 import type { AppState } from '../../../src/state/AppStateStore.js'
 import {
   MAX_CONCURRENT_IN_PROCESS_AGENTS,
@@ -87,6 +88,11 @@ describe('checkSpawnCapacity', () => {
     expect(result.residentCount).toBe(MAX_RESIDENT_AGENTS)
   })
 
+  // reason 走 tSync('agent.capacity.maxConcurrentReached', {max})：断言与实现
+  // 同键同源渲染，同时校验 key 选择与 max 参数注入，不绑定具体语种措辞。
+  const maxConcurrentReason = () =>
+    tSync('agent.capacity.maxConcurrentReached', { max: MAX_CONCURRENT_IN_PROCESS_AGENTS })
+
   test('concurrent 超限时拒绝 spawn', () => {
     const tasks = []
     for (let i = 0; i < MAX_CONCURRENT_IN_PROCESS_AGENTS; i++) {
@@ -95,7 +101,7 @@ describe('checkSpawnCapacity', () => {
     const state = mockState(tasks)
     const result = checkSpawnCapacity(() => state)
     expect(result.canSpawn).toBe(false)
-    expect(result.reason).toContain('并发')
+    expect(result.reason).toBe(maxConcurrentReason())
   })
 
   test('resident + concurrent 同时超限时优先返回 concurrent 错误', () => {
@@ -106,7 +112,7 @@ describe('checkSpawnCapacity', () => {
     const state = mockState(tasks)
     const result = checkSpawnCapacity(() => state)
     expect(result.canSpawn).toBe(false)
-    expect(result.reason).toContain('并发')
+    expect(result.reason).toBe(maxConcurrentReason())
   })
 
   test('resident 超限、concurrent 未超限且无 idle agent 时拒绝 spawn', () => {

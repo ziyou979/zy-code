@@ -48,4 +48,6 @@ export const enChat: TranslationResource = {
   'contextVis.systemToolsDeferred': 'System tools (deferred)',
   'contextVis.title': 'Context Usage',
   'contextVis.waitingForTrigger': 'waiting for first trigger',
+  'systemMessage.hookSummary': 'Hook {name} executed in {duration}ms',
+  'teammate.toolUseCount': '{count} tool calls',
 }

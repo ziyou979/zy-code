@@ -14,6 +14,7 @@ import {
   MAX_RESIDENT_AGENTS,
 } from '../../tasks/in-process-teammate-task/types.js'
 import { logForDebugging } from '../../services/infra/debug.js'
+import { tSync } from '../../i18n/index.js'
 
 export type CapacityCheckResult = {
   /** 是否可以继续 spawn */
@@ -81,7 +82,9 @@ export function checkSpawnCapacity(getAppState: () => AppState): CapacityCheckRe
   if (concurrentCount >= MAX_CONCURRENT_IN_PROCESS_AGENTS) {
     return {
       canSpawn: false,
-      reason: `已达到最大并发 agent 数 (${MAX_CONCURRENT_IN_PROCESS_AGENTS})。请等待当前 agent 完成后重试。`,
+      reason: tSync('agent.capacity.maxConcurrentReached', {
+        max: MAX_CONCURRENT_IN_PROCESS_AGENTS,
+      }),
       residentCount,
       concurrentCount,
     }
@@ -106,7 +109,7 @@ export function checkSpawnCapacity(getAppState: () => AppState): CapacityCheckRe
     // 所有 resident agent 都在工作中，拒绝
     return {
       canSpawn: false,
-      reason: `已达到最大驻留 agent 数 (${MAX_RESIDENT_AGENTS})，且所有 agent 均在运行中。无法创建新 agent。`,
+      reason: tSync('agent.capacity.maxResidentReached', { max: MAX_RESIDENT_AGENTS }),
       residentCount,
       concurrentCount,
     }

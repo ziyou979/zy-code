@@ -48,4 +48,6 @@ export const zhChat: TranslationResource = {
   'contextVis.systemToolsDeferred': '系统工具（延迟加载）',
   'contextVis.title': '上下文使用情况',
   'contextVis.waitingForTrigger': '等待首次触发',
+  'systemMessage.hookSummary': '钩子 {name} 执行完毕，耗时 {duration} 毫秒',
+  'teammate.toolUseCount': '{count} 次工具调用',
 }
