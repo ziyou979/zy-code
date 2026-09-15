@@ -304,7 +304,7 @@ export async function handlePromptSubmit(params: HandlePromptSubmitParams): Prom
       }
 
       const impl = await immediateCommand.load()
-      const jsx = await impl.call(
+      const commandJsx = await impl.call(
         onDone,
         { ...context, invokedAs: commandName },
         commandArgs,
@@ -313,9 +313,9 @@ export async function handlePromptSubmit(params: HandlePromptSubmitParams): Prom
 
       // Skip if onDone already fired — prevents stuck isLocalJSXCommand
       // (see ProcessSlashCommand.tsx local-jsx case for full mechanism).
-      if (jsx && !doneWasCalled) {
+      if (commandJsx && !doneWasCalled) {
         setToolJSX({
-          jsx,
+          jsx: commandJsx,
           shouldHidePromptInput: false,
           isLocalJSXCommand: true,
           isImmediate: true,

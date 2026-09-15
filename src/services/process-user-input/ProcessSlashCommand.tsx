@@ -786,8 +786,8 @@ async function getMessagesForSlashCommand(
                 commandName,
               ),
             )
-            .then((jsx) => {
-              if (jsx == null) {
+            .then((commandJsx) => {
+              if (commandJsx == null) {
                 return
               }
               if (context.options.isNonInteractiveSession) {
@@ -809,7 +809,7 @@ async function getMessagesForSlashCommand(
                 return
               }
               setToolJSX({
-                jsx,
+                jsx: commandJsx,
                 shouldHidePromptInput: true,
                 showSpinner: false,
                 isLocalJSXCommand: true,

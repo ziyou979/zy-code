@@ -58,9 +58,9 @@ function RateLimitOptionsMenu({ onDone, context }: RateLimitOptionsMenuProps) {
   const handleSelect = function handleSelect(value: RateLimitOptionsMenuOptionType) {
     if (value === 'upgrade') {
       logEvent('zy_rate_limit_options_menu_select_upgrade', {})
-      upgradeCall(onDone, context).then((jsx) => {
-        if (jsx) {
-          setSubCommandJSX(jsx)
+      upgradeCall(onDone, context).then((subJsx) => {
+        if (subJsx) {
+          setSubCommandJSX(subJsx)
         }
       })
     } else if (value === 'cancel') {
