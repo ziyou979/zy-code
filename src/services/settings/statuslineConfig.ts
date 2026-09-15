@@ -16,7 +16,11 @@ import { safeParseJSON } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../services/infra/log.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
-import { STATUSLINE_MODULE_IDS, type StatuslineModuleConfig } from './statuslineTypes.js'
+import {
+  STATUSLINE_MODULE_IDS,
+  STATUSLINE_PATH_MODES,
+  type StatuslineModuleConfig,
+} from './statuslineTypes.js'
 
 // ─── Schema ────────────────────────────────────────────────────────
 
@@ -26,6 +30,11 @@ const StatuslineModuleSchema = lazySchema(() =>
     visible: z.boolean().optional().default(true),
     icon: z.string().optional(),
     color: z.string().optional(),
+    // directory 模块：路径显示方式（'name' | 'full'）。zod 默认 strip 未知键，
+    // 新字段必须显式声明，否则保存 statusline.json 时会被丢掉。
+    pathMode: z.enum(STATUSLINE_PATH_MODES).optional(),
+    // speed 模块：TTFT 前缀符号，'' 表示不显示
+    ttftSymbol: z.string().optional(),
   }),
 )
 

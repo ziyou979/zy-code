@@ -9,10 +9,12 @@
  * - COLOR_TOKENS is the picker library for theme color tokens.
  */
 
+import { TAU } from '../../constants/figures.js'
 import {
   STATUSLINE_MODULE_IDS,
   type StatuslineModuleConfig,
   type StatuslineModuleId,
+  type StatuslinePathMode,
 } from '../../services/settings/statuslineTypes.js'
 
 export const MODULE_IDS = STATUSLINE_MODULE_IDS
@@ -24,7 +26,13 @@ export type ModuleConfig = StatuslineModuleConfig
  * When the terminal is too narrow, trailing modules are dropped first.
  */
 export const DEFAULT_MODULES: readonly ModuleConfig[] = [
-  { id: 'directory', visible: true, icon: '▸', color: 'rainbow_blue_shimmer' },
+  {
+    id: 'directory',
+    visible: true,
+    icon: '▸',
+    color: 'rainbow_blue_shimmer',
+    pathMode: 'name',
+  },
   { id: 'model', visible: true, icon: '', color: 'rainbow_violet_shimmer' },
   { id: 'context', visible: true, icon: '⛁', color: 'success' },
   { id: 'tokens', visible: true, icon: '', color: 'suggestion' },
@@ -51,6 +59,14 @@ export const ICON_LIBRARY: Record<ModuleId, readonly string[]> = {
   cost: ['¥', '$', '€', '£', '₩', '₹', '₽', '₿', ''],
   memory: ['☰', '▤', '≡', '▥', '▣', '◫', '☱', '☷', ''],
 }
+
+/**
+ * Curated TTFT symbol library for the speed module（嵌入段内、非模块前缀 icon）。
+ * 全部 1 格宽：避开 ⏱/emoji 类（JetBrains 内置终端缺字形或宽度错乱，
+ * 理由同 constants/figures.ts 的 TAU 注释），希腊字母/箭头区覆盖稳定。
+ * 默认不显示符号（''）——「首token」文案已自解释，符号仅是可选装饰。
+ */
+export const TTFT_SYMBOL_LIBRARY: readonly string[] = [TAU, 't', '†', '→', '⇣', '']
 
 /**
  * Curated theme color tokens for the color picker. Each entry references a
@@ -91,6 +107,23 @@ export function effectiveColor(module: ModuleConfig): string {
   }
   const def = DEFAULT_MODULES.find((m) => m.id === module.id)
   return def?.color ?? 'text'
+}
+
+/** Resolves directory module path display mode, defaulting to project name. */
+export function effectivePathMode(module: ModuleConfig): StatuslinePathMode {
+  if (module.pathMode !== undefined) {
+    return module.pathMode
+  }
+  const def = DEFAULT_MODULES.find((m) => m.id === module.id)
+  return def?.pathMode ?? 'name'
+}
+
+/**
+ * Resolves speed module TTFT symbol。默认 ''（不显示符号）：
+ * 「首token」文案已自解释，符号由用户在 /statusline 里自选装饰。
+ */
+export function effectiveTtftSymbol(module: ModuleConfig): string {
+  return module.ttftSymbol ?? ''
 }
 
 /**

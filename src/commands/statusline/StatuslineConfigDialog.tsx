@@ -13,11 +13,18 @@ import {
   DEFAULT_MODULES,
   effectiveColor,
   effectiveIcon,
+  effectivePathMode,
+  effectiveTtftSymbol,
   ICON_LIBRARY,
   type ModuleConfig,
   type ModuleId,
   mergeWithDefaults,
+  TTFT_SYMBOL_LIBRARY,
 } from '../../components/statusbar/statusbarModuleDefaults.js'
+import {
+  STATUSLINE_PATH_MODES,
+  type StatuslinePathMode,
+} from '../../services/settings/statuslineTypes.js'
 import { BALLOT_BOX, CHECKBOX_CHECKED } from '../../constants/figures.js'
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { useSettings } from '../../hooks/useSettings.js'
@@ -33,7 +40,7 @@ import { getEffectiveStatuslineConfig } from '../../services/settings/statusline
 import { resolveThemeSetting } from '../../services/environment/systemTheme.js'
 import { getTheme, type Theme } from '../../services/environment/theme.js'
 
-type Mode = 'main' | 'icon' | 'color'
+type Mode = 'main' | 'icon' | 'color' | 'path' | 'ttft'
 
 type Props = {
   initial: readonly ModuleConfig[]
@@ -127,6 +134,22 @@ export function StatuslineConfigDialog({ initial, onSave, onCancel }: Props): Re
     [focusedId],
   )
 
+  const setPathMode = useCallback(
+    (pathMode: StatuslinePathMode) => {
+      setModules((prev) => prev.map((m) => (m.id === focusedId ? { ...m, pathMode } : m)))
+      setMode('main')
+    },
+    [focusedId],
+  )
+
+  const setTtftSymbol = useCallback(
+    (ttftSymbol: string) => {
+      setModules((prev) => prev.map((m) => (m.id === focusedId ? { ...m, ttftSymbol } : m)))
+      setMode('main')
+    },
+    [focusedId],
+  )
+
   // ─── Custom keybindings (only active on main view) ────────────────────
   useInput(
     (input, key) => {
@@ -151,6 +174,15 @@ export function StatuslineConfigDialog({ initial, onSave, onCancel }: Props): Re
       }
       if (input === 'c') {
         setMode('color')
+        return
+      }
+      // p / t 只对特定模块有意义：p 仅 directory（路径显示方式），t 仅 speed（TTFT 符号）
+      if (input === 'p' && focusedId === 'directory') {
+        setMode('path')
+        return
+      }
+      if (input === 't' && focusedId === 'speed') {
+        setMode('ttft')
         return
       }
       if (input === 'r') {
@@ -206,6 +238,20 @@ export function StatuslineConfigDialog({ initial, onSave, onCancel }: Props): Re
           <ColorPickerView
             module={modules[focusedIndex]!}
             onPick={setColor}
+            onCancel={() => setMode('main')}
+          />
+        )}
+        {mode === 'path' && focusedIndex >= 0 && (
+          <PathModePickerView
+            module={modules[focusedIndex]!}
+            onPick={setPathMode}
+            onCancel={() => setMode('main')}
+          />
+        )}
+        {mode === 'ttft' && focusedIndex >= 0 && (
+          <TtftSymbolPickerView
+            module={modules[focusedIndex]!}
+            onPick={setTtftSymbol}
             onCancel={() => setMode('main')}
           />
         )}
@@ -436,6 +482,87 @@ function ColorPickerView({
 function resolveColor(theme: Theme, token: string): string {
   const value = (theme as unknown as Record<string, string>)[token]
   return value ?? token
+}
+
+/**
+ * directory 模块的路径显示方式选择器：项目名（basename）或全路径。
+ * 默认 'name' 与历史行为一致。
+ */
+function PathModePickerView({
+  module,
+  onPick,
+  onCancel,
+}: {
+  module: ModuleConfig
+  onPick: (mode: StatuslinePathMode) => void
+  onCancel: () => void
+}): React.ReactNode {
+  const options = STATUSLINE_PATH_MODES.map((mode) => ({
+    value: mode,
+    // Text-only label（Select 外层包 <Text>，此处不能再嵌 Box）
+    label: <Text>{tSync(`statusline.pathMode.${mode}` as never)}</Text>,
+  }))
+  const current = effectivePathMode(module)
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>
+        {tSync('statusline.pathPicker.title', {
+          module: tSync(`statusline.module.${module.id}` as never),
+        })}
+      </Text>
+      <Select
+        options={options}
+        defaultFocusValue={current}
+        onChange={(v: string) => onPick(v as StatuslinePathMode)}
+        onCancel={onCancel}
+        hideIndexes
+      />
+      <Text dimColor>{tSync('statusline.dialog.pickHints')}</Text>
+    </Box>
+  )
+}
+
+/**
+ * speed 模块的 TTFT 前缀符号选择器（τ 默认，'' 表示不显示符号）。
+ * 与 IconPickerView 同款「符号 + 说明」两列标签，保持视觉一致。
+ */
+function TtftSymbolPickerView({
+  module,
+  onPick,
+  onCancel,
+}: {
+  module: ModuleConfig
+  onPick: (symbol: string) => void
+  onCancel: () => void
+}): React.ReactNode {
+  const options = TTFT_SYMBOL_LIBRARY.map((sym) => ({
+    value: sym === '' ? '__none__' : sym,
+    label: (
+      <Text>
+        {padVisual(sym || ' ', stringWidth(sym || ' '), 3)}
+        <Text dimColor>{sym === '' ? tSync('statusline.ttftSymbol.none') : sym}</Text>
+      </Text>
+    ),
+  }))
+  const current = effectiveTtftSymbol(module)
+  const defaultFocus = current === '' ? '__none__' : current
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>
+        {tSync('statusline.ttftSymbolPicker.title', {
+          module: tSync(`statusline.module.${module.id}` as never),
+        })}
+      </Text>
+      <Select
+        options={options}
+        defaultFocusValue={defaultFocus}
+        onChange={(v: string) => onPick(v === '__none__' ? '' : v)}
+        onCancel={onCancel}
+        hideIndexes
+      />
+      <Text dimColor>{tSync('statusline.dialog.pickHints')}</Text>
+    </Box>
+  )
 }
 
 // ─── Public helper to wire into the slash command ──────────────────────────
