@@ -4,6 +4,7 @@
 import { describe, expect, test } from 'bun:test'
 import {
   findLongestCommonPrefix,
+  selectIndexedFiles,
   getDirectoryNames,
   pathListSignature,
 } from '../../src/hooks/fileSuggestions.js'
@@ -30,4 +31,15 @@ describe('fileSuggestions', () => {
     const dirs = getDirectoryNames(files)
     expect(dirs).toContain(`src${require('node:path').sep}`)
   })
+})
+
+test('初次构建与后台合并均限制文件数且优先保留配置文件', () => {
+  const tracked = Array.from({ length: 60000 }, (_, i) => `src/${i}.ts`)
+  const config = ['.zy/config.md']
+  const initial = selectIndexedFiles(config, tracked)
+  const merged = selectIndexedFiles(config, tracked, ['new.ts'])
+  expect(initial).toHaveLength(50000)
+  expect(merged).toEqual(initial)
+  expect(merged[0]).toBe(config[0])
+  expect(selectIndexedFiles(['a'], ['a', 'b'])).toEqual(['a', 'b'])
 })

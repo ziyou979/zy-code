@@ -48,9 +48,22 @@ let untrackedFetchPromise: Promise<void> | null = null
 let cachedTrackedFiles: string[] = []
 // 缓存配置文件，以便 mergeUntrackedIntoNormalizedCache 保留它们
 let cachedConfigFiles: string[] = []
-// 缓存已跟踪目录，以便 mergeUntrackedIntoNormalizedCache 不必
-// 在每次合并时重新计算约 27 万次 path.dirname() 调用
-let cachedTrackedDirs: string[] = []
+// 初次构建与后台合并共享文件预算；目录只从入选文件派生。
+const MAX_INDEXED_FILES = 50_000
+
+/** 两条索引构建路径共用容量预算，先去重再截断，避免合并时恢复完整列表。 */
+export function selectIndexedFiles(...groups: readonly string[][]): string[] {
+  const files = new Set<string>()
+  for (const group of groups) {
+    for (const file of group) {
+      files.add(file)
+      if (files.size >= MAX_INDEXED_FILES) {
+        return [...files]
+      }
+    }
+  }
+  return [...files]
+}
 
 // .ignore/.rgignore 模式缓存（以 repoRoot:cwd 为键）
 let ignorePatternsCache: ReturnType<typeof ignore> | null = null
@@ -81,7 +94,6 @@ export function clearFileSuggestionCaches(): void {
   untrackedFetchPromise = null
   cachedTrackedFiles = []
   cachedConfigFiles = []
-  cachedTrackedDirs = []
   indexBuildComplete.clear()
   ignorePatternsCache = null
   ignorePatternsCacheKey = null
@@ -165,20 +177,26 @@ async function mergeUntrackedIntoNormalizedCache(normalizedUntracked: string[]):
     return
   }
 
-  const untrackedDirs = await getDirectoryNamesAsync(normalizedUntracked)
-  const allPaths = [
-    ...cachedTrackedFiles,
-    ...cachedConfigFiles,
-    ...cachedTrackedDirs,
-    ...normalizedUntracked,
-    ...untrackedDirs,
-  ]
+  // 捕获代际与索引实例：getDirectoryNamesAsync 会分块让出事件循环，
+  // 期间 clearFileSuggestionCaches 可能重置缓存甚至把 fileIndex 置空。
+  const generation = cacheGeneration
+  const index = fileIndex
+
+  const files = selectIndexedFiles(cachedConfigFiles, cachedTrackedFiles, normalizedUntracked)
+  const directories = await getDirectoryNamesAsync(files)
+  const allPaths = [...directories, ...files]
   const sig = pathListSignature(allPaths)
   if (sig === loadedMergedSignature) {
     logForDebugging(`[FileIndex] 跳过索引重建 — 合并路径未变更`)
     return
   }
-  await fileIndex.loadFromFileListAsync(allPaths).done
+  await index.loadFromFileListAsync(allPaths).done
+  // 对齐 CC "discarding refresh results"：刷新中途缓存被重置时丢弃过期结果，
+  // 不把签名写到已被替换的索引上（否则下次重建被错误跳过）。
+  if (generation !== cacheGeneration) {
+    logForDebugging(`[FileIndex] 丢弃合并结果 — 缓存中途被重置`)
+    return
+  }
   loadedMergedSignature = sig
   logForDebugging(
     `[FileIndex] 已用 ${cachedTrackedFiles.length} 个已跟踪 + ${normalizedUntracked.length} 个未跟踪文件重建索引`,
@@ -286,7 +304,7 @@ async function getFilesUsingGit(
     }
 
     // 缓存已跟踪文件，稍后与未跟踪文件合并
-    cachedTrackedFiles = normalizedTracked
+    cachedTrackedFiles = selectIndexedFiles(normalizedTracked)
 
     const duration = Date.now() - startTime
     logForDebugging(
@@ -460,7 +478,11 @@ async function getProjectFiles(
   }
 
   const files = await ripGrep(rgArgs, '.', abortSignal)
-  const relativePaths = files.map((f) => path.relative(getCwd(), f))
+  // rg 多线程并行遍历，输出顺序跨运行不保证稳定；而 50k 截断的入选集合与
+  // pathListSignature 都依赖输入顺序，顺序漂移会让签名每轮翻转、索引反复
+  // 全量重建。唯一的非稳定来源在此排序一次即可让两条构建路径获得确定性的
+  // 文件预算（对齐 CC：其签名门控基于天然有序的 git 输出）。
+  const relativePaths = files.map((f) => path.relative(getCwd(), f)).sort()
 
   const duration = Date.now() - startTime
   logForDebugging(`[FileIndex] ripgrep：${relativePaths.length} 个文件，耗时 ${duration}ms`)
@@ -496,25 +518,29 @@ export async function getPathsForSuggestions(): Promise<FileIndex> {
     ])
 
     // 缓存供 mergeUntrackedIntoNormalizedCache 使用
-    cachedConfigFiles = configFiles
+    cachedConfigFiles = selectIndexedFiles(configFiles)
 
     // 限制单次索引的最大文件数量，防止超大仓库或异常深层结构耗尽内存
-    const MAX_INDEXED_FILES = 50_000
-    const rawFiles = [...projectFiles, ...configFiles]
-    const allFiles =
-      rawFiles.length > MAX_INDEXED_FILES ? rawFiles.slice(0, MAX_INDEXED_FILES) : rawFiles
+    const allFiles = selectIndexedFiles(cachedConfigFiles, projectFiles)
     const directories = await getDirectoryNamesAsync(allFiles)
-    cachedTrackedDirs = directories
     const allPathsList = [...directories, ...allFiles]
 
     // 当列表未变更时跳过重建。这是输入会话中的常见情况——
     // git ls-files 返回相同的输出。
+    const generation = cacheGeneration
     const sig = pathListSignature(allPathsList)
     if (sig !== loadedTrackedSignature) {
       // 等待完整构建，使冷启动返回完整结果。构建每约 4ms
       // 让出一次，UI 保持响应——用户可以在约 120ms 等待期间
       // 继续输入而不会出现输入延迟。
       await index.loadFromFileListAsync(allPathsList).done
+      // 对齐 CC "discarding refresh results"：await 期间缓存被重置（如会话恢复）
+      // 时丢弃本次结果；旧 index 已完整加载、本轮 UI 仍可用，
+      // 但不写签名——新索引由下次刷新重建。
+      if (generation !== cacheGeneration) {
+        logForDebugging(`[FileIndex] 丢弃刷新结果 — 缓存中途被重置`)
+        return index
+      }
       loadedTrackedSignature = sig
       // 我们刚刚用仅含已跟踪数据的索引替换了合并索引。
       // 强制下次未跟踪合并重建，即使其自身签名匹配。
