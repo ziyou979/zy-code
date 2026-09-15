@@ -351,7 +351,16 @@
       "Bash(awk '/^@@/{exit} {print}' /tmp/zy-split/config_full.patch)",
       "Bash(awk '/^@@/{h++} h==2{print}' /tmp/zy-split/config_full.patch)",
       "Bash(echo \"exit: $?\")",
-      "Bash(echo exit=$?)"
+      "Bash(echo exit=$?)",
+      "Bash(echo \"=== tsc exit: $?==\")",
+      "Bash(echo \"tsc exit $?\")",
+      "Bash(echo \"TERMINAL_EMULATOR=$TERMINAL_EMULATOR\")",
+      "Bash(env)",
+      "Bash(tasklist)",
+      "Bash(taskkill //PID 5712 //F)",
+      "Bash(taskkill //PID 6488 //F)",
+      "PowerShell(Get-CimInstance:*)",
+      "Bash(echo EXIT=$?)"
     ]
   },
   "spinnerTipsEnabled": true
