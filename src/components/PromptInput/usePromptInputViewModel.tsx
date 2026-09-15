@@ -386,7 +386,8 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
     if (getPlatform() === 'macos' && isMacosOptionChar(char)) {
       const shortcut = MACOS_OPTION_SPECIAL_CHARS[char]
       const terminalName = getNativeCSIuTerminalDisplayName()
-      const jsx = terminalName ? (
+      // 注意：不能命名为 jsx，否则 Bun.build 的 JSX transform 会将局部变量误当做 JSX 工厂函数导致作用域冲突
+      const hintContent = terminalName ? (
         <Text dimColor>
           To enable {shortcut}, set <Text bold>Option as Meta</Text> in {terminalName} preferences
           (⌘,)
@@ -396,7 +397,7 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
       )
       addNotification({
         key: 'option-meta-hint',
-        jsx,
+        jsx: hintContent,
         priority: 'immediate',
         timeoutMs: 5000,
       })

@@ -42,6 +42,7 @@ type Props = {
   onCancel: () => void
   onTabPrev?: () => void
   onTabNext?: () => void
+  onNavigate?: (index: number) => void
   onRespondToZy: () => void
   onFinishPlanInterview: () => void
 }
@@ -66,6 +67,7 @@ export function PreviewQuestionView({
   onCancel,
   onTabPrev,
   onTabNext,
+  onNavigate,
   onRespondToZy,
   onFinishPlanInterview,
 }: Props): React.ReactNode {
@@ -325,6 +327,7 @@ export function PreviewQuestionView({
           currentQuestionIndex={currentQuestionIndex}
           answers={answers}
           hideSubmitTab={hideSubmitTab}
+          onNavigate={onNavigate}
         />
         <PermissionRequestTitle title={question.question} color={'text'} />
 

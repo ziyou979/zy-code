@@ -18,6 +18,7 @@ type Props = {
   minContentHeight?: number
   outerMinHeight?: number
   onFinalResponse: (value: 'submit' | 'cancel') => void
+  onNavigate?: (index: number) => void
 }
 export function SubmitQuestionsView({
   questions,
@@ -28,6 +29,7 @@ export function SubmitQuestionsView({
   minContentHeight,
   outerMinHeight,
   onFinalResponse,
+  onNavigate,
 }: Props) {
   return (
     <Box flexDirection="column" marginTop={1} minHeight={outerMinHeight}>
@@ -38,6 +40,8 @@ export function SubmitQuestionsView({
             questions={questions}
             currentQuestionIndex={currentQuestionIndex}
             answers={answers}
+            onNavigate={onNavigate}
+            onSubmit={() => onFinalResponse('submit')}
           />
         }
         {<PermissionRequestTitle title={tSync('permissionRules.reviewYourAnswers')} color="text" />}

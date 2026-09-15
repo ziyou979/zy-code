@@ -349,26 +349,41 @@ export function usePromptInputSubmission(context: ReturnType<typeof usePromptInp
       // Clear stash hint notification on submit
       removeNotification('stash-hint')
 
-      // Route input to viewed agent (in-process teammate or named local_agent).
-      const activeAgent = getActiveAgentForInput(store.getState())
-      if (activeAgent.type !== 'leader' && onAgentSubmit) {
-        logEvent('zy_transcript_input_to_teammate', {})
-        await onAgentSubmit(inputParam, activeAgent.task, {
+      // 乐观即时清空：立即清空输入框、重置光标与缓冲，消除回车提交后的视觉停顿感
+      const draftBackup = inputParam
+      const draftOffset = cursorOffset
+      trackAndSetInput('')
+      setCursorOffset(0)
+      clearBuffer()
+
+      try {
+        // Route input to viewed agent (in-process teammate or named local_agent).
+        const activeAgent = getActiveAgentForInput(store.getState())
+        if (activeAgent.type !== 'leader' && onAgentSubmit) {
+          logEvent('zy_transcript_input_to_teammate', {})
+          await onAgentSubmit(inputParam, activeAgent.task, {
+            setCursorOffset,
+            clearBuffer,
+            resetHistory,
+          })
+          return
+        }
+
+        // Normal leader submission
+        await onSubmitProp(inputParam, {
           setCursorOffset,
           clearBuffer,
           resetHistory,
         })
-        return
+      } catch (error) {
+        // 发生未捕获异常时恢复输入框内容，防止用户输入丢失
+        trackAndSetInput(draftBackup)
+        setCursorOffset(draftOffset)
+        throw error
       }
-
-      // Normal leader submission
-      await onSubmitProp(inputParam, {
-        setCursorOffset,
-        clearBuffer,
-        resetHistory,
-      })
     },
     [
+      cursorOffset,
       promptSuggestionState,
       speculation,
       speculationSessionTimeSavedMs,

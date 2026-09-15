@@ -455,6 +455,7 @@ export default class Ink {
     if (!this.options.stdout.isTTY) {
       return
     }
+    this.restoreNativeCursorStyle()
 
     // alt screen：SIGCONT 后内容已过期，shell 可能已写入 main screen 并切走焦点，
     // 鼠标跟踪也已被 handleSuspend 禁用。
@@ -536,6 +537,7 @@ export default class Ink {
     if (!this.syncTerminalSize()) {
       return
     }
+    this.restoreNativeCursorStyle()
 
     // 用更新后的 props 重新渲染 React 树，使 context 值发生变化。
     // React commit 阶段会调用 onComputeLayout()，按新尺寸重新计算 Yoga 布局，
@@ -612,6 +614,7 @@ export default class Ink {
     } else {
       this.repaint()
     }
+    this.restoreNativeCursorStyle()
     this.resume()
     // Re-enable focus reporting and extended key reporting — terminal
     // editors (vim, nano, etc.) write their own modifyOtherKeys level on
@@ -1040,8 +1043,13 @@ export default class Ink {
             optimized.unshift({ type: 'cursorHide' })
           }
           if (shouldShow) {
-            // 首次显示或终端重置后恢复样式；repaint/备用屏幕重置会清空 parked。
-            if (!this.nativeCursorVisible || parked === null || nativeCursorStyleChanged) {
+            // 首次显示、内容重绘或终端重置后恢复样式；repaint/备用屏幕重置会清空 parked。
+            if (
+              hasDiff ||
+              !this.nativeCursorVisible ||
+              parked === null ||
+              nativeCursorStyleChanged
+            ) {
               optimized.push({ type: 'stdout', content: BLINKING_BAR_CURSOR })
               this.nativeCursorStyleDirty = false
             }
@@ -1188,6 +1196,7 @@ export default class Ink {
     // Clear displayCursor so the cursor preamble doesn't emit a stale
     // relative move from where we last parked it.
     this.displayCursor = null
+    this.nativeCursorStyleDirty = true
   }
 
   /**
@@ -1402,6 +1411,7 @@ export default class Ink {
     // resets), but a stale displayCursor would be misleading if we later
     // exit to main-screen without an intervening render.
     this.displayCursor = null
+    this.nativeCursorStyleDirty = true
     // Fresh frontFrame is blank rows×cols — blitting from it would copy
     // blanks over content. Next alt-screen frame must full-render.
     this.prevFrameContaminated = true

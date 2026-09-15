@@ -114,6 +114,53 @@ describe('原生光标状态', () => {
     }
   })
 
+  test('内容发生重绘变动时重新声明竖线样式，确保光标自愈', () => {
+    const { stdout, chunks } = makeStdout()
+    const ink = new Ink({
+      stdout,
+      stderr: stdout,
+      stdin: process.stdin,
+      exitOnCtrlC: false,
+      patchConsole: false,
+      nativeCursor: true,
+    })
+    try {
+      function DynamicTarget({ text }: { text: string }): React.ReactNode {
+        const cursorRef = useDeclaredCursor({
+          line: 0,
+          column: text.length,
+          active: true,
+          visible: true,
+        })
+        return (
+          <Box ref={cursorRef}>
+            <Text>{text}</Text>
+          </Box>
+        )
+      }
+
+      ink.render(<DynamicTarget text="hello" />)
+      ;(ink as unknown as { onRender: () => void }).onRender()
+      expect(chunks.join('')).toContain(BLINKING_BAR_CURSOR)
+
+      // 输入变动（hasDiff = true）：即使之前已显示且未失焦，仍应补发竖线样式自愈
+      chunks.length = 0
+      ink.render(<DynamicTarget text="hello world" />)
+      ;(ink as unknown as { onRender: () => void }).onRender()
+      expect(chunks.join('')).toContain(BLINKING_BAR_CURSOR)
+      expect(chunks.join('')).toContain(SHOW_CURSOR)
+
+      // 回车清空输入框（hasDiff = true）：仍应补发竖线样式自愈
+      chunks.length = 0
+      ink.render(<DynamicTarget text="" />)
+      ;(ink as unknown as { onRender: () => void }).onRender()
+      expect(chunks.join('')).toContain(BLINKING_BAR_CURSOR)
+      expect(chunks.join('')).toContain(SHOW_CURSOR)
+    } finally {
+      ink.unmount()
+    }
+  })
+
   test('默认启用，支持显式回退和无障碍覆盖', () => {
     const keys = [
       'TERM',
