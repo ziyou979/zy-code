@@ -293,9 +293,24 @@ export async function setup(
   // - Win Working Set trim：空闲高 RSS 时驱逐可重载驻留页
   // 不做周期性/阈值 Bun.gc：实测堆 GC 对任务管理器 RSS 几乎无效，
   // Windows 虚高主因是 Working Set 不主动归还，由 trim 专门处理。
-  void import('../services/diagnostics/memoryMonitor.js').then(({ initMemoryMonitor }) => {
-    initMemoryMonitor()
-  })
+  void import('../services/diagnostics/memoryMonitor.js')
+    .then(async ({ initMemoryMonitor }) => {
+      if (isEnvTruthy(process.env.ZY_CODE_AUTO_HEAP_DUMP)) {
+        // 提前加载抓取实现，避免越过阈值后才加载模块而错过短暂峰值。
+        const { performHeapDump } = await import('../services/diagnostics/heapDumpService.js')
+        initMemoryMonitor({
+          sampleIntervalMs: 1000,
+          criticalThresholdRss: 1.5 * 1024 * 1024 * 1024,
+          autoHeapDump: true,
+          onHeapDump: async () => {
+            await performHeapDump('auto-1.5GB', 1)
+          },
+        })
+      } else {
+        initMemoryMonitor()
+      }
+    })
+    .catch(logError)
   void Promise.all([
     import('../services/diagnostics/winWorkingSetTrim.js'),
     import('../services/input/activityManager.js'),

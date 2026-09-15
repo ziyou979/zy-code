@@ -194,3 +194,35 @@ describe('LocalAgentTask eviction and memory cleanup', () => {
     expect(getState().tasks['agent-dismiss']).toBeUndefined()
   })
 })
+
+test('延期淘汰替换旧定时器且不同 store 的同名任务独立回收', async () => {
+  const first = createMockState(),
+    second = createMockState()
+  for (const store of [first, second]) {
+    registerTask(
+      createSampleTask('rescheduled', {
+        status: 'completed',
+        notified: true,
+        evictAfter: Date.now() + 10,
+      }),
+      store.setAppState,
+    )
+    scheduleTerminalEviction('rescheduled', store.setAppState, 10)
+  }
+  first.setAppState((prev) => ({
+    ...prev,
+    tasks: {
+      ...prev.tasks,
+      rescheduled: {
+        ...prev.tasks.rescheduled!,
+        evictAfter: Date.now() + 250,
+      } as LocalAgentTaskState,
+    },
+  }))
+  scheduleTerminalEviction('rescheduled', first.setAppState, 250)
+  await Bun.sleep(180)
+  expect(first.getState().tasks.rescheduled).toBeDefined()
+  expect(second.getState().tasks.rescheduled).toBeUndefined()
+  await Bun.sleep(250)
+  expect(first.getState().tasks.rescheduled).toBeUndefined()
+})
