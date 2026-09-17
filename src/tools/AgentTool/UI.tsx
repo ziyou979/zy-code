@@ -11,6 +11,7 @@ import { Markdown } from '../../components/Markdown.js'
 import { Message as MessageComponent } from '../../components/Message.js'
 import { MessageResponse } from '../../components/MessageResponse.js'
 import { ToolUseLoader } from '../../components/ToolUseLoader.js'
+import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
@@ -81,6 +82,9 @@ function CtrlBToBackground() {
  * 缺少此字段，必须被 UI 助手跳过。
  */
 function hasProgressMessage(data: Progress): data is AgentToolProgress {
+  if (!data || typeof data !== 'object') {
+    return false
+  }
   if (!('message' in data)) {
     return false
   }
@@ -118,7 +122,8 @@ function getSearchOrReadInfo(
   if (message.type === 'user') {
     const content = message.message.content[0]
     if (content?.type === 'tool_result') {
-      const toolUse = toolUseByID.get(content.toolCallId)
+      const callId = content.toolCallId
+      const toolUse = toolUseByID.get(callId)
       if (toolUse) {
         return getSearchOrReadFromContent(toolUse, tools)
       }
@@ -174,7 +179,8 @@ function processProgressMessages(
         if (m.data.message.type === 'user') {
           const content = m.data.message.message.content[0]
           if (content?.type === 'tool_result') {
-            const toolUse = toolUseByID.get(content.toolCallId)
+            const callId = content.toolCallId
+            const toolUse = toolUseByID.get(callId)
             if (toolUse) {
               const tool = findToolByName(tools, toolUse.name)
               if (tool?.briefStandalone) return true
@@ -275,27 +281,13 @@ function processProgressMessages(
 export function selectDisplayMessages(
   processedMessages: ProcessedMessage[],
   tools: Tools,
-): { displayed: ProcessedMessage[]; hiddenCount: number; toolCallToResult: Map<string, number> } {
+): { displayed: ProcessedMessage[]; hiddenCount: number } {
   if (processedMessages.length <= MAX_PROGRESS_MESSAGES_TO_SHOW) {
-    return { displayed: processedMessages, hiddenCount: 0, toolCallToResult: new Map() }
+    return { displayed: processedMessages, hiddenCount: 0 }
   }
 
   const seenToolNames = new Set<string>()
   const briefIndices = new Set<number>()
-  const toolCallToResult = new Map<string, number>()
-
-  // 首先建立 toolCallId -> result index 的映射
-  for (let i = 0; i < processedMessages.length; i++) {
-    const p = processedMessages[i]!
-    if (p.type !== 'original') continue
-    const data = p.message.data
-    if (!hasProgressMessage(data)) continue
-    if (data.message.type !== 'user') continue
-    const content = data.message.message.content[0]
-    if (content?.type === 'tool_result') {
-      toolCallToResult.set(content.toolCallId, i)
-    }
-  }
 
   for (let i = processedMessages.length - 1; i >= 0; i--) {
     if (briefIndices.size >= MAX_BRIEF_STANDALONE_DISPLAY) break
@@ -337,7 +329,7 @@ export function selectDisplayMessages(
       )
     },
   )
-  return { displayed, hiddenCount, toolCallToResult }
+  return { displayed, hiddenCount }
 }
 
 const ESTIMATED_LINES_PER_TOOL = 9
@@ -426,21 +418,58 @@ function VerboseAgentTranscript({ progressMessages, tools, verbose }: VerboseAge
 }
 
 /**
- * 完成态折叠视图：从 progress 中提取 briefStandalone 工具的最后一次调用显示。
- * 让用户在不展开 transcript 的情况下看到关键操作。
+ * 清洗工具调用摘要用于折叠树预览：
+ * 1. 压平多行换行与空白
+ * 2. 截断超长字符串，保持单行整齐
  */
-function BriefStandalonePreview({ progressMessages, tools }: VerboseAgentTranscriptProps) {
+export function formatToolSummaryForPreview(
+  rawSummary: string | null | undefined,
+  maxLength = TOOL_SUMMARY_MAX_LENGTH,
+): string | null {
+  if (!rawSummary) return null
+  const summary = rawSummary.trim().replace(/\s*[\r\n]+\s*/g, ' ')
+  if (!summary) return null
+  if (summary.length > maxLength) {
+    return `${summary.slice(0, maxLength).trimEnd()}…`
+  }
+  return summary
+}
+
+export type BriefStandalonePreviewProps = {
+  progressMessages: ProgressMessage<Progress>[]
+  tools: Tools
+}
+
+/**
+ * 完成态折叠视图：从 progress 中提取 briefStandalone 工具的动作节点显示。
+ * 让用户在不展开 transcript 的情况下看到子任务实际调用的动作及状态，
+ * 且不渲染庞杂的 stdout 输出以防视觉错乱。
+ */
+export function BriefStandalonePreview({ progressMessages, tools }: BriefStandalonePreviewProps) {
   const processed = processProgressMessages(progressMessages, tools, false)
-  const { displayed, hiddenCount, toolCallToResult } = selectDisplayMessages(processed, tools)
+  const { displayed, hiddenCount } = selectDisplayMessages(processed, tools)
   if (displayed.length === 0) {
     return null
   }
+
+  // 从原始全量 progressMessages 中建立各 toolCallId -> 执行结果状态的索引
+  const toolResultMap = new Map<string, { isError: boolean }>()
+  for (const m of progressMessages) {
+    const data = m.data
+    if (!hasProgressMessage(data)) continue
+    if (data.message.type !== 'user') continue
+    const content = data.message.message.content[0]
+    if (content?.type === 'tool_result') {
+      toolResultMap.set(content.toolCallId, { isError: Boolean(content.isError) })
+    }
+  }
+
   const elements: React.ReactNode[] = []
   for (const p of displayed) {
     if (p.type === 'summary') {
       elements.push(
         <MessageResponse key={p.uuid} height={1}>
-          <Text dimColor>
+          <Text dimColor wrap="truncate-end">
             {getSearchReadSummaryText(p.searchCount, p.readCount, false, p.replCount)}
           </Text>
         </MessageResponse>,
@@ -452,36 +481,26 @@ function BriefStandalonePreview({ progressMessages, tools }: VerboseAgentTranscr
     const block = data.message.message.content[0]
     if (!block || block.type !== 'tool_call') continue
     const tool = findToolByName(tools, block.name)
+    if (tool && !tool.briefStandalone) continue
     const name = tool?.userFacingName?.(block.input) ?? block.name
-    const summary = tool?.getToolUseSummary?.(block.input)
+    const rawSummary = tool?.getToolUseSummary?.(block.input)
+    const summary = formatToolSummaryForPreview(rawSummary)
+
+    // 检查对应的执行结果并附加轻量状态徽标
+    const result = toolResultMap.get(block.id)
+    let statusBadge: React.ReactNode = null
+    if (result !== undefined) {
+      statusBadge = result.isError ? <Text color="error"> ✗</Text> : <Text color="success"> ✓</Text>
+    }
+
     elements.push(
       <MessageResponse key={p.message.uuid} height={1}>
-        <Text dimColor>{summary ? `${name}(${summary})` : name}</Text>
+        <Text dimColor wrap="truncate-end">
+          {summary ? `${name}(${summary})` : name}
+          {statusBadge}
+        </Text>
       </MessageResponse>,
     )
-
-    // 查找对应的 tool_result 并渲染
-    const resultIndex = toolCallToResult.get(block.id)
-    if (resultIndex !== undefined && tool?.renderToolResultMessage) {
-      const resultMsg = processed[resultIndex]
-      if (resultMsg && resultMsg.type === 'original') {
-        const resultData = resultMsg.message.data
-        if (hasProgressMessage(resultData) && resultData.message.type === 'user') {
-          const toolUseResult = resultData.message.toolUseResult
-          if (toolUseResult !== undefined) {
-            const rendered = tool.renderToolResultMessage(toolUseResult, [], {
-              verbose: false,
-              theme: 'dark',
-              tools,
-              isTranscriptMode: false,
-            })
-            if (rendered) {
-              elements.push(<Box key={`${p.message.uuid}-result`}>{rendered}</Box>)
-            }
-          }
-        }
-      }
-    }
   }
   if (elements.length === 0) {
     return null
@@ -589,11 +608,7 @@ export function renderToolResultMessage(
           />
         </SubAgentProvider>
       ) : (
-        <BriefStandalonePreview
-          progressMessages={progressMessagesForMessage}
-          tools={tools}
-          verbose={verbose}
-        />
+        <BriefStandalonePreview progressMessages={progressMessagesForMessage} tools={tools} />
       )}
       {isTranscriptMode && content && content.length > 0 && (
         <MessageResponse>

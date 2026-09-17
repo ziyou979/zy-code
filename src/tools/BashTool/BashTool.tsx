@@ -703,7 +703,11 @@ export const BashTool = buildTool({
     if (description) {
       return description
     }
-    return truncate(command, TOOL_SUMMARY_MAX_LENGTH)
+    const cleanCommand = command
+      .trim()
+      .replace(/^cd\s+(?:"[^"]+"|'[^']+'|\S+)\s*&&\s*/i, '')
+      .replace(/[\r\n]+/g, ' ')
+    return truncate(cleanCommand, TOOL_SUMMARY_MAX_LENGTH)
   },
   getActivityDescription(input) {
     if (!input?.command) {
