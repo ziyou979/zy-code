@@ -259,6 +259,21 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     ],
   },
   {
+    id: 'atria',
+    formatEndpoints: [
+      { format: 'openai-responses', baseUrl: 'https://api.atria-asi.ai/v1' },
+      { format: 'openai-chat', baseUrl: 'https://api.atria-asi.ai/v1' },
+      { format: 'anthropic', baseUrl: 'https://api.atria-asi.ai' },
+    ],
+    endpointType: ['default', 'custom'],
+    capabilities: STANDARD_CAPABILITIES,
+    apiKeyLabel: 'Atria API Key',
+    baseUrlHint: 'https://api.atria-asi.ai/v1',
+    suggestedModels: [
+      { label: 'Atria-Dawn-Preview', value: 'Atria-Dawn-Preview', tier: 'advanced' },
+    ],
+  },
+  {
     id: 'qianfan',
     formatEndpoints: [
       { format: 'openai-chat', baseUrl: 'https://aistudio.baidu.com/llm/lmapi/v3' },
@@ -407,7 +422,11 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
   },
   {
     id: 'generic',
-    formatEndpoints: [{ format: 'anthropic' }, { format: 'openai-chat' }],
+    formatEndpoints: [
+      { format: 'anthropic' },
+      { format: 'openai-chat' },
+      { format: 'openai-responses' },
+    ],
     endpointType: ['custom'],
     capabilities: FULL_CAPABILITIES,
     apiKeyLabel: 'API Key',

@@ -92,6 +92,7 @@ export const SettingsSchema = lazySchema(() =>
       provider: z
         .enum([
           'anthropic',
+          'atria',
           'mimo',
           'dashscope',
           'deepseek',
