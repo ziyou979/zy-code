@@ -404,7 +404,8 @@ function isPreToolHookSummary(msg: RenderableMessage): msg is SystemStopHookSumm
 function isThinkingBlock(msg: RenderableMessage): boolean {
   if (msg.type === 'assistant') {
     const content = msg.message.content[0]
-    return content?.type === 'thinking' && !!content.thinking?.trim()
+    // 仅含签名的 Responses thinking 也属于本组，保留重放信息而不制造分界。
+    return content?.type === 'thinking'
   }
   return false
 }
@@ -869,7 +870,7 @@ export function collapseReadSearchGroups(
           currentGroup.latestThinkingSummary = thinkingText.trim().replace(/\s+/g, ' ')
           currentGroup.latestDisplayKind = 'thinking'
         }
-        if (lastTimestamp !== undefined && msg.timestamp) {
+        if (thinkingText?.trim() && lastTimestamp !== undefined && msg.timestamp) {
           const elapsed = Date.parse(msg.timestamp) - Date.parse(lastTimestamp)
           if (Number.isFinite(elapsed) && elapsed > 0) {
             currentGroup.thoughtForMs =

@@ -8,7 +8,7 @@
  * - 工具定义是扁平结构 `{type:'function', name, parameters}`，无 `function` 嵌套层
  * - 消息无 `role:'tool'`；工具调用是独立 `function_call` item，结果用
  *   `function_call_output` item（call_id 关联）
- * - 思考参数是 `reasoning: { effort }`，且无显式关闭机制（o 系列模型始终思考）
+ * - 思考参数是 `reasoning: { effort }`，可用档位取决于模型能力
  * - 流式事件按类型分发（response.output_text.delta 等），usage 只在
  *   `response.completed` / `response.failed` / `response.incomplete` 事件内返回
  *
@@ -339,14 +339,14 @@ export function toolChoiceToResponses(choice?: ToolChoice): ResponsesToolChoice 
  * 将标准 thinking 参数映射为 Responses 的 reasoning 参数。
  *
  * 与 Chat Completions 的关键差异：Responses 用 `reasoning: { effort }`，
- * 且 **没有显式关闭机制**（o 系列模型始终思考，只能调低 effort）。
- * 因此 disabled / 未配置时选择不传 reasoning 字段，交由模型默认行为；
+ * 旧 o 系列不支持 none，其他模型的支持档位由能力配置决定。
+ * 因此 disabled / 未配置时仍不强行发送 none，交由模型默认行为；
  * enabled / adaptive 时传 reasoning.effort。
  */
 export function convertThinkingForResponses(
   thinking: ThinkingConfig | undefined,
   reasoningEffort?: string,
-): { reasoning?: { effort?: 'low' | 'medium' | 'high' } } | undefined {
+): { reasoning?: { effort?: ResponsesReasoningEffort } } | undefined {
   if (!thinking || thinking.type === 'disabled') {
     return undefined
   }
@@ -354,20 +354,29 @@ export function convertThinkingForResponses(
 }
 
 /**
- * 将任意 effort 档位收敛为 Responses 接受的 low/medium/high。
- * mapEffortToProvider 产出的值依赖 model-capabilities 的 effort.map 配置，
- * 可能超出此值域（如 ultra/extreme），统一收敛到 medium。
+ * 保留模型能力配置选出的官方档位，不把 minimal/xhigh/max 静默降为 medium。
+ * 未知值（如未映射的 ultra/extreme）仍回退到 medium。
  */
-function normalizeResponsesReasoningEffort(effort?: string): 'low' | 'medium' | 'high' {
+type ResponsesReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+
+function normalizeResponsesReasoningEffort(effort?: string): ResponsesReasoningEffort {
   const e = effort?.toLowerCase()
-  if (e === 'low') return 'low'
-  if (e === 'medium' || e === 'balanced') return 'medium'
-  // "on" 是内部 toggle；只有明确受支持的 high 才映射为 high。
-  // 其他超出 Responses 值域的档位回退到 medium，避免擅自提高推理强度。
+  if (e === 'none' || e === 'minimal' || e === 'xhigh' || e === 'max') {
+    return e
+  }
+  if (e === 'low') {
+    return 'low'
+  }
+  if (e === 'medium' || e === 'balanced') {
+    return 'medium'
+  }
+  // "on" 是内部 toggle，沿用 high 映射；未知档位不擅自提高推理强度。
   if (e === 'high' || e === 'on') {
     return 'high'
   }
-  if (e === 'light' || e === 'quick') return 'low'
+  if (e === 'light' || e === 'quick') {
+    return 'low'
+  }
   return 'medium'
 }
 
@@ -447,6 +456,10 @@ export function responsesStatusToStopReason(
  * tool_use（Responses 的 status 无法区分自然结束与工具调用结束）。
  */
 function responseStopReason(response: OpenAI.Responses.Response): StopReason {
+  // 截断的函数参数不能被误报为正常工具调用结束。
+  if (response.status !== 'completed') {
+    return responsesStatusToStopReason(response.status, response.incomplete_details)
+  }
   const hasFunctionCall = response.output?.some((item) => item.type === 'function_call')
   if (hasFunctionCall) {
     return 'tool_use'
@@ -483,13 +496,40 @@ function toDeltaUsage(usage: TokenUsage): DeltaUsage {
   }
 }
 
+// 当前 SDK 尚未声明 reasoning content 与 reasoning_text 事件，在协议边界补齐，
+// 不升级依赖；原始 item 仍完整写入 signature，避免丢失后续请求需要的字段。
+type ResponsesReasoningItem = OpenAI.Responses.ResponseReasoningItem & {
+  content?: Array<{ type: 'reasoning_text'; text: string }>
+}
+
+type ResponsesStreamEvent =
+  | OpenAI.Responses.ResponseStreamEvent
+  | {
+      type: 'response.reasoning_text.delta'
+      item_id: string
+      content_index: number
+      delta: string
+    }
+  | {
+      type: 'response.reasoning_text.done'
+      item_id: string
+      content_index: number
+      text: string
+    }
+
+function reasoningText(item: ResponsesReasoningItem): string {
+  const summary = (item.summary ?? []).map((part) => part.text).join('\n\n')
+  // summary 与正文是不同表示；优先摘要，仅在摘要为空时使用明确返回的正文。
+  return summary.trim() ? summary : (item.content ?? []).map((part) => part.text).join('\n\n')
+}
+
 /**
  * 将非流式 Response 转换为标准 LLMResponse。
  *
  * output 数组按序处理（天然保证 reasoning → text → function_call 的顺序）：
  * - message item 的 output_text parts → text 块
  * - function_call item → tool_call 块（arguments JSON 容错解析）
- * - reasoning item 的 summary → thinking 块
+ * - reasoning item 的 summary / reasoning_text → thinking 块
  * - file_search_call / web_search_call 等内置工具调用：项目不支持，忽略
  */
 export function responsesToStandard(
@@ -505,6 +545,8 @@ export function responsesToStandard(
         for (const part of item.content) {
           if (part.type === 'output_text' && part.text) {
             texts.push(part.text)
+          } else if (part.type === 'refusal' && part.refusal) {
+            texts.push(part.refusal)
           }
         }
         if (texts.length > 0) {
@@ -534,10 +576,9 @@ export function responsesToStandard(
       }
 
       case 'reasoning': {
-        const summary = (item.summary ?? []).map((s) => s.text).join('\n\n')
         contentBlocks.push({
           type: 'thinking',
-          thinking: summary,
+          thinking: reasoningText(item),
           // 保存完整 item（含 id 与 encrypted_content），供 store:false 下一轮重放。
           signature: JSON.stringify(item),
         })
@@ -565,247 +606,278 @@ export function responsesToStandard(
  *
  * 事件驱动设计（与 mapOpenAIStreamToStandard 的 chunk 扫描不同）：
  * - 块 index 按出现顺序分配：thinking → text → tool，与模型输出顺序一致
- * - 新块出现时，为已开始未结束的旧块补发 chunk_stop（恢复逐块完成时序）
+ * - 新块出现时，为旧文本/思考块补发 chunk_stop，工具块等参数收齐后结算
  * - 多并行工具调用以 item_id 区分；函数名来自 response.output_item.added
  *   （arguments.delta 事件本身不带 name）
- * - usage / 最终 stopReason 只在 response.completed / failed / incomplete
+ * - usage / 最终 stopReason 只在 response.completed / incomplete
  *   事件内返回（Responses 无独立 usage chunk）
  */
 export async function* mapResponsesStreamToStandard(
-  stream: AsyncIterable<OpenAI.Responses.ResponseStreamEvent>,
+  stream: AsyncIterable<ResponsesStreamEvent>,
   model: string,
 ): AsyncIterable<LLMStreamEvent> {
-  const messageId = randomUUID()
-  // 块状态：thinking / text / tool 各自维护 started / stopped
-  let thinkingBlockIndex = -1
-  let thinkingStarted = false
-  let thinkingStopped = false
-  let textBlockIndex = -1
-  let textStarted = false
-  let textStopped = false
-  // item_id → 块信息（多并行工具调用按 item_id 区分）
-  const toolBlocks = new Map<string, { index: number; name: string }>()
-  const toolStopped = new Set<number>()
+  type Block = {
+    index: number
+    kind: 'thinking' | 'text' | 'tool_call'
+    value: string
+    stopped: boolean
+    signature?: string
+    source?: 'summary' | 'content'
+    partIndex?: number
+    parts: Map<string, string>
+  }
+  const blocks = new Map<string, Block>()
   let nextIndex = 0
-  let finalStopReason: StopReason | null = null
-  let finalUsage: DeltaUsage | undefined
-  let reasoningSignature = ''
 
-  yield { type: 'response_start', responseId: messageId, model }
-
-  // 为所有已开始未结束的块补发 chunk_stop（新块出现或收尾时调用）
-  const stopAllOpenBlocks = (): LLMStreamEvent[] => {
-    const events: LLMStreamEvent[] = []
-    if (thinkingStarted && !thinkingStopped) {
-      events.push({ type: 'chunk_stop', index: thinkingBlockIndex })
-      thinkingStopped = true
-    }
-    if (textStarted && !textStopped) {
-      events.push({ type: 'chunk_stop', index: textBlockIndex })
-      textStopped = true
-    }
-    for (const [itemId, block] of toolBlocks) {
-      if (!toolStopped.has(block.index)) {
-        events.push({ type: 'chunk_stop', index: block.index })
-        toolStopped.add(block.index)
+  function* stopBlocks(includeTools = true): Generator<LLMStreamEvent> {
+    for (const block of blocks.values()) {
+      if (!block.stopped && (includeTools || block.kind !== 'tool_call')) {
+        block.stopped = true
+        yield { type: 'chunk_stop', index: block.index }
       }
-      void itemId
     }
-    return events
   }
 
+  function* startBlock(
+    key: string,
+    chunk: Extract<AssistantContentBlock, { type: 'thinking' | 'text' | 'tool_call' }>,
+  ): Generator<LLMStreamEvent, Block> {
+    const existing = blocks.get(key)
+    if (existing) {
+      return existing
+    }
+    // 并行 function_call 不能在另一个工具开始时提前结算未收齐的 JSON。
+    yield* stopBlocks(false)
+    const block: Block = {
+      index: nextIndex++,
+      kind: chunk.type,
+      value: '',
+      stopped: false,
+      parts: new Map(),
+    }
+    blocks.set(key, block)
+    yield { type: 'chunk_start', index: block.index, chunk }
+    return block
+  }
+
+  function* append(block: Block, value: string): Generator<LLMStreamEvent> {
+    if (!value) {
+      return
+    }
+    block.value += value
+    const delta: ChunkDelta =
+      block.kind === 'thinking'
+        ? { type: 'thinking_delta', thinking: value }
+        : block.kind === 'text'
+          ? { type: 'text_delta', text: value }
+          : { type: 'input_json_delta', partialJson: value }
+    yield { type: 'chunk_delta', index: block.index, delta }
+  }
+
+  function* finishValue(block: Block, value: string): Generator<LLMStreamEvent> {
+    // done 携带累计全文。仅补齐未收到的后缀，避免 delta + done 重复追加。
+    if (value.startsWith(block.value)) {
+      yield* append(block, value.slice(block.value.length))
+    }
+  }
+
+  function* thinkingPart(
+    itemId: string,
+    source: 'summary' | 'content',
+    partIndex: number,
+    value: string,
+    done: boolean,
+  ): Generator<LLMStreamEvent> {
+    if (!value) {
+      return
+    }
+    const block = yield* startBlock(`reasoning:${itemId}`, {
+      type: 'thinking',
+      thinking: '',
+      signature: '',
+    })
+    // 流式不能撤回已显示的内容，因此同一 item 采用最先到达的非空表示。
+    // 后续 summary / 正文只保留在签名中，避免把两种表示混成重复思考。
+    if (block.source && block.source !== source) {
+      return
+    }
+    block.source = source
+    const key = `${source}:${partIndex}`
+    const previous = block.parts.get(key) ?? ''
+    const suffix = done ? (value.startsWith(previous) ? value.slice(previous.length) : '') : value
+    if (!suffix) {
+      return
+    }
+    if (block.partIndex !== undefined && block.partIndex !== partIndex) {
+      yield* append(block, '\n\n')
+    }
+    block.partIndex = partIndex
+    block.parts.set(key, previous + suffix)
+    yield* append(block, suffix)
+  }
+
+  function* finishItem(item: OpenAI.Responses.ResponseOutputItem): Generator<LLMStreamEvent> {
+    if (item.type === 'reasoning') {
+      const reasoning: ResponsesReasoningItem = item
+      const existing = blocks.get(`reasoning:${item.id}`)
+      const source =
+        existing?.source ??
+        ((item.summary ?? []).some((p) => p.text.trim()) ? 'summary' : 'content')
+      const parts = source === 'summary' ? (item.summary ?? []) : (reasoning.content ?? [])
+      for (const [index, part] of parts.entries()) {
+        yield* thinkingPart(item.id, source, index, part.text, true)
+      }
+      const block = yield* startBlock(`reasoning:${item.id}`, {
+        type: 'thinking',
+        thinking: '',
+        signature: '',
+      })
+      const signature = JSON.stringify(item)
+      if (signature !== block.signature) {
+        block.signature = signature
+        yield {
+          type: 'chunk_delta',
+          index: block.index,
+          delta: { type: 'signature_delta', signature },
+        }
+      }
+    } else if (item.type === 'message') {
+      for (const [index, part] of item.content.entries()) {
+        const value =
+          part.type === 'output_text' ? part.text : part.type === 'refusal' ? part.refusal : ''
+        if (!value) {
+          continue
+        }
+        const block = yield* startBlock(`text:${item.id}:${index}`, { type: 'text', text: '' })
+        yield* finishValue(block, value)
+      }
+    } else if (item.type === 'function_call') {
+      const block = yield* startBlock(`tool:${item.id ?? item.call_id}`, {
+        type: 'tool_call',
+        id: item.call_id,
+        name: item.name,
+        input: {},
+        ...(item.id ? { providerMetadata: { openaiResponses: { itemId: item.id } } } : {}),
+      })
+      yield* finishValue(block, item.arguments ?? '')
+    }
+  }
+
+  yield { type: 'response_start', responseId: randomUUID(), model }
   for await (const event of stream) {
     switch (event.type) {
-      case 'response.output_text.delta': {
-        if (!textStarted) {
-          for (const e of stopAllOpenBlocks()) {
-            yield e
-          }
-          textBlockIndex = nextIndex++
-          yield {
-            type: 'chunk_start',
-            index: textBlockIndex,
-            chunk: { type: 'text', text: '' },
-          }
-          textStarted = true
-        }
-        yield {
-          type: 'chunk_delta',
-          index: textBlockIndex,
-          delta: { type: 'text_delta', text: event.delta },
+      case 'response.output_text.delta':
+      case 'response.refusal.delta': {
+        const block = yield* startBlock(`text:${event.item_id}:${event.content_index}`, {
+          type: 'text',
+          text: '',
+        })
+        yield* append(block, event.delta)
+        break
+      }
+      case 'response.output_text.done':
+      case 'response.refusal.done': {
+        const value = event.type === 'response.refusal.done' ? event.refusal : event.text
+        if (value) {
+          const block = yield* startBlock(`text:${event.item_id}:${event.content_index}`, {
+            type: 'text',
+            text: '',
+          })
+          yield* finishValue(block, value)
         }
         break
       }
-
-      case 'response.reasoning_summary_text.delta': {
-        if (!thinkingStarted) {
-          thinkingBlockIndex = nextIndex++
-          yield {
-            type: 'chunk_start',
-            index: thinkingBlockIndex,
-            chunk: { type: 'thinking', thinking: '', signature: '' },
-          }
-          thinkingStarted = true
-        }
-        yield {
-          type: 'chunk_delta',
-          index: thinkingBlockIndex,
-          delta: { type: 'thinking_delta', thinking: event.delta },
+      case 'response.reasoning_summary_text.delta':
+        yield* thinkingPart(event.item_id, 'summary', event.summary_index, event.delta, false)
+        break
+      case 'response.reasoning_summary_text.done':
+        yield* thinkingPart(event.item_id, 'summary', event.summary_index, event.text, true)
+        break
+      case 'response.reasoning_text.delta':
+        yield* thinkingPart(event.item_id, 'content', event.content_index, event.delta, false)
+        break
+      case 'response.reasoning_text.done':
+        yield* thinkingPart(event.item_id, 'content', event.content_index, event.text, true)
+        break
+      case 'response.reasoning.delta':
+        // 旧 SDK / 兼容端点的别名；未知结构不能隐式转换为用户可见文本。
+        if (typeof event.delta === 'string') {
+          yield* thinkingPart(event.item_id, 'content', event.content_index, event.delta, false)
         }
         break
-      }
-
-      case 'response.output_item.done': {
-        if (event.item.type === 'reasoning') {
-          if (!thinkingStarted) {
-            thinkingBlockIndex = nextIndex++
-            yield {
-              type: 'chunk_start',
-              index: thinkingBlockIndex,
-              chunk: { type: 'thinking', thinking: '', signature: '' },
-            }
-            thinkingStarted = true
-          }
-          reasoningSignature = JSON.stringify(event.item)
-          yield {
-            type: 'chunk_delta',
-            index: thinkingBlockIndex,
-            delta: { type: 'signature_delta', signature: reasoningSignature },
-          }
-        }
+      case 'response.reasoning.done':
+        yield* thinkingPart(event.item_id, 'content', event.content_index, event.text, true)
         break
-      }
-
       case 'response.output_item.added': {
-        // function_call item 创建时即可拿到函数名（arguments.delta 不带 name）
-        if (event.item.type === 'function_call') {
-          const itemId = event.item.id ?? ''
-          if (itemId && !toolBlocks.has(itemId)) {
-            for (const e of stopAllOpenBlocks()) {
-              yield e
-            }
-            const index = nextIndex++
-            toolBlocks.set(itemId, { index, name: event.item.name })
-            yield {
-              type: 'chunk_start',
-              index,
-              chunk: {
-                type: 'tool_call',
-                id: event.item.call_id,
-                name: event.item.name,
-                input: {},
-                providerMetadata: { openaiResponses: { itemId } },
-              },
-            }
+        if (event.item.type === 'reasoning') {
+          // item 创建就启动思考计时；只在 done 才提供正文的端点也能计入等待时间。
+          yield* startBlock(`reasoning:${event.item.id}`, {
+            type: 'thinking',
+            thinking: '',
+            signature: '',
+          })
+        } else if (event.item.type === 'function_call') {
+          const item = event.item
+          const block = yield* startBlock(`tool:${item.id ?? item.call_id}`, {
+            type: 'tool_call',
+            id: item.call_id,
+            name: item.name,
+            input: {},
+            ...(item.id ? { providerMetadata: { openaiResponses: { itemId: item.id } } } : {}),
+          })
+          yield* finishValue(block, item.arguments ?? '')
+        }
+        break
+      }
+      case 'response.output_item.done':
+        yield* finishItem(event.item)
+        break
+      case 'response.function_call_arguments.delta':
+      case 'response.function_call_arguments.done': {
+        const block = blocks.get(`tool:${event.item_id}`)
+        // 没有 added 时不能拿 item_id 冒充 call_id，也不能执行缺少名称的工具。
+        // 等 output_item.done / 终止响应携带完整身份后再回填参数。
+        if (block) {
+          if (event.type === 'response.function_call_arguments.delta') {
+            yield* append(block, event.delta)
+          } else {
+            yield* finishValue(block, event.arguments)
           }
         }
         break
       }
-
-      case 'response.function_call_arguments.delta': {
-        // 兜底：若未收到 output_item.added（异常流），此时才开始工具块
-        if (!toolBlocks.has(event.item_id)) {
-          for (const e of stopAllOpenBlocks()) {
-            yield e
-          }
-          const index = nextIndex++
-          toolBlocks.set(event.item_id, { index, name: '' })
-          yield {
-            type: 'chunk_start',
-            index,
-            chunk: { type: 'tool_call', id: event.item_id, name: '', input: {} },
-          }
-        }
-        const block = toolBlocks.get(event.item_id)
-        if (block && event.delta) {
-          const delta: ChunkDelta = {
-            type: 'input_json_delta',
-            partialJson: event.delta,
-          }
-          yield { type: 'chunk_delta', index: block.index, delta }
-        }
-        break
-      }
-
-      case 'response.completed': {
-        // 某些兼容端点只在终止事件里补 encrypted_content；以终止响应为准回填签名。
-        const terminalReasoning = event.response.output?.find(
-          (item) => item.type === 'reasoning' && Boolean(item.encrypted_content),
-        )
-        if (terminalReasoning) {
-          if (!thinkingStarted) {
-            thinkingBlockIndex = nextIndex++
-            yield {
-              type: 'chunk_start',
-              index: thinkingBlockIndex,
-              chunk: { type: 'thinking', thinking: '', signature: '' },
-            }
-            thinkingStarted = true
-          }
-          const terminalSignature = JSON.stringify(terminalReasoning)
-          if (terminalSignature !== reasoningSignature) {
-            reasoningSignature = terminalSignature
-            yield {
-              type: 'chunk_delta',
-              index: thinkingBlockIndex,
-              delta: { type: 'signature_delta', signature: terminalSignature },
-            }
-          }
-        }
-        // usage 与最终状态只在 completed 事件内返回
-        const stopReason = responseStopReason(event.response)
-        for (const e of stopAllOpenBlocks()) {
-          yield e
-        }
-        finalStopReason = stopReason
-        finalUsage = event.response.usage
-          ? toDeltaUsage(responsesUsageToStandard(event.response.usage))
-          : undefined
-        yield { type: 'response_delta', stopReason, usage: finalUsage }
-        yield { type: 'response_stop' }
-        return
-      }
-
-      case 'response.failed': {
-        const detail = event.response.error?.message ?? 'OpenAI Responses request failed'
-        throw new Error(detail)
-      }
-
+      case 'response.completed':
       case 'response.incomplete': {
-        const stopReason = responseStopReason(event.response)
-        for (const e of stopAllOpenBlocks()) {
-          yield e
+        // 终止事件也可能是唯一完整快照；逐 item 回填，保留所有 reasoning 签名。
+        for (const item of event.response.output ?? []) {
+          yield* finishItem(item)
         }
-        finalStopReason = stopReason
-        finalUsage = event.response.usage
-          ? toDeltaUsage(responsesUsageToStandard(event.response.usage))
-          : undefined
-        yield { type: 'response_delta', stopReason, usage: finalUsage }
+        yield* stopBlocks()
+        yield {
+          type: 'response_delta',
+          stopReason: responseStopReason(event.response),
+          usage: event.response.usage
+            ? toDeltaUsage(responsesUsageToStandard(event.response.usage))
+            : undefined,
+        }
         yield { type: 'response_stop' }
         return
       }
-
-      case 'error': {
-        // error 事件（SSE 层错误，如流中断）
-        const detail = [event.code, event.message].filter(Boolean).join(' ')
-        throw new Error(`OpenAI Responses API error: ${detail}`)
-      }
-
+      case 'response.failed':
+        throw new Error(event.response.error?.message ?? 'OpenAI Responses request failed')
+      case 'error':
+        throw new Error(
+          `OpenAI Responses API error: ${[event.code, event.message].filter(Boolean).join(' ')}`,
+        )
       default:
-        // response.created / content_part.* / output_item.done /
-        // function_call_arguments.done / reasoning.delta 等无需处理的事件
+        // 生命周期通知与项目未启用的内置工具事件无需投影为聊天内容。
         break
     }
   }
-
-  // 流异常结束（未收到 completed/failed/incomplete）：兜底收尾
-  for (const e of stopAllOpenBlocks()) {
-    yield e
-  }
-  yield { type: 'response_delta', stopReason: finalStopReason ?? null, usage: finalUsage }
+  yield* stopBlocks()
+  yield { type: 'response_delta', stopReason: null }
   yield { type: 'response_stop' }
 }
-
 // ============================================================================
 // 请求参数构造
 // ============================================================================
@@ -866,7 +938,8 @@ export function buildResponsesRequestParams(params: CreateParams): ResponsesCrea
   // disabled 时不传 reasoning，无 requestNeedsNoThinking 兜底需求）
   const reasoningParams = convertThinkingForResponses(params.thinking, params.reasoningEffort)
   if (reasoningParams?.reasoning) {
-    out.reasoning = reasoningParams.reasoning
+    // 旧 SDK 的 effort 类型只有 low/medium/high；协议已支持更多模型相关档位。
+    out.reasoning = reasoningParams.reasoning as ResponseCreateParamsBase['reasoning']
   }
 
   const textConfig = convertOutputFormatToResponsesText(params.responseFormat)

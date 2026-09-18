@@ -8,7 +8,12 @@
 
 import { describe, expect, test } from 'bun:test'
 import OpenAI from 'openai'
-import type { JSONOutputFormat, LLMMessage, ToolDefinition } from '../../../src/types/llm.js'
+import type {
+  JSONOutputFormat,
+  LLMMessage,
+  LLMStreamEvent,
+  ToolDefinition,
+} from '../../../src/types/llm.js'
 import {
   buildResponsesRequestParams,
   convertOutputFormatToResponsesText,
@@ -26,6 +31,225 @@ import {
 function ev<T>(partial: unknown): T {
   return partial as T
 }
+
+describe('Responses 内容完整性回归', () => {
+  const reasoning = (id: string, text: string) => ({
+    type: 'reasoning' as const,
+    id,
+    summary: [],
+    content: [{ type: 'reasoning_text', text }],
+    encrypted_content: null,
+    status: 'completed' as const,
+  })
+  const response = (output: unknown[], status = 'completed') =>
+    ev<OpenAI.Responses.Response>({
+      id: 'resp',
+      status,
+      output,
+      incomplete_details: status === 'incomplete' ? { reason: 'max_output_tokens' } : null,
+    })
+  async function collect(input: unknown[]) {
+    async function* stream() {
+      for (const event of input) {
+        yield ev<OpenAI.Responses.ResponseStreamEvent>(event)
+      }
+    }
+    const events: LLMStreamEvent[] = []
+    for await (const event of mapResponsesStreamToStandard(stream(), 'test-model')) {
+      events.push(event)
+    }
+    return events
+  }
+  function text(
+    events: LLMStreamEvent[],
+    kind: 'thinking_delta' | 'text_delta' | 'input_json_delta',
+    index?: number,
+  ) {
+    return events
+      .flatMap((event) => {
+        if (event.type !== 'chunk_delta' || (index !== undefined && event.index !== index)) {
+          return []
+        }
+        const delta = event.delta
+        if (delta.type !== kind) {
+          return []
+        }
+        return delta.type === 'thinking_delta'
+          ? delta.thinking
+          : delta.type === 'text_delta'
+            ? delta.text
+            : delta.partialJson
+      })
+      .join('')
+  }
+
+  test('Atria 空 summary 的正文进入 thinking，原始签名可完整重放', async () => {
+    const item = reasoning('rs_1', '检查路径并重试')
+    const nonstream = responsesToStandard(response([item]), 'test-model')
+    expect(nonstream.content).toEqual([
+      { type: 'thinking', thinking: '检查路径并重试', signature: JSON.stringify(item) },
+    ])
+    const events = await collect([
+      { type: 'response.output_item.done', item },
+      { type: 'response.completed', response: response([item]) },
+    ])
+    expect(text(events, 'thinking_delta')).toBe('检查路径并重试')
+    expect(
+      events.filter((e) => e.type === 'chunk_delta' && e.delta.type === 'signature_delta'),
+    ).toHaveLength(1)
+    expect(messagesToResponses([{ role: 'assistant', content: nonstream.content }])).toEqual([item])
+  })
+
+  test('reasoning_text 增量与 done、item.done、completed 不重复，多个 part 保留段落', async () => {
+    const item = {
+      ...reasoning('rs', '先检查'),
+      content: [
+        { type: 'reasoning_text', text: '先检查' },
+        { type: 'reasoning_text', text: '再验证' },
+      ],
+    }
+    const events = await collect([
+      { type: 'response.reasoning_text.delta', item_id: 'rs', content_index: 0, delta: '先' },
+      { type: 'response.reasoning_text.done', item_id: 'rs', content_index: 0, text: '先检查' },
+      { type: 'response.reasoning_text.done', item_id: 'rs', content_index: 1, text: '再验证' },
+      { type: 'response.output_item.done', item },
+      { type: 'response.completed', response: response([item]) },
+    ])
+    expect(text(events, 'thinking_delta')).toBe('先检查\n\n再验证')
+  })
+
+  test('同一 item 同时有摘要与正文时不混合，非流式优先摘要', async () => {
+    const item = {
+      ...reasoning('rs', '完整正文'),
+      summary: [{ type: 'summary_text', text: '摘要' }],
+    }
+    expect(responsesToStandard(response([item]), 'test-model').content[0]).toMatchObject({
+      thinking: '摘要',
+    })
+    const events = await collect([
+      {
+        type: 'response.reasoning_summary_text.delta',
+        item_id: 'rs',
+        summary_index: 0,
+        delta: '摘要',
+      },
+      { type: 'response.reasoning_text.delta', item_id: 'rs', content_index: 0, delta: '完整正文' },
+      { type: 'response.output_item.done', item },
+    ])
+    expect(text(events, 'thinking_delta')).toBe('摘要')
+  })
+
+  test('多段 reasoning 各自保留正文和签名，终止快照支持独立回填', async () => {
+    const items = [reasoning('rs_1', '第一段'), reasoning('rs_2', '第二段')]
+    const events = await collect([{ type: 'response.completed', response: response(items) }])
+    expect(text(events, 'thinking_delta', 0)).toBe('第一段')
+    expect(text(events, 'thinking_delta', 1)).toBe('第二段')
+    for (const [index, item] of items.entries()) {
+      expect(events).toContainEqual({
+        type: 'chunk_delta',
+        index,
+        delta: { type: 'signature_delta', signature: JSON.stringify(item) },
+      })
+    }
+  })
+
+  test('reasoning item 创建时启动思考，只有 done 正文时也不丢失', async () => {
+    const item = reasoning('rs', '完成检查')
+    const events = await collect([
+      { type: 'response.output_item.added', item: { type: 'reasoning', id: 'rs', summary: [] } },
+      { type: 'response.output_item.done', item },
+    ])
+    expect(events[1]).toMatchObject({ type: 'chunk_start', chunk: { type: 'thinking' } })
+    expect(text(events, 'thinking_delta')).toBe('完成检查')
+    expect(events.filter((e) => e.type === 'chunk_start')).toHaveLength(1)
+  })
+
+  test('缺少工具 added 时等待完整 item，不能用 item_id 冒充 call_id', async () => {
+    const item = {
+      type: 'function_call',
+      id: 'fc',
+      call_id: 'call',
+      name: 'Read',
+      arguments: '{"path":"a"}',
+    }
+    const events = await collect([
+      { type: 'response.function_call_arguments.delta', item_id: 'fc', delta: item.arguments },
+      { type: 'response.output_item.done', item },
+    ])
+    expect(events.filter((e) => e.type === 'chunk_start')).toHaveLength(1)
+    expect(events[1]).toMatchObject({ type: 'chunk_start', chunk: { id: 'call', name: 'Read' } })
+    expect(text(events, 'input_json_delta')).toBe(item.arguments)
+  })
+
+  test('refusal 非流式与流式均可见，done 只补齐后缀', async () => {
+    const item = { type: 'message', id: 'msg', content: [{ type: 'refusal', refusal: '无法执行' }] }
+    expect(responsesToStandard(response([item]), 'test-model').content).toEqual([
+      { type: 'text', text: '无法执行' },
+    ])
+    const events = await collect([
+      { type: 'response.refusal.delta', item_id: 'msg', content_index: 0, delta: '无法' },
+      { type: 'response.refusal.done', item_id: 'msg', content_index: 0, refusal: '无法执行' },
+      { type: 'response.completed', response: response([item]) },
+    ])
+    expect(text(events, 'text_delta')).toBe('无法执行')
+  })
+
+  test('只有 done 的正文及工具参数不会丢失，call_id 与 item_id 保持独立', async () => {
+    const tool = {
+      type: 'function_call',
+      id: 'fc',
+      call_id: 'call',
+      name: 'Read',
+      arguments: '{"path":"a"}',
+    }
+    const events = await collect([
+      { type: 'response.output_text.done', item_id: 'msg', content_index: 0, text: '读取文件' },
+      { type: 'response.output_item.added', item: { ...tool, arguments: '' } },
+      { type: 'response.function_call_arguments.done', item_id: 'fc', arguments: tool.arguments },
+      { type: 'response.completed', response: response([tool]) },
+    ])
+    expect(text(events, 'text_delta')).toBe('读取文件')
+    expect(text(events, 'input_json_delta')).toBe(tool.arguments)
+    expect(
+      events.find((e) => e.type === 'chunk_start' && e.chunk.type === 'tool_call'),
+    ).toMatchObject({
+      chunk: { id: 'call', name: 'Read', providerMetadata: { openaiResponses: { itemId: 'fc' } } },
+    })
+  })
+
+  test('并行工具参数交错到达时，不会在参数完成前关闭工具块', async () => {
+    const events = await collect([
+      ...['a', 'b'].map((id) => ({
+        type: 'response.output_item.added',
+        item: { type: 'function_call', id, call_id: `call_${id}`, name: 'Read', arguments: '' },
+      })),
+      { type: 'response.function_call_arguments.delta', item_id: 'a', delta: '{"path":"a"}' },
+      { type: 'response.function_call_arguments.delta', item_id: 'b', delta: '{"path":"b"}' },
+      { type: 'response.completed', response: response([]) },
+    ])
+    for (const index of [0, 1]) {
+      expect(events.findIndex((e) => e.type === 'chunk_stop' && e.index === index)).toBeGreaterThan(
+        events.findIndex((e) => e.type === 'chunk_delta' && e.index === index),
+      )
+    }
+  })
+
+  test('incomplete 含工具调用时仍返回截断原因，并回填思考', async () => {
+    const terminal = response(
+      [
+        reasoning('rs', '尚未完成'),
+        { type: 'function_call', id: 'fc', call_id: 'call', name: 'Read', arguments: '{' },
+      ],
+      'incomplete',
+    )
+    expect(responsesToStandard(terminal, 'test-model').stopReason).toBe('max_tokens')
+    const events = await collect([{ type: 'response.incomplete', response: terminal }])
+    expect(text(events, 'thinking_delta')).toBe('尚未完成')
+    expect(events.find((e) => e.type === 'response_delta')).toMatchObject({
+      stopReason: 'max_tokens',
+    })
+  })
+})
 
 describe('toolsToResponses', () => {
   test('undefined → undefined', () => {
@@ -105,6 +329,22 @@ describe('toolChoiceToResponses', () => {
 })
 
 describe('convertThinkingForResponses', () => {
+  test('保留模型能力配置指定的新官方 effort 档位', () => {
+    for (const effort of ['none', 'minimal', 'xhigh', 'max'] as const) {
+      expect(convertThinkingForResponses({ type: 'adaptive' }, effort)).toEqual({
+        reasoning: { effort },
+      })
+      expect(
+        buildResponsesRequestParams({
+          model: 'test-model',
+          maxTokens: 100,
+          messages: [],
+          thinking: { type: 'adaptive' },
+          reasoningEffort: effort,
+        } as Parameters<typeof buildResponsesRequestParams>[0]).reasoning,
+      ).toMatchObject({ effort })
+    }
+  })
   test('undefined → undefined（不传 reasoning）', () => {
     expect(convertThinkingForResponses(undefined)).toBeUndefined()
   })

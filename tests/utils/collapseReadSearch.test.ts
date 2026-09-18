@@ -37,6 +37,35 @@ function collapsedGroup(messages: RenderableMessage[]) {
 }
 
 describe('collapseReadSearchGroups', () => {
+  test('空思考签名不拆分连续读取，不把工具耗时估算成思考耗时', () => {
+    const hidden = createTestAssistantMessage(
+      [{ type: 'thinking', thinking: '', signature: '{"type":"reasoning"}' }],
+      { uuid: 'hidden', timestamp: '2024-01-01T00:04:00.000Z' },
+    )
+    const result = collapseReadSearchGroups(
+      [
+        read('read-1', 'tool-1', 'src/current.ts', '2024-01-01T00:00:00.000Z'),
+        hidden,
+        read('read-2', 'tool-2', 'src/current.ts', '2024-01-01T00:04:01.000Z'),
+        createTestAssistantMessage([{ type: 'thinking', thinking: '' }], {
+          uuid: 'final-thinking',
+          thinkingDurationMs: 36,
+        }),
+      ],
+      [FileReadTool],
+    )
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      type: 'collapsed_read_search',
+      readCount: 1,
+      thinkingDurationMs: 36,
+    })
+    if (result[0]?.type === 'collapsed_read_search') {
+      expect(result[0].messages).toContain(hidden)
+      expect(result[0].thoughtForMs).toBeUndefined()
+    }
+  })
+
   test('工具后进入思考时，折叠提示切到思考摘要', () => {
     const result = collapsedKinds([
       read('read-1', 'tool-1', 'src/first.ts', '2024-01-01T00:00:00.000Z'),
