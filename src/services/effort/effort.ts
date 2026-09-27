@@ -74,20 +74,16 @@ function getModelCapabilityContext(model: string, provider: string = getProvider
 /**
  * 将内部 effort 档位映射为目标 provider 的 API 参数值。
  * 映射来源：模型级 effortMap（model-capabilities.json 的 effort.map）。
- * 没有配置 effortMap 的模型不支持 effort，返回 undefined。
+ * 非 on 档位没有配置 effortMap 时返回 undefined。
  *
- * "on" 是特殊档位，表示"思考开启，无特定强度"——直接返回 "on"，不走映射链。
- * 由各 provider 的 openaiAttr.thinking.enable() 处理为合理默认值。
+ * "on" 是特殊档位，表示"思考开启，无特定强度"。模型显式配置
+ * effort.map.on 时使用该映射，否则交给 provider 的 thinking.enable() 处理。
  */
 export function mapEffortToProvider(
   effort: EffortLevel,
   providerId: string,
   model?: string,
 ): string | undefined {
-  // "on" 是 toggle 模式的开启档，不走 provider 映射
-  if (effort === 'on') {
-    return 'on'
-  }
   // "ultra" 复用 "extreme" 的 provider 映射（最强思考强度）
   // "orchestrate" 同理
   const key = effort === 'orchestrate' || effort === 'ultra' ? 'extreme' : effort
@@ -98,7 +94,8 @@ export function mapEffortToProvider(
       return modelMap[key]!
     }
   }
-  return undefined
+  // 未配置模型级映射时，保留通用 toggle 语义。
+  return effort === 'on' ? 'on' : undefined
 }
 
 // ---------------------------------------------------------------------------

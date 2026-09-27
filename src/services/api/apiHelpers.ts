@@ -1,7 +1,8 @@
 import { feature } from 'bun:bundle'
 import { getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { EFFORT_BETA_HEADER, TASK_BUDGETS_BETA_HEADER } from '../../constants/betas.js'
-import { getAPIProvider, isAnthropicModel } from '../model/providers.js'
+import { isAnthropicModel } from '../model/providers.js'
+import { getProviderForModel } from '../model/model.js'
 import type { TaskBudgetParam } from '../../types/llm.js'
 import { getOauthAccountInfo } from '../auth/auth.js'
 import { shouldIncludeExperimentalBetas } from '../feature-flags/betas.js'
@@ -115,7 +116,8 @@ export function configureEffortParams(
 
   if (typeof effortValue === 'string') {
     // 通过映射表将内部语义档位转为目标 provider 的 API 参数值
-    const providerId = getAPIProvider()
+    // 候选链中的模型可能与全局 provider 不同，映射须按本次请求的模型路由。
+    const providerId = getProviderForModel(model)
     const providerValue = mapEffortToProvider(effortValue as EffortLevel, providerId, model)
     // provider 没有配置模型级 effort map 时不设置 effort 参数
     if (providerValue !== undefined) {
