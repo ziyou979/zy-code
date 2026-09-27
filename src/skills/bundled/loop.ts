@@ -86,6 +86,7 @@ At the end of every iteration:
 <<autonomous-loop-dynamic>>
 Continue this self-paced loop objective: ${args}
 Inspect current state, make meaningful progress, and either stop when complete or call ${SCHEDULE_WAKEUP_TOOL_NAME} again for the next useful observation.
+Unless the user requested periodic reports, stay quiet when nothing meaningful changed. Set noop=true on ${SCHEDULE_WAKEUP_TOOL_NAME} only for a successful check with no changes and no report needed. Report meaningful changes, completion, failure, or required user action; do not mark those iterations as noop.
 
 Do not use ${CRON_CREATE_TOOL_NAME} for this dynamic loop. Only one wakeup may be pending, and every ${SCHEDULE_WAKEUP_TOOL_NAME} call replaces it.
 

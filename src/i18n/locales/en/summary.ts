@@ -1,6 +1,8 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const enSummary: TranslationResource = {
+  'summary.loop.quietChecks':
+    'No meaningful changes in {count} consecutive loop checks · Ctrl+O for full transcript',
   'compactSummary.contextLabel': 'Context',
   'compactSummary.expand': 'expand',
   'compactSummary.expandHistory': 'expand history',

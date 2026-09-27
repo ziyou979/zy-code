@@ -21,6 +21,12 @@ const inputSchema = lazySchema(() =>
       .optional()
       .describe('The stable loop prompt, including <<autonomous-loop-dynamic>>.'),
     stop: z.boolean().optional().describe('Cancel the pending wakeup and end the dynamic loop.'),
+    noop: z
+      .boolean()
+      .optional()
+      .describe(
+        'True only when this iteration found no meaningful change and made no changes. Allows consecutive quiet checks to collapse in the UI; does not skip execution or change scheduling.',
+      ),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>

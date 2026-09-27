@@ -228,6 +228,13 @@ export interface SystemScheduledTaskFireMessage extends BaseMessage {
   content: string
 }
 
+/** 仅用于显示投影的连续空轮次摘要，不写入模型上下文或 transcript。 */
+export interface SystemQuietLoopMessage extends BaseMessage {
+  type: 'system'
+  subtype: 'quiet_loop'
+  content: string
+}
+
 export interface SystemTurnDurationMessage extends BaseMessage {
   type: 'system'
   subtype: 'turn_duration'
@@ -293,6 +300,7 @@ export type SystemMessage =
   | SystemCompactBoundaryMessage
   | SystemMicrocompactBoundaryMessage
   | SystemScheduledTaskFireMessage
+  | SystemQuietLoopMessage
   | SystemTurnDurationMessage
   | SystemAgentsKilledMessage
   | ToolUseSummaryMessage

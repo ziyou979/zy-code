@@ -1,6 +1,7 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const zhSummary: TranslationResource = {
+  'summary.loop.quietChecks': '连续 {count} 次循环检查无实质变化 · Ctrl+O 查看完整记录',
   'compactSummary.contextLabel': '上下文',
   'compactSummary.expand': '展开',
   'compactSummary.expandHistory': '展开历史',

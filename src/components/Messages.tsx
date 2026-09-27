@@ -28,6 +28,8 @@ import type {
 } from '../types/message.js'
 import { collapseBackgroundBashNotifications } from '../services/compact/collapseBackgroundBashNotifications.js'
 import { collapseHookSummaries } from '../services/messages/collapseHookSummaries.js'
+import { collapseQuietLoopTurns } from '../services/messages/collapseQuietLoopTurns.js'
+import { isFullscreenEnvEnabled } from '../services/terminal/fullscreen.js'
 import { collapseReadSearchGroups } from '../services/compact/collapseReadSearch.js'
 import { collapseTeammateShutdowns } from '../services/swarm/collapseTeammateShutdowns.js'
 import { getGlobalConfig } from '../services/config/config.js'
@@ -579,7 +581,11 @@ const MessagesImpl = ({
     // resume / 非 fullscreen 均无可靠的原生 scrollback 可补全冷段；
     // 切勿在此 getHotContextMessages。API/token 统计走 hot / liveApiUsage。
     // 非虚拟化路径靠 MAX_MESSAGES_WITHOUT_VIRTUALIZATION 切片控内存。
-    const displayMessages = getDisplayMessages(normalizedMessages)
+    const displayMessages = collapseQuietLoopTurns(
+      getDisplayMessages(normalizedMessages).filter((msg) => !isNullRenderingAttachment(msg)),
+      tools,
+      !isTranscriptMode && !verbose && isFullscreenEnvEnabled(),
+    )
     const messagesToShowNotTruncated = reorderMessagesInUI(
       displayMessages
         .filter(

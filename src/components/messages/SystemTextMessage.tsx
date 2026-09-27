@@ -99,7 +99,10 @@ export function SystemTextMessage({ message, addMargin, verbose, isTranscriptMod
   if ('subtype' in message && message.subtype === 'bridge_status') {
     return <WireStatusMessage message={message} addMargin={addMargin} />
   }
-  if ('subtype' in message && message.subtype === 'scheduled_task_fire') {
+  if (
+    'subtype' in message &&
+    (message.subtype === 'scheduled_task_fire' || message.subtype === 'quiet_loop')
+  ) {
     return (
       // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
       <Box
