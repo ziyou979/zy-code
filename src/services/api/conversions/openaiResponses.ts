@@ -36,6 +36,7 @@ import type {
 } from '../../../types/llm.js'
 import { normalizeModelStringForAPI } from '../../model/model.js'
 import { safeStringifyToolArguments } from './openai.js'
+import { hoistToolResultImages } from './toolResultImages.js'
 
 /**
  * buildResponsesRequestParams 的返回类型。
@@ -142,7 +143,7 @@ function getResponsesCallId(toolCallId: string): string {
 export function messagesToResponses(messages: LLMMessage[]): OpenAI.Responses.ResponseInputItem[] {
   const result: OpenAI.Responses.ResponseInputItem[] = []
 
-  for (const [messageIndex, msg] of messages.entries()) {
+  for (const [messageIndex, msg] of hoistToolResultImages(messages).entries()) {
     switch (msg.role) {
       case 'system':
         // 系统消息由 extractInstructions 收集，不产生 item
@@ -507,12 +508,14 @@ type ResponsesStreamEvent =
   | {
       type: 'response.reasoning_text.delta'
       item_id: string
+      output_index?: number
       content_index: number
       delta: string
     }
   | {
       type: 'response.reasoning_text.done'
       item_id: string
+      output_index?: number
       content_index: number
       text: string
     }
@@ -627,7 +630,27 @@ export async function* mapResponsesStreamToStandard(
     parts: Map<string, string>
   }
   const blocks = new Map<string, Block>()
+  const itemAliases = new Map<string, string>()
+  const outputSlots = new Map<string, string>()
   let nextIndex = 0
+
+  function resolveItemId(id: string, outputIndex: number | undefined, kind: string): string {
+    const alias = `${kind}:${id}`
+    const slot = outputIndex !== undefined ? `${kind}:${outputIndex}` : undefined
+    // 兼容端可能在 done / completed 重建全部 ID；同一 output_index 仍是同一项。
+    // 已知 ID 优先，兼容只携带部分 output 的终止快照；不能按正文/命令去重，
+    // 不同位置完全相同的两次工具调用也可能是合法操作。
+    const canonical = itemAliases.get(alias) ?? (slot ? outputSlots.get(slot) : undefined) ?? id
+    itemAliases.set(alias, canonical)
+    if (slot && !outputSlots.has(slot)) {
+      outputSlots.set(slot, canonical)
+    }
+    return canonical
+  }
+
+  function eventItemId(event: { item_id: string; output_index?: number }, kind: string): string {
+    return resolveItemId(event.item_id, event.output_index, kind)
+  }
 
   function* stopBlocks(includeTools = true): Generator<LLMStreamEvent> {
     for (const block of blocks.values()) {
@@ -716,18 +739,26 @@ export async function* mapResponsesStreamToStandard(
     yield* append(block, suffix)
   }
 
-  function* finishItem(item: OpenAI.Responses.ResponseOutputItem): Generator<LLMStreamEvent> {
+  function* finishItem(
+    item: OpenAI.Responses.ResponseOutputItem,
+    outputIndex?: number,
+  ): Generator<LLMStreamEvent> {
+    const itemId = resolveItemId(
+      item.id ?? (item.type === 'function_call' ? item.call_id : ''),
+      outputIndex,
+      item.type,
+    )
     if (item.type === 'reasoning') {
       const reasoning: ResponsesReasoningItem = item
-      const existing = blocks.get(`reasoning:${item.id}`)
+      const existing = blocks.get(`reasoning:${itemId}`)
       const source =
         existing?.source ??
         ((item.summary ?? []).some((p) => p.text.trim()) ? 'summary' : 'content')
       const parts = source === 'summary' ? (item.summary ?? []) : (reasoning.content ?? [])
       for (const [index, part] of parts.entries()) {
-        yield* thinkingPart(item.id, source, index, part.text, true)
+        yield* thinkingPart(itemId, source, index, part.text, true)
       }
-      const block = yield* startBlock(`reasoning:${item.id}`, {
+      const block = yield* startBlock(`reasoning:${itemId}`, {
         type: 'thinking',
         thinking: '',
         signature: '',
@@ -748,11 +779,11 @@ export async function* mapResponsesStreamToStandard(
         if (!value) {
           continue
         }
-        const block = yield* startBlock(`text:${item.id}:${index}`, { type: 'text', text: '' })
+        const block = yield* startBlock(`text:${itemId}:${index}`, { type: 'text', text: '' })
         yield* finishValue(block, value)
       }
     } else if (item.type === 'function_call') {
-      const block = yield* startBlock(`tool:${item.id ?? item.call_id}`, {
+      const block = yield* startBlock(`tool:${itemId}`, {
         type: 'tool_call',
         id: item.call_id,
         name: item.name,
@@ -768,10 +799,13 @@ export async function* mapResponsesStreamToStandard(
     switch (event.type) {
       case 'response.output_text.delta':
       case 'response.refusal.delta': {
-        const block = yield* startBlock(`text:${event.item_id}:${event.content_index}`, {
-          type: 'text',
-          text: '',
-        })
+        const block = yield* startBlock(
+          `text:${eventItemId(event, 'message')}:${event.content_index}`,
+          {
+            type: 'text',
+            text: '',
+          },
+        )
         yield* append(block, event.delta)
         break
       }
@@ -779,46 +813,90 @@ export async function* mapResponsesStreamToStandard(
       case 'response.refusal.done': {
         const value = event.type === 'response.refusal.done' ? event.refusal : event.text
         if (value) {
-          const block = yield* startBlock(`text:${event.item_id}:${event.content_index}`, {
-            type: 'text',
-            text: '',
-          })
+          const block = yield* startBlock(
+            `text:${eventItemId(event, 'message')}:${event.content_index}`,
+            {
+              type: 'text',
+              text: '',
+            },
+          )
           yield* finishValue(block, value)
         }
         break
       }
       case 'response.reasoning_summary_text.delta':
-        yield* thinkingPart(event.item_id, 'summary', event.summary_index, event.delta, false)
+        yield* thinkingPart(
+          eventItemId(event, 'reasoning'),
+          'summary',
+          event.summary_index,
+          event.delta,
+          false,
+        )
         break
       case 'response.reasoning_summary_text.done':
-        yield* thinkingPart(event.item_id, 'summary', event.summary_index, event.text, true)
+        yield* thinkingPart(
+          eventItemId(event, 'reasoning'),
+          'summary',
+          event.summary_index,
+          event.text,
+          true,
+        )
         break
       case 'response.reasoning_text.delta':
-        yield* thinkingPart(event.item_id, 'content', event.content_index, event.delta, false)
+        yield* thinkingPart(
+          eventItemId(event, 'reasoning'),
+          'content',
+          event.content_index,
+          event.delta,
+          false,
+        )
         break
       case 'response.reasoning_text.done':
-        yield* thinkingPart(event.item_id, 'content', event.content_index, event.text, true)
+        yield* thinkingPart(
+          eventItemId(event, 'reasoning'),
+          'content',
+          event.content_index,
+          event.text,
+          true,
+        )
         break
       case 'response.reasoning.delta':
         // 旧 SDK / 兼容端点的别名；未知结构不能隐式转换为用户可见文本。
         if (typeof event.delta === 'string') {
-          yield* thinkingPart(event.item_id, 'content', event.content_index, event.delta, false)
+          yield* thinkingPart(
+            eventItemId(event, 'reasoning'),
+            'content',
+            event.content_index,
+            event.delta,
+            false,
+          )
         }
         break
       case 'response.reasoning.done':
-        yield* thinkingPart(event.item_id, 'content', event.content_index, event.text, true)
+        yield* thinkingPart(
+          eventItemId(event, 'reasoning'),
+          'content',
+          event.content_index,
+          event.text,
+          true,
+        )
         break
       case 'response.output_item.added': {
+        const itemId = resolveItemId(
+          event.item.id ?? (event.item.type === 'function_call' ? event.item.call_id : ''),
+          event.output_index,
+          event.item.type,
+        )
         if (event.item.type === 'reasoning') {
           // item 创建就启动思考计时；只在 done 才提供正文的端点也能计入等待时间。
-          yield* startBlock(`reasoning:${event.item.id}`, {
+          yield* startBlock(`reasoning:${itemId}`, {
             type: 'thinking',
             thinking: '',
             signature: '',
           })
         } else if (event.item.type === 'function_call') {
           const item = event.item
-          const block = yield* startBlock(`tool:${item.id ?? item.call_id}`, {
+          const block = yield* startBlock(`tool:${itemId}`, {
             type: 'tool_call',
             id: item.call_id,
             name: item.name,
@@ -830,11 +908,11 @@ export async function* mapResponsesStreamToStandard(
         break
       }
       case 'response.output_item.done':
-        yield* finishItem(event.item)
+        yield* finishItem(event.item, event.output_index)
         break
       case 'response.function_call_arguments.delta':
       case 'response.function_call_arguments.done': {
-        const block = blocks.get(`tool:${event.item_id}`)
+        const block = blocks.get(`tool:${eventItemId(event, 'function_call')}`)
         // 没有 added 时不能拿 item_id 冒充 call_id，也不能执行缺少名称的工具。
         // 等 output_item.done / 终止响应携带完整身份后再回填参数。
         if (block) {
@@ -849,8 +927,8 @@ export async function* mapResponsesStreamToStandard(
       case 'response.completed':
       case 'response.incomplete': {
         // 终止事件也可能是唯一完整快照；逐 item 回填，保留所有 reasoning 签名。
-        for (const item of event.response.output ?? []) {
-          yield* finishItem(item)
+        for (const [outputIndex, item] of (event.response.output ?? []).entries()) {
+          yield* finishItem(item, outputIndex)
         }
         yield* stopBlocks()
         yield {

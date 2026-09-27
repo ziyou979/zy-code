@@ -100,6 +100,153 @@ describe('Responses 内容完整性回归', () => {
     expect(messagesToResponses([{ role: 'assistant', content: nonstream.content }])).toEqual([item])
   })
 
+  for (const terminalType of ['response.completed', 'response.incomplete']) {
+    test(`${terminalType} 重建所有 ID 时，思考、正文与工具只结算一次`, async () => {
+      const thought = reasoning('stream-reasoning', '检查分支状态')
+      const message = {
+        type: 'message',
+        id: 'stream-message',
+        content: [{ type: 'output_text', text: '准备合并。' }],
+      }
+      const tool = {
+        type: 'function_call',
+        id: 'stream-tool',
+        call_id: 'call_original',
+        name: 'Bash',
+        arguments: '{"command":"git status"}',
+      }
+      const finalThought = { ...thought, id: 'rs_final' }
+      const events = await collect([
+        { type: 'response.output_item.added', output_index: 0, item: { ...thought, content: [] } },
+        { type: 'response.output_item.done', output_index: 0, item: thought },
+        {
+          type: 'response.output_text.delta',
+          output_index: 1,
+          item_id: message.id,
+          content_index: 0,
+          delta: '准备',
+        },
+        {
+          type: 'response.output_text.done',
+          output_index: 1,
+          item_id: 'done-message',
+          content_index: 0,
+          text: '准备合并。',
+        },
+        {
+          type: 'response.output_item.done',
+          output_index: 1,
+          item: { ...message, id: 'item-done-message' },
+        },
+        { type: 'response.output_item.added', output_index: 2, item: { ...tool, arguments: '' } },
+        {
+          type: 'response.function_call_arguments.delta',
+          output_index: 2,
+          item_id: tool.id,
+          delta: '{"command":',
+        },
+        {
+          type: 'response.function_call_arguments.done',
+          output_index: 2,
+          item_id: 'done-tool',
+          arguments: tool.arguments,
+        },
+        {
+          type: 'response.output_item.done',
+          output_index: 2,
+          item: { ...tool, id: 'item-done-tool', call_id: 'call_done' },
+        },
+        {
+          type: terminalType,
+          response: response(
+            [
+              finalThought,
+              { ...message, id: 'msg_final' },
+              { ...tool, id: 'fc_final', call_id: 'chatcmpl-tool-final' },
+            ],
+            terminalType === 'response.completed' ? 'completed' : 'incomplete',
+          ),
+        },
+      ])
+      expect(events.filter((e) => e.type === 'chunk_start')).toHaveLength(3)
+      expect(events.filter((e) => e.type === 'chunk_stop').map((e) => e.index)).toEqual([0, 1, 2])
+      expect(text(events, 'thinking_delta')).toBe('检查分支状态')
+      expect(text(events, 'text_delta')).toBe('准备合并。')
+      expect(text(events, 'input_json_delta')).toBe(tool.arguments)
+      expect(
+        events.find((e) => e.type === 'chunk_start' && e.chunk.type === 'tool_call'),
+      ).toMatchObject({
+        chunk: {
+          id: 'call_original',
+          providerMetadata: { openaiResponses: { itemId: 'stream-tool' } },
+        },
+      })
+      expect(
+        events.filter((e) => e.type === 'chunk_delta' && e.delta.type === 'signature_delta').at(-1),
+      ).toMatchObject({
+        index: 0,
+        delta: { signature: JSON.stringify(finalThought) },
+      })
+    })
+  }
+
+  test('不同输出位置的相同命令不误去重，终止快照的新 ID 也不重复执行', async () => {
+    const tools = [0, 1].map((i) => ({
+      type: 'function_call',
+      id: `stream-${i}`,
+      call_id: `call-${i}`,
+      name: 'Bash',
+      arguments: '{"command":"git status"}',
+    }))
+    const events = await collect([
+      ...tools.map((item, output_index) => ({
+        type: 'response.output_item.added',
+        output_index,
+        item,
+      })),
+      {
+        type: 'response.completed',
+        response: response(
+          tools.map((item, i) => ({ ...item, id: `fc-${i}`, call_id: `chatcmpl-tool-${i}` })),
+        ),
+      },
+    ])
+    const starts = events.filter((e) => e.type === 'chunk_start')
+    expect(starts).toHaveLength(2)
+    expect(starts[0]).toMatchObject({ chunk: { id: 'call-0' } })
+    expect(starts[1]).toMatchObject({ chunk: { id: 'call-1' } })
+    expect(text(events, 'input_json_delta', 0)).toBe(tools[0]!.arguments)
+    expect(text(events, 'input_json_delta', 1)).toBe(tools[1]!.arguments)
+  })
+
+  test('added 注册位置后，无 output_index 的文本增量仍关联到最终快照', async () => {
+    const events = await collect([
+      {
+        type: 'response.output_item.added',
+        output_index: 0,
+        item: { type: 'message', id: 'stream', content: [] },
+      },
+      { type: 'response.output_text.delta', item_id: 'stream', content_index: 0, delta: '第一段' },
+      { type: 'response.output_text.delta', item_id: 'stream', content_index: 1, delta: '第二段' },
+      {
+        type: 'response.completed',
+        response: response([
+          {
+            type: 'message',
+            id: 'final',
+            content: [
+              { type: 'output_text', text: '第一段' },
+              { type: 'output_text', text: '第二段' },
+            ],
+          },
+        ]),
+      },
+    ])
+    expect(events.filter((e) => e.type === 'chunk_start')).toHaveLength(2)
+    expect(text(events, 'text_delta', 0)).toBe('第一段')
+    expect(text(events, 'text_delta', 1)).toBe('第二段')
+  })
+
   test('reasoning_text 增量与 done、item.done、completed 不重复，多个 part 保留段落', async () => {
     const item = {
       ...reasoning('rs', '先检查'),
