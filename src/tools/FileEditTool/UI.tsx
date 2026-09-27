@@ -263,8 +263,7 @@ function EditRejectionBody({
   style?: 'condensed'
   verbose: boolean
 }) {
-  // biome-ignore lint/suspicious/noExplicitAny: React.use 对 Promise 的类型推断不完整
-  const data = use(promise as Promise<any>) as RejectionDiffData
+  const data = use(promise)
   return (
     <FileEditToolUseRejectedMessage
       file_path={filePath}

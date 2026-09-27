@@ -59,6 +59,42 @@ function toForwardPath(absPath: string): string {
   return absPath.replace(/\\/g, '/')
 }
 
+function parseSource(file: string, content: string): ts.SourceFile {
+  return ts.createSourceFile(
+    file,
+    content,
+    ts.ScriptTarget.Latest,
+    true,
+    file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+  )
+}
+
+/** 行号仅用于展示；声明路径隔离不同作用域，重复序号防止同文案新增时借用旧额度。 */
+function createNodeIdentity() {
+  const counts = new Map<string, number>()
+  const printer = ts.createPrinter({ removeComments: true })
+  return (node: ts.Node, detail: string): string => {
+    const names: string[] = []
+    for (let parent = node.parent; parent; parent = parent.parent) {
+      if (
+        (ts.isFunctionDeclaration(parent) ||
+          ts.isVariableDeclaration(parent) ||
+          ts.isClassDeclaration(parent) ||
+          ts.isMethodDeclaration(parent) ||
+          ts.isPropertyDeclaration(parent)) &&
+        parent.name
+      ) {
+        names.unshift(parent.name.getText())
+      }
+    }
+    const code = printer.printNode(ts.EmitHint.Unspecified, node, node.getSourceFile())
+    const signature = hashText(JSON.stringify([names, detail, code]))
+    const ordinal = (counts.get(signature) ?? 0) + 1
+    counts.set(signature, ordinal)
+    return `v2|${signature}|${ordinal}`
+  }
+}
+
 /** 已知的兼容转发目录 — 仅允许纯 re-export 文件 */
 const KNOWN_COMPAT_DIRS = [
   '/utils/hooks/',
@@ -99,6 +135,7 @@ interface Violation {
 }
 
 const violations: Violation[] = []
+const lengthReviews: Array<{ file: string; lines: number }> = []
 
 function addV(file: string, line: number, msg: string, cat: string, detail?: string) {
   violations.push({ file, line, message: msg, category: cat, detail })
@@ -415,28 +452,36 @@ function getConditionContainer(
 
 function unwrapFeatureConditionExpression(call: ts.CallExpression): ts.Expression {
   let current: ts.Expression = call
-
-  while (ts.isParenthesizedExpression(current.parent)) {
-    current = current.parent
-  }
-
-  if (
-    ts.isPrefixUnaryExpression(current.parent) &&
-    current.parent.operator === ts.SyntaxKind.ExclamationToken
-  ) {
-    current = current.parent
-    while (ts.isParenthesizedExpression(current.parent)) {
-      current = current.parent
-    }
+  // Bun 会折叠条件内的布尔组合；遇到调用、赋值或比较即停止，不能跨越间接使用。
+  while (true) {
+    const parent = current.parent
+    if (
+      ts.isParenthesizedExpression(parent) ||
+      (ts.isPrefixUnaryExpression(parent) && parent.operator === ts.SyntaxKind.ExclamationToken) ||
+      (ts.isBinaryExpression(parent) &&
+        (parent.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken ||
+          parent.operatorToken.kind === ts.SyntaxKind.BarBarToken))
+    ) {
+      current = parent
+    } else break
   }
 
   return current
 }
 
 function getFeatureViolationMessage(call: ts.CallExpression): string | null {
-  const rootExpression = unwrapFeatureConditionExpression(call)
-  if (getConditionContainer(rootExpression)) {
+  if (getConditionContainer(unwrapFeatureConditionExpression(call))) {
     return null
+  }
+
+  // 非法用法保留原分类，避免规则放宽时把既有债务重新标为新增。
+  let rootExpression: ts.Expression = call
+  while (
+    ts.isParenthesizedExpression(rootExpression.parent) ||
+    (ts.isPrefixUnaryExpression(rootExpression.parent) &&
+      rootExpression.parent.operator === ts.SyntaxKind.ExclamationToken)
+  ) {
+    rootExpression = rootExpression.parent
   }
 
   const parent = rootExpression.parent
@@ -468,7 +513,8 @@ function checkFeatureMacro() {
   const files = walkDir(SRC)
   for (const file of files) {
     const content = readFileSync(file, 'utf-8')
-    const sf = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+    const sf = parseSource(file, content)
+    const identify = createNodeIdentity()
     const seenPositions = new Set<string>()
 
     const visit = (node: ts.Node) => {
@@ -476,7 +522,7 @@ function checkFeatureMacro() {
         const message = getFeatureViolationMessage(node)
         if (message) {
           const position = sf.getLineAndCharacterOfPosition(node.getStart(sf))
-          const detail = `${position.line + 1}:${position.character + 1}:${message}`
+          const detail = identify(node, message)
           if (!seenPositions.has(detail)) {
             seenPositions.add(detail)
             addV(file, position.line + 1, message, 'featureMacro', detail)
@@ -533,7 +579,22 @@ function checkAsAny(): AsAnyStats {
     const content = readFileSync(file, 'utf-8')
     const lines = content.split('\n')
     const relPath = getRelativePath(file)
-    const matches = [...content.matchAll(/\bas\s+any\b/g)]
+    const sf = parseSource(file, content)
+    const identify = createNodeIdentity()
+    const matches: Array<ts.AsExpression | ts.TypeAssertion> = []
+    // 数组/泛型中的 any 同样会丢失类型约束；注释和模型文案不属于断言。
+    const containsAny = (node: ts.Node): boolean =>
+      node.kind === ts.SyntaxKind.AnyKeyword || !!ts.forEachChild(node, containsAny)
+    const visit = (node: ts.Node) => {
+      if (
+        (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) &&
+        containsAny(node.type)
+      ) {
+        matches.push(node)
+      }
+      ts.forEachChild(node, visit)
+    }
+    visit(sf)
     const count = matches.length
 
     if (count > 0) {
@@ -551,14 +612,10 @@ function checkAsAny(): AsAnyStats {
       }
 
       const category: AsAnyOccurrence['category'] = isAdapter ? 'adapter' : 'nonAdapter'
-      const lineOrdinalMap = new Map<number, number>()
       for (const match of matches) {
-        const index = match.index ?? 0
-        const line = content.slice(0, index).split('\n').length
-        const ordinal = (lineOrdinalMap.get(line) ?? 0) + 1
-        lineOrdinalMap.set(line, ordinal)
+        const line = sf.getLineAndCharacterOfPosition(match.getStart(sf)).line + 1
         const snippet = (lines[line - 1] ?? '').trim().slice(0, 160)
-        const id = `${relPath}|${category}|${line}|${ordinal}|${hashText(snippet)}`
+        const id = `${relPath}|${category}|${identify(match, category)}`
         occurrences.push({
           id,
           file: relPath,
@@ -598,19 +655,7 @@ function getFileLengthRule(relPath: string): FileLengthRule | null {
     return { maxLines: 800, scope: 'utils' }
   }
 
-  if (relPath.endsWith('.tsx')) {
-    return { maxLines: 1200, scope: 'react' }
-  }
-
-  if (
-    relPath.startsWith('services/') ||
-    relPath.startsWith('commands/') ||
-    relPath.startsWith('tools/')
-  ) {
-    return { maxLines: 1200, scope: 'serviceOrCommand' }
-  }
-
-  return null
+  return { maxLines: 1500, scope: 'review' }
 }
 
 function countFileLines(content: string): number {
@@ -629,6 +674,12 @@ function checkFileLengths() {
     const content = readFileSync(file, 'utf-8')
     const lineCount = countFileLines(content)
     if (lineCount <= rule.maxLines) continue
+
+    // 普通模块按职责审查，不把行数当作强制拆分依据；utils 仍执行硬限制。
+    if (rule.scope === 'review') {
+      lengthReviews.push({ file: relPath, lines: lineCount })
+      continue
+    }
 
     const detail = `${relPath}|${rule.scope}|${rule.maxLines}`
     addV(
@@ -817,7 +868,8 @@ function checkHardcodedUserText() {
     if (!shouldCheckHardcodedText(relPath)) continue
 
     const content = readFileSync(file, 'utf-8')
-    const sf = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+    const sf = parseSource(file, content)
+    const identify = createNodeIdentity()
     const seen = new Set<string>()
 
     const visit = (node: ts.Node) => {
@@ -834,7 +886,7 @@ function checkHardcodedUserText() {
       if (literal && context) {
         const normalizedText = normalizeTextCandidate(literal.text)
         if (!isLikelyCodeLikeText(normalizedText)) {
-          const detail = `${relPath}|${literal.line}|${literal.character}|${hashText(`${context}|${normalizedText}`)}`
+          const detail = identify(node, `${context}|${normalizedText}`)
           if (!seen.has(detail)) {
             seen.add(detail)
             addV(
@@ -1279,6 +1331,14 @@ function main() {
   checkToolProfiles()
   checkSupportFiles()
   const asAnyStats = checkAsAny()
+
+  if (lengthReviews.length > 0) {
+    console.error(
+      `📐 ${lengthReviews.length} 个文件超过 1500 行，需记录职责审查结论（非违规，不自动要求拆分）：`,
+    )
+    for (const review of lengthReviews) console.error(`  ${review.file}: ${review.lines} 行`)
+    console.error('')
+  }
 
   // 生成违规条目（用于精确基线匹配）
   const entries: BaselineEntry[] = violations.map((v) => {

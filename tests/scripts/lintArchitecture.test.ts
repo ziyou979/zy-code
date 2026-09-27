@@ -70,6 +70,80 @@ afterEach(() => {
 })
 
 describe('lint-architecture', () => {
+  test('普通模块按 1500 行提示职责审查，不按旧 1200 行门禁强制拆分', () => {
+    const fixture = createFixtureProject({
+      'src/services/largeService.ts': '// 占位行\n'.repeat(1500),
+    })
+    const baseline = runLint(fixture.root, fixture.baselinePath, ['--write-baseline'])
+    expect(baseline.exitCode).toBe(0)
+    expect(baseline.stderr).not.toContain('需记录职责审查结论')
+    expect(baseline.stderr).not.toContain('[fileLength]')
+    writeFileSync(join(fixture.root, 'src/services/largeService.ts'), '// 占位行\n'.repeat(1501))
+    const result = runLint(fixture.root, fixture.baselinePath)
+    expect(result.exitCode).toBe(0)
+    expect(result.stderr).toContain('需记录职责审查结论')
+    expect(result.stderr).toContain('services/largeService.ts: 1501 行')
+    expect(result.stderr).not.toContain('[fileLength]')
+  }, 30000)
+  test('TS 泛型箭头函数不会被解析成 JSX，真实 TSX 文案仍被检查', () => {
+    const fixture = createFixtureProject({
+      'src/components/useValue.ts': 'export const useValue = <T>(value: T) => value\n',
+      'src/components/Label.tsx': 'export const Label = () => <div>Hello there</div>\n',
+    })
+    const result = runLint(fixture.root, fixture.baselinePath, ['--write-baseline'])
+    expect(result.exitCode).toBe(0)
+    expect(result.stderr).not.toContain('hardcodedText] components/useValue.ts')
+    expect(result.stderr).toContain('hardcodedText] components/Label.tsx')
+  })
+
+  test('断言统计忽略字符串和注释，并识别跨行及容器中的 any', () => {
+    const fixture = createFixtureProject({
+      'src/services/assertions.ts': [
+        '// as any 不应统计',
+        'const prompt = "as any other"',
+        'const a = value as\n any',
+        'const b = value as any[]',
+        'const c = <any>value',
+        'const d = value as Array<any>',
+      ].join('\n'),
+    })
+    const result = runLint(fixture.root, fixture.baselinePath, ['--write-baseline'])
+    expect(result.exitCode).toBe(0)
+    expect(result.stderr).toContain('as any 统计（共 4 处）')
+  })
+
+  test('位置和格式变化不新增债务，同作用域重复与跨作用域新增仍被拦截', () => {
+    const original = `export function Label() {
+      const value = input as any
+      const enabled = feature('FLAG_A')
+      return <div>Hello there</div>
+    }\n`
+    const fixture = createFixtureProject({ 'src/components/Label.tsx': original })
+    expect(runLint(fixture.root, fixture.baselinePath, ['--write-baseline']).exitCode).toBe(0)
+    const file = join(fixture.root, 'src/components/Label.tsx')
+    writeFileSync(
+      file,
+      `// 新增注释\n\n${original.replace('input as any', 'input /* 注释 */ as\n any')}`,
+    )
+    expect(runLint(fixture.root, fixture.baselinePath).exitCode).toBe(0)
+
+    writeFileSync(
+      file,
+      original.replace(
+        '<div>Hello there</div>',
+        '<><div>Hello there</div><div>Hello there</div></>',
+      ),
+    )
+    expect(runLint(fixture.root, fixture.baselinePath).exitCode).toBe(1)
+
+    writeFileSync(file, original.replace('function Label()', 'function OtherLabel()'))
+    const moved = runLint(fixture.root, fixture.baselinePath)
+    expect(moved.exitCode).toBe(1)
+    expect(moved.stderr).toContain('as any 新增 1 处')
+    expect(moved.stderr).toContain('[featureMacro]')
+    expect(moved.stderr).toContain('[hardcodedText]')
+  }, 30000)
+
   test('历史根文件按大小写不敏感识别，不误报为新增文件', () => {
     const fixture = createFixtureProject({
       'src/queryEngine.ts': 'export const queryEngine = 1\n',
@@ -95,24 +169,26 @@ describe('lint-architecture', () => {
     expect(result.stderr).not.toContain('普通模块建议 camelCase: useSelectState.ts')
   })
 
-  test('if 条件中的 feature 复合逻辑只按一个源码点报错', () => {
+  test('允许条件内的布尔组合，继续拦截间接和非条件使用', () => {
     const fixture = createFixtureProject({
       'src/utils/featureGate.ts': [
         'export function shouldRun(ready: boolean) {',
         "  if (feature('FLAG_A') && ready) {",
         '    return true',
         '  }',
-        "  return !feature('FLAG_B')",
+        "  const cached = feature('FLAG_B') || feature('FLAG_C')",
+        "  if (wrap(feature('FLAG_D'))) return false",
+        "  return !(feature('FLAG_E') || feature('FLAG_F')) ? true : false",
         '}',
         '',
       ].join('\n'),
     })
 
     const result = runLint(fixture.root, fixture.baselinePath, ['--write-baseline'])
-    const matches = result.stderr.match(/feature\(\) 在 if 中不能与 && 组合/g) ?? []
-
     expect(result.exitCode).toBe(0)
-    expect(matches).toHaveLength(1)
+    expect(result.stderr.match(/feature\(\) 不能用于 \|\| 表达式/g)).toHaveLength(2)
+    expect(result.stderr.match(/feature\(\) 必须直接位于 if 或三元条件中/g)).toHaveLength(1)
+    expect(result.stderr).not.toContain('feature() 在 if 中不能与 && 组合')
     expect(result.stderr).not.toContain('feature() 不能用于 && 表达式')
   })
 

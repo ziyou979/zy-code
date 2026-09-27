@@ -238,8 +238,7 @@ function WriteRejectionBody({
   style?: 'condensed'
   verbose: boolean
 }) {
-  // biome-ignore lint/suspicious/noExplicitAny: React.use 对 Promise 的类型推断不完整
-  const data: RejectionDiffData = use(promise as Promise<any>)
+  const data = use(promise)
   if (data.type === 'create') {
     return createFallback
   }
