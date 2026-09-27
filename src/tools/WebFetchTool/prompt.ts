@@ -11,6 +11,7 @@ export const DESCRIPTION = `
 Usage notes:
   - IMPORTANT: If an MCP-provided web fetch tool is available, prefer using that tool instead of this one, as it may have fewer restrictions.
   - The URL must be a fully-formed valid URL
+  - WebFetch rejects localhost and other hostnames without a dot. For a local server, use an available shell tool appropriate to the environment: curl via Bash, or Invoke-WebRequest / curl.exe via PowerShell. Shell access remains subject to the session's permissions.
   - HTTP URLs will be automatically upgraded to HTTPS
   - The prompt should describe what information you want to extract from the page
   - This tool is read-only and does not modify any files

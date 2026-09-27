@@ -152,7 +152,7 @@ const baseInputSchema = lazySchema(() =>
       .enum(['advanced', 'standard', 'compact'])
       .optional()
       .describe(
-        "Optional model tier override for this agent. Takes precedence over the agent definition's model frontmatter. If omitted, uses the agent definition's model, or inherits from the parent.",
+        "Optional model tier for this agent. ZY_CODE_SUBAGENT_MODEL takes precedence over this parameter. Otherwise, this parameter overrides the agent definition's model frontmatter. If omitted, uses the agent definition's model, or inherits the parent model when the definition omits model or specifies inherit.",
       ),
     run_in_background: z
       .boolean()

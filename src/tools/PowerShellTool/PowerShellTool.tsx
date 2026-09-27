@@ -290,7 +290,9 @@ const fullInputSchema = lazySchema(() =>
     description: z
       .string()
       .optional()
-      .describe('Clear, concise description of what this command does in active voice.'),
+      .describe(
+        "Describe what the command does in clear, concise, plain language and active voice. The user may see only this description. Explain its purpose instead of repeating the command text, flags, or file paths. Write in the user's language.",
+      ),
     run_in_background: semanticBoolean(z.boolean().optional()).describe(
       `Set to true to run this command in the background. Use Read to read the output later.`,
     ),
