@@ -14,8 +14,9 @@
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import * as ts from 'typescript'
 
-const ROOT = resolve(import.meta.dirname, '..')
+const ROOT = resolve(process.env.ZY_LOCALE_ROOT ?? join(import.meta.dirname, '..'))
 const LOCALES_DIR = join(ROOT, 'src', 'i18n', 'locales')
 const EN_DIR = join(LOCALES_DIR, 'en')
 const ZH_DIR = join(LOCALES_DIR, 'zh-CN')
@@ -40,8 +41,26 @@ function error(msg: string) {
 function extractKeysFromTS(content: string, fileLabel: string): Map<string, string> {
   const keys = new Map<string, string>()
 
-  // 去掉注释
-  const noComments = content.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '')
+  // 由词法分析区分注释和字符串，避免截断 URL；保留换行供后续多行值解析。
+  const scanner = ts.createScanner(
+    ts.ScriptTarget.Latest,
+    false,
+    ts.LanguageVariant.Standard,
+    content,
+  )
+  const chunks: string[] = []
+  let offset = 0
+  for (let token = scanner.scan(); token !== ts.SyntaxKind.EndOfFileToken; token = scanner.scan()) {
+    if (
+      token === ts.SyntaxKind.SingleLineCommentTrivia ||
+      token === ts.SyntaxKind.MultiLineCommentTrivia
+    ) {
+      chunks.push(content.slice(offset, scanner.getTokenPos()))
+      chunks.push(scanner.getTokenText().replace(/[^\r\n]/g, ' '))
+      offset = scanner.getTextPos()
+    }
+  }
+  const noComments = chunks.join('') + content.slice(offset)
 
   // 按行处理（支持多行值）
   const lines = noComments.split('\n')
