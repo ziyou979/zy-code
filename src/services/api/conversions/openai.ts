@@ -51,6 +51,7 @@ import {
   localModelHasCapability,
 } from '../../settings/localModelCapabilities.js'
 import { stripThinkingTagsFromText } from '../assistantCompletionValidator.js'
+import { hoistToolResultImages } from './toolResultImages.js'
 
 interface DashScopeChatCompletionDelta {
   content?: string | null
@@ -169,7 +170,7 @@ export function messagesToOpenAI(
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
   const result: OpenAI.Chat.ChatCompletionMessageParam[] = []
 
-  for (const raw of messages) {
+  for (const raw of hoistToolResultImages(messages)) {
     // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 类型转换
     const msg = raw as any
     switch (msg.role) {

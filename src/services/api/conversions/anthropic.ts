@@ -166,6 +166,16 @@ function blockToAnthropic(
   if (b.type === 'text') {
     return { type: 'text', text: b.text, ...cc }
   }
+  if (b.type === 'tool_result') {
+    // 工具结果必须保持协议块；JSON 文本中的 Base64 不会被模型当作图片。
+    return {
+      type: 'tool_result',
+      tool_use_id: b.toolCallId,
+      content: Array.isArray(b.content) ? b.content.map(blockToAnthropic) : (b.content ?? ''),
+      ...(b.isError !== undefined && { is_error: b.isError }),
+      ...cc,
+    }
+  }
   if (b.type === 'tool_call' || b.type === 'tool_use') {
     return {
       type: 'tool_use',
