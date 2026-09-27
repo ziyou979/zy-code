@@ -57,16 +57,23 @@ export function buildIDEProperties(
   const ideClient = mcpClients?.find((client) => client.name === 'ide')
   if (ideInstallationStatus) {
     const ideName = toIDEDisplayName(ideInstallationStatus.ideType)
-    const pluginOrExtension = isJetBrainsIde(ideInstallationStatus.ideType) ? 'plugin' : 'extension'
+    const pluginOrExtension = tSync(
+      isJetBrainsIde(ideInstallationStatus.ideType) ? 'status.idePlugin' : 'status.ideExtension',
+    )
     if (ideInstallationStatus.error) {
       return [
         {
           label: tSync('status.ide'),
           value: (
             <Text>
-              {color('error', theme)(CROSS)} Error installing {ideName} {pluginOrExtension}:{' '}
-              {ideInstallationStatus.error}
-              {'\n'}Please restart your IDE and try again.
+              {color('error', theme)(CROSS)}{' '}
+              {tSync('status.ideInstallError', {
+                name: ideName,
+                kind: pluginOrExtension,
+                error: ideInstallationStatus.error,
+              })}
+              {'\n'}
+              {tSync('status.ideRestartHint')}
             </Text>
           ),
         },
@@ -78,14 +85,23 @@ export function buildIDEProperties(
           return [
             {
               label: tSync('status.ide'),
-              value: `Connected to ${ideName} ${pluginOrExtension} version ${ideInstallationStatus.installedVersion} (server version: ${ideClient.serverInfo?.version})`,
+              value: tSync('status.ideConnectedVersions', {
+                name: ideName,
+                kind: pluginOrExtension,
+                version: ideInstallationStatus.installedVersion ?? '',
+                serverVersion: ideClient.serverInfo?.version ?? '',
+              }),
             },
           ]
         } else {
           return [
             {
               label: tSync('status.ide'),
-              value: `Connected to ${ideName} ${pluginOrExtension} version ${ideInstallationStatus.installedVersion}`,
+              value: tSync('status.ideConnectedVersion', {
+                name: ideName,
+                kind: pluginOrExtension,
+                version: ideInstallationStatus.installedVersion ?? '',
+              }),
             },
           ]
         }
@@ -93,7 +109,7 @@ export function buildIDEProperties(
         return [
           {
             label: tSync('status.ide'),
-            value: `Installed ${ideName} ${pluginOrExtension}`,
+            value: tSync('status.ideInstalled', { name: ideName, kind: pluginOrExtension }),
           },
         ]
       }
@@ -104,14 +120,14 @@ export function buildIDEProperties(
       return [
         {
           label: tSync('status.ide'),
-          value: `Connected to ${ideName} extension`,
+          value: tSync('status.ideConnected', { name: ideName }),
         },
       ]
     } else {
       return [
         {
           label: tSync('status.ide'),
-          value: `${color('error', theme)(CROSS)} Not connected to ${ideName}`,
+          value: `${color('error', theme)(CROSS)} ${tSync('status.ideDisconnected', { name: ideName })}`,
         },
       ]
     }

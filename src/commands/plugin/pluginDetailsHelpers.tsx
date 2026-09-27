@@ -96,7 +96,7 @@ export function PluginSelectionKeyHint({ hasSelection }: { hasSelection: boolean
               action="plugin:install"
               context="Plugin"
               fallback="i"
-              description="install"
+              description={tSync('common.install')}
               bold={true}
             />
           )}
@@ -105,7 +105,7 @@ export function PluginSelectionKeyHint({ hasSelection }: { hasSelection: boolean
               action="plugin:toggle"
               context="Plugin"
               fallback="Space"
-              description="toggle"
+              description={tSync('managePlugins.shortcutToggle')}
             />
           }
           {
@@ -113,7 +113,7 @@ export function PluginSelectionKeyHint({ hasSelection }: { hasSelection: boolean
               action="select:accept"
               context="Select"
               fallback="Enter"
-              description="details"
+              description={tSync('managePlugins.shortcutDetails')}
             />
           }
           {
@@ -121,7 +121,7 @@ export function PluginSelectionKeyHint({ hasSelection }: { hasSelection: boolean
               action="confirm:no"
               context="Confirmation"
               fallback="Esc"
-              description="back"
+              description={tSync('managePlugins.shortcutBack')}
             />
           }
         </Byline>

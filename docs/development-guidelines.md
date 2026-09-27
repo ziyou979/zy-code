@@ -6,7 +6,10 @@
 
 - 注释使用中文，标识符使用英文。编译器指令和 React、Ink、MCP 等专有名词可保留英文。
 - 默认注释非显然逻辑、意图和取舍，并匹配周围代码的注释密度。
-- 用户可见文本禁止硬编码，通过 `tSync()` 或 `t()` 获取。
+- 用户界面的固定文案（菜单、按钮、状态、通知、面向用户的错误提示等）禁止硬编码，通过 `tSync()` 或 `t()` 获取。
+- 仅供模型消费的指令保持英文，不走 i18n，包括 system prompt、tool prompt、agent 调度指引和工具 schema 的参数说明（如 `.describe(...)`）。不能因为文件已有 `tSync()`，就将同文件中的模型指令也翻译。
+- 按文本的实际消费方区分：指导模型填写 `description` 的 schema 说明属于模型指令；模型填写后展示给用户的任务描述属于动态内容，应由 prompt 要求使用用户的语言，不应作为翻译 key。模型输出和用户输入不纳入固定 UI 文案翻译。
+- 同一内容若同时用于模型指令和用户界面，应分别提供英文模型说明和经过 i18n 的 UI 文案；调试视图中展示原始 prompt/schema 不改变其模型指令属性。
 - 翻译 key 同时加入 `src/i18n/locales/en/` 与 `src/i18n/locales/zh-CN/`。
 - 翻译文件按模块前缀归入对应文件；key 使用描述性模块分组并支持 `{count}` 插值。
 - `KeyboardShortcutHint.action` 必须在 `actionKeyMap` 注册。
@@ -18,6 +21,14 @@
 - 测试使用 `bun test`，放在镜像 `src/` 路径的 `tests/` 下。
 - `describe` 写模块名，`test` 使用中文描述。
 - 修改 LLM 类型或适配器后必须运行完整测试，并确认 lint 无新增问题。
+
+## 架构检查基线
+
+- `bun run lint:architecture` 按具体违规与基线比较；行号用于定位，不作为 AST 规则的身份。
+- feature、用户文案、含 `any` 的类型断言使用文件、所属声明、节点内容和重复序号生成标识。新增重复项、跨文件或跨声明移动不能借用原位置的额度。
+- TS 和 TSX 按扩展名解析；断言统计包含 `any[]`、`Promise<any>` 等容器类型，不统计注释或字符串。
+- 不应为了消除告警直接执行 `--write-baseline`；该选项会接受当前全部债务，只能用于已审查的基线更新。
+- 2026-09-21 标识迁移以基线提交 `8bb47522c8ddab985793376318359335ecff2260` 的源码为依据，仅转换旧基线中已登记的项，保留原审批日期。转换 911 条 AST 记录，删除 125 条 TSX 误解析记录和 64 条在该历史源码中已不存在的记录；其余类别保留。断言基线从 56 项转为 54 项，删除的两项均为注释误报。当前源码中新增发现的项未自动纳入基线。
 
 ## Tool 结构
 
@@ -69,6 +80,7 @@ Tool 必须显式声明 `interactive`、`headless` 或 `internal` 档案：
 - 小文件也可能低内聚（例如 48 行的纯转发壳）；
 - 大文件也可能高内聚（例如描述完整异步 generator 状态机的中心编排器，800～1500 行可以接受）；
 - 超过约 1500 行时需要记录职责审查结论，但不自动要求拆分；
+- 检查器对非 utils 模块超过 1500 行输出独立审查提示，不计入违规基线；utils 仍执行 800 行硬限制。提示不代表已完成职责审查。
 - 不把"超长文件数量下降"作为架构治理的完成度指标。
 
 候选独立模块必须满足以下五项中的**至少三项**，否则不应拆分：
@@ -93,7 +105,7 @@ Tool 必须显式声明 `interactive`、`headless` 或 `internal` 档案：
 
 ## feature 宏
 
-`feature('X')` 必须直接位于 `if` 或三元表达式的条件位置，才能被构建期 DCE：
+`feature('X')` 应位于 `if` 或三元表达式的条件中。允许条件内通过括号、`!`、`&&`、`||` 组合；Bun 能折叠这些表达式并裁剪不可达分支：
 
 ```ts
 if (feature('X')) {
@@ -101,16 +113,21 @@ if (feature('X')) {
 }
 
 const value = feature('X') ? enabled : disabled
+
+const optional = feature('X') || feature('Y') ? require('./optional.js') : null
 ```
 
-禁止缓存宏结果或把它嵌入复合逻辑：
+禁止缓存宏结果、传入其他函数或在条件之外用短路表达式承载业务逻辑，以便直接审查可选依赖边界：
 
 ```ts
 const enabled = feature('X')
 feature('X') && run()
+if (isEnabled(feature('X'))) run()
 ```
 
 `feature() ? require(...) : null` 可放在独立 lazy module 中，DCE 仍按 caller 模块生效。
+
+复合条件以 `tests/scripts/featureDce.test.ts` 验证开关组合、依赖裁剪和短路副作用。运行时条件使整个表达式仍可能为真时，对应依赖必须保留；例如 `feature('X') || runtimeEnabled` 不能保证关闭 X 后裁剪模块。
 
 ## 禁止事项
 

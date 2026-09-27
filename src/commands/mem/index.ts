@@ -1,9 +1,12 @@
 import type { Command } from '../../commands/index.js'
+import { tSync } from '../../i18n/index.js'
 
 const mem: Command = {
   type: 'local',
   name: 'mem',
-  description: 'Show runtime memory usage analysis and diagnostic information',
+  get description() {
+    return tSync('commands.mem.description')
+  },
   isHidden: false,
   supportsNonInteractive: true,
   load: () => import('./mem.js'),

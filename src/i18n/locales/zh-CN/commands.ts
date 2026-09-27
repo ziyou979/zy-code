@@ -1,6 +1,7 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const zhCommands: TranslationResource = {
+  'commands.mem.description': '查看运行时内存使用分析和诊断信息',
   'commands.addDir': '添加新的工作目录',
   'commands.advisor': '配置 advisor 模型',
   'commands.agents': '管理子 agent 配置',

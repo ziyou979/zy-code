@@ -565,6 +565,7 @@ export const enCommands: TranslationResource = {
   'commands.voice': 'Toggle voice mode',
   'commands.install': 'Install ZY Code native build',
   'commands.mem.reportHeader': '━━━ Memory Usage Report ━━━',
+  'commands.mem.description': 'Show runtime memory usage analysis and diagnostic information',
   'commands.mem.processMemory': 'Process Memory:',
   'commands.mem.nativeDesc': '(RSS - heapUsed, including native addons)',
   'commands.mem.v8HeapDetails': 'V8 Heap Details:',
