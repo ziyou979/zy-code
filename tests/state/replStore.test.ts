@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { createFileStateCacheWithSizeLimit } from '../../src/services/file-persistence/fileStateCache.js'
 import { QueryGuard } from '../../src/services/query/queryGuard.js'
-import { createReplStore } from '../../src/state/ReplStore.js'
+import { createReplStore } from '../../src/state/replStore.js'
 
 function createTestStore() {
   return createReplStore({

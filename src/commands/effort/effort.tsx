@@ -19,7 +19,7 @@ import {
   toPersistableEffort,
 } from '../../services/effort/effort.js'
 import { updateSettingsForSource } from '../../services/settings/settings.js'
-import { EffortPicker } from './effortPicker.js'
+import { EffortPicker } from './EffortPicker.js'
 
 type EffortCommandResult = {
   message: string
