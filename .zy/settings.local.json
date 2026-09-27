@@ -360,7 +360,10 @@
       "Bash(taskkill //PID 5712 //F)",
       "Bash(taskkill //PID 6488 //F)",
       "PowerShell(Get-CimInstance:*)",
-      "Bash(echo EXIT=$?)"
+      "Bash(echo EXIT=$?)",
+      "Bash(gh repo:*)",
+      "Bash(gh api:*)",
+      "Bash(echo \"--- exit: $?--\")"
     ]
   },
   "spinnerTipsEnabled": true
