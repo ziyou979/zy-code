@@ -82,6 +82,8 @@ export const enOnboarding: TranslationResource = {
   'onboarding.platform.perplexityDesc': 'Perplexity AI search-augmented models',
   'onboarding.platform.siliconflow': 'SiliconFlow',
   'onboarding.platform.siliconflowDesc': 'SiliconFlow Cloud AI Platform',
+  'onboarding.platform.stepfun': 'StepFun',
+  'onboarding.platform.stepfunDesc': 'StepFun AI Platform (Step models)',
   'onboarding.platform.tencent': 'Tencent Hunyuan',
   'onboarding.platform.tencentDesc': 'Tencent Cloud LKE AI Platform',
   'onboarding.platform.together': 'Together AI',

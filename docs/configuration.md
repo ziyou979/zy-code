@@ -244,6 +244,7 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 - **settings 分离**:`settings.json` 不再承载连接细节；`baseUrl` 只作为旧版迁移回退，`apiKey` / `apiKeyHelper` 只放在 `auth.json`。
 - **模型路由**:`settings.json` 中通过 `{provider,model}` 或 `customModels[].provider` 的 `provider` 直接填写连接 id。运行时用连接的底层 `provider` 做协议分派，用连接 id 读取 URL 和凭证。
 - **多个 generic**:为每个端点定义不同连接 id，即可在同一 tier 的候选数组或不同 tier 中自由组合；failover 会保留具体连接身份。
+- **阶跃星辰**:使用独立 `stepfun` provider，默认 OpenAI Chat 端点为 `https://api.stepfun.com/v1`；选择 `anthropic` 时默认端点为 `https://api.stepfun.com`。例如 `auth.json` 中配置 `"stepfun": {"provider": "stepfun", "apiKey": "你的密钥"}`，模型引用使用 `{"provider": "stepfun", "model": "step-5-preview"}`。推理强度通过模型能力文件的 `thinking.effort.map` 映射到 `low` / `medium` / `high`；仅配置 `on` 时沿用服务端默认强度，不发送 `thinking` 开关。模型能力分片的 provider 选择器应包含 `stepfun`，需要保留连接的协议选择时不要固定模型级 `apiFormat`。接口依据：[官方 Flash 文档](https://platform.stepfun.com/docs/zh/guides/models/step-3.7-flash)。
 - **apiKeyHelper**:ZY 会执行该命令并读取 stdout 作为 key。provider 级 helper 按命令独立缓存,避免多个 provider 串用同一个缓存值。
 - **OAuth 与 API Key 同文件**:xAI、OpenAI Codex、GitHub Copilot 等 OAuth 连接可同时存在，请求按 settings 中的连接 id 精确选取。旧版根级 `oauth.activeProvider/credentials` 可读，下次 OAuth 写入时自动迁移。MCP OAuth 等仍可能使用 `~/.zy/.credentials.json` / Keychain，与 `/login` 无关。
 

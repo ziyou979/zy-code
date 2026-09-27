@@ -288,6 +288,9 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
 }
 
 export function getProviderDisplayName(provider: string = getAPIProvider()): string {
+  if (provider === 'stepfun') {
+    return tSync('onboarding.platform.stepfun')
+  }
   return PROVIDER_DISPLAY_NAMES[provider] ?? provider
 }
 

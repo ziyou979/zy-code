@@ -82,6 +82,8 @@ export const zhOnboarding: TranslationResource = {
   'onboarding.platform.perplexityDesc': 'Perplexity AI 搜索增强模型',
   'onboarding.platform.siliconflow': '硅基流动',
   'onboarding.platform.siliconflowDesc': '硅基流动 SiliconFlow 云端 AI 平台',
+  'onboarding.platform.stepfun': '阶跃星辰',
+  'onboarding.platform.stepfunDesc': '阶跃星辰 Step 模型开放平台',
   'onboarding.platform.tencent': '腾讯混元',
   'onboarding.platform.tencentDesc': '腾讯云大模型知识引擎',
   'onboarding.platform.together': 'Together AI',

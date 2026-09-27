@@ -749,6 +749,31 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     ],
   },
   {
+    id: 'stepfun',
+    formatEndpoints: [
+      { format: 'openai-chat', baseUrl: 'https://api.stepfun.com/v1' },
+      { format: 'anthropic', baseUrl: 'https://api.stepfun.com' },
+    ],
+    endpointType: ['default', 'custom'],
+    capabilities: STANDARD_CAPABILITIES,
+    baseUrlHint: 'https://api.stepfun.com/v1',
+    suggestedModels: [
+      { label: 'step-5-preview', value: 'step-5-preview', tier: 'advanced' },
+      { label: 'step-3.7-flash', value: 'step-3.7-flash', tier: 'standard' },
+      { label: 'step-3.5-flash-2603', value: 'step-3.5-flash-2603', tier: 'compact' },
+    ],
+    openaiAttr: {
+      thinking: {
+        // 阶跃用 reasoning_effort 调整推理强度；on 只表示使用模型默认强度。
+        // 不发送通用 thinking 开关，也不把内部 on/off 当作 API 档位。
+        enable: (effort) =>
+          effort && ['low', 'medium', 'high'].includes(effort) ? { reasoning_effort: effort } : {},
+        // 当前推理模型未确认支持关闭思考，内部禁用时保持服务端默认行为。
+        disable: {},
+      },
+    },
+  },
+  {
     id: 'tencent',
     formatEndpoints: [
       { format: 'anthropic', baseUrl: 'https://api.lkeap.cloud.tencent.com/coding/anthropic' },

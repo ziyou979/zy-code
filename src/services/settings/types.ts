@@ -100,6 +100,7 @@ export const SettingsSchema = lazySchema(() =>
           'zhipu',
           'kimi',
           'siliconflow',
+          'stepfun',
           'ark',
           'tencent',
           'minimax',
