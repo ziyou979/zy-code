@@ -8,6 +8,8 @@ import { enqueuePendingNotification } from '../../services/input/messageQueueMan
 import { exec } from '../../services/shell/shell.js'
 import { toolRegistry } from '../registry.js'
 import { DESCRIPTION, MONITOR_TOOL_NAME, PROMPT } from './prompt.js'
+import { armMonitorDeadline } from './monitorDeadline.js'
+import { tSync } from '../../i18n/index.js'
 
 // --- 速率限制常量 ---
 /** 令牌桶容量 */
@@ -179,6 +181,7 @@ export const MonitorTool = buildTool({
     let batchTimer: ReturnType<typeof setTimeout> | null = null
     let rateLimitedSince: number | null = null
     let suppressedCount = 0
+    let eventCount = 0
     let stopped = false
     let partialLine = ''
     let shellCommand: Awaited<ReturnType<typeof exec>> | null = null
@@ -238,6 +241,7 @@ export const MonitorTool = buildTool({
       const chunks = `${partialLine}${data}`.split(/\r?\n/)
       partialLine = chunks.pop() ?? ''
       const lines = chunks.filter((line) => line.length > 0)
+      eventCount += lines.length
       for (const rawLine of lines) {
         // 单行截断
         const line =
@@ -256,9 +260,27 @@ export const MonitorTool = buildTool({
     }
 
     // --- 启动子进程 ---
-    shellCommand = await exec(command, abortController.signal, 'bash', {
-      timeout: timeoutMs,
-      onStdout,
+    try {
+      shellCommand = await exec(command, abortController.signal, 'bash', {
+        timeout: timeoutMs,
+        onStdout,
+      })
+    } catch (error) {
+      stopMonitor()
+      throw error
+    }
+
+    armMonitorDeadline(shellCommand, persistent ? null : timeoutMs, () => {
+      enqueuePendingNotification({
+        value: tSync('monitor.deadlineReached', {
+          description,
+          timeoutMs,
+          count: eventCount + (partialLine.length > 0 ? 1 : 0),
+          suppressed: suppressedCount,
+        }),
+        mode: 'task-notification',
+        agentId: context.agentId,
+      })
     })
 
     // --- 注册为后台任务（kind: 'monitor'） ---

@@ -44,4 +44,8 @@ done
 
 Stdout lines within 200ms are batched into a single notification, so multiline output from a single event groups naturally.
 
-The script runs in the same shell environment as Bash. Exit ends the watch (exit code is reported). Timeout → killed. Set \`persistent: true\` for session-length watches (PR monitoring, log tails) — the monitor runs until you call TaskStop or the session ends. Use TaskStop to cancel early.`
+The script runs in the same shell environment as Bash. Exit ends the watch (exit code is reported). A non-persistent monitor defaults to 300000ms and clamps timeout_ms to 1000–3600000ms. Its deadline remains active in the background: on timeout the process is killed and a notification reports observed event lines and suppressed lines. Batched notifications may contain several event lines; these counts are not a count of notifications.
+
+After a timeout, re-arm only if the user's monitoring objective still requires it. Preserve the previous cursor or timestamp so events are not duplicated, and check for events missed during the gap. Silence or expiry does not mean success. Do not restart after the user stops monitoring.
+
+Set \`persistent: true\` for session-length watches (PR monitoring, log tails) — timeout_ms is ignored and the monitor runs until you call TaskStop or the session ends. Use TaskStop to cancel early.`

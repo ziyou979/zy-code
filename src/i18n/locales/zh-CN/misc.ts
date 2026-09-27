@@ -1,6 +1,8 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const zhMisc: TranslationResource = {
+  'monitor.deadlineReached':
+    '监控“{description}”已到达 {timeoutMs}ms 截止时间，正在停止。共观察到 {count} 行事件，抑制了 {suppressed} 行。仅在仍需监控时重新启动，并保留游标、检查间隔内遗漏的事件。',
   'assistantThinking.label': '思考中',
   'assistantThinking.thinking': '思考中…',
   'autoMode.title': '启用自动模式？',

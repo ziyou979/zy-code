@@ -1,6 +1,8 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const enMisc: TranslationResource = {
+  'monitor.deadlineReached':
+    'Monitor "{description}" reached its {timeoutMs}ms deadline and is stopping. Observed {count} event lines; suppressed {suppressed} lines. Re-arm only if monitoring is still needed, preserving the cursor and checking for missed events.',
   'autoMode.title': 'Enable auto mode?',
   'autoMode.description':
     "Auto mode lets Zy handle permission prompts automatically — Zy checks each tool call for risky actions and prompt injection before executing. Actions Zy identifies as safe are executed, while actions Zy identifies as risky are blocked and Zy may try a different approach. Ideal for long-running tasks. Sessions are slightly more expensive. Zy can make mistakes that allow harmful commands to run, it's recommended to only use in isolated environments. Shift+Tab to change mode.",
