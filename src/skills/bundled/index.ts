@@ -34,6 +34,10 @@ export function initBundledSkills(): void {
   registerStuckSkill()
   registerFewerPermissionPromptsSkill()
   registerDatavizSkill()
+  if (feature('WORKFLOW_SCRIPTS')) {
+    const { registerWorkflowAuthoringSkill } = require('./workflowAuthoring.js')
+    registerWorkflowAuthoringSkill()
+  }
   if (feature('KAIROS') || feature('KAIROS_DREAM')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     const { registerDreamSkill } = require('./dream.js')

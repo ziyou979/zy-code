@@ -1,6 +1,7 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const zhWorkflow: TranslationResource = {
+  'workflow.authoring.loading': '正在加载工作流编写参考',
   'workflow.error.inputRequired': '必须提供 script、scriptPath 或 name 之一。',
   'workflow.error.inputExclusive': '只能提供 script、scriptPath 或 name 中的一个。',
   'workflow.error.namedNotFound':

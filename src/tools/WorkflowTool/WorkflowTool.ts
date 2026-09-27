@@ -16,6 +16,7 @@ import { getInitialSettings } from '../../services/settings/settings.js'
 import { WORKFLOW_WIRE_NAME } from './constants.js'
 import { resolveWorkflow } from './loader.js'
 import { getWorkflowPrompt } from './prompt.js'
+import { SKILL_TOOL_NAME } from '../SkillTool/constants.js'
 import { MutableWorkflowBudget } from './runtime/budget.js'
 import { WorkflowSemaphore } from './runtime/concurrency.js'
 import { WorkflowJournal } from './runtime/journal.js'
@@ -250,9 +251,14 @@ export const WorkflowTool = buildTool({
     return { behavior: 'allow' as const }
   },
 
-  async prompt() {
+  async prompt({ tools }) {
     const configuredSize = getInitialSettings().workflowSizeGuideline
-    return getWorkflowPrompt(true, configuredSize ?? 'medium', configuredSize === undefined)
+    return getWorkflowPrompt(
+      true,
+      configuredSize ?? 'medium',
+      configuredSize === undefined,
+      tools.some((tool) => tool.name === SKILL_TOOL_NAME),
+    )
   },
 
   userFacingName() {

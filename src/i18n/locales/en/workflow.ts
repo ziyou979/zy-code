@@ -1,6 +1,7 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const enWorkflow: TranslationResource = {
+  'workflow.authoring.loading': 'Loading workflow authoring reference',
   'workflow.error.inputRequired': 'One of script, scriptPath, or name is required.',
   'workflow.error.inputExclusive': 'Only one of script, scriptPath, or name may be provided.',
   'workflow.error.namedNotFound':
