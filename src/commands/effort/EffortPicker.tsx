@@ -106,6 +106,7 @@ export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
 
     if (confirmingHigh) {
       if (e.key === 'return') {
+        e.preventDefault()
         const level = layout.levels[selectedIndex]!
         applyEffort(level.value)
       }
@@ -157,7 +158,7 @@ export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
   if (confirmingHigh && layout.levels[selectedIndex]) {
     const level = layout.levels[selectedIndex]!
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>
         <Text>
           {tSync('effort.picker.confirmPrompt', { level: level.label }) ||
             `Set effort to ${level.label}?`}

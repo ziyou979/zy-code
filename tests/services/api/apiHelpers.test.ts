@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 describe('apiHelpers.configureEffortParams', () => {
-  test('跨 provider 候选的六档思考强度映射进入 OpenRouter 请求体', () => {
+  test('跨 provider 候选的五档思考强度映射进入 OpenRouter 请求体', () => {
     const model = 'stealth/space-bunny-alpha'
     const configDir = mkdtempSync(join(tmpdir(), 'zy-api-effort-'))
     const projectRoot = join(import.meta.dir, '..', '..', '..')
@@ -36,7 +36,7 @@ describe('apiHelpers.configureEffortParams', () => {
               capabilities: {
                 thinking: {
                   effort: {
-                    levels: ['on', 'quick', 'light', 'balanced', 'thorough', 'extreme'],
+                    levels: ['quick', 'light', 'balanced', 'thorough', 'extreme'],
                     map: {
                       on: 'max',
                       quick: 'low',
@@ -60,8 +60,9 @@ describe('apiHelpers.configureEffortParams', () => {
         const { buildOpenAIRequestParams } = await import(${JSON.stringify(moduleUrl('src/services/api/conversions/openai.ts'))})
         const { getProviderForModel } = await import(${JSON.stringify(moduleUrl('src/services/model/model.ts'))})
         const { getAPIProvider } = await import(${JSON.stringify(moduleUrl('src/services/model/providers.ts'))})
+        const { getModelEffortLevels, resolveAppliedEffort } = await import(${JSON.stringify(moduleUrl('src/services/effort/effort.ts'))})
         const model = ${JSON.stringify(model)}
-        const levels = ['on', 'quick', 'light', 'balanced', 'thorough', 'extreme']
+        const levels = getModelEffortLevels(model)
         const results = levels.map((level) => {
           const outputConfig = {}
           configureEffortParams(level, outputConfig, {}, [], model)
@@ -74,9 +75,11 @@ describe('apiHelpers.configureEffortParams', () => {
           })
           return { level, mapped: outputConfig.effort ?? null, reasoning: request.reasoning ?? null }
         })
+        const legacyResolved = resolveAppliedEffort(model, 'on')
         process.stdout.write('ZY_EFFORT_RESULT:' + JSON.stringify({
           globalProvider: getAPIProvider(),
           targetProvider: getProviderForModel(model),
+          legacyResolved,
           results,
         }))
       `
@@ -97,8 +100,8 @@ describe('apiHelpers.configureEffortParams', () => {
       expect(result).toEqual({
         globalProvider: 'mimo',
         targetProvider: 'openrouter',
+        legacyResolved: 'extreme',
         results: [
-          { level: 'on', mapped: 'max', reasoning: { effort: 'max' } },
           { level: 'quick', mapped: 'low', reasoning: { effort: 'low' } },
           { level: 'light', mapped: 'medium', reasoning: { effort: 'medium' } },
           { level: 'balanced', mapped: 'high', reasoning: { effort: 'high' } },

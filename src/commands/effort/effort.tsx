@@ -16,6 +16,7 @@ import {
   getEffortLevelDescription,
   getModelEffortLevels,
   isEffortLevel,
+  resolveAppliedEffort,
   toPersistableEffort,
 } from '../../services/effort/effort.js'
 import { updateSettingsForSource } from '../../services/settings/settings.js'
@@ -100,8 +101,10 @@ export function showCurrentEffort(
       message: tSync('effort.command.currentAuto', { level: levelName }),
     }
   }
-  const description = getEffortLevelDescription(effectiveValue)
-  const valueName = tSync(`effort.${effectiveValue}`) || effectiveValue
+  // 展示实际生效的档位，避免旧 on 设置在模型已隐藏该档位时仍显示为“开启”。
+  const appliedValue = resolveAppliedEffort(model, appStateEffort) ?? effectiveValue
+  const description = getEffortLevelDescription(appliedValue)
+  const valueName = tSync(`effort.${appliedValue}`) || appliedValue
   return {
     message: tSync('effort.command.current', { value: valueName, description }),
   }
