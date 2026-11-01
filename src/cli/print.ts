@@ -156,7 +156,8 @@ import {
 import { getModelOptions } from 'src/services/model/modelOptions.js'
 import { getModelEffortLevels } from 'src/services/effort/effort.js'
 import { modelSupportsAdaptiveThinking } from 'src/services/messages/thinking.js'
-import { modelSupportsAutoMode } from 'src/services/feature-flags/betas.js'
+import { isAutoModeModelEligible } from '../services/permissions/autoModeQualification.js'
+import { getClassifierModel } from '../services/permissions/classifierTranscript.js'
 import { ensureModelStringsInitialized } from 'src/services/model/modelStrings.js'
 import { getSessionId, switchSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
@@ -964,7 +965,7 @@ function runHeadlessStreaming(
       (l): l is Exclude<typeof l, 'orchestrate'> => l !== 'orchestrate',
     )
     const hasAdaptiveThinking = modelSupportsAdaptiveThinking(resolvedModel)
-    const hasAutoMode = modelSupportsAutoMode(resolvedModel)
+    const hasAutoMode = isAutoModeModelEligible(getClassifierModel(resolvedModel))
     return {
       value: modelId,
       displayName: option.label,

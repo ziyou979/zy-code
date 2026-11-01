@@ -28,7 +28,12 @@ import {
 } from '../analytics/index.js'
 import { checkMockRateLimitError, isMockRateLimitError } from '../rateLimitMocking.js'
 import { MalformedAssistantCompletionError } from './assistantCompletionValidator.js'
-import { REPEATED_529_ERROR_MESSAGE } from './errors.js'
+import {
+  isChatGPTSubscriptionAdmissionDeniedError,
+  isChatGPTSubscriptionTransientError,
+  isChatGPTSubscriptionUsageLimitError,
+  REPEATED_529_ERROR_MESSAGE,
+} from './errors.js'
 import { extractConnectionErrorDetails } from './errorUtils.js'
 
 const retryLog = createDebugLog('api:retry')
@@ -210,7 +215,10 @@ export async function* withRetry<T, TClient = unknown>(
         ) {
           const failedAccessToken = getZyAIOAuthTokens()?.accessToken
           if (failedAccessToken) {
-            await handleOAuth401Error(failedAccessToken)
+            const recovered = await handleOAuth401Error(failedAccessToken)
+            if (!recovered) {
+              throw new CannotRetryError(lastError, retryContext)
+            }
           }
         }
         client = await getClient()
@@ -218,11 +226,24 @@ export async function* withRetry<T, TClient = unknown>(
 
       return await operation(client, attempt, retryContext)
     } catch (error) {
+      if (error instanceof CannotRetryError) {
+        throw error
+      }
       lastError = error
       retryLog(
         `attempt ${attempt}/${maxRetries + 1} error: ${isAPIError(error) ? `${error.status} ${error.message}` : errorMessage(error)}`,
         { level: 'error' },
       )
+
+      // 订阅额度与准入错误是持久状态，即使 HTTP 状态为 429/403 也不能进入
+      // 通用退避；订阅侧临时不可用则允许无状态码的流内错误重试。
+      if (
+        isChatGPTSubscriptionUsageLimitError(error) ||
+        isChatGPTSubscriptionAdmissionDeniedError(error)
+      ) {
+        throw new CannotRetryError(error, retryContext)
+      }
+      const isChatGPTSubscriptionTransient = isChatGPTSubscriptionTransientError(error)
 
       // 非前台来源在 529 时立即放弃——容量级联期间不重试放大
       // 用户永远不会看到这些失败
@@ -281,7 +302,7 @@ export async function* withRetry<T, TClient = unknown>(
         continue
       }
 
-      if (!isAPIError(error) || !shouldRetry(error)) {
+      if (!isChatGPTSubscriptionTransient && (!isAPIError(error) || !shouldRetry(error))) {
         throw new CannotRetryError(error, retryContext)
       }
 

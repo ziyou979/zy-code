@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import {
   setupTerminal,
   shouldOfferTerminalSetup,
@@ -9,12 +9,12 @@ import { setLanguage } from '../i18n/languageStore.js'
 import type { UiLanguage } from '../i18n/types.js'
 import { Box, Link, Newline, Text, useTheme } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
-import { PROVIDER_REGISTRY } from '../services/model/providerRegistry.js'
 import { type EffortLevel, toPersistableEffort } from '../services/effort/effort.js'
 import { buildOnboardingModels } from '../services/settings/onboardingModelSettings.js'
 import { updateSettingsForSource } from '../services/settings/settings.js'
 import { ApiKeySetup, type ApiKeyProvider } from './ApiKeySetup.js'
 import { Select } from './CustomSelect/select.js'
+import { ProviderModelPicker } from './ProviderModelPicker.js'
 import { effortLevelToSymbol } from './EffortIndicator.js'
 import { Welcome } from './Logo/Welcome.js'
 import { PressEnterToContinue } from './PressEnterToContinue.js'
@@ -44,20 +44,11 @@ type Props = {
 
 type PlatformProvider = ApiKeyProvider
 
-function getGenericModelOptions(): Array<{ label: string; value: string; description: string }> {
-  return [
-    {
-      label: tSync('onboarding.model.custom'),
-      value: '__custom__',
-      description: tSync('onboarding.model.customDesc'),
-    },
-  ]
-}
-
 export function Onboarding({ onDone }: Props): React.ReactNode {
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [theme, setTheme] = useTheme()
   const [selectedProvider, setSelectedProvider] = useState<PlatformProvider | null>(null)
+  const [modelSaveError, setModelSaveError] = useState(false)
 
   useEffect(() => {
     // onboarding started
@@ -160,12 +151,12 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   }
   const standardStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
-      <TierModelSetup
-        tier="standard"
-        provider={selectedProvider}
+      <ProviderModelPicker
+        provider={selectedProvider ?? 'anthropic'}
         title={tSync('onboarding.tier.standard.title')}
         description={tSync('onboarding.tier.standard.desc')}
         onDone={handleStandardDone}
+        onCancel={() => {}}
         allowSkip={false}
       />
     </Box>
@@ -180,12 +171,12 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   }
   const advancedStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
-      <TierModelSetup
-        tier="advanced"
-        provider={selectedProvider}
+      <ProviderModelPicker
+        provider={selectedProvider ?? 'anthropic'}
         title={tSync('onboarding.tier.advanced.title')}
         description={tSync('onboarding.tier.advanced.desc')}
         onDone={handleAdvancedDone}
+        onCancel={() => handleAdvancedDone('')}
         allowSkip={true}
       />
     </Box>
@@ -200,12 +191,12 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
   }
   const compactStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
-      <TierModelSetup
-        tier="compact"
-        provider={selectedProvider}
+      <ProviderModelPicker
+        provider={selectedProvider ?? 'anthropic'}
         title={tSync('onboarding.tier.compact.title')}
         description={tSync('onboarding.tier.compact.desc')}
         onDone={handleCompactDone}
+        onCancel={() => handleCompactDone('')}
         allowSkip={true}
       />
     </Box>
@@ -223,11 +214,21 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
       : 'standard'
 
     // Write to settings.json
-    updateSettingsForSource('userSettings', { models, mainLoopModel })
+    const result = updateSettingsForSource('userSettings', {
+      models,
+      mainLoopModel,
+      model: undefined,
+    })
+    if (result.error) {
+      setModelSaveError(true)
+      return
+    }
+    setModelSaveError(false)
     goToNextStep()
   }
   const tierStep = (
     <Box flexDirection="column" gap={1} paddingLeft={1}>
+      {modelSaveError && <Text color="error">{tSync('settings.modelConfigSaveFailed')}</Text>}
       <Text bold>{tSync('onboarding.tier.mainLoop.title')}</Text>
       <Text dimColor>{tSync('onboarding.tier.mainLoop.desc')}</Text>
       <Box flexDirection="column" width={60} gap={1}>
@@ -399,128 +400,5 @@ export function Onboarding({ onDone }: Props): React.ReactNode {
         )}
       </Box>
     </Box>
-  )
-}
-
-function CustomModelInput({
-  onSubmit,
-  onBack,
-}: {
-  onSubmit(value: string): void
-  onBack(): void
-}): React.ReactNode {
-  const valueRef = useRef('')
-  return (
-    <>
-      <Text bold>{tSync('onboarding.enterModelName')}</Text>
-      <Box flexDirection="column" width={60} gap={1}>
-        <Select
-          options={[
-            {
-              type: 'input',
-              label: tSync('onboarding.modelNameLabel'),
-              value: 'input',
-              placeholder: tSync('onboarding.modelNamePlaceholder'),
-              onChange: (value: string) => {
-                valueRef.current = value
-              },
-              allowEmptySubmitToCancel: true,
-              resetCursorOnUpdate: true,
-            },
-          ]}
-          onChange={() => {
-            const trimmed = valueRef.current.trim()
-            if (trimmed.length > 0) {
-              onSubmit(trimmed)
-            }
-          }}
-          onCancel={onBack}
-        />
-        <Text dimColor>{tSync('onboarding.confirmBack')}</Text>
-      </Box>
-    </>
-  )
-}
-
-/**
- * Tier-based model selection step during onboarding.
- * Shows provider-suggested models for each tier, with optional skip for non-required tiers.
- */
-function TierModelSetup({
-  provider,
-  title,
-  description,
-  onDone,
-  allowSkip,
-}: {
-  tier: 'standard' | 'advanced' | 'compact'
-  provider: PlatformProvider | null
-  title: string
-  description: string
-  onDone(model: string): void
-  allowSkip: boolean
-}): React.ReactNode {
-  const [phase, setPhase] = useState<'select' | 'custom'>('select')
-
-  const providerEntry = PROVIDER_REGISTRY.find((entry) => entry.id === provider)
-  const suggestedModels = providerEntry?.suggestedModels?.map((model) => ({
-    label: model.label,
-    value: model.value,
-    description: tSync(`model.tier.${model.tier}`),
-  }))
-  const modelOptions = suggestedModels ?? getGenericModelOptions()
-  const hasCustomOption = !suggestedModels || providerEntry?.id === 'generic'
-
-  // Build select options — add skip and custom options
-  const selectOptions = modelOptions.map((m) => ({
-    label: m.label,
-    description: m.description,
-    value: m.value,
-  }))
-
-  if (allowSkip) {
-    selectOptions.push({
-      label: tSync('onboarding.tier.skip'),
-      value: '__skip__',
-      description: '',
-    })
-  }
-  if (hasCustomOption) {
-    selectOptions.push({
-      label: tSync('onboarding.tier.custom'),
-      value: '__custom__',
-      description: tSync('onboarding.tier.customDesc'),
-    })
-  }
-
-  const handleSelect = (value: string) => {
-    if (value === '__skip__') {
-      onDone('')
-    } else if (value === '__custom__') {
-      setPhase('custom')
-    } else {
-      onDone(value)
-    }
-  }
-
-  if (phase === 'custom') {
-    return (
-      <CustomModelInput onSubmit={(value) => onDone(value)} onBack={() => setPhase('select')} />
-    )
-  }
-
-  return (
-    <>
-      <Text bold>{title}</Text>
-      <Text dimColor>{description}</Text>
-      <Box flexDirection="column" width={60} gap={1}>
-        <Select
-          options={selectOptions}
-          onChange={handleSelect}
-          onCancel={() => (allowSkip ? onDone('') : undefined)}
-        />
-        <Text dimColor>{tSync('onboarding.enterToConfirm')}</Text>
-      </Box>
-    </>
   )
 }

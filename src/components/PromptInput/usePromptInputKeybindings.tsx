@@ -15,13 +15,14 @@ import { saveGlobalConfig } from '../../services/config/config.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { env } from '../../services/environment/env.js'
 import { getImageFromClipboard } from '../../services/attachments/imagePaste.js'
-import { setAutoModeActive } from '../../services/permissions/autoModeState.js'
 import {
   cyclePermissionMode,
   getNextPermissionMode,
 } from '../../services/permissions/getNextPermissionMode.js'
 import { transitionPermissionMode } from '../../services/permissions/permissionModeTransitions.js'
-import { hasAutoModeOptIn } from '../../services/settings/settings.js'
+import { getInitialSettings, hasAutoModeOptIn } from '../../services/settings/settings.js'
+import { getClassifierModel } from '../../services/permissions/classifierTranscript.js'
+import { isAutoModeModelEligible } from '../../services/permissions/autoModeQualification.js'
 import { usePromptInputSubmission } from './usePromptInputSubmission.js'
 export function usePromptInputKeybindings(context: ReturnType<typeof usePromptInputSubmission>) {
   const {
@@ -273,7 +274,7 @@ export function usePromptInputKeybindings(context: ReturnType<typeof usePromptIn
         mode: viewedTeammate.permissionMode,
       }
       // Pass undefined for teamContext (unused but kept for API compatibility)
-      const nextMode = getNextPermissionMode(teammateContext, undefined)
+      const nextMode = getNextPermissionMode(teammateContext, undefined, { allowEnrollment: false })
       logEvent('zy_mode_cycle', {
         to: nextMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
@@ -307,7 +308,27 @@ export function usePromptInputKeybindings(context: ReturnType<typeof usePromptIn
     logForDebugging(
       `[auto-mode] handleCycleMode: currentMode=${toolPermissionContext.mode} isAutoModeAvailable=${toolPermissionContext.isAutoModeAvailable} showAutoModeOptIn=${showAutoModeOptIn} timeoutPending=${!!autoModeOptInTimeoutRef.current}`,
     )
-    const nextMode = getNextPermissionMode(toolPermissionContext, teamContext)
+    // 弹窗仍在显示，或用户刚明确拒绝过时，本次切换跳过 auto。这样既不会暗中
+    // 开启自动审批，也不会把用户困在 acceptEdits → 弹窗的循环中。
+    const skipEnrollment =
+      showAutoModeOptIn ||
+      !!autoModeOptInTimeoutRef.current ||
+      previousModeBeforeAuto === toolPermissionContext.mode
+    if (showAutoModeOptIn || autoModeOptInTimeoutRef.current) {
+      logEvent('zy_auto_mode_opt_in_dialog_decline', {})
+      setShowAutoModeOptIn(false)
+      if (autoModeOptInTimeoutRef.current) {
+        clearTimeout(autoModeOptInTimeoutRef.current)
+      }
+      autoModeOptInTimeoutRef.current = null
+    }
+    if (skipEnrollment) {
+      setPreviousModeBeforeAuto(null)
+    }
+    const allowEnrollment = !viewingAgentTaskId && !skipEnrollment
+    const nextMode = getNextPermissionMode(toolPermissionContext, teamContext, {
+      allowEnrollment,
+    })
 
     // Check if user is entering auto mode for the first time. Gated on the
     // persistent settings flag (hasAutoModeOptIn) rather than the broader
@@ -318,67 +339,26 @@ export function usePromptInputKeybindings(context: ReturnType<typeof usePromptIn
     isEnteringAutoModeFirstTime =
       nextMode === 'auto' &&
       toolPermissionContext.mode !== 'auto' &&
-      !hasAutoModeOptIn() &&
+      (!hasAutoModeOptIn() || !isAutoModeModelEligible(getClassifierModel())) &&
       !viewingAgentTaskId // Only show for primary agent, not subagents
     if (isEnteringAutoModeFirstTime) {
       // Store previous mode so we can revert if user declines
       setPreviousModeBeforeAuto(toolPermissionContext.mode)
 
-      // Only update the UI mode label — do NOT call transitionPermissionMode
-      // or cyclePermissionMode yet; we haven't confirmed with the user.
-      setAppState((prev) => ({
-        ...prev,
-        toolPermissionContext: {
-          ...prev.toolPermissionContext,
-          mode: 'auto',
-        },
-      }))
-      setToolPermissionContext({
-        ...toolPermissionContext,
-        mode: 'auto',
-      })
-
-      // Show opt-in dialog after 400ms debounce
-      if (autoModeOptInTimeoutRef.current) {
-        clearTimeout(autoModeOptInTimeoutRef.current)
-      }
-      autoModeOptInTimeoutRef.current = setTimeout(
-        (setShowAutoModeOptIn, autoModeOptInTimeoutRef) => {
-          setShowAutoModeOptIn(true)
-          autoModeOptInTimeoutRef.current = null
-        },
-        400,
-        setShowAutoModeOptIn,
-        autoModeOptInTimeoutRef,
-      )
+      // 提示只是进入意图。确认之前不改 mode，后台任务仍遵循原权限。
+      setShowAutoModeOptIn(true)
       if (helpOpen) {
         setHelpOpen(false)
       }
       return
     }
 
-    // Dismiss auto mode opt-in dialog if showing or pending (user is cycling away).
-    // Do NOT revert to previousModeBeforeAuto here — shift+tab means "advance the
-    // carousel", not "decline". Reverting causes a ping-pong loop: auto reverts to
-    // the prior mode, whose next mode is auto again, forever.
-    // The dialog's own decline button (handleAutoModeOptInDecline) handles revert.
-    if (showAutoModeOptIn || autoModeOptInTimeoutRef.current) {
-      if (showAutoModeOptIn) {
-        logEvent('zy_auto_mode_opt_in_dialog_decline', {})
-      }
-      setShowAutoModeOptIn(false)
-      if (autoModeOptInTimeoutRef.current) {
-        clearTimeout(autoModeOptInTimeoutRef.current)
-        autoModeOptInTimeoutRef.current = null
-      }
-      setPreviousModeBeforeAuto(null)
-      // Fall through — mode is 'auto', cyclePermissionMode below goes to 'default'.
-    }
-
     // Now that we know this is NOT the first-time auto mode path,
     // call cyclePermissionMode to apply side effects (e.g. strip
     // dangerous permissions, activate classifier)
-    const { context: preparedContext } = cyclePermissionMode(toolPermissionContext, teamContext)
+    const { context: preparedContext } = cyclePermissionMode(toolPermissionContext, teamContext, {
+      allowEnrollment,
+    })
     logEvent('zy_mode_cycle', {
       to: nextMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
@@ -401,6 +381,7 @@ export function usePromptInputKeybindings(context: ReturnType<typeof usePromptIn
         ...preparedContext,
         mode: nextMode,
       },
+      ...(nextMode === 'auto' ? { settings: getInitialSettings() } : {}),
     }))
     setToolPermissionContext({
       ...preparedContext,
@@ -438,7 +419,7 @@ export function usePromptInputKeybindings(context: ReturnType<typeof usePromptIn
     // auto mode backend (classifier, beta headers) and strip dangerous
     // permissions (e.g. Bash(*) always-allow rules).
     const strippedContext = transitionPermissionMode(
-      previousModeBeforeAuto ?? toolPermissionContext.mode,
+      toolPermissionContext.mode,
       'auto',
       toolPermissionContext,
     )
@@ -447,11 +428,14 @@ export function usePromptInputKeybindings(context: ReturnType<typeof usePromptIn
       toolPermissionContext: {
         ...strippedContext,
         mode: 'auto',
+        isAutoModeAvailable: true,
       },
+      settings: getInitialSettings(),
     }))
     setToolPermissionContext({
       ...strippedContext,
       mode: 'auto',
+      isAutoModeAvailable: true,
     })
 
     // Close help tips if they're open when auto mode is enabled
@@ -471,34 +455,15 @@ export function usePromptInputKeybindings(context: ReturnType<typeof usePromptIn
 
   // Handler for auto mode opt-in dialog decline
   const handleAutoModeOptInDecline = useCallback(() => {
-    logForDebugging(
-      `[auto-mode] handleAutoModeOptInDecline: reverting to ${previousModeBeforeAuto}, setting isAutoModeAvailable=false`,
-    )
+    logForDebugging('[auto-mode] enrollment closed; current permission mode unchanged')
     setShowAutoModeOptIn(false)
     if (autoModeOptInTimeoutRef.current) {
       clearTimeout(autoModeOptInTimeoutRef.current)
       autoModeOptInTimeoutRef.current = null
     }
 
-    // Revert to previous mode and remove auto from the carousel
-    // for the rest of this session
-    if (previousModeBeforeAuto) {
-      setAutoModeActive(false)
-      setAppState((prev) => ({
-        ...prev,
-        toolPermissionContext: {
-          ...prev.toolPermissionContext,
-          mode: previousModeBeforeAuto,
-          isAutoModeAvailable: false,
-        },
-      }))
-      setToolPermissionContext({
-        ...toolPermissionContext,
-        mode: previousModeBeforeAuto,
-        isAutoModeAvailable: false,
-      })
-      setPreviousModeBeforeAuto(null)
-    }
+    // 提示没有提前切换模式；保留原模式作为一次性“跳过 auto”标记，用户下次
+    // Shift+Tab 会继续切往 bypass/default，而不会再次立刻弹出同一提示。
   }, [
     previousModeBeforeAuto,
     toolPermissionContext,

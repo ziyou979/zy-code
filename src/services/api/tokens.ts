@@ -89,6 +89,10 @@ function getAssistantMessageId(message: Message): string | undefined {
  * 若需要从消息中获取上下文大小，请使用 tokenCountWithEstimation()。
  */
 export function getTokenCountFromUsage(usage: Usage): number {
+  if (usage.extras?.initialPromptTokenCount !== undefined) {
+    // Gemini 续传会重新计费先前的输入；上下文只占一份原始 prompt，不能累加计费输入。
+    return usage.extras.initialPromptTokenCount + usage.outputTokens
+  }
   return (
     usage.inputTokens +
     (usage.cacheCreationInputTokens ?? 0) +
@@ -147,6 +151,9 @@ export function finalContextTokensFromLastResponse(messages: Message[]): number 
     const message = live[i]
     const usage = message ? getTokenUsage(message) : undefined
     if (usage) {
+      if (usage.extras?.initialPromptTokenCount !== undefined) {
+        return getTokenCountFromUsage(usage)
+      }
       // Stainless 类型尚未包含 iterations——进行类型断言
       const iterations = (
         usage as {
@@ -209,6 +216,14 @@ export function getCurrentUsage(messages: Message[]): {
     const message = messages[i]
     const usage = message ? getTokenUsage(message) : undefined
     if (usage) {
+      if (usage.extras?.initialPromptTokenCount !== undefined) {
+        return {
+          inputTokens: usage.extras.initialPromptTokenCount,
+          outputTokens: usage.outputTokens,
+          cacheCreationInputTokens: 0,
+          cacheReadInputTokens: 0,
+        }
+      }
       return {
         inputTokens: usage.inputTokens,
         outputTokens: usage.outputTokens,

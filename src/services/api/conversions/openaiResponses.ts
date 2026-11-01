@@ -18,6 +18,7 @@
 import { randomUUID } from 'node:crypto'
 import OpenAI from 'openai'
 import type { ResponseCreateParamsBase } from 'openai/resources/responses/responses'
+import { LLMConnectionError, LLMError } from '../../../types/llm.js'
 import type {
   AssistantContentBlock,
   ChunkDelta,
@@ -618,6 +619,7 @@ export function responsesToStandard(
 export async function* mapResponsesStreamToStandard(
   stream: AsyncIterable<ResponsesStreamEvent>,
   model: string,
+  options?: { requireTerminalEvent?: boolean },
 ): AsyncIterable<LLMStreamEvent> {
   type Block = {
     index: number
@@ -942,19 +944,45 @@ export async function* mapResponsesStreamToStandard(
         return
       }
       case 'response.failed':
-        throw new Error(event.response.error?.message ?? 'OpenAI Responses request failed')
+        throw responsesStreamError(event.response.error)
       case 'error':
-        throw new Error(
-          `OpenAI Responses API error: ${[event.code, event.message].filter(Boolean).join(' ')}`,
-        )
+        throw responsesStreamError(event)
       default:
         // 生命周期通知与项目未启用的内置工具事件无需投影为聊天内容。
         break
     }
   }
+  if (options?.requireTerminalEvent) {
+    throw new LLMConnectionError('OpenAI Responses stream ended without a terminal response')
+  }
   yield* stopBlocks()
   yield { type: 'response_delta', stopReason: null }
   yield { type: 'response_stop' }
+}
+
+/** 保留错误码，供上层区分订阅额度、准入与临时故障；message 本身不保证含 code。 */
+function responsesStreamError(error?: { code?: string | null; message?: string } | null): LLMError {
+  return new LLMError(
+    [error?.code, error?.message].filter(Boolean).join(': ') || 'OpenAI Responses request failed',
+  )
+}
+
+/** SSE 专用通道为非流式调用消费终止快照，失败或断流不能当作成功。 */
+export async function consumeResponsesStream(
+  stream: AsyncIterable<ResponsesStreamEvent>,
+): Promise<OpenAI.Responses.Response> {
+  for await (const event of stream) {
+    if (event.type === 'response.completed' || event.type === 'response.incomplete') {
+      return event.response
+    }
+    if (event.type === 'response.failed') {
+      throw responsesStreamError(event.response.error)
+    }
+    if (event.type === 'error') {
+      throw responsesStreamError(event)
+    }
+  }
+  throw new LLMConnectionError('OpenAI Responses stream ended without a terminal response')
 }
 // ============================================================================
 // 请求参数构造
@@ -968,15 +996,28 @@ export async function* mapResponsesStreamToStandard(
  * text.format 结构化输出、OpenAI 原生工具透传、providerExtras.openai /
  * extra_body 顶层透传、model 字符串规范化。
  */
-export function buildResponsesRequestParams(params: CreateParams): ResponsesCreateParams {
-  // biome-ignore lint/suspicious/noExplicitAny: v1/v2 双格式兼容（max_tokens/tool_choice 等）
-  const p = params as any
+export function buildResponsesRequestParams(
+  params: CreateParams,
+  options?: { chatGPTSubscription?: boolean },
+): ResponsesCreateParams {
+  // 仅适配边界读取旧 snake_case 字段，业务层继续使用标准 CreateParams。
+  const p = params as CreateParams & {
+    max_tokens?: number
+    top_p?: number
+    tool_choice?: ToolChoice | ResponsesToolChoice
+  }
   const items = messagesToResponses(p.messages ?? [])
   const instructions = extractInstructions(params)
   const openaiExtras = p.providerExtras?.openai
+  // 仅订阅通道执行预览协议限制，普通 API key 保留原来的参数语义。
+  const omitUnsupportedFields = options?.chatGPTSubscription === true
 
   // OpenAI 原生工具（如 web_search_preview），注入到 tools 数组顶部
-  const openaiNativeTools = openaiExtras?._web_search_tool ? [openaiExtras._web_search_tool] : []
+  const nativeTool = openaiExtras?._web_search_tool
+  const openaiNativeTools =
+    typeof nativeTool === 'object' && nativeTool !== null && 'type' in nativeTool
+      ? [nativeTool as OpenAI.Responses.Tool]
+      : []
   const cleanedExtras = openaiExtras ? { ...openaiExtras } : {}
   delete (cleanedExtras as Record<string, unknown>)._web_search_tool
   // response_format 是 chat 专属字段，Responses 用 text.format，剔除避免误传
@@ -992,8 +1033,10 @@ export function buildResponsesRequestParams(params: CreateParams): ResponsesCrea
   const out: ResponsesCreateParams = {
     model: normalizeModelStringForAPI(p.model),
     input: items.length > 0 ? items : '',
-    max_output_tokens: p.maxTokens ?? p.max_tokens,
-    temperature: p.temperature ?? 1,
+  }
+  if (!omitUnsupportedFields) {
+    out.max_output_tokens = p.maxTokens ?? p.max_tokens
+    out.temperature = p.temperature ?? 1
   }
 
   if (instructions) {
@@ -1009,7 +1052,10 @@ export function buildResponsesRequestParams(params: CreateParams): ResponsesCrea
     out.tools = toolDefs
   }
   if (toolChoice) {
-    out.tool_choice = toolChoiceToResponses(toolChoice) ?? toolChoice
+    out.tool_choice =
+      typeof toolChoice === 'string' || toolChoice.type === 'function'
+        ? toolChoice
+        : toolChoiceToResponses(toolChoice)
   }
 
   // thinking → reasoning（结构不同于 chat 的 thinking:{type}，独立映射；
@@ -1028,6 +1074,37 @@ export function buildResponsesRequestParams(params: CreateParams): ResponsesCrea
   Object.assign(out, cleanedExtras)
   if (params.extraBody) {
     Object.assign(out, params.extraBody)
+  }
+
+  // 最后应用通道约束，防止 extras/extraBody 把已删除的字段重新写回。
+  // 限制依据官方 SIWC preview-limitations；prompt_cache_key 并不在禁用列表中。
+  if (omitUnsupportedFields) {
+    const record = out as unknown as Record<string, unknown>
+    for (const field of [
+      'background',
+      'conversation',
+      'max_output_tokens',
+      'max_tool_calls',
+      'metadata',
+      'moderation',
+      'multi_agent',
+      'prompt',
+      'prompt_cache_retention',
+      'prompt_cache_options',
+      'safety_identifier',
+      'temperature',
+      'top_logprobs',
+      'top_p',
+      'truncation',
+      'user',
+      'previous_response_id',
+    ]) {
+      delete record[field]
+    }
+    out.store = false
+    if (typeof out.input === 'string') {
+      out.input = out.input ? [{ role: 'user', content: out.input }] : []
+    }
   }
 
   return out

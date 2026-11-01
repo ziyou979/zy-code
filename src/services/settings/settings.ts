@@ -369,6 +369,13 @@ export function getPolicySettingsOrigin(): 'remote' | 'plist' | 'hklm' | 'file' 
   return null
 }
 
+// 写入补丁允许删除档位键；落盘后的 SettingsJson 仍只接受完整模型值。
+type SettingsUpdate = {
+  [Key in keyof SettingsJson]: Key extends 'models'
+    ? Partial<NonNullable<SettingsJson[Key]>> | undefined
+    : SettingsJson[Key]
+}
+
 /**
  * 使用 lodash mergeWith 将 `settings` 合并到 `source` 的现有配置中。
  *
@@ -378,7 +385,7 @@ export function getPolicySettingsOrigin(): 'remote' | 'plist' | 'hklm' | 'file' 
  */
 export function updateSettingsForSource(
   source: EditableSettingSource,
-  settings: SettingsJson,
+  settings: SettingsUpdate,
 ): { error: Error | null } {
   if ((source as unknown) === 'policySettings' || (source as unknown) === 'flagSettings') {
     return { error: null }
@@ -429,7 +436,7 @@ export function updateSettingsForSource(
       existingSettings || {},
       settings,
       (
-        _objValue: unknown,
+        objValue: unknown,
         srcValue: unknown,
         key: string | number | symbol,
         object: Record<string | number | symbol, unknown>,
@@ -439,9 +446,10 @@ export function updateSettingsForSource(
           delete object[key]
           return undefined
         }
-        // 对于数组，始终使用提供的数组替换
-        // 由调用方负责计算所需的最终状态
-        if (Array.isArray(srcValue)) {
+        // 数组与单对象之间切换时必须整体替换。否则 lodash 会把模型引用的
+        // provider/model 挂到旧候选数组上，JSON 序列化时丢弃这些非索引字段。
+        // 同为数组也由调用方提供最终状态，不能按下标合并。
+        if (Array.isArray(srcValue) || Array.isArray(objValue)) {
           return srcValue
         }
         // 对于非数组值，让 lodash 处理默认的合并行为

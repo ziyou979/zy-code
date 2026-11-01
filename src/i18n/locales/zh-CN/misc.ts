@@ -1,6 +1,32 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const zhMisc: TranslationResource = {
+  'messageActions.edit': '编辑',
+  'messageActions.copyPath': '复制路径',
+  'messageActions.copyCommand': '复制命令',
+  'messageActions.copyPattern': '复制匹配模式',
+  'messageActions.copyUrl': '复制链接',
+  'messageActions.copyQuery': '复制查询',
+  'messageActions.copyPrompt': '复制提示词',
+  'ideOnboarding.welcome': '欢迎使用 {ideName} 中的 ZY Code',
+  'ideOnboarding.installedPlugin': '已安装插件 v{version}',
+  'ideOnboarding.installedExtension': '已安装扩展 v{version}',
+  'ideOnboarding.context': 'Zy 能够了解打开的文件和选中的代码行。',
+  'ideOnboarding.review': '在 IDE 中查看 ZY Code 的修改（{added}、{removed}）。',
+  'ideOnboarding.quickLaunch': '按 {shortcut} 快速启动',
+  'ideOnboarding.mention': '按 {shortcut} 在输入中引用文件或代码行',
+  'collapsedReadSearch.hookSummary_one': '已运行 {count} 个 PreToolUse 钩子（{duration}）',
+  'collapsedReadSearch.hookSummary_other': '已运行 {count} 个 PreToolUse 钩子（{duration}）',
+  'collapsedReadSearch.recalled': '已召回 {name}',
+  'collapsedReadSearch.prNumber': 'PR #{number}',
+  'teamMem.count_one': '{verb} {count} 条团队记忆',
+  'teamMem.count_other': '{verb} {count} 条团队记忆',
+  'teamMem.searchSummary': '{verb}团队记忆',
+
+  'http.extraCA.unreadable':
+    '无法读取 NODE_EXTRA_CA_CERTS 文件“{path}”：{reason}。请将其设置为实际存在的 CA PEM 文件，再重启 ZYCode。',
+  'http.extraCA.invalid':
+    'NODE_EXTRA_CA_CERTS 文件“{path}”包含无效或不完整的 PEM 证书。请使用代理启动时显示的 CA PEM 文件，再重启 ZYCode。',
   'monitor.deadlineReached':
     '监控“{description}”已到达 {timeoutMs}ms 截止时间，正在停止。共观察到 {count} 行事件，抑制了 {suppressed} 行。仅在仍需监控时重新启动，并保留游标、检查间隔内遗漏的事件。',
   'assistantThinking.label': '思考中',
@@ -328,6 +354,8 @@ export const zhMisc: TranslationResource = {
   'listMcpResources.noResourcesFound': '（未找到资源）',
   'login.interrupted': '登录已中断',
   'login.pressAgainExit': '再按 {keyName} 退出',
+  'login.selectModelPrompt': '授权成功！请选择对话模型：',
+  'login.skipModelSelection': '稍后配置（保持当前模型）',
   'login.successful': '登录成功',
   'login.title': '登录',
   'logo.apiCalls': 'API 调用：{path}',
@@ -992,6 +1020,9 @@ export const zhMisc: TranslationResource = {
   'systemMessage.hookSummary_other': '执行了 {count} 个 {label} 钩子函数',
   'systemMessage.stopHookLabel': 'stop',
   'systemMessage.tasksStillRunning': '，{count} 仍在运行',
+  'systemMessage.turnTokens': ' · 共 {total} tokens（↑ {input} · ↓ {output}）',
+  'systemMessage.turnTokensWithCache':
+    ' · 共 {total} tokens（↑ {input} · ↓ {output} · 缓存命中 {cacheHit}%）',
   'systemMessage.verbWithDuration': '{verb}，耗时 {duration}',
   'tag.currentTag': '当前标签：#{tagName}',
   'tag.emptyName': '标签名称不能为空',
@@ -1265,6 +1296,7 @@ export const zhMisc: TranslationResource = {
   'settings.shortcuts.clear': '清除',
   'settings.shortcuts.change': '更改',
   'settings.shortcuts.save': '保存',
+  'settings.shortcuts.open': '打开',
   'settings.shortcuts.search': '搜索',
 
   // colorPicker
@@ -1611,4 +1643,8 @@ export const zhMisc: TranslationResource = {
   'claudeChrome.forMoreInfo': '了解更多信息，请访问：',
   'claudeChrome.orVisit': '或查阅相关文档。',
   'misc.repl.memorySurvey.question': '本次会话中记忆功能对你有帮助吗？',
+  'modelCapability.inputTypes': '输入格式',
+  'modelCapability.inputTypesHint':
+    '用逗号分隔，例如 text, image/jpeg, image/png, application/pdf。具体 MIME 声明仅允许对应格式。',
+  'modelCapability.invalidInputTypes': '请填写至少一个有效输入类别或 MIME 类型，不含参数或通配符。',
 }

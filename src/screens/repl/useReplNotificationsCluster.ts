@@ -37,6 +37,7 @@ import { count } from '../../utils/array.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
 import {
+  computeTurnTokenUsage,
   createSystemMessage,
   createTurnDurationMessage,
 } from '../../services/messages/./constructors.js'
@@ -154,7 +155,12 @@ export function useReplNotificationsCluster({
       swarmBudgetInfoRef.current = undefined
       setMessages((prev) => [
         ...prev,
-        createTurnDurationMessage(totalMs, deferredBudget, count(prev, isLoggableMessage)),
+        createTurnDurationMessage(
+          totalMs,
+          deferredBudget,
+          count(prev, isLoggableMessage),
+          computeTurnTokenUsage(prev),
+        ),
       ])
     }
   }, [hasRunningTeammates, setMessages])

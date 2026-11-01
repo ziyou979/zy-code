@@ -119,7 +119,7 @@ function NotificationsImpl({
               action="chat:externalEditor"
               context="Chat"
               fallback="ctrl+g"
-              description={`edit in ${toIDEDisplayName(editor)}`}
+              description={tSync('promptInput.editIn', { editorName: toIDEDisplayName(editor) })}
             />
           </Text>
         ),

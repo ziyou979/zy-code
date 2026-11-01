@@ -2,18 +2,35 @@ import { tSync } from '../../i18n/index.js'
 import type { ContentBlock, ToolResultBlock } from '../../types/llm.js'
 import { LLMError } from '../../types/llm.js'
 import type { AssistantMessage, UserMessage } from '../../types/message.js'
+import { getLocalModelInputModalities } from '../settings/localModelCapabilities.js'
 import {
-  getLocalModelInputModalities,
+  acceptsModelInput,
+  isModelInputModality,
   type ModelInputModality,
-} from '../settings/localModelCapabilities.js'
+} from './modelInputTypes.js'
 
 function isToolResult(block: ContentBlock): block is ToolResultBlock {
   return block.type === 'tool_result'
 }
 
 function collectBlockModalities(block: ContentBlock, modalities: Set<ModelInputModality>): void {
-  if (block.type === 'image' || block.type === 'document') {
-    modalities.add(block.type)
+  if (block.type === 'image') {
+    modalities.add(isModelInputModality(block.mimeType) ? block.mimeType : 'image')
+    return
+  }
+  if (block.type === 'document') {
+    const source = block.source
+    const mime =
+      source && typeof source === 'object'
+        ? 'mediaType' in source
+          ? source.mediaType
+          : 'media_type' in source
+            ? source.media_type
+            : 'mimeType' in source
+              ? source.mimeType
+              : undefined
+        : undefined
+    modalities.add(isModelInputModality(mime) ? mime : 'document')
     return
   }
   if (!isToolResult(block) || !Array.isArray(block.content)) {
@@ -21,7 +38,7 @@ function collectBlockModalities(block: ContentBlock, modalities: Set<ModelInputM
   }
   for (const nested of block.content) {
     if (nested.type === 'image') {
-      modalities.add('image')
+      collectBlockModalities(nested, modalities)
     }
   }
 }
@@ -44,7 +61,7 @@ export function getMessageMediaInputModalities(
 }
 
 function formatModality(modality: ModelInputModality): string {
-  return tSync(`modelInput.modality.${modality}`)
+  return modality.includes('/') ? modality : tSync(`modelInput.modality.${modality}`)
 }
 
 /**
@@ -70,7 +87,7 @@ export function assertMessageInputModalities(
   }
 
   const unsupported = getMessageMediaInputModalities(messages).filter(
-    (modality) => !supported.includes(modality),
+    (modality) => !acceptsModelInput(supported, modality),
   )
   if (unsupported.length === 0) {
     return

@@ -14,9 +14,11 @@
  * }
  */
 
+import { randomUUID } from 'node:crypto'
 import { chmodSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { z } from 'zod/v4'
+import { tSync } from '../../i18n/index.js'
 import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
@@ -28,6 +30,9 @@ import {
 
 /** 旧版全局 OAuth 存储键；仅用于读取迁移，新数据不再写入。 */
 export const AUTH_OAUTH_KEY = 'oauth' as const
+
+/** 主机级元数据，不能按命名连接解析或枚举。 */
+const AUTH_HOST_ID_KEY = 'deviceId' as const
 
 /** 单条 OAuth 凭证（access/refresh/expires + provider 扩展字段） */
 const AuthOAuthCredentialsSchema = z
@@ -43,12 +48,26 @@ const AuthProviderConfigSchema = z
   .object({
     provider: z.string().optional().describe('Registered provider used by this named connection.'),
     baseUrl: z.string().optional().describe('API base URL for this named connection.'),
+    modelsUrl: z.string().optional().describe('API models listing URL for this named connection.'),
     apiFormat: z
       .enum(['anthropic', 'openai-chat', 'openai-responses', 'google'])
       .optional()
       .describe('API protocol used by this named connection.'),
     apiKey: z.string().optional().describe('Provider-scoped API key.'),
     apiKeyHelper: z.string().optional().describe('Provider-scoped command that prints an API key.'),
+    credentialType: z
+      .enum(['google-adc'])
+      .optional()
+      .describe('Use Google Application Default Credentials instead of an API key.'),
+    vertex: z
+      .object({
+        project: z.string().min(1),
+        location: z.string().min(1).optional(),
+        credentialsFile: z.string().min(1).optional(),
+        gcloudPath: z.string().min(1).optional(),
+      })
+      .optional()
+      .describe('Google Cloud project and location for Vertex AI.'),
     oauth: AuthOAuthCredentialsSchema.optional().describe(
       'OAuth credentials owned by this named connection.',
     ),
@@ -76,9 +95,10 @@ export type AuthOAuthStore = {
  * - 可选 `oauth`：多 Provider OAuth 登录态
  */
 export type AuthConfig = {
-  [providerId: string]: AuthProviderConfig | AuthOAuthStore | undefined
+  [providerId: string]: AuthProviderConfig | AuthOAuthStore | string | undefined
 } & {
   oauth?: AuthOAuthStore
+  deviceId?: string
 }
 
 export type AuthOAuthConnection = {
@@ -117,6 +137,16 @@ export function parseAuthConfig(value: unknown): AuthConfig | null {
 
   const result: AuthConfig = {}
 
+  // 订阅登录曾在顶层写入字符串 deviceId；明确登记元数据，恢复已有文件的
+  // 读取能力，而不是放宽所有连接校验导致损坏的凭据被悄悄接受。
+  if (Object.hasOwn(raw, AUTH_HOST_ID_KEY)) {
+    const hostId = z.string().safeParse(raw[AUTH_HOST_ID_KEY])
+    if (!hostId.success) {
+      return null
+    }
+    result.deviceId = hostId.data
+  }
+
   if (Object.hasOwn(raw, AUTH_OAUTH_KEY)) {
     const oauthResult = AuthOAuthStoreSchema.safeParse(raw[AUTH_OAUTH_KEY])
     if (!oauthResult.success) {
@@ -129,7 +159,7 @@ export function parseAuthConfig(value: unknown): AuthConfig | null {
   }
 
   for (const [key, entry] of Object.entries(raw)) {
-    if (key === AUTH_OAUTH_KEY) {
+    if (key === AUTH_OAUTH_KEY || key === AUTH_HOST_ID_KEY) {
       continue
     }
     const parsed = AuthProviderConfigSchema.safeParse(entry)
@@ -220,6 +250,24 @@ export function updateAuthConfigRaw(mutator: (current: Record<string, unknown>) 
   return writeAuthConfigRaw(current)
 }
 
+/** 从当前认证目录读取或创建主机标识；不缓存，避免不同用户目录串用身份。 */
+export function getOrCreateAuthHostId(): string {
+  const current = readAuthConfigRaw()
+  const existing = current[AUTH_HOST_ID_KEY]
+  if (typeof existing === 'string' && existing) {
+    return existing
+  }
+  const hostId = randomUUID()
+  const result = updateAuthConfigRaw((config) => {
+    config[AUTH_HOST_ID_KEY] = hostId
+  })
+  // 主机身份必须跨进程稳定；落盘失败时阻止登录，不能用临时身份注册。
+  if (!result.success) {
+    throw new Error(tSync('oauth.openaiChatGPT.hostIdPersistenceFailed'))
+  }
+  return hostId
+}
+
 /** 读取 oauth 块；不存在则返回空结构 */
 export function getAuthOAuthStoreFromConfig(config: AuthConfig | null): AuthOAuthStore {
   const credentials: Record<string, AuthOAuthCredentials> = {}
@@ -254,7 +302,13 @@ export function getAuthOAuthConnectionsFromConfig(
   }
   const result: AuthOAuthConnection[] = []
   for (const [connectionId, value] of Object.entries(config)) {
-    if (connectionId === AUTH_OAUTH_KEY || !value || isAuthOAuthStore(value)) {
+    if (
+      connectionId === AUTH_OAUTH_KEY ||
+      connectionId === AUTH_HOST_ID_KEY ||
+      !value ||
+      typeof value !== 'object' ||
+      isAuthOAuthStore(value)
+    ) {
       continue
     }
     const oauth = (value as AuthProviderConfig).oauth
@@ -279,6 +333,7 @@ export function setAuthConfigOAuth(
   connectionId: string,
   providerId: string,
   credentials: AuthOAuthCredentials,
+  connectionConfig?: Pick<AuthProviderConfig, 'provider' | 'apiFormat'>,
 ): { success: boolean; warning?: string } {
   return updateAuthConfigRaw((current) => {
     const existing = current[connectionId]
@@ -287,6 +342,7 @@ export function setAuthConfigOAuth(
         ? { ...(existing as Record<string, unknown>) }
         : {}
     entry.oauth = { ...credentials, provider: providerId }
+    Object.assign(entry, connectionConfig)
     current[connectionId] = entry
     delete current[AUTH_OAUTH_KEY]
   })
@@ -337,7 +393,7 @@ export function getAuthConfigForProviderFromConfig(
   provider?: string | null,
 ): AuthProviderConfig | undefined {
   // oauth 是保留键，不是 API provider id
-  if (!provider || !config || provider === AUTH_OAUTH_KEY) {
+  if (!provider || !config || provider === AUTH_OAUTH_KEY || provider === AUTH_HOST_ID_KEY) {
     return undefined
   }
   const entry = config[provider]
@@ -349,6 +405,29 @@ export function getAuthConfigForProviderFromConfig(
 
 export function getAuthConfigForProvider(provider?: string | null): AuthProviderConfig | undefined {
   return getAuthConfigForProviderFromConfig(loadAuthConfig(), provider)
+}
+
+/**
+ * 获取所有已在 auth.json 中配置了凭证（apiKey、apiKeyHelper 或 oauth）的有效连接 ID 列表。
+ */
+export function getConfiguredConnectionIds(): string[] {
+  const config = loadAuthConfig()
+  if (!config) return []
+  const ids: string[] = []
+  for (const [key, value] of Object.entries(config)) {
+    if (key === AUTH_OAUTH_KEY || key === AUTH_HOST_ID_KEY) continue
+    if (!value || typeof value !== 'object') continue
+    const entry = value as AuthProviderConfig
+    if (
+      entry.apiKey ||
+      entry.apiKeyHelper ||
+      entry.oauth ||
+      entry.credentialType === 'google-adc'
+    ) {
+      ids.push(key)
+    }
+  }
+  return ids
 }
 
 export function getAuthConfigBaseUrl(provider?: string | null): string | undefined {
@@ -423,7 +502,10 @@ export function setAuthConfigApiKey(
 /** 写入 onboarding 产生的完整连接信息，同时保留已有 helper 等扩展字段。 */
 export function setAuthConfigConnection(
   connectionId: string,
-  config: Pick<AuthProviderConfig, 'provider' | 'baseUrl' | 'apiFormat' | 'apiKey'>,
+  config: Pick<
+    AuthProviderConfig,
+    'provider' | 'baseUrl' | 'modelsUrl' | 'apiFormat' | 'apiKey' | 'credentialType' | 'vertex'
+  >,
 ): { success: boolean; warning?: string } {
   if (!connectionId.trim()) {
     return { success: false, warning: 'connection id is required' }
@@ -434,9 +516,20 @@ export function setAuthConfigConnection(
       existing && typeof existing === 'object' && !Array.isArray(existing)
         ? { ...(existing as Record<string, unknown>) }
         : {}
+    if (config.credentialType === 'google-adc') {
+      // 切换到 ADC 时清除旧连接的认证和端点，防止残留配置抢占路由。
+      delete entry.apiKey
+      delete entry.apiKeyHelper
+      delete entry.oauth
+      delete entry.baseUrl
+      delete entry.modelsUrl
+    } else if (config.apiKey) {
+      delete entry.credentialType
+      delete entry.vertex
+    }
     for (const [key, value] of Object.entries(config)) {
       if (value !== undefined && value !== '') {
-        entry[key] = key === 'apiKey' ? value.trim() : value
+        entry[key] = key === 'apiKey' && typeof value === 'string' ? value.trim() : value
       }
     }
     current[connectionId] = entry

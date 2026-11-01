@@ -1,3 +1,4 @@
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
 /**
  * 消息构造函数测试 — snapshot 验证输出结构。
  *
@@ -10,11 +11,11 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 // ---- Mock 重依赖模块（阻断 analytics/i18n 等副作用链） ----
-function setupMocks() {
-  mock.module('../../../src/constants/messages.js', () => ({
+async function setupMocks() {
+  spyOnModuleExports(await import('../../../src/constants/messages.js'), {
     getNoContentMessage: () => '[no content]',
-  }))
-  mock.module('../../../src/services/analytics/growthbook.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/services/analytics/growthbook.js'), {
     getFeatureValue_CACHED_MAY_BE_STALE: (_k: string, def: unknown) => def,
     checkStatsigFeatureGate_CACHED_MAY_BE_STALE: () => false,
     checkGate_CACHED_OR_BLOCKING: async () => false,
@@ -35,17 +36,16 @@ function setupMocks() {
     getDynamicConfig_BLOCKS_ON_INIT: async () => null,
     getDynamicConfig_CACHED_MAY_BE_STALE: () => null,
     onGrowthBookRefresh: () => () => {},
-  }))
-  mock.module('../../../src/services/analytics/index.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/services/analytics/index.js'), {
     logEvent: () => {},
-  }))
-  mock.module('../../../src/i18n/index.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/i18n/index.js'), {
     tSync: (key: string) => `[i18n:${key}]`,
     t: (key: string) => `[i18n:${key}]`,
     getUiLanguage: () => 'en',
     warmI18n: async () => {},
-    SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
-  }))
+  })
 }
 
 // ---- 测试辅助 ----
@@ -79,7 +79,7 @@ describe('消息构造函数', () => {
 
   beforeEach(async () => {
     mock.restore()
-    setupMocks()
+    await setupMocks()
     // bun 的 mock.module 在并行运行时可能被其他文件污染 messages.js barrel，
     // 需要用 dynamic import + 时间戳 cache buster 绕过 bun 的 module cache
     const mod = await import(`../../../src/services/messages/constructors.js?t=${Date.now()}`)

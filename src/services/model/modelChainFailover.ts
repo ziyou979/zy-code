@@ -118,6 +118,7 @@ export function tryAdvanceAuthChainOnError(
   fromIndex: number
   toIndex: number
   tier: string
+  mode: 'confirm' | 'notify' | 'off'
 } | null {
   const resolvedSettings = settings ?? undefined
   if (!isModelFailoverEnabled(resolvedSettings)) {
@@ -184,6 +185,7 @@ export function tryAdvanceAuthChainOnError(
     fromIndex,
     toIndex: next.candidateIndex ?? fromIndex + 1,
     tier,
+    mode: getModelFailoverConfig(resolvedSettings).mode,
   }
 }
 

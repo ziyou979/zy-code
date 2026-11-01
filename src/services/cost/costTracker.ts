@@ -150,17 +150,78 @@ function addUsageToStoredCostState(state: StoredCostState, model: string, rawUsa
   state.totalCostByCurrency[currency] = (state.totalCostByCurrency[currency] ?? 0) + cost
 }
 
+// 相邻消息间隔超过 30 分钟视为离线/挂起空档，不计入历史活跃墙钟时长
+const MAX_ACTIVE_MESSAGE_GAP_MS = 30 * 60 * 1000
+
+function hydrateStoredModelUsage(
+  rawUsage:
+    | Record<
+        string,
+        {
+          inputTokens: number
+          outputTokens: number
+          cacheReadInputTokens: number
+          cacheCreationInputTokens: number
+          webSearchRequests: number
+          cost: number
+          currency?: 'CNY' | 'USD'
+        }
+      >
+    | undefined,
+): { [modelName: string]: ModelUsage } | undefined {
+  if (!rawUsage) {
+    return undefined
+  }
+  return Object.fromEntries(
+    Object.entries(rawUsage).map(([model, usage]) => [
+      model,
+      {
+        ...usage,
+        currency: usage.currency ?? getModelCurrency(model),
+        contextWindow: getContextWindowForModel(model),
+        maxOutputTokens: getModelMaxOutputTokens(model).default,
+      },
+    ]),
+  )
+}
+
 /**
- * 从 transcript 中的 assistant usage 重建费用状态。
- * 这是 sessionCosts 缓存缺失时的兜底，避免 /resume 后状态栏计费从零重新开始。
+ * 从 transcript 中的 assistant usage 与时间戳重建费用和耗时状态。
+ * 这是 sessionCosts 缓存缺失或耗时字段为 0 时的兜底，避免 /resume 后计费与耗时归零。
  */
 export function reconstructCostStateFromMessages(
   messages: readonly Message[],
 ): StoredCostState | undefined {
   const state = createEmptyStoredCostState()
   let hasUsage = false
+  let turnDurationSumMs = 0
+  let estimatedApiDurationMs = 0
+  let activeWallDurationMs = 0
+  let prevTimestampMs: number | undefined
+  const seenResponseIds = new Set<string>()
 
   for (const message of messages) {
+    const ts = message.timestamp ? Date.parse(message.timestamp) : Number.NaN
+    if (Number.isFinite(ts)) {
+      if (prevTimestampMs !== undefined) {
+        const delta = ts - prevTimestampMs
+        if (delta > 0 && delta <= MAX_ACTIVE_MESSAGE_GAP_MS) {
+          activeWallDurationMs += delta
+          if (message.type === 'assistant') {
+            estimatedApiDurationMs += delta
+          }
+        }
+      }
+      prevTimestampMs = ts
+    }
+
+    if (message.type === 'system' && 'subtype' in message && message.subtype === 'turn_duration') {
+      if (Number.isFinite(message.durationMs) && message.durationMs > 0) {
+        turnDurationSumMs += message.durationMs
+      }
+      continue
+    }
+
     if (message.type !== 'assistant') {
       continue
     }
@@ -169,32 +230,91 @@ export function reconstructCostStateFromMessages(
     if (!usage || !model || model === SYNTHETIC_MODEL) {
       continue
     }
+    // normalizeMessages 会把同一次 API 响应拆成多个块消息，按 message.id 去重避免重复累计
+    const responseId = message.message.id || message.uuid
+    if (seenResponseIds.has(responseId)) {
+      continue
+    }
+    seenResponseIds.add(responseId)
     hasUsage = true
     addUsageToStoredCostState(state, model, usage)
   }
 
-  return hasUsage ? state : undefined
+  const reconstructedApiMs = estimatedApiDurationMs > 0 ? estimatedApiDurationMs : turnDurationSumMs
+  const reconstructedWallMs = Math.max(turnDurationSumMs, activeWallDurationMs, reconstructedApiMs)
+  if (reconstructedApiMs > 0) {
+    state.totalAPIDuration = reconstructedApiMs
+    state.totalAPIDurationWithoutRetries = reconstructedApiMs
+  }
+  if (reconstructedWallMs > 0) {
+    state.lastDuration = reconstructedWallMs
+  }
+
+  return hasUsage || reconstructedWallMs > 0 ? state : undefined
 }
 
 export function getRestorableSessionCosts(
   sessionId: string,
   messages?: readonly Message[],
 ): StoredCostState | undefined {
+  let stored: StoredCostState | undefined
+
   // 优先从 sidecar 读取（最可靠，不受压缩影响）
   try {
     const transcriptPath = getTranscriptPathForSession(sessionId)
     const sidecar = readSessionSidecar(transcriptPath)
     if (sidecar?.sessionCosts) {
-      return sidecar.sessionCosts as StoredCostState
+      stored = {
+        ...sidecar.sessionCosts,
+        modelUsage: hydrateStoredModelUsage(sidecar.sessionCosts.modelUsage),
+      }
     }
   } catch {
     // sidecar 读取失败不阻塞
   }
 
-  return (
-    getStoredSessionCosts(sessionId) ??
-    (messages ? reconstructCostStateFromMessages(messages) : undefined)
-  )
+  if (!stored) {
+    stored = getStoredSessionCosts(sessionId)
+  }
+
+  if (!stored) {
+    return messages ? reconstructCostStateFromMessages(messages) : undefined
+  }
+
+  // 若历史会话在修复前退出导致持久化的耗时为 0 或缺失，则用 transcript 消息回填耗时与缺失用量
+  if (
+    messages &&
+    (stored.totalAPIDuration <= 0 ||
+      !stored.lastDuration ||
+      !stored.modelUsage ||
+      Object.keys(stored.modelUsage).length === 0)
+  ) {
+    const reconstructed = reconstructCostStateFromMessages(messages)
+    if (reconstructed) {
+      return {
+        ...stored,
+        totalCost: stored.totalCost > 0 ? stored.totalCost : reconstructed.totalCost,
+        totalCostByCurrency:
+          stored.totalCost > 0 ? stored.totalCostByCurrency : reconstructed.totalCostByCurrency,
+        totalAPIDuration:
+          stored.totalAPIDuration > 0 ? stored.totalAPIDuration : reconstructed.totalAPIDuration,
+        totalAPIDurationWithoutRetries:
+          stored.totalAPIDurationWithoutRetries > 0
+            ? stored.totalAPIDurationWithoutRetries
+            : reconstructed.totalAPIDurationWithoutRetries,
+        lastDuration:
+          stored.lastDuration && stored.lastDuration > 0
+            ? stored.lastDuration
+            : reconstructed.lastDuration,
+        modelUsage:
+          stored.modelUsage && Object.keys(stored.modelUsage).length > 0
+            ? stored.modelUsage
+            : reconstructed.modelUsage,
+      }
+    }
+  }
+
+  return stored
 }
 
 /**

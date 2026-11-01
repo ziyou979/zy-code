@@ -9,9 +9,10 @@ import {
   probedModelSupportsThinking,
 } from '../api/modelCapabilityProbe.js'
 import {
-  localModelHasCapability,
+  getLocalModelCapability,
   localModelHasAdaptiveThinking,
 } from '../settings/localModelCapabilities.js'
+import { getModelThinkingSupport } from '../model/modelCatalogCapabilities.js'
 import { getSettingsWithErrors } from '../settings/settings.js'
 import type { ThinkingConfig } from '../../types/thinking.js'
 
@@ -100,9 +101,11 @@ export function getRainbowColor(charIndex: number, shimmer: boolean = false): ke
 // @[MODEL LAUNCH]: 将新模型添加到 ~/.zy/model-capabilities.json
 export function modelSupportsThinking(model: string): boolean {
   const context = getModelCapabilityContext(model)
-  if (localModelHasCapability(model, 'thinking', context)) {
-    return true
-  }
+  const declared = getModelThinkingSupport(
+    getLocalModelCapability(model, context)?.capabilities.thinking,
+  )
+  // 显式不支持必须终止回退，否则连接级关闭会被 provider 默认能力重新打开。
+  if (declared !== undefined) return declared
   const probed = probedModelSupportsThinking(model)
   if (probed !== undefined) {
     return probed

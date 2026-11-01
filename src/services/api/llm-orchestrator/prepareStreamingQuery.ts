@@ -8,7 +8,7 @@ import type {
   StopReason,
   TaskBudgetParam,
 } from '../../../types/llm.js'
-import type { AssistantMessage, Message, StreamEvent } from '../../../types/message.js'
+import type { AssistantMessage, Message } from '../../../types/message.js'
 import { logAPIPrefix, toolToAPISchema } from '../api.js'
 import { getMergedBetas } from '../../feature-flags/betas.js'
 import { resolveAppliedEffort } from '../../effort/effort.js'
@@ -83,7 +83,6 @@ import {
 } from '../logging.js'
 import { addCacheBreakpoints, stripExcessMediaItems } from '../messageTransforms.js'
 import { CACHE_TTL_1HOUR_MS, recordPromptState } from '../promptCacheBreakDetection.js'
-import { cleanupStream } from '../usageTracker.js'
 import { type RetryContext } from '../withRetry.js'
 import { Options, autoModeStateModule, getPreviousRequestIdFromMessages } from './nonStreaming.js'
 export async function prepareStreamingQuery(
@@ -459,28 +458,6 @@ export async function prepareStreamingQuery(
 
   const attemptStartTimes: number[] = []
 
-  let stream: AsyncIterable<StreamEvent> | undefined
-
-  let streamRequestId: string | null | undefined
-
-  let clientRequestId: string | undefined
-
-  // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins -- Response is available in Node 18+ and is used by the SDK
-  let streamResponse: Response | undefined
-
-  // 释放所有流资源以防止原生内存泄漏。
-  // Response 对象持有 V8 堆外的原生 TLS/socket 缓冲区
-  //（在 Node.js/npm 路径上观察到；见 GH #32920），所以我们必须
-  // 显式取消并释放它，无论生成器如何退出。
-  function releaseStreamResources(): void {
-    cleanupStream(stream)
-    stream = undefined
-    if (streamResponse) {
-      streamResponse.body?.cancel().catch(() => {})
-      streamResponse = undefined
-    }
-  }
-
   // 在定义 paramsFromContext 之前消费待处理的缓存编辑一次。
   // paramsFromContext 会被多次调用（日志、重试），所以在
   // 其中消费会导致第一次调用从后续调用中窃取编辑。
@@ -730,11 +707,6 @@ export async function prepareStreamingQuery(
     start,
     attemptNumber,
     attemptStartTimes,
-    stream,
-    streamRequestId,
-    clientRequestId,
-    streamResponse,
-    releaseStreamResources,
     consumedCacheEdits,
     consumedPinnedEdits,
     lastRequestBetas,

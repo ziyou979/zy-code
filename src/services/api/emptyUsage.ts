@@ -21,6 +21,7 @@ export type NonNullableUsage = {
   inferenceGeo: string
   iterations: unknown[]
   speed: string
+  extras?: Record<string, number>
 }
 
 /**

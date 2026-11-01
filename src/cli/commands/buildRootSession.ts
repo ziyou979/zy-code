@@ -355,7 +355,7 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
         }
       : null,
     effortValue: resolveInitialEffortSetting(options.effort),
-    activeOverlays: new Set<string>(),
+    activeOverlays: new Map<string, string>(),
     // 同步计算 teamContext 以避免渲染期间的 useEffect setState。
     // KAIROS：assistantTeamContext 优先 —— 在
     // KAIROS 块中更早设置，以便 Agent(name: "foo") 可以生成进程内队友

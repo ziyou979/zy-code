@@ -1,6 +1,32 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const enMisc: TranslationResource = {
+  'messageActions.edit': 'edit',
+  'messageActions.copyPath': 'copy path',
+  'messageActions.copyCommand': 'copy command',
+  'messageActions.copyPattern': 'copy pattern',
+  'messageActions.copyUrl': 'copy URL',
+  'messageActions.copyQuery': 'copy query',
+  'messageActions.copyPrompt': 'copy prompt',
+  'ideOnboarding.welcome': 'Welcome to ZY Code for {ideName}',
+  'ideOnboarding.installedPlugin': 'Installed plugin v{version}',
+  'ideOnboarding.installedExtension': 'Installed extension v{version}',
+  'ideOnboarding.context': 'Zy has context of open files and selected lines.',
+  'ideOnboarding.review': 'Review ZY Code’s changes ({added}, {removed}) in your IDE.',
+  'ideOnboarding.quickLaunch': '{shortcut} for Quick Launch',
+  'ideOnboarding.mention': '{shortcut} to reference files or lines in your input',
+  'collapsedReadSearch.hookSummary_one': 'Ran {count} PreToolUse hook ({duration})',
+  'collapsedReadSearch.hookSummary_other': 'Ran {count} PreToolUse hooks ({duration})',
+  'collapsedReadSearch.recalled': 'Recalled {name}',
+  'collapsedReadSearch.prNumber': 'PR #{number}',
+  'teamMem.count_one': '{verb} {count} team memory',
+  'teamMem.count_other': '{verb} {count} team memories',
+  'teamMem.searchSummary': '{verb} team memories',
+
+  'http.extraCA.unreadable':
+    'Cannot read NODE_EXTRA_CA_CERTS file "{path}": {reason}. Set it to an existing CA PEM file and restart ZYCode.',
+  'http.extraCA.invalid':
+    'NODE_EXTRA_CA_CERTS file "{path}" contains an invalid or incomplete PEM certificate. Use the CA PEM file printed by your proxy and restart ZYCode.',
   'monitor.deadlineReached':
     'Monitor "{description}" reached its {timeoutMs}ms deadline and is stopping. Observed {count} event lines; suppressed {suppressed} lines. Re-arm only if monitoring is still needed, preserving the cursor and checking for missed events.',
   'autoMode.title': 'Enable auto mode?',
@@ -315,6 +341,8 @@ export const enMisc: TranslationResource = {
   'listMcpResources.noResourcesFound': '(No resources found)',
   'login.interrupted': 'Login interrupted',
   'login.pressAgainExit': 'Press {keyName} again to exit',
+  'login.selectModelPrompt': 'Authorization successful! Select a conversation model:',
+  'login.skipModelSelection': 'Skip for now (keep current model)',
   'login.successful': 'Login successful',
   'login.title': 'Login',
   'logo.apiCalls': 'API calls: {path}',
@@ -1015,6 +1043,9 @@ export const enMisc: TranslationResource = {
   'systemMessage.hookSummary_other': 'Ran {count} {label} hooks',
   'systemMessage.stopHookLabel': 'stop',
   'systemMessage.tasksStillRunning': ', {count} still running',
+  'systemMessage.turnTokens': ' · {total} tokens (↑ {input} · ↓ {output})',
+  'systemMessage.turnTokensWithCache':
+    ' · {total} tokens (↑ {input} · ↓ {output} · cache hit {cacheHit}%)',
   'systemMessage.verbWithDuration': '{verb} for {duration}',
   'tag.currentTag': 'Current tag: #{tagName}',
   'tag.emptyName': 'Tag name cannot be empty',
@@ -1309,6 +1340,7 @@ export const enMisc: TranslationResource = {
   'settings.shortcuts.clear': 'clear',
   'settings.shortcuts.change': 'change',
   'settings.shortcuts.save': 'save',
+  'settings.shortcuts.open': 'open',
   'settings.shortcuts.search': 'search',
 
   // colorPicker
@@ -1661,4 +1693,9 @@ export const enMisc: TranslationResource = {
   'claudeChrome.forMoreInfo': 'For more information, see:',
   'claudeChrome.orVisit': 'or visit documentation.',
   'misc.repl.memorySurvey.question': 'How helpful was memory in this session?',
+  'modelCapability.inputTypes': 'Input formats',
+  'modelCapability.inputTypesHint':
+    'Comma-separated input types, e.g. text, image/jpeg, image/png, application/pdf. Exact MIME declarations only allow those formats.',
+  'modelCapability.invalidInputTypes':
+    'Enter at least one valid input category or MIME type (without parameters or wildcards).',
 }

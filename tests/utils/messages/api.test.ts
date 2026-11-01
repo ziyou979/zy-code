@@ -1,3 +1,4 @@
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
 /**
  * normalizeMessagesForAPI 行为测试 — 核心行为验证。
  *
@@ -7,15 +8,14 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 // ---- 最小 Mock：仅阻断 analytics 副作用 ----
-function setupMocks() {
-  mock.module('../../../src/i18n/index.js', () => ({
+async function setupMocks() {
+  spyOnModuleExports(await import('../../../src/i18n/index.js'), {
     tSync: (key: string) => `[i18n:${key}]`,
     t: (key: string) => `[i18n:${key}]`,
     getUiLanguage: () => 'en',
     warmI18n: async () => {},
-    SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
-  }))
-  mock.module('../../../src/services/analytics/growthbook.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/services/analytics/growthbook.js'), {
     getFeatureValue_CACHED_MAY_BE_STALE: (_k: string, def: unknown) => def,
     checkStatsigFeatureGate_CACHED_MAY_BE_STALE: () => false,
     checkGate_CACHED_OR_BLOCKING: async () => false,
@@ -36,13 +36,13 @@ function setupMocks() {
     getDynamicConfig_BLOCKS_ON_INIT: async () => null,
     getDynamicConfig_CACHED_MAY_BE_STALE: () => null,
     onGrowthBookRefresh: () => () => {},
-  }))
-  mock.module('../../../src/services/analytics/index.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/services/analytics/index.js'), {
     logEvent: () => {},
-  }))
-  mock.module('../../../src/services/analytics/metadata.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/services/analytics/metadata.js'), {
     sanitizeToolNameForAnalytics: (s: string) => s,
-  }))
+  })
 }
 
 // ---- 辅助构造函数 ----
@@ -91,9 +91,9 @@ function makeProgressMsg() {
 }
 
 describe('normalizeMessagesForAPI — 核心行为', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     counter = 0
-    setupMocks()
+    await setupMocks()
   })
   afterEach(() => mock.restore())
 

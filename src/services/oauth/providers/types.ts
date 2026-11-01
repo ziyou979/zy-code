@@ -91,6 +91,9 @@ export interface OAuthProviderInterface {
   /** 映射到 zy-code PROVIDER_REGISTRY 中的 provider ID */
   apiProvider?: string
 
+  /** 默认保存凭据的命名连接；同一 API provider 的不同认证方式可独立保存。 */
+  defaultConnectionId?: string
+
   /** 映射到 zy-code 的 API 消息格式 */
   apiFormat?: ApiFormat
 }

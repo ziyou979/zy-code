@@ -1,3 +1,4 @@
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
 /**
  * 3.4 hook 输出超阈值落盘 —— maybeSpillHookOutput。
  *
@@ -12,19 +13,18 @@ import { join } from 'node:path'
 
 let tmpRoot: string
 
-// spread 真实模块再覆盖单个导出：避免与并发运行的其他测试文件共享 mock 注册表时
-// 因部分 mock 缺失导出而触发 "export not found"（参见 queryEngineHarness 的同款做法）。
+// 函数 spy 会在用例结束后恢复，不能把临时数据目录留给后续配置测试。
 async function setupMocks() {
   const state = await import('../../../src/bootstrap/runtime/runtimeContext.js')
-  mock.module('../../../src/bootstrap/runtime/runtimeContext.js', () => ({
+  spyOnModuleExports(state, {
     ...state,
     getSessionId: () => 'sess-test',
-  }))
+  })
   const envUtils = await import('../../../src/services/infra/envUtils.js')
-  mock.module('../../../src/services/infra/envUtils.js', () => ({
+  spyOnModuleExports(envUtils, {
     ...envUtils,
     getZyConfigHomeDir: () => tmpRoot,
-  }))
+  })
 }
 
 describe('3.4 maybeSpillHookOutput', () => {

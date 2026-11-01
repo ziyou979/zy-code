@@ -1,5 +1,10 @@
 import { tSync } from '../../i18n/index.js'
-import type { APIErrorLike } from '../../types/llm.js'
+import {
+  type APIErrorLike,
+  LLMAbortError,
+  LLMConnectionError,
+  isAPIError,
+} from '../../types/llm.js'
 
 // 来自 OpenSSL 的 SSL/TLS 错误码（Node.js 和 Bun 均使用）
 // 参见：https://www.openssl.org/docs/man3.1/man3/X509_STORE_CTX_get_error.html
@@ -71,6 +76,38 @@ export function extractConnectionErrorDetails(error: unknown): ConnectionErrorDe
   }
 
   return null
+}
+
+/** 原生 fetch 没有 SDK 的错误包装；仅转换网络错误，保留协议和业务错误。 */
+export function normalizeFetchError(error: unknown, signal?: AbortSignal): unknown {
+  if (signal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
+    return signal?.reason instanceof Error && signal.reason.name === 'TimeoutError'
+      ? new LLMConnectionError(tSync('errorUtils.connection.timeout'), 'ETIMEDOUT')
+      : new LLMAbortError()
+  }
+  if (isAPIError(error)) {
+    return error
+  }
+  const details = extractConnectionErrorDetails(error)
+  if (
+    details &&
+    (details.isSSLError ||
+      /^(?:E(?:CONNRESET|CONNREFUSED|PIPE|TIMEDOUT|NOTFOUND|AI_AGAIN|HOSTUNREACH|NETUNREACH)|ConnectionClosed|ConnectionRefused|TimeoutError|UND_ERR_.*)$/.test(
+        details.code,
+      ))
+  ) {
+    // Bun 使用 ConnectionClosed；统一为连接重置，让现有重试和连接池失效策略生效。
+    const code = details.code === 'ConnectionClosed' ? 'ECONNRESET' : details.code
+    const normalized = new LLMConnectionError('Connection error.', code)
+    normalized.cause = error
+    return normalized
+  }
+  if (error instanceof TypeError && error.message === 'fetch failed') {
+    const normalized = new LLMConnectionError('Connection error.')
+    normalized.cause = error
+    return normalized
+  }
+  return error
 }
 
 /**

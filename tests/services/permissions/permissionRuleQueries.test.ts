@@ -1,14 +1,14 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test, spyOn } from 'bun:test'
 import type { ToolPermissionContext } from '../../../src/tools/tool.js'
 import * as realSettings from '../../../src/services/settings/settings.js'
 
 let classifyAllShell = false
 
-mock.module('../../../src/services/settings/settings.js', () => ({
-  ...realSettings,
-  getAutoModeConfig: () => (classifyAllShell ? { classifyAllShell: true } : undefined),
-}))
-
+beforeEach(() => {
+  spyOn(realSettings, 'getAutoModeConfig').mockImplementation(() =>
+    classifyAllShell ? { classifyAllShell: true } : undefined,
+  )
+})
 const { getAllowRules } = await import('../../../src/services/permissions/permissionRuleQueries.js')
 
 function createContext(overrides: Partial<ToolPermissionContext> = {}): ToolPermissionContext {
@@ -27,6 +27,7 @@ function createContext(overrides: Partial<ToolPermissionContext> = {}): ToolPerm
 
 describe('getAllowRules classifyAllShell', () => {
   afterEach(() => {
+    mock.restore()
     classifyAllShell = false
   })
 

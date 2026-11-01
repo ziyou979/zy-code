@@ -19,6 +19,7 @@ import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { tSync } from '../../i18n/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import type { KeyboardEvent } from '../../ink/events/keyboardEvent.js'
+import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js'
 import { Box, Text } from '../../ink/index.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
@@ -164,11 +165,9 @@ export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
             `Set effort to ${level.label}?`}
         </Text>
         <Text>
-          <Text bold={true}>Enter</Text>
-          {tSync('effort.picker.toConfirm') || ' to confirm'}
+          <KeyboardShortcutHint shortcut="Enter" action="confirm" />
           {' \xB7 '}
-          <Text bold={true}>Esc</Text>
-          {tSync('effort.picker.toCancel') || ' to cancel'}
+          <KeyboardShortcutHint shortcut="Esc" action="cancel" />
         </Text>
       </Box>
     )
@@ -289,11 +288,9 @@ export function EffortPicker({ onDone }: { onDone: LocalJSXCommandOnDone }) {
           {'\u2190'}/<Text bold={true}>{'\u2192'}</Text>
           {tSync('effort.picker.toAdjust') || ' to adjust'}
           {' \xB7 '}
-          <Text bold={true}>Enter</Text>
-          {tSync('effort.picker.toConfirm') || ' to confirm'}
+          <KeyboardShortcutHint shortcut="Enter" action="confirm" />
           {' \xB7 '}
-          <Text bold={true}>Esc</Text>
-          {tSync('effort.picker.toCancel') || ' to cancel'}
+          <KeyboardShortcutHint shortcut="Esc" action="cancel" />
         </Text>
       </Box>
     </Box>

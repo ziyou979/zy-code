@@ -9,6 +9,7 @@ import {
 } from '../services/permissions/bypassPermissionPolicy.js'
 import { applySettingsChange } from '../services/settings/applySettingsChange.js'
 import { createStore } from './store.js'
+import { configureRuntimeContext, onSessionSwitch } from '../bootstrap/runtime/runtimeContext.js'
 
 // DCE：语音 context 仅供 ant 使用，外部构建直接透传。
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -19,7 +20,12 @@ const VoiceProvider: (props: { children: React.ReactNode }) => React.ReactNode =
   : ({ children }) => children
 
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { type AppState, type AppStateStore, getDefaultAppState } from './AppStateStore.js'
+import {
+  type AppState,
+  type AppStateStore,
+  getDefaultAppState,
+  normalizeAppStateUpdate,
+} from './AppStateStore.js'
 
 export const AppStoreContext = React.createContext<AppStateStore | null>(null)
 type Props = {
@@ -34,8 +40,22 @@ export function AppStateProvider({ children, initialState, onChangeAppState }: P
     throw new Error('AppStateProvider can not be nested within another AppStateProvider')
   }
   const [store] = useState(() =>
-    createStore(initialState ?? getDefaultAppState(), onChangeAppState),
+    createStore(initialState ?? getDefaultAppState(), onChangeAppState, normalizeAppStateUpdate),
   )
+  React.useLayoutEffect(() => {
+    configureRuntimeContext({
+      getAutoModeSessionGrant: () => store.getState().autoModeSessionGrant,
+    })
+    const unsubscribe = onSessionSwitch(() =>
+      store.setState((previous) =>
+        previous.autoModeSessionGrant ? { ...previous, autoModeSessionGrant: undefined } : previous,
+      ),
+    )
+    return () => {
+      unsubscribe()
+      configureRuntimeContext({ getAutoModeSessionGrant: () => undefined })
+    }
+  }, [store])
   useEffect(() => {
     const { toolPermissionContext } = store.getState()
     if (

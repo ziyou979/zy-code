@@ -11,7 +11,7 @@ import { tSync } from '../../i18n/index.js'
 import { getPlatform } from '../shell/platform.js'
 import { getPathsForPermissionCheck } from '../../services/infra/fsOperations.js'
 import { expandPath } from '../../utils/path.js'
-import { isZySettingsPath } from './filesystemPolicy.js'
+import { isAutoModeQualificationPath, isZySettingsPath } from './filesystemPolicy.js'
 import { normalizeCaseForComparison, pathInWorkingPath } from './internalPaths.js'
 
 // ─── 危险文件/目录常量 ──────────────────────────
@@ -164,6 +164,14 @@ export function checkPathSafetyForAutoEdit(
   precomputedPathsToCheck?: readonly string[],
 ): { safe: true } | { safe: false; message: string; classifierApprovable: boolean } {
   const pathsToCheck = precomputedPathsToCheck ?? getPathsForPermissionCheck(path)
+
+  if (pathsToCheck.some(isAutoModeQualificationPath)) {
+    return {
+      safe: false,
+      message: tSync('permission.requestedWritePathNotGranted', { path }),
+      classifierApprovable: false,
+    }
+  }
 
   for (const pathToCheck of pathsToCheck) {
     if (hasSuspiciousWindowsPathPattern(pathToCheck)) {

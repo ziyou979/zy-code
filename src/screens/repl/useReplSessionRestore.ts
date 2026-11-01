@@ -180,15 +180,14 @@ export function useReplSessionRestore({
         setAbortController(null)
         replStore.setConversationId(sessionId)
 
-        const targetSessionCosts = getRestorableSessionCosts(sessionId, messages)
         saveCurrentSessionCosts()
-        // 原子操作：reset 后立即 restore，消除中间渲染窗口导致状态栏费用归零
+        switchSession(asSessionId(sessionId), log.fullPath ? dirname(log.fullPath) : null)
+        // 原子操作：switchSession 后读取目标会话 sidecar/配置，reset 后立即 restore
+        const targetSessionCosts = getRestorableSessionCosts(sessionId, messages)
         resetCostState()
         if (targetSessionCosts) {
           setCostStateForRestore(targetSessionCosts)
         }
-
-        switchSession(asSessionId(sessionId), log.fullPath ? dirname(log.fullPath) : null)
         const { renameRecordingForSession } = await import('../../services/shell/asciicast.js')
         await renameRecordingForSession()
         await resetSessionFilePointer()

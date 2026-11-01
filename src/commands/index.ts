@@ -66,6 +66,7 @@ import plugin from '../commands/plugin/index.js'
 import reloadPlugins from '../commands/reload-plugins/index.js'
 import reloadSkills from '../commands/reload-skills/index.js'
 import reloadTools from '../commands/reload-tools/index.js'
+import autoMode from './auto-mode/index.js'
 import rewind from '../commands/rewind/index.js'
 import heapDump from '../commands/heapdump/index.js'
 import mem from '../commands/mem/index.js'
@@ -247,6 +248,7 @@ const COMMANDS = memoize((): Command[] => [
   reloadPlugins,
   reloadSkills,
   reloadTools,
+  autoMode,
   rename,
   // 同名 local 变体：仅在非交互过滤后生效（交互模式 findCommand 命中紧靠在前的 rename）
   renameLocal,

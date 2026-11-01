@@ -235,6 +235,15 @@ export interface SystemQuietLoopMessage extends BaseMessage {
   content: string
 }
 
+export interface TurnTokenUsageSummary {
+  totalTokens: number
+  inputTokens: number
+  outputTokens: number
+  cacheReadInputTokens?: number
+  cacheCreationInputTokens?: number
+  stepCount?: number
+}
+
 export interface SystemTurnDurationMessage extends BaseMessage {
   type: 'system'
   subtype: 'turn_duration'
@@ -244,6 +253,7 @@ export interface SystemTurnDurationMessage extends BaseMessage {
   budgetLimit?: number
   budgetNudges?: number
   messageCount?: number
+  turnUsage?: TurnTokenUsageSummary
 }
 
 export interface SystemAgentsKilledMessage extends BaseMessage {

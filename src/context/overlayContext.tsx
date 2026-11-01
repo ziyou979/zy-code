@@ -11,18 +11,18 @@
  *
  * Hook 会在挂载时自动注册、卸载时自动注销，无需手动清理或管理状态。
  */
-import { useContext, useEffect, useLayoutEffect } from 'react'
+import { useContext, useId, useLayoutEffect } from 'react'
 import instances from '../ink/instances.js'
 import { AppStoreContext, useAppState } from '../state/AppState.js'
 
-// Non-modal overlays that shouldn't disable TextInput focus
+// 非模态覆盖层不应禁用文本输入焦点。
 const NON_MODAL_OVERLAYS = new Set(['autocomplete'])
 
 /**
  * 将组件注册为活跃 Overlay 的 Hook。
  * 挂载时自动注册，卸载时自动注销。
  *
- * @param id Overlay 的唯一标识，例如 'select'、'multi-select'
+ * @param id Overlay 的类型，例如 'select'、'multi-select'；实例标识由 Hook 管理
  * @param enabled 是否注册，默认为 true。可根据组件属性有条件注册，例如仅在提供 onCancel 时注册
  *
  * @example
@@ -36,16 +36,17 @@ export function useRegisterOverlay(id: string, enabledParam?: boolean) {
   const enabled = enabledParam === undefined ? true : enabledParam
   const store = useContext(AppStoreContext)
   const setAppState = store?.setState
-  useEffect(() => {
+  const instanceId = useId()
+  useLayoutEffect(() => {
     if (!enabled || !setAppState) {
       return
     }
     setAppState((prev) => {
-      if (prev.activeOverlays.has(id)) {
+      if (prev.activeOverlays.get(instanceId) === id) {
         return prev
       }
-      const next = new Set(prev.activeOverlays)
-      next.add(id)
+      const next = new Map(prev.activeOverlays)
+      next.set(instanceId, id)
       return {
         ...prev,
         activeOverlays: next,
@@ -53,18 +54,18 @@ export function useRegisterOverlay(id: string, enabledParam?: boolean) {
     })
     return () => {
       setAppState((prevState) => {
-        if (!prevState.activeOverlays.has(id)) {
+        if (!prevState.activeOverlays.has(instanceId)) {
           return prevState
         }
-        const nextOverlays = new Set(prevState.activeOverlays)
-        nextOverlays.delete(id)
+        const nextOverlays = new Map(prevState.activeOverlays)
+        nextOverlays.delete(instanceId)
         return {
           ...prevState,
           activeOverlays: nextOverlays,
         }
       })
     }
-  }, [id, enabled, setAppState])
+  }, [id, instanceId, enabled, setAppState])
   useLayoutEffect(() => {
     if (!enabled) {
       return
@@ -105,7 +106,7 @@ export function useIsOverlayActive() {
 
 export function useIsModalOverlayActive() {
   return useAppState((s) => {
-    for (const id of s.activeOverlays) {
+    for (const id of s.activeOverlays.values()) {
       if (!NON_MODAL_OVERLAYS.has(id)) {
         return true
       }

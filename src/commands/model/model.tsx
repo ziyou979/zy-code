@@ -1,9 +1,14 @@
 import chalk from 'chalk'
 import * as React from 'react'
+import { setMainLoopModelOverride } from '../../bootstrap/runtime/runtimeContext.js'
 import type { CommandResultDisplay } from '../../commands/index.js'
 import { ModelPicker } from '../../components/ModelPicker.js'
+import { ModelTierConfigFlow } from '../../components/ModelTierConfigDialog.js'
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js'
 import { tSync } from '../../i18n/index.js'
+import { Box, Text } from '../../ink/index.js'
+import { saveMainLoopModelSetting } from '../../services/settings/modelTierSettings.js'
+import { getInitialSettings } from '../../services/settings/settings.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -22,9 +27,20 @@ import { shouldEnableThinkingByDefault } from '../../services/messages/thinking.
 import { renderModelLabel } from './performModelChange.js'
 
 function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
+  const [isConfiguringTiers, setIsConfiguringTiers] = React.useState(false)
+  const [saveError, setSaveError] = React.useState(false)
   const mainLoopModel = useAppState((s) => s.mainLoopModel)
   const mainLoopModelForSession = useAppState((state) => state.mainLoopModelForSession)
   const setAppState = useSetAppState()
+
+  if (isConfiguringTiers) {
+    return (
+      <ModelTierConfigFlow
+        onDone={(msg) => onDone(msg ?? tSync('settings.modelConfigUpdated'))}
+        onCancel={() => setIsConfiguringTiers(false)}
+      />
+    )
+  }
   const handleCancel = function handleCancel() {
     logEvent('zy_model_command_menu', {
       action: 'cancel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -35,6 +51,14 @@ function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
     })
   }
   const handleSelect = function handleSelect(model: string | null, effort?: string) {
+    // 同一档位内换候选时 mainLoopModel 不变，状态差异回调不会清除旧覆盖。
+    if (model === mainLoopModel) {
+      if (saveMainLoopModelSetting(model).error) {
+        setSaveError(true)
+        return
+      }
+      setMainLoopModelOverride(model)
+    }
     logEvent('zy_model_command_menu', {
       action: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       from_model: mainLoopModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -49,6 +73,7 @@ function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
       // 的模型的过期 false 值被保留。
       thinkingEnabled: shouldEnableThinkingByDefault(model ?? undefined),
     }))
+    setAppState((prev) => ({ ...prev, settings: getInitialSettings() }))
     let message = tSync('modelCommand.set', { model: chalk.bold(renderModelLabel(model)) })
     if (effort !== undefined) {
       const effortDisplay = tSync(`effort.${effort}`) || effort
@@ -60,13 +85,17 @@ function ModelPickerWrapper({ onDone }: { onDone: LocalJSXCommandOnDone }) {
     onDone(message)
   }
   return (
-    <ModelPicker
-      initial={mainLoopModel}
-      sessionModel={mainLoopModelForSession}
-      onSelect={handleSelect}
-      onCancel={handleCancel}
-      isStandaloneCommand={true}
-    />
+    <Box flexDirection="column">
+      {saveError && <Text color="error">{tSync('settings.modelConfigSaveFailed')}</Text>}
+      <ModelPicker
+        initial={mainLoopModel}
+        sessionModel={mainLoopModelForSession}
+        onSelect={handleSelect}
+        onCancel={handleCancel}
+        onConfigureTiers={() => setIsConfiguringTiers(true)}
+        isStandaloneCommand={true}
+      />
+    </Box>
   )
 }
 function SetModelAndClose({

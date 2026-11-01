@@ -51,8 +51,10 @@ export function TeamMemCountParts({
     }
     nodes.push(
       <Text key="team-mem-read">
-        {verb} {<Text bold={true}>{tmReadCount}</Text>} team{' '}
-        {tmReadCount === 1 ? tSync('teamMem.memory_one') : tSync('teamMem.memory_other')}
+        {tSync(tmReadCount === 1 ? 'teamMem.count_one' : 'teamMem.count_other', {
+          verb,
+          count: tmReadCount,
+        })}
       </Text>,
     )
     count++
@@ -69,7 +71,9 @@ export function TeamMemCountParts({
     if (count > 0) {
       nodes.push(<Text key="comma-tms">, </Text>)
     }
-    nodes.push(<Text key="team-mem-search">{`${verb_0} ${tSync('teamMem.memory_other')}`}</Text>)
+    nodes.push(
+      <Text key="team-mem-search">{tSync('teamMem.searchSummary', { verb: verb_0 })}</Text>,
+    )
     count++
   }
   if (tmWriteCount > 0) {
@@ -86,8 +90,10 @@ export function TeamMemCountParts({
     }
     nodes.push(
       <Text key="team-mem-write">
-        {verb_1} {<Text bold={true}>{tmWriteCount}</Text>} team{' '}
-        {tmWriteCount === 1 ? tSync('teamMem.memory_one') : tSync('teamMem.memory_other')}
+        {tSync(tmWriteCount === 1 ? 'teamMem.count_one' : 'teamMem.count_other', {
+          verb: verb_1,
+          count: tmWriteCount,
+        })}
       </Text>,
     )
   }

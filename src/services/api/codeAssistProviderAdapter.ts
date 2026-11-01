@@ -33,6 +33,7 @@ import { LLMError } from '../../types/llm.js'
 import { tSync } from '../../i18n/index.js'
 import { createDebugLog } from '../infra/debug.js'
 import { buildProxiedFetch } from '../http/proxy.js'
+import { parseGoogleSseStream } from './googleSseStream.js'
 import {
   buildGoogleRequestParams,
   type GoogleGenerateContentRequest,
@@ -131,61 +132,6 @@ async function resolveCodeAssistContext(model: string): Promise<CodeAssistContex
   return { token: credentials.access, project: credentials.project, baseUrl }
 }
 
-/**
- * 解析 v1internal 的 SSE 响应为 Gemini chunk 流。
- *
- * streamGenerateContent?alt=sse 的每个事件是单个 `data:` 行携带完整 JSON
- * chunk（Gemini 不使用多行 data 拼接），按行解析即可。
- */
-export async function* parseSseStream(
-  body: ReadableStream<Uint8Array>,
-): AsyncGenerator<GoogleGenerateContentResponse> {
-  const reader = body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-  try {
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-
-      let newlineIndex: number
-      while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
-        const line = buffer.slice(0, newlineIndex).replace(/\r$/, '')
-        buffer = buffer.slice(newlineIndex + 1)
-        const chunk = parseSseDataLine(line)
-        if (chunk !== undefined) {
-          yield chunk
-        }
-      }
-    }
-
-    // 流结束后处理残留缓冲（最后一行可能没有换行结尾）
-    const tailLine = buffer.replace(/\r$/, '')
-    if (tailLine) {
-      const chunk = parseSseDataLine(tailLine)
-      if (chunk !== undefined) {
-        yield chunk
-      }
-    }
-  } finally {
-    reader.releaseLock()
-  }
-}
-
-/** 解析单个 SSE data 行；非 data 行、[DONE] 与非法 JSON 返回 undefined */
-function parseSseDataLine(line: string): GoogleGenerateContentResponse | undefined {
-  if (!line.startsWith('data:')) return undefined
-  const payload = line.slice(5).trim()
-  if (!payload || payload === '[DONE]') return undefined
-  try {
-    return unwrapCodeAssistResponse(JSON.parse(payload))
-  } catch (error) {
-    log(`Failed to parse SSE chunk: ${error}`)
-    return undefined
-  }
-}
-
 /** 将上游错误响应转换为带状态码的 LLMError（便于重试层识别） */
 async function toUpstreamError(response: Response, url: string): Promise<LLMError> {
   const text = await response.text().catch(() => '')
@@ -226,7 +172,10 @@ export class CodeAssistProviderAdapter implements LLMAdapter {
     }
 
     return {
-      stream: googleStreamToStandard(parseSseStream(response.body), params.model),
+      stream: googleStreamToStandard(
+        parseGoogleSseStream(response.body, unwrapCodeAssistResponse),
+        params.model,
+      ),
       requestId: response.headers.get('x-request-id') ?? undefined,
       response,
     }

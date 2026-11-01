@@ -186,7 +186,7 @@ export function buildTranscriptForClassifier(messages: Message[], tools: Tools):
  * 内部构建的环境变量优先，然后是 GrowthBook JSON 配置覆盖，
  * 最后是主循环模型。
  */
-export function getClassifierModel(): string {
+export function getClassifierModel(mainLoopModel: string = getMainLoopModel()!): string {
   if (isInternalBuild()) {
     const envModel = process.env.ZY_CODE_AUTO_MODE_MODEL
     if (envModel) {
@@ -197,7 +197,7 @@ export function getClassifierModel(): string {
   if (config?.model) {
     return config.model
   }
-  return getMainLoopModel()!
+  return mainLoopModel
 }
 
 /**

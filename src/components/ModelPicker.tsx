@@ -49,6 +49,10 @@ export type Props = {
    * install.ts) and should not leak to the user's global ~/.zy/settings.
    */
   skipSettingsWrite?: boolean
+  /**
+   * Optional callback to launch the model tiers configuration flow.
+   */
+  onConfigureTiers?: () => void
 }
 const NO_PREFERENCE = '__NO_PREFERENCE__'
 export function ModelPicker({
@@ -59,6 +63,7 @@ export function ModelPicker({
   isStandaloneCommand,
   headerText,
   skipSettingsWrite,
+  onConfigureTiers,
 }: Props) {
   const setAppState = useSetAppState()
   const exitState = useExitOnCtrlCDWithKeybindings()
@@ -90,6 +95,13 @@ export function ModelPicker({
     ...option,
     value: option.pickerValue ?? (option.value === null ? NO_PREFERENCE : option.value),
   }))
+  if (onConfigureTiers) {
+    selectOptions.push({
+      value: '__configure_tiers__',
+      label: `⚙️  ${tSync('settings.configureModelTiersOption')}`,
+      description: tSync('settings.configureModelTiersOptionDesc'),
+    })
+  }
   const initialFocusValue = selectOptions.some((_) => _.value === initialValue)
     ? initialValue
     : (selectOptions[0]?.value ?? undefined)
@@ -127,6 +139,10 @@ export function ModelPicker({
     },
   )
   const handleSelect = function handleSelect(selectedValue: string) {
+    if (selectedValue === '__configure_tiers__') {
+      onConfigureTiers?.()
+      return
+    }
     logEvent('zy_model_command_menu_effort', {
       effort: effort as unknown as number | boolean | undefined,
     })

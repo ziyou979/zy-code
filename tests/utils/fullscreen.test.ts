@@ -3,7 +3,7 @@
  *
  * 用 mock.module 替换整个依赖链中的模块，阻断传递加载。
  */
-import { afterEach, describe, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test, spyOn } from 'bun:test'
 import * as realRuntimeContext from '../../src/bootstrap/runtime/runtimeContext.js'
 import * as realGrowthbook from '../../src/services/analytics/growthbook.js'
 import * as realConfig from '../../src/services/config/config.js'
@@ -18,57 +18,27 @@ let mockIsInternalBuild = false
 let mockTuiConfig: 'fullscreen' | 'default' | undefined
 let mockFeatureFlag = false
 
-// 阻断所有传递依赖（spread 原始模块避免污染其他测试）
-mock.module('../../src/i18n/index.js', () => ({
-  tSync: (k: string) => k,
-  t: (k: string) => k,
-  getUiLanguage: () => 'en',
-  warmI18n: async () => {},
-  SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
-}))
-
-mock.module('../../src/services/infra/debug.js', () => ({
-  ...realDebug,
-  logForDebugging: () => {},
-}))
-
-// 通过正式运行时注入边界覆盖 fullscreen 依赖。
-mock.module('../../src/bootstrap/runtime/runtimeContext.js', () => ({
-  ...realRuntimeContext,
-  getIsInteractive: () => true,
-}))
-
-mock.module('../../src/services/analytics/growthbook.js', () => ({
-  ...realGrowthbook,
-  getFeatureValue_CACHED_MAY_BE_STALE: () => mockFeatureFlag,
-  getDynamicConfig_CACHED_MAY_BE_STALE: <T>(_k: string, d: T) => d,
-  checkGate_CACHED_OR_BLOCKING: async () => false,
-}))
-
-mock.module('../../src/services/config/config.js', () => ({
-  ...realConfig,
-  getGlobalConfig: () => ({ tui: mockTuiConfig }),
-  saveGlobalConfig: () => {},
-  getGlobalConfigWriteCount: () => 0,
-  createDefaultGlobalConfig: () => ({}),
-}))
-
-mock.module('../../src/services/session/concurrentSessions.js', () => ({
-  ...realConcurrentSessions,
-  isBgSession: () => mockIsBgSession,
-}))
-
-mock.module('../../src/services/infra/envUtils.js', () => ({
-  ...realEnvUtils,
-  isInternalBuild: () => mockIsInternalBuild,
-}))
-
-mock.module('../../src/services/shell/execFileNoThrow.js', () => ({
-  ...realExecFileNoThrow,
-  execFileNoThrow: async () => ({ stdout: '', code: 1 }),
-}))
+// 仅对当前用例替换依赖函数；真实 i18n 保留，避免污染后续界面断言。
+beforeEach(() => {
+  spyOn(realRuntimeContext, 'getIsInteractive').mockReturnValue(true)
+  spyOn(realGrowthbook, 'getFeatureValue_CACHED_MAY_BE_STALE').mockImplementation(
+    <T>() => mockFeatureFlag as T,
+  )
+  spyOn(realConfig, 'getGlobalConfig').mockImplementation(
+    () => ({ tui: mockTuiConfig }) as ReturnType<typeof realConfig.getGlobalConfig>,
+  )
+  spyOn(realConcurrentSessions, 'isBgSession').mockImplementation(() => mockIsBgSession)
+  spyOn(realEnvUtils, 'isInternalBuild').mockImplementation(() => mockIsInternalBuild)
+  spyOn(realDebug, 'logForDebugging').mockImplementation(() => {})
+  spyOn(realExecFileNoThrow, 'execFileNoThrow').mockImplementation(async () => ({
+    stdout: '',
+    stderr: '',
+    code: 1,
+  }))
+})
 
 afterEach(() => {
+  mock.restore()
   mockIsBgSession = false
   mockIsInternalBuild = false
   mockTuiConfig = undefined

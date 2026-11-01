@@ -4,16 +4,22 @@ import { createDebugLog } from '../../services/infra/debug.js'
 const permLog = createDebugLog('permissions')
 
 import type { PermissionMode } from './permissionMode.js'
-import { getAutoModeUnavailableReason, isAutoModeGateEnabled } from './autoModePolicy.js'
+import {
+  getAutoModeUnavailableReason,
+  isAutoModeEnrollmentAvailable,
+  isAutoModeGateEnabled,
+} from './autoModePolicy.js'
 import { transitionPermissionMode } from './permissionModeTransitions.js'
 
 // 同时检查启动时由 verifyAutoModeGateAccess 设置的缓存值 isAutoModeAvailable 和实时值
 // isAutoModeGateEnabled()；会话中途 circuit breaker 或 settings 变化时二者可能不同。实时
 // 检查可防止 transitionPermissionMode 抛出异常（permissionSetup.ts:~559），否则会静默
 // 终止 shift+tab handler，使用户卡在当前模式。
-function canCycleToAuto(ctx: ToolPermissionContext): boolean {
+function canCycleToAuto(ctx: ToolPermissionContext, allowEnrollment: boolean): boolean {
   const gateEnabled = isAutoModeGateEnabled()
-  const can = !!ctx.isAutoModeAvailable && gateEnabled
+  const can =
+    (!!ctx.isAutoModeAvailable && gateEnabled) ||
+    (allowEnrollment && isAutoModeEnrollmentAvailable())
   if (!can) {
     permLog(
       `[auto-mode] canCycleToAuto=false: ctx.isAutoModeAvailable=${ctx.isAutoModeAvailable} isAutoModeGateEnabled=${gateEnabled} reason=${getAutoModeUnavailableReason()}`,
@@ -28,6 +34,7 @@ function canCycleToAuto(ctx: ToolPermissionContext): boolean {
 export function getNextPermissionMode(
   toolPermissionContext: ToolPermissionContext,
   _teamContext?: { leadAgentId: string },
+  options?: { allowEnrollment?: boolean },
 ): PermissionMode {
   switch (toolPermissionContext.mode) {
     // 手动模式 → 计划模式（权限最低到最高）
@@ -40,7 +47,7 @@ export function getNextPermissionMode(
 
     // 接受编辑 → 自动模式（可用时）/ 跳过权限（可用时）/ 手动模式
     case 'acceptEdits':
-      if (canCycleToAuto(toolPermissionContext)) {
+      if (canCycleToAuto(toolPermissionContext, options?.allowEnrollment !== false)) {
         return 'auto'
       }
       if (toolPermissionContext.isBypassPermissionsModeAvailable) {
@@ -78,8 +85,9 @@ export function getNextPermissionMode(
 export function cyclePermissionMode(
   toolPermissionContext: ToolPermissionContext,
   teamContext?: { leadAgentId: string },
+  options?: { allowEnrollment?: boolean },
 ): { nextMode: PermissionMode; context: ToolPermissionContext } {
-  const nextMode = getNextPermissionMode(toolPermissionContext, teamContext)
+  const nextMode = getNextPermissionMode(toolPermissionContext, teamContext, options)
   return {
     nextMode,
     context: transitionPermissionMode(toolPermissionContext.mode, nextMode, toolPermissionContext),

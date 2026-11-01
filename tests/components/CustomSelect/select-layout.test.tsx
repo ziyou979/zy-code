@@ -84,4 +84,71 @@ describe('Select 布局', () => {
 
     ink.unmount()
   })
+
+  test('双列模式下描述起始对齐列在滚动与翻页中保持全局稳定', () => {
+    const stdout = makeStdout(100, 20)
+    const ink = new Ink({
+      stdout,
+      stderr: stdout,
+      stdin: process.stdin,
+      exitOnCtrlC: false,
+      patchConsole: false,
+    })
+    const frames: Frame[] = []
+    ink.frameSink = (frame) => {
+      frames.push(frame)
+      return true
+    }
+
+    const options = [
+      { label: 'Anthropic', value: 'anthropic', description: 'Anthropic Claude API' },
+      { label: 'DeepSeek', value: 'deepseek', description: 'DeepSeek AI 开放平台' },
+      { label: 'OpenAI', value: 'openai', description: 'OpenAI API' },
+      {
+        label: 'vertex-gemini (Google Vertex AI) [已配置]',
+        value: 'vertex-gemini',
+        description: 'Google Vertex AI 模型',
+      },
+      { label: 'Kimi', value: 'kimi', description: '月之暗面 Kimi 平台' },
+    ]
+
+    // 渲染前 3 项可见（此时视口内不含长项 vertex-gemini）
+    ink.render(
+      <AppStateProvider>
+        <Select
+          key="p1"
+          isDisabled
+          visibleOptionCount={3}
+          options={options}
+          defaultFocusValue="anthropic"
+        />
+      </AppStateProvider>,
+    )
+
+    const frame1 = frameToLines(frames.at(-1)!)
+    const anthropicLine1 = frame1.find((l) => l.includes('Anthropic'))!
+    const descCol1 = anthropicLine1.indexOf('Anthropic Claude API')
+
+    // 重新渲染聚焦到底部项（视口滑到包含 vertex-gemini 的区域）
+    ink.render(
+      <AppStateProvider>
+        <Select
+          key="p2"
+          isDisabled
+          visibleOptionCount={3}
+          options={options}
+          defaultFocusValue="kimi"
+        />
+      </AppStateProvider>,
+    )
+
+    const frame2 = frameToLines(frames.at(-1)!)
+    const kimiLine = frame2.find((l) => l.includes('Kimi'))!
+    const descCol2 = kimiLine.indexOf('月之暗面 Kimi 平台')
+
+    // 验证：视口变化前后，左右两列的描述对齐起始列完全一致，不发生抖动跳变
+    expect(descCol1).toBeGreaterThan(0)
+    expect(descCol1).toBe(descCol2)
+    ink.unmount()
+  })
 })

@@ -10,6 +10,7 @@ import type {
   ContentBlock,
   CreateParams,
   LLMError,
+  LLMStreamEvent,
   ResponseDeltaEvent,
   ResponseStartEvent,
   SignatureDelta,
@@ -72,7 +73,7 @@ import {
 import { EMPTY_USAGE, logAPIError, logAPISuccessAndDuration } from '../logging.js'
 import { probeThinkingFromError } from '../modelCapabilityProbe.js'
 import { checkResponseForCacheBreak } from '../promptCacheBreakDetection.js'
-import { updateUsage } from '../usageTracker.js'
+import { cleanupStream, updateUsage } from '../usageTracker.js'
 import { CannotRetryError, FallbackTriggeredError, is529Error, withRetry } from '../withRetry.js'
 import type { Options } from './queryOptions.js'
 import {
@@ -102,8 +103,6 @@ export async function* queryModel(
   let {
     previousRequestId,
     resolvedModel,
-    betas,
-    apiProvider,
     filteredTools,
     cachedMCEnabled,
     globalCacheStrategy,
@@ -113,11 +112,6 @@ export async function* queryModel(
     start,
     attemptNumber,
     attemptStartTimes,
-    stream,
-    streamRequestId,
-    clientRequestId,
-    streamResponse,
-    releaseStreamResources,
     lastRequestBetas,
     paramsFromContext,
     newMessages,
@@ -134,6 +128,18 @@ export async function* queryModel(
     research,
   } = prepared
   let stopReason: StopReason | null = preparedStopReason
+  let stream: AsyncIterable<LLMStreamEvent> | undefined
+  let streamRequestId: string | null | undefined
+  let clientRequestId: string | undefined
+  let streamResponse: Response | undefined
+
+  function releaseStreamResources(): void {
+    // 流在本函数中赋值，清理必须读取同一作用域；准备阶段的闭包只能看到旧的 undefined。
+    cleanupStream(stream)
+    stream = undefined
+    streamResponse?.body?.cancel().catch(() => {})
+    streamResponse = undefined
+  }
 
   try {
     queryCheckpoint('query_client_creation_start')
@@ -184,7 +190,6 @@ export async function* queryModel(
         // 使用原始流而非 BetaMessageStream，避免 O(n²) 的部分 JSON 解析
         // BetaMessageStream 在每个 input_json_delta 上调用 partialParse()，我们不需要它
         // 因为我们自己处理工具输入累积
-        // biome-ignore lint/plugin: main conversation loop handles attribution separately
 
         // 统一的流式请求路径（Anthropic SDK / OpenAI SDK 由适配器自动选择）
         const streamResult = await adapter.createStream(requestParams, signal, clientRequestId)
@@ -202,16 +207,13 @@ export async function* queryModel(
       },
     )
 
-    let e
-    do {
-      e = await generator.next()
-
-      // 产出 API 错误消息（流具有 'controller' 属性，而错误消息没有）
-      if (!('controller' in e.value)) {
-        yield e.value as SystemAPIErrorMessage
-      }
-    } while (!e.done)
-    stream = e.value as AsyncIterable<StreamEvent>
+    let result = await generator.next()
+    while (!result.done) {
+      // 用生成器是否完成区分重试通知和最终流；Google 流不保证带 SDK controller。
+      yield result.value
+      result = await generator.next()
+    }
+    stream = result.value
 
     // 重置状态
     newMessages.length = 0
@@ -486,6 +488,19 @@ export async function* queryModel(
                 part_index: chunkStopEvent.index,
               })
               throw new RangeError('Content block not found')
+            }
+            const providerMetadata = streamExtras?.providerMetadata
+            if (
+              (contentBlock.type === 'text' || contentBlock.type === 'tool_call') &&
+              providerMetadata &&
+              typeof providerMetadata === 'object' &&
+              !Array.isArray(providerMetadata)
+            ) {
+              // Gemini 文本签名可能到尾包才返回，必须在保存消息前合并。
+              contentBlock.providerMetadata = {
+                ...contentBlock.providerMetadata,
+                ...providerMetadata,
+              }
             }
             if (!partialMessage) {
               logEvent('zy_streaming_error', {

@@ -7,7 +7,11 @@ export type Store<T> = {
   subscribe: (listener: Listener) => () => void
 }
 
-export function createStore<T>(initialState: T, onChange?: OnChange<T>): Store<T> {
+export function createStore<T>(
+  initialState: T,
+  onChange?: OnChange<T>,
+  normalize?: (previous: T, next: T) => T,
+): Store<T> {
   let state = initialState
   const listeners = new Set<Listener>()
 
@@ -16,7 +20,8 @@ export function createStore<T>(initialState: T, onChange?: OnChange<T>): Store<T
 
     setState: (updater: (prev: T) => T) => {
       const prev = state
-      const next = updater(prev)
+      const updated = updater(prev)
+      const next = normalize ? normalize(prev, updated) : updated
       if (Object.is(next, prev)) {
         return
       }

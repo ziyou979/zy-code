@@ -1,7 +1,7 @@
 import { PureComponent, type ReactNode } from 'react'
 import { updateLastInteractionTime } from 'src/bootstrap/runtime/runtimeContext.js'
 import { logForDebugging } from '../../services/infra/debug.js'
-import { stopCapturingEarlyInput } from '../../services/input/earlyInput.js'
+import { handoffEarlyInput } from '../earlyInput.js'
 import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { isMouseClicksDisabled } from '../../services/terminal/fullscreen.js'
 import { logError } from '../../services/infra/log.js'
@@ -150,6 +150,9 @@ export default class App extends PureComponent<Props, State> {
   // 统计有多少个组件启用了 raw 模式，以避免
   // 在所有组件都不再需要之前禁用 raw 模式
   rawModeEnabledCount = 0
+  private inputDisposed = false
+  private inputGeneration = 0
+  private inputStartupImmediate: ReturnType<typeof setImmediate> | null = null
   internal_eventEmitter = new EventEmitter()
   keyParseState = INITIAL_STATE
   // 不完整转义序列的刷新定时器
@@ -245,6 +248,7 @@ export default class App extends PureComponent<Props, State> {
     }
   }
   override componentWillUnmount() {
+    this.disposeInput()
     if (this.props.stdout.isTTY) {
       this.props.stdout.write(SHOW_CURSOR)
     }
@@ -258,15 +262,14 @@ export default class App extends PureComponent<Props, State> {
       clearTimeout(this.pendingHyperlinkTimer)
       this.pendingHyperlinkTimer = null
     }
-    // 避免在无法调用的 stdin 上调用 setRawMode
-    if (this.isRawModeSupported()) {
-      this.handleSetRawMode(false)
-    }
   }
   override componentDidCatch(error: Error) {
     this.handleExit(error)
   }
   handleSetRawMode = (isEnabled: boolean): void => {
+    if (this.inputDisposed) {
+      return
+    }
     const { stdin } = this.props
     if (!this.isRawModeSupported()) {
       if (stdin === process.stdin) {
@@ -287,7 +290,10 @@ export default class App extends PureComponent<Props, State> {
         // 两者使用相同的 stdin 'readable' + read() 模式，因此它们不能
         // 共存——我们的处理程序会在 Ink 的处理程序之前排空 stdin。
         // 缓冲的文本通过 consumeEarlyInput() 保留给 REPL.tsx 使用。
-        stopCapturingEarlyInput()
+        const earlyInputState = handoffEarlyInput(stdin)
+        if (earlyInputState) {
+          this.keyParseState = earlyInputState
+        }
         stdin.ref()
         stdin.setRawMode(true)
         stdin.addListener('readable', this.handleReadable)
@@ -311,8 +317,31 @@ export default class App extends PureComponent<Props, State> {
         // 延迟到下一个 tick，以便它在当前同步
         // 初始化序列完成之后触发——避免与可能在同一渲染周期
         // 发生的备用屏幕/鼠标跟踪启用写入交错。
-        setImmediate(() => {
+        const generation = ++this.inputGeneration
+        this.inputStartupImmediate = setImmediate(() => {
+          this.inputStartupImmediate = null
+          if (
+            this.inputDisposed ||
+            this.rawModeEnabledCount <= 0 ||
+            generation !== this.inputGeneration
+          ) {
+            return
+          }
+          // readable 可能在交接前已触发；等待 useInput 的订阅 effect 完成后
+          // 主动排空已有数据，避免同步读取将首批按键派发给尚未订阅的组件。
+          this.handleReadable()
+          if (
+            this.inputDisposed ||
+            this.rawModeEnabledCount <= 0 ||
+            generation !== this.inputGeneration
+          ) {
+            return
+          }
+          this.scheduleInputFlush()
           void Promise.all([this.querier.send(xtversion()), this.querier.flush()]).then(([r]) => {
+            if (this.inputDisposed || generation !== this.inputGeneration) {
+              return
+            }
             if (r) {
               setXtversionName(r.name)
               logForDebugging(`XTVERSION: terminal identified as "${r.name}"`)
@@ -327,16 +356,72 @@ export default class App extends PureComponent<Props, State> {
     }
 
     // 仅在没有任何组件使用 raw 模式时才禁用
+    if (this.rawModeEnabledCount === 0) {
+      return
+    }
     if (--this.rawModeEnabledCount === 0) {
-      this.props.stdout.write(DISABLE_MODIFY_OTHER_KEYS)
-      this.props.stdout.write(DISABLE_KITTY_KEYBOARD)
-      // 禁用终端焦点报告 (DECSET 1004)
-      this.props.stdout.write(DFE)
-      // 禁用括号粘贴模式
-      this.props.stdout.write(DBP)
+      this.deactivateInput()
+    }
+  }
+
+  private deactivateInput(): void {
+    this.cancelInputWork()
+    this.props.stdout.write(DISABLE_MODIFY_OTHER_KEYS)
+    this.props.stdout.write(DISABLE_KITTY_KEYBOARD)
+    this.props.stdout.write(DFE)
+    this.props.stdout.write(DBP)
+    const { stdin } = this.props
+    stdin.removeListener('readable', this.handleReadable)
+    try {
       stdin.setRawMode(false)
-      stdin.removeListener('readable', this.handleReadable)
+    } finally {
       stdin.unref()
+    }
+  }
+
+  private cancelInputWork(): void {
+    this.inputGeneration++
+    if (this.inputStartupImmediate !== null) {
+      clearImmediate(this.inputStartupImmediate)
+      this.inputStartupImmediate = null
+    }
+    if (this.incompleteEscapeTimer !== null) {
+      clearTimeout(this.incompleteEscapeTimer)
+      this.incompleteEscapeTimer = null
+    }
+    this.querier.cancelPending()
+  }
+
+  private disposeInput(): void {
+    if (this.inputDisposed) {
+      return
+    }
+    // 销毁整个输入会话与释放单个 Hook 分开；后续 Hook 清理可以安全地重复调用。
+    this.inputDisposed = true
+    const wasEnabled = this.rawModeEnabledCount > 0
+    this.rawModeEnabledCount = 0
+    if (wasEnabled) {
+      this.deactivateInput()
+    } else {
+      this.cancelInputWork()
+    }
+  }
+
+  private scheduleInputFlush(): void {
+    if (this.incompleteEscapeTimer !== null) {
+      clearTimeout(this.incompleteEscapeTimer)
+      this.incompleteEscapeTimer = null
+    }
+    if (
+      !this.inputDisposed &&
+      this.rawModeEnabledCount > 0 &&
+      (this.keyParseState.incomplete || this.keyParseState.mode === 'IN_PASTE')
+    ) {
+      // 粘贴正文也会重置空闲超时，允许正常分块继续到达；缺少结束标记时恢复普通输入。
+      this.incompleteEscapeTimer = setTimeout(
+        this.flushIncomplete,
+        this.keyParseState.mode === 'IN_PASTE' ? this.PASTE_TIMEOUT : this.NORMAL_TIMEOUT,
+      )
     }
   }
 
@@ -346,7 +431,11 @@ export default class App extends PureComponent<Props, State> {
     this.incompleteEscapeTimer = null
 
     // 仅在有不完整序列时继续
-    if (!this.keyParseState.incomplete) {
+    if (
+      this.inputDisposed ||
+      this.rawModeEnabledCount <= 0 ||
+      (!this.keyParseState.incomplete && this.keyParseState.mode !== 'IN_PASTE')
+    ) {
       return
     }
 
@@ -370,6 +459,9 @@ export default class App extends PureComponent<Props, State> {
 
   // 通过解析器处理输入并处理结果
   processInput = (input: string | Buffer | null): void => {
+    if (this.inputDisposed) {
+      return
+    }
     // 使用状态机解析输入
     const [keys, newState] = parseMultipleKeypresses(this.keyParseState, input)
     this.keyParseState = newState
@@ -383,19 +475,12 @@ export default class App extends PureComponent<Props, State> {
       reconciler.discreteUpdates(processKeysInBatch, this, keys, undefined, undefined)
     }
 
-    // 如果有不完整的转义序列，设置定时器刷新它们
-    if (this.keyParseState.incomplete) {
-      // 先取消任何现有的定时器
-      if (this.incompleteEscapeTimer) {
-        clearTimeout(this.incompleteEscapeTimer)
-      }
-      this.incompleteEscapeTimer = setTimeout(
-        this.flushIncomplete,
-        this.keyParseState.mode === 'IN_PASTE' ? this.PASTE_TIMEOUT : this.NORMAL_TIMEOUT,
-      )
-    }
+    this.scheduleInputFlush()
   }
   handleReadable = (): void => {
+    if (this.inputDisposed || this.rawModeEnabledCount <= 0) {
+      return
+    }
     // 检测长时间 stdin 间隔（tmux 附加、ssh 重连、笔记本唤醒）。
     // 终端可能已重置 DEC 私有模式；重新声明鼠标
     // 跟踪。在读取循环之前检查，这样一次 Date.now() 覆盖
@@ -407,7 +492,11 @@ export default class App extends PureComponent<Props, State> {
     this.lastStdinTime = now
     try {
       let chunk
-      while ((chunk = this.props.stdin.read() as string | null) !== null) {
+      while (
+        !this.inputDisposed &&
+        this.rawModeEnabledCount > 0 &&
+        (chunk = this.props.stdin.read() as string | null) !== null
+      ) {
         // 处理输入数据块
         this.processInput(chunk)
       }
@@ -447,9 +536,7 @@ export default class App extends PureComponent<Props, State> {
     // CSI u 格式（来自 Kitty 键盘协议终端：Ghostty、iTerm2、kitty、WezTerm）
   }
   handleExit = (error?: Error): void => {
-    if (this.isRawModeSupported()) {
-      this.handleSetRawMode(false)
-    }
+    this.disposeInput()
     this.props.onExit(error)
   }
   handleTerminalFocus = (isFocused: boolean): void => {
@@ -582,8 +669,14 @@ function processKeysInBatch(
       continue
     }
     app.handleInput(sequence)
+    if (app.rawModeEnabledCount <= 0) {
+      return
+    }
     const event = new InputEvent(item)
     app.internal_eventEmitter.emit('input', event)
+    if (app.rawModeEnabledCount <= 0) {
+      return
+    }
 
     // 同时通过 DOM 树分发，使 onKeyDown 处理程序也能触发
     app.props.dispatchKeyboardEvent(item)

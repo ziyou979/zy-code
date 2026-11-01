@@ -22,6 +22,7 @@ import { createStatsStore, type StatsStore } from '../context/stats.js'
 import { getSystemContext } from '../services/context/context.js'
 import { initializeTelemetryAfterTrust } from '../entrypoints/init.js'
 import { isSynchronizedOutputSupported } from '../ink/terminal.js'
+import { AlternateScreen } from '../ink/components/AlternateScreen.js'
 import type { RenderOptions, Root, TextProps } from '../ink/index.js'
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js'
 import {
@@ -118,13 +119,27 @@ export function showSetupDialog<T = void>(
   renderer: (done: (result: T) => void) => React.ReactNode,
   options?: {
     onChangeAppState?: typeof onChangeAppState
+    /** 临时启动提示使用备用屏幕，完成后立即恢复原终端内容。 */
+    transient?: boolean
   },
 ): Promise<T> {
-  return showDialog<T>(root, (done) => (
-    <AppStateProvider onChangeAppState={options?.onChangeAppState}>
-      <KeybindingSetup>{renderer(done)}</KeybindingSetup>
-    </AppStateProvider>
-  ))
+  return showDialog<T>(root, (done) => {
+    const complete = (result: T) => {
+      // 必须在后续 REPL 挂载前退出临时备用屏幕，避免两个屏幕的卸载/挂载交错。
+      if (options?.transient) root.render(null)
+      done(result)
+    }
+    const dialog = (
+      <AppStateProvider onChangeAppState={options?.onChangeAppState}>
+        <KeybindingSetup>{renderer(complete)}</KeybindingSetup>
+      </AppStateProvider>
+    )
+    return options?.transient ? (
+      <AlternateScreen mouseTracking={false}>{dialog}</AlternateScreen>
+    ) : (
+      dialog
+    )
+  })
 }
 
 /**
@@ -188,7 +203,10 @@ export async function showSetupScreens(
     // 因此可省去动态导入和渲染周期。
     if (!checkHasTrustDialogAccepted()) {
       const { TrustDialog } = await import('../components/TrustDialog/TrustDialog.js')
-      await showSetupDialog(root, (done) => <TrustDialog commands={commands} onDone={done} />)
+      // 信任提醒不是会话记录；不能留在主屏幕并在退出 REPL 时重新出现。
+      await showSetupDialog(root, (done) => <TrustDialog commands={commands} onDone={done} />, {
+        transient: true,
+      })
     }
 
     // 标记本会话已验证信任；GrowthBook 据此决定是否附带认证请求头。

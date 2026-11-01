@@ -17,6 +17,7 @@ import * as sessionRuntimeState from '../state/sessionRuntime.js'
 import * as skillsState from '../state/skills.js'
 import * as telemetryState from '../state/telemetry.js'
 import * as tokenState from '../state/tokens.js'
+import type { AppState } from '../../state/AppStateStore.js'
 
 export type { AttributedCounter, ChannelEntry } from '../state/core.js'
 
@@ -49,9 +50,16 @@ type RuntimeFunctionName = {
 }[keyof StateModule]
 
 /** 可在入口或测试中替换的最小运行时函数集合。 */
-export type RuntimeContextOverrides = Partial<Pick<StateModule, RuntimeFunctionName>>
+export type RuntimeContextOverrides = Partial<Pick<StateModule, RuntimeFunctionName>> & {
+  getAutoModeSessionGrant?: () => AppState['autoModeSessionGrant']
+}
 
 let runtimeOverrides: RuntimeContextOverrides = {}
+
+/** 审批服务读取当前 AppState；无活动界面或未注入时不授予临时权限。 */
+export function getAutoModeSessionGrant(): AppState['autoModeSessionGrant'] {
+  return runtimeOverrides.getAutoModeSessionGrant?.()
+}
 
 /**
  * 注入运行时能力。未提供的函数继续使用正式状态模块中的实时 accessor，

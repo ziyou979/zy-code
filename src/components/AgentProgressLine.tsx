@@ -3,12 +3,19 @@ import { Box, Text } from '../ink/index.js'
 import { formatNumber } from '../utils/format.js'
 import type { Theme } from '../services/environment/theme.js'
 
+export type AgentStepInfo = {
+  id: string
+  text: string
+  status: 'running' | 'success' | 'error'
+}
+
 type Props = {
   agentType: string
   description?: string
   name?: string
   descriptionColor?: keyof Theme
   taskDescription?: string
+  model?: string
   toolUseCount: number
   tokens: number | null
   color?: keyof Theme
@@ -18,6 +25,7 @@ type Props = {
   isAsync?: boolean
   shouldAnimate: boolean
   lastToolInfo?: string | null
+  steps?: AgentStepInfo[]
   hideType?: boolean
 }
 export function AgentProgressLine({
@@ -26,6 +34,7 @@ export function AgentProgressLine({
   name,
   descriptionColor,
   taskDescription,
+  model,
   toolUseCount,
   tokens,
   color,
@@ -33,6 +42,7 @@ export function AgentProgressLine({
   isResolved,
   isAsync = false,
   lastToolInfo,
+  steps,
   hideType = false,
 }: Props) {
   const treeChar = isLast ? '\u2514\u2500' : '\u251C\u2500'
@@ -81,6 +91,12 @@ export function AgentProgressLine({
                   )}
                 </>
               )}
+              {model && (
+                <>
+                  {' \xB7 '}
+                  {model}
+                </>
+              )}
               {!isBackgrounded && (
                 <>
                   {' \xB7 '}
@@ -97,12 +113,29 @@ export function AgentProgressLine({
           }
         </Box>
       }
-      {!isBackgrounded && (
-        <Box paddingLeft={3} flexDirection="row">
-          <Text dimColor={true}>{isLast ? '   \u23BF  ' : '\u2502  \u23BF  '}</Text>
-          <Text dimColor={true}>{getStatusText()}</Text>
-        </Box>
-      )}
+      {!isBackgrounded &&
+        (steps && steps.length > 0 ? (
+          steps.map((step) => (
+            <Box key={step.id} paddingLeft={3} flexDirection="row" height={1} overflow="hidden">
+              <Text dimColor={true}>{isLast ? '   \u23BF  ' : '\u2502  \u23BF  '}</Text>
+              <Text dimColor={true} wrap="truncate-end">
+                {step.text}
+                {step.status === 'success' ? (
+                  <Text color="success">{' \u2713'}</Text>
+                ) : step.status === 'error' ? (
+                  <Text color="error">{' \u2717'}</Text>
+                ) : (
+                  <Text dimColor={true}>{' \u2026'}</Text>
+                )}
+              </Text>
+            </Box>
+          ))
+        ) : (
+          <Box paddingLeft={3} flexDirection="row">
+            <Text dimColor={true}>{isLast ? '   \u23BF  ' : '\u2502  \u23BF  '}</Text>
+            <Text dimColor={true}>{getStatusText()}</Text>
+          </Box>
+        ))}
     </Box>
   )
 }

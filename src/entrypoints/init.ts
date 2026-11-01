@@ -21,6 +21,8 @@ import { isBetaTracingEnabled } from '../services/telemetry/betaSessionTracing.j
 import { preconnectAnthropicApi } from '../services/api/apiPreconnect.js'
 import { populateOAuthAccountInfoIfNeeded } from '../services/auth/auth.js'
 import { applyExtraCACertsFromConfig } from '../services/settings/caCertsConfig.js'
+import { ExtraCACertificatesError, getCACertificates } from '../services/http/caCerts.js'
+import { warmI18n } from '../i18n/index.js'
 import { registerCleanup } from '../services/cleanup/cleanupRegistry.js'
 import { enableConfigs, recordFirstStartTime } from '../services/config/config.js'
 import { createDebugLog } from '../services/infra/debug.js'
@@ -81,6 +83,8 @@ export const init = memoize(async (): Promise<void> => {
     // 在任何 TLS 连接之前。Bun 在启动时通过 BoringSSL 缓存 TLS 证书存储，
     // 因此这必须在第一次 TLS 握手之前完成。
     applyExtraCACertsFromConfig()
+    // Bun 首次 HTTPS 请求才加载额外 CA，原生警告绕过 stderr.write；在 TUI 挂载前检查。
+    getCACertificates()
 
     logForDiagnosticsNoPII('info', 'init_safe_env_vars_applied', {
       duration_ms: Date.now() - envVarsStart,
@@ -208,7 +212,13 @@ export const init = memoize(async (): Promise<void> => {
     })
     profileCheckpoint('init_function_end')
   } catch (error) {
-    if (error instanceof ConfigParseError) {
+    if (error instanceof ExtraCACertificatesError) {
+      // 此时尚未挂载 TUI；先加载翻译，再输出一次可读错误并退出，避免原生警告污染屏幕。
+      await warmI18n()
+      process.stderr.write(`${error.getUserMessage()}\n`)
+      gracefulShutdownSync(1)
+      return
+    } else if (error instanceof ConfigParseError) {
       // 当无法安全渲染时跳过交互式 Ink 对话框。
       // 该对话框会导致 JSON 消费者出错（如在 VM 沙箱中运行
       // `plugin marketplace list --json` 的桌面市场插件管理器）。

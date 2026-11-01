@@ -84,7 +84,7 @@ export class googleProviderAdapter implements LLMAdapter {
     const googleStream = result.stream as unknown as AsyncIterable<GoogleGenerateContentResponse>
 
     return {
-      stream: googleStreamToStandard(googleStream, params.model),
+      stream: googleStreamToStandard(googleStream, params.model, 'delta'),
       requestId: undefined, // Google SDK 不直接返回 requestId
       response: undefined,
     }

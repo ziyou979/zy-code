@@ -1,6 +1,4 @@
-import { afterAll, afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
-// Bun 的 mock.module factory 内不能 import 被 mock 的目标模块（返回空对象，
-// 透传失效甚至卡死加载链），真实导出必须在 factory 外顶层加载。
+import { afterEach, beforeEach, describe, expect, mock, test, spyOn } from 'bun:test'
 import * as runtimeContextActual from '../../../src/bootstrap/runtime/runtimeContext.js'
 import * as settingsActual from '../../../src/services/settings/settings.js'
 
@@ -8,44 +6,23 @@ interface ModelStringsState {
   modelStrings: Record<string, string> | null
 }
 
-// 可变测试状态：mock 工厂在注册表重建时求值，读取最新闭包变量。
+// 每个用例重新安装函数 spy，并在结束时恢复原始绑定。
 let state: ModelStringsState = { modelStrings: null }
 let settings: Record<string, unknown> = {}
 let throwOnGetInitialSettings = false
 
-// mock.module 是进程级全局替换且 mock.restore() 不撤销它：此前窄面 mock
-// （runtimeContext 只给 getModelStrings/setModelStrings、settings 只给
-// getInitialSettings）丢失其余导出（如 getSessionId），泄漏给同 worker 后续
-// 文件报 "Export named ... not found"。改为真实快照 spread + 仅覆盖所需导出；
-// fake 只在测试体内登记，afterEach 恢复真实快照、afterAll 兜底，把泄漏窗口
-// 限制在本文件执行期内。
-const MOCK_PATHS = {
-  runtimeContext: '../../../src/bootstrap/runtime/runtimeContext.js',
-  settings: '../../../src/services/settings/settings.js',
-} as const
-
+// 使用可恢复 spy 保留真实模块绑定，避免恢复时重新登记模块替身。
 function registerMocks() {
-  mock.module(MOCK_PATHS.runtimeContext, () => ({
-    ...runtimeContextActual,
-    getModelStrings: () => state.modelStrings,
-    setModelStrings: (ms: Record<string, string>) => {
-      state.modelStrings = ms
-    },
-  }))
-  mock.module(MOCK_PATHS.settings, () => ({
-    ...settingsActual,
-    getInitialSettings: () => {
-      if (throwOnGetInitialSettings) {
-        throw new Error('Settings not loaded')
-      }
-      return settings
-    },
-  }))
-}
-
-function restoreRealModules() {
-  mock.module(MOCK_PATHS.runtimeContext, () => ({ ...runtimeContextActual }))
-  mock.module(MOCK_PATHS.settings, () => ({ ...settingsActual }))
+  spyOn(runtimeContextActual, 'getModelStrings').mockImplementation(() => state.modelStrings)
+  spyOn(runtimeContextActual, 'setModelStrings').mockImplementation((value) => {
+    state.modelStrings = value
+  })
+  spyOn(settingsActual, 'getInitialSettings').mockImplementation(() => {
+    if (throwOnGetInitialSettings) {
+      throw new Error('Settings not loaded')
+    }
+    return settings as ReturnType<typeof settingsActual.getInitialSettings>
+  })
 }
 
 describe('modelStrings', () => {
@@ -58,11 +35,6 @@ describe('modelStrings', () => {
 
   afterEach(() => {
     mock.restore()
-    restoreRealModules()
-  })
-
-  afterAll(() => {
-    restoreRealModules()
   })
 
   describe('getModelStrings', () => {

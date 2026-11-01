@@ -388,12 +388,9 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
       const terminalName = getNativeCSIuTerminalDisplayName()
       // 注意：不能命名为 jsx，否则 Bun.build 的 JSX transform 会将局部变量误当做 JSX 工厂函数导致作用域冲突
       const hintContent = terminalName ? (
-        <Text dimColor>
-          To enable {shortcut}, set <Text bold>Option as Meta</Text> in {terminalName} preferences
-          (⌘,)
-        </Text>
+        <Text dimColor>{tSync('promptInput.optionMetaHint', { shortcut, terminalName })}</Text>
       ) : (
-        <Text dimColor>To enable {shortcut}, run /terminal-setup</Text>
+        <Text dimColor>{tSync('promptInput.optionMetaHintSetup', { shortcut })}</Text>
       )
       addNotification({
         key: 'option-meta-hint',
@@ -696,9 +693,19 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
         <AutoModeOptInDialog
           onAccept={handleAutoModeOptInAccept}
           onDecline={handleAutoModeOptInDecline}
+          getEvaluationContext={() =>
+            getToolUseContext(messages, [], new AbortController(), mainLoopModel)
+          }
         />
       ) : null,
-    [showAutoModeOptIn, handleAutoModeOptInAccept, handleAutoModeOptInDecline],
+    [
+      showAutoModeOptIn,
+      handleAutoModeOptInAccept,
+      handleAutoModeOptInDecline,
+      getToolUseContext,
+      messages,
+      mainLoopModel,
+    ],
   )
 
   useSetPromptOverlayDialog(isFullscreenEnvEnabled() ? autoModeOptInDialog : null)
@@ -782,3 +789,4 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
     autoModeOptInDialog,
   }
 }
+import { tSync } from '../../i18n/index.js'

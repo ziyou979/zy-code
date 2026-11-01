@@ -9,6 +9,9 @@
 import type { z } from 'zod/v4'
 import type { ContentBlock } from '../../types/llm.js'
 
+// 工具名称属于分类器协议，不依赖请求实现，避免权限初始化链反向加载 yoloClassifier。
+export const YOLO_CLASSIFIER_TOOL_NAME = 'classify_result'
+
 /**
  * 按 tool 名称从消息内容中提取 tool call block。
  */

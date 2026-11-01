@@ -41,6 +41,8 @@ export type AssistantContentBlock =
 export interface TextBlock {
   type: 'text'
   text: string
+  /** 原生协议附带的签名等不透明元数据，仅由对应适配器读取。 */
+  providerMetadata?: Record<string, unknown>
 }
 
 /** 图片块 — 平铺格式 */

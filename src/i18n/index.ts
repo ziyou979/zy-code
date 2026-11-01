@@ -92,15 +92,11 @@ function interpolate(template: string, vars?: Record<string, string | number>): 
  */
 export async function warmI18n(): Promise<void> {
   const lang = getUiLanguage()
-  await loadMessages(lang)
+  const messages = await loadMessages(lang)
 
-  // 始终更新同步缓存，以便 tSync 在 warmI18n 完成之前能找到翻译
-  if (lang === 'en') {
-    _syncMessages = _cachedMessages
-  } else {
-    // 对于非英语，将当前语言消息加载到同步缓存
-    _syncMessages = _cachedMessages
-  }
+  // 内容和语言标签必须一起更新；交错预热不能让新内容沿用旧语言标签。
+  _syncMessages = messages
+  _syncMessagesLang = lang
 }
 
 /**

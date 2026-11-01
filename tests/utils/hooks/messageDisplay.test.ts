@@ -1,3 +1,4 @@
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
 /**
  * 4.1 MessageDisplay —— schema 接受性 + executor 的 gate / 聚合 / fail-open。
  *
@@ -5,7 +6,7 @@
  * （createBaseHookInput / extractTextContent / getSessionId）用真实实现。全替换 i18n 切断
  * schema/config 图里顶层 tSync→settings 的循环初始化 TDZ。
  */
-import { beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test'
+import { beforeAll, beforeEach, describe, expect, mock, test, afterAll } from 'bun:test'
 
 // executeHooks 的可控产出
 let QUEUED: Array<{ transformedText?: string; hide?: boolean }> = []
@@ -19,14 +20,13 @@ let S: any
 let executeMessageDisplayHooks: any
 
 beforeAll(async () => {
-  mock.module('../../../src/i18n/index.js', () => ({
+  spyOnModuleExports(await import('../../../src/i18n/index.js'), {
     tSync: (k: string) => k,
     t: (k: string) => k,
     getUiLanguage: () => 'en',
     warmI18n: async () => {},
-    SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
-  }))
-  mock.module('../../../src/services/hooks/executeEngine.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/services/hooks/executeEngine.js'), {
     executeHooks: async function* () {
       if (THROW) {
         throw new Error('boom')
@@ -35,12 +35,12 @@ beforeAll(async () => {
         yield r
       }
     },
-  }))
+  })
   const matcher = await import('../../../src/services/hooks/matcher.js')
-  mock.module('../../../src/services/hooks/matcher.js', () => ({
+  spyOnModuleExports(await import('../../../src/services/hooks/matcher.js'), {
     ...matcher,
     hasHookForEvent: () => HAS_HOOK,
-  }))
+  })
 
   S = await import('../../../src/types/hooks/schemas.js')
   ;({ executeMessageDisplayHooks } = await import(
@@ -123,3 +123,5 @@ describe('4.1 executeMessageDisplayHooks', () => {
     expect(await executeMessageDisplayHooks(assistantMsg('secret'), ctx)).toEqual({})
   })
 })
+
+afterAll(() => mock.restore())

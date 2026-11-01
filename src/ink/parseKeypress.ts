@@ -285,8 +285,10 @@ export function parseMultipleKeypresses(
   }
 
   // 如果正在刷新且仍处于粘贴模式，发出已缓存的内容
-  if (isFlush && inPaste && pasteBuffer) {
-    keys.push(createPasteKey(pasteBuffer))
+  if (isFlush && inPaste) {
+    if (pasteBuffer) {
+      keys.push(createPasteKey(pasteBuffer))
+    }
     inPaste = false
     pasteBuffer = ''
   }

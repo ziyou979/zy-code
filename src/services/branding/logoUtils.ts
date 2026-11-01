@@ -257,6 +257,7 @@ export function subscribeRecentActivity(listener: () => void): () => void {
  * 获取当前 provider 的展示名称
  */
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
+  'ant-ling': '蚂蚁百灵',
   anthropic: 'Anthropic',
   ark: '火山方舟',
   azure: '微软Azure',
@@ -288,6 +289,9 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
 }
 
 export function getProviderDisplayName(provider: string = getAPIProvider()): string {
+  if (provider === 'ant-ling') {
+    return tSync('onboarding.platform.ant-ling')
+  }
   if (provider === 'stepfun') {
     return tSync('onboarding.platform.stepfun')
   }

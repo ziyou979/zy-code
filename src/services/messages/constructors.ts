@@ -19,6 +19,7 @@ import type {
 } from '../../types/llm.js'
 import type {
   AssistantMessage,
+  Message,
   MessageOrigin,
   PartialCompactDirection,
   ProgressMessage,
@@ -477,10 +478,101 @@ export function createStopHookSummaryMessage(
   } satisfies SystemStopHookSummaryMessage
 }
 
+export function computeTurnTokenUsage(
+  messages: readonly Message[],
+): SystemTurnDurationMessage['turnUsage'] | undefined {
+  let inputTokens = 0
+  let outputTokens = 0
+  let cacheReadInputTokens = 0
+  let cacheCreationInputTokens = 0
+  let stepCount = 0
+  const seenResponseIds = new Set<string>()
+
+  // 从末尾向前扫描当前轮次（直到上一条 turn_duration 或触发本轮的非 tool_result 用户消息）
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i]!
+    if (msg.type === 'system' && 'subtype' in msg && msg.subtype === 'turn_duration') {
+      break
+    }
+    if (msg.type === 'user') {
+      const hasToolResult = msg.message.content.some((block) => block.type === 'tool_result')
+      if (hasToolResult) {
+        // 统计本轮同步子智能体（AgentTool）返回结果中消耗的 token
+        const toolResult = msg.toolUseResult as
+          | {
+              agentId?: string
+              totalTokens?: number
+              usage?: {
+                inputTokens?: number
+                outputTokens?: number
+                cacheReadInputTokens?: number
+                cacheCreationInputTokens?: number
+              }
+            }
+          | undefined
+        if (toolResult && typeof toolResult === 'object' && 'agentId' in toolResult) {
+          if (toolResult.usage) {
+            const subUncached = toolResult.usage.inputTokens ?? 0
+            const subCacheRead = toolResult.usage.cacheReadInputTokens ?? 0
+            const subCacheWrite = toolResult.usage.cacheCreationInputTokens ?? 0
+            const subOut = toolResult.usage.outputTokens ?? 0
+            inputTokens += subUncached + subCacheRead + subCacheWrite
+            outputTokens += subOut
+            cacheReadInputTokens += subCacheRead
+            cacheCreationInputTokens += subCacheWrite
+          } else if (typeof toolResult.totalTokens === 'number' && toolResult.totalTokens > 0) {
+            inputTokens += toolResult.totalTokens
+          }
+        }
+        continue
+      }
+      if (!msg.isMeta) {
+        break
+      }
+    }
+    if (msg.type === 'assistant') {
+      const usage = msg.message.usage
+      const model = msg.message.model
+      if (!usage || !model || model === SYNTHETIC_MODEL) {
+        continue
+      }
+      const responseId = msg.message.id || msg.uuid
+      if (seenResponseIds.has(responseId)) {
+        continue
+      }
+      seenResponseIds.add(responseId)
+      const uncached = usage.inputTokens ?? 0
+      const cacheRead = usage.cacheReadInputTokens ?? usage.extras?.cacheReadInputTokens ?? 0
+      const cacheWrite =
+        usage.cacheCreationInputTokens ?? usage.extras?.cacheCreationInputTokens ?? 0
+      const out = usage.outputTokens ?? 0
+      inputTokens += uncached + cacheRead + cacheWrite
+      outputTokens += out
+      cacheReadInputTokens += cacheRead
+      cacheCreationInputTokens += cacheWrite
+      stepCount++
+    }
+  }
+
+  const totalTokens = inputTokens + outputTokens
+  if (totalTokens <= 0) {
+    return undefined
+  }
+  return {
+    totalTokens,
+    inputTokens,
+    outputTokens,
+    cacheReadInputTokens,
+    cacheCreationInputTokens,
+    stepCount,
+  }
+}
+
 export function createTurnDurationMessage(
   durationMs: number,
   budget?: { tokens: number; limit: number; nudges: number },
   messageCount?: number,
+  turnUsage?: SystemTurnDurationMessage['turnUsage'],
 ): SystemTurnDurationMessage {
   return {
     type: 'system',
@@ -490,6 +582,7 @@ export function createTurnDurationMessage(
     budgetLimit: budget?.limit,
     budgetNudges: budget?.nudges,
     messageCount,
+    turnUsage,
     timestamp: new Date().toISOString(),
     uuid: randomUUID(),
     isMeta: false as const,

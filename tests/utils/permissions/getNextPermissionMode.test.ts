@@ -9,28 +9,32 @@
  * - auto 和 bypassPermissions 只在可用时出现在循环中
  * - 循环闭合回到 default
  */
-import { describe, expect, mock, test } from 'bun:test'
+import { afterAll, beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test'
+import * as autoModePolicyActual from '../../../src/services/permissions/autoModePolicy.js'
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
 
 let autoModeGateEnabled = false
+let enrollmentAvailable = false
 
-mock.module('../../../src/services/permissions/autoModePolicy.js', () => ({
-  isAutoModeGateEnabled: () => autoModeGateEnabled,
-  getAutoModeUnavailableReason: () => (autoModeGateEnabled ? undefined : 'disabled'),
-}))
-mock.module('../../../src/services/permissions/permissionModeTransitions.js', () => ({
-  transitionPermissionMode: (_from: string, _to: string, ctx: Record<string, unknown>) => ({
-    ...ctx,
-    mode: _to,
-  }),
-}))
-mock.module('../../../src/services/infra/debug.js', () => ({
-  logForDebugging: () => {},
-  createDebugLog: () => () => {},
-}))
+beforeEach(() => {
+  enrollmentAvailable = false
+})
 
-const { getNextPermissionMode } = await import(
-  '../../../src/services/permissions/getNextPermissionMode.js'
-)
+let getNextPermissionMode: typeof import('../../../src/services/permissions/getNextPermissionMode.js').getNextPermissionMode
+
+beforeAll(async () => {
+  spyOnModuleExports(autoModePolicyActual, {
+    isAutoModeGateEnabled: () => autoModeGateEnabled,
+    isAutoModeEnrollmentAvailable: () => enrollmentAvailable,
+    getAutoModeUnavailableReason: () => (autoModeGateEnabled ? undefined : 'disabled'),
+  })
+  const permissionModes = await import('../../../src/services/permissions/getNextPermissionMode.js')
+  getNextPermissionMode = permissionModes.getNextPermissionMode
+})
+
+afterAll(() => {
+  mock.restore()
+})
 
 function makeCtx(
   mode: string,
@@ -51,6 +55,18 @@ function makeCtx(
 }
 
 describe('getNextPermissionMode', () => {
+  test('未验证模型可提出进入意图，权限转换仍等待用户授权', () => {
+    enrollmentAvailable = true
+    autoModeGateEnabled = false
+    expect(getNextPermissionMode(makeCtx('acceptEdits', { isAutoModeAvailable: false }))).toBe(
+      'auto',
+    )
+    expect(
+      getNextPermissionMode(makeCtx('acceptEdits', { isAutoModeAvailable: false }), undefined, {
+        allowEnrollment: false,
+      }),
+    ).toBe('default')
+  })
   describe('全部模式可用时：default → plan → acceptEdits → auto → bypass → default', () => {
     const opts = { isAutoModeAvailable: true, isBypassPermissionsModeAvailable: true }
 
@@ -172,7 +188,9 @@ describe('getNextPermissionMode', () => {
       for (let i = 0; i < 10; i++) {
         const next = getNextPermissionMode(makeCtx(currentMode, opts))
         order.push(next)
-        if (next === 'default') break
+        if (next === 'default') {
+          break
+        }
         currentMode = next
       }
       expect(order).toEqual([
@@ -193,7 +211,9 @@ describe('getNextPermissionMode', () => {
       for (let i = 0; i < 10; i++) {
         const next = getNextPermissionMode(makeCtx(currentMode, opts))
         order.push(next)
-        if (next === 'default') break
+        if (next === 'default') {
+          break
+        }
         currentMode = next
       }
       expect(order).toEqual(['default', 'plan', 'acceptEdits', 'auto', 'default'])
@@ -207,7 +227,9 @@ describe('getNextPermissionMode', () => {
       for (let i = 0; i < 10; i++) {
         const next = getNextPermissionMode(makeCtx(currentMode, opts))
         order.push(next)
-        if (next === 'default') break
+        if (next === 'default') {
+          break
+        }
         currentMode = next
       }
       expect(order).toEqual(['default', 'plan', 'acceptEdits', 'bypassPermissions', 'default'])
@@ -220,7 +242,9 @@ describe('getNextPermissionMode', () => {
       for (let i = 0; i < 10; i++) {
         const next = getNextPermissionMode(makeCtx(currentMode))
         order.push(next)
-        if (next === 'default') break
+        if (next === 'default') {
+          break
+        }
         currentMode = next
       }
       expect(order).toEqual(['default', 'plan', 'acceptEdits', 'default'])

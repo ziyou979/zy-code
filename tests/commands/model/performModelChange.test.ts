@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'bun:test'
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'bun:test'
 import {
   resolveModelChange,
   renderModelLabel,
@@ -7,31 +8,6 @@ import {
 import { COMMON_INFO_ARGS, COMMON_HELP_ARGS } from '../../../src/constants/xml.js'
 
 // Mock i18n
-vi.mock('../../../src/i18n/index.js', () => ({
-  tSync: (key: string, params?: Record<string, string>) => {
-    const map: Record<string, string> = {
-      'modelCommand.help':
-        'Run /model to open the model selection menu, or /model [modelName] to set the model.',
-      'modelCommand.current': 'Current model: {model}',
-      'modelCommand.currentSessionOverride':
-        'Current model: {model} (session override from plan mode)\nBase model: {base}{effort}',
-      'modelCommand.set': 'Set model to {model}',
-      'modelCommand.setWithEffort': 'Set model to {model} with {effort} effort',
-      'modelCommand.notAvailable':
-        "Model '{model}' is not available. Your organization restricts model selection.",
-      'modelCommand.notFound': "Model '{model}' not found",
-      'modelCommand.validateFailed': 'Failed to validate model: {error}',
-      'modelCommand.default': ' (default)',
-    }
-    let msg = map[key] || key
-    if (params) {
-      for (const [k, v] of Object.entries(params)) {
-        msg = msg.replace(`{${k}}`, v)
-      }
-    }
-    return msg
-  },
-}))
 
 // Mock model services
 const mockGetDefaultMainLoopModelSetting = vi.fn(() => 'default-model')
@@ -46,26 +22,52 @@ const mockIsKnownModelAlias = vi.fn((model: string) =>
 const mockIsModelAllowed = vi.fn(() => true)
 const mockValidateModel = vi.fn().mockResolvedValue({ valid: true, error: null })
 
-vi.mock('../../../src/services/model/model.js', () => ({
-  getDefaultMainLoopModelSetting: mockGetDefaultMainLoopModelSetting,
-  getMainLoopModel: mockGetMainLoopModel,
-  renderDefaultModelSetting: mockRenderDefaultModelSetting,
-}))
-
-vi.mock('../../../src/services/model/aliases.js', () => ({
-  isKnownModelAlias: mockIsKnownModelAlias,
-}))
-
-vi.mock('../../../src/services/model/modelAllowlist.js', () => ({
-  isModelAllowed: mockIsModelAllowed,
-}))
-
-vi.mock('../../../src/services/model/validateModel.js', () => ({
-  validateModel: mockValidateModel,
-}))
+async function registerMocks() {
+  spyOnModuleExports(await import('../../../src/i18n/index.js'), {
+    tSync: (key: string, params?: Record<string, string>) => {
+      const map: Record<string, string> = {
+        'modelCommand.help':
+          'Run /model to open the model selection menu, or /model [modelName] to set the model.',
+        'modelCommand.current': 'Current model: {model}',
+        'modelCommand.currentSessionOverride':
+          'Current model: {model} (session override from plan mode)\nBase model: {base}{effort}',
+        'modelCommand.set': 'Set model to {model}',
+        'modelCommand.setWithEffort': 'Set model to {model} with {effort} effort',
+        'modelCommand.notAvailable':
+          "Model '{model}' is not available. Your organization restricts model selection.",
+        'modelCommand.notFound': "Model '{model}' not found",
+        'modelCommand.validateFailed': 'Failed to validate model: {error}',
+        'modelCommand.default': ' (default)',
+      }
+      let msg = map[key] || key
+      if (params) {
+        for (const [k, v] of Object.entries(params)) {
+          msg = msg.replace(`{${k}}`, v)
+        }
+      }
+      return msg
+    },
+  })
+  spyOnModuleExports(await import('../../../src/services/model/model.js'), {
+    getDefaultMainLoopModelSetting: mockGetDefaultMainLoopModelSetting,
+    getMainLoopModel: mockGetMainLoopModel,
+    renderDefaultModelSetting: mockRenderDefaultModelSetting,
+  })
+  spyOnModuleExports(await import('../../../src/services/model/aliases.js'), {
+    isKnownModelAlias: mockIsKnownModelAlias,
+  })
+  spyOnModuleExports(await import('../../../src/services/model/modelAllowlist.js'), {
+    isModelAllowed: mockIsModelAllowed,
+  })
+  spyOnModuleExports(await import('../../../src/services/model/validateModel.js'), {
+    validateModel: mockValidateModel,
+  })
+}
+afterEach(() => vi.restoreAllMocks())
 
 describe('performModelChange - 收敛点测试', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await registerMocks()
     vi.clearAllMocks()
     mockGetDefaultMainLoopModelSetting.mockReturnValue('default-model')
     mockGetMainLoopModel.mockReturnValue('current-model')

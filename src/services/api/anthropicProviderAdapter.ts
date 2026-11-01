@@ -157,11 +157,8 @@ export class anthropicProviderAdapter implements LLMAdapter {
       )
       .withResponse()
 
-    // biome-ignore lint/suspicious/noExplicitAny: 适配层处理 SDK 流式类型转换
-    const rawStream = result.data as unknown as AsyncIterable<any>
-
     return {
-      stream: anthropicStreamToStandard(rawStream),
+      stream: anthropicStreamToStandard(result.data),
       requestId: result.request_id ?? undefined,
       response: undefined,
     }

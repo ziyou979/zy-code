@@ -515,6 +515,8 @@ async function* queryLoop(
               fallbackModel,
               onStreamingFallback: () => {
                 streamingFallbackOccured = true
+                // 流已结束，非流式回退正在等待新响应，不能继续累计或显示上一段思考。
+                toolUseContext.setStreamMode?.('requesting')
               },
               querySource,
               agents: toolUseContext.options.agentDefinitions.activeAgents,

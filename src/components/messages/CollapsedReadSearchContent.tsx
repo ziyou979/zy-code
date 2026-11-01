@@ -39,6 +39,93 @@ const teamMemCollapsed = feature('TEAMMEM')
 //（bash 命令、文件读取、搜索模式）才是可读的，而不是
 // 在一帧内闪烁消失。
 const MIN_HINT_DISPLAY_MS = 700
+const MAX_STEP_SUMMARY_CHARS = 88
+
+type StepRowItem = {
+  key: string
+  kind: 'thinking' | 'tool'
+  text: string
+  status: 'running' | 'success' | 'error' | 'done' | 'pending'
+}
+
+/**
+ * 提取思考文本的首行摘要（对齐 deepseek-harness ReasoningRow）：
+ * 流式阶段优先展示最近已完成段落的首行，移除 Markdown 粗体/标题前缀并截断。
+ */
+function extractThinkingStepLine(rawText: string, streaming: boolean): string | null {
+  const cleaned = rawText.trim()
+  if (!cleaned) {
+    return null
+  }
+  let candidate = ''
+  if (streaming) {
+    const paragraphs = cleaned.split(/\r?\n(?:[\t ]*\r?\n)+/)
+    const targetParagraph =
+      paragraphs.length > 1 ? (paragraphs.at(-2) ?? paragraphs[0]!) : paragraphs[0]!
+    candidate = targetParagraph.split(/\r?\n/)[0] ?? ''
+  } else {
+    for (const line of cleaned.split(/\r?\n/)) {
+      if (line.trim() !== '') {
+        candidate = line.trim()
+        break
+      }
+    }
+  }
+  const normalized = candidate
+    .replace(/\*\*/g, '')
+    .replace(/^#+\s*/, '')
+    .trim()
+  if (!normalized) {
+    return null
+  }
+  return normalized.length > MAX_STEP_SUMMARY_CHARS
+    ? `${normalized.slice(0, MAX_STEP_SUMMARY_CHARS - 1).trimEnd()}…`
+    : normalized
+}
+
+/**
+ * 格式化单个工具调用步骤显示文本（如 Read(src/foo.ts)、Grep("pattern")、Bash(git status)）。
+ */
+function formatToolCallStepText(
+  block: { id: string; name: string; input: unknown },
+  tools: Tools,
+): string {
+  const tool =
+    findToolByName(tools, block.name) ?? findToolByName(getReplPrimitiveTools(), block.name)
+  const parsed = tool?.inputSchema?.safeParse(block.input)
+  const validInput = parsed?.success ? parsed.data : undefined
+  const userFacingName = tool?.userFacingName?.(validInput) ?? block.name
+  let rawSummary = tool?.getToolUseSummary?.(validInput)
+  if (!rawSummary && block.input && typeof block.input === 'object') {
+    const raw = block.input as {
+      file_path?: string
+      path?: string
+      pattern?: string
+      glob?: string
+      command?: string
+      description?: string
+    }
+    rawSummary =
+      (raw.file_path ? getDisplayPath(raw.file_path) : undefined) ??
+      (raw.pattern ? `"${raw.pattern}"` : undefined) ??
+      raw.description ??
+      raw.command ??
+      (raw.path ? getDisplayPath(raw.path) : undefined) ??
+      raw.glob
+  }
+  if (!rawSummary) {
+    return userFacingName
+  }
+  const singleLine = rawSummary.trim().replace(/\s*[\r\n]+\s*/g, ' ')
+  if (!singleLine) {
+    return userFacingName
+  }
+  const truncated =
+    singleLine.length > MAX_STEP_SUMMARY_CHARS
+      ? `${singleLine.slice(0, MAX_STEP_SUMMARY_CHARS - 1).trimEnd()}…`
+      : singleLine
+  return `${userFacingName}(${truncated})`
+}
 
 /**
  * 收集折叠组内所有 tool_call 块（id + name + input），用于判断当前正在
@@ -321,11 +408,14 @@ export function CollapsedReadSearchContent({
   // 在 verbose 模式下，渲染每个工具使用及其 1 行结果摘要
   if (verbose) {
     const items: AssistantMessage[] = []
-    for (const msg of groupMessages ?? []) {
+    for (const msg of (groupMessages ?? []) as Array<
+      | AssistantMessage
+      | { type: 'grouped_tool_use'; messages?: AssistantMessage[]; message?: AssistantMessage[] }
+    >) {
       if (msg.type === 'assistant') {
         items.push(msg)
       } else if (msg.type === 'grouped_tool_use') {
-        items.push(...(msg.message as unknown as AssistantMessage[]))
+        items.push(...(msg.messages ?? msg.message ?? []))
       }
     }
     return (
@@ -364,9 +454,16 @@ export function CollapsedReadSearchContent({
         {message.hookInfos && message.hookInfos.length > 0 && (
           <>
             <Text dimColor>
-              {'  ⎿  '}Ran {message.hookCount} PreToolUse{' '}
-              {message.hookCount === 1 ? 'hook' : 'hooks'} (
-              {formatSecondsShort(message.hookTotalMs ?? 0)})
+              {'  ⎿  '}
+              {tSync(
+                message.hookCount === 1
+                  ? 'collapsedReadSearch.hookSummary_one'
+                  : 'collapsedReadSearch.hookSummary_other',
+                {
+                  count: message.hookCount ?? 0,
+                  duration: formatSecondsShort(message.hookTotalMs ?? 0),
+                },
+              )}
             </Text>
             {message.hookInfos.map((info, idx: number) => (
               <Text key={`hook-${idx}`} dimColor>
@@ -380,7 +477,8 @@ export function CollapsedReadSearchContent({
           (m) => (
             <Box key={m.path} flexDirection="column" marginTop={1}>
               <Text dimColor>
-                {'  ⎿  '}Recalled {basename(m.path)}
+                {'  ⎿  '}
+                {tSync('collapsedReadSearch.recalled', { name: basename(m.path) })}
               </Text>
               <Box paddingLeft={5}>
                 <Text>
@@ -515,7 +613,7 @@ export function CollapsedReadSearchContent({
         pr.url ? (
           <PrBadge number={pr.number} url={pr.url} bold />
         ) : (
-          <Text bold>PR #{pr.number}</Text>
+          <Text bold>{tSync('collapsedReadSearch.prNumber', { number: pr.number })}</Text>
         ),
       )
     }
@@ -714,6 +812,58 @@ export function CollapsedReadSearchContent({
       </Text>,
     )
   }
+  // 构建每步动作明细列表（参考 deepseek-harness 步骤展示：包含每步思考摘要与具体工具调用动作）
+  const stepRows: StepRowItem[] = []
+  for (const msg of (groupMessages ?? []) as Array<
+    | AssistantMessage
+    | { type: 'grouped_tool_use'; messages?: AssistantMessage[]; message?: AssistantMessage[] }
+  >) {
+    const assistantList =
+      msg.type === 'assistant'
+        ? [msg]
+        : msg.type === 'grouped_tool_use'
+          ? (msg.messages ?? msg.message ?? [])
+          : []
+    for (const aMsg of assistantList) {
+      const content = aMsg.message.content[0]
+      if (!content) {
+        continue
+      }
+      if (content.type === 'thinking' && content.thinking) {
+        const line = extractThinkingStepLine(content.thinking, false)
+        if (line) {
+          stepRows.push({
+            key: `think-${aMsg.uuid}`,
+            kind: 'thinking',
+            text: line,
+            status: 'done',
+          })
+        }
+      } else if (content.type === 'tool_call') {
+        const isInProgress = inProgressToolUseIDs.has(content.id)
+        const isError = lookups.erroredToolUseIDs.has(content.id)
+        const isResolved = lookups.resolvedToolUseIDs.has(content.id)
+        stepRows.push({
+          key: `tool-${content.id}`,
+          kind: 'tool',
+          text: formatToolCallStepText(content, tools),
+          status: isInProgress ? 'running' : isError ? 'error' : isResolved ? 'success' : 'pending',
+        })
+      }
+    }
+  }
+  if (isActiveGroup && isCurrentlyThinking && liveThinkingSummary) {
+    const liveLine = extractThinkingStepLine(liveThinkingSummary, true)
+    if (liveLine && !(stepRows.at(-1)?.kind === 'thinking' && stepRows.at(-1)?.text === liveLine)) {
+      stepRows.push({
+        key: 'live-thinking',
+        kind: 'thinking',
+        text: liveLine,
+        status: 'running',
+      })
+    }
+  }
+
   return (
     <Box flexDirection="column" marginTop={1} backgroundColor={bg}>
       <Box flexDirection="row">
@@ -735,23 +885,51 @@ export function CollapsedReadSearchContent({
           {isActiveGroup && <Text key="ellipsis">…</Text>} <CtrlOToExpand />
         </Text>
       </Box>
-      {isActiveGroup && displayedHint !== undefined && (
-        // 行布局：5 宽 gutter 用于 ⎿，然后是 flex 列用于文本。
-        // Ink 的 wrap 保留在右侧列内，因此续行在 ⎿ 下方缩进。
-        // MAX_HINT_CHARS in commandAsHint 将总计限制为约 5 行。
-        <Box flexDirection="row">
-          <Box width={5} flexShrink={0}>
-            <Text dimColor>{'  ⎿  '}</Text>
-          </Box>
-          <Box flexDirection="column" flexGrow={1}>
-            <Markdown dimColor>{displayedHint + shellProgressSuffix}</Markdown>
-          </Box>
+      {stepRows.length > 0 ? (
+        <Box flexDirection="column">
+          {stepRows.map((step) => (
+            <Box key={step.key} flexDirection="row" height={1} overflow="hidden">
+              <Text dimColor wrap="truncate-end">
+                {'  \u23BF  '}
+                {step.kind === 'thinking' ? `\u{1F4AD} ${step.text}` : step.text}
+                {step.status === 'success' ? (
+                  <Text color="success">{' \u2713'}</Text>
+                ) : step.status === 'error' ? (
+                  <Text color="error">{' \u2717'}</Text>
+                ) : step.status === 'running' ? (
+                  <Text
+                    dimColor
+                  >{` \u2026${step.kind === 'tool' ? shellProgressSuffix : ''}`}</Text>
+                ) : null}
+              </Text>
+            </Box>
+          ))}
         </Box>
+      ) : (
+        isActiveGroup &&
+        displayedHint !== undefined && (
+          // 行布局：5 宽 gutter 用于 ⎿，然后是 flex 列用于文本。
+          // Ink 的 wrap 保留在右侧列内，因此续行在 ⎿ 下方缩进。
+          // MAX_HINT_CHARS in commandAsHint 将总计限制为约 5 行。
+          <Box flexDirection="row">
+            <Box width={5} flexShrink={0}>
+              <Text dimColor>{'  ⎿  '}</Text>
+            </Box>
+            <Box flexDirection="column" flexGrow={1}>
+              <Markdown dimColor>{displayedHint + shellProgressSuffix}</Markdown>
+            </Box>
+          </Box>
+        )
       )}
       {message.hookTotalMs !== undefined && message.hookTotalMs > 0 && (
         <Text dimColor>
-          {'  ⎿  '}Ran {message.hookCount} PreToolUse {message.hookCount === 1 ? 'hook' : 'hooks'} (
-          {formatSecondsShort(message.hookTotalMs)})
+          {'  ⎿  '}
+          {tSync(
+            message.hookCount === 1
+              ? 'collapsedReadSearch.hookSummary_one'
+              : 'collapsedReadSearch.hookSummary_other',
+            { count: message.hookCount ?? 0, duration: formatSecondsShort(message.hookTotalMs) },
+          )}
         </Text>
       )}
     </Box>

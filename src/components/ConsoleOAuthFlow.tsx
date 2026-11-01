@@ -24,12 +24,20 @@ import { Select } from './CustomSelect/select.js'
 import { ApiKeySetup } from './ApiKeySetup.js'
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { resolveLoginSetupState } from './loginSelection.js'
+import { ProviderModelPicker } from './ProviderModelPicker.js'
+import { saveModelTierSelection } from '../services/settings/modelTierSettings.js'
+import { useSetAppState } from '../state/AppState.js'
 import { Spinner } from './Spinner.js'
 import TextInput from './TextInput.js'
+import { VertexLogin } from './VertexLogin.js'
+import { isGoogleAdcConnection } from '../services/auth/googleAdc.js'
+import { getAuthConfigForProvider } from '../services/auth/authConfig.js'
 
 type Props = {
-  onDone(): void
+  onDone(credentialType?: 'google-adc'): void
   startingMessage?: string
+  onInputModeChange?(active: boolean): void
+  onSetupModeChange?(active: boolean): void
 }
 
 // ─── 登录流程状态 ───────────────────────────────────────────────────────────
@@ -38,18 +46,36 @@ type OAuthStatus =
   | { state: 'idle' }
   | { state: 'api_key_setup' }
   | { state: 'platform_setup' }
+  | { state: 'vertex_setup' }
+  | { state: 'select_post_login_model'; provider: string; credentialType?: 'google-adc' }
   | { state: 'waiting_for_login'; url: string }
   | { state: 'device_code_waiting'; userCode: string; verificationUri: string }
   | { state: 'select_login_method'; options: OAuthSelectOption[]; message: string }
   | { state: 'prompt_input'; message: string; placeholder?: string }
   | { state: 'progress'; message: string }
   | { state: 'about_to_retry'; nextState: OAuthStatus }
-  | { state: 'success'; providerName: string }
+  | { state: 'success'; providerName: string; credentialType?: 'google-adc' }
   | { state: 'error'; message: string; toRetry?: OAuthStatus }
 
-export function ConsoleOAuthFlow({ onDone, startingMessage }: Props): React.ReactNode {
+export function ConsoleOAuthFlow({
+  onDone,
+  startingMessage,
+  onInputModeChange,
+  onSetupModeChange,
+}: Props): React.ReactNode {
   const terminal = useTerminalNotification()
   const [oauthStatus, setOAuthStatus] = useState<OAuthStatus>({ state: 'idle' })
+  const setupActive = [
+    'api_key_setup',
+    'platform_setup',
+    'vertex_setup',
+    'select_post_login_model',
+  ].includes(oauthStatus.state)
+  // 嵌套向导自行处理返回和快捷键提示，外层 Dialog 不应再抢占 Esc/n。
+  useEffect(() => {
+    onSetupModeChange?.(setupActive)
+    return () => onSetupModeChange?.(false)
+  }, [setupActive, onSetupModeChange])
   const [pastedCode, setPastedCode] = useState('')
   const [cursorOffset, setCursorOffset] = useState(0)
   const [showPastePrompt, setShowPastePrompt] = useState(false)
@@ -74,27 +100,22 @@ export function ConsoleOAuthFlow({ onDone, startingMessage }: Props): React.Reac
     }
   }, [oauthStatus])
 
+  // 模型选择完成后自动结束登录弹窗，避免停留在无提示页面被 Esc 误判为中断
+  useEffect(() => {
+    if (oauthStatus.state === 'success') {
+      onDone(oauthStatus.credentialType)
+    }
+  }, [oauthStatus, onDone])
+
   // 成功时按 Enter 继续
   useKeybinding(
     'confirm:yes',
     () => {
-      onDone()
+      onDone(oauthStatus.state === 'success' ? oauthStatus.credentialType : undefined)
     },
     {
       context: 'Confirmation',
       isActive: oauthStatus.state === 'success',
-    },
-  )
-
-  // 平台设置页按 Enter 返回
-  useKeybinding(
-    'confirm:yes',
-    () => {
-      setOAuthStatus({ state: 'idle' })
-    },
-    {
-      context: 'Confirmation',
-      isActive: oauthStatus.state === 'platform_setup',
     },
   )
 
@@ -218,17 +239,21 @@ export function ConsoleOAuthFlow({ onDone, startingMessage }: Props): React.Reac
 
         // 保存凭证
         const saveResult = saveOAuthCredentials(provider.id, credentials)
-        if (!saveResult.success) {
+        if (!saveResult.success || !saveResult.connectionId) {
           logEvent('zy_oauth_multi_provider_save_failed', {
             providerId: provider.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           })
+          throw new Error(tSync('oauth.credentialsSaveFailed'))
         }
 
         logEvent('zy_oauth_multi_provider_login_success', {
           providerId: provider.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
 
-        setOAuthStatus({ state: 'success', providerName: provider.name })
+        setOAuthStatus({
+          state: 'select_post_login_model',
+          provider: saveResult.connectionId,
+        })
         void sendNotification(
           { message: 'ZY Code login successful', notificationType: 'auth_success' },
           terminal,
@@ -316,6 +341,7 @@ export function ConsoleOAuthFlow({ onDone, startingMessage }: Props): React.Reac
           onPromptSubmit={handlePromptSubmit}
           onSelectMethod={handleSelectMethod}
           pasteCodePrompt={pasteCodePrompt}
+          onInputModeChange={onInputModeChange}
         />
       </Box>
     </Box>
@@ -340,6 +366,7 @@ type OAuthStatusMessageProps = {
   onPromptSubmit: (value: string) => void
   onSelectMethod: (value: string) => void
   pasteCodePrompt: string
+  onInputModeChange?: (active: boolean) => void
 }
 
 function OAuthStatusMessage({
@@ -358,6 +385,7 @@ function OAuthStatusMessage({
   onPromptSubmit,
   onSelectMethod,
   pasteCodePrompt,
+  onInputModeChange,
 }: OAuthStatusMessageProps) {
   switch (oauthStatus.state) {
     case 'idle': {
@@ -434,13 +462,43 @@ function OAuthStatusMessage({
     case 'api_key_setup':
       return (
         <ApiKeySetup
-          onDone={() => {
+          onDone={(provider) => {
             setOAuthStatus({
-              state: 'success',
-              providerName: tSync('oauth.providerApikey'),
+              state: 'select_post_login_model',
+              provider,
+              credentialType: isGoogleAdcConnection(provider) ? 'google-adc' : undefined,
             })
           }}
           onCancel={() => setOAuthStatus({ state: 'idle' })}
+          onInputModeChange={onInputModeChange}
+        />
+      )
+    case 'vertex_setup':
+      return (
+        <VertexLogin
+          onBack={() => setOAuthStatus({ state: 'platform_setup' })}
+          onInputModeChange={onInputModeChange}
+          onDone={(provider) =>
+            setOAuthStatus({
+              state: 'select_post_login_model',
+              provider,
+              credentialType: 'google-adc',
+            })
+          }
+        />
+      )
+    case 'select_post_login_model':
+      return (
+        <PostLoginModelSelector
+          onInputModeChange={onInputModeChange}
+          provider={oauthStatus.provider}
+          onDone={(providerName) => {
+            setOAuthStatus({
+              state: 'success',
+              providerName,
+              credentialType: oauthStatus.credentialType,
+            })
+          }}
         />
       )
     case 'platform_setup': {
@@ -454,6 +512,16 @@ function OAuthStatusMessage({
           <Box flexDirection="column" gap={1}>
             {description1}
             {description2}
+            <Select
+              options={[
+                { label: tSync('vertex.loginOption'), value: 'vertex' },
+                { label: tSync('vertex.setup.back'), value: 'back' },
+              ]}
+              onChange={(value: string) =>
+                setOAuthStatus(value === 'vertex' ? { state: 'vertex_setup' } : { state: 'idle' })
+              }
+              onCancel={() => setOAuthStatus({ state: 'idle' })}
+            />
             <Box flexDirection="column" marginTop={1}>
               {docHeading}
               <Text>
@@ -476,7 +544,7 @@ function OAuthStatusMessage({
               </Text>
             </Box>
             <Box marginTop={1}>
-              <Text dimColor={true}>{tSync('oauth.pressEnterToGoBack')}</Text>
+              <Text dimColor={true}>{tSync('onboarding.confirmBack')}</Text>
             </Box>
           </Box>
         </Box>
@@ -617,4 +685,50 @@ function OAuthStatusMessage({
       return null
     }
   }
+}
+
+function PostLoginModelSelector({
+  provider,
+  onDone,
+  onInputModeChange,
+}: {
+  provider: string
+  onDone(providerName: string): void
+  onInputModeChange?(active: boolean): void
+}): React.ReactNode {
+  const setAppState = useSetAppState()
+  const [saveError, setSaveError] = useState(false)
+  const providerDisplayName =
+    tSync(`onboarding.platform.${getAuthConfigForProvider(provider)?.provider ?? provider}`) ||
+    provider
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      {saveError && <Text color="error">{tSync('settings.modelConfigSaveFailed')}</Text>}
+      <ProviderModelPicker
+        onInputModeChange={onInputModeChange}
+        provider={provider}
+        title={tSync('login.selectModelPrompt')}
+        description={providerDisplayName}
+        allowSkip={true}
+        skipLabel={tSync('login.skipModelSelection')}
+        onDone={(chosenModel) => {
+          if (chosenModel) {
+            const result = saveModelTierSelection(
+              { tier: 'standard', provider, model: chosenModel, activate: true },
+              setAppState,
+            )
+            if (result.error) {
+              setSaveError(true)
+              return
+            }
+          }
+          onDone(providerDisplayName)
+        }}
+        onCancel={() => {
+          onDone(providerDisplayName)
+        }}
+      />
+    </Box>
+  )
 }

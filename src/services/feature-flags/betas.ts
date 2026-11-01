@@ -103,33 +103,6 @@ export function modelSupportsStructuredOutputs(model: string): boolean {
   })
 }
 
-// @[MODEL LAUNCH]: Add the new model if it supports auto mode (specifically PI probes) — ask in #proj-zy-code-safety-research.
-export function modelSupportsAutoMode(model: string): boolean {
-  // Auto 模式按模型的实际路由判定，避免 failover/命名连接被全局 provider 误伤。
-  const provider = getProviderForModel(model)
-  if (
-    localModelHasCapability(model, 'auto_mode', {
-      provider,
-      apiFormat: getEffectiveApiFormat(provider, model),
-    })
-  ) {
-    return true
-  }
-  // GrowthBook override: zy_auto_mode_config.allowModels
-  const config = getFeatureValue_CACHED_MAY_BE_STALE<{
-    allowModels?: string[]
-  }>('zy_auto_mode_config', {})
-  const rawLower = model.toLowerCase()
-  if (
-    config?.allowModels?.some(
-      (am) => am.toLowerCase() === rawLower || am.toLowerCase() === model.toLowerCase(),
-    )
-  ) {
-    return true
-  }
-  return false
-}
-
 /**
  * 按当前 API provider 返回对应的 tool search beta header(取值同 Claude Code 的 oh9()):
  * - Vertex AI / Bedrock → tool-search-tool-2025-10-19

@@ -59,6 +59,7 @@ export const zhSession: TranslationResource = {
   'oauth.invalidCode': '无效代码。请确保完整复制了代码',
   'oauth.loggedInAs': '已登录为',
   'oauth.loginSuccessful': '登录成功。按 Enter 继续…',
+  'oauth.credentialsSaveFailed': '登录已完成，但凭证保存失败。',
   'oauth.openingBrowserToSignIn': '正在打开浏览器以登录…',
   'oauth.pasteCodePrompt': '如有提示，请在此粘贴代码',
   'oauth.pasteCodeHere': '如有提示，请在此粘贴代码 > ',
@@ -128,6 +129,29 @@ export const zhSession: TranslationResource = {
   'oauth.openaiCodex.tokenResponseMissingFields':
     'OpenAI Codex 令牌操作 {operation} 的响应缺少必要字段：{response}',
   'oauth.openaiCodex.unknownLoginMethod': '未知的 OpenAI Codex 登录方式：{method}',
+  'oauth.openaiChatGPT.loginLabel': '使用 ChatGPT 订阅登录',
+  'oauth.openaiChatGPT.selectLoginMethod': '使用你的 ChatGPT 订阅登录：',
+  'oauth.openaiChatGPT.browserLogin': '浏览器登录（使用 ChatGPT 订阅额度）',
+  'oauth.openaiChatGPT.browserInstructions': '浏览器窗口将自动打开，请在其中完成登录。',
+  'oauth.openaiChatGPT.authenticationCompleted': 'ChatGPT 认证已完成，可以关闭此窗口。',
+  'oauth.openaiChatGPT.callbackRouteNotFound': '未找到 OAuth 回调路由。',
+  'oauth.openaiChatGPT.callbackInternalError': '处理 OAuth 回调时发生内部错误。',
+  'oauth.openaiChatGPT.stateMismatch': 'OAuth 状态校验不匹配',
+  'oauth.openaiChatGPT.missingAuthorizationCode': '缺少授权码',
+  'oauth.openaiChatGPT.missingClientId': 'OAuth 回调中没有 OpenAI 下发的 client ID。',
+  'oauth.openaiChatGPT.clientIdConflict':
+    'OpenAI 返回的 client ID 与该账号已保存的不一致，请重新登录以完成注册。',
+  'oauth.openaiChatGPT.pasteAuthorizationCode': '粘贴回调 URL（或授权码）：',
+  'oauth.openaiChatGPT.tokenOperationFailed': 'ChatGPT 令牌 {operation} 失败（{status}）：{detail}',
+  'oauth.openaiChatGPT.tokenResponseMissingFields':
+    'ChatGPT 令牌 {operation} 的响应缺少必要字段：{response}',
+  'oauth.openaiChatGPT.missingSubscriptionScope':
+    '授予的 scope 不包含 {scope}，无法使用 ChatGPT 订阅额度。请检查账号套餐后重试。',
+  'oauth.openaiChatGPT.reconnectRequired':
+    '缺少已保存的 client ID，请重新使用 ChatGPT 订阅登录以重新连接。',
+  'oauth.openaiChatGPT.hostIdPersistenceFailed':
+    '无法保存 ChatGPT 主机标识，请检查认证目录的写入权限后重试。',
+  'oauth.openaiChatGPT.usageLimitReached': '已达到 ChatGPT 使用上限，可在 {url} 查看用量与套餐。',
   'oauth.xai.deviceCodeRequestFailed': 'xAI 设备码申请失败（HTTP {status}）{detail}',
   'oauth.xai.deviceTokenMissingAccessToken': 'xAI 设备码令牌响应缺少 access_token',
   'oauth.xai.deviceTokenMissingRefreshToken': 'xAI 设备码令牌响应缺少 refresh_token',

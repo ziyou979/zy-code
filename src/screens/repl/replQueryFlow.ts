@@ -91,7 +91,9 @@ import type { IdeType } from '../../services/ide/ideTypes.js'
 import type { SetAppState } from '../../services/input/messageQueueManager.js'
 import { enqueue, getCommandQueueLength } from '../../services/input/messageQueueManager.js'
 import { StreamingThinking } from '../../services/messages/./streaming.js'
+import { saveCurrentSessionCosts } from '../../services/cost/costTracker.js'
 import {
+  computeTurnTokenUsage,
   createCommandInputMessage,
   createTurnDurationMessage,
   createUserMessage,
@@ -833,9 +835,18 @@ export async function runQuery(
         } else {
           ctx.replStore.setMessages((prev) => [
             ...prev,
-            createTurnDurationMessage(turnDurationMs, budgetInfo, count(prev, isLoggableMessage)),
+            createTurnDurationMessage(
+              turnDurationMs,
+              budgetInfo,
+              count(prev, isLoggableMessage),
+              computeTurnTokenUsage(prev),
+            ),
           ])
         }
+      }
+      if (shouldQuery) {
+        // 每轮模型查询结束即持久化当前累计会话费用与耗时，防止异常退出或中断后丢失历史耗时
+        saveCurrentSessionCosts()
       }
       ctx.setAbortController(null)
       if (process.platform === 'win32') {

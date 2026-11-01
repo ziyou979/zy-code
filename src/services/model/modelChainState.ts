@@ -203,11 +203,21 @@ export function clearAllModelChainSticky(settings?: SettingsJson | null): void {
 /** 读取 modelFailover 默认值 */
 export function getModelFailoverConfig(settings: SettingsJson | null | undefined): {
   enabled: boolean
+  mode: 'confirm' | 'notify' | 'off'
   maxConsecutiveFailures: number
 } {
   const raw = settings?.modelFailover
+  const rawMode = raw?.mode
+  const explicitlyDisabled = raw?.enabled === false || rawMode === 'off'
+  const mode: 'confirm' | 'notify' | 'off' = explicitlyDisabled
+    ? 'off'
+    : rawMode === 'notify'
+      ? 'notify'
+      : 'confirm'
+
   return {
-    enabled: raw?.enabled !== false,
+    enabled: mode !== 'off',
+    mode,
     maxConsecutiveFailures:
       typeof raw?.maxConsecutiveFailures === 'number' && raw.maxConsecutiveFailures >= 1
         ? Math.min(10, Math.floor(raw.maxConsecutiveFailures))

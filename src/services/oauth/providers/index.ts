@@ -53,6 +53,8 @@ export {
   getOAuthApiKey,
   getOAuthProvider,
   getOAuthProviders,
+  getRegisteredOAuthProviders,
+  isCredentialInvalidatedError,
   registerOAuthProvider,
   resetOAuthProviders,
   unregisterOAuthProvider,

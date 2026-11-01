@@ -234,6 +234,8 @@ export function stripCallerFieldFromAssistantMessage(message: AssistantMessage):
           id: block.id,
           name: block.name,
           input: block.input,
+          // caller 是工具搜索协议字段，适配器签名属于独立元数据，不应一并删除。
+          ...(block.providerMetadata && { providerMetadata: block.providerMetadata }),
         }
       }),
     },

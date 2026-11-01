@@ -1,8 +1,9 @@
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
 /**
  * 5.2 executePostToolBatchHooks —— gate 短路 + 输出转换（additionalContext / preventContinuation
  * → 消息），供 query.ts 按 toolUpdates 方式消费。mock executeHooks + hasHookForEvent。
  */
-import { beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test'
+import { beforeAll, beforeEach, describe, expect, mock, test, afterAll } from 'bun:test'
 import * as realAttachments from '../../../src/services/attachments/attachments.js'
 
 // executeHooks 可控产出 + gate
@@ -13,29 +14,28 @@ let HAS_HOOK = true
 let executePostToolBatchHooks: any
 
 beforeAll(async () => {
-  mock.module('../../../src/i18n/index.js', () => ({
+  spyOnModuleExports(await import('../../../src/i18n/index.js'), {
     tSync: (k: string) => k,
     t: (k: string) => k,
     getUiLanguage: () => 'en',
     warmI18n: async () => {},
-    SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
-  }))
+  })
   // 确保 createAttachmentMessage 使用真实实现，避免被其他测试文件的 mock 污染
-  mock.module('../../../src/services/attachments/attachments.js', () => ({
+  spyOnModuleExports(await import('../../../src/services/attachments/attachments.js'), {
     ...realAttachments,
-  }))
-  mock.module('../../../src/services/hooks/executeEngine.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/services/hooks/executeEngine.js'), {
     executeHooks: async function* () {
       for (const r of QUEUED) {
         yield r
       }
     },
-  }))
+  })
   const matcher = await import('../../../src/services/hooks/matcher.js')
-  mock.module('../../../src/services/hooks/matcher.js', () => ({
+  spyOnModuleExports(await import('../../../src/services/hooks/matcher.js'), {
     ...matcher,
     hasHookForEvent: () => HAS_HOOK,
-  }))
+  })
   ;({ executePostToolBatchHooks } = await import('../../../src/services/hooks/executors/tool.js'))
 })
 
@@ -93,3 +93,5 @@ describe('5.2 executePostToolBatchHooks', () => {
     expect(out[0].message.attachment.type).toBe('hook_stopped_continuation')
   })
 })
+
+afterAll(() => mock.restore())

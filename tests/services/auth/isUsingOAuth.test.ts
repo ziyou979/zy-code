@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'bun:test'
+import { describe, expect, it, vi, beforeEach, afterEach, spyOn } from 'bun:test'
 import { isUsingOAuthTokens } from '../../../src/services/auth/auth.js'
 import { isUsingOAuthForService } from '../../../src/services/auth/auth.js'
 
@@ -47,22 +47,22 @@ describe('isUsingOAuthTokens - scope 判断纯函数', () => {
 const mockResolveModelRequestContext = vi.fn()
 const mockIsAnthropicOfficialEndpoint = vi.fn()
 
-vi.mock('../../../src/services/model/modelRequestContext.js', () => ({
-  resolveModelRequestContext: mockResolveModelRequestContext,
-}))
-
-vi.mock('../../../src/services/api/baseUrlResolution.js', () => ({
-  isAnthropicOfficialEndpoint: mockIsAnthropicOfficialEndpoint,
-}))
-
-vi.mock('../../../src/services/auth/authFileDescriptor.js', () => ({
-  getOAuthTokenFromFileDescriptor: () => null,
-  getApiKeyFromFileDescriptor: () => null,
-}))
+import * as requestContext from '../../../src/services/model/modelRequestContext.js'
+import * as baseUrlResolution from '../../../src/services/api/baseUrlResolution.js'
+import * as authFileDescriptor from '../../../src/services/auth/authFileDescriptor.js'
+afterEach(() => vi.restoreAllMocks())
 
 describe('isUsingOAuthForService - provider/endpoint 门槛', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    spyOn(requestContext, 'resolveModelRequestContext').mockImplementation(
+      mockResolveModelRequestContext,
+    )
+    spyOn(baseUrlResolution, 'isAnthropicOfficialEndpoint').mockImplementation(
+      mockIsAnthropicOfficialEndpoint,
+    )
+    spyOn(authFileDescriptor, 'getOAuthTokenFromFileDescriptor').mockReturnValue(null)
+    spyOn(authFileDescriptor, 'getApiKeyFromFileDescriptor').mockReturnValue(null)
     // 默认：非 anthropic 或非官方端点 → false（不读 token）
     mockResolveModelRequestContext.mockReturnValue({ provider: 'openai' })
     mockIsAnthropicOfficialEndpoint.mockReturnValue(true)
