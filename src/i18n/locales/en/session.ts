@@ -143,8 +143,6 @@ export const enSession: TranslationResource = {
     'OpenAI Codex token {operation} response missing fields: {response}',
   'oauth.openaiCodex.unknownLoginMethod': 'Unknown OpenAI Codex login method: {method}',
   'oauth.openaiChatGPT.loginLabel': 'Sign in with ChatGPT',
-  'oauth.openaiChatGPT.selectLoginMethod': 'Sign in to use your ChatGPT subscription:',
-  'oauth.openaiChatGPT.browserLogin': 'Browser login (uses ChatGPT subscription)',
   'oauth.openaiChatGPT.browserInstructions':
     'A browser window should open. Complete login to finish.',
   'oauth.openaiChatGPT.authenticationCompleted':

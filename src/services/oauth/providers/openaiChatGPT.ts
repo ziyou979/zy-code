@@ -33,7 +33,6 @@ import type {
   OAuthLoginCallbacks,
   OAuthPrompt,
   OAuthProviderInterface,
-  OAuthSelectPrompt,
 } from './types.js'
 
 const AUTH_BASE_URL = 'https://auth.openai.com'
@@ -87,19 +86,6 @@ type AuthorizationResult = {
 function randomValue(): string {
   const crypto = require('node:crypto') as typeof import('node:crypto')
   return crypto.randomBytes(32).toString('base64url')
-}
-
-/** 在打开选择器前一次性解析文案，保证同一页面使用同一种语言。 */
-export function getOpenAIChatGPTLoginPrompt(): OAuthSelectPrompt {
-  return {
-    message: tSync('oauth.openaiChatGPT.selectLoginMethod'),
-    options: [
-      {
-        id: 'browser',
-        label: tSync('oauth.openaiChatGPT.browserLogin'),
-      },
-    ],
-  }
 }
 
 /** 从回调 URL 或用户粘贴的输入中解析授权结果。 */
@@ -542,11 +528,6 @@ export const openaiChatGPTOAuthProvider: OAuthProviderInterface = {
   apiFormat: 'openai-responses',
 
   async login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
-    const loginMethod = await callbacks.onSelect(getOpenAIChatGPTLoginPrompt())
-    if (!loginMethod) {
-      throw new Error(tSync('oauth.loginCancelled'))
-    }
-
     return loginOpenAIChatGPT({
       onAuth: callbacks.onAuth,
       onPrompt: callbacks.onPrompt,

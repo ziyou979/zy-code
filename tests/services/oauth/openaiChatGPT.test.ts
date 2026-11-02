@@ -59,6 +59,29 @@ describe('OpenAI ChatGPT 订阅登录', () => {
         openaiChatGPTOAuthProvider.getApiKey({ access: 'sub-token', refresh: 'r', expires: 0 }),
       ).toBe('sub-token')
     })
+
+    test('登录直接进入浏览器授权，不显示只有一个选项的选择器，且仍可取消', async () => {
+      let selections = 0
+      let authorizations = 0
+      const controller = new AbortController()
+      await expect(
+        openaiChatGPTOAuthProvider.login({
+          signal: controller.signal,
+          onSelect: async () => {
+            selections++
+            return 'browser'
+          },
+          onAuth: () => {
+            authorizations++
+            controller.abort()
+          },
+          onDeviceCode: () => {},
+          onPrompt: async () => '',
+        }),
+      ).rejects.toThrow()
+      expect(selections).toBe(0)
+      expect(authorizations).toBe(1)
+    })
   })
 
   describe('回调解析', () => {

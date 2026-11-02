@@ -130,8 +130,6 @@ export const zhSession: TranslationResource = {
     'OpenAI Codex 令牌操作 {operation} 的响应缺少必要字段：{response}',
   'oauth.openaiCodex.unknownLoginMethod': '未知的 OpenAI Codex 登录方式：{method}',
   'oauth.openaiChatGPT.loginLabel': '使用 ChatGPT 订阅登录',
-  'oauth.openaiChatGPT.selectLoginMethod': '使用你的 ChatGPT 订阅登录：',
-  'oauth.openaiChatGPT.browserLogin': '浏览器登录（使用 ChatGPT 订阅额度）',
   'oauth.openaiChatGPT.browserInstructions': '浏览器窗口将自动打开，请在其中完成登录。',
   'oauth.openaiChatGPT.authenticationCompleted': 'ChatGPT 认证已完成，可以关闭此窗口。',
   'oauth.openaiChatGPT.callbackRouteNotFound': '未找到 OAuth 回调路由。',
