@@ -70,11 +70,11 @@ afterEach(() => {
 })
 
 describe('lint-architecture', () => {
-  test('有限状态映射不是 UI 文案，普通与宽泛类型的 summary 仍被检查', () => {
+  test('状态机 switch 不当作 UI 文案，普通 summary 字段仍被检查', () => {
     const fixture = createFixtureProject({
       'src/components/Workflow.tsx': [
         "type Phase = 'summary' | 'checks'",
-        "const previous: Record<Phase, Phase> = { summary: 'checks', checks: ready ? 'summary' : 'checks' }",
+        "function previous(phase: Phase): Phase { switch (phase) { case 'summary': return 'checks'; case 'checks': return ready ? 'summary' : 'checks' } }",
         "const view = { summary: 'Please review the result' }",
         "const loose: Record<Phase, string> = { summary: 'Check the result', checks: 'Ready' }",
         "const invalid: Record<Phase, Phase> = { summary: 'User facing text', checks: 'summary' }",

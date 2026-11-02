@@ -22,6 +22,7 @@ import {
   reorderModelTierCandidates,
   saveModelFailoverPolicy,
   saveModelTierSelection,
+  ShadowedModelTierError,
 } from '../services/settings/modelTierSettings.js'
 import { getInitialSettings } from '../services/settings/settings.js'
 import type { ModelTier } from '../services/model/model.js'
@@ -31,6 +32,17 @@ import { Select } from './CustomSelect/select.js'
 import { ProviderModelPicker } from './ProviderModelPicker.js'
 
 // ─── 全量模型档位与降级链展示工具函数 ─────────────────────────────────────
+
+/** 清空会暴露旧列表时说明原因与替代操作，其余写入失败沿用通用提示。 */
+export function getModelTierSaveErrorMessage(error: Error): string {
+  if (error instanceof ShadowedModelTierError) {
+    return tSync('settings.modelTierClearShadowed', {
+      tier: error.tier,
+      path: error.settingsPath,
+    })
+  }
+  return tSync('settings.modelConfigSaveFailed')
+}
 
 export function formatModelTierSummary(entry: unknown): string {
   if (!entry) return tSync('settings.notConfigured')
@@ -89,13 +101,17 @@ export function ModelTierConfigFlow({
   const [selectedProvider, setSelectedProvider] = useState<string>('')
   const [actionType, setActionType] = useState<'primary' | 'fallback'>('primary')
   const [selectedCandidateIndex, setSelectedCandidateIndex] = useState<number>(0)
-  const [saveError, setSaveError] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const setAppState = useSetAppState()
   const currentModel = useAppState((state) => state.mainLoopModel)
 
   const settings = getInitialSettings()
   const models = settings.models ?? {}
   const currentTierCandidates = getModelTierCandidates(selectedTier, settings)
+  const report = (result: { error: Error | null }): boolean => {
+    setSaveError(result.error ? getModelTierSaveErrorMessage(result.error) : null)
+    return !result.error
+  }
 
   const terminalSize = useContext(TerminalSizeContext)
   const columns = terminalSize?.columns ?? process.stdout?.columns ?? 80
@@ -140,6 +156,7 @@ export function ModelTierConfigFlow({
               }
               const tier = selected as ModelTier
               setSelectedTier(tier)
+              setSaveError(null)
               const existing = getModelTierCandidates(tier, settings)
               if (existing.length === 0) {
                 // 未配置时直接引导选择主模型
@@ -194,6 +211,7 @@ export function ModelTierConfigFlow({
 
     return (
       <Box flexDirection="column" gap={1}>
+        {saveError && <Text color="error">{saveError}</Text>}
         <Text bold>{tSync('settings.manageTierHeading', { tier: tierLabel })}</Text>
         <Text dimColor>{tSync('settings.currentCandidateQueue')}</Text>
         <Box flexDirection="column" paddingLeft={1}>
@@ -353,7 +371,7 @@ export function ModelTierConfigFlow({
                 )
                 setStep('manage_tier')
               } else if (action === 'remove') {
-                removeModelTierCandidate(selectedTier, selectedCandidateIndex, setAppState)
+                report(removeModelTierCandidate(selectedTier, selectedCandidateIndex, setAppState))
                 setStep('manage_tier')
               } else {
                 setStep('manage_tier')
@@ -448,7 +466,7 @@ export function ModelTierConfigFlow({
   // 步骤 7：选择该 Provider 下的模型并保存
   return (
     <Box flexDirection="column" gap={1}>
-      {saveError && <Text color="error">{tSync('settings.modelConfigSaveFailed')}</Text>}
+      {saveError && <Text color="error">{saveError}</Text>}
       <ProviderModelPicker
         provider={selectedProvider}
         title={tSync('settings.selectModelForTier', {
@@ -470,11 +488,9 @@ export function ModelTierConfigFlow({
               { provider: selectedProvider, model: chosenModel },
               setAppState,
             )
-            if (result.error) {
-              setSaveError(true)
+            if (!report(result)) {
               return
             }
-            setSaveError(false)
             setStep('manage_tier')
           } else {
             // 设置/更换主选模型（自动保留现有备用降级链）
@@ -490,16 +506,14 @@ export function ModelTierConfigFlow({
               },
               setAppState,
             )
-            if (result.error) {
-              setSaveError(true)
+            if (!report(result)) {
               return
             }
-            setSaveError(false)
             setStep('manage_tier')
           }
         }}
         onCancel={() => {
-          setSaveError(false)
+          setSaveError(null)
           setStep('select_provider')
         }}
       />

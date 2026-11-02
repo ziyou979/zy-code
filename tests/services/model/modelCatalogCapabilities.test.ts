@@ -1,10 +1,14 @@
 import { describe, expect, test } from 'bun:test'
 import {
   getModelThinkingSupport,
+  mergeModelCatalogCapabilities,
   removeThinkingEffortOverride,
   extractModelCatalogCapability,
   extractRegistryModelCapability,
+  type ModelCatalogCapability,
 } from '../../../src/services/model/modelCatalogCapabilities.js'
+
+type ThinkingCapability = NonNullable<ModelCatalogCapability['capabilities']['thinking']>
 
 describe('modelCatalogCapabilities', () => {
   test('空 thinking 保持未知，清除唯一 effort 覆盖后删除整个声明', () => {
@@ -112,4 +116,29 @@ test('目录保留具体 MIME，公共目录 PDF 使用标准 MIME 值', () => {
     extractRegistryModelCapability({ modalities: { input: ['text', 'pdf', 'image/png'] } })
       .capabilities.input,
   ).toEqual(['text', 'application/pdf', 'image/png'])
+})
+
+test('明确不支持思考时不继承 preserve/adaptive，部分或未知覆盖仍继承', () => {
+  const merge = (thinking: ThinkingCapability, override?: ThinkingCapability) =>
+    mergeModelCatalogCapabilities(
+      { capabilities: { thinking } },
+      { capabilities: override ? { thinking: override } : {} },
+    ).capabilities.thinking
+  const bases: ThinkingCapability[] = [
+    { preserve: 'optional', effort: ['on'] },
+    { preserve: 'always' },
+    { adaptive: true, effort: ['off', 'on'] },
+  ]
+  for (const base of bases) {
+    expect(merge(base, { effort: ['off'] })).toEqual({ effort: ['off'] })
+    expect(merge(base, { effort: { levels: ['off'] } })).toEqual({ effort: { levels: ['off'] } })
+    expect(getModelThinkingSupport(merge(base, { effort: ['off'] }))).toBe(false)
+    expect(merge(base)).toEqual(base)
+    expect(merge(base, {})).toEqual(base)
+  }
+  expect(merge({ preserve: 'always', adaptive: true }, { effort: ['off', 'on'] })).toEqual({
+    preserve: 'always',
+    adaptive: true,
+    effort: ['off', 'on'],
+  })
 })

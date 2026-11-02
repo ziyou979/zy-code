@@ -88,6 +88,8 @@ export const zhSettings: TranslationResource = {
   'settings.modelConfigUpdated': '模型档位配置已更新',
   'settings.modelLabel': '模型',
   'settings.modelTiersLabel': '模型档位与供应商配置',
+  'settings.modelTierClearShadowed':
+    '无法移除 {tier} 档位的最后一个模型：settings.json 中的 {path} 会重新生效。请改用“更换主选模型”替换，或先从 settings.json 删除 {path}。',
   'settings.notConfigured': '未配置',
   'settings.selectModelForTier': '为 {tier} 档位选择 {provider} 模型',
   'settings.selectProviderForTier': '选择 {tier} 档位的模型提供商',

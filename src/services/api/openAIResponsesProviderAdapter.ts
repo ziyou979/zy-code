@@ -10,6 +10,7 @@
 import { randomUUID } from 'node:crypto'
 import OpenAI from 'openai'
 import { getMainLoopModel, normalizeModelStringForAPI } from '../model/model.js'
+import { OPENAI_CHATGPT_API_RESOURCE } from '../oauth/providers/openaiChatGPT.js'
 import type {
   CreateParams,
   LLMAdapter,
@@ -62,7 +63,7 @@ export class OpenAIResponsesProviderAdapter implements LLMAdapter {
     return getOpenAIClient({
       model,
       ...(this.chatGPTSubscription && {
-        baseURL: 'https://api.openai.com/v1',
+        baseURL: OPENAI_CHATGPT_API_RESOURCE,
         maxRetries: 0,
       }),
     })
@@ -160,7 +161,7 @@ export class OpenAIResponsesProviderAdapter implements LLMAdapter {
         apiKey,
         maxRetries: this.chatGPTSubscription ? 0 : 3,
         model,
-        ...(this.chatGPTSubscription && { baseURL: 'https://api.openai.com/v1' }),
+        ...(this.chatGPTSubscription && { baseURL: OPENAI_CHATGPT_API_RESOURCE }),
       })
       if (this.chatGPTSubscription) {
         const stream = await client.responses.create({

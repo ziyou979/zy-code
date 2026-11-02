@@ -258,6 +258,19 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 
 ---
 
+### ChatGPT 订阅认证边界
+
+ChatGPT 订阅登录入口保持默认关闭。`openai-chatgpt` 使用独立命名连接，既有 OpenAI API key、Codex OAuth 与其他订阅身份不能相互借用凭据。`auth.json` 顶层主机标识是元数据，不参与连接枚举；显式 API key 优先于同连接残留的 OAuth。
+
+授权码交换和刷新使用 OpenAI 签发的 client ID，首次注册占位 ID 只用于发起授权。重新授权沿用已保存的 client ID；回调返回冲突的 client ID 时拒绝登录。订阅推理固定使用公开 Responses 资源、`store: false` 和 SSE；非流式业务消费流的终止快照，断流不能伪装成成功。SDK 自动重试关闭，由请求层区分额度与临时故障。
+
+当前实现仍有以下边界，不能仅凭保存了 ID token 就声称账号身份已经验证：
+
+- ID token 的 JWKS 签名、issuer、audience、expiry、nonce 与返回账号身份匹配尚待完整验证。
+- 同连接的进程内刷新已合并，并避免旧刷新失败删除较新凭据；跨进程刷新锁和原子凭据替换仍待实现。
+- 默认命名连接只承载一个 ChatGPT 账号，按已验证身份管理多账号与远端会话撤销尚待实现。
+- 模型使用该账号实际可用的 slug；新增订阅登录不会自动重写既有模型引用。
+
 ### 3.1 Vertex AI Gemini（ADC）
 
 Vertex Gemini 使用 Google 原生协议，不使用 Anthropic API key，也不使用 Gemini Code Assist 订阅令牌。首次设置或 `/login` →「第三方平台」→「Google Cloud Vertex AI（ADC）」提供同一个完整向导，不需要先手工填写 `auth.json`：

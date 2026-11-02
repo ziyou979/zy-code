@@ -35,15 +35,20 @@ export function mergeModelCatalogCapabilities(
   base: ModelCatalogCapability | undefined,
   override: ModelCatalogCapability | undefined,
 ): ModelCatalogCapability {
+  const baseThinking = base?.capabilities.thinking
+  const overrideThinking = override?.capabilities.thinking
+  // 明确不支持思考时整体替换，不能继承 preserve/adaptive 重新开启思考
+  const thinking =
+    getModelThinkingSupport(overrideThinking) === false
+      ? overrideThinking
+      : baseThinking || overrideThinking
+        ? { ...baseThinking, ...overrideThinking }
+        : undefined
   return {
     capabilities: {
       ...base?.capabilities,
       ...override?.capabilities,
-      ...(base?.capabilities.thinking || override?.capabilities.thinking
-        ? {
-            thinking: { ...base?.capabilities.thinking, ...override?.capabilities.thinking },
-          }
-        : {}),
+      ...(thinking ? { thinking } : {}),
     },
     ...(base?.tokens || override?.tokens
       ? { tokens: { ...base?.tokens, ...override?.tokens } }

@@ -7,6 +7,9 @@ import {
   getLocalContextWindow,
   getLocalModelCapability,
   getLocalModelEffortLevels,
+  getLocalModelPreserveThinking,
+  localModelHasAdaptiveThinking,
+  localModelHasCapability,
   getLocalModelInputModalities,
 } from '../../../src/services/settings/localModelCapabilities.js'
 
@@ -181,5 +184,26 @@ describe('discoveredModelCapabilities', () => {
     ).not.toContain('fixture-secret')
     saveDiscoveredModelCapability(selection, { capabilities: {} }, 'user')
     expect(getLocalModelEffortLevels('new-model', context)).toEqual(['on'])
+  })
+  test('用户关闭思考落盘后不继承手工 preserve/adaptive，恢复未知后重新继承', () => {
+    writeFileSync(
+      join(directory, 'model-capabilities.json'),
+      JSON.stringify({
+        models: [
+          {
+            pattern: 'new-model',
+            capabilities: { thinking: { preserve: 'optional', adaptive: true, effort: ['on'] } },
+          },
+        ],
+      }),
+    )
+    const off = { capabilities: { thinking: { effort: { levels: ['off' as const] } } } }
+    expect(saveDiscoveredModelCapability(selection, off, 'user').error).toBeNull()
+    expect(getLocalModelEffortLevels('new-model', context)).toEqual(['off'])
+    expect(localModelHasCapability('new-model', 'thinking', context)).toBe(false)
+    expect(getLocalModelPreserveThinking('new-model', context)).toBeUndefined()
+    expect(localModelHasAdaptiveThinking('new-model', context)).toBe(false)
+    saveDiscoveredModelCapability(selection, { capabilities: {} }, 'user')
+    expect(getLocalModelPreserveThinking('new-model', context)).toBe('optional')
   })
 })

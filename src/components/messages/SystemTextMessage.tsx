@@ -23,6 +23,7 @@ import type {
   SystemMessage,
   SystemStopHookSummaryMessage,
   SystemMemorySavedMessage,
+  TurnTokenUsageSummary,
 } from '../../types/message.js'
 import { SystemAPIErrorMessage } from './SystemAPIErrorMessage.js'
 import {
@@ -364,14 +365,7 @@ function TurnDurationMessage({ message, addMargin }: { message: any; addMargin: 
       verb,
       duration,
     })
-  const turnUsage = message.turnUsage as
-    | {
-        totalTokens: number
-        inputTokens: number
-        outputTokens: number
-        cacheReadInputTokens?: number
-      }
-    | undefined
+  const turnUsage: TurnTokenUsageSummary | undefined = message.turnUsage
   let turnUsageText: string | undefined
   if (showTurnDuration && turnUsage && turnUsage.totalTokens > 0) {
     const cacheRead = turnUsage.cacheReadInputTokens ?? 0

@@ -23,6 +23,7 @@ import {
   saveMainLoopModelSetting,
   saveModelFailoverPolicy,
   saveModelTierSelection,
+  ShadowedModelTierError,
 } from '../../../src/services/settings/modelTierSettings.js'
 import {
   createTierCandidateOptions,
@@ -285,6 +286,70 @@ describe('modelTierSettings', () => {
           },
         },
       })
+    })
+
+    test('顶层隐式平台在追加备选后仍与运行时一致', () => {
+      const settings = readSaved()
+      const providerModels = settings.providers?.deepseek?.models
+      if (!providerModels) {
+        throw new Error('Missing provider fixture')
+      }
+      delete providerModels.standard
+      settings.models = { ...settings.models, standard: 'deepseek-chat' }
+      writeFileSync(join(configDir, 'settings.json'), JSON.stringify(settings))
+      resetSettingsCache()
+      expect(getModelTierCandidates('standard')).toEqual([
+        { provider: 'deepseek', model: 'deepseek-chat' },
+      ])
+      expect(
+        addModelTierCandidate('standard', { provider: 'openai', model: 'gpt-4o' }).error,
+      ).toBeNull()
+      expect(getModelCandidatesForTier('standard')[0]?.provider).toBe('deepseek')
+    })
+
+    test('编辑器保留未配置的命名连接，运行时仍解析其平台', () => {
+      const raw = [
+        { provider: 'missing-conn', model: 'm1' },
+        { model: 'ds-i' },
+        { provider: 'ling-personal', model: 'm2' },
+      ]
+      updateSettingsForSource('userSettings', {
+        providers: { deepseek: { models: { standard: raw } } },
+      })
+      expect(reorderModelTierCandidates('standard', 2, 0).error).toBeNull()
+      expect(readSaved().providers?.deepseek?.models?.standard).toEqual([
+        raw[2],
+        raw[0],
+        { provider: 'deepseek', model: 'ds-i' },
+      ])
+      expect(getModelCandidatesForTier('standard').map((c) => [c.provider, c.authProfile])).toEqual(
+        [
+          ['ant-ling', 'ling-personal'],
+          [undefined, undefined],
+          ['deepseek', undefined],
+        ],
+      )
+    })
+
+    test('可选档位无自身配置时编辑器为空并写入自身，运行时回落 standard', () => {
+      updateSettingsForSource('userSettings', { models: { advanced: undefined } })
+      expect(getModelTierCandidates('advanced')).toEqual([])
+      expect(getModelCandidatesForTier('advanced')[0]?.model).toBe('ds-a')
+      expect(
+        addModelTierCandidate('advanced', { provider: 'deepseek', model: 'a1' }).error,
+      ).toBeNull()
+      expect(readSaved().providers?.deepseek?.models).toEqual({
+        standard: scoped,
+        advanced: { provider: 'deepseek', model: 'a1' },
+      })
+    })
+
+    test('拒绝清空时返回可识别的遮蔽错误', () => {
+      expect(removeModelTierCandidate('standard', 0).error).toBeNull()
+      const last = removeModelTierCandidate('standard', 0).error as ShadowedModelTierError
+      expect(last).toBeInstanceOf(ShadowedModelTierError)
+      expect(last.settingsPath).toBe('models.standard')
+      expect(readSaved().providers?.deepseek?.models?.standard).toEqual(scoped[1])
     })
 
     test('读取与运行时一致：优先当前 provider 的档位列表', () => {

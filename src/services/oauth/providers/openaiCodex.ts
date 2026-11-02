@@ -8,7 +8,7 @@
 
 import { tSync } from '../../../i18n/index.js'
 import { pollOAuthDeviceCodeFlow } from './deviceCode.js'
-import { oauthErrorHtml, oauthSuccessHtml } from './oauthPage.js'
+import { fetchWithLoginCancellation, startOAuthCallbackServer } from './oauthCallbackServer.js'
 import { generatePKCE } from './pkce.js'
 import type {
   OAuthCredentials,
@@ -53,10 +53,6 @@ export function getOpenAICodexLoginPrompt(): OAuthSelectPrompt {
 
 type OAuthToken = { access: string; refresh: string; expires: number }
 type TokenOperation = 'exchange' | 'refresh'
-
-function getCallbackHost(): string {
-  return process.env.ZY_CODE_OAUTH_CALLBACK_HOST || '127.0.0.1'
-}
 
 type DeviceAuthInfo = {
   deviceAuthId: string
@@ -134,18 +130,6 @@ export function getOpenAICodexAccountId(accessToken: string): string | null {
   const payload = decodeJwt(accessToken)
   const accountId = payload?.[JWT_CLAIM_PATH]?.chatgpt_account_id
   return typeof accountId === 'string' && accountId.length > 0 ? accountId : null
-}
-
-/** 带取消支持的 fetch */
-async function fetchWithLoginCancellation(input: string, init: RequestInit): Promise<Response> {
-  try {
-    return await fetch(input, init)
-  } catch (error) {
-    if (init.signal?.aborted) {
-      throw new Error(tSync('oauth.loginCancelled'))
-    }
-    throw error
-  }
 }
 
 /** 读取 token 响应 */
@@ -376,87 +360,6 @@ async function createAuthorizationFlow(
   return { verifier, state, url: url.toString() }
 }
 
-type OAuthServerInfo = {
-  close: () => void
-  cancelWait: () => void
-  waitForCode: () => Promise<{ code: string } | null>
-}
-
-/** 启动本地 OAuth 回调服务器 */
-function startLocalOAuthServer(state: string): Promise<OAuthServerInfo> {
-  const http = require('node:http') as typeof import('node:http')
-
-  let settleWait: ((value: { code: string } | null) => void) | undefined
-  const waitForCodePromise = new Promise<{ code: string } | null>((resolve) => {
-    let settled = false
-    settleWait = (value) => {
-      if (settled) return
-      settled = true
-      resolve(value)
-    }
-  })
-
-  const server = http.createServer((req, res) => {
-    try {
-      const url = new URL(req.url || '', 'http://localhost')
-      if (url.pathname !== '/auth/callback') {
-        res.statusCode = 404
-        res.setHeader('Content-Type', 'text/html; charset=utf-8')
-        res.end(oauthErrorHtml(tSync('oauth.openaiCodex.callbackRouteNotFound')))
-        return
-      }
-      if (url.searchParams.get('state') !== state) {
-        res.statusCode = 400
-        res.setHeader('Content-Type', 'text/html; charset=utf-8')
-        res.end(oauthErrorHtml(tSync('oauth.openaiCodex.stateMismatch')))
-        return
-      }
-      const code = url.searchParams.get('code')
-      if (!code) {
-        res.statusCode = 400
-        res.setHeader('Content-Type', 'text/html; charset=utf-8')
-        res.end(oauthErrorHtml(tSync('oauth.openaiCodex.missingAuthorizationCode')))
-        return
-      }
-      res.statusCode = 200
-      res.setHeader('Content-Type', 'text/html; charset=utf-8')
-      res.end(oauthSuccessHtml(tSync('oauth.openaiCodex.authenticationCompleted')))
-      settleWait?.({ code })
-    } catch {
-      res.statusCode = 500
-      res.setHeader('Content-Type', 'text/html; charset=utf-8')
-      res.end(oauthErrorHtml(tSync('oauth.openaiCodex.callbackInternalError')))
-    }
-  })
-
-  return new Promise((resolve) => {
-    server
-      .listen(1455, getCallbackHost(), () => {
-        resolve({
-          close: () => server.close(),
-          cancelWait: () => {
-            settleWait?.(null)
-          },
-          waitForCode: () => waitForCodePromise,
-        })
-      })
-      .on('error', () => {
-        settleWait?.(null)
-        resolve({
-          close: () => {
-            try {
-              server.close()
-            } catch {
-              // 忽略
-            }
-          },
-          cancelWait: () => {},
-          waitForCode: async () => null,
-        })
-      })
-  })
-}
-
 /** 从 access token 中提取 accountId */
 function getAccountId(accessToken: string): string | null {
   return getOpenAICodexAccountId(accessToken)
@@ -521,7 +424,19 @@ export async function loginOpenAICodex(options: {
   originator?: string
 }): Promise<OAuthCredentials> {
   const { verifier, state, url } = await createAuthorizationFlow(options.originator)
-  const server = await startLocalOAuthServer(state)
+  const server = await startOAuthCallbackServer({
+    port: 1455,
+    path: '/auth/callback',
+    state,
+    messages: {
+      routeNotFound: tSync('oauth.openaiCodex.callbackRouteNotFound'),
+      stateMismatch: tSync('oauth.openaiCodex.stateMismatch'),
+      missingCode: tSync('oauth.openaiCodex.missingAuthorizationCode'),
+      completed: tSync('oauth.openaiCodex.authenticationCompleted'),
+      internalError: tSync('oauth.openaiCodex.callbackInternalError'),
+    },
+    accept: (code) => ({ code }),
+  })
 
   options.onAuth({ url, instructions: tSync('oauth.openaiCodex.browserInstructions') })
 

@@ -26,7 +26,7 @@
 
 import { tSync } from '../../../i18n/index.js'
 import { getOrCreateAuthHostId } from '../../auth/authConfig.js'
-import { oauthErrorHtml, oauthSuccessHtml } from './oauthPage.js'
+import { fetchWithLoginCancellation, startOAuthCallbackServer } from './oauthCallbackServer.js'
 import { generatePKCE } from './pkce.js'
 import type {
   OAuthCredentials,
@@ -48,7 +48,7 @@ const DIRECT_TOKEN_SCOPE = 'chatgpt.tokens.use.direct'
 const SCOPE = `openid profile email offline_access resource.invoke ${DIRECT_TOKEN_SCOPE}`
 
 /** 订阅令牌最终发往的 API 资源，需同时出现在授权与换 token 请求中。 */
-const RESOURCE = 'https://api.openai.com/v1'
+export const OPENAI_CHATGPT_API_RESOURCE = 'https://api.openai.com/v1'
 
 /** 仅首次注册使用；令牌交换和刷新必须使用回调签发的 client ID。 */
 const DYNAMIC_CLIENT_ID = 'dynamic_agent_client'
@@ -62,8 +62,6 @@ const EXPIRY_MARGIN_MS = 3 * 60 * 1000
  * 而不是靠 access token 是否以 `sk-` 开头去猜凭据类型。
  */
 export const CHATGPT_SUBSCRIPTION_AUTH_METHOD = 'chatgpt-subscription'
-
-const CALLBACK_PATHNAME = '/auth/callback'
 
 type OAuthToken = {
   access: string
@@ -84,16 +82,6 @@ type TokenOperation = 'exchange' | 'refresh'
 type AuthorizationResult = {
   code: string
   clientId?: string
-}
-
-type OAuthServerInfo = {
-  close: () => void
-  cancelWait: () => void
-  waitForCode: () => Promise<AuthorizationResult | null>
-}
-
-function getCallbackHost(): string {
-  return process.env.ZY_CODE_OAUTH_CALLBACK_HOST || '127.0.0.1'
 }
 
 function randomValue(): string {
@@ -180,17 +168,6 @@ function resolveClientId(issued: string | undefined, saved: string | undefined):
     throw new Error(tSync('oauth.openaiChatGPT.missingClientId'))
   }
   return resolved
-}
-
-async function fetchWithLoginCancellation(input: string, init: RequestInit): Promise<Response> {
-  try {
-    return await fetch(input, init)
-  } catch (error) {
-    if (init.signal?.aborted) {
-      throw new Error(tSync('oauth.loginCancelled'))
-    }
-    throw error
-  }
 }
 
 /**
@@ -316,7 +293,7 @@ async function exchangeAuthorizationCode(
       code,
       code_verifier: verifier,
       redirect_uri: REDIRECT_URI,
-      resource: RESOURCE,
+      resource: OPENAI_CHATGPT_API_RESOURCE,
     }),
     signal,
   })
@@ -348,7 +325,7 @@ async function refreshAccessToken(
         grant_type: 'refresh_token',
         client_id: clientId,
         refresh_token: refreshToken,
-        resource: RESOURCE,
+        resource: OPENAI_CHATGPT_API_RESOURCE,
       }),
     })
   } catch (error) {
@@ -399,7 +376,7 @@ async function createAuthorizationFlow(options: {
   url.searchParams.set('code_challenge_method', 'S256')
   url.searchParams.set('state', state)
   url.searchParams.set('nonce', randomValue())
-  url.searchParams.set('resource', RESOURCE)
+  url.searchParams.set('resource', OPENAI_CHATGPT_API_RESOURCE)
   // 同一主机必须始终发送同一个 ext_agent_host_id
   url.searchParams.set('ext_agent_host_id', `urn:uuid:${getOrCreateAuthHostId()}`)
   if (isReauthorization && options.idToken) {
@@ -409,108 +386,6 @@ async function createAuthorizationFlow(options: {
   url.searchParams.set('originator', options.originator ?? 'zy-code')
 
   return { verifier, state, url: url.toString() }
-}
-
-/**
- * 启动本地回调服务器，校验 state 并取出授权码与 client ID。
- *
- * @param savedClientId 已保存的 client ID；首次动态注册时为空，此时回调必须下发
- */
-function startLocalOAuthServer(state: string, savedClientId?: string): Promise<OAuthServerInfo> {
-  const http = require('node:http') as typeof import('node:http')
-
-  let settleWait: ((value: AuthorizationResult | null) => void) | undefined
-  const waitForCodePromise = new Promise<AuthorizationResult | null>((resolve) => {
-    let settled = false
-    settleWait = (value) => {
-      if (settled) {
-        return
-      }
-      settled = true
-      resolve(value)
-    }
-  })
-
-  const server = http.createServer((req, res) => {
-    try {
-      const url = new URL(req.url || '', 'http://localhost')
-      const respondError = (statusCode: number, message: string) => {
-        res.statusCode = statusCode
-        res.setHeader('Content-Type', 'text/html; charset=utf-8')
-        res.end(oauthErrorHtml(message))
-      }
-
-      if (url.pathname !== CALLBACK_PATHNAME) {
-        respondError(404, tSync('oauth.openaiChatGPT.callbackRouteNotFound'))
-        return
-      }
-      if (url.searchParams.get('state') !== state) {
-        respondError(400, tSync('oauth.openaiChatGPT.stateMismatch'))
-        return
-      }
-
-      const code = url.searchParams.get('code')
-      if (!code) {
-        respondError(400, tSync('oauth.openaiChatGPT.missingAuthorizationCode'))
-        return
-      }
-      // OpenAI 在首次注册的回调中回发签发的 client ID；重新授权时可能省略，
-      // 此时沿用已保存的值。下发值与已保存值冲突说明账号归属错乱，拒绝而非替换。
-      const issuedClientId = url.searchParams.get('client_id')?.trim() || undefined
-      let clientId: string
-      try {
-        clientId = resolveClientId(issuedClientId, savedClientId)
-      } catch (error) {
-        respondError(
-          400,
-          error instanceof Error ? error.message : tSync('oauth.openaiChatGPT.missingClientId'),
-        )
-        return
-      }
-
-      res.statusCode = 200
-      res.setHeader('Content-Type', 'text/html; charset=utf-8')
-      res.end(oauthSuccessHtml(tSync('oauth.openaiChatGPT.authenticationCompleted')))
-      settleWait?.({ code, clientId })
-    } catch {
-      res.statusCode = 500
-      res.setHeader('Content-Type', 'text/html; charset=utf-8')
-      res.end(oauthErrorHtml(tSync('oauth.openaiChatGPT.callbackInternalError')))
-    }
-  })
-
-  return new Promise((resolve) => {
-    server
-      .listen(CALLBACK_PORT, getCallbackHost(), () => {
-        resolve({
-          close: () => {
-            server.close()
-            // 浏览器会提前建立备用连接；不主动断开的话，这些连接可能把
-            // 下一次登录的回调送到本进程，触发 state 校验失败。
-            server.closeAllConnections?.()
-          },
-          cancelWait: () => {
-            settleWait?.(null)
-          },
-          waitForCode: () => waitForCodePromise,
-        })
-      })
-      .on('error', () => {
-        // 端口被占用等启动失败：交由手动粘贴流程兜底（SSH 等无回环环境同样适用）。
-        settleWait?.(null)
-        resolve({
-          close: () => {
-            try {
-              server.close()
-            } catch {
-              // 忽略
-            }
-          },
-          cancelWait: () => {},
-          waitForCode: async () => null,
-        })
-      })
-  })
 }
 
 function credentialsFromToken(token: OAuthToken, clientId: string): OAuthCredentials {
@@ -531,7 +406,6 @@ function credentialsFromToken(token: OAuthToken, clientId: string): OAuthCredent
 export async function loginOpenAIChatGPT(options: {
   onAuth: (info: { url: string; instructions?: string }) => void
   onPrompt: (prompt: OAuthPrompt) => Promise<string>
-  onProgress?: (message: string) => void
   onManualCodeInput?: () => Promise<string>
   originator?: string
   signal?: AbortSignal
@@ -558,7 +432,23 @@ export async function loginOpenAIChatGPT(options: {
     idToken: savedIdToken,
     originator: options.originator,
   })
-  const server = await startLocalOAuthServer(state, savedClientId)
+  const server = await startOAuthCallbackServer({
+    port: CALLBACK_PORT,
+    path: CALLBACK_PATH,
+    state,
+    messages: {
+      routeNotFound: tSync('oauth.openaiChatGPT.callbackRouteNotFound'),
+      stateMismatch: tSync('oauth.openaiChatGPT.stateMismatch'),
+      missingCode: tSync('oauth.openaiChatGPT.missingAuthorizationCode'),
+      completed: tSync('oauth.openaiChatGPT.authenticationCompleted'),
+      internalError: tSync('oauth.openaiChatGPT.callbackInternalError'),
+    },
+    // 回调下发 client ID；重新授权可省略则沿用已保存值，冲突即拒绝
+    accept: (code, params): AuthorizationResult => ({
+      code,
+      clientId: resolveClientId(params.get('client_id')?.trim() || undefined, savedClientId),
+    }),
+  })
   let onAbort: (() => void) | undefined
   try {
     const cancelled = new Promise<never>((_resolve, reject) => {
@@ -660,7 +550,6 @@ export const openaiChatGPTOAuthProvider: OAuthProviderInterface = {
     return loginOpenAIChatGPT({
       onAuth: callbacks.onAuth,
       onPrompt: callbacks.onPrompt,
-      onProgress: callbacks.onProgress,
       onManualCodeInput: callbacks.onManualCodeInput,
       signal: callbacks.signal,
       existingCredentials: readExistingCredentials(),

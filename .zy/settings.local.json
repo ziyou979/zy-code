@@ -363,8 +363,7 @@
       "Bash(echo EXIT=$?)",
       "Bash(gh repo:*)",
       "Bash(gh api:*)",
-      "Bash(echo \"--- exit: $?--\")",
-      "Bash(cmd //c dir /b \"E:\\\\ProjectCollection\\\\TSProjects\")"
+      "Bash(echo \"--- exit: $?--\")"
     ]
   },
   "spinnerTipsEnabled": true

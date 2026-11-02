@@ -52,6 +52,33 @@ const inputPhases: Phase[] = [
 const cliDocs = 'https://cloud.google.com/sdk/docs/install'
 const adcDocs = 'https://cloud.google.com/docs/authentication/set-up-adc-local-dev-environment'
 
+function previousPhase(phase: Phase, hasConnections: boolean): Phase {
+  switch (phase) {
+    case 'connections':
+      return 'connections'
+    case 'intro':
+      return hasConnections ? 'connections' : 'intro'
+    case 'credentials':
+      return 'intro'
+    case 'gcloud':
+    case 'file':
+    case 'projects':
+      return 'credentials'
+    case 'gcloudPath':
+      return 'gcloud'
+    case 'projectInput':
+    case 'location':
+      return 'projects'
+    case 'locationInput':
+    case 'checks':
+      return 'location'
+    case 'summary':
+      return 'checks'
+    case 'connectionName':
+      return 'summary'
+  }
+}
+
 export function VertexLogin({
   onDone,
   onBack,
@@ -87,26 +114,11 @@ export function VertexLogin({
     setPhase(next)
   }
   function back() {
-    const previous: Record<Phase, Phase> = {
-      connections: 'connections',
-      intro: connections.length ? 'connections' : 'intro',
-      credentials: 'intro',
-      gcloud: 'credentials',
-      gcloudPath: 'gcloud',
-      file: 'credentials',
-      projects: 'credentials',
-      projectInput: 'projects',
-      location: 'projects',
-      locationInput: 'location',
-      checks: 'location',
-      summary: 'checks',
-      connectionName: 'summary',
-    }
     if (phase === 'connections' || (phase === 'intro' && !connections.length)) {
       controller.current?.abort()
       onBack()
     } else {
-      go(previous[phase])
+      go(previousPhase(phase, connections.length > 0))
     }
   }
   // Dialog 的 Confirmation 上下文优先于 Select；输入页禁用它，避免 n 被当作取消。

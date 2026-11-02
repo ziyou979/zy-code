@@ -846,11 +846,7 @@ function getHardcodedTextContext(node: ts.Node): string | null {
 
     if (ts.isPropertyAssignment(parent)) {
       const propertyName = getStaticPropertyName(parent.name)
-      if (
-        propertyName &&
-        USER_TEXT_PROP_NAMES.has(propertyName) &&
-        !isStateTransitionProperty(parent)
-      ) {
+      if (propertyName && USER_TEXT_PROP_NAMES.has(propertyName)) {
         return `对象属性 ${propertyName}`
       }
     }
@@ -863,64 +859,6 @@ function getHardcodedTextContext(node: ts.Node): string | null {
   }
 
   return null
-}
-
-/** 有限状态到同一状态集合的映射是机器标识；不豁免普通 UI summary 字段。 */
-function isStateTransitionProperty(property: ts.PropertyAssignment): boolean {
-  const object = property.parent
-  if (!ts.isObjectLiteralExpression(object) || !ts.isVariableDeclaration(object.parent)) {
-    return false
-  }
-  const type = object.parent.type
-  if (!type || !ts.isTypeReferenceNode(type) || type.typeName.getText() !== 'Record') {
-    return false
-  }
-  const [keyType, valueType] = type.typeArguments ?? []
-  if (!keyType || !valueType || keyType.getText() !== valueType.getText()) {
-    return false
-  }
-  if (
-    !ts.isTypeReferenceNode(keyType) ||
-    !ts.isIdentifier(keyType.typeName) ||
-    !/(Phase|State)$/.test(keyType.typeName.text)
-  ) {
-    return false
-  }
-  const name = keyType.typeName.text
-  // 同名类型有遮蔽时无法静态确认含义，保守保留文案检查。
-  const aliases: ts.TypeAliasDeclaration[] = []
-  const visit = (node: ts.Node) => {
-    if (ts.isTypeAliasDeclaration(node) && node.name.text === name) {
-      aliases.push(node)
-    }
-    ts.forEachChild(node, visit)
-  }
-  visit(property.getSourceFile())
-  const alias = aliases.length === 1 ? aliases[0] : undefined
-  if (!alias || !ts.isUnionTypeNode(alias.type)) {
-    return false
-  }
-  const values = new Set<string>()
-  for (const member of alias.type.types) {
-    if (!ts.isLiteralTypeNode(member) || !ts.isStringLiteral(member.literal)) {
-      return false
-    }
-    values.add(member.literal.text)
-  }
-  const isStateValue = (node: ts.Expression): boolean =>
-    (ts.isStringLiteral(node) && values.has(node.text)) ||
-    (ts.isConditionalExpression(node) &&
-      isStateValue(node.whenTrue) &&
-      isStateValue(node.whenFalse))
-  return (
-    object.properties.length > 0 &&
-    object.properties.every(
-      (entry) =>
-        ts.isPropertyAssignment(entry) &&
-        values.has(getStaticPropertyName(entry.name) ?? '') &&
-        isStateValue(entry.initializer),
-    )
-  )
 }
 
 function checkHardcodedUserText() {

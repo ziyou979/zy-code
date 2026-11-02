@@ -87,6 +87,8 @@ export const enSettings: TranslationResource = {
   'settings.modelConfigUpdated': 'Model tier configuration updated',
   'settings.modelLabel': 'Model',
   'settings.modelTiersLabel': 'Model Tiers & Providers',
+  'settings.modelTierClearShadowed':
+    'Cannot remove the last {tier} model: {path} in settings.json would take effect again. Use "Change Primary Model" to replace it, or delete {path} from settings.json first.',
   'settings.notConfigured': 'Not configured',
   'settings.selectModelForTier': 'Select {provider} model for {tier} tier',
   'settings.selectProviderForTier': 'Select model provider for {tier} tier',

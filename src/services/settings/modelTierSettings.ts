@@ -1,6 +1,11 @@
 import { setMainLoopModelOverride } from '../../bootstrap/runtime/runtimeContext.js'
 import type { AppStateStore } from '../../state/AppStateStore.js'
-import type { ModelSetting, ModelTier } from '../model/model.js'
+import {
+  findModelTierScope,
+  parseModelTierValue,
+  type ModelSetting,
+  type ModelTier,
+} from '../model/model.js'
 import { getAPIProvider } from '../model/providers.js'
 import { resolveEffortForModel } from '../effort/effort.js'
 import { shouldEnableThinkingByDefault } from '../messages/thinking.js'
@@ -43,45 +48,45 @@ export function getModelTierProviderConnections(): ModelTierProviderConnection[]
   return [...configured, ...available]
 }
 
-// 与 getModelCandidatesForTier 同序查找有候选的作用域，'' 为顶层
-function findScope(tier: ModelTier, st: SettingsJson, skip?: string) {
-  const has = (s: string) => s !== skip && getModelTierCandidates(tier, st, s).length > 0
-  return [getAPIProvider(), '', ...Object.keys(st.providers ?? {})].find(has)
+/** 清空当前作用域会让 shadowedScope 中被遮蔽的旧档位列表重新生效。 */
+export class ShadowedModelTierError extends Error {
+  constructor(
+    readonly tier: ModelTier,
+    /** '' 为顶层 models */
+    readonly shadowedScope: string,
+  ) {
+    super(`clearing ${tier} would expose ${shadowedScope || 'top-level'} models`)
+    this.name = 'ShadowedModelTierError'
+  }
+
+  /** settings.json 中会重新生效的键路径 */
+  get settingsPath(): string {
+    const models = `models.${this.tier}`
+    return this.shadowedScope ? `providers.${this.shadowedScope}.${models}` : models
+  }
 }
 
-function getScope(tier: ModelTier, st: SettingsJson): string {
+// 编辑档位自身生效的作用域；都未配置时写当前 provider 段（若存在）或顶层，不借用 standard
+function getEditScope(tier: ModelTier, st: SettingsJson): string {
   const p = getAPIProvider()
-  return findScope(tier, st) ?? (st.providers?.[p] ? p : '')
+  return findModelTierScope(tier, st, p)?.scope ?? (st.providers?.[p] ? p : '')
 }
 
 /** 解析指定档位已配置的有序候选列表（第 0 项为主选，后续为降级备选）。 */
 export function getModelTierCandidates(
   tier: ModelTier,
   settings = getInitialSettings(),
-  scope = getScope(tier, settings),
+  scope = getEditScope(tier, settings),
 ): ModelTierCandidate[] {
   const value = scope ? settings.providers?.[scope]?.models?.[tier] : settings.models?.[tier]
-  if (!value) return []
-  if (Array.isArray(value)) {
-    const list: ModelTierCandidate[] = []
-    for (const item of value) {
-      if (typeof item === 'string') {
-        list.push({ provider: scope, model: item })
-      } else if (item && typeof item === 'object' && 'model' in item) {
-        const ref = item as { provider?: string; model: string; label?: string }
-        list.push({ provider: ref.provider ?? scope, model: ref.model, label: ref.label })
-      }
-    }
-    return list
-  }
-  if (typeof value === 'string') {
-    return [{ provider: scope, model: value }]
-  }
-  if (typeof value === 'object' && 'model' in value) {
-    const ref = value as { provider?: string; model: string; label?: string }
-    return [{ provider: ref.provider ?? scope, model: ref.model, label: ref.label }]
-  }
-  return []
+  // 保留原始连接名；顶层隐式平台与运行时一样取当前 provider。
+  return parseModelTierValue(value, scope || getAPIProvider()).map(
+    ({ provider, model, label }) => ({
+      provider: provider ?? '',
+      model,
+      ...(label === undefined ? {} : { label }),
+    }),
+  )
 }
 
 /** 保存主循环选择，沿用现有 provider 级配置的优先级。 */
@@ -118,16 +123,17 @@ export function saveModelTierCandidates(
 
   const primaryModel = candidates[0]?.model ?? ''
   const cur = getInitialSettings()
-  const scope = getScope(tier, cur)
+  const p = getAPIProvider()
+  const scope = getEditScope(tier, cur)
   // 清空会暴露其他作用域的旧列表
-  if (!tierValue && findScope(tier, cur, scope) !== undefined) {
-    return { error: new Error('stale tier would surface') }
+  const shadowed = tierValue ? undefined : findModelTierScope(tier, cur, p, scope)
+  if (shadowed) {
+    return { error: new ShadowedModelTierError(tier, shadowed.scope) }
   }
   const models: Partial<Record<ModelTier, TierValue>> = {}
   models[tier] = tierValue
   // 单次写入；p 取自写入前，不受 sticky 失效影响
   const update: SettingsUpdate = scope ? { providers: { [scope]: { models } } } : { models }
-  const p = getAPIProvider()
   const main = { mainLoopModel: tier, model: undefined }
   if (activate && cur.providers?.[p]) {
     update.model = undefined
