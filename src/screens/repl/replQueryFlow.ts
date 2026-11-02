@@ -331,6 +331,7 @@ export function buildToolUseContext(
     resume: ctx.resume,
     setConversationId: ctx.replStore.setConversationId,
     requestPrompt: feature('HOOK_PROMPTS') ? ctx.requestPrompt : undefined,
+    requestModelFailoverPrompt: ctx.requestPrompt,
     contentReplacementState: ctx.replStore.mutable.contentReplacementState ?? undefined,
     onContentReplacements: (records) => {
       ctx.replStore.setMessages((current) => applyContentReplacementRecords(current, records))

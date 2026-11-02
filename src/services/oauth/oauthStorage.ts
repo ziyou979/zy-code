@@ -314,10 +314,22 @@ export function isOAuthTokenExpiredForConnection(connectionId?: string): boolean
   return credentials ? Date.now() + 5 * 60 * 1000 >= credentials.expires : false
 }
 
-export async function refreshOAuthTokenForConnection(connectionId?: string): Promise<boolean> {
-  if (!connectionId) {
-    return false
+// 同一连接的并发刷新共享一次请求，避免 refresh token 轮换竞争
+const inflight = new Map<string, Promise<boolean>>()
+
+export function refreshOAuthTokenForConnection(id?: string): Promise<boolean> {
+  if (!id) {
+    return Promise.resolve(false)
   }
+  let p = inflight.get(id)
+  if (!p) {
+    p = refreshOnce(id).finally(() => inflight.delete(id))
+    inflight.set(id, p)
+  }
+  return p
+}
+
+async function refreshOnce(connectionId: string): Promise<boolean> {
   const connection = getConnectionById(connectionId)
   const provider = connection ? getOAuthProvider(connection.providerId) : undefined
   if (!connection || !provider) {
@@ -331,6 +343,11 @@ export async function refreshOAuthTokenForConnection(connectionId?: string): Pro
     ).success
   } catch (error) {
     if (isCredentialInvalidatedError(error)) {
+      // 仅当存储的仍是本次使用的 refresh token 时才删除，保留外部已轮换的新凭据
+      const cur = getConnectionById(connection.connectionId)?.credentials
+      if (cur && cur.refresh !== connection.credentials.refresh) {
+        return true
+      }
       removeAuthConfigOAuth(connection.connectionId)
       clearOAuthCredentialsCache()
     }

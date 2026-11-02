@@ -628,6 +628,9 @@ export function openAIUsageToStandard(
     outputTokens: usage?.completion_tokens ?? 0,
     cacheReadInputTokens,
     cacheCreationInputTokens,
+    ...(cacheReadInputTokens + cacheCreationInputTokens > 0 && {
+      extras: { inputIncludesCache: 1 },
+    }),
   }
 }
 
@@ -640,6 +643,9 @@ export function openAIDeltaUsageToStandard(
     outputTokens: usage?.completion_tokens ?? 0,
     cacheReadInputTokens,
     cacheCreationInputTokens,
+    ...(cacheReadInputTokens + cacheCreationInputTokens > 0 && {
+      extras: { inputIncludesCache: 1 },
+    }),
   }
 }
 

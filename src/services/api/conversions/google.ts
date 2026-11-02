@@ -854,8 +854,12 @@ function mapUsageMetadata(usage: GoogleUsageMetadata | undefined): TokenUsage {
     ...(usage.cachedContentTokenCount !== undefined && {
       cacheReadInputTokens: usage.cachedContentTokenCount,
     }),
-    ...((usage.thoughtsTokenCount !== undefined || usage.initialPromptTokenCount !== undefined) && {
+    ...((usage.thoughtsTokenCount !== undefined ||
+      usage.initialPromptTokenCount !== undefined ||
+      (usage.cachedContentTokenCount ?? 0) > 0) && {
       extras: {
+        // promptTokenCount 已含 cachedContentTokenCount
+        ...((usage.cachedContentTokenCount ?? 0) > 0 && { inputIncludesCache: 1 }),
         ...(usage.thoughtsTokenCount !== undefined && {
           thoughtsTokenCount: usage.thoughtsTokenCount,
         }),
@@ -878,8 +882,12 @@ function mapDeltaUsage(usage: GoogleUsageMetadata | undefined): DeltaUsage {
     ...(usage.cachedContentTokenCount !== undefined && {
       cacheReadInputTokens: usage.cachedContentTokenCount,
     }),
-    ...((usage.thoughtsTokenCount !== undefined || usage.initialPromptTokenCount !== undefined) && {
+    ...((usage.thoughtsTokenCount !== undefined ||
+      usage.initialPromptTokenCount !== undefined ||
+      (usage.cachedContentTokenCount ?? 0) > 0) && {
       extras: {
+        // promptTokenCount 已含 cachedContentTokenCount
+        ...((usage.cachedContentTokenCount ?? 0) > 0 && { inputIncludesCache: 1 }),
         ...(usage.thoughtsTokenCount !== undefined && {
           thoughtsTokenCount: usage.thoughtsTokenCount,
         }),

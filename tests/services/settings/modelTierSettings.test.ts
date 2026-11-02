@@ -269,6 +269,131 @@ describe('modelTierSettings', () => {
     expect(readSaved().providers?.deepseek?.models?.standard).toEqual(oldStandard)
   })
 
+  describe('provider 级档位作用域', () => {
+    const scoped = [
+      { provider: 'deepseek', model: 'ds-a' },
+      { provider: 'deepseek', model: 'ds-b' },
+    ]
+
+    beforeEach(() => {
+      updateSettingsForSource('userSettings', {
+        provider: 'deepseek',
+        providers: {
+          deepseek: {
+            models: { standard: scoped },
+            baseUrl: 'https://fixture.example/v1',
+          },
+        },
+      })
+    })
+
+    test('读取与运行时一致：优先当前 provider 的档位列表', () => {
+      expect(getModelTierCandidates('standard').map((c) => c.model)).toEqual(['ds-a', 'ds-b'])
+      expect(getModelCandidatesForTier('standard').map((c) => c.model)).toEqual(['ds-a', 'ds-b'])
+      // provider 段未配置 advanced 时回落到顶层，与运行时顺序一致
+      expect(getModelTierCandidates('advanced')).toEqual(advanced)
+    })
+
+    test('provider 档位中的隐式平台在编辑后仍保持原连接', () => {
+      updateSettingsForSource('userSettings', {
+        providers: { deepseek: { models: { standard: 'ds-implicit' } } },
+      })
+      expect(getModelTierCandidates('standard')).toEqual([
+        { provider: 'deepseek', model: 'ds-implicit' },
+      ])
+      expect(
+        addModelTierCandidate('standard', { provider: 'openai', model: 'gpt-4o' }).error,
+      ).toBeNull()
+      expect(getModelCandidatesForTier('standard')[0]?.provider).toBe('deepseek')
+    })
+
+    test('回落到其他 provider 档位时保留其隐式平台', () => {
+      updateSettingsForSource('userSettings', {
+        models: { advanced: undefined },
+        providers: { ark: { models: { advanced: 'ark-implicit' } } },
+      })
+      expect(getModelTierCandidates('advanced')).toEqual([
+        { provider: 'ark', model: 'ark-implicit' },
+      ])
+      expect(getModelCandidatesForTier('advanced')[0]?.provider).toBe('ark')
+    })
+
+    test('保存写入生效的 provider 段，保留顶层列表、其他档位与 provider 字段', () => {
+      expect(
+        saveModelTierSelection({
+          tier: 'standard',
+          provider: 'deepseek',
+          model: 'ds-c',
+          activate: false,
+        }).error,
+      ).toBeNull()
+      const saved = readSaved()
+      expect(saved.providers?.deepseek?.models?.standard).toEqual([
+        { provider: 'deepseek', model: 'ds-c' },
+        { provider: 'deepseek', model: 'ds-b' },
+      ])
+      expect(saved.providers?.deepseek?.baseUrl).toBe('https://fixture.example/v1')
+      expect(saved.models?.standard).toEqual(oldStandard)
+      expect(saved.models?.advanced).toEqual(advanced)
+      expect(getModelCandidatesForTier('standard')[0]?.model).toBe('ds-c')
+    })
+
+    test('降级链编辑作用于 provider 段而不是顶层', () => {
+      expect(reorderModelTierCandidates('standard', 1, 0).error).toBeNull()
+      expect(readSaved().providers?.deepseek?.models?.standard).toEqual([scoped[1], scoped[0]])
+      expect(clearModelTierFallbacks('standard').error).toBeNull()
+      expect(readSaved().providers?.deepseek?.models?.standard).toEqual(scoped[1])
+      expect(readSaved().models?.standard).toEqual(oldStandard)
+    })
+
+    test('仅顶层有档位时编辑顶层，不复制到 provider 段', () => {
+      expect(
+        addModelTierCandidate('advanced', { provider: 'deepseek', model: 'adv-2' }).error,
+      ).toBeNull()
+      expect(readSaved().models?.advanced).toEqual([
+        ...advanced,
+        { provider: 'deepseek', model: 'adv-2' },
+      ])
+      expect(readSaved().providers?.deepseek?.models?.advanced).toBeUndefined()
+    })
+
+    test('激活档位写入 provider 段主循环并清除两级 model 覆盖', () => {
+      updateSettingsForSource('userSettings', {
+        mainLoopModel: 'standard',
+        providers: { deepseek: { model: 'pinned', mainLoopModel: 'standard' } },
+      })
+      const store = createStore(getDefaultAppState(), onChangeAppState)
+      expect(
+        saveModelTierSelection(
+          { tier: 'advanced', provider: 'deepseek', model: 'adv-x', activate: true },
+          store.setState,
+        ).error,
+      ).toBeNull()
+      const saved = readSaved()
+      expect(saved.providers?.deepseek?.mainLoopModel).toBe('advanced')
+      expect(saved.providers?.deepseek?.model).toBeUndefined()
+      expect(saved.model).toBeUndefined()
+      expect(saved.providers?.deepseek?.models?.standard).toEqual(scoped)
+      expect(saved.providers?.deepseek?.baseUrl).toBe('https://fixture.example/v1')
+      setMainLoopModelOverride(undefined)
+      resetSettingsCache()
+      expect(getMainLoopModel()).toBe('adv-x')
+    })
+
+    test('清空 provider 档位会暴露旧顶层列表时拒绝写入', () => {
+      expect(
+        saveModelTierSelection({
+          tier: 'standard',
+          provider: 'deepseek',
+          model: '',
+          activate: false,
+        }).error,
+      ).toBeInstanceOf(Error)
+      expect(readSaved().providers?.deepseek?.models?.standard).toEqual(scoped)
+      expect(getModelCandidatesForTier('standard')[0]?.model).toBe('ds-a')
+    })
+  })
+
   test('同档位换到新模型时重新识别思考能力并清理旧强度', () => {
     writeFileSync(
       join(configDir, 'auth.json'),

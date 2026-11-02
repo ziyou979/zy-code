@@ -17,6 +17,42 @@ import {
   registerOAuthProvider,
   unregisterOAuthProvider,
 } from '../../../src/services/oauth/providers/registry.js'
+import type { OAuthCredentials } from '../../../src/services/oauth/providers/types.js'
+
+const RACE_PROVIDER_IDS = ['race-a', 'race-b']
+
+/** 注册刷新行为可控的测试 provider，记录每次收到的 refresh token。 */
+function registerRaceProvider(
+  id: string,
+  refreshToken: (credentials: OAuthCredentials) => Promise<OAuthCredentials>,
+): string[] {
+  const attempted: string[] = []
+  registerOAuthProvider({
+    id,
+    name: id,
+    apiProvider: 'generic',
+    defaultConnectionId: id,
+    login: async () => ({ access: '', refresh: '', expires: 0 }),
+    refreshToken: async (credentials) => {
+      attempted.push(credentials.refresh)
+      return refreshToken(credentials)
+    },
+    getApiKey: (credentials) => credentials.access,
+  })
+  return attempted
+}
+
+function deferred(): { promise: Promise<void>; resolve: () => void } {
+  let resolve!: () => void
+  const promise = new Promise<void>((r) => {
+    resolve = r
+  })
+  return { promise, resolve }
+}
+
+function invalidatedError(): Error {
+  return Object.assign(new Error('refresh_token_reused'), { requiresReauthentication: true })
+}
 
 describe('oauthStorage (auth.json)', () => {
   let configDir: string
@@ -31,6 +67,9 @@ describe('oauthStorage (auth.json)', () => {
 
   afterEach(() => {
     unregisterOAuthProvider('invalidating-test')
+    for (const id of RACE_PROVIDER_IDS) {
+      unregisterOAuthProvider(id)
+    }
     clearOAuthCredentialsCache()
     if (prevConfigDir === undefined) {
       delete process.env.ZY_CONFIG_DIR
@@ -214,6 +253,109 @@ describe('oauthStorage (auth.json)', () => {
     expect(getOAuthProviderIdForConnection('invalidating-test')).toBeNull()
     const raw = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf-8'))
     expect(raw['invalidating-test']?.oauth).toBeUndefined()
+  })
+
+  test('同一连接的并发刷新合并为一次请求，完成后允许再次刷新', async () => {
+    const gate = deferred()
+    const attempted = registerRaceProvider('race-a', async (credentials) => {
+      await gate.promise
+      return {
+        access: `access-after-${credentials.refresh}`,
+        refresh: `${credentials.refresh}-next`,
+        expires: Date.now() + 3_600_000,
+      }
+    })
+    saveOAuthCredentials('race-a', { access: 'old-access', refresh: 'r1', expires: 1 })
+
+    const first = refreshOAuthTokenForConnection('race-a')
+    const second = refreshOAuthTokenForConnection('race-a')
+    gate.resolve()
+    expect(await Promise.all([first, second])).toEqual([true, true])
+    expect(attempted).toEqual(['r1'])
+    expect(getOAuthApiKeySyncForConnection('race-a')).toBe('access-after-r1')
+
+    // 成功后进行中状态已清理，下一次刷新使用轮换后的 refresh token
+    expect(await refreshOAuthTokenForConnection('race-a')).toBe(true)
+    expect(attempted).toEqual(['r1', 'r1-next'])
+  })
+
+  test('过期的 refresh_token_reused 失败不会删除外部已保存的新凭据', async () => {
+    const gate = deferred()
+    registerRaceProvider('race-a', async () => {
+      await gate.promise
+      throw invalidatedError()
+    })
+    saveOAuthCredentials('race-a', { access: 'old-access', refresh: 'r1', expires: 1 })
+
+    const pending = refreshOAuthTokenForConnection('race-a')
+    // 另一个进程或调用方在本次刷新失败前已经轮换并保存了新凭据
+    saveOAuthCredentials(
+      'race-a',
+      { access: 'rotated-access', refresh: 'r2', expires: Date.now() + 3_600_000 },
+      'race-a',
+    )
+    gate.resolve()
+
+    expect(await pending).toBe(true)
+    expect(getOAuthProviderIdForConnection('race-a')).toBe('race-a')
+    expect(getOAuthApiKeySyncForConnection('race-a')).toBe('rotated-access')
+    const raw = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf-8'))
+    expect(raw['race-a'].oauth).toMatchObject({ access: 'rotated-access', refresh: 'r2' })
+  })
+
+  test('不同连接的刷新互不合并、互不影响', async () => {
+    const gate = deferred()
+    const attemptedA = registerRaceProvider('race-a', async () => {
+      await gate.promise
+      return { access: 'a-new', refresh: 'ra2', expires: Date.now() + 3_600_000 }
+    })
+    const attemptedB = registerRaceProvider('race-b', async () => {
+      await gate.promise
+      throw invalidatedError()
+    })
+    saveOAuthCredentials('race-a', { access: 'a-old', refresh: 'ra1', expires: 1 })
+    saveOAuthCredentials('race-b', { access: 'b-old', refresh: 'rb1', expires: 1 })
+
+    const a = refreshOAuthTokenForConnection('race-a')
+    const b = refreshOAuthTokenForConnection('race-b')
+    gate.resolve()
+    expect(await Promise.all([a, b])).toEqual([true, false])
+    expect(attemptedA).toEqual(['ra1'])
+    expect(attemptedB).toEqual(['rb1'])
+    expect(getOAuthApiKeySyncForConnection('race-a')).toBe('a-new')
+    expect(getOAuthProviderIdForConnection('race-b')).toBeNull()
+  })
+
+  test('并发刷新遇到真正失效的 token 只请求一次并删除该连接', async () => {
+    const gate = deferred()
+    const attempted = registerRaceProvider('race-a', async () => {
+      await gate.promise
+      throw invalidatedError()
+    })
+    saveOAuthCredentials('race-a', { access: 'old-access', refresh: 'r1', expires: 1 })
+
+    const first = refreshOAuthTokenForConnection('race-a')
+    const second = refreshOAuthTokenForConnection('race-a')
+    gate.resolve()
+    expect(await Promise.all([first, second])).toEqual([false, false])
+    expect(attempted).toEqual(['r1'])
+    expect(getOAuthProviderIdForConnection('race-a')).toBeNull()
+    const raw = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf-8'))
+    expect(raw['race-a']?.oauth).toBeUndefined()
+  })
+
+  test('普通刷新失败保留凭据并清理进行中状态', async () => {
+    let calls = 0
+    registerRaceProvider('race-a', async () => {
+      calls += 1
+      throw new Error('network down')
+    })
+    saveOAuthCredentials('race-a', { access: 'old-access', refresh: 'r1', expires: 1 })
+
+    expect(await refreshOAuthTokenForConnection('race-a')).toBe(false)
+    expect(await refreshOAuthTokenForConnection('race-a')).toBe(false)
+    expect(calls).toBe(2)
+    expect(getOAuthApiKeySyncForConnection('race-a')).toBe('old-access')
   })
 
   test('保存订阅不会把已有命名 OAuth 迁移到 API key 连接', () => {

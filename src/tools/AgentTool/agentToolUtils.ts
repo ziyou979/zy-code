@@ -319,6 +319,7 @@ export function finalizeAgentTool(
       cacheReadInputTokens: lastAssistantMessage.message.usage?.cacheReadInputTokens ?? undefined,
       serviceTier: lastAssistantMessage.message.usage?.serviceTier,
       cacheCreation: lastAssistantMessage.message.usage?.cacheCreation,
+      extras: lastAssistantMessage.message.usage?.extras,
     },
     // 错误语义字段：如果子代理未完成（流式中断/错误截断），
     // 传播 incomplete 标记和错误分类。clean success 则不设置这些字段，

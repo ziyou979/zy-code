@@ -205,6 +205,11 @@ export const enSession: TranslationResource = {
   'modelFailover.switched':
     'The model channel failed and was switched: {from} → {to} ({reason}). The new provider and model remain active until /model is used again or the candidate is removed.',
   'modelFailover.reason.auth_failed': 'authentication failed',
+  'modelFailover.confirmTitle': 'Model failover',
+  'modelFailover.confirm':
+    'The model channel {from} failed ({reason}). Switch to {to} ({provider})? The new channel stays active until /model is used again.',
+  'modelFailover.confirmSwitch': 'Switch',
+  'modelFailover.confirmStay': 'Stay on current model',
   'modelFailover.reason.rate_limit_exhausted': 'rate limit exhausted',
   'modelFailover.reason.quota_exhausted': 'quota / billing exhausted',
   'modelFailover.reason.manual': 'manual',

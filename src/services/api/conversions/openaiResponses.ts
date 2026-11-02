@@ -477,14 +477,21 @@ function responseStopReason(response: OpenAI.Responses.Response): StopReason {
 export function responsesUsageToStandard(
   usage: OpenAI.Responses.ResponseUsage | undefined | null,
 ): TokenUsage {
+  const reasoning = usage?.output_tokens_details?.reasoning_tokens
+  const cached = usage?.input_tokens_details?.cached_tokens ?? 0
   return {
     inputTokens: usage?.input_tokens ?? 0,
     outputTokens: usage?.output_tokens ?? 0,
     cacheReadInputTokens: usage?.input_tokens_details?.cached_tokens,
     cacheCreationInputTokens: undefined,
-    extras: usage?.output_tokens_details?.reasoning_tokens
-      ? { reasoning_tokens: usage.output_tokens_details.reasoning_tokens }
-      : undefined,
+    // input_tokens 已含 cached_tokens
+    extras:
+      reasoning || cached > 0
+        ? {
+            ...(reasoning ? { reasoning_tokens: reasoning } : {}),
+            ...(cached > 0 && { inputIncludesCache: 1 }),
+          }
+        : undefined,
   }
 }
 

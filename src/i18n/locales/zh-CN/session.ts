@@ -184,6 +184,11 @@ export const zhSession: TranslationResource = {
   'modelFailover.switched':
     '模型通道请求失败，已切换：{from} → {to}（{reason}）。新 provider 和模型将保持到再次使用 /model，或该候选被移除。',
   'modelFailover.reason.auth_failed': '认证失败',
+  'modelFailover.confirmTitle': '模型通道切换',
+  'modelFailover.confirm':
+    '模型通道 {from} 请求失败（{reason}）。是否切换到 {to}（{provider}）？新通道将保持到再次使用 /model。',
+  'modelFailover.confirmSwitch': '切换',
+  'modelFailover.confirmStay': '保持当前模型',
   'modelFailover.reason.rate_limit_exhausted': '限流耗尽',
   'modelFailover.reason.quota_exhausted': '额度/账单耗尽',
   'modelFailover.reason.manual': '手动',

@@ -7,6 +7,10 @@ import { shouldEnableThinkingByDefault } from '../messages/thinking.js'
 import { getAuthConfigForProvider, getConfiguredConnectionIds } from '../auth/authConfig.js'
 import { PROVIDER_REGISTRY } from '../model/providerRegistry.js'
 import { getInitialSettings, updateSettingsForSource } from './settings.js'
+import type { SettingsJson } from './types.js'
+
+type SettingsUpdate = Parameters<typeof updateSettingsForSource>[1]
+type TierValue = NonNullable<SettingsJson['models']>[string]
 
 export type ModelTierProviderConnection = {
   id: string
@@ -39,31 +43,43 @@ export function getModelTierProviderConnections(): ModelTierProviderConnection[]
   return [...configured, ...available]
 }
 
+// 与 getModelCandidatesForTier 同序查找有候选的作用域，'' 为顶层
+function findScope(tier: ModelTier, st: SettingsJson, skip?: string) {
+  const has = (s: string) => s !== skip && getModelTierCandidates(tier, st, s).length > 0
+  return [getAPIProvider(), '', ...Object.keys(st.providers ?? {})].find(has)
+}
+
+function getScope(tier: ModelTier, st: SettingsJson): string {
+  const p = getAPIProvider()
+  return findScope(tier, st) ?? (st.providers?.[p] ? p : '')
+}
+
 /** 解析指定档位已配置的有序候选列表（第 0 项为主选，后续为降级备选）。 */
 export function getModelTierCandidates(
   tier: ModelTier,
   settings = getInitialSettings(),
+  scope = getScope(tier, settings),
 ): ModelTierCandidate[] {
-  const value = settings.models?.[tier]
+  const value = scope ? settings.providers?.[scope]?.models?.[tier] : settings.models?.[tier]
   if (!value) return []
   if (Array.isArray(value)) {
     const list: ModelTierCandidate[] = []
     for (const item of value) {
       if (typeof item === 'string') {
-        list.push({ provider: '', model: item })
+        list.push({ provider: scope, model: item })
       } else if (item && typeof item === 'object' && 'model' in item) {
         const ref = item as { provider?: string; model: string; label?: string }
-        list.push({ provider: ref.provider ?? '', model: ref.model, label: ref.label })
+        list.push({ provider: ref.provider ?? scope, model: ref.model, label: ref.label })
       }
     }
     return list
   }
   if (typeof value === 'string') {
-    return [{ provider: '', model: value }]
+    return [{ provider: scope, model: value }]
   }
   if (typeof value === 'object' && 'model' in value) {
     const ref = value as { provider?: string; model: string; label?: string }
-    return [{ provider: ref.provider ?? '', model: ref.model, label: ref.label }]
+    return [{ provider: ref.provider ?? scope, model: ref.model, label: ref.label }]
   }
   return []
 }
@@ -101,10 +117,26 @@ export function saveModelTierCandidates(
         : candidates.map((c) => ({ provider: c.provider, model: c.model }))
 
   const primaryModel = candidates[0]?.model ?? ''
-  const result = updateSettingsForSource('userSettings', {
-    models: { [tier]: tierValue },
-    ...(activate ? { mainLoopModel: tier, model: undefined } : {}),
-  })
+  const cur = getInitialSettings()
+  const scope = getScope(tier, cur)
+  // 清空会暴露其他作用域的旧列表
+  if (!tierValue && findScope(tier, cur, scope) !== undefined) {
+    return { error: new Error('stale tier would surface') }
+  }
+  const models: Partial<Record<ModelTier, TierValue>> = {}
+  models[tier] = tierValue
+  // 单次写入；p 取自写入前，不受 sticky 失效影响
+  const update: SettingsUpdate = scope ? { providers: { [scope]: { models } } } : { models }
+  const p = getAPIProvider()
+  const main = { mainLoopModel: tier, model: undefined }
+  if (activate && cur.providers?.[p]) {
+    update.model = undefined
+    update.providers = { ...update.providers, [p]: { ...update.providers?.[p], ...main } }
+  } else if (activate) {
+    update.mainLoopModel = tier
+    update.model = undefined
+  }
+  const result = updateSettingsForSource('userSettings', update)
   if (result.error) return result
 
   const settings = getInitialSettings()

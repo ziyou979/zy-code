@@ -507,6 +507,7 @@ export function computeTurnTokenUsage(
                 outputTokens?: number
                 cacheReadInputTokens?: number
                 cacheCreationInputTokens?: number
+                extras?: Record<string, number>
               }
             }
           | undefined
@@ -516,7 +517,10 @@ export function computeTurnTokenUsage(
             const subCacheRead = toolResult.usage.cacheReadInputTokens ?? 0
             const subCacheWrite = toolResult.usage.cacheCreationInputTokens ?? 0
             const subOut = toolResult.usage.outputTokens ?? 0
-            inputTokens += subUncached + subCacheRead + subCacheWrite
+            // inputIncludesCache：OpenAI/Google 输入已含缓存；无标记按 Anthropic 口径相加
+            inputTokens += toolResult.usage.extras?.inputIncludesCache
+              ? subUncached
+              : subUncached + subCacheRead + subCacheWrite
             outputTokens += subOut
             cacheReadInputTokens += subCacheRead
             cacheCreationInputTokens += subCacheWrite
@@ -546,7 +550,7 @@ export function computeTurnTokenUsage(
       const cacheWrite =
         usage.cacheCreationInputTokens ?? usage.extras?.cacheCreationInputTokens ?? 0
       const out = usage.outputTokens ?? 0
-      inputTokens += uncached + cacheRead + cacheWrite
+      inputTokens += usage.extras?.inputIncludesCache ? uncached : uncached + cacheRead + cacheWrite
       outputTokens += out
       cacheReadInputTokens += cacheRead
       cacheCreationInputTokens += cacheWrite
