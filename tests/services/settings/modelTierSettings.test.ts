@@ -29,7 +29,8 @@ import {
   createTierCandidateOptions,
   applyModelOptionSelection,
 } from '../../../src/services/model/modelOptions.js'
-import { getModelCandidatesForTier } from '../../../src/services/model/model.js'
+import { getModelCandidatesForTier, pinModelCandidate } from '../../../src/services/model/model.js'
+import { getStickyForTier, setStickyForTier } from '../../../src/services/model/modelChainState.js'
 import {
   getInitialSettings,
   updateSettingsForSource,
@@ -245,6 +246,85 @@ describe('modelTierSettings', () => {
     expect(getMainLoopModel()).toBe('backup-model')
   })
 
+  describe('显式选择主选与已粘住的降级候选', () => {
+    function readStickyTiers(): Record<string, { model: string }> {
+      return JSON.parse(readFileSync(join(configDir, 'model-chain-state.json'), 'utf8')).tiers
+    }
+
+    beforeEach(() => {
+      // standard 已失效切换并粘住 backup-model；advanced 也有独立选择
+      pinModelCandidate('standard', getModelCandidatesForTier('standard')[1]!)
+      pinModelCandidate('advanced', getModelCandidatesForTier('advanced')[0]!)
+      setMainLoopModelOverride('standard')
+      expect(getMainLoopModel()).toBe('backup-model')
+    })
+
+    test('登录后启用新主选清除该档位 sticky，保留降级链与其他档位且重启后仍生效', () => {
+      const result = saveModelTierSelection({
+        tier: 'standard',
+        provider: 'ling-personal',
+        model: 'Ling-3.1-flash',
+        activate: true,
+      })
+      expect(result.error).toBeNull()
+      expect(readSaved().models?.standard).toEqual([
+        { provider: 'ling-personal', model: 'Ling-3.1-flash' },
+        { provider: 'deepseek', model: 'backup-model' },
+      ])
+      expect(getMainLoopModel()).toBe('Ling-3.1-flash')
+      expect(getProviderForModel('standard')).toBe('ant-ling')
+      expect(getAuthProfileForModel('standard')).toBe('ling-personal')
+      expect(readStickyTiers().standard).toBeUndefined()
+      expect(readStickyTiers().advanced?.model).toBe('advanced-model')
+
+      setMainLoopModelOverride(undefined)
+      resetSettingsCache()
+      expect(getMainLoopModel()).toBe('Ling-3.1-flash')
+      expect(getProviderForModel('standard')).toBe('ant-ling')
+    })
+
+    test('非激活编辑保留仍有效的 sticky', () => {
+      const result = saveModelTierSelection({
+        tier: 'standard',
+        provider: 'ling-personal',
+        model: 'Ling-3.1-flash',
+        activate: false,
+      })
+      expect(result.error).toBeNull()
+      expect(readStickyTiers().standard?.model).toBe('backup-model')
+      expect(getMainLoopModel()).toBe('backup-model')
+      expect(getProviderForModel('standard')).toBe('deepseek')
+    })
+
+    test('激活其他档位不清除 standard 的 sticky', () => {
+      const result = saveModelTierSelection({
+        tier: 'advanced',
+        provider: 'ling-personal',
+        model: 'Ling-3.1-flash',
+        activate: true,
+      })
+      expect(result.error).toBeNull()
+      expect(readStickyTiers().advanced).toBeUndefined()
+      expect(readStickyTiers().standard?.model).toBe('backup-model')
+      setMainLoopModelOverride('standard')
+      expect(getMainLoopModel()).toBe('backup-model')
+    })
+
+    test('设置写入失败时保留 sticky', () => {
+      writeFileSync(join(configDir, 'settings.json'), '{ invalid json')
+      resetSettingsCache()
+      const result = saveModelTierSelection({
+        tier: 'standard',
+        provider: 'ling-personal',
+        model: 'Ling-3.1-flash',
+        activate: true,
+      })
+      expect(result.error).toBeInstanceOf(Error)
+      expect(readStickyTiers().standard?.model).toBe('backup-model')
+      expect(getMainLoopModelOverride()).toBe('standard')
+    })
+  })
+
   test('主循环保存保留 provider 级配置中的候选和其他字段', () => {
     updateSettingsForSource('userSettings', {
       provider: 'deepseek',
@@ -286,6 +366,36 @@ describe('modelTierSettings', () => {
           },
         },
       })
+    })
+
+    test('明确激活新主模型会解除旧备用选择，重载后仍选中新主模型', () => {
+      setMainLoopModelOverride(undefined)
+      updateSettingsForSource('userSettings', { model: undefined })
+      const before = getInitialSettings()
+      setStickyForTier('standard', { index: 1, provider: 'deepseek', model: 'ds-b' }, before)
+      setStickyForTier(
+        'advanced',
+        { index: 0, provider: 'deepseek', model: 'advanced-model' },
+        before,
+      )
+      expect(getMainLoopModel()).toBe('ds-b')
+      expect(
+        saveModelTierSelection({
+          tier: 'standard',
+          provider: 'deepseek',
+          model: 'ds-c',
+          activate: true,
+        }).error,
+      ).toBeNull()
+      setMainLoopModelOverride(undefined)
+      resetSettingsCache()
+      expect(getMainLoopModel()).toBe('ds-c')
+      expect(getStickyForTier('standard', getInitialSettings())).toBeNull()
+      expect(getStickyForTier('advanced', getInitialSettings())?.model).toBe('advanced-model')
+      expect(getModelTierCandidates('standard').map((candidate) => candidate.model)).toEqual([
+        'ds-c',
+        'ds-b',
+      ])
     })
 
     test('顶层隐式平台在追加备选后仍与运行时一致', () => {

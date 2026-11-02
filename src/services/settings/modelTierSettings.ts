@@ -7,6 +7,7 @@ import {
   type ModelTier,
 } from '../model/model.js'
 import { getAPIProvider } from '../model/providers.js'
+import { clearStickyForTier } from '../model/modelChainState.js'
 import { resolveEffortForModel } from '../effort/effort.js'
 import { shouldEnableThinkingByDefault } from '../messages/thinking.js'
 import { getAuthConfigForProvider, getConfiguredConnectionIds } from '../auth/authConfig.js'
@@ -146,7 +147,15 @@ export function saveModelTierCandidates(
   if (result.error) return result
 
   const settings = getInitialSettings()
-  if (activate) setMainLoopModelOverride(tier)
+  if (activate) {
+    setMainLoopModelOverride(tier)
+    // 显式启用档位即选中新主选，旧 sticky 会让运行时继续停在原降级候选
+    try {
+      clearStickyForTier(tier, settings)
+    } catch {
+      // sticky 写失败不影响已保存的设置
+    }
+  }
   if (setAppState) {
     setAppState((prev) => ({
       ...prev,
