@@ -48,6 +48,7 @@ import { buildTranscriptForClassifier } from '../../services/permissions/classif
 import { classifyYoloAction } from '../../services/permissions/yoloClassifier.js'
 import { isInProcessTeammate } from '../../services/swarm/teammateContext.js'
 import { getTokenCountFromUsage } from '../../services/api/tokens.js'
+import { aggregateAgentUsage } from '../../services/agent/agentUsage.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from '../ExitPlanModeTool/constants.js'
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from './constants.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
@@ -311,15 +312,11 @@ export function finalizeAgentTool(
     totalDurationMs: Date.now() - startTime,
     totalTokens,
     totalToolUseCount,
+    // totalTokens 保持末次上下文口径；usage 汇总全部请求供父轮统计
     usage: {
-      inputTokens: lastAssistantMessage.message.usage?.inputTokens ?? 0,
-      outputTokens: lastAssistantMessage.message.usage?.outputTokens ?? 0,
-      cacheCreationInputTokens:
-        lastAssistantMessage.message.usage?.cacheCreationInputTokens ?? undefined,
-      cacheReadInputTokens: lastAssistantMessage.message.usage?.cacheReadInputTokens ?? undefined,
+      ...aggregateAgentUsage(agentMessages),
       serviceTier: lastAssistantMessage.message.usage?.serviceTier,
       cacheCreation: lastAssistantMessage.message.usage?.cacheCreation,
-      extras: lastAssistantMessage.message.usage?.extras,
     },
     // 错误语义字段：如果子代理未完成（流式中断/错误截断），
     // 传播 incomplete 标记和错误分类。clean success 则不设置这些字段，

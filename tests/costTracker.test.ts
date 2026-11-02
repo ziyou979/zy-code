@@ -27,6 +27,7 @@ import {
 import { updateUsage } from '../src/services/api/usageTracker.js'
 import { EMPTY_USAGE } from '../src/services/api/emptyUsage.js'
 import { agentToolResultSchema } from '../src/services/agent/agentToolResultSchema.js'
+import { aggregateAgentUsage } from '../src/services/agent/agentUsage.js'
 import { createTestAssistantMessage } from './_helpers/messageFixtures.js'
 
 describe('costTracker resume restore', () => {
@@ -256,6 +257,77 @@ describe('costTracker resume restore', () => {
       expect(summary?.inputTokens).toBe(3000 + 1000)
       expect(summary?.outputTokens).toBe(40)
       expect(summary?.cacheReadInputTokens).toBe(2900)
+    })
+
+    test('子智能体多请求用量全部汇总，同响应分块取最新，父轮不重复计', () => {
+      const asst = (blocks: unknown[], id: string, usage: TokenUsage, model = 'm') => {
+        const msg = createTestAssistantMessage(blocks, { messageId: id })
+        msg.message.model = model
+        msg.message.usage = usage
+        return msg
+      }
+      const anthropicFinal = {
+        inputTokens: 100,
+        outputTokens: 40,
+        cacheReadInputTokens: 4000,
+        cacheCreationInputTokens: 50,
+      }
+      const openai = openAIUsageToStandard({
+        prompt_tokens: 1000,
+        completion_tokens: 20,
+        total_tokens: 1020,
+        prompt_tokens_details: { cached_tokens: 600 },
+      })
+      const agentMessages = [
+        user(),
+        // 同一响应的 thinking 与 tool_call 分块：先到的是早期 usage，后到的为最终 usage
+        asst([{ type: 'thinking', thinking: 'plan' }], 'resp_a', {
+          ...anthropicFinal,
+          outputTokens: 1,
+        }),
+        asst([{ type: 'tool_call', id: 'tc', name: 'Agent', input: {} }], 'resp_a', anthropicFinal),
+        // 保留的嵌套同步 AgentTool 结果
+        createUserMessage({
+          content: [{ type: 'tool_result', toolCallId: 'tc', content: 'ok' }],
+          toolUseResult: {
+            agentId: 'nested',
+            usage: { inputTokens: 10, outputTokens: 5, cacheReadInputTokens: 90 },
+          },
+        }),
+        asst([{ type: 'text', text: 'done' }], 'resp_b', openai),
+        asst(
+          [{ type: 'text', text: 'x' }],
+          'syn',
+          { inputTokens: 999, outputTokens: 9 },
+          SYNTHETIC_MODEL,
+        ),
+      ]
+      const usage = aggregateAgentUsage(agentMessages)
+      expect(usage).toEqual({
+        inputTokens: 100 + (1000 - 600) + 10,
+        outputTokens: 65,
+        cacheReadInputTokens: 4690,
+        cacheCreationInputTokens: 50,
+      })
+      const result = agentToolResultSchema().parse({
+        agentId: 'sub',
+        content: [],
+        totalToolUseCount: 1,
+        totalDurationMs: 0,
+        totalTokens: 1020,
+        usage,
+      })
+      const summary = computeTurnTokenUsage([
+        user(),
+        createUserMessage({
+          content: [{ type: 'tool_result', toolCallId: 'tc-1', content: 'done' }],
+          toolUseResult: result,
+        }),
+      ])
+      // 4150（Anthropic）+ 1000（OpenAI 含缓存）+ 100（嵌套）
+      expect(summary?.inputTokens).toBe(5250)
+      expect(summary?.outputTokens).toBe(65)
+      expect(summary?.cacheReadInputTokens).toBe(4690)
     })
   })
 })

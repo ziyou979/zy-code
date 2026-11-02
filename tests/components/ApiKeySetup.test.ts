@@ -106,4 +106,26 @@ describe('ApiKeySetup', () => {
       expect(saved.generic.apiFormat).toBe(format)
     }
   })
+
+  test('重新配置自定义或本地接口时留空密钥会清除旧密钥，并保留其他连接', () => {
+    saveApiKeyConnection({ platformId: 'openai', apiKey: 'fixture-unrelated-key' })
+    for (const platformId of ['generic', 'local']) {
+      saveApiKeyConnection({
+        platformId,
+        apiKey: 'fixture-old-endpoint-key',
+        customBaseUrl: 'https://old.example.invalid/v1',
+        customApiFormat: 'openai-chat',
+      })
+      const provider = saveApiKeyConnection({
+        platformId,
+        apiKey: '   ',
+        customBaseUrl: 'http://localhost:11434/v1',
+        customApiFormat: 'openai-chat',
+      })
+      const saved = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf8'))
+      expect(saved[provider].apiKey).toBeUndefined()
+      expect(saved[provider].baseUrl).toBe('http://localhost:11434/v1')
+      expect(saved.openai.apiKey).toBe('fixture-unrelated-key')
+    }
+  })
 })

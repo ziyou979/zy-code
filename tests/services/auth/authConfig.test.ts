@@ -87,6 +87,23 @@ describe('authConfig', () => {
     expect(apiKeyConfig.vertex.vertex).toBeUndefined()
   })
 
+  test('显式空 apiKey 清除本连接旧凭据，省略 apiKey 时保留，其他连接不受影响', () => {
+    writeFileSync(
+      join(configDir, 'auth.json'),
+      JSON.stringify({
+        generic: { baseUrl: 'https://old.example/v1', apiKey: 'old-key', apiKeyHelper: 'helper' },
+        local: { apiKey: 'other-key' },
+      }),
+    )
+    setAuthConfigConnection('generic', { baseUrl: 'https://keep.example/v1' })
+    expect(getApiKey('generic')).toBe('old-key')
+    const baseUrl = 'http://127.0.0.1:11434/v1'
+    setAuthConfigConnection('generic', { provider: 'generic', baseUrl, apiKey: '' })
+    const saved = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf8'))
+    expect(saved.generic).toEqual({ provider: 'generic', baseUrl })
+    expect(saved.local.apiKey).toBe('other-key')
+  })
+
   test('ChatGPT 主机标识不会使其他连接的认证配置失效', () => {
     const config = parseAuthConfig({
       deviceId: 'ae77b758-d1b3-4221-bca9-e6bcb160d730',

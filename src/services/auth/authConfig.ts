@@ -499,7 +499,7 @@ export function setAuthConfigApiKey(
   })
 }
 
-/** 写入 onboarding 产生的完整连接信息，同时保留已有 helper 等扩展字段。 */
+/** 写入 onboarding 产生的完整连接信息；省略字段保留原值，显式空 apiKey 清除该连接旧凭据。 */
 export function setAuthConfigConnection(
   connectionId: string,
   config: Pick<
@@ -523,9 +523,15 @@ export function setAuthConfigConnection(
       delete entry.oauth
       delete entry.baseUrl
       delete entry.modelsUrl
-    } else if (config.apiKey) {
+    } else if (config.apiKey !== undefined) {
       delete entry.credentialType
       delete entry.vertex
+      if (!config.apiKey.trim()) {
+        // 显式空 key 表示该连接无需认证；不能残留旧凭据继续发送。
+        delete entry.apiKey
+        delete entry.apiKeyHelper
+        delete entry.oauth
+      }
     }
     for (const [key, value] of Object.entries(config)) {
       if (value !== undefined && value !== '') {
