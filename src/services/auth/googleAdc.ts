@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { execa } from 'execa'
@@ -8,6 +8,7 @@ import { LLMAuthenticationError } from '../../types/llm.js'
 import { resolveModelRequestContext } from '../model/modelRequestContext.js'
 import { getAuthConfigForProvider } from './authConfig.js'
 import { getZyConfigHomeDir } from '../infra/envUtils.js'
+import { createGoogleAdcClient, GOOGLE_ADC_SCOPES } from './googleAdcClient.js'
 
 // 认证缓存由登录与请求共用；重新授权后统一失效，避免继续使用旧 refresh token。
 const googleAdcClients = new Map<string, GoogleAuth>()
@@ -17,8 +18,10 @@ export function getGoogleAdcAuth(credentialsFile?: string): GoogleAuth {
   let auth = googleAdcClients.get(key)
   if (!auth) {
     auth = new GoogleAuth({
-      ...(credentialsFile ? { keyFilename: credentialsFile } : {}),
-      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+      ...(credentialsFile
+        ? { authClient: createGoogleAdcClient(JSON.parse(readFileSync(credentialsFile, 'utf8'))) }
+        : {}),
+      scopes: GOOGLE_ADC_SCOPES,
       clientOptions: { transporterOptions: { timeout: 20000, retry: false } },
     })
     googleAdcClients.set(key, auth)

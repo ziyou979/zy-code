@@ -10,8 +10,8 @@ describe('Google ADC 登录与认证', () => {
     const callsPath = join(dir, 'calls.txt')
     const script =
       process.platform === 'win32'
-        ? `@echo off\r\necho %* >> "${callsPath}"\r\nif "%1"=="--version" exit /b 0\r\necho {} > "%CLOUDSDK_CONFIG%\\application_default_credentials.json"\r\necho https://accounts.google.com/o/oauth2/auth?fixture=1\r\n`
-        : `#!/bin/sh\nprintf '%s\\n' "$*" >> '${callsPath}'\nif [ "$1" = '--version' ]; then exit 0; fi\nprintf '{}' > "$CLOUDSDK_CONFIG/application_default_credentials.json"\nprintf 'https://accounts.google.com/o/oauth2/auth?fixture=1\\n'\n`
+        ? `@echo off\r\necho %* >> "${callsPath}"\r\nif "%1"=="--version" exit /b 0\r\necho {"type":"authorized_user","client_id":"fixture-client","client_secret":"fixture-secret","refresh_token":"fixture-refresh"} > "%CLOUDSDK_CONFIG%\\application_default_credentials.json"\r\necho https://accounts.google.com/o/oauth2/auth?fixture=1\r\n`
+        : `#!/bin/sh\nprintf '%s\\n' "$*" >> '${callsPath}'\nif [ "$1" = '--version' ]; then exit 0; fi\nprintf '{"type":"authorized_user","client_id":"fixture-client","client_secret":"fixture-secret","refresh_token":"fixture-refresh"}' > "$CLOUDSDK_CONFIG/application_default_credentials.json"\nprintf 'https://accounts.google.com/o/oauth2/auth?fixture=1\\n'\n`
     try {
       const source = `
         import { writeFileSync, readFileSync, chmodSync, existsSync } from 'node:fs';
@@ -21,7 +21,7 @@ describe('Google ADC 登录与认证', () => {
         const credentialsFile = join(dir, 'adc.json');
         const callsPath = join(dir, 'calls.txt');
         const sdkPath = join(dir, process.platform === 'win32' ? 'fake cloud.cmd' : 'fake cloud.sh');
-        writeFileSync(credentialsFile, '{}');
+        writeFileSync(credentialsFile, '{"type":"authorized_user","client_id":"fixture-client","client_secret":"fixture-secret","refresh_token":"fixture-refresh"}');
         writeFileSync(sdkPath, ${JSON.stringify(script)});
         if (process.platform !== 'win32') chmodSync(sdkPath, 0o700);
         writeFileSync(join(dir, 'settings.json'), JSON.stringify({ mainLoopModel: 'standard', models: { standard: { provider: 'vertex-fixture', model: 'gemini-4-argon' } } }));

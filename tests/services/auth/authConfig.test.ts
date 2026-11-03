@@ -169,7 +169,8 @@ describe('authConfig', () => {
       oauth: 'openai-codex-responses',
       apiKey: 'openai-responses',
     })
-  })
+    // 父测试的预算须覆盖子进程的 10 秒上限，避免默认 5 秒抢先终止冷启动验证。
+  }, 15_000)
 
   test('更换认证目录不会复用进程中其他用户的主机标识', () => {
     const first = getOrCreateAuthHostId()
