@@ -1,4 +1,8 @@
 import { describe, expect, test } from 'bun:test'
+import {
+  extractNormalizedThinkingLines,
+  sliceLineWindowByWidth,
+} from '../../../src/components/messages/CollapsedReadSearchContent.js'
 import type { SpinnerMode } from '../../../src/components/Spinner.js'
 import type { Message } from '../../../src/types/message.js'
 import {
@@ -230,5 +234,79 @@ describe('handleMessageFromStream streaming thinking', () => {
       thinking: '旧流',
       isStreaming: true,
     })
+  })
+
+  test('上一轮 thinking 结束后，新一轮 thinking_delta 会从头开始而不拼接旧段', () => {
+    const harness = createHarness()
+
+    harness.handle({
+      type: 'stream_event',
+      uuid: 't1-delta',
+      timestamp: new Date(0).toISOString(),
+      event: {
+        type: 'chunk_delta',
+        index: 0,
+        delta: { type: 'thinking_delta', thinking: '第一轮思考' },
+      },
+    } as Message)
+    harness.handle({
+      type: 'stream_event',
+      uuid: 'tool-start',
+      timestamp: new Date(0).toISOString(),
+      event: {
+        type: 'chunk_start',
+        index: 1,
+        chunk: { type: 'tool_call', id: 'call_1', name: 'Read', input: {} },
+      },
+    } as Message)
+
+    expect(harness.thinking?.isStreaming).toBe(false)
+
+    harness.handle({
+      type: 'stream_event',
+      uuid: 't2-delta',
+      timestamp: new Date(0).toISOString(),
+      event: {
+        type: 'chunk_delta',
+        index: 0,
+        delta: { type: 'thinking_delta', thinking: '第二轮思考' },
+      },
+    } as Message)
+
+    expect(harness.thinking).toMatchObject({
+      thinking: '第二轮思考',
+      isStreaming: true,
+    })
+  })
+})
+
+describe('CollapsedReadSearchContent 思考行换行更新与向左滚动窗口切片', () => {
+  test('extractNormalizedThinkingLines 按换行提取非空行并清理 Markdown 前缀', () => {
+    const raw = '# **第一行标题**\n\n- 第二行列表内容\n   \n第三行最新思考'
+    expect(extractNormalizedThinkingLines(raw)).toEqual([
+      '第一行标题',
+      '第二行列表内容',
+      '第三行最新思考',
+    ])
+  })
+
+  test('sliceLineWindowByWidth 在超过最大宽度时支持向左滚动视窗', () => {
+    const shortRes = sliceLineWindowByWidth('short text', 0, 20)
+    expect(shortRes).toEqual({
+      visibleText: 'short text',
+      totalWidth: 10,
+      maxStartCol: 0,
+    })
+
+    const longText = '0123456789abcdefghij0123456789'
+    const startWindow = sliceLineWindowByWidth(longText, 0, 12)
+    expect(startWindow.maxStartCol).toBe(18)
+    expect(startWindow.visibleText).toBe('0123456789a…')
+
+    const midWindow = sliceLineWindowByWidth(longText, 9, 12)
+    expect(midWindow.visibleText).toBe('…abcdefghij…')
+
+    const endWindow = sliceLineWindowByWidth(longText, 18, 12)
+    expect(endWindow.visibleText).toBe('…j0123456789')
   })
 })
