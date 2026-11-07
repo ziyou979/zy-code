@@ -12,6 +12,7 @@ import { useTerminalSize } from '../hooks/useTerminalSize.js'
 import { tSync } from '../i18n/index.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { Box, Text, wrapText } from '../ink/index.js'
+import { renderModelName } from '../services/model/model.js'
 import { evictTerminalTask } from '../services/task-runtime/framework.js'
 import type { AppState } from '../state/AppStateStore.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
@@ -175,7 +176,9 @@ function AgentLine({ task, isSelected, isViewed, onClick }: AgentLineProps) {
   const bullet = isViewed ? BLACK_CIRCLE : RADIO_OFF
   const dim = !highlighted && !isViewed
   const typeLabel = getAgentTypeLabel(task.agentType)
-  const typeLabelPart = `${typeLabel}  `
+  const modelLabel = task.model ? renderModelName(task.model) : undefined
+  const modelPart = modelLabel ? ` \xB7 ${modelLabel}` : ''
+  const typeLabelPart = `${typeLabel}${modelPart}  `
   // 描述左侧消耗的宽度 + 右侧 elapsed 占用宽度，剩下的空间留给描述与 gap
   const leftWidth = stringWidth(prefix) + stringWidth(bullet) + 1 + stringWidth(typeLabelPart)
   const rightWidth = stringWidth(elapsed)
@@ -189,8 +192,9 @@ function AgentLine({ task, isSelected, isViewed, onClick }: AgentLineProps) {
         {bullet}{' '}
         <Text dimColor={false} bold={true}>
           {typeLabel}
-          {'  '}
         </Text>
+        {modelPart && <Text dimColor={true}>{modelPart}</Text>}
+        {'  '}
         {truncated}
         {' '.repeat(gap)}
         {elapsed}

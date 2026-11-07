@@ -30,9 +30,25 @@ import { logEvent } from '../analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../analytics/metadata.js'
 import { parsePromptTooLongTokenCounts } from '../api/errors.js'
 import { getDefaultMaxRetries } from '../api/withRetry.js'
-import { extractToolCallInlineBlock, parseClassifierResponse } from './classifierShared.js'
-import { getZyTempDir } from './scratchpadStorage.js'
 import {
+  extractToolCallInlineBlock,
+  parseClassifierResponse,
+  YOLO_CLASSIFIER_TOOL_NAME,
+} from './classifierShared.js'
+import { getZyTempDir } from './scratchpadStorage.js'
+import { resolveModelRequestContext } from '../model/modelRequestContext.js'
+import {
+  getLocalModelEffortLevels,
+  getLocalMaxOutputTokens,
+  localModelHasAdaptiveThinking,
+} from '../settings/localModelCapabilities.js'
+import {
+  getAutoModeQualificationFingerprint,
+  isAutoModeModelEligible,
+  getTemporaryAutoModeAuthorizationId,
+} from './autoModeQualification.js'
+import {
+  AUTO_MODE_CLASSIFIER_SCHEMA_PROMPTS,
   buildAgentsMdMessage,
   buildDefaultSystemPrompt,
   buildYoloSystemPrompt,
@@ -170,26 +186,24 @@ const yoloClassifierResponseSchema = lazySchema(() =>
   }),
 )
 
-export const YOLO_CLASSIFIER_TOOL_NAME = 'classify_result'
-
 function getYoloClassifierToolSchema(): ToolDefinition {
   return {
     name: YOLO_CLASSIFIER_TOOL_NAME,
-    description: tSync('permission.yoloClassifier.schema.description'),
+    description: AUTO_MODE_CLASSIFIER_SCHEMA_PROMPTS.tool,
     inputSchema: {
       type: 'object',
       properties: {
         thinking: {
           type: 'string',
-          description: tSync('permission.yoloClassifier.schema.thinking'),
+          description: AUTO_MODE_CLASSIFIER_SCHEMA_PROMPTS.thinking,
         },
         shouldBlock: {
           type: 'boolean',
-          description: tSync('permission.yoloClassifier.schema.shouldBlock'),
+          description: AUTO_MODE_CLASSIFIER_SCHEMA_PROMPTS.shouldBlock,
         },
         reason: {
           type: 'string',
-          description: tSync('permission.yoloClassifier.schema.reason'),
+          description: AUTO_MODE_CLASSIFIER_SCHEMA_PROMPTS.reason,
         },
       },
       required: ['thinking', 'shouldBlock', 'reason'],
@@ -318,7 +332,26 @@ function replaceOutputFormatWithXml(systemPrompt: string): string {
  * 返回 [disableThinking, headroom] — 使用元组而非命名对象，
  * 以便属性名字符串不会在缩减后存活到外部构建中。
  */
-function getClassifierThinkingConfig(_model: string): [false | undefined, number] {
+export function getClassifierThinkingConfig(model: string): [false | undefined, number] {
+  const route = resolveModelRequestContext(model)
+  const context = {
+    provider: route.provider,
+    connectionId: route.authProfile ?? route.provider,
+    apiFormat: route.apiFormat,
+  }
+  const levels = getLocalModelEffortLevels(model, context)
+  // 目录只声明思考开启、或声明自适应思考时，不能硬塞 disabled 导致强模型被 400 拒绝。
+  // 为其默认推理预留有限输出空间，并遵守已知的模型输出上限。
+  if (
+    localModelHasAdaptiveThinking(model, context) ||
+    (levels?.length && !levels.includes('off'))
+  ) {
+    const maxOutputTokens = getLocalMaxOutputTokens(model, context)
+    const outputLimit =
+      Number.isFinite(maxOutputTokens) && maxOutputTokens > 0 ? maxOutputTokens : Infinity
+    const headroom = Math.max(0, Math.min(8192, outputLimit - 4096))
+    return [undefined, headroom]
+  }
   return [false, 0]
 }
 
@@ -358,6 +391,7 @@ async function classifyYoloActionXml(
     action: string
   },
   mode: TwoStageMode,
+  recordDebugRequests: boolean,
 ): Promise<YoloClassifierResult> {
   const classifierType =
     mode === 'both' ? 'xml_2stage' : mode === 'fast' ? 'xml_fast' : 'xml_thinking'
@@ -414,8 +448,10 @@ async function classifyYoloActionXml(
       const stage1Text = extractTextContent(stage1Raw.content)
       const stage1Block = parseXmlBlock(stage1Text)
 
-      void maybeDumpAutoMode(stage1Opts, stage1Raw, stage1Start, 'stage1')
-      setLastClassifierRequests([stage1Opts])
+      if (recordDebugRequests) {
+        void maybeDumpAutoMode(stage1Opts, stage1Raw, stage1Start, 'stage1')
+        setLastClassifierRequests([stage1Opts])
+      }
 
       // 如果阶段 1 说放行，立即返回（快速路径）
       if (stage1Block === false) {
@@ -443,6 +479,7 @@ async function classifyYoloActionXml(
           return {
             shouldBlock: true,
             reason: 'Classifier stage 1 unparseable - blocking for safety',
+            unavailable: true,
             model,
             usage: stage1Usage,
             durationMs: stage1DurationMs,
@@ -496,14 +533,17 @@ async function classifyYoloActionXml(
     const totalDurationMs = (stage1DurationMs ?? 0) + stage2DurationMs
     const totalUsage = stage1Usage ? combineUsage(stage1Usage, stage2Usage) : stage2Usage
 
-    void maybeDumpAutoMode(stage2Opts, stage2Raw, stage2Start, 'stage2')
-    setLastClassifierRequests(stage1Opts ? [stage1Opts, stage2Opts] : [stage2Opts])
+    if (recordDebugRequests) {
+      void maybeDumpAutoMode(stage2Opts, stage2Raw, stage2Start, 'stage2')
+      setLastClassifierRequests(stage1Opts ? [stage1Opts, stage2Opts] : [stage2Opts])
+    }
 
     if (stage2Block === null) {
       logAutoModeOutcome('parse_failure', model, { classifierType })
       return {
         shouldBlock: true,
         reason: 'Classifier stage 2 unparseable - blocking for safety',
+        unavailable: true,
         model,
         usage: totalUsage,
         durationMs: totalDurationMs,
@@ -616,7 +656,41 @@ export async function classifyYoloAction(
   tools: Tools,
   context: ToolPermissionContext,
   signal: AbortSignal,
+  options?: { evaluation?: boolean },
 ): Promise<YoloClassifierResult> {
+  const model = getClassifierModel()
+  // 启动门控之后仍可能切换模型、修改策略或过期；每次实际审批重新验证资格。
+  // 评测只调用分类器，永远不执行工具，也不走权限放行路径。
+  if (!options?.evaluation && !isAutoModeModelEligible(model)) {
+    return {
+      shouldBlock: true,
+      unavailable: true,
+      reason: tSync('autoModeEvaluation.qualificationUnavailable'),
+      model,
+    }
+  }
+  const fingerprint = options?.evaluation ? undefined : getAutoModeQualificationFingerprint(model)
+  const temporaryGrantId = fingerprint
+    ? getTemporaryAutoModeAuthorizationId(model, fingerprint)
+    : undefined
+  const validateDecision = (result: YoloClassifierResult): YoloClassifierResult => {
+    // 网络等待期间发生配置变化时，旧响应不能批准新路由下的动作。
+    if (
+      fingerprint &&
+      (getClassifierModel() !== model ||
+        !isAutoModeModelEligible(model) ||
+        getTemporaryAutoModeAuthorizationId(model, fingerprint) !== temporaryGrantId ||
+        getAutoModeQualificationFingerprint(model) !== fingerprint)
+    ) {
+      return {
+        shouldBlock: true,
+        unavailable: true,
+        reason: tSync('autoModeEvaluation.qualificationChanged'),
+        model,
+      }
+    }
+    return result
+  }
   const lookup = buildToolLookup(tools)
   const actionCompact = toCompact(action, lookup)
   // '' = "无安全相关性"（Tool.toAutoClassifierInput 约定）。没有
@@ -698,27 +772,28 @@ export async function classifyYoloAction(
     text: actionCompact,
   })
 
-  const model = getClassifierModel()
-
   // 如果通过 GrowthBook 启用，则分派到 2 阶段 XML 分类器
   if (isTwoStageClassifierEnabled()) {
-    return classifyYoloActionXml(
-      prefixMessages,
-      systemPrompt,
-      userPrompt,
-      userContentBlocks,
-      model,
-      promptLengths,
-      signal,
-      {
-        mainLoopTokens: mainLoopTokens ?? tokenCountWithEstimation(messages),
-        classifierChars,
-        classifierTokensEst,
-        transcriptEntries: transcriptEntries.length,
-        messages: messages.length,
-        action: actionCompact,
-      },
-      getTwoStageMode(),
+    return validateDecision(
+      await classifyYoloActionXml(
+        prefixMessages,
+        systemPrompt,
+        userPrompt,
+        userContentBlocks,
+        model,
+        promptLengths,
+        signal,
+        {
+          mainLoopTokens: mainLoopTokens ?? tokenCountWithEstimation(messages),
+          classifierChars,
+          classifierTokensEst,
+          transcriptEntries: transcriptEntries.length,
+          messages: messages.length,
+          action: actionCompact,
+        },
+        getTwoStageMode(),
+        !options?.evaluation,
+      ),
     )
   }
   const [disableThinking, thinkingPadding] = getClassifierThinkingConfig(model)
@@ -747,8 +822,10 @@ export async function classifyYoloAction(
       querySource: 'auto_mode',
     } satisfies Parameters<typeof sideQuery>[0]
     const result = await sideQuery(sideQueryOpts)
-    void maybeDumpAutoMode(sideQueryOpts, result, start)
-    setLastClassifierRequests([sideQueryOpts])
+    if (!options?.evaluation) {
+      void maybeDumpAutoMode(sideQueryOpts, result, start)
+      setLastClassifierRequests([sideQueryOpts])
+    }
     const durationMs = Date.now() - start
     const stage1RequestId = extractRequestId(result)
     const stage1MsgId = result.id
@@ -790,6 +867,7 @@ export async function classifyYoloAction(
       return {
         shouldBlock: true,
         reason: 'Classifier returned no tool call block - blocking for safety',
+        unavailable: true,
         model,
         usage,
         durationMs,
@@ -811,6 +889,7 @@ export async function classifyYoloAction(
       return {
         shouldBlock: true,
         reason: 'Invalid classifier response - blocking for safety',
+        unavailable: true,
         model,
         usage,
         durationMs,
@@ -840,7 +919,7 @@ export async function classifyYoloAction(
       classifierInputTokens,
       classifierTokensEst,
     })
-    return classifierResult
+    return validateDecision(classifierResult)
   } catch (error) {
     if (signal.aborted) {
       permLog('Auto mode classifier: aborted by user')

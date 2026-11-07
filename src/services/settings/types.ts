@@ -92,6 +92,7 @@ export const SettingsSchema = lazySchema(() =>
       provider: z
         .enum([
           'anthropic',
+          'ant-ling',
           'atria',
           'mimo',
           'dashscope',
@@ -160,6 +161,13 @@ export const SettingsSchema = lazySchema(() =>
             '"advanced" (complex reasoning), "standard" (everyday tasks), "compact" (fast/cheap). ' +
             'At least the tier referenced by "mainLoopModel" must be configured. ' +
             'Values may be a model id, { provider, model }, or an ordered array of candidates for multi-auth failover.',
+        ),
+      modelCapabilityCatalogUrl: z
+        .url()
+        .nullable()
+        .optional()
+        .describe(
+          'Public model capability catalog URL. Defaults to https://models.dev/api.json. Set null to disable public catalog lookups. The service never receives connection credentials.',
         ),
       /** 多 auth 候选列表的失效切换策略 */
       modelFailover: ModelFailoverSchema()

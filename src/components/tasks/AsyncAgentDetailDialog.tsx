@@ -6,6 +6,7 @@ import { useKeybindings } from '../../keybindings/useKeybinding.js'
 import { getEmptyToolPermissionContext } from '../../tools/tool.js'
 import type { LocalAgentTaskState } from '../../tasks/local-agent-task/LocalAgentTask.js'
 import { getTools } from '../../tools/tools.js'
+import { renderModelName } from '../../services/model/model.js'
 import { formatNumber } from '../../utils/format.js'
 import { extractTag } from '../../services/messages/./predicates.js'
 import { Byline } from '../design-system/Byline.js'
@@ -81,6 +82,12 @@ export function AsyncAgentDetailDialog({ agent, onDone, onKillAgent, onBack }: P
       {
         <Text dimColor={true}>
           {elapsedTime}
+          {agent.model && (
+            <>
+              {' \xB7 '}
+              {renderModelName(agent.model)}
+            </>
+          )}
           {tokenCount !== undefined && tokenCount > 0 && <> · {formatNumber(tokenCount)} tokens</>}
           {toolUseCount !== undefined && toolUseCount > 0 && (
             <>

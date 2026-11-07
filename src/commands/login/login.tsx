@@ -1,4 +1,3 @@
-import { feature } from 'bun:bundle'
 import * as React from 'react'
 import { resetCostState } from 'src/bootstrap/runtime/runtimeContext.js'
 import { clearTrustedDeviceToken, enrollTrustedDevice } from '../../bridge/trustedDevice.js'
@@ -27,12 +26,13 @@ export async function call(
 ): Promise<React.ReactNode> {
   return (
     <Login
-      onDone={async (success: boolean) => {
+      onDone={async (success, _model, credentialType) => {
         context.onChangeAPIKey()
-        // Signature-bearing blocks (thinking, connector_text) are bound to the API key —
-        // strip them so the new key doesn't reject stale signatures.
-        context.setMessages(stripSignatureBlocks)
         if (success) {
+          // ADC 校验或刷新不切换 Anthropic 账户，不能顺带删除 Gemini 历史思考签名。
+          if (credentialType !== 'google-adc') {
+            context.setMessages(stripSignatureBlocks)
+          }
           // Post-login refresh logic. Keep in sync with onboarding in src/InteractiveHelpers.tsx
           // Reset cost state when switching accounts
           resetCostState()
@@ -71,15 +71,19 @@ export async function call(
   )
 }
 export function Login(props: {
-  onDone: (success: boolean, model?: string) => void
+  onDone: (success: boolean, model?: string, credentialType?: 'google-adc') => void
   startingMessage?: string
 }) {
   const mainLoopModel = useMainLoopModel()
+  const [inputActive, setInputActive] = React.useState(false)
+  const [setupActive, setSetupActive] = React.useState(false)
   return (
     <Dialog
       title={tSync('login.title')}
       onCancel={() => props.onDone(false, mainLoopModel)}
       color="permission"
+      isCancelActive={!inputActive && !setupActive}
+      hideInputGuide={setupActive}
       inputGuide={(exitState) =>
         exitState.pending ? (
           <Text>{tSync('login.pressAgainExit', { keyName: exitState.keyName ?? '' })}</Text>
@@ -93,12 +97,12 @@ export function Login(props: {
         )
       }
     >
-      {
-        <ConsoleOAuthFlow
-          onDone={() => props.onDone(true, mainLoopModel)}
-          startingMessage={props.startingMessage}
-        />
-      }
+      <ConsoleOAuthFlow
+        onDone={(credentialType) => props.onDone(true, mainLoopModel, credentialType)}
+        startingMessage={props.startingMessage}
+        onInputModeChange={setInputActive}
+        onSetupModeChange={setSetupActive}
+      />
     </Dialog>
   )
 }

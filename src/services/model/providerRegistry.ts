@@ -13,11 +13,6 @@ import {
 import type { ApiFormat } from './apiFormat.js'
 import type { ProviderCapability } from './providers.js'
 
-/**
- * 模型推荐档位 — 对应 ZY Code 的 advanced / standard / compact 三个模型档位。
- */
-export type ModelTier = 'advanced' | 'standard' | 'compact'
-
 // ---------------------------------------------------------------------------
 // 类型定义
 // ---------------------------------------------------------------------------
@@ -98,14 +93,6 @@ export interface ProviderEntry {
 
   /** API Key 输入框下方显示的 base URL 提示 */
   baseUrlHint?: string
-
-  /** onboarding 模型选择步骤中显示的推荐模型（每个档位推荐一个） */
-  suggestedModels?: Array<{
-    label: string
-    value: string
-    /** 模型档位，Onboarding 会据此渲染 i18n 描述 */
-    tier: ModelTier
-  }>
 
   /** 是否在 onboarding 平台列表中显示，默认 true。基础设施 provider（bedrock 等）设为 false */
   showInOnboarding?: boolean
@@ -252,11 +239,34 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'Anthropic API Key',
-    suggestedModels: [
-      { label: 'claude-opus-5', value: 'claude-opus-5', tier: 'advanced' },
-      { label: 'claude-sonnet-5', value: 'claude-sonnet-5', tier: 'standard' },
-      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
+  },
+  {
+    id: 'ant-ling',
+    formatEndpoints: [
+      { format: 'openai-chat', baseUrl: 'https://api.ant-ling.com/v1' },
+      { format: 'anthropic', baseUrl: 'https://api.ant-ling.com/anthropic' },
     ],
+    endpointType: ['env', 'default', 'custom'],
+    capabilities: STANDARD_CAPABILITIES,
+    baseUrlEnvVar: 'ANT_LING_BASE_URL',
+    apiKeyLabel: 'Ant Ling API Key',
+    baseUrlHint: 'https://api.ant-ling.com/v1',
+    openaiAttr: {
+      thinking: {
+        ...DEFAULT_OPENAI_THINKING_ATTR,
+        modelOverrides: [
+          {
+            pattern: 'ring',
+            enable: (effort) => ({
+              reasoning: {
+                effort: effort === 'xhigh' ? 'xhigh' : 'high',
+              },
+            }),
+            disable: {},
+          },
+        ],
+      },
+    },
   },
   {
     id: 'atria',
@@ -269,9 +279,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'Atria API Key',
     baseUrlHint: 'https://api.atria-asi.ai/v1',
-    suggestedModels: [
-      { label: 'Atria-Dawn-Preview', value: 'Atria-Dawn-Preview', tier: 'advanced' },
-    ],
   },
   {
     id: 'qianfan',
@@ -281,11 +288,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'Baidu API Key',
-    suggestedModels: [
-      { label: 'ernie-5.1', value: 'ernie-5.1', tier: 'advanced' },
-      { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro', tier: 'standard' },
-      { label: 'ernie-4.5-turbo-128k', value: 'ernie-4.5-turbo-128k', tier: 'compact' },
-    ],
   },
   {
     id: 'bedrock',
@@ -297,11 +299,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     baseUrlEnvVar: 'BEDROCK_BASE_URL',
     apiKeyLabel: 'AWS Access Key',
     baseUrlHint: 'https://bedrock-runtime.{region}.amazonaws.com',
-    suggestedModels: [
-      { label: 'claude-opus-5', value: 'claude-opus-5', tier: 'advanced' },
-      { label: 'claude-sonnet-5', value: 'claude-sonnet-5', tier: 'standard' },
-      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
-    ],
   },
   {
     id: 'dashscope',
@@ -316,11 +313,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: STANDARD_CAPABILITIES,
     baseUrlEnvVar: 'DASHSCOPE_BASE_URL',
     apiKeyLabel: 'DashScope API Key',
-    suggestedModels: [
-      { label: 'qwen3.8-max', value: 'qwen3.8-max', tier: 'advanced' },
-      { label: 'qwen3.7-plus', value: 'qwen3.7-plus', tier: 'standard' },
-      { label: 'qwen3.7-flash', value: 'qwen3.7-flash', tier: 'compact' },
-    ],
     openaiAttr: {
       stripThinkingTags: true,
     },
@@ -331,10 +323,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'DeepSeek API Key',
-    suggestedModels: [
-      { label: 'deepseek-v4-pro', value: 'deepseek-v4-pro', tier: 'advanced' },
-      { label: 'deepseek-v4-flash', value: 'deepseek-v4-flash', tier: 'standard' },
-    ],
   },
   {
     id: 'fireworks',
@@ -345,23 +333,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'Fireworks API Key',
-    suggestedModels: [
-      {
-        label: 'accounts/fireworks/models/deepseek-v4-pro',
-        value: 'accounts/fireworks/models/deepseek-v4-pro',
-        tier: 'advanced',
-      },
-      {
-        label: 'accounts/fireworks/models/gpt-oss-120b',
-        value: 'accounts/fireworks/models/gpt-oss-120b',
-        tier: 'standard',
-      },
-      {
-        label: 'accounts/fireworks/models/gpt-oss-20b',
-        value: 'accounts/fireworks/models/gpt-oss-20b',
-        tier: 'compact',
-      },
-    ],
   },
   {
     id: 'azure',
@@ -377,11 +348,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     baseUrlEnvVar: 'AZURE_BASE_URL',
     apiKeyLabel: 'Microsoft Azure API Key',
     baseUrlHint: 'https://{resource}.services.ai.azure.com/models',
-    suggestedModels: [
-      { label: 'claude-opus-5', value: 'claude-opus-5', tier: 'advanced' },
-      { label: 'claude-sonnet-5', value: 'claude-sonnet-5', tier: 'standard' },
-      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
-    ],
   },
   {
     id: 'gemini',
@@ -398,27 +364,19 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['env', 'default'],
     capabilities: ['context_management'],
     apiKeyLabel: 'Google AI API Key',
-    suggestedModels: [
-      { label: 'gemini-3.1-pro-preview', value: 'gemini-3.1-pro-preview', tier: 'advanced' },
-      { label: 'gemini-3.7-flash', value: 'gemini-3.7-flash', tier: 'standard' },
-      { label: 'gemini-3.5-flash-lite', value: 'gemini-3.5-flash-lite', tier: 'compact' },
-    ],
   },
   {
     // Google AI Pro/Ultra 订阅走 OAuth（gemini-oauth，Antigravity 流程）。
     // v1internal Code Assist 端点的鉴权（Bearer）与请求信封（{model,project,request}）
     // 不同于公开 Gemini API，推理由 codeAssistProviderAdapter 单独处理
     id: 'gemini-oauth',
+    // 订阅认证只通过 OAuth 登录入口授权，不能在 API 密钥向导中填写密钥。
+    showInOnboarding: false,
     formatEndpoints: [
       { format: 'google', baseUrl: 'https://cloudcode-pa.googleapis.com/v1internal' },
     ],
     endpointType: ['default'],
     capabilities: ['context_management'],
-    suggestedModels: [
-      { label: 'gemini-3.1-pro-preview', value: 'gemini-3.1-pro-preview', tier: 'advanced' },
-      { label: 'gemini-3.7-flash', value: 'gemini-3.7-flash', tier: 'standard' },
-      { label: 'gemini-3.5-flash-lite', value: 'gemini-3.5-flash-lite', tier: 'compact' },
-    ],
   },
   {
     id: 'generic',
@@ -437,19 +395,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'Groq API Key',
-    suggestedModels: [
-      {
-        label: 'openai/gpt-oss-120b',
-        value: 'openai/gpt-oss-120b',
-        tier: 'advanced',
-      },
-      {
-        label: 'llama-3.3-70b-versatile',
-        value: 'llama-3.3-70b-versatile',
-        tier: 'standard',
-      },
-      { label: 'llama-3.1-8b-instant', value: 'llama-3.1-8b-instant', tier: 'compact' },
-    ],
   },
   {
     // SuperGrok / X Premium+ 订阅走 OAuth（xai-oauth）；也可在 auth.json 配 API Key
@@ -468,10 +413,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     openaiAttr: {
       thinking: XAI_THINKING_ATTR,
     },
-    suggestedModels: [
-      { label: 'grok-4.6', value: 'grok-4.6', tier: 'advanced' },
-      { label: 'grok-4.3', value: 'grok-4.3', tier: 'standard' },
-    ],
   },
   {
     id: 'pangu',
@@ -481,10 +422,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: '华为盘古 API Key',
-    suggestedModels: [
-      { label: 'DeepSeek-V4-pro', value: 'DeepSeek-V4-pro', tier: 'advanced' },
-      { label: 'DeepSeek-V4-flash', value: 'DeepSeek-V4-flash', tier: 'standard' },
-    ],
   },
   {
     id: 'kimi',
@@ -496,11 +433,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: STANDARD_CAPABILITIES,
     baseUrlEnvVar: 'KIMI_BASE_URL',
     apiKeyLabel: 'Kimi API Key',
-    suggestedModels: [
-      { label: 'kimi-k2.7-code', value: 'kimi-k2.7-code', tier: 'advanced' },
-      { label: 'kimi-k2.6', value: 'kimi-k2.6', tier: 'standard' },
-      { label: 'moonshot-v1-8k', value: 'moonshot-v1-8k', tier: 'compact' },
-    ],
     openaiAttr: {
       thinking: {
         enable: (_effort, model) => {
@@ -538,11 +470,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'MiniMax API Key',
-    suggestedModels: [
-      { label: 'MiniMax-M2.7', value: 'MiniMax-M2.7', tier: 'advanced' },
-      { label: 'MiniMax-M2.5', value: 'MiniMax-M2.5', tier: 'standard' },
-      { label: 'MiniMax-M2.1', value: 'MiniMax-M2.1', tier: 'compact' },
-    ],
   },
   {
     id: 'mimo',
@@ -554,10 +481,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: STANDARD_CAPABILITIES,
     baseUrlEnvVar: 'MIMO_BASE_URL',
     apiKeyLabel: 'MiMo API Key',
-    suggestedModels: [
-      { label: 'mimo-v2.5-pro', value: 'mimo-v2.5-pro', tier: 'advanced' },
-      { label: 'mimo-v2.5', value: 'mimo-v2.5', tier: 'standard' },
-    ],
   },
   {
     id: 'nim',
@@ -601,19 +524,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
         ],
       },
     },
-    suggestedModels: [
-      {
-        label: 'nvidia/nemotron-3-ultra-550b-a55b',
-        value: 'nvidia/nemotron-3-ultra-550b-a55b',
-        tier: 'advanced',
-      },
-      { label: 'openai/gpt-oss-120b', value: 'openai/gpt-oss-120b', tier: 'standard' },
-      {
-        label: 'nvidia/nemotron-3-nano-30b-a3b',
-        value: 'nvidia/nemotron-3-nano-30b-a3b',
-        tier: 'compact',
-      },
-    ],
   },
   {
     id: 'ollama',
@@ -622,11 +532,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'API Key',
     baseUrlHint: 'http://localhost:11434/v1',
-    suggestedModels: [
-      { label: 'qwen3-coder-next', value: 'qwen3-coder-next', tier: 'advanced' },
-      { label: 'gpt-oss:20b', value: 'gpt-oss:20b', tier: 'standard' },
-      { label: 'qwen3.5', value: 'qwen3.5', tier: 'compact' },
-    ],
   },
   {
     id: 'openai',
@@ -639,11 +544,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default'],
     capabilities: ['context_management'],
     apiKeyLabel: 'OpenAI API Key',
-    suggestedModels: [
-      { label: 'gpt-5.6-sol', value: 'gpt-5.6-sol', tier: 'advanced' },
-      { label: 'gpt-5.6-terra', value: 'gpt-5.6-terra', tier: 'standard' },
-      { label: 'gpt-5.6-luna', value: 'gpt-5.6-luna', tier: 'compact' },
-    ],
   },
   {
     id: 'opencode-go',
@@ -670,11 +570,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'OpenCode Go API Key',
-    suggestedModels: [
-      { label: 'Qwen3.7 Max', value: 'qwen3.7-max', tier: 'advanced' },
-      { label: 'GLM-5.2', value: 'glm-5.2', tier: 'standard' },
-      { label: 'DeepSeek V4 Flash', value: 'deepseek-v4-flash', tier: 'compact' },
-    ],
   },
   {
     id: 'openrouter',
@@ -688,19 +583,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: ['context_management'],
     // OpenRouter reasoning.effort 支持 low/medium/high（映射由 mapEffortToProvider 处理）。
     apiKeyLabel: 'OpenRouter API Key',
-    suggestedModels: [
-      { label: 'anthropic/claude-opus-5', value: 'anthropic/claude-opus-5', tier: 'advanced' },
-      {
-        label: 'anthropic/claude-sonnet-5',
-        value: 'anthropic/claude-sonnet-5',
-        tier: 'standard',
-      },
-      {
-        label: 'anthropic/claude-haiku-4.5',
-        value: 'anthropic/claude-haiku-4.5',
-        tier: 'compact',
-      },
-    ],
     openaiAttr: {
       thinking: {
         enable: (effort) => ({
@@ -715,11 +597,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'Perplexity API Key',
-    suggestedModels: [
-      { label: 'sonar-reasoning-pro', value: 'sonar-reasoning-pro', tier: 'advanced' },
-      { label: 'sonar-pro', value: 'sonar-pro', tier: 'standard' },
-      { label: 'sonar', value: 'sonar', tier: 'compact' },
-    ],
   },
   {
     id: 'siliconflow',
@@ -730,23 +607,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'SiliconFlow API Key',
-    suggestedModels: [
-      {
-        label: 'deepseek-ai/DeepSeek-V4-Pro',
-        value: 'deepseek-ai/DeepSeek-V4-Pro',
-        tier: 'advanced',
-      },
-      {
-        label: 'Pro/moonshotai/Kimi-K2.6',
-        value: 'Pro/moonshotai/Kimi-K2.6',
-        tier: 'standard',
-      },
-      {
-        label: 'deepseek-ai/DeepSeek-V4-Flash',
-        value: 'deepseek-ai/DeepSeek-V4-Flash',
-        tier: 'compact',
-      },
-    ],
   },
   {
     id: 'stepfun',
@@ -757,11 +617,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     baseUrlHint: 'https://api.stepfun.com/v1',
-    suggestedModels: [
-      { label: 'step-5-preview', value: 'step-5-preview', tier: 'advanced' },
-      { label: 'step-3.7-flash', value: 'step-3.7-flash', tier: 'standard' },
-      { label: 'step-3.5-flash-2603', value: 'step-3.5-flash-2603', tier: 'compact' },
-    ],
     openaiAttr: {
       thinking: {
         // 阶跃用 reasoning_effort 调整推理强度；on 只表示使用模型默认强度。
@@ -782,11 +637,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'Tencent Cloud API Key',
-    suggestedModels: [
-      { label: 'deepseek-v3.2', value: 'deepseek-v3.2', tier: 'advanced' },
-      { label: 'deepseek-r1-0528', value: 'deepseek-r1-0528', tier: 'standard' },
-      { label: 'hunyuan-turbos', value: 'hunyuan-turbos', tier: 'compact' },
-    ],
   },
   {
     id: 'together',
@@ -794,19 +644,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'Together AI API Key',
-    suggestedModels: [
-      {
-        label: 'deepseek-ai/DeepSeek-V4-Pro',
-        value: 'deepseek-ai/DeepSeek-V4-Pro',
-        tier: 'advanced',
-      },
-      {
-        label: 'MiniMaxAI/MiniMax-M2.7',
-        value: 'MiniMaxAI/MiniMax-M2.7',
-        tier: 'standard',
-      },
-      { label: 'openai/gpt-oss-20b', value: 'openai/gpt-oss-20b', tier: 'compact' },
-    ],
   },
   {
     id: 'vertex',
@@ -815,17 +652,14 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
         format: 'anthropic',
         baseUrl: 'https://us-central1-aiplatform.googleapis.com/v1',
       },
+      // Gemini 使用原生 Google 协议和 ADC；项目与区域由命名连接指定。
+      { format: 'google', baseUrl: 'https://aiplatform.googleapis.com/v1beta1' },
     ],
-    endpointType: ['env', 'default'],
+    endpointType: ['env', 'default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     baseUrlEnvVar: 'VERTEX_BASE_URL',
     apiKeyLabel: 'GCP API Key',
     baseUrlHint: 'https://{region}-aiplatform.googleapis.com/v1',
-    suggestedModels: [
-      { label: 'claude-opus-5', value: 'claude-opus-5', tier: 'advanced' },
-      { label: 'claude-sonnet-5', value: 'claude-sonnet-5', tier: 'standard' },
-      { label: 'claude-haiku-4-5', value: 'claude-haiku-4-5', tier: 'compact' },
-    ],
   },
   {
     id: 'ark',
@@ -840,11 +674,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['default', 'custom'],
     capabilities: STANDARD_CAPABILITIES,
     apiKeyLabel: 'ARK API Key',
-    suggestedModels: [
-      { label: 'doubao-seed-evolving', value: 'doubao-seed-evolving', tier: 'advanced' },
-      { label: 'doubao-seed-code', value: 'doubao-seed-code', tier: 'standard' },
-      { label: 'deepseek-v3.2', value: 'deepseek-v3.2', tier: 'compact' },
-    ],
   },
   {
     id: 'zhipu',
@@ -856,11 +685,6 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     capabilities: STANDARD_CAPABILITIES,
     baseUrlEnvVar: 'ZHIPU_BASE_URL',
     apiKeyLabel: 'ZHIPU API Key',
-    suggestedModels: [
-      { label: 'glm-5.2', value: 'glm-5.2', tier: 'advanced' },
-      { label: 'glm-5-turbo', value: 'glm-5-turbo', tier: 'standard' },
-      { label: 'glm-4.5-flash', value: 'glm-4.5-flash', tier: 'compact' },
-    ],
   },
 ] as const
 

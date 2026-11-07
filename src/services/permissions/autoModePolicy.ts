@@ -5,7 +5,10 @@
  * 纯逻辑——同步门控检查、熔断器状态、GrowthBook 配置读取。
  * 不含权限模式转换（见 permissionModeTransitions.ts）。
  */
-import { setNeedsAutoModeExitAttachment } from '../../bootstrap/runtime/runtimeContext.js'
+import {
+  setNeedsAutoModeExitAttachment,
+  getAutoModeSessionGrant,
+} from '../../bootstrap/runtime/runtimeContext.js'
 import {
   getInitialSettings,
   getUseAutoModeDuringPlan,
@@ -15,7 +18,8 @@ import {
 import type { ToolPermissionContext } from '../../tools/tool.js'
 import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { getMainLoopModel } from 'src/services/model/model.js'
-import { modelSupportsAutoMode } from '../feature-flags/betas.js'
+import { getAutoModeModelAuthorization, isAutoModeModelEligible } from './autoModeQualification.js'
+import { getClassifierModel } from './classifierTranscript.js'
 import {
   getDynamicConfig_BLOCKS_ON_INIT,
   getFeatureValue_CACHED_MAY_BE_STALE,
@@ -99,17 +103,28 @@ export function isAutoModeGateEnabled(): boolean {
     return false
   }
   // 先检查全局开关，避免在功能未启用时进入模型能力解析及其 provider 初始化链。
-  if (getAutoModeEnabledState() !== 'enabled') {
+  const enabledState = getAutoModeEnabledState()
+  if (enabledState === 'disabled' || (enabledState === 'opt-in' && !hasAutoModeOptInAnySource())) {
     return false
   }
-  return modelSupportsAutoMode(getMainLoopModel()!)
+  return isAutoModeModelEligible(getClassifierModel())
+}
+
+/** 进入候选模式前可展示用户选择；并未授予执行权限，也不触发评测。 */
+export function isAutoModeEnrollmentAvailable(): boolean {
+  return (
+    !(autoModeStateModule?.isAutoModeCircuitBroken() ?? false) &&
+    !isAutoModeDisabledBySettings() &&
+    getAutoModeEnabledState() !== 'disabled' &&
+    getAutoModeModelAuthorization(getClassifierModel()) !== 'disabled'
+  )
 }
 
 /**
  * 返回启动阶段可安全使用的 auto 模式初始可用性。
  *
  * 冷启动时 provider/model 能力上下文尚未完成注入；此时同步调用
- * modelSupportsAutoMode 会反向加载 provider 初始化链，阻塞在欢迎页渲染之前。
+ * 审批资格检查会反向加载 provider 初始化链，阻塞在欢迎页渲染之前。
  * 因此这里只处理已经可同步确定的本地状态，模型能力由挂载后的
  * verifyAutoModeGateAccess 异步校正。
  */
@@ -144,7 +159,7 @@ export function getAutoModeUnavailableReason(): AutoModeUnavailableReason | null
   if (autoModeStateModule?.isAutoModeCircuitBroken() ?? false) {
     return 'circuit-breaker'
   }
-  if (!modelSupportsAutoMode(getMainLoopModel()!)) {
+  if (!isAutoModeModelEligible(getClassifierModel())) {
     return 'model'
   }
   return null
@@ -198,6 +213,12 @@ export function getAutoModeEnabledStateIfCached(): AutoModeEnabledState | undefi
  *   IDE/Desktop 设置切换来设置）
  */
 export function hasAutoModeOptInAnySource(): boolean {
+  if (
+    getAutoModeSessionGrant() &&
+    getAutoModeModelAuthorization(getClassifierModel()) === 'temporary'
+  ) {
+    return true
+  }
   if (autoModeStateModule?.getAutoModeFlagCli() ?? false) {
     return true
   }
@@ -249,7 +270,7 @@ export async function verifyAutoModeGateAccess(
 
   // 轮播可用性：未被熔断、未被设置禁用、模型支持，且（已启用或已 opt-in）
   const mainModel = getMainLoopModel()!
-  const modelSupported = modelSupportsAutoMode(mainModel)
+  const modelSupported = isAutoModeModelEligible(getClassifierModel())
   let carouselAvailable = false
   if (enabledState !== 'disabled' && !disabledBySettings && modelSupported) {
     carouselAvailable = enabledState === 'enabled' || hasAutoModeOptInAnySource()

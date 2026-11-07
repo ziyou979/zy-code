@@ -1,14 +1,13 @@
 // @ts-nocheck
 
-import type { TokenUsage } from '../../types/llm.js'
-import type { StreamEvent } from '../../types/message.js'
+import type { LLMStreamEvent, TokenUsage } from '../../types/llm.js'
 import type { NonNullableUsage } from './logging.js'
 
 /**
  * 清理流资源以防止内存泄漏。
  * @internal 导出用于测试
  */
-export function cleanupStream(stream: AsyncIterable<StreamEvent> | undefined): void {
+export function cleanupStream(stream: AsyncIterable<LLMStreamEvent> | undefined): void {
   if (!stream) {
     return
   }
@@ -90,6 +89,7 @@ export function updateUsage(
         usage.serverToolUse.webFetchRequests,
     },
     speed: partAsFull.speed ?? usage.speed,
+    ...((usage.extras || extras) && { extras: { ...usage.extras, ...extras } }),
   }
 }
 

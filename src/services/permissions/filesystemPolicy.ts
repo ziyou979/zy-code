@@ -45,6 +45,21 @@ export function isZySettingsPath(filePath: string): boolean {
   )
 }
 
+/** 评测资格可改变自动审批门槛，不能当作工作区普通文件自动写入。 */
+export function isAutoModeQualificationPath(filePath: string): boolean {
+  const path = normalizeCaseForComparison(expandPath(filePath))
+  return (
+    path ===
+      normalizeCaseForComparison(join(getZyConfigHomeDir(), 'auto-mode-qualifications.json')) ||
+    path ===
+      normalizeCaseForComparison(
+        join(getZyConfigHomeDir(), 'discovered-model-capabilities.json'),
+      ) ||
+    path === normalizeCaseForComparison(join(getZyConfigHomeDir(), 'model-capabilities.json')) ||
+    pathInWorkingPath(expandPath(filePath), join(getZyConfigHomeDir(), 'model-capabilities'))
+  )
+}
+
 function isZyConfigFilePath(filePath: string): boolean {
   if (isZySettingsPath(filePath)) {
     return true

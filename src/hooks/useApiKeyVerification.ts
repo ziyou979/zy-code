@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { isAPIError } from '../types/llm.js'
 import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
 import { verifyApiKey } from '../services/api/apiHelpers.js'
 import {
@@ -6,6 +7,10 @@ import {
   getApiKeyWithSource,
   isAuthEnabled,
 } from '../services/auth/auth.js'
+import {
+  getCurrentGoogleAdcConnection,
+  verifyGoogleAdcCredentials,
+} from '../services/auth/googleAdc.js'
 export type VerificationStatus = 'loading' | 'valid' | 'invalid' | 'missing' | 'error'
 export type ApiKeyVerificationResult = {
   status: VerificationStatus
@@ -14,6 +19,9 @@ export type ApiKeyVerificationResult = {
 }
 export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [status, setStatus] = useState<VerificationStatus>(() => {
+    if (getCurrentGoogleAdcConnection()) {
+      return 'loading'
+    }
     if (!isAuthEnabled()) {
       return 'valid'
     }
@@ -30,6 +38,20 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
   })
   const [error, setError] = useState<Error | null>(null)
   const verify = useCallback(async (): Promise<void> => {
+    const adcConnection = getCurrentGoogleAdcConnection()
+    if (adcConnection) {
+      setStatus('loading')
+      setError(null)
+      try {
+        await verifyGoogleAdcCredentials(adcConnection)
+        setStatus('valid')
+      } catch (error) {
+        setError(error instanceof Error ? error : new Error(String(error)))
+        // 网络故障不是退出登录；仅明确认证失败才显示登录提示。
+        setStatus(isAPIError(error) && error.status === 401 ? 'invalid' : 'error')
+      }
+      return
+    }
     if (!isAuthEnabled()) {
       setStatus('valid')
       return

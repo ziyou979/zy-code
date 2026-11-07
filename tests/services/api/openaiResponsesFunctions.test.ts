@@ -766,7 +766,7 @@ describe('responsesUsageToStandard', () => {
     expect(result.inputTokens).toBe(100)
     expect(result.outputTokens).toBe(20)
     expect(result.cacheReadInputTokens).toBe(40)
-    expect(result.extras).toEqual({ reasoning_tokens: 15 })
+    expect(result.extras).toEqual({ reasoning_tokens: 15, inputIncludesCache: 1 })
   })
 
   test('undefined → 全 0 缺省', () => {

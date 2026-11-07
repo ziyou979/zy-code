@@ -27,6 +27,7 @@ import {
   isLocalAgentTask,
   type LocalAgentTaskState,
 } from '../../tasks/local-agent-task/LocalAgentTask.js'
+import { renderModelName } from '../../services/model/model.js'
 import { formatWaitingDuration } from '../../utils/format.js'
 
 type AgentTask = LocalAgentTaskState | InProcessTeammateTaskState
@@ -132,18 +133,20 @@ function getProgressSummary(task: AgentTask): string {
   }
 
   const progress = task.progress
-  if (!progress) {
-    return ''
-  }
   const parts: string[] = []
-  if (progress.toolUseCount > 0) {
-    parts.push(`${progress.toolUseCount} tools`)
+  if (task.model) {
+    parts.push(renderModelName(task.model))
   }
-  if (progress.tokenCount > 0) {
-    parts.push(`${(progress.tokenCount / 1000).toFixed(1)}k tokens`)
-  }
-  if (progress.lastActivity?.activityDescription) {
-    parts.push(progress.lastActivity.activityDescription)
+  if (progress) {
+    if (progress.toolUseCount > 0) {
+      parts.push(`${progress.toolUseCount} tools`)
+    }
+    if (progress.tokenCount > 0) {
+      parts.push(`${(progress.tokenCount / 1000).toFixed(1)}k tokens`)
+    }
+    if (progress.lastActivity?.activityDescription) {
+      parts.push(progress.lastActivity.activityDescription)
+    }
   }
   return parts.join(' · ')
 }

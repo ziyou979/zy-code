@@ -415,6 +415,14 @@ export function getAssistantMessageFromError(
     messagesForAPI?: (UserMessage | AssistantMessage)[]
   },
 ): AssistantMessage {
+  // ChatGPT 订阅额度超限：重试无用，直接引导用户查看用量与套餐
+  if (isChatGPTSubscriptionUsageLimitError(error)) {
+    return createAssistantAPIErrorMessage({
+      content: tSync('oauth.openaiChatGPT.usageLimitReached', { url: CHATGPT_USAGE_URL }),
+      error: 'rate_limit',
+    })
+  }
+
   // 检查 SDK 超时错误
   if (isConnectionError(error)) {
     return createAssistantAPIErrorMessage({
@@ -1017,6 +1025,69 @@ export function classifyAPIError(error: unknown): string {
  */
 export type APIErrorSeverity = 'retryable' | 'terminal'
 
+/**
+ * ChatGPT 订阅共享额度超限。
+ *
+ * 该错误常伴随 429，但配额按小时/窗口重置而非按秒恢复，退避重试只会
+ * 耗尽重试次数后失败，因此必须先于 429 判定为 terminal。
+ */
+const CHATGPT_USAGE_LIMIT_PATTERN = 'subscription_sharing_usage_limit_exceeded'
+
+/** 订阅超限时引导用户查看用量的页面。 */
+const CHATGPT_USAGE_URL = 'https://chatgpt.com/settings/usage'
+
+/** 订阅侧临时不可用（额度共享服务抖动），可重试。 */
+const CHATGPT_USAGE_RETRYABLE_PATTERN = [
+  'subscription_sharing_usage_unavailable',
+  'subscription_sharing_user_unavailable',
+]
+
+/**
+ * 订阅准入被拒（账号套餐、工作区策略或能力不支持）。
+ *
+ * 这些都属于配置/权限问题，重试或改换计费方式都无济于事，必须 terminal。
+ */
+const CHATGPT_ADMISSION_DENIED_PATTERN = [
+  // 该账号/工作区/策略下套餐不可用
+  'subscription_sharing_user_not_eligible',
+  // 请求包含订阅通道不支持的能力，需按 error.param 移除后重发
+  'subscription_sharing_unsupported_capability',
+  // 方法/端点未被该授权覆盖
+  'subscription_sharing_route_not_supported',
+  // 客户端与授权配置错误
+  'chatpass_v2_scope_not_authorized',
+  'chatpass_v2_invalid_authorization_context',
+  // 订阅者身份校验失败，需用户重新登录
+  'subscription_sharing_invalid_user',
+]
+
+function errorMessageText(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+  if (isAPIError(error) && typeof error.message === 'string') {
+    return error.message
+  }
+  return typeof error === 'string' ? error : ''
+}
+
+/** 是否为 ChatGPT 订阅额度超限（不可重试，需引导用户查看用量）。 */
+export function isChatGPTSubscriptionUsageLimitError(error: unknown): boolean {
+  return errorMessageText(error).includes(CHATGPT_USAGE_LIMIT_PATTERN)
+}
+
+/** 是否为 ChatGPT 订阅侧的临时不可用（可重试）。 */
+export function isChatGPTSubscriptionTransientError(error: unknown): boolean {
+  const text = errorMessageText(error)
+  return CHATGPT_USAGE_RETRYABLE_PATTERN.some((pattern) => text.includes(pattern))
+}
+
+/** 是否为 ChatGPT 订阅准入被拒（不可重试，属账号/策略/能力问题）。 */
+export function isChatGPTSubscriptionAdmissionDeniedError(error: unknown): boolean {
+  const text = errorMessageText(error)
+  return CHATGPT_ADMISSION_DENIED_PATTERN.some((pattern) => text.includes(pattern))
+}
+
 export function getAPIErrorSeverity(error: unknown): APIErrorSeverity {
   // 被中止的请求 → terminal（用户意图）
   if (error instanceof Error && error.message === 'Request was aborted.') {
@@ -1026,6 +1097,21 @@ export function getAPIErrorSeverity(error: unknown): APIErrorSeverity {
   // 紧急容量关闭 → terminal
   if (error instanceof Error && error.message.includes(CUSTOM_OFF_SWITCH_MESSAGE)) {
     return 'terminal'
+  }
+
+  // ChatGPT 订阅超限：即使状态码是 429 也不重试（配额按窗口重置）
+  if (isChatGPTSubscriptionUsageLimitError(error)) {
+    return 'terminal'
+  }
+
+  // ChatGPT 订阅准入被拒：账号套餐/策略/能力不支持，重试无意义
+  if (isChatGPTSubscriptionAdmissionDeniedError(error)) {
+    return 'terminal'
+  }
+
+  // ChatGPT 订阅侧临时不可用：服务抖动，退避重试有效
+  if (isChatGPTSubscriptionTransientError(error)) {
+    return 'retryable'
   }
 
   // 认证/授权错误 → terminal
@@ -1071,6 +1157,18 @@ export function getAPIErrorSeverity(error: unknown): APIErrorSeverity {
 }
 
 export function categorizeRetryableAPIError(error: APIErrorLike): WireAssistantMessageError {
+  // 订阅超限与临时不可用都可能不带可辨识的状态码，优先按错误串判定：
+  // 前者按窗口重置不可重试，后者属于服务抖动可重试。
+  if (isChatGPTSubscriptionUsageLimitError(error)) {
+    return 'rate_limit'
+  }
+  if (isChatGPTSubscriptionTransientError(error)) {
+    return 'server_error'
+  }
+  // 准入被拒多为权限/能力问题，归入认证类以便上层提示重新登录或换套餐
+  if (isChatGPTSubscriptionAdmissionDeniedError(error)) {
+    return 'authentication_failed'
+  }
   if (error.status === 529 || error.message?.includes('"type":"overloaded_error"')) {
     return 'rate_limit'
   }

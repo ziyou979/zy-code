@@ -1,3 +1,4 @@
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
 /**
  * bridge 消息转换测试 — toSDKMessages / toInternalMessages / convertSDKMessage。
  *
@@ -11,18 +12,17 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import * as realRuntimeContext from '../../../src/bootstrap/runtime/runtimeContext.js'
 
 // ---- Mock 重依赖 ----
-function setupMocks() {
-  mock.module('../../../src/i18n/index.js', () => ({
+async function setupMocks() {
+  spyOnModuleExports(await import('../../../src/i18n/index.js'), {
     tSync: (key: string) => `[i18n:${key}]`,
     t: (key: string) => `[i18n:${key}]`,
     getUiLanguage: () => 'en',
     warmI18n: async () => {},
-    SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
-  }))
-  mock.module('../../../src/constants/messages.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/constants/messages.js'), {
     getNoContentMessage: () => '[no content]',
-  }))
-  mock.module('../../../src/services/analytics/growthbook.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/services/analytics/growthbook.js'), {
     getFeatureValue_CACHED_MAY_BE_STALE: (_k: string, def: unknown) => def,
     checkStatsigFeatureGate_CACHED_MAY_BE_STALE: () => false,
     checkGate_CACHED_OR_BLOCKING: async () => false,
@@ -43,14 +43,14 @@ function setupMocks() {
     getDynamicConfig_BLOCKS_ON_INIT: async () => null,
     getDynamicConfig_CACHED_MAY_BE_STALE: () => null,
     onGrowthBookRefresh: () => () => {},
-  }))
-  mock.module('../../../src/services/analytics/index.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/services/analytics/index.js'), {
     logEvent: () => {},
-  }))
-  mock.module('../../../src/bootstrap/runtime/runtimeContext.js', () => ({
+  })
+  spyOnModuleExports(await import('../../../src/bootstrap/runtime/runtimeContext.js'), {
     ...realRuntimeContext,
     getSessionId: () => 'test-session-001',
-  }))
+  })
 }
 
 // ---- 辅助构造函数 ----

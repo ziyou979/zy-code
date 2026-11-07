@@ -1,3 +1,5 @@
+import { tSync } from '../i18n/index.js'
+import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
 import { envDynamic } from 'src/services/environment/envDynamic.js'
 import { Box, Text } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
@@ -26,62 +28,44 @@ export function IdeOnboardingDialog({ onDone, installationStatus }: Props) {
   const isJetBrains = isJetBrainsIde(ideType)
   const ideName = toIDEDisplayName(ideType)
   const installedVersion = installationStatus?.installedVersion
-  const pluginOrExtension = isJetBrains ? 'plugin' : 'extension'
   const mentionShortcut = env.platform === 'darwin' ? 'Cmd+Option+K' : 'Ctrl+Alt+K'
   return (
     <>
-      {
-        <Dialog
-          title={
-            <>
-              {<Text color="zy">✻ </Text>}
-              <Text>Welcome to ZY Code for {ideName}</Text>
-            </>
-          }
-          subtitle={
-            installedVersion ? `installed ${pluginOrExtension} v${installedVersion}` : undefined
-          }
-          color="ide"
-          onCancel={onDone}
-          hideInputGuide={true}
-        >
-          {
-            <Box flexDirection="column" gap={1}>
-              {
-                <Text>
-                  • Zy has context of {<Text color="suggestion">⧉ open files</Text>} and{' '}
-                  <Text color="suggestion">⧉ selected lines</Text>
-                </Text>
-              }
-              {
-                <Text>
-                  • Review ZY Code's changes {<Text color="diffAddedWord">+11</Text>}{' '}
-                  <Text color="diffRemovedWord">-22</Text> in the comfort of your IDE
-                </Text>
-              }
-              {
-                <Text>
-                  • Cmd+Esc<Text dimColor={true}> for Quick Launch</Text>
-                </Text>
-              }
-              <Text>
-                • {mentionShortcut}
-                <Text dimColor={true}> to reference files or lines in your input</Text>
-              </Text>
-            </Box>
-          }
-        </Dialog>
-      }
-      {
-        <Box paddingX={1}>
-          <Text dimColor={true} italic={true}>
-            Press Enter to continue
-          </Text>
+      <Dialog
+        title={<Text color="zy">✻ {tSync('ideOnboarding.welcome', { ideName })}</Text>}
+        subtitle={
+          installedVersion
+            ? tSync(
+                isJetBrains ? 'ideOnboarding.installedPlugin' : 'ideOnboarding.installedExtension',
+                { version: installedVersion },
+              )
+            : undefined
+        }
+        color="ide"
+        onCancel={onDone}
+        hideInputGuide
+      >
+        <Box flexDirection="column" gap={1}>
+          <Text>• {tSync('ideOnboarding.context')}</Text>
+          <Text>• {tSync('ideOnboarding.review', { added: '+11', removed: '-22' })}</Text>
+          <Text>• {tSync('ideOnboarding.quickLaunch', { shortcut: 'Cmd+Esc' })}</Text>
+          <Text>• {tSync('ideOnboarding.mention', { shortcut: mentionShortcut })}</Text>
         </Box>
-      }
+      </Dialog>
+      <Box paddingX={2}>
+        <Text dimColor italic>
+          <ConfigurableShortcutHint
+            action="confirm:yes"
+            context="Confirmation"
+            fallback="Enter"
+            description={tSync('common.continue')}
+          />
+        </Text>
+      </Box>
     </>
   )
 }
+
 export function hasIdeOnboardingDialogBeenShown(): boolean {
   const config = getGlobalConfig()
   const terminal = envDynamic.terminal || 'unknown'

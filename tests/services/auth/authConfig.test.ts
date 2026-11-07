@@ -1,19 +1,24 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { spawnSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { getApiKey } from '../../../src/services/auth/auth.js'
 import {
   AUTH_OAUTH_KEY,
   getAuthConfigApiKeyFromConfig,
   getAuthConfigApiKeyHelperFromConfig,
   getAuthConfigApiFormat,
   getAuthConfigBaseUrl,
+  getOrCreateAuthHostId,
   getAuthOAuthStore,
   getAuthOAuthStoreFromConfig,
   getAuthOAuthConnectionsFromConfig,
   loadAuthConfigFromPath,
   parseAuthConfig,
   setAuthConfigOAuth,
+  setAuthConfigConnection,
+  getConfiguredConnectionIds,
   updateAuthConfigRaw,
 } from '../../../src/services/auth/authConfig.js'
 
@@ -43,6 +48,145 @@ describe('authConfig', () => {
 
     expect(getAuthConfigApiKeyFromConfig(config, 'opencode-go')).toBe('provider-key')
     expect(getAuthConfigApiKeyFromConfig(config, 'dashscope')).toBeUndefined()
+  })
+
+  test('ADC 连接在选择器中可见并清理旧凭证和端点，其他连接保持不变', () => {
+    writeFileSync(
+      join(configDir, 'auth.json'),
+      JSON.stringify({
+        vertex: {
+          apiKey: 'fixture-expired-token',
+          apiKeyHelper: 'fixture-helper',
+          baseUrl: 'https://us-central1-aiplatform.googleapis.com/v1',
+          modelsUrl: 'https://fixture.invalid/models',
+          oauth: { access: 'fixture-access', refresh: 'fixture-refresh', expires: 1 },
+        },
+        'other-api': { apiKey: 'fixture-other-key' },
+      }),
+    )
+    expect(
+      setAuthConfigConnection('vertex', {
+        provider: 'vertex',
+        apiFormat: 'google',
+        credentialType: 'google-adc',
+        vertex: { project: 'fixture-project', location: 'global' },
+      }).success,
+    ).toBe(true)
+    const saved = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf8'))
+    expect(saved.vertex).toEqual({
+      provider: 'vertex',
+      apiFormat: 'google',
+      credentialType: 'google-adc',
+      vertex: { project: 'fixture-project', location: 'global' },
+    })
+    expect(saved['other-api'].apiKey).toBe('fixture-other-key')
+    expect(getConfiguredConnectionIds()).toContain('vertex')
+    expect(setAuthConfigConnection('vertex', { apiKey: 'fixture-new-key' }).success).toBe(true)
+    const apiKeyConfig = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf8'))
+    expect(apiKeyConfig.vertex.credentialType).toBeUndefined()
+    expect(apiKeyConfig.vertex.vertex).toBeUndefined()
+  })
+
+  test('显式空 apiKey 清除本连接旧凭据，省略 apiKey 时保留，其他连接不受影响', () => {
+    writeFileSync(
+      join(configDir, 'auth.json'),
+      JSON.stringify({
+        generic: { baseUrl: 'https://old.example/v1', apiKey: 'old-key', apiKeyHelper: 'helper' },
+        local: { apiKey: 'other-key' },
+      }),
+    )
+    setAuthConfigConnection('generic', { baseUrl: 'https://keep.example/v1' })
+    expect(getApiKey('generic')).toBe('old-key')
+    const baseUrl = 'http://127.0.0.1:11434/v1'
+    setAuthConfigConnection('generic', { provider: 'generic', baseUrl, apiKey: '' })
+    const saved = JSON.parse(readFileSync(join(configDir, 'auth.json'), 'utf8'))
+    expect(saved.generic).toEqual({ provider: 'generic', baseUrl })
+    expect(saved.local.apiKey).toBe('other-key')
+  })
+
+  test('ChatGPT 主机标识不会使其他连接的认证配置失效', () => {
+    const config = parseAuthConfig({
+      deviceId: 'ae77b758-d1b3-4221-bca9-e6bcb160d730',
+      dashscope: { apiKey: 'keep-key' },
+      openai: {
+        oauth: { provider: 'openai-codex', access: 'keep-token', refresh: 'r', expires: 1 },
+      },
+    })
+
+    expect(config).not.toBeNull()
+    expect(getAuthConfigApiKeyFromConfig(config, 'dashscope')).toBe('keep-key')
+    expect(getAuthOAuthConnectionsFromConfig(config)).toHaveLength(1)
+    expect(getAuthOAuthStoreFromConfig(config).credentials['openai-codex']?.access).toBe(
+      'keep-token',
+    )
+    expect(getAuthConfigApiKeyFromConfig(config, 'deviceId')).toBeUndefined()
+  })
+
+  test('主机标识创建后保持稳定且保留 API key', () => {
+    writeFileSync(join(configDir, 'auth.json'), JSON.stringify({ generic: { apiKey: 'keep-key' } }))
+    const hostId = getOrCreateAuthHostId()
+    expect(getOrCreateAuthHostId()).toBe(hostId)
+    expect(getApiKey('generic')).toBe('keep-key')
+    expect(
+      getAuthConfigApiKeyFromConfig(
+        loadAuthConfigFromPath(join(configDir, 'auth.json')),
+        'generic',
+      ),
+    ).toBe('keep-key')
+    expect(
+      getAuthOAuthConnectionsFromConfig(loadAuthConfigFromPath(join(configDir, 'auth.json'))),
+    ).toHaveLength(0)
+  })
+
+  test('OpenAI 连接保留旧 OAuth 时显式 API key 不被分派到订阅后端', () => {
+    writeFileSync(
+      join(configDir, 'auth.json'),
+      JSON.stringify({
+        openai: {
+          oauth: { provider: 'openai-codex', access: 'old-token', refresh: 'r', expires: 1 },
+        },
+      }),
+    )
+    // 全量测试有其他文件 mock model/providers；隔离进程验证真实工厂和凭据优先级。
+    // eval 作为 argv 传递，不经过 shell 解释。
+    const clientUrl = new URL('../../../src/services/api/client.js', import.meta.url).href
+    const authUrl = new URL('../../../src/services/auth/authConfig.js', import.meta.url).href
+    const source = `
+      const { getLLMAdapter } = await import(${JSON.stringify(clientUrl)});
+      const { setAuthConfigApiKey } = await import(${JSON.stringify(authUrl)});
+      const oauth = getLLMAdapter({ model: 'gpt-5.3-codex' }).name;
+      setAuthConfigApiKey('openai', 'explicit-key');
+      const apiKey = getLLMAdapter({ model: 'gpt-5.3-codex' }).name;
+      console.log(JSON.stringify({ oauth, apiKey }));
+    `
+    const child = spawnSync(process.execPath, ['--eval', source], {
+      env: { ...process.env, ZY_CONFIG_DIR: configDir },
+      encoding: 'utf-8',
+      timeout: 10_000,
+    })
+    expect(child.status).toBe(0)
+    expect(JSON.parse(child.stdout.trim())).toEqual({
+      oauth: 'openai-codex-responses',
+      apiKey: 'openai-responses',
+    })
+    // 父测试的预算须覆盖子进程的 10 秒上限，避免默认 5 秒抢先终止冷启动验证。
+  }, 15_000)
+
+  test('更换认证目录不会复用进程中其他用户的主机标识', () => {
+    const first = getOrCreateAuthHostId()
+    const otherDir = join(configDir, 'other')
+    process.env.ZY_CONFIG_DIR = otherDir
+    const second = getOrCreateAuthHostId()
+    expect(second).not.toBe(first)
+    process.env.ZY_CONFIG_DIR = configDir
+    expect(getOrCreateAuthHostId()).toBe(first)
+  })
+
+  test('主机标识无法落盘时阻止注册临时身份', () => {
+    const blockedPath = join(configDir, 'blocked')
+    writeFileSync(blockedPath, 'file blocks directory creation')
+    process.env.ZY_CONFIG_DIR = blockedPath
+    expect(() => getOrCreateAuthHostId()).toThrow()
   })
 
   test('按 provider 读取 auth.json 中的 apiKeyHelper', () => {

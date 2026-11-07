@@ -118,6 +118,9 @@ export function tryAdvanceAuthChainOnError(
   fromIndex: number
   toIndex: number
   tier: string
+  mode: 'confirm' | 'notify' | 'off'
+  commit: () => ResolvedModelReference | null
+  decline: () => void
 } | null {
   const resolvedSettings = settings ?? undefined
   if (!isModelFailoverEnabled(resolvedSettings)) {
@@ -168,14 +171,23 @@ export function tryAdvanceAuthChainOnError(
     return null
   }
 
-  const next = advanceModelCandidate(tier, fromIndex, reason, resolvedSettings, activeProvider)
-  if (!next) {
+  // 仅提议：sticky 只在 commit 时写入，confirm 确认前不落盘
+  const peek = candidates[fromIndex + 1]
+  if (!peek) {
     return null
   }
-
-  // 推进成功：清零旧计数，新候选从 0 计
-  consecutiveExhaustionCounts.delete(key)
-  consecutiveExhaustionCounts.set(countKey(tier, next.candidateIndex ?? fromIndex + 1), 0)
+  const next = { ...peek, candidateIndex: fromIndex + 1 }
+  const commit = () => {
+    const done = advanceModelCandidate(tier, fromIndex, reason, resolvedSettings, activeProvider)
+    if (done) {
+      // 推进成功：清零旧计数，新候选从 0 计
+      consecutiveExhaustionCounts.delete(key)
+      consecutiveExhaustionCounts.set(countKey(tier, fromIndex + 1), 0)
+    }
+    return done
+  }
+  // 拒绝/取消：清零计数，阈值重新累计
+  const decline = () => void consecutiveExhaustionCounts.delete(key)
 
   return {
     from,
@@ -184,6 +196,9 @@ export function tryAdvanceAuthChainOnError(
     fromIndex,
     toIndex: next.candidateIndex ?? fromIndex + 1,
     tier,
+    commit,
+    decline,
+    mode: getModelFailoverConfig(resolvedSettings).mode,
   }
 }
 

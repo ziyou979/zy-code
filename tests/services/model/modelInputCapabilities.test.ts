@@ -29,7 +29,7 @@ describe('modelInputCapabilities', () => {
       ]),
     ]
 
-    expect(getMessageMediaInputModalities(messages)).toEqual(['image', 'document'])
+    expect(getMessageMediaInputModalities(messages)).toEqual(['image/png', 'document'])
   })
 
   test('显式声明为纯文本时拒绝图片输入', () => {
@@ -47,4 +47,32 @@ describe('modelInputCapabilities', () => {
       assertMessageInputModalities('undeclared-model', messages, undefined),
     ).not.toThrow()
   })
+})
+
+test('按具体 MIME 区分图片格式，并检查工具结果和 PDF 来源字段', () => {
+  const jpeg = [userMessage([{ type: 'image', mimeType: 'image/jpeg', data: 'jpeg' }])]
+  expect(() => assertMessageInputModalities('jpeg', jpeg, ['text', 'image/jpeg'])).not.toThrow()
+  expect(() => assertMessageInputModalities('png', jpeg, ['text', 'image/png'])).toThrow()
+  expect(() => assertMessageInputModalities('generic', jpeg, ['image'])).not.toThrow()
+  const nested = [
+    userMessage([
+      {
+        type: 'tool_result',
+        toolCallId: 'x',
+        content: [{ type: 'image', mimeType: 'image/webp', data: 'webp' }],
+      },
+    ]),
+  ]
+  expect(() => assertMessageInputModalities('jpeg', nested, ['image/jpeg'])).toThrow()
+  for (const key of ['mediaType', 'media_type', 'mimeType']) {
+    const pdf = [
+      userMessage([{ type: 'document', source: { [key]: 'application/pdf', data: 'pdf' } }]),
+    ]
+    expect(getMessageMediaInputModalities(pdf)).toEqual(['application/pdf'])
+    expect(() => assertMessageInputModalities('pdf', pdf, ['application/pdf'])).not.toThrow()
+    expect(() => assertMessageInputModalities('doc', pdf, ['document'])).not.toThrow()
+    expect(() => assertMessageInputModalities('jpeg', pdf, ['image/jpeg'])).toThrow()
+  }
+  const unknown = [userMessage([{ type: 'document', source: {} }])]
+  expect(() => assertMessageInputModalities('pdf', unknown, ['application/pdf'])).toThrow()
 })

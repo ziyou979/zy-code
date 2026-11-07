@@ -1,3 +1,4 @@
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
 /**
  * P1 PR-A schema 接受性：4.2 updatedToolOutput / 4.5 terminalSequence /
  * 4.3 background_tasks+session_crons / 4.4 args exec form。
@@ -5,7 +6,7 @@
  * 纯 zod schema 解析。schema 导入图里有模块顶层调用 tSync（zyAiLimits 等）会触发
  * settings.ts 循环初始化 TDZ，故先全替换 i18n，再动态 import schema。
  */
-import { beforeAll, describe, expect, mock, test } from 'bun:test'
+import { beforeAll, describe, expect, mock, test, afterAll } from 'bun:test'
 
 // biome-ignore lint/suspicious/noExplicitAny: 测试持有动态导入的 schema 工厂
 let S: any
@@ -13,13 +14,12 @@ let S: any
 let HookCommandSchema: any
 
 beforeAll(async () => {
-  mock.module('../../../src/i18n/index.js', () => ({
+  spyOnModuleExports(await import('../../../src/i18n/index.js'), {
     tSync: (k: string) => k,
     t: (k: string) => k,
     getUiLanguage: () => 'en',
     warmI18n: async () => {},
-    SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
-  }))
+  })
   S = await import('../../../src/types/hooks/schemas.js')
   ;({ HookCommandSchema } = await import('../../../src/schemas/hooks.js'))
 })
@@ -106,3 +106,5 @@ describe('PR-A schema 接受性', () => {
     expect(r.success).toBe(true)
   })
 })
+
+afterAll(() => mock.restore())

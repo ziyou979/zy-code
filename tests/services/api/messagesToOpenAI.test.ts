@@ -10,8 +10,10 @@
  * - 多模态：image 块 → image_url
  * - 异常 input：非对象/字符串 input 时的行为（这是 DashScope 400 关键防线）
  */
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test, afterEach, mock, spyOn } from 'bun:test'
 import { messagesToOpenAI } from '../../../src/services/api/conversions/openai.js'
+import * as capabilities from '../../../src/services/settings/localModelCapabilities.js'
+afterEach(() => mock.restore())
 import { assertValidOpenAIChatMessages } from '../../_helpers/sdkValidators.js'
 
 describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
@@ -243,11 +245,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
   test('DeepSeek + tool_call + 具备 thinking 能力：走 reasoning_content 独立字段', async () => {
     // DeepSeek 协议：两轮之间有 tool_call 时必须回传 reasoning_content
     // 参考：https://api-docs.deepseek.com/zh-cn/guides/thinking_mode
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/settings/localModelCapabilities.js', () => ({
-      localModelHasCapability: (model: string, cap: string) =>
-        model.toLowerCase().includes('deepseek') && cap === 'thinking',
-    }))
+    spyOn(capabilities, 'localModelHasCapability').mockImplementation(
+      (model, cap) => model.toLowerCase().includes('deepseek') && cap === 'thinking',
+    )
     const { messagesToOpenAI: fn } = await import('../../../src/services/api/conversions/openai.js')
     const messages = [
       {
@@ -269,11 +269,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
   })
 
   test('DeepSeek + 纯文本轮次：thinking 被丢弃', async () => {
-    const { mock } = await import('bun:test')
-    mock.module('../../../src/services/settings/localModelCapabilities.js', () => ({
-      localModelHasCapability: (model: string, cap: string) =>
-        model.toLowerCase().includes('deepseek') && cap === 'thinking',
-    }))
+    spyOn(capabilities, 'localModelHasCapability').mockImplementation(
+      (model, cap) => model.toLowerCase().includes('deepseek') && cap === 'thinking',
+    )
     const { messagesToOpenAI: fn } = await import('../../../src/services/api/conversions/openai.js')
     const messages = [
       {
@@ -294,16 +292,10 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
   })
 
   test('DeepSeek 但不具备 thinking 能力（model-capabilities 未声明）：走普通 <thinking> 兜底', async () => {
-    const { mock } = await import('bun:test')
     // 必须同时 mock provider 为非 REASONING_CONTENT_PROVIDERS，否则 provider 级判断会短路
     const realProviders = await import('../../../src/services/model/providers.js')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      ...realProviders,
-      getAPIProvider: () => 'generic',
-    }))
-    mock.module('../../../src/services/settings/localModelCapabilities.js', () => ({
-      localModelHasCapability: () => false, // 未声明 thinking 能力
-    }))
+    spyOn(realProviders, 'getAPIProvider').mockReturnValue('generic')
+    spyOn(capabilities, 'localModelHasCapability').mockReturnValue(false)
     const { messagesToOpenAI: fn } = await import('../../../src/services/api/conversions/openai.js')
     const messages = [
       {
@@ -325,13 +317,9 @@ describe('messagesToOpenAI: 出站 OpenAI 请求构造', () => {
   })
 
   test('非 reasoning provider 的模型：thinking 包成 <thinking>...</thinking> 并入 content', async () => {
-    const { mock } = await import('bun:test')
     // 确保 provider 不在 REASONING_CONTENT_PROVIDERS 中
     const realProviders = await import('../../../src/services/model/providers.js')
-    mock.module('../../../src/services/model/providers.js', () => ({
-      ...realProviders,
-      getAPIProvider: () => 'generic',
-    }))
+    spyOn(realProviders, 'getAPIProvider').mockReturnValue('generic')
     const { messagesToOpenAI: fn } = await import('../../../src/services/api/conversions/openai.js')
     const messages = [
       {

@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import type { ControlOperator, ParseEntry } from 'shell-quote'
+import type { ParseEntry } from 'shell-quote'
 import {
   type CommandPrefixResult,
   type CommandSubcommandPrefixResult,
@@ -238,9 +238,7 @@ export function splitCommandWithOperators(command: string): string[] {
 }
 
 export function filterControlOperators(commandsAndOperators: string[]): string[] {
-  return commandsAndOperators.filter(
-    (part) => !(ALL_SUPPORTED_CONTROL_OPERATORS as Set<string>).has(part),
-  )
+  return commandsAndOperators.filter((part) => !ALL_SUPPORTED_CONTROL_OPERATORS.has(part))
 }
 
 /**
@@ -498,15 +496,10 @@ export function clearCommandPrefixCaches(): void {
   getCommandSubcommandPrefix.cache.clear()
 }
 
-const COMMAND_LIST_SEPARATORS = new Set<ControlOperator>(['&&', '||', ';', ';;', '|'])
+const COMMAND_LIST_SEPARATORS = new Set<string>(['&&', '||', ';', ';;', '|'])
 
-let ALL_SUPPORTED_CONTROL_OPERATORS: Set<ControlOperator>
-ALL_SUPPORTED_CONTROL_OPERATORS = new Set<ControlOperator>([
-  ...COMMAND_LIST_SEPARATORS,
-  '>&',
-  '>',
-  '>>',
-])
+let ALL_SUPPORTED_CONTROL_OPERATORS: Set<string>
+ALL_SUPPORTED_CONTROL_OPERATORS = new Set<string>([...COMMAND_LIST_SEPARATORS, '>&', '>', '>>'])
 
 // 检查命令是否只是一个命令列表
 function isCommandList(command: string): boolean {

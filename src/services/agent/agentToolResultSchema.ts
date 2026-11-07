@@ -26,6 +26,7 @@ export const agentToolResultSchema = lazySchema(() =>
           ephemeral5mInputTokens: z.number().optional(),
         })
         .optional(),
+      extras: z.record(z.string(), z.number()).optional(),
     }),
     incomplete: z.boolean().optional(),
     errorKind: z

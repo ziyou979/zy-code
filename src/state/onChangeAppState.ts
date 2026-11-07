@@ -1,5 +1,4 @@
 import { setMainLoopModelOverride } from 'src/bootstrap/runtime/runtimeContext.js'
-import { getAPIProvider } from '../services/model/providers.js'
 import { clearApiKeyHelperCache } from '../services/auth/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../services/config/config.js'
 import { isInternalBuild } from '../services/infra/envUtils.js'
@@ -15,7 +14,7 @@ import {
   notifySessionMetadataChanged,
   type SessionExternalMetadata,
 } from '../services/session-state/sessionState.js'
-import { getInitialSettings, updateSettingsForSource } from '../services/settings/settings.js'
+import { saveMainLoopModelSetting } from '../services/settings/modelTierSettings.js'
 import { savePermissionMode } from '../services/session-storage/sessionMetadata.js'
 import type { AppState } from './AppStateStore.js'
 
@@ -85,51 +84,8 @@ export function onChangeAppState({
   // 如果值是 tier 名（advanced/standard/compact），写入 mainLoopModel 字段
   // 否则写入 model 字段并清除 mainLoopModel（覆盖模式）
   if (newState.mainLoopModel !== oldState.mainLoopModel) {
-    const TIER_NAMES = ['advanced', 'standard', 'compact'] as const
-    const settings = getInitialSettings()
-    const currentProvider = getAPIProvider()
-    const shouldPersistProviderScoped =
-      settings.providers !== undefined && settings.providers[currentProvider] !== undefined
-    const updateModelSettings = (modelUpdate: {
-      model?: string
-      mainLoopModel?: 'advanced' | 'standard' | 'compact'
-    }) => {
-      if (!shouldPersistProviderScoped) {
-        updateSettingsForSource('userSettings', modelUpdate)
-        return
-      }
-      updateSettingsForSource('userSettings', {
-        providers: {
-          ...settings.providers,
-          [currentProvider]: {
-            ...settings.providers?.[currentProvider],
-            ...modelUpdate,
-          },
-        },
-      })
-    }
-    if (newState.mainLoopModel === null) {
-      // 恢复默认：清除覆盖字段
-      updateModelSettings({
-        model: undefined,
-        mainLoopModel: undefined,
-      })
-      setMainLoopModelOverride(null)
-    } else if (TIER_NAMES.includes(newState.mainLoopModel as (typeof TIER_NAMES)[number])) {
-      // tier 名 → 写入 mainLoopModel，清除 model 覆盖
-      updateModelSettings({
-        model: undefined,
-        mainLoopModel: newState.mainLoopModel as 'advanced' | 'standard' | 'compact',
-      })
-      setMainLoopModelOverride(newState.mainLoopModel)
-    } else {
-      // 具体模型名 → 写入 model 覆盖字段，清除 mainLoopModel
-      updateModelSettings({
-        model: newState.mainLoopModel,
-        mainLoopModel: undefined,
-      })
-      setMainLoopModelOverride(newState.mainLoopModel)
-    }
+    saveMainLoopModelSetting(newState.mainLoopModel)
+    setMainLoopModelOverride(newState.mainLoopModel)
   }
 
   // expandedView：为向后兼容，持久化为 showExpandedTodos + showSpinnerTree。

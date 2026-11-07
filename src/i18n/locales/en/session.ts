@@ -66,6 +66,7 @@ export const enSession: TranslationResource = {
   'oauth.invalidCode': 'Invalid code. Please make sure the full code was copied',
   'oauth.loggedInAs': 'Logged in as',
   'oauth.loginSuccessful': 'Login successful. Press Enter to continue…',
+  'oauth.credentialsSaveFailed': 'Login succeeded, but the credentials could not be saved.',
   'oauth.openingBrowserToSignIn': 'Opening browser to sign in…',
   'oauth.pasteCodePrompt': 'Paste code here if prompted',
   'oauth.pasteCodeHere': 'Paste code here if prompted > ',
@@ -141,6 +142,33 @@ export const enSession: TranslationResource = {
   'oauth.openaiCodex.tokenResponseMissingFields':
     'OpenAI Codex token {operation} response missing fields: {response}',
   'oauth.openaiCodex.unknownLoginMethod': 'Unknown OpenAI Codex login method: {method}',
+  'oauth.openaiChatGPT.loginLabel': 'Sign in with ChatGPT',
+  'oauth.openaiChatGPT.browserInstructions':
+    'A browser window should open. Complete login to finish.',
+  'oauth.openaiChatGPT.authenticationCompleted':
+    'ChatGPT authentication completed. You can close this window.',
+  'oauth.openaiChatGPT.callbackRouteNotFound': 'Callback route not found.',
+  'oauth.openaiChatGPT.callbackInternalError': 'Internal error while processing OAuth callback.',
+  'oauth.openaiChatGPT.stateMismatch': 'OAuth state mismatch',
+  'oauth.openaiChatGPT.missingAuthorizationCode': 'Missing authorization code',
+  'oauth.openaiChatGPT.missingClientId':
+    'The OAuth callback did not include a client ID issued by OpenAI.',
+  'oauth.openaiChatGPT.clientIdConflict':
+    'The client ID returned by OpenAI does not match the one saved for this account. Sign in again to re-register.',
+  'oauth.openaiChatGPT.pasteAuthorizationCode':
+    'Paste the redirect URL (or the authorization code):',
+  'oauth.openaiChatGPT.tokenOperationFailed':
+    'ChatGPT token {operation} failed ({status}): {detail}',
+  'oauth.openaiChatGPT.tokenResponseMissingFields':
+    'ChatGPT token {operation} response missing fields: {response}',
+  'oauth.openaiChatGPT.missingSubscriptionScope':
+    'The granted scope does not include {scope}, so the ChatGPT subscription cannot be used. Check the account plan and try again.',
+  'oauth.openaiChatGPT.reconnectRequired':
+    'The stored client ID is missing. Sign in with ChatGPT again to reconnect.',
+  'oauth.openaiChatGPT.hostIdPersistenceFailed':
+    'Could not save the ChatGPT host ID. Check access to the authentication directory and try again.',
+  'oauth.openaiChatGPT.usageLimitReached':
+    'You have reached your ChatGPT usage limit. Check your usage and plan at {url}',
   'oauth.xai.deviceCodeRequestFailed': 'xAI device-code request failed (HTTP {status}){detail}',
   'oauth.xai.deviceTokenMissingAccessToken': 'xAI device-code token response missing access_token',
   'oauth.xai.deviceTokenMissingRefreshToken':
@@ -175,6 +203,11 @@ export const enSession: TranslationResource = {
   'modelFailover.switched':
     'The model channel failed and was switched: {from} → {to} ({reason}). The new provider and model remain active until /model is used again or the candidate is removed.',
   'modelFailover.reason.auth_failed': 'authentication failed',
+  'modelFailover.confirmTitle': 'Model failover',
+  'modelFailover.confirm':
+    'The model channel {from} failed ({reason}). Switch to {to} ({provider})? The new channel stays active until /model is used again.',
+  'modelFailover.confirmSwitch': 'Switch',
+  'modelFailover.confirmStay': 'Stay on current model',
   'modelFailover.reason.rate_limit_exhausted': 'rate limit exhausted',
   'modelFailover.reason.quota_exhausted': 'quota / billing exhausted',
   'modelFailover.reason.manual': 'manual',

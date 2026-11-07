@@ -6,9 +6,8 @@
  * 先跑 checkRuleBasedPermissions，命中 deny 则直接拒绝、不弹 prompt。
  * 对齐 Claude Code 2.1.101。
  */
-import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test, spyOn } from 'bun:test'
 import * as realAnalytics from '../../../src/services/analytics/index.js'
-import * as realAnalyticsMetadata from '../../../src/services/analytics/metadata.js'
 import * as realMcpUtils from '../../../src/services/mcp/utils.js'
 import * as realDebug from '../../../src/services/infra/debug.js'
 import * as realHooks from '../../../src/services/hooks.js'
@@ -19,62 +18,23 @@ import * as realToolErrors from '../../../src/services/tool-runtime/toolErrors.j
 // checkRuleBasedPermissions 的可控返回值（每个 case 单独设置）+ 调用计数。
 const ruleCheck: { result: unknown; calls: number } = { result: null, calls: 0 }
 
-// 全替换 i18n，不 import 真实模块（避免其循环初始化 TDZ）。与 promptShellExecution.test 同款。
-function mockI18n() {
-  mock.module('../../../src/i18n/index.js', () => ({
-    tSync: (k: string) => k,
-    t: (k: string) => k,
-    getUiLanguage: () => 'en',
-    warmI18n: async () => {},
-    SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
-  }))
-}
+import * as realPermissions from '../../../src/services/permissions/permissions.js'
 
 async function setupMocks() {
-  // toolHooks 的导入图会拉起 UI 模块 use-tab-status，其顶层 tSync('spinner.idle')
-  // 在 eval 时即调用 i18n→settings，触发 settings.ts 循环初始化 TDZ。全替换 i18n 切断该链
-  // （不 import 真实 i18n，避免其自身循环初始化的 TDZ）。
-  mockI18n()
-  mock.module('../../../src/services/permissions/permissions.js', () => ({
-    checkRuleBasedPermissions: async () => {
-      ruleCheck.calls++
-      return ruleCheck.result
-    },
-  }))
-  // toolHooks 在 import 时会加载的其余运行时依赖 —— 与本测试逻辑无关，桩掉即可。
-  // spread 原始模块避免污染其他测试的模块缓存。
-  mock.module('../../../src/services/analytics/index.js', () => ({
-    ...realAnalytics,
-    logEvent: () => {},
-  }))
-  mock.module('../../../src/services/analytics/metadata.js', () => ({
-    ...realAnalyticsMetadata,
-    sanitizeToolNameForAnalytics: (n: string) => n,
-  }))
-  mock.module('../../../src/services/infra/debug.js', () => ({
-    ...realDebug,
-    logForDebugging: () => {},
-  }))
-  mock.module('../../../src/services/hooks.js', () => ({
-    ...realHooks,
-    executePostToolHooks: async function* () {},
-    executePostToolUseFailureHooks: async function* () {},
-    executePreToolHooks: async function* () {},
-    getPreToolHookBlockingMessage: () => undefined,
-  }))
-  mock.module('../../../src/services/infra/log.js', () => ({ ...realLog, logError: () => {} }))
-  mock.module('../../../src/services/permissions/permissionResult.js', () => ({
-    ...realPermissionResult,
-    getRuleBehaviorDescription: () => '',
-  }))
-  mock.module('../../../src/services/tool-runtime/toolErrors.js', () => ({
-    ...realToolErrors,
-    formatError: (e: unknown) => String(e),
-  }))
-  mock.module('../../../src/services/mcp/utils.js', () => ({
-    ...realMcpUtils,
-    isMcpTool: () => false,
-  }))
+  spyOn(realPermissions, 'checkRuleBasedPermissions').mockImplementation(async () => {
+    ruleCheck.calls++
+    return ruleCheck.result as Awaited<ReturnType<typeof realPermissions.checkRuleBasedPermissions>>
+  })
+  spyOn(realAnalytics, 'logEvent').mockImplementation(() => {})
+  spyOn(realDebug, 'logForDebugging').mockImplementation(() => {})
+  spyOn(realHooks, 'executePostToolHooks').mockImplementation(async function* () {})
+  spyOn(realHooks, 'executePostToolUseFailureHooks').mockImplementation(async function* () {})
+  spyOn(realHooks, 'executePreToolHooks').mockImplementation(async function* () {})
+  spyOn(realHooks, 'getPreToolHookBlockingMessage').mockReturnValue('')
+  spyOn(realLog, 'logError').mockImplementation(() => {})
+  spyOn(realPermissionResult, 'getRuleBehaviorDescription').mockReturnValue('')
+  spyOn(realToolErrors, 'formatError').mockImplementation((error) => String(error))
+  spyOn(realMcpUtils, 'isMcpTool').mockReturnValue(false)
 }
 
 async function importSUT() {

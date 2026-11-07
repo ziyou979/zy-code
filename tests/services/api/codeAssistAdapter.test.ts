@@ -3,8 +3,8 @@ import {
   buildCodeAssistEnvelope,
   buildCodeAssistCountRequest,
   unwrapCodeAssistResponse,
-  parseSseStream,
 } from '../../../src/services/api/codeAssistProviderAdapter.js'
+import { parseGoogleSseStream } from '../../../src/services/api/googleSseStream.js'
 import {
   googleStreamToStandard,
   googleResponseToStandard,
@@ -63,7 +63,7 @@ describe('buildCodeAssistEnvelope', () => {
   })
 })
 
-describe('parseSseStream', () => {
+describe('parseGoogleSseStream: Code Assist', () => {
   test('解析 data 行并忽略注释、空行与 [DONE]', async () => {
     const chunks: GoogleGenerateContentResponse[] = []
     const body = sseBody(
@@ -72,10 +72,11 @@ describe('parseSseStream', () => {
         'data: {"response":{"candidates":[{"content":{"parts":[{"text":"he"}],"role":"model"}}]}}',
         '',
         'data: {"response":{"candidates":[{"content":{"parts":[{"text":"llo"}],"role":"model"}}]}}',
+        '',
         'data: [DONE]',
       ].join('\n'),
     )
-    for await (const chunk of parseSseStream(body)) {
+    for await (const chunk of parseGoogleSseStream(body, unwrapCodeAssistResponse)) {
       chunks.push(chunk)
     }
     expect(chunks).toHaveLength(2)
@@ -87,7 +88,9 @@ describe('parseSseStream', () => {
         'data: {"traceId":"r1","response":{"candidates":[{"content":{"role":"model","parts":[{"text":"hello"}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":3,"candidatesTokenCount":2}}}',
       ].join('\n'),
     )
-    const events = await collect(googleStreamToStandard(parseSseStream(body), 'gemini-test'))
+    const events = await collect(
+      googleStreamToStandard(parseGoogleSseStream(body, unwrapCodeAssistResponse), 'gemini-test'),
+    )
 
     expect(events[0]?.type).toBe('response_start')
     const textDelta = events.find(

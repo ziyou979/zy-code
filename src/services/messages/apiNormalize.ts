@@ -220,9 +220,51 @@ export function reorderMessagesInUI(
     result.push(message)
   }
 
+  // 旧会话可能因分块提交顺序把思考保存到正文之后；同一响应的 UI 显示先摘要、后正文。
+  // 只调整连续且已拆块的纯文本/思考消息，工具、用户输入和响应 ID 都是边界。
+  // 不修改消息对象和持久化顺序，API 仍回传原始 Part 顺序与签名。
+  const ordered: typeof result = []
+  let responseGroup: AssistantMessage[] = []
+  let responseId: string | undefined
+  const isThinking = (message: AssistantMessage) =>
+    message.message.content[0]?.type === 'thinking' ||
+    message.message.content[0]?.type === 'redacted_thinking'
+  const flushResponseGroup = () => {
+    for (const message of responseGroup) {
+      if (isThinking(message)) {
+        ordered.push(message)
+      }
+    }
+    for (const message of responseGroup) {
+      if (!isThinking(message)) {
+        ordered.push(message)
+      }
+    }
+    responseGroup = []
+    responseId = undefined
+  }
+  for (const message of result) {
+    if (
+      message.type === 'assistant' &&
+      message.message.id &&
+      message.message.content.length === 1 &&
+      ['text', 'thinking', 'redacted_thinking'].includes(message.message.content[0]!.type)
+    ) {
+      if (responseId !== undefined && responseId !== message.message.id) {
+        flushResponseGroup()
+      }
+      responseId = message.message.id
+      responseGroup.push(message)
+    } else {
+      flushResponseGroup()
+      ordered.push(message)
+    }
+  }
+  flushResponseGroup()
+
   // 过滤以仅保留最后一个 api 错误消息
-  const last = result.at(-1)
-  return result.filter((_) => _.type !== 'system' || _.subtype !== 'api_error' || _ === last)
+  const last = ordered.at(-1)
+  return ordered.filter((_) => _.type !== 'system' || _.subtype !== 'api_error' || _ === last)
 }
 
 /**
@@ -819,13 +861,13 @@ export function normalizeMessagesForAPI(
                         }
                       }
 
-                      // 工具搜索未启用时，显式构造仅含标准 API 字段的 tool_use
-                      // 块，避免发送 'caller' 等字段（这些可能来自工具搜索运行的会话存储）
+                      // 删除工具搜索字段，但保留适配器元数据；Gemini 工具签名必须原样回传。
                       return {
                         type: 'tool_call' as const,
                         id: block.id,
                         name: canonicalName,
                         input: normalizedInput,
+                        ...(block.providerMetadata && { providerMetadata: block.providerMetadata }),
                       }
                     }
                     return block

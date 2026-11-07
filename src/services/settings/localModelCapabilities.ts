@@ -27,6 +27,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod/v4'
+import { isModelInputModality, type ModelInputModality } from '../model/modelInputTypes.js'
 import type { ApiFormat } from '../model/apiFormat.js'
 import { API_FORMATS } from '../model/apiFormat.js'
 import { CURRENCIES } from '../../types/currency.js'
@@ -35,6 +36,12 @@ import { PERSISTABLE_EFFORT_LEVELS } from '../effort/effortTypes.js'
 import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
 import { safeParseJSONC } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
+import { getDiscoveredModelCapability } from './discoveredModelCapabilities.js'
+import { MODEL_CAPABILITY_STATE_FILES } from './modelCapabilityStorage.js'
+import {
+  getModelThinkingSupport,
+  mergeModelCatalogCapabilities,
+} from '../model/modelCatalogCapabilities.js'
 
 // ---------------------------------------------------------------------------
 // 类型定义
@@ -46,12 +53,7 @@ import { lazySchema } from '../../utils/lazySchema.js'
 export type ModelCapabilityKind =
   | 'thinking' // 思考能力（对象，effort 仅有 "off" 表示不支持）
   | 'structured_outputs' // 严格工具 schema / 结构化输出
-  | 'auto_mode' // 自动模式
   | 'prompt_caching' // prompt 缓存（"implicit" | "explicit"）
-
-/** 模型可接收的输入模态。 */
-export const MODEL_INPUT_MODALITIES = ['text', 'image', 'document'] as const
-export type ModelInputModality = (typeof MODEL_INPUT_MODALITIES)[number]
 
 /**
  * effort 配置（档位 + 可选的 API 映射）。
@@ -65,7 +67,7 @@ export type EffortCapabilityConfig = {
  * thinking 能力配置（始终为对象）。
  *
  * - effort 含非 "off" 档位 → 支持思考
- * - effort 仅 ["off"] 或无其他字段 → 不支持思考
+ * - effort 仅 ["off"] → 不支持思考；无字段保持未知
  * - adaptive / preserve 存在 → 支持思考（附带子特性）
  */
 export type ThinkingCapabilityConfig = {
@@ -85,6 +87,7 @@ export type ModelCapabilities = {
   input?: ModelInputModality[]
   thinking?: ThinkingCapabilityConfig
   structured_outputs?: boolean
+  /** 历史应用约束；用户文件中的 true 表示直接授权，不代表模型经过实测。 */
   auto_mode?: boolean
   prompt_caching?: 'implicit' | 'explicit'
 }
@@ -110,6 +113,8 @@ export type TokenLimits = {
  * 配置了选择器的条目只在当前上下文满足时生效。
  */
 export type ModelCapabilityMatchContext = {
+  /** auth.json 中的命名连接，自动发现的能力按连接隔离。 */
+  connectionId?: string
   provider?: string | null
   apiFormat?: ApiFormat | null
   /** 计算时段费率时使用的时间点；未传则取当前时间 */
@@ -255,7 +260,7 @@ const EffortLevelSchema = z.enum(PERSISTABLE_EFFORT_LEVELS)
 const ApiFormatSchema = z.enum(API_FORMATS)
 
 /** 输入模态枚举 */
-const ModelInputModalitySchema = z.enum(MODEL_INPUT_MODALITIES)
+const ModelInputModalitySchema = z.custom<ModelInputModality>(isModelInputModality)
 
 /** provider / apiFormat 选择器支持单值或多值。 */
 const ProviderSelectorSchema = z.union([z.string(), z.array(z.string())])
@@ -305,14 +310,16 @@ const ModelCapabilitiesSchema = lazySchema(() =>
         .array(ModelInputModalitySchema)
         .min(1)
         .describe(
-          '模型支持的输入模态，按实际能力声明，例如纯文本模型为 ["text"]，视觉模型为 ["text", "image"]。',
+          'Supported input categories or concrete MIME types, e.g. ["text", "image/jpeg", "application/pdf"]. MIME values must not contain parameters or wildcards.',
         ),
       thinking: ThinkingConfigSchema.describe(
         'thinking 能力配置（始终为对象）。' +
           'effort 含非 "off" 档位表示支持思考，仅 ["off"] 表示不支持。',
       ),
       structured_outputs: z.boolean().describe('是否支持严格工具 schema / 结构化输出'),
-      auto_mode: z.boolean().describe('是否支持自动模式'),
+      auto_mode: z
+        .boolean()
+        .describe('历史 ZYCode 审批约束；false 禁用，用户文件中的 true 表示未经实测的直接授权'),
       prompt_caching: z
         .enum(['implicit', 'explicit'])
         .describe(
@@ -467,6 +474,12 @@ type ModelCapabilityOverride = z.infer<ReturnType<typeof ModelCapabilityOverride
 
 export type ModelCapabilitiesFile = z.infer<ReturnType<typeof ModelCapabilitiesFileSchema>>
 
+/** 目录持久化与读取复用同一能力 schema，不能维护另一份宽松类型。 */
+export function parseModelCapabilityEntry(value: unknown): ModelCapabilityEntry | undefined {
+  const result = ModelCapabilityEntrySchema().safeParse(value)
+  return result.success ? result.data : undefined
+}
+
 // ---------------------------------------------------------------------------
 // 配置加载与迁移
 // ---------------------------------------------------------------------------
@@ -492,7 +505,11 @@ function getConfigFilePaths(): string[] {
   const dirPath = join(dir, 'model-capabilities')
   try {
     const files = readdirSync(dirPath)
-      .filter((f) => f.endsWith('.json') || f.endsWith('.jsonc'))
+      .filter(
+        (f) =>
+          (f.endsWith('.json') || f.endsWith('.jsonc')) &&
+          !Object.values(MODEL_CAPABILITY_STATE_FILES).some((name) => name === f),
+      )
       .sort()
     for (const file of files) {
       paths.push(join(dirPath, file))
@@ -570,9 +587,9 @@ function migrateCapabilitiesFormat(parsed: unknown): void {
     }
 
     // 3. thinking 统一为对象格式
-    //    thinking: true/false → thinking: { effort: ["off"] }
+    //    thinking: true/false → 开启/关闭声明
     //    散落的 adaptive_thinking / preserve_thinking / effort → 合并到 thinking 对象
-    //    无 thinking 字段 → 补 thinking: { effort: ["off"] }
+    //    未声明 thinking 必须保持未知，不能伪造为明确不支持。
     const hasScatteredThinking =
       caps.adaptive_thinking !== undefined ||
       caps.preserve_thinking !== undefined ||
@@ -584,8 +601,7 @@ function migrateCapabilitiesFormat(parsed: unknown): void {
     if (typeof caps.thinking === 'object' && caps.thinking !== null) {
       thinkingObj = { ...(caps.thinking as Record<string, unknown>) }
     } else if (caps.thinking === true || caps.thinking === false) {
-      // boolean → 对象，effort 默认 ["off"]
-      thinkingObj = { effort: ['off'] }
+      thinkingObj = { effort: caps.thinking ? ['on'] : ['off'] }
     }
 
     // 合并散落字段
@@ -606,8 +622,7 @@ function migrateCapabilitiesFormat(parsed: unknown): void {
     if (Object.keys(thinkingObj).length > 0) {
       caps.thinking = thinkingObj
     } else {
-      // 没有 thinking 也没有散落字段 → 补默认
-      caps.thinking = { effort: ['off'] }
+      delete caps.thinking
     }
 
     // 4. 顶层 token 限制字段 → tokens 对象
@@ -690,6 +705,7 @@ function getCurrentModelCapabilityContext(model: string): ModelCapabilityMatchCo
     const provider = modelService.getProviderForModel(model)
     return {
       provider,
+      connectionId: modelService.getAuthProfileForModel(model) ?? provider,
       apiFormat: providers.getEffectiveApiFormat(provider, model),
     }
   } catch {
@@ -793,7 +809,7 @@ function resolveMatchedEntry(
  * 从本地配置中查找模型能力条目。
  * 优先选择 provider/apiFormat 更具体、pattern 更长的条目。
  */
-export function getLocalModelCapability(
+export function getManualModelCapability(
   model: string,
   context?: ModelCapabilityMatchContext,
 ): ModelCapabilityEntry | undefined {
@@ -801,12 +817,20 @@ export function getLocalModelCapability(
     return undefined
   }
   const config = loadLocalModelCapabilities()
-  if (!config) {
-    return undefined
-  }
   const m = model.toLowerCase()
-  const resolvedContext = context ?? getCurrentModelCapabilityContext(model)
-  return config.models
+  const currentContext = context?.connectionId ? context : getCurrentModelCapabilityContext(model)
+  const resolvedContext = context
+    ? {
+        ...context,
+        connectionId:
+          context.connectionId ??
+          (context.provider === currentContext.provider
+            ? currentContext.connectionId
+            : context.provider) ??
+          undefined,
+      }
+    : currentContext
+  return (config?.models ?? [])
     .map((entry, index) => ({ entry, index }))
     .map(({ entry, index }) => {
       const matched = resolveMatchedEntry(entry, m, resolvedContext)
@@ -834,6 +858,35 @@ export function getLocalModelCapability(
       }
       return a.index - b.index
     })[0]?.entry
+}
+
+/** 统一解析自动元数据、手工文件与当前连接的界面覆盖。 */
+export function getLocalModelCapability(
+  model: string,
+  context?: ModelCapabilityMatchContext,
+): ModelCapabilityEntry | undefined {
+  if (!model) return undefined
+  const currentContext = context?.connectionId ? context : getCurrentModelCapabilityContext(model)
+  const resolvedContext: ModelCapabilityMatchContext = context
+    ? {
+        ...context,
+        connectionId:
+          context.connectionId ??
+          (context.provider === currentContext.provider
+            ? currentContext.connectionId
+            : context.provider) ??
+          undefined,
+      }
+    : currentContext
+  const automatic = getDiscoveredModelCapability(model, resolvedContext)
+  const manual = getManualModelCapability(model, resolvedContext)
+  const user = getDiscoveredModelCapability(model, resolvedContext, 'user')
+  const identity = user ?? manual ?? automatic
+  if (!identity) return undefined
+  return {
+    ...identity,
+    ...mergeModelCatalogCapabilities(mergeModelCatalogCapabilities(automatic, manual), user),
+  }
 }
 
 /**
@@ -909,18 +962,7 @@ export function localModelHasCapability(
 
   // thinking: 检查是否真正支持（effort 仅 ["off"] 且无 adaptive/preserve → 不支持）
   if (capability === 'thinking' && typeof value === 'object' && value !== null) {
-    const t = value as ThinkingCapabilityConfig
-    if (t.adaptive || t.preserve) {
-      return true
-    }
-    if (!t.effort) {
-      return false
-    }
-    if (Array.isArray(t.effort)) {
-      return t.effort.some((l) => l !== 'off')
-    }
-    // object format: { levels, map }
-    return t.effort.levels.some((l) => l !== 'off')
+    return getModelThinkingSupport(value as ThinkingCapabilityConfig) ?? false
   }
 
   return true

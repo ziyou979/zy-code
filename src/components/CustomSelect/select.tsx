@@ -621,7 +621,7 @@ SelectProps<any>) {
     const maxIndexWidth_1 = hideIndexes ? 0 : state.options.length.toString().length
     const hasInputOptions = state.visibleOptions.some((opt) => opt.type === 'input')
     const hasDescriptions =
-      !inlineDescriptions && !hasInputOptions && state.visibleOptions.some((opt) => opt.description)
+      !inlineDescriptions && !hasInputOptions && options.some((opt) => Boolean(opt.description))
     const optionData = state.visibleOptions.map((option, index) => {
       const isFirstVisibleOption = option.index === state.visibleFromIndex
       const isLastVisibleOption = option.index === state.visibleToIndex - 1
@@ -659,17 +659,20 @@ SelectProps<any>) {
       }
     })
     if (hasDescriptions) {
-      const maxLabelWidth = Math.max(
-        ...optionData.map((data) => {
-          if (data.option.type === 'input') {
+      // 基于全量 options 计算基准 Label 宽度，避免滚动过程中视口选项变动导致左列宽度跳变
+      const calculatedMaxLabelWidth = Math.max(
+        ...options.map((opt) => {
+          if (opt.type === 'input') {
             return 0
           }
-          const labelText_2 = getTextContent(data.option.label)
+          const labelText_2 = getTextContent(opt.label)
           const indexWidth = hideIndexes ? 0 : maxIndexWidth_1 + 2
-          const checkmarkWidth = data.isSelected ? 2 : 0
-          return 2 + indexWidth + stringWidth(labelText_2) + checkmarkWidth
+          return 2 + indexWidth + stringWidth(labelText_2) + 2
         }),
+        0,
       )
+      // 避免单项极端超长霸占整行导致右侧描述被挤爆换行；设定合理上限（46 列），保证右列有充足空间展示描述且行高保持单行
+      const maxLabelWidth = Math.min(calculatedMaxLabelWidth, 46)
       earlyReturn = (
         <Box {...styles.container()}>
           {optionData.map((data) => {
@@ -681,7 +684,7 @@ SelectProps<any>) {
             const isHovered_1 = hoveredId != null && data.option.value === hoveredId
             const checkmarkWidth = data.isSelected ? 2 : 0
             const currentLabelWidth = 2 + indexWidth + stringWidth(labelText) + checkmarkWidth
-            const padding = maxLabelWidth - currentLabelWidth
+            const padding = Math.max(0, maxLabelWidth - currentLabelWidth)
             return (
               <TwoColumnRow
                 key={String(data.option.value)}

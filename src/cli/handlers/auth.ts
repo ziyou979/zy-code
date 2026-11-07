@@ -97,7 +97,10 @@ async function authLoginWithProvider(providerId: string): Promise<void> {
     const credentials: OAuthCredentials = await provider.login(callbacks)
 
     // 保存凭证
-    await saveOAuthCredentials(provider.id, credentials)
+    const saveResult = saveOAuthCredentials(provider.id, credentials)
+    if (!saveResult.success) {
+      throw new Error(tSync('oauth.credentialsSaveFailed'))
+    }
     clearOAuthCredentialsCache()
 
     logEvent('zy_oauth_provider_login_success', {

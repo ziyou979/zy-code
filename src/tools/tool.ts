@@ -229,6 +229,8 @@ export type ToolUseContext = {
     sourceName: string,
     toolInputSummary?: string | null,
   ) => (request: PromptRequest) => Promise<PromptResponse>
+  /** 候选链 confirm 专用，不受 HOOK_PROMPTS 门控 */
+  requestModelFailoverPrompt?: (title: string) => (req: PromptRequest) => Promise<PromptResponse>
   toolUseId?: string
   criticalSystemReminder_EXPERIMENTAL?: string
   /** 当为 true 时，即使对于子 agent 也保留消息上的 toolUseResult。

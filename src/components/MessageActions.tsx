@@ -1,5 +1,7 @@
 import type { RefObject } from 'react'
 import React, { useCallback, useMemo, useRef } from 'react'
+import { tSync } from '../i18n/index.js'
+import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js'
 import { ARROW_DOWN, ARROW_UP } from '../constants/figures.js'
 import { Box, Text } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
@@ -82,62 +84,62 @@ export function isNavigableMessage(msg: NavigableMessage): boolean {
   }
 }
 type PrimaryInput = {
-  label: string
+  labelKey: string
   extract: (input: Record<string, unknown>) => string | undefined
 }
 const str = (k: string) => (i: Record<string, unknown>) =>
   typeof i[k] === 'string' ? i[k] : undefined
 const PRIMARY_INPUT = {
   Read: {
-    label: 'path',
+    labelKey: 'messageActions.copyPath',
     extract: str('file_path'),
   },
   Edit: {
-    label: 'path',
+    labelKey: 'messageActions.copyPath',
     extract: str('file_path'),
   },
   Write: {
-    label: 'path',
+    labelKey: 'messageActions.copyPath',
     extract: str('file_path'),
   },
   NotebookEdit: {
-    label: 'path',
+    labelKey: 'messageActions.copyPath',
     extract: str('notebook_path'),
   },
   Bash: {
-    label: 'command',
+    labelKey: 'messageActions.copyCommand',
     extract: str('command'),
   },
   Grep: {
-    label: 'pattern',
+    labelKey: 'messageActions.copyPattern',
     extract: str('pattern'),
   },
   Glob: {
-    label: 'pattern',
+    labelKey: 'messageActions.copyPattern',
     extract: str('pattern'),
   },
   WebFetch: {
-    label: 'url',
+    labelKey: 'messageActions.copyUrl',
     extract: str('url'),
   },
   WebSearch: {
-    label: 'query',
+    labelKey: 'messageActions.copyQuery',
     extract: str('query'),
   },
   Task: {
-    label: 'prompt',
+    labelKey: 'messageActions.copyPrompt',
     extract: str('prompt'),
   },
   Agent: {
-    label: 'prompt',
+    labelKey: 'messageActions.copyPrompt',
     extract: str('prompt'),
   },
   Tmux: {
-    label: 'command',
+    labelKey: 'messageActions.copyCommand',
     extract: (i: Record<string, unknown>) =>
       Array.isArray(i.args) ? `tmux ${(i.args as string[]).join(' ')}` : undefined,
   },
-}
+} satisfies Record<string, PrimaryInput>
 
 // 仅 AgentTool 有 renderGroupedToolUse——Edit/Bash 等保持为 assistant tool_use 块。
 export function toolCallOf(msg: NavigableMessage):
@@ -186,7 +188,7 @@ function action<const T extends NavigableType, const K extends string>(a: {
 export const MESSAGE_ACTIONS = [
   action({
     key: 'enter',
-    label: (s) => (s.expanded ? 'collapse' : 'expand'),
+    label: (s) => tSync(s.expanded ? 'common.collapse' : 'common.expand'),
     types: ['grouped_tool_use', 'collapsed_read_search', 'attachment', 'system'],
     stays: true,
     // 空——`stays` 由 dispatch 内联处理。
@@ -194,14 +196,14 @@ export const MESSAGE_ACTIONS = [
   }),
   action({
     key: 'enter',
-    label: 'edit',
+    label: () => tSync('messageActions.edit'),
     types: ['user'],
     // biome-ignore lint/suspicious/noExplicitAny: UI 组件动态类型兼容
     run: (m, c) => void c.edit(m as UserMessage),
   }),
   action({
     key: 'c',
-    label: 'copy',
+    label: () => tSync('common.copy'),
     types: NAVIGABLE_TYPES,
     run: (m, c) => c.copy(copyTextOf(m)),
   }),
@@ -209,7 +211,7 @@ export const MESSAGE_ACTIONS = [
     key: 'p',
     // `!` safe: applies() guarantees toolName ∈ PRIMARY_INPUT.
     label: (s) =>
-      `copy ${(PRIMARY_INPUT as Record<string, { label: string }>)[s.toolName!]!.label}`,
+      tSync((PRIMARY_INPUT as Record<string, { labelKey: string }>)[s.toolName!]!.labelKey),
     types: ['grouped_tool_use', 'assistant'],
     applies: (s) => s.toolName != null && s.toolName in PRIMARY_INPUT,
     run: (m, c) => {
@@ -220,7 +222,7 @@ export const MESSAGE_ACTIONS = [
       const val = (
         PRIMARY_INPUT as Record<
           string,
-          { label: string; extract: (i: Record<string, unknown>) => string | undefined }
+          { labelKey: string; extract: (i: Record<string, unknown>) => string | undefined }
         >
       )[tc.name]?.extract(tc.input)
       if (val) {
@@ -386,20 +388,10 @@ export function MessageActionsBar({ cursor }: { cursor: MessageActionsState }) {
       {
         <Box paddingX={2} paddingY={1}>
           {actionItems}
-          {<Text dimColor={true}> · </Text>}
-          {
-            <Text bold={true} dimColor={false}>
-              {ARROW_UP}
-              {ARROW_DOWN}
-            </Text>
-          }
-          {<Text dimColor={true}> navigate · </Text>}
-          {
-            <Text bold={true} dimColor={false}>
-              esc
-            </Text>
-          }
-          {<Text dimColor={true}> back</Text>}
+          <Text dimColor> · </Text>
+          <KeyboardShortcutHint shortcut={`${ARROW_UP}${ARROW_DOWN}`} action="navigate" />
+          <Text dimColor> · </Text>
+          <KeyboardShortcutHint shortcut="Esc" action="return" />
         </Box>
       }
     </Box>

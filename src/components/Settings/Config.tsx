@@ -43,6 +43,8 @@ import {
 import { ThemePicker } from '../ThemePicker.js'
 import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState.js'
 import { ModelPicker } from '../ModelPicker.js'
+import { ModelTierConfigFlow, formatModelTierSummary } from '../ModelTierConfigDialog.js'
+import type { SettingsJson } from '../../services/settings/types.js'
 import { modelDisplayString } from '../../services/model/model.js'
 import { ChannelDowngradeDialog, type ChannelDowngradeChoice } from '../ChannelDowngradeDialog.js'
 import { Dialog } from '../design-system/Dialog.js'
@@ -128,12 +130,30 @@ type Setting =
 type SubMenu =
   | 'Theme'
   | 'Model'
+  | 'ModelTiers'
   | 'TeammateModel'
   | 'ExternalIncludes'
   | 'OutputStyle'
   | 'ChannelDowngrade'
   | 'Language'
   | 'EnableAutoUpdates'
+
+function formatModelTiersSummary(models?: SettingsJson['models']): string {
+  if (!models || Object.keys(models).length === 0) {
+    return tSync('settings.notConfigured')
+  }
+  const parts: string[] = []
+  if (models.standard) {
+    parts.push(`std: ${formatModelTierSummary(models.standard)}`)
+  }
+  if (models.advanced) {
+    parts.push(`adv: ${formatModelTierSummary(models.advanced)}`)
+  }
+  if (models.compact) {
+    parts.push(`cpt: ${formatModelTierSummary(models.compact)}`)
+  }
+  return parts.join(' | ') || tSync('settings.configured')
+}
 export function Config({
   onClose,
   context,
@@ -928,6 +948,16 @@ export function Config({
       type: 'managedEnum' as const,
       onChange: onChangeMainModelConfig,
     },
+    {
+      id: 'modelTiers',
+      label: tSync('settings.modelTiersLabel'),
+      value: formatModelTiersSummary(getInitialSettings().models),
+      type: 'managedEnum' as const,
+      onChange: () => {
+        setTabsHidden(true)
+        setShowSubmenu('ModelTiers')
+      },
+    },
     ...(isConnectedToIde
       ? [
           {
@@ -1174,12 +1204,127 @@ export function Config({
     [maxVisible],
   )
 
+  // Settings navigation and toggle actions via configurable keybindings.
+  // Only active when not in search mode and no submenu is open.
+  const toggleSetting = useCallback(() => {
+    const setting_0 = filteredSettingsItems[selectedIndex]
+    if (!setting_0?.onChange) {
+      return
+    }
+    if (setting_0.type === 'boolean') {
+      isDirty.current = true
+      setting_0.onChange(!setting_0.value)
+      if (setting_0.id === 'thinkingEnabled') {
+        const newValue = !setting_0.value
+        const backToInitial = newValue === initialThinkingEnabled.current
+        if (backToInitial) {
+          setShowThinkingWarning(false)
+        } else if (context.messages.some((m_0) => m_0.type === 'assistant')) {
+          setShowThinkingWarning(true)
+        }
+      }
+      return
+    }
+    if (
+      setting_0.id === 'theme' ||
+      setting_0.id === 'model' ||
+      setting_0.id === 'modelTiers' ||
+      setting_0.id === 'teammateDefaultModel' ||
+      setting_0.id === 'showExternalIncludesDialog' ||
+      setting_0.id === 'outputStyle' ||
+      setting_0.id === 'language'
+    ) {
+      // managedEnum items open a submenu — isDirty is set by the submenu's
+      // completion callback, not here (submenu may be cancelled).
+      switch (setting_0.id) {
+        case 'theme':
+          setShowSubmenu('Theme')
+          setTabsHidden(true)
+          return
+        case 'model':
+          setShowSubmenu('Model')
+          setTabsHidden(true)
+          return
+        case 'modelTiers':
+          setShowSubmenu('ModelTiers')
+          setTabsHidden(true)
+          return
+        case 'teammateDefaultModel':
+          setShowSubmenu('TeammateModel')
+          setTabsHidden(true)
+          return
+        case 'showExternalIncludesDialog':
+          setShowSubmenu('ExternalIncludes')
+          setTabsHidden(true)
+          return
+        case 'outputStyle':
+          setShowSubmenu('OutputStyle')
+          setTabsHidden(true)
+          return
+        case 'language':
+          setShowSubmenu('Language')
+          setTabsHidden(true)
+          return
+      }
+    }
+    if (setting_0.id === 'autoUpdatesChannel') {
+      if (autoUpdaterDisabledReason) {
+        // Auto-updates are disabled - show enable dialog instead
+        setShowSubmenu('EnableAutoUpdates')
+        setTabsHidden(true)
+        return
+      }
+      const currentChannel = settingsData?.autoUpdatesChannel ?? 'latest'
+      if (currentChannel === 'latest') {
+        // Switching to stable - show downgrade dialog
+        setShowSubmenu('ChannelDowngrade')
+        setTabsHidden(true)
+      } else {
+        // Switching to latest - just do it and clear minimumVersion
+        isDirty.current = true
+        updateSettingsForSource('userSettings', {
+          autoUpdatesChannel: 'latest',
+          minimumVersion: undefined,
+        })
+        setSettingsData((prev_24) => ({
+          ...prev_24,
+          autoUpdatesChannel: 'latest',
+          minimumVersion: undefined,
+        }))
+        logEvent('zy_autoupdate_channel_changed', {
+          channel: 'latest' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        })
+      }
+      return
+    }
+    if (setting_0.type === 'enum') {
+      isDirty.current = true
+      const currentIndex = setting_0.options.indexOf(setting_0.value)
+      const nextIndex = (currentIndex + 1) % setting_0.options.length
+      setting_0.onChange(setting_0.options[nextIndex]!)
+      return
+    }
+  }, [
+    autoUpdaterDisabledReason,
+    filteredSettingsItems,
+    selectedIndex,
+    settingsData?.autoUpdatesChannel,
+    setTabsHidden,
+    context.messages.some,
+  ])
+
   // Enter: keep all changes (already persisted by onChange handlers), close
   // with a summary of what changed.
   const handleSaveAndClose = useCallback(() => {
     // Submenu handling: each submenu has its own Enter/Esc — don't close
     // the whole panel while one is open.
     if (showSubmenu !== null) {
+      return
+    }
+    // 聚焦在 managedEnum 项（如 modelTiers, model 等）时按 Enter 打开对应子菜单，不关闭面板
+    const currentSetting = filteredSettingsItems[selectedIndex]
+    if (currentSetting?.type === 'managedEnum') {
+      toggleSetting()
       return
     }
     // Log any changes that were made
@@ -1456,109 +1601,6 @@ export function Config({
     isActive: showSubmenu === null && !isSearchMode && !headerFocused,
   })
 
-  // Settings navigation and toggle actions via configurable keybindings.
-  // Only active when not in search mode and no submenu is open.
-  const toggleSetting = useCallback(() => {
-    const setting_0 = filteredSettingsItems[selectedIndex]
-    if (!setting_0?.onChange) {
-      return
-    }
-    if (setting_0.type === 'boolean') {
-      isDirty.current = true
-      setting_0.onChange(!setting_0.value)
-      if (setting_0.id === 'thinkingEnabled') {
-        const newValue = !setting_0.value
-        const backToInitial = newValue === initialThinkingEnabled.current
-        if (backToInitial) {
-          setShowThinkingWarning(false)
-        } else if (context.messages.some((m_0) => m_0.type === 'assistant')) {
-          setShowThinkingWarning(true)
-        }
-      }
-      return
-    }
-    if (
-      setting_0.id === 'theme' ||
-      setting_0.id === 'model' ||
-      setting_0.id === 'teammateDefaultModel' ||
-      setting_0.id === 'showExternalIncludesDialog' ||
-      setting_0.id === 'outputStyle' ||
-      setting_0.id === 'language'
-    ) {
-      // managedEnum items open a submenu — isDirty is set by the submenu's
-      // completion callback, not here (submenu may be cancelled).
-      switch (setting_0.id) {
-        case 'theme':
-          setShowSubmenu('Theme')
-          setTabsHidden(true)
-          return
-        case 'model':
-          setShowSubmenu('Model')
-          setTabsHidden(true)
-          return
-        case 'teammateDefaultModel':
-          setShowSubmenu('TeammateModel')
-          setTabsHidden(true)
-          return
-        case 'showExternalIncludesDialog':
-          setShowSubmenu('ExternalIncludes')
-          setTabsHidden(true)
-          return
-        case 'outputStyle':
-          setShowSubmenu('OutputStyle')
-          setTabsHidden(true)
-          return
-        case 'language':
-          setShowSubmenu('Language')
-          setTabsHidden(true)
-          return
-      }
-    }
-    if (setting_0.id === 'autoUpdatesChannel') {
-      if (autoUpdaterDisabledReason) {
-        // Auto-updates are disabled - show enable dialog instead
-        setShowSubmenu('EnableAutoUpdates')
-        setTabsHidden(true)
-        return
-      }
-      const currentChannel = settingsData?.autoUpdatesChannel ?? 'latest'
-      if (currentChannel === 'latest') {
-        // Switching to stable - show downgrade dialog
-        setShowSubmenu('ChannelDowngrade')
-        setTabsHidden(true)
-      } else {
-        // Switching to latest - just do it and clear minimumVersion
-        isDirty.current = true
-        updateSettingsForSource('userSettings', {
-          autoUpdatesChannel: 'latest',
-          minimumVersion: undefined,
-        })
-        setSettingsData((prev_24) => ({
-          ...prev_24,
-          autoUpdatesChannel: 'latest',
-          minimumVersion: undefined,
-        }))
-        logEvent('zy_autoupdate_channel_changed', {
-          channel: 'latest' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        })
-      }
-      return
-    }
-    if (setting_0.type === 'enum') {
-      isDirty.current = true
-      const currentIndex = setting_0.options.indexOf(setting_0.value)
-      const nextIndex = (currentIndex + 1) % setting_0.options.length
-      setting_0.onChange(setting_0.options[nextIndex]!)
-      return
-    }
-  }, [
-    autoUpdaterDisabledReason,
-    filteredSettingsItems,
-    selectedIndex,
-    settingsData?.autoUpdatesChannel,
-    setTabsHidden,
-    context.messages.some,
-  ])
   const moveSelection = (delta: -1 | 1): void => {
     setShowThinkingWarning(false)
     const newIndex_1 = Math.max(
@@ -1631,9 +1673,15 @@ export function Config({
         }
         return
       }
-      // List mode: left/right/tab cycle the selected option's value. These
-      // keys used to switch tabs; now they only do so when the tab row is
-      // explicitly focused (see headerFocused in Settings.tsx).
+      // List mode: left/right/tab cycle the selected option's value.
+      if (e.key === 'return') {
+        const currentSetting = filteredSettingsItems[selectedIndex]
+        if (currentSetting?.type === 'managedEnum') {
+          e.preventDefault()
+          toggleSetting()
+          return
+        }
+      }
       if (e.key === 'left' || e.key === 'right' || e.key === 'tab') {
         e.preventDefault()
         toggleSetting()
@@ -1703,6 +1751,9 @@ export function Config({
               setShowSubmenu(null)
               setTabsHidden(false)
             }}
+            onConfigureTiers={() => {
+              setShowSubmenu('ModelTiers')
+            }}
           />
           <Text dimColor>
             <Byline>
@@ -1716,6 +1767,21 @@ export function Config({
             </Byline>
           </Text>
         </>
+      ) : showSubmenu === 'ModelTiers' ? (
+        <ModelTierConfigFlow
+          onDone={(msg) => {
+            isDirty.current = true
+            setShowSubmenu(null)
+            setTabsHidden(false)
+            if (msg) {
+              onClose(msg)
+            }
+          }}
+          onCancel={() => {
+            setShowSubmenu(null)
+            setTabsHidden(false)
+          }}
+        />
       ) : showSubmenu === 'TeammateModel' ? (
         <>
           <ModelPicker
@@ -2101,7 +2167,11 @@ export function Config({
                   action="settings:close"
                   context="Settings"
                   fallback="Enter"
-                  description={tSync('settings.shortcuts.save')}
+                  description={
+                    filteredSettingsItems[selectedIndex]?.type === 'managedEnum'
+                      ? tSync('settings.shortcuts.open')
+                      : tSync('settings.shortcuts.save')
+                  }
                 />
                 <ConfigurableShortcutHint
                   action="settings:search"

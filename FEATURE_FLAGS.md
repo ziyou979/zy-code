@@ -69,6 +69,7 @@
 | Flag | 默认值 | 说明 | 文件 |
 |------|--------|------|------|
 | `zy_gemini_oauth_login` | `false` | Google AI Pro/Ultra 订阅 OAuth 登录入口（gemini-oauth）灰度开关；仅控制登录入口暴露，已登录用户的凭证刷新与推理不受影响 | `src/services/oauth/providers/registry.ts` |
+| `zy_chatgpt_subscription_login` | `false` | 「使用 ChatGPT 订阅登录」入口（openai-chatgpt）灰度开关。该能力为 OpenAI 正式文档化的公开接口（Sign in with ChatGPT token sharing），但有准入边界：仅 ChatGPT Plus/Pro 可用，官方将开放对象限定为开源项目、本地运行的个人项目与少量精选私有应用，付费或远程托管应用需先加入 waitlist。默认关闭以控制暴露面；仅控制登录入口暴露，已登录用户的凭证刷新与推理不受影响。env 覆盖：`ZY_CODE_ENABLE_CHATGPT_LOGIN` | `src/services/oauth/providers/registry.ts` |
 
 ## Channels / 插件
 

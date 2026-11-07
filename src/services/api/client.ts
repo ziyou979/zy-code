@@ -4,10 +4,18 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import OpenAI from 'openai'
 import { resolveModelRequestContext } from 'src/services/model/modelRequestContext.js'
 import { isCustomEndpointProvider, isEnvEndpointProvider } from 'src/services/model/providers.js'
-import { getApiKey, getApiKeyFromApiKeyHelper } from 'src/services/auth/auth.js'
+import {
+  getApiKey,
+  getApiKeyFromApiKeyHelper,
+  getApiKeyWithSource,
+} from 'src/services/auth/auth.js'
 import { getUserAgent } from 'src/services/http/http.js'
 import { buildProxiedFetch, getProxyFetchOptions } from 'src/services/http/proxy.js'
-import { getOAuthProviderIdForConnection } from 'src/services/oauth/oauthStorage.js'
+import {
+  getOAuthProviderIdForConnection,
+  isOAuthTokenExpiredForConnection,
+  refreshOAuthTokenForConnection,
+} from 'src/services/oauth/oauthStorage.js'
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import type { LLMAdapter } from '../../types/llm.js'
@@ -15,6 +23,7 @@ import { isDebugToStdErr, logForDebugging } from '../../services/infra/debug.js'
 import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../services/infra/envUtils.js'
 import { anthropicProviderAdapter } from './anthropicProviderAdapter.js'
 import { googleProviderAdapter } from './googleProviderAdapter.js'
+import { VertexGoogleProviderAdapter } from './vertexGoogleProviderAdapter.js'
 import { OpenAIProviderAdapter } from './openAIProviderAdapter.js'
 import { OpenAICodexResponsesProviderAdapter } from './openAICodexResponsesProviderAdapter.js'
 import { OpenAIResponsesProviderAdapter } from './openAIResponsesProviderAdapter.js'
@@ -216,6 +225,16 @@ export async function getOpenAIClient(options?: {
   const context = resolveModelRequestContext(options?.model)
   const { provider: apiProvider, authProfile } = context
   const authProvider = authProfile ?? apiProvider
+
+  // 订阅连接在请求前刷新即将过期的令牌，避免先发送一次必然失败的请求再由
+  // 外层 401 重试补救。刷新临时失败时仍保留旧令牌，由服务端结果决定后续处理。
+  if (
+    !options?.apiKey &&
+    getOAuthProviderIdForConnection(authProvider) &&
+    isOAuthTokenExpiredForConnection(authProvider)
+  ) {
+    await refreshOAuthTokenForConnection(authProvider)
+  }
 
   // ── Headers（与 getAnthropicClient 保持一致）──────────────────────────────────
   const containerId = process.env.ZY_CODE_CONTAINER_ID
@@ -449,22 +468,35 @@ function createAdapterFromContext(
   anthropicClient?: Anthropic,
 ): LLMAdapter {
   const { provider: apiProvider, authProfile, apiFormat } = context
+  const authProvider = authProfile ?? apiProvider
+  // 分派与凭据选择使用相同优先级；连接保留旧 OAuth 时，显式 API key 仍走公开 API。
+  const oauthProviderId =
+    getApiKeyWithSource({ provider: authProvider }).source === 'oauth'
+      ? getOAuthProviderIdForConnection(authProvider)
+      : null
 
   // 大多数 OAuth provider（xAI、Copilot、Anthropic）可沿用其 apiFormat adapter；
   // Codex 订阅后端的端点和请求约束不同，因此必须在通用 OpenAI 分派前单独识别。
   // 同一个 openai provider 使用 API key 时仍走 api.openai.com，不受此分支影响。
-  if (getOAuthProviderIdForConnection(authProfile ?? apiProvider) === 'openai-codex') {
+  if (oauthProviderId === 'openai-codex') {
     return new OpenAICodexResponsesProviderAdapter()
+  }
+
+  // Sign in with ChatGPT：订阅令牌直发公开 api.openai.com，用标准 Responses
+  // 格式与 SSE，字段和重试限制由订阅模式在 API 边界统一落实。
+  if (oauthProviderId === 'openai-chatgpt') {
+    return new OpenAIResponsesProviderAdapter(undefined, { chatGPTSubscription: true })
   }
 
   // 同理：gemini-oauth 订阅走 v1internal Code Assist 端点（Bearer + 信封请求），
   // 与公开 Gemini API 的 SDK 路径不兼容，必须在通用 google 分派前单独识别。
-  if (getOAuthProviderIdForConnection(authProfile ?? apiProvider) === 'gemini-oauth') {
+  if (oauthProviderId === 'gemini-oauth') {
     return new CodeAssistProviderAdapter()
   }
 
   switch (apiFormat) {
     case 'google':
+      if (apiProvider === 'vertex') return new VertexGoogleProviderAdapter()
       return new googleProviderAdapter()
     case 'openai-responses':
       return new OpenAIResponsesProviderAdapter()

@@ -33,7 +33,7 @@ import type { McpServerConfig, ScopedMcpServerConfig } from '../../services/mcp/
 import { setAutoModeFlagCli } from '../../services/permissions/autoModeState.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { checkHasTrustDialogAccepted, getGlobalConfig } from '../../services/config/config.js'
-import { seedEarlyInput } from '../../services/input/earlyInput.js'
+import { seedEarlyInput } from '../../ink/earlyInput.js'
 import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { initialPermissionModeFromCLI } from '../../services/permissions/permissionBootstrap.js'

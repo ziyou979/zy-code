@@ -34,8 +34,10 @@ function baseCtx(): StatusbarContext {
 
 /** 通过 transcript 重建路径注入全局累计用量（与 /resume 后状态栏恢复同一路径）。 */
 function seedUsages(entries: readonly { model: string; usage: TokenUsage }[]): void {
-  const messages = entries.map(({ model, usage }) => {
+  const messages = entries.map(({ model, usage }, index) => {
     const msg = createTestAssistantMessage([{ type: 'text', text: 'ok' }])
+    // 每条输入代表独立 API 响应，不能复用工厂的默认响应 ID 被去重。
+    msg.message.id = `cache-response-${index}`
     msg.message.model = model
     msg.message.usage = usage
     return msg

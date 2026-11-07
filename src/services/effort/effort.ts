@@ -202,10 +202,15 @@ export function resolveEffortForModel(
   requested: EffortLevel | undefined,
 ): EffortLevel | undefined {
   const supportedLevels = getModelEffortLevels(model)
+  const effortMap =
+    requested === 'on' && !supportedLevels.includes('on')
+      ? getLocalModelEffortMap(model, getModelCapabilityContext(model))
+      : undefined
   return resolveEffortForSupportedLevels(
     supportedLevels,
     requested,
     getDefaultEffortForModel(model),
+    effortMap,
   )
 }
 
@@ -213,11 +218,24 @@ export function resolveEffortForSupportedLevels(
   supportedLevels: readonly EffortLevel[],
   requested: EffortLevel | undefined,
   defaultEffort: EffortLevel | undefined,
+  effortMap?: Readonly<Record<string, string>>,
 ): EffortLevel | undefined {
   if (supportedLevels.length === 0) {
     return undefined
   }
   const resolved = requested ?? defaultEffort
+
+  // 旧的 on 设置若映射到某个显式强度，沿用等价档位，避免隐藏 on 后回退到最低档。
+  const mappedOn = effortMap?.on
+  if (resolved === 'on' && !supportedLevels.includes('on') && mappedOn !== undefined) {
+    for (let i = EFFORT_LEVEL_ORDER.length - 1; i >= 0; i--) {
+      const level = EFFORT_LEVEL_ORDER[i]!
+      if (supportedLevels.includes(level) && effortMap?.[level] === mappedOn) {
+        return level
+      }
+    }
+  }
+
   return resolved === undefined ? undefined : clampEffort(resolved, supportedLevels)
 }
 

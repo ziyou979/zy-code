@@ -1,5 +1,4 @@
-import { useEffect, useLayoutEffect } from 'react'
-import { useEventCallback } from 'usehooks-ts'
+import { useCallback, useLayoutEffect, useRef } from 'react'
 import type { InputEvent, Key } from '../events/inputEvent.js'
 import useStdin from './useStdin.js'
 
@@ -42,29 +41,18 @@ type Options = {
 const useInput = (inputHandler: Handler, options: Options = {}) => {
   const { setRawMode, internal_exitOnCtrlC, internal_eventEmitter } = useStdin()
 
-  // 使用 useLayoutEffect（而非 useEffect）以便在 React 的 commit 阶段同步启用 raw mode，
-  // 这样 render() 返回时 raw mode 已就绪。如果使用 useEffect，raw mode 的设置会通过
-  // React 的调度器推迟到下一个事件循环 tick，导致终端在此期间处于 cooked 模式——
-  // 按键会回显且光标可见，直到 effect 触发。
-  useLayoutEffect(() => {
-    if (options.isActive === false) {
-      return
-    }
-
-    setRawMode(true)
-
-    return () => {
-      setRawMode(false)
-    }
-  }, [options.isActive, setRawMode])
-
   // 在 mount 时仅注册一次监听器，以确保其在 EventEmitter 的 listener 数组中的位置稳定。
   // 如果将 isActive 放在 effect 的 deps 中，监听器会在 false→true 时重新添加，
   // 排在它处于非激活期间注册的监听器之后——这会破坏 stopImmediatePropagation() 的顺序。
-  // useEventCallback 保持引用稳定，同时通过闭包读取最新的 isActive/inputHandler
-  //（它通过 useLayoutEffect 同步，对编译器安全）。
-  const handleData = useEventCallback((event: InputEvent) => {
-    if (options.isActive === false) {
+  // usehooks-ts 在无 window 的终端环境会退化为普通 effect；这里显式在提交阶段
+  // 同步最新回调，避免已订阅的监听器在首次读取或重新激活时仍使用旧状态。
+  const handlerRef = useRef({ inputHandler, isActive: options.isActive, internal_exitOnCtrlC })
+  useLayoutEffect(() => {
+    handlerRef.current = { inputHandler, isActive: options.isActive, internal_exitOnCtrlC }
+  })
+  const handleData = useCallback((event: InputEvent) => {
+    const current = handlerRef.current
+    if (current.isActive === false) {
       return
     }
     const { input, key } = event
@@ -72,18 +60,27 @@ const useInput = (inputHandler: Handler, options: Options = {}) => {
     // 如果应用不应在 Ctrl+C 时退出，则交由 input 监听器处理
     // 注意：discreteUpdates 在 emit 事件时于 App 层级调用，
     // 因此所有监听器已处于高优先级更新上下文中。
-    if (!(input === 'c' && key.ctrl) || !internal_exitOnCtrlC) {
-      inputHandler(input, key, event)
+    if (!(input === 'c' && key.ctrl) || !current.internal_exitOnCtrlC) {
+      current.inputHandler(input, key, event)
     }
-  })
+  }, [])
 
-  useEffect(() => {
+  // 先在提交阶段稳定订阅，再启用终端读取，避免首批按键先于订阅到达。
+  useLayoutEffect(() => {
     internal_eventEmitter?.on('input', handleData)
 
     return () => {
       internal_eventEmitter?.removeListener('input', handleData)
     }
   }, [internal_eventEmitter, handleData])
+
+  useLayoutEffect(() => {
+    if (options.isActive === false) {
+      return
+    }
+    setRawMode(true)
+    return () => setRawMode(false)
+  }, [options.isActive, setRawMode])
 }
 
 export default useInput

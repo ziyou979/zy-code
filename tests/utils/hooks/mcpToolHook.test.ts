@@ -1,8 +1,9 @@
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
 /**
  * 5.5 mcp_tool hook —— schema 接受性 + execMcpToolHook（连接检查 / 结果提取 / args 合并 / fail-open）。
  * mock callMCPTool（可控返回/抛错 + 捕获 args）；全替换 i18n 防 schema/attachments 图的 settings TDZ。
  */
-import { beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test'
+import { beforeAll, beforeEach, describe, expect, mock, test, afterAll } from 'bun:test'
 
 let CONTENT: unknown = 'hello'
 let THROW = false
@@ -14,15 +15,14 @@ let HookCommandSchema: any
 let execMcpToolHook: any
 
 beforeAll(async () => {
-  mock.module('../../../src/i18n/index.js', () => ({
+  spyOnModuleExports(await import('../../../src/i18n/index.js'), {
     tSync: (k: string) => k,
     t: (k: string) => k,
     getUiLanguage: () => 'en',
     warmI18n: async () => {},
-    SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
-  }))
+  })
   const mcpToolCall = await import('../../../src/services/mcp/mcpToolCall.js')
-  mock.module('../../../src/services/mcp/mcpToolCall.js', () => ({
+  spyOnModuleExports(await import('../../../src/services/mcp/mcpToolCall.js'), {
     ...mcpToolCall,
     callMCPTool: async ({ args }: { args: Record<string, unknown> }) => {
       CAPTURED_ARGS = args
@@ -31,7 +31,7 @@ beforeAll(async () => {
       }
       return { content: CONTENT }
     },
-  }))
+  })
   ;({ HookCommandSchema } = await import('../../../src/schemas/hooks.js'))
   ;({ execMcpToolHook } = await import('../../../src/services/hooks/execMcpToolHook.js'))
 })
@@ -104,3 +104,5 @@ describe('5.5 execMcpToolHook', () => {
     expect(r.outcome).toBe('non_blocking_error')
   })
 })
+
+afterAll(() => mock.restore())

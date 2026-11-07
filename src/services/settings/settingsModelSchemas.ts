@@ -74,6 +74,12 @@ export const ModelFailoverSchema = lazySchema(() =>
         .describe(
           'Enable automatic auth/model failover when a tier has multiple candidates. Defaults to true when a candidate list is configured.',
         ),
+      mode: z
+        .enum(['confirm', 'notify', 'off'])
+        .optional()
+        .describe(
+          'Failover mode: "confirm" (ask user before switching), "notify" (automatic switch with alert), or "off" (disable failover). Default: "confirm".',
+        ),
       maxConsecutiveFailures: z
         .number()
         .int()

@@ -41,7 +41,10 @@ import {
   hasUnresolvedHooksFromLookup,
   scopeMessageLookups,
 } from '../services/messages/./lookups.js'
-import { createAssistantMessage } from '../services/messages/./constructors.js'
+import {
+  computeTurnTokenUsage,
+  createAssistantMessage,
+} from '../services/messages/./constructors.js'
 import {
   deriveUUID,
   getToolUseID,
@@ -423,14 +426,21 @@ const MessagesImpl = ({
     'Ctrl+E',
   )
   const normalizeForDisplay = useMemo(() => createMessageNormalizer(), [])
-  const normalizedMessages = useMemo(
-    () =>
-      normalizeForDisplay(messages)
-        .filter(isNotEmptyMessage)
-        // MessageDisplay hook 的 display-only 隐藏：仅从渲染中移除，消息仍在上下文/转录中。
-        .filter((m) => !m.displayOverride?.hide),
-    [messages, normalizeForDisplay],
-  )
+  const normalizedMessages = useMemo(() => {
+    const filtered = normalizeForDisplay(messages)
+      .filter(isNotEmptyMessage)
+      // MessageDisplay hook 的 display-only 隐藏：仅从渲染中移除，消息仍在上下文/转录中。
+      .filter((m) => !m.displayOverride?.hide)
+    return filtered.map((m, idx) => {
+      if (m.type === 'system' && m.subtype === 'turn_duration' && !m.turnUsage) {
+        const turnUsage = computeTurnTokenUsage(filtered.slice(0, idx))
+        if (turnUsage) {
+          return { ...m, turnUsage }
+        }
+      }
+      return m
+    })
+  }, [messages, normalizeForDisplay])
 
   // 已落盘消息中记录的思考时长累计（与折叠组聚合逻辑一致）。
   // 流式思考的展示基准必须包含已确认部分：消息落盘消费会把

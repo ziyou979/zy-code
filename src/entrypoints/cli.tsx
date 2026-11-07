@@ -208,7 +208,7 @@ async function main(): Promise<void> {
   }
 
   // 未检测到特殊标志，加载并运行完整 CLI
-  const { startCapturingEarlyInput } = await import('../services/input/earlyInput.js')
+  const { startCapturingEarlyInput } = await import('../ink/earlyInput.js')
   startCapturingEarlyInput()
   profileCheckpoint('cli_before_main_import')
   const { main: cliMain } = await import('../main.js')

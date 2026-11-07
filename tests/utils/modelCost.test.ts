@@ -1,3 +1,4 @@
+import { spyOnModuleExports } from '../_helpers/spyOnModuleExports.js'
 /**
  * modelCost 测试：费用计算函数。
  *
@@ -12,8 +13,8 @@ import * as realModel from '../../src/services/model/model.js'
 import * as realModelCapabilities from '../../src/services/model/modelCapabilities.js'
 
 describe('modelCost', () => {
-  beforeEach(() => {
-    mock.module('../../src/services/model/modelCapabilities.js', () => ({
+  beforeEach(async () => {
+    spyOnModuleExports(await import('../../src/services/model/modelCapabilities.js'), {
       ...realModelCapabilities,
       getStaticPricingForModel: () => ({
         cost_input: 30,
@@ -24,7 +25,7 @@ describe('modelCost', () => {
         currency: 'CNY',
       }),
       getModelCapability: () => undefined,
-    }))
+    })
   })
 
   afterEach(() => {
@@ -151,7 +152,7 @@ describe('modelCost', () => {
 
   describe('getModelCurrency', () => {
     test('配置 currency: CNY 时返回 CNY', async () => {
-      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+      spyOnModuleExports(await import('../../src/services/model/modelCapabilities.js'), {
         ...realModelCapabilities,
         getStaticPricingForModel: () => ({
           cost_input: 1,
@@ -161,13 +162,13 @@ describe('modelCost', () => {
           cost_web_search: 0,
           currency: 'CNY',
         }),
-      }))
+      })
       const { getModelCurrency } = await import('../../src/services/model/modelCost.js')
       expect(getModelCurrency('test-model')).toBe('CNY')
     })
 
     test('配置 currency: USD 时返回 USD', async () => {
-      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+      spyOnModuleExports(await import('../../src/services/model/modelCapabilities.js'), {
         ...realModelCapabilities,
         getStaticPricingForModel: () => ({
           cost_input: 1,
@@ -177,20 +178,20 @@ describe('modelCost', () => {
           cost_web_search: 0,
           currency: 'USD',
         }),
-      }))
+      })
       const { getModelCurrency } = await import('../../src/services/model/modelCost.js')
       expect(getModelCurrency('test-model')).toBe('USD')
     })
 
     test('无定价配置时默认 CNY', async () => {
-      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+      spyOnModuleExports(await import('../../src/services/model/modelCapabilities.js'), {
         ...realModelCapabilities,
         getStaticPricingForModel: () => null,
-      }))
-      mock.module('../../src/services/model/model.js', () => ({
+      })
+      spyOnModuleExports(await import('../../src/services/model/model.js'), {
         ...realModel,
         getDefaultMainLoopModelSetting: () => null,
-      }))
+      })
       const { getModelCurrency } = await import('../../src/services/model/modelCost.js')
       expect(getModelCurrency('unknown-model')).toBe('CNY')
     })
@@ -210,7 +211,7 @@ describe('modelCost', () => {
 
   describe('getCurrencySymbol — 根据模型货币', () => {
     test('当前模型 currency 为 USD 时返回 $', async () => {
-      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+      spyOnModuleExports(await import('../../src/services/model/modelCapabilities.js'), {
         ...realModelCapabilities,
         getStaticPricingForModel: () => ({
           cost_input: 1,
@@ -220,17 +221,17 @@ describe('modelCost', () => {
           cost_web_search: 0,
           currency: 'USD',
         }),
-      }))
-      mock.module('../../src/services/model/model.js', () => ({
+      })
+      spyOnModuleExports(await import('../../src/services/model/model.js'), {
         ...realModel,
         getDefaultMainLoopModelSetting: () => 'gpt-4o',
-      }))
+      })
       const { getCurrencySymbol: fn } = await import('../../src/services/model/modelCost.js')
       expect(fn()).toBe('$')
     })
 
     test('当前模型 currency 为 CNY 时返回 ¥', async () => {
-      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+      spyOnModuleExports(await import('../../src/services/model/modelCapabilities.js'), {
         ...realModelCapabilities,
         getStaticPricingForModel: () => ({
           cost_input: 1,
@@ -240,24 +241,24 @@ describe('modelCost', () => {
           cost_web_search: 0,
           currency: 'CNY',
         }),
-      }))
-      mock.module('../../src/services/model/model.js', () => ({
+      })
+      spyOnModuleExports(await import('../../src/services/model/model.js'), {
         ...realModel,
         getDefaultMainLoopModelSetting: () => 'qwen3.6-max',
-      }))
+      })
       const { getCurrencySymbol: fn } = await import('../../src/services/model/modelCost.js')
       expect(fn()).toBe('¥')
     })
 
     test('无模型配置时默认返回 ¥', async () => {
-      mock.module('../../src/services/model/modelCapabilities.js', () => ({
+      spyOnModuleExports(await import('../../src/services/model/modelCapabilities.js'), {
         ...realModelCapabilities,
         getStaticPricingForModel: () => null,
-      }))
-      mock.module('../../src/services/model/model.js', () => ({
+      })
+      spyOnModuleExports(await import('../../src/services/model/model.js'), {
         ...realModel,
         getDefaultMainLoopModelSetting: () => null,
-      }))
+      })
       const { getCurrencySymbol: fn } = await import('../../src/services/model/modelCost.js')
       expect(fn()).toBe('¥')
     })

@@ -531,12 +531,17 @@ export function filterTrailingThinkingFromLastAssistant(
 /**
  * 检查 assistant 消息是否仅含纯空白 text 内容块。
  */
-function hasOnlyWhitespaceTextContent(content: Array<{ type: string; text?: string }>): boolean {
+function hasOnlyWhitespaceTextContent(
+  content: Array<{ type: string; text?: string; providerMetadata?: Record<string, unknown> }>,
+): boolean {
   if (content.length === 0) {
     return false
   }
 
   for (const block of content) {
+    if (typeof block.providerMetadata?.googleThoughtSignature === 'string') {
+      return false
+    }
     if (block.type !== 'text') {
       return false
     }

@@ -12,9 +12,38 @@ import {
   extractConnectionErrorDetails,
   formatAPIError,
   getSSLErrorHint,
+  normalizeFetchError,
 } from '../../../src/services/api/errorUtils.js'
+import { LLMAbortError, LLMConnectionError, LLMError } from '../../../src/types/llm.js'
 
 describe('errorUtils', () => {
+  describe('normalizeFetchError', () => {
+    test('保留 API 和 JSON 协议错误，避免无效重试', () => {
+      for (const error of [
+        new LLMError('bad request', 400),
+        new SyntaxError('bad JSON'),
+        new Error('unexpected'),
+      ]) {
+        expect(normalizeFetchError(error)).toBe(error)
+      }
+    })
+    test('Node fetch cause 中的断线保留错误码和原因', () => {
+      const cause = Object.assign(new Error('reset'), { code: 'ECONNRESET' })
+      const error = new TypeError('fetch failed', { cause })
+      expect(normalizeFetchError(error)).toBeInstanceOf(LLMConnectionError)
+      expect(normalizeFetchError(error)).toMatchObject({ code: 'ECONNRESET', cause: error })
+    })
+    test('超时与用户中止分别处理', () => {
+      const timeout = new AbortController()
+      timeout.abort(new DOMException('timed out', 'TimeoutError'))
+      expect(normalizeFetchError(new Error('closed'), timeout.signal)).toMatchObject({
+        code: 'ETIMEDOUT',
+      })
+      const cancel = new AbortController()
+      cancel.abort()
+      expect(normalizeFetchError(new Error('closed'), cancel.signal)).toBeInstanceOf(LLMAbortError)
+    })
+  })
   describe('extractConnectionErrorDetails', () => {
     test('null/undefined → null', () => {
       expect(extractConnectionErrorDetails(null)).toBe(null)

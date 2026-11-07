@@ -17,6 +17,7 @@ import {
   getAuthConfigForProvider,
   getAuthOAuthConnections,
   getAuthOAuthStore,
+  loadAuthConfig,
   removeAuthConfigOAuth,
   setAuthConfigOAuth,
   type AuthOAuthCredentials,
@@ -26,7 +27,12 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { getOAuthApiKey, getOAuthProvider, getOAuthProviders } from './providers/index.js'
+import {
+  getOAuthApiKey,
+  getOAuthProvider,
+  getRegisteredOAuthProviders,
+  isCredentialInvalidatedError,
+} from './providers/index.js'
 import type { OAuthCredentials, OAuthProviderInterface } from './providers/types.js'
 
 type StoredOAuthConnection = {
@@ -36,8 +42,13 @@ type StoredOAuthConnection = {
 }
 
 function inferOAuthProviderId(connectionId: string): string | undefined {
-  const apiProvider = getAuthConfigForProvider(connectionId)?.provider ?? connectionId
-  return getOAuthProviders().find((provider) => provider.apiProvider === apiProvider)?.id
+  const config = getAuthConfigForProvider(connectionId)
+  const apiProvider = config?.provider ?? connectionId
+  // 旧 openai 凭据没有实现 ID 时按原 Codex 契约识别，不能受新登录入口顺序影响。
+  if (apiProvider === 'openai') {
+    return config?.oauth?.authMethod === 'chatgpt-subscription' ? 'openai-chatgpt' : 'openai-codex'
+  }
+  return getRegisteredOAuthProviders().find((provider) => provider.apiProvider === apiProvider)?.id
 }
 
 function getStoredOAuthConnections(): StoredOAuthConnection[] {
@@ -65,7 +76,7 @@ function getStoredOAuthConnections(): StoredOAuthConnection[] {
     }
     const provider = getOAuthProvider(providerId)
     connections.push({
-      connectionId: provider?.apiProvider ?? providerId,
+      connectionId: provider?.defaultConnectionId ?? provider?.apiProvider ?? providerId,
       providerId,
       credentials: credentials as OAuthCredentials,
     })
@@ -84,19 +95,28 @@ function getConnectionById(connectionId: string): StoredOAuthConnection | undefi
   if (exact) {
     return exact
   }
-  return getStoredOAuthConnections().find(
-    (connection) => getOAuthProvider(connection.providerId)?.apiProvider === connectionId,
-  )
+  // 已声明的 API key 连接没有 OAuth，不能借用同 provider 的另一个订阅身份。
+  if (getAuthConfigForProvider(connectionId)) {
+    return undefined
+  }
+  return getStoredOAuthConnections().find((connection) => {
+    const provider = getOAuthProvider(connection.providerId)
+    return (provider?.defaultConnectionId ?? provider?.apiProvider) === connectionId
+  })
 }
 
 function migrateLegacyCredentials(): void {
-  const store = getAuthOAuthStore()
-  for (const [providerId, credentials] of Object.entries(store.credentials)) {
+  // 只迁移旧全局块；聚合 store 同时包含命名连接，重写它会复制或覆盖其他身份。
+  const credentialsByProvider = loadAuthConfig()?.oauth?.credentials ?? {}
+  for (const [providerId, credentials] of Object.entries(credentialsByProvider)) {
     const provider = getOAuthProvider(providerId)
     setAuthConfigOAuth(
-      provider?.apiProvider ?? providerId,
+      provider?.defaultConnectionId ?? provider?.apiProvider ?? providerId,
       providerId,
       credentials as AuthOAuthCredentials,
+      provider?.defaultConnectionId
+        ? { provider: provider.apiProvider, apiFormat: provider.apiFormat }
+        : undefined,
     )
   }
 }
@@ -158,18 +178,31 @@ export function setActiveOAuthProvider(providerId: string): void {
 export function saveOAuthCredentials(
   providerId: string,
   credentials: OAuthCredentials,
-): { success: boolean; warning?: string } {
+  connectionId?: string,
+): { success: boolean; connectionId?: string; warning?: string } {
   try {
     migrateLegacyCredentials()
     const provider = getOAuthProvider(providerId)
-    const connectionId = provider?.apiProvider ?? providerId
-    const result = setAuthConfigOAuth(connectionId, providerId, credentials as AuthOAuthCredentials)
+    const targetConnectionId =
+      connectionId ??
+      getConnectionByProviderId(providerId)?.connectionId ??
+      provider?.defaultConnectionId ??
+      provider?.apiProvider ??
+      providerId
+    const result = setAuthConfigOAuth(
+      targetConnectionId,
+      providerId,
+      credentials as AuthOAuthCredentials,
+      provider?.defaultConnectionId
+        ? { provider: provider.apiProvider, apiFormat: provider.apiFormat }
+        : undefined,
+    )
     clearOAuthCredentialsCache()
 
     logEvent(result.success ? 'zy_oauth_credentials_saved' : 'zy_oauth_credentials_save_failed', {
       providerId: providerId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
-    return result
+    return result.success ? { ...result, connectionId: targetConnectionId } : result
   } catch (error) {
     logError(error)
     logEvent('zy_oauth_credentials_save_exception', {
@@ -224,6 +257,9 @@ export async function getActiveOAuthApiKey(): Promise<{
     }
     return { key: apiKey, provider: providerId }
   } catch (error) {
+    if (isCredentialInvalidatedError(error)) {
+      removeOAuthCredentials(providerId)
+    }
     logError(error)
     return null
   }
@@ -278,19 +314,43 @@ export function isOAuthTokenExpiredForConnection(connectionId?: string): boolean
   return credentials ? Date.now() + 5 * 60 * 1000 >= credentials.expires : false
 }
 
-export async function refreshOAuthTokenForConnection(connectionId?: string): Promise<boolean> {
-  if (!connectionId) {
-    return false
+// 同一连接的并发刷新共享一次请求，避免 refresh token 轮换竞争
+const inflight = new Map<string, Promise<boolean>>()
+
+export function refreshOAuthTokenForConnection(id?: string): Promise<boolean> {
+  if (!id) {
+    return Promise.resolve(false)
   }
+  let p = inflight.get(id)
+  if (!p) {
+    p = refreshOnce(id).finally(() => inflight.delete(id))
+    inflight.set(id, p)
+  }
+  return p
+}
+
+async function refreshOnce(connectionId: string): Promise<boolean> {
   const connection = getConnectionById(connectionId)
   const provider = connection ? getOAuthProvider(connection.providerId) : undefined
   if (!connection || !provider) {
     return false
   }
   try {
-    saveOAuthCredentials(connection.providerId, await provider.refreshToken(connection.credentials))
-    return true
+    return saveOAuthCredentials(
+      connection.providerId,
+      await provider.refreshToken(connection.credentials),
+      connection.connectionId,
+    ).success
   } catch (error) {
+    if (isCredentialInvalidatedError(error)) {
+      // 仅当存储的仍是本次使用的 refresh token 时才删除，保留外部已轮换的新凭据
+      const cur = getConnectionById(connection.connectionId)?.credentials
+      if (cur && cur.refresh !== connection.credentials.refresh) {
+        return true
+      }
+      removeAuthConfigOAuth(connection.connectionId)
+      clearOAuthCredentialsCache()
+    }
     logError(error)
     return false
   }
@@ -304,9 +364,15 @@ export async function refreshActiveOAuthToken(): Promise<boolean> {
     return false
   }
   try {
-    saveOAuthCredentials(providerId, await provider.refreshToken(credentials))
-    return true
+    return saveOAuthCredentials(providerId, await provider.refreshToken(credentials)).success
   } catch (error) {
+    if (isCredentialInvalidatedError(error)) {
+      const connection = getConnectionByProviderId(providerId)
+      if (connection) {
+        removeAuthConfigOAuth(connection.connectionId)
+        clearOAuthCredentialsCache()
+      }
+    }
     logError(error)
     return false
   }

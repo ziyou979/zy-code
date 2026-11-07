@@ -147,16 +147,22 @@ export function getStickyForTier(
   return sticky
 }
 
-/** 仅删除一个已确认不再存在的档位选择，避免影响其它档位。 */
+/**
+ * 仅删除一个档位的选择，避免影响其它档位。指纹可能早于刚写入的 settings
+ * （如显式切换主选后），与 getStickyForTier 一样保留其它档位并刷新指纹。
+ */
 export function clearStickyForTier(tier: string, settings: SettingsJson | null | undefined): void {
-  const fingerprint = computeModelChainFingerprint(settings)
   const prev = readStateFile()
-  if (!prev || prev.configFingerprint !== fingerprint || !prev.tiers[tier]) {
+  if (!prev?.tiers[tier]) {
     return
   }
   const tiers = { ...prev.tiers }
   delete tiers[tier]
-  writeStateFile({ version: STATE_VERSION, configFingerprint: fingerprint, tiers })
+  writeStateFile({
+    version: STATE_VERSION,
+    configFingerprint: computeModelChainFingerprint(settings),
+    tiers,
+  })
 }
 
 /** 写入某档位 sticky（保留其它档位） */
@@ -203,11 +209,21 @@ export function clearAllModelChainSticky(settings?: SettingsJson | null): void {
 /** 读取 modelFailover 默认值 */
 export function getModelFailoverConfig(settings: SettingsJson | null | undefined): {
   enabled: boolean
+  mode: 'confirm' | 'notify' | 'off'
   maxConsecutiveFailures: number
 } {
   const raw = settings?.modelFailover
+  const rawMode = raw?.mode
+  const explicitlyDisabled = raw?.enabled === false || rawMode === 'off'
+  const mode: 'confirm' | 'notify' | 'off' = explicitlyDisabled
+    ? 'off'
+    : rawMode === 'notify'
+      ? 'notify'
+      : 'confirm'
+
   return {
-    enabled: raw?.enabled !== false,
+    enabled: mode !== 'off',
+    mode,
     maxConsecutiveFailures:
       typeof raw?.maxConsecutiveFailures === 'number' && raw.maxConsecutiveFailures >= 1
         ? Math.min(10, Math.floor(raw.maxConsecutiveFailures))

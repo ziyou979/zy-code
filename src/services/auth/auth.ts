@@ -68,6 +68,7 @@ import {
   getAuthConfigApiKeyHelper,
   setAuthConfigApiKey,
 } from './authConfig.js'
+import { isGoogleAdcConnection } from './googleAdc.js'
 
 /** API key helper 缓存的默认 TTL，单位毫秒（5 分钟） */
 const DEFAULT_API_KEY_HELPER_TTL = 5 * 60 * 1000
@@ -107,6 +108,9 @@ export function isZyAISubscriber(): boolean {
 export function isAuthEnabled(): boolean {
   // 检查用户级 auth.json 中配置的 API key / apiKeyHelper。
   const provider = getAuthProviderId()
+  if (isGoogleAdcConnection(provider)) {
+    return true
+  }
   if (getAuthConfigApiKey(provider) || getAuthConfigApiKeyHelper(provider)) {
     return true
   }
@@ -129,6 +133,9 @@ export function isAuthEnabled(): boolean {
 export function getAuthTokenSource() {
   // 检查用户级 auth.json 中配置的 API key。
   const provider = getAuthProviderId()
+  if (isGoogleAdcConnection(provider)) {
+    return { source: 'google-adc' as const, hasToken: true }
+  }
   if (getAuthConfigApiKey(provider)) {
     return { source: 'settingsApiKey' as const, hasToken: true }
   }
@@ -172,6 +179,7 @@ export type ApiKeySource =
   | 'apiKeyHelper'
   | '/login managed key'
   | 'oauth'
+  | 'google-adc'
   | 'none'
 
 /**
@@ -199,6 +207,10 @@ export function getApiKeyWithSource(
 } {
   // 检查用户级 auth.json 中配置的 API key。
   const provider = getAuthProviderId(opts.provider)
+  if (isGoogleAdcConnection(provider)) {
+    // ADC 由 Google 认证库消费，不伪造 API key，也不回退到其他连接的认证。
+    return { key: null, source: 'google-adc' }
+  }
   const authConfigApiKey = getAuthConfigApiKey(provider)
   if (authConfigApiKey) {
     return { key: authConfigApiKey, source: 'settingsApiKey' }
@@ -603,7 +615,7 @@ async function maybeRemoveApiKeyFromMacOSKeychain(): Promise<void> {
  * 从新的多 Provider OAuth 存储中读取活跃 provider 的 access token。
  * 外部模块通过 utils/auth.ts 导入此函数获取当前 token。
  */
-export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
+export function getZyAIOAuthTokens(): OAuthTokens | null {
   if (isBareMode()) {
     return null
   }
@@ -641,7 +653,7 @@ export const getZyAIOAuthTokens = memoize((): OAuthTokens | null => {
     subscriptionType: null,
     rateLimitTier: null,
   }
-})
+}
 
 /**
  * 纯函数：判断 OAuth token 是否满足 user:inference + 额外 scopes。
@@ -693,7 +705,6 @@ export function isOAuthTokenExpired(expiresAt: number | null): boolean {
  * （例如，token 签发后发生了时钟校正）。
  */
 export function clearOAuthTokenCache(): void {
-  getZyAIOAuthTokens.cache?.clear?.()
   clearKeychainCache()
   clearOAuthCredentialsCache()
 }
@@ -1010,6 +1021,9 @@ export type UserAccountInfo = {
 }
 
 export function getAccountInformation() {
+  if (isGoogleAdcConnection(getAuthProviderId())) {
+    return { tokenSource: 'google-adc' } satisfies UserAccountInfo
+  }
   const model = getMainLoopModel()
   const apiProvider = getProviderForModel(model)
   // 覆盖 Anthropic 格式及 OpenAI 兼容格式连接；后者也包括 xAI、Codex、Copilot 等 OAuth。

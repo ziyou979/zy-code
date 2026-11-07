@@ -2,12 +2,12 @@
  * useReplInput：从 REPL.tsx 提取的输入值、模式、vim 和历史搜索状态。
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTerminalFocus } from '../../ink/index.js'
 import type { PromptInputMode, VimMode } from '../../types/textInputTypes.js'
 import type { PastedContent } from '../../services/config/config.js'
 import type { ReplStoreInstance } from '../../state/replStore.js'
-import { consumeEarlyInput } from '../../services/input/earlyInput.js'
+import { consumeEarlyInput } from '../../ink/earlyInput.js'
 
 const RECENT_SCROLL_REPIN_WINDOW_MS = 3000
 const PROMPT_SUPPRESSION_MS = 1500
@@ -22,13 +22,8 @@ export type UseReplInputParams = {
 export function useReplInput(params: UseReplInputParams) {
   const { replStore, repinScroll, lastUserScrollTsRef, trySuggestBgPRIntercept } = params
 
-  const [initialInputValue] = useState(() => consumeEarlyInput())
-  const inputValueRef = useRef(initialInputValue)
-  const inputStoreInitializedRef = useRef(false)
-  if (!inputStoreInitializedRef.current) {
-    replStore.input.setValue(initialInputValue)
-    inputStoreInitializedRef.current = true
-  }
+  const inputValueRef = useRef(replStore.input.getValue())
+  const earlyInputCommittedRef = useRef(false)
   const setInputValueRaw = useCallback<React.Dispatch<React.SetStateAction<string>>>(
     (action) => {
       const previous = inputValueRef.current
@@ -41,6 +36,18 @@ export function useReplInput(params: UseReplInputParams) {
     },
     [replStore],
   )
+
+  useLayoutEffect(() => {
+    if (earlyInputCommittedRef.current) {
+      return
+    }
+    earlyInputCommittedRef.current = true
+    // 提交后才消费启动输入；中断渲染和 StrictMode 重放不会提前清空缓存或重置已有输入。
+    const buffered = consumeEarlyInput()
+    if (buffered) {
+      setInputValueRaw((previous) => previous + buffered)
+    }
+  }, [setInputValueRaw])
 
   const insertTextRef = useRef<{
     insert: (text: string) => void

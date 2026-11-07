@@ -21,7 +21,7 @@ export function createUiSlice(): UiSlice {
     coordinatorTaskIndex: -1,
     viewSelectionMode: 'none',
     footerSelection: null,
-    activeOverlays: new Set<string>(),
+    activeOverlays: new Map<string, string>(),
   }
 }
 

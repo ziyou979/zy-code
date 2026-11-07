@@ -25,10 +25,13 @@
 
 ## LLM 适配
 
-`src/services/api/` — Anthropic / OpenAI 统一适配层：
+`src/services/api/` — 多协议统一适配层：
 - `llmOrchestrator.ts` — 稳定业务入口；内部由 `llm-orchestrator/` 中的非流式请求、流式准备、流式执行和空闲看门狗共同完成请求/重试/用量编排
-- `AnthropicProviderAdapter.ts` / `OpenAIProviderAdapter.ts` — Provider 专属 SDK 适配（实现 `LLMAdapter`）
-- `conversions/anthropic.ts` / `conversions/openai.ts` — SDK 流 → `AsyncIterable<StreamEvent>` 的标准化转换
+- `anthropicProviderAdapter.ts` / `openAIProviderAdapter.ts` — Anthropic Messages 与 OpenAI Chat 适配（实现 `LLMAdapter`）
+- `openAIResponsesProviderAdapter.ts` / `openAICodexResponsesProviderAdapter.ts` — OpenAI Responses 与 Codex 订阅协议适配
+- `googleProviderAdapter.ts` / `codeAssistProviderAdapter.ts` — Gemini Developer API 与 Gemini OAuth Code Assist 适配
+- `vertexGoogleProviderAdapter.ts` — Vertex Gemini 原生协议与 ADC 认证；`googleContinuation.ts`、`googleSseStream.ts` 负责续传状态和 SSE 解析
+- `conversions/anthropic.ts` / `conversions/openai.ts` / `conversions/openaiResponses.ts` / `conversions/google.ts` — 各协议与标准消息、流事件之间的转换
 
 P8 大文件治理后的主要内部边界：
 
@@ -60,6 +63,10 @@ P8 大文件治理后的主要内部边界：
 | 服务 | 职责 |
 |------|------|
 | `api/` | API 客户端、重试、用量、流适配 |
+| `auth/` | 命名连接配置、Google ADC 与 Vertex 设置 |
+| `permissions/` | 权限策略、Auto Mode 分类器、资格验证与评测任务 |
+| `effort/` | 思考强度解析与协议映射 |
+| `http/` | HTTP 代理、额外 CA 证书和网络预检 |
 | `mcp/` | MCP 连接管理与 OAuth |
 | `lsp/` | LSP 客户端（IDE 诊断） |
 | `analytics/` | GrowthBook 功能开关、遥测 |

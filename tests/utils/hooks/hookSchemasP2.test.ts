@@ -1,20 +1,20 @@
+import { spyOnModuleExports } from '../../_helpers/spyOnModuleExports.js'
 /**
  * P2 schema 接受性：5.1 PostToolUse.duration_ms / 5.2 PostToolBatch / 5.3 UserPromptExpansion。
  * 纯 zod 解析。schema 图里有顶层 tSync→settings 的 TDZ，先全替换 i18n 再动态 import。
  */
-import { beforeAll, describe, expect, mock, test } from 'bun:test'
+import { beforeAll, describe, expect, mock, test, afterAll } from 'bun:test'
 
 // biome-ignore lint/suspicious/noExplicitAny: 动态导入的 schema 工厂
 let S: any
 
 beforeAll(async () => {
-  mock.module('../../../src/i18n/index.js', () => ({
+  spyOnModuleExports(await import('../../../src/i18n/index.js'), {
     tSync: (k: string) => k,
     t: (k: string) => k,
     getUiLanguage: () => 'en',
     warmI18n: async () => {},
-    SUPPORTED_UI_LANGUAGES: ['en', 'zh'],
-  }))
+  })
   S = await import('../../../src/types/hooks/schemas.js')
 })
 
@@ -90,3 +90,5 @@ describe('P2 schema 接受性', () => {
     ).toBe(true)
   })
 })
+
+afterAll(() => mock.restore())

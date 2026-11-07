@@ -23,9 +23,14 @@ import type {
   SystemMessage,
   SystemStopHookSummaryMessage,
   SystemMemorySavedMessage,
+  TurnTokenUsageSummary,
 } from '../../types/message.js'
 import { SystemAPIErrorMessage } from './SystemAPIErrorMessage.js'
-import { formatSecondsShort, getLocalizedDurationFormatter } from '../../utils/format.js'
+import {
+  formatNumber,
+  formatSecondsShort,
+  getLocalizedDurationFormatter,
+} from '../../utils/format.js'
 import { getGlobalConfig } from '../../services/config/config.js'
 import Link from '../../ink/components/Link.js'
 import ThemedText from '../design-system/ThemedText.js'
@@ -360,6 +365,28 @@ function TurnDurationMessage({ message, addMargin }: { message: any; addMargin: 
       verb,
       duration,
     })
+  const turnUsage: TurnTokenUsageSummary | undefined = message.turnUsage
+  let turnUsageText: string | undefined
+  if (showTurnDuration && turnUsage && turnUsage.totalTokens > 0) {
+    const cacheRead = turnUsage.cacheReadInputTokens ?? 0
+    const cacheHit =
+      cacheRead > 0 && turnUsage.inputTokens > 0
+        ? Math.round((cacheRead / turnUsage.inputTokens) * 100)
+        : 0
+    turnUsageText =
+      cacheHit > 0
+        ? tSync('systemMessage.turnTokensWithCache', {
+            total: formatNumber(turnUsage.totalTokens),
+            input: formatNumber(turnUsage.inputTokens),
+            output: formatNumber(turnUsage.outputTokens),
+            cacheHit,
+          })
+        : tSync('systemMessage.turnTokens', {
+            total: formatNumber(turnUsage.totalTokens),
+            input: formatNumber(turnUsage.inputTokens),
+            output: formatNumber(turnUsage.outputTokens),
+          })
+  }
   const backgroundTaskText =
     backgroundTaskSummary &&
     tSync('systemMessage.tasksStillRunning', {
@@ -381,6 +408,7 @@ function TurnDurationMessage({ message, addMargin }: { message: any; addMargin: 
       {
         <Text dimColor={true}>
           {verbWithDuration}
+          {turnUsageText}
           {budgetSuffix}
           {backgroundTaskText}
         </Text>

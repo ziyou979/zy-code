@@ -70,6 +70,24 @@ afterEach(() => {
 })
 
 describe('lint-architecture', () => {
+  test('状态机 switch 不当作 UI 文案，普通 summary 字段仍被检查', () => {
+    const fixture = createFixtureProject({
+      'src/components/Workflow.tsx': [
+        "type Phase = 'summary' | 'checks'",
+        "function previous(phase: Phase): Phase { switch (phase) { case 'summary': return 'checks'; case 'checks': return ready ? 'summary' : 'checks' } }",
+        "const view = { summary: 'Please review the result' }",
+        "const loose: Record<Phase, string> = { summary: 'Check the result', checks: 'Ready' }",
+        "const invalid: Record<Phase, Phase> = { summary: 'User facing text', checks: 'summary' }",
+      ].join('\n'),
+    })
+    const result = runLint(fixture.root, fixture.baselinePath, ['--write-baseline'])
+    expect(result.exitCode).toBe(0)
+    expect(result.stderr).not.toContain('存在硬编码用户文本: checks')
+    expect(result.stderr).not.toContain('存在硬编码用户文本: summary')
+    expect(result.stderr).toContain('存在硬编码用户文本: Please review the result')
+    expect(result.stderr).toContain('存在硬编码用户文本: Check the result')
+    expect(result.stderr).toContain('存在硬编码用户文本: User facing text')
+  })
   test('普通模块按 1500 行提示职责审查，不按旧 1200 行门禁强制拆分', () => {
     const fixture = createFixtureProject({
       'src/services/largeService.ts': '// 占位行\n'.repeat(1500),

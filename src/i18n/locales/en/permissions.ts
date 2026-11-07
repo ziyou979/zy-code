@@ -1,6 +1,56 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const enPermissions: TranslationResource = {
+  'autoModeEvaluation.temporaryAuthorized':
+    'Temporarily authorized; consent is required again after Auto Mode is turned off',
+  'commands.autoMode': 'Evaluate eligibility for automatic command approval',
+  'autoModeEvaluation.firstUse':
+    '{model} has not been verified. Allow it temporarily, always allow it, or choose an evaluation that may incur charges. Dangerous-action checks remain enabled. Evaluation runs in the background without changing the current task or permission mode.',
+  'autoModeEvaluation.enableDirect':
+    'Always allow this model (save auto_mode: true, no evaluation)',
+  'autoModeEvaluation.enableTemporary':
+    'Allow temporarily for this activation in the current conversation',
+  'autoModeEvaluation.temporaryHint':
+    'Temporary permission expires when Auto Mode is turned off, the model changes, or the conversation ends. Enabling again requires consent. No settings are saved or evaluation requests sent.',
+  'autoModeEvaluation.verifyFirst': 'Verify first (may incur charges)',
+  'autoModeEvaluation.directAuthorized':
+    'User authorized this classifier directly; it is not marked as verified.',
+  'autoModeEvaluation.continueTask': 'Continue current task',
+  'autoModeEvaluation.backgroundProgress':
+    'Background evaluation of {model}: {completed}/{total}. You can close this page and continue your task.',
+  'autoModeEvaluation.background.passed':
+    '{model} passed Auto mode evaluation. Use Shift+Tab when you want to enable it.',
+  'autoModeEvaluation.background.failed':
+    '{model} did not pass evaluation. The current task and permission mode remain unchanged.',
+  'autoModeEvaluation.background.cancelled':
+    'Evaluation of {model} was cancelled. The current task continues.',
+  'autoModeEvaluation.background.error':
+    'Evaluation of {model} could not finish or save. The current task continues.',
+  'autoModeEvaluation.connection': 'Approval connection: {connectionId}',
+  'autoModeEvaluation.confirmHint':
+    'Start {count} simulated decisions using the connection above? Normally {requests} model requests; retries may add requests. The provider may charge for tokens. No requests begin until you confirm. Cancelling stops further checks; requests already sent may still be billed.',
+  'autoModeEvaluation.keepManual': 'Cancel without starting evaluation',
+  'autoModeEvaluation.confirmStart': 'Confirm evaluation (may incur charges)',
+  'autoModeEvaluation.activationHint':
+    'Close this page, then use Shift+Tab to select Auto mode and confirm the initial opt-in. Automatic command approval can itself make additional model requests.',
+  'autoModeEvaluation.qualificationUnavailable':
+    'The classifier has no valid Auto mode qualification. Use /auto-mode to evaluate it, or approve this action manually.',
+  'autoModeEvaluation.qualificationChanged':
+    'The classifier qualification changed during approval. This action requires manual approval.',
+  'autoModeEvaluation.title': 'Auto mode approval evaluation: {model}',
+  'autoModeEvaluation.hint':
+    'Run {count} simulated decisions through the actual classifier. Commands are never executed. Provider requests may incur charges. Passing grants eligibility, not activation; results expire after 30 days or a configuration change. This finite suite does not guarantee safety.',
+  'autoModeEvaluation.eligible': 'Current classifier is eligible for Auto mode.',
+  'autoModeEvaluation.ineligible': 'Current classifier has no valid passing qualification.',
+  'autoModeEvaluation.score':
+    'Dangerous actions blocked: {blocked}/{dangerous}; normal actions allowed: {allowed}/{benign}; valid responses: {valid}/{total}.',
+  'autoModeEvaluation.progress': 'Evaluating: {completed}/{total}',
+  'autoModeEvaluation.start': 'Evaluate this classifier',
+  'autoModeEvaluation.cancel': 'Cancel evaluation',
+  'autoModeEvaluation.close': 'Close',
+  'autoModeEvaluation.closed': 'Auto mode evaluation closed.',
+  'autoModeEvaluation.error':
+    'Evaluation or saving failed. Check credentials and whether the classifier configuration changed.',
   'bashSecurity.allChecksPassed': 'Command passed all security checks',
   'bashSecurity.ambiguousSeparators':
     'Command contains ambiguous syntax with command separators that could be misinterpreted',

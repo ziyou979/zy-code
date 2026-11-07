@@ -8,7 +8,7 @@ import { clearPolicyLimitsCache } from '../../services/policy-limits/index.js'
 // flushTelemetry is loaded lazily to avoid pulling in ~1.1MB of OpenTelemetry at startup
 import { clearRemoteManagedSettingsCache } from '../../services/remote-managed-settings/index.js'
 import { getSecureStorage } from '../../services/secure-storage/index.js'
-import { getZyAIOAuthTokens, removeApiKey } from '../../services/auth/auth.js'
+import { removeApiKey } from '../../services/auth/auth.js'
 import { clearBetasCaches } from '../../services/feature-flags/betas.js'
 import { saveGlobalConfig } from '../../services/config/config.js'
 import { gracefulShutdownSync } from '../../bootstrap/lifecycle/gracefulShutdown.js'
@@ -46,8 +46,6 @@ export async function performLogout({ clearOnboarding = false }): Promise<void> 
 
 // clearing anything memoized that must be invalidated when user/session/auth changes
 export async function clearAuthRelatedCaches(): Promise<void> {
-  // Clear the OAuth token cache
-  getZyAIOAuthTokens.cache?.clear?.()
   // Clear the multi-provider OAuth credentials cache
   clearOAuthCredentialsCache()
   clearTrustedDeviceTokenCache()

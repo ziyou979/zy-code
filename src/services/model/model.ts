@@ -113,6 +113,30 @@ function resolveModelReference(
   return undefined
 }
 
+export type ModelTierEntry = {
+  /** 原始连接名（含未配置/无效连接），未写 provider 时取 implicitProvider */
+  provider?: string
+  model: string
+  label?: string
+  /** 在原始数组中的下标 */
+  index: number
+}
+
+/** 原样展开档位值，不解析连接；运行时与档位编辑器共用。 */
+export function parseModelTierValue(value: unknown, implicitProvider?: string): ModelTierEntry[] {
+  const items = Array.isArray(value) ? value : value === undefined || value === null ? [] : [value]
+  const list: ModelTierEntry[] = []
+  items.forEach((item, index) => {
+    if (typeof item === 'string') {
+      list.push({ provider: implicitProvider, model: item, index })
+    } else if (isModelReference(item)) {
+      const provider = item.provider ?? implicitProvider
+      list.push({ provider, model: item.model, label: item.label, index })
+    }
+  })
+  return list
+}
+
 /**
  * 将档位值（单引用或数组）规范为有序候选列表。
  * 数组下标越小优先级越高。
@@ -121,21 +145,41 @@ export function normalizeModelTierValue(
   value: unknown,
   implicitProvider?: string,
 ): ResolvedModelReference[] {
-  if (value === undefined || value === null) {
-    return []
-  }
-  if (Array.isArray(value)) {
-    const list: ResolvedModelReference[] = []
-    for (let i = 0; i < value.length; i++) {
-      const resolved = resolveModelReference(value[i] as ModelReferenceInput, implicitProvider, i)
-      if (resolved) {
-        list.push(resolved)
-      }
+  return parseModelTierValue(value, implicitProvider).map((entry) => ({
+    model: entry.model,
+    ...resolveProviderReference(entry.provider),
+    candidateIndex: entry.index,
+    ...(entry.label === undefined ? {} : { label: entry.label }),
+  }))
+}
+
+export type ModelTierScope = {
+  /** '' 为顶层 models，否则为 providers 下的键 */
+  scope: string
+  value: unknown
+}
+
+/**
+ * 按运行时优先级（当前 provider → 顶层 → 其他 provider）查找档位自身有候选的作用域。
+ * 不回落到 standard，回落由调用方决定。
+ */
+export function findModelTierScope(
+  tier: ModelTier,
+  settings: InitialSettings | undefined,
+  activeProvider: string = getAPIProvider(),
+  skipScope?: string,
+): ModelTierScope | undefined {
+  const [active, ...others] = getAllProviderIds(settings, activeProvider)
+  for (const scope of [active!, '', ...others]) {
+    if (scope === skipScope) {
+      continue
     }
-    return list
+    const value = scope ? settings?.providers?.[scope]?.models?.[tier] : settings?.models?.[tier]
+    if (parseModelTierValue(value).length > 0) {
+      return { scope, value }
+    }
   }
-  const single = resolveModelReference(value as ModelReferenceInput, implicitProvider, 0)
-  return single ? [single] : []
+  return undefined
 }
 
 function getModelReferenceModel(value: ModelReferenceInput | undefined): ModelName | undefined {
@@ -151,32 +195,10 @@ export function getModelCandidatesForTier(
   activeProvider: APIProvider = getAPIProvider(),
 ): ResolvedModelReference[] {
   const modelTier = tier as ModelTier
-  const activeProviderSettings = getProviderSettings(settings, activeProvider)
-
-  const fromActive = normalizeModelTierValue(
-    activeProviderSettings?.models?.[modelTier],
-    activeProvider,
-  )
-  if (fromActive.length > 0) {
-    return fromActive
-  }
-
-  const fromTop = normalizeModelTierValue(settings?.models?.[modelTier], activeProvider)
-  if (fromTop.length > 0) {
-    return fromTop
-  }
-
-  for (const provider of getAllProviderIds(settings, activeProvider)) {
-    if (provider === activeProvider) {
-      continue
-    }
-    const scoped = normalizeModelTierValue(
-      settings?.providers?.[provider]?.models?.[modelTier],
-      provider,
-    )
-    if (scoped.length > 0) {
-      return scoped
-    }
+  const found = findModelTierScope(modelTier, settings, activeProvider)
+  if (found) {
+    // 顶层档位的隐式平台为当前 provider
+    return normalizeModelTierValue(found.value, found.scope || activeProvider)
   }
 
   if (modelTier !== 'standard') {

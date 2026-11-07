@@ -1,6 +1,47 @@
 import type { TranslationResource } from '../resourceTypes.js'
 
 export const zhPermissions: TranslationResource = {
+  'autoModeEvaluation.temporaryAuthorized': '已临时授权，关闭 Auto Mode 后需重新授权',
+  'commands.autoMode': '评测自动审批命令的使用资格',
+  'autoModeEvaluation.firstUse':
+    '{model} 尚未验证。你可以临时允许、始终允许，或选择可能计费的评测验证。危险操作检查始终保留；评测独立后台运行，不切换当前任务的权限模式。',
+  'autoModeEvaluation.enableDirect': '始终允许此模型，保存 auto_mode: true（不评测）',
+  'autoModeEvaluation.enableTemporary': '临时允许，仅本次对话中的这次开启',
+  'autoModeEvaluation.temporaryHint':
+    '临时允许在关闭 Auto Mode、切换模型或结束对话后失效，再次开启需重新授权；不会保存配置或发起评测。',
+  'autoModeEvaluation.verifyFirst': '先通过评测验证（可能计费）',
+  'autoModeEvaluation.directAuthorized': '已由用户直接授权，尚未标记为评测通过。',
+  'autoModeEvaluation.continueTask': '继续当前任务',
+  'autoModeEvaluation.backgroundProgress':
+    '正在后台评测 {model}：{completed}/{total}。可以关闭此页继续当前任务。',
+  'autoModeEvaluation.background.passed':
+    '{model} 已通过 Auto mode 评测，可在需要时用 Shift+Tab 启用。',
+  'autoModeEvaluation.background.failed': '{model} 未通过评测，当前任务和权限模式保持不变。',
+  'autoModeEvaluation.background.cancelled': '已取消 {model} 的评测，当前任务继续。',
+  'autoModeEvaluation.background.error': '{model} 的评测或保存失败，当前任务继续。',
+  'autoModeEvaluation.connection': '审批连接：{connectionId}',
+  'autoModeEvaluation.confirmHint':
+    '使用以上连接进行 {count} 次模拟判断？通常需要 {requests} 次模型请求，重试可能增加请求。服务商可能按 tokens 计费。明确确认前不会开始请求；取消会停止后续评测，已发出的请求仍可能计费。',
+  'autoModeEvaluation.keepManual': '取消，不开始评测',
+  'autoModeEvaluation.confirmStart': '确认发起评测（可能计费）',
+  'autoModeEvaluation.activationHint':
+    '关闭此页后，用 Shift+Tab 切换到 Auto mode，首次启用时按提示确认。自动审批命令本身也可能产生额外模型请求。',
+  'autoModeEvaluation.qualificationUnavailable':
+    '审批模型尚无有效的 Auto mode 资格。可通过 /auto-mode 评测，或手动审批本次操作。',
+  'autoModeEvaluation.qualificationChanged': '审批期间模型资格发生变化，本次操作需要手动审批。',
+  'autoModeEvaluation.title': 'Auto mode 审批评测：{model}',
+  'autoModeEvaluation.hint':
+    '使用实际审批分类器进行 {count} 次模拟判断，不执行样例命令。模型请求可能产生费用。通过后只获得使用资格，仍需主动启用；结果在 30 天后或配置变化时失效。有限样例通过不代表安全保证。',
+  'autoModeEvaluation.eligible': '当前审批模型具备 Auto mode 使用资格。',
+  'autoModeEvaluation.ineligible': '当前审批模型尚无有效的合格评测结果。',
+  'autoModeEvaluation.score':
+    '危险操作拦截：{blocked}/{dangerous}；正常操作放行：{allowed}/{benign}；有效响应：{valid}/{total}。',
+  'autoModeEvaluation.progress': '正在评测：{completed}/{total}',
+  'autoModeEvaluation.start': '评测当前审批模型',
+  'autoModeEvaluation.cancel': '取消评测',
+  'autoModeEvaluation.close': '关闭',
+  'autoModeEvaluation.closed': '已关闭 Auto mode 评测。',
+  'autoModeEvaluation.error': '评测或保存失败，请检查凭证以及审批配置是否发生变化。',
   'bashSecurity.allChecksPassed': '命令通过所有安全检查',
   'bashSecurity.ambiguousSeparators': '命令包含可能引起误解的歧义语法和命令分隔符',
   'bashSecurity.ansiCQuoting': '命令包含 ANSI-C 引号，可能隐藏字符',

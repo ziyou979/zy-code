@@ -1,4 +1,5 @@
 export const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
+  'auto-mode': 'commands.autoMode',
   'add-dir': 'commands.addDir',
   agents: 'commands.agents',
   background: 'commands.bg',

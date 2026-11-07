@@ -4,7 +4,7 @@ import { CtrlOToExpand, SubAgentProvider } from 'src/components/CtrlOToExpand.js
 import { Byline } from 'src/components/design-system/Byline.js'
 import { KeyboardShortcutHint } from 'src/components/design-system/KeyboardShortcutHint.js'
 import type { z } from 'zod/v4'
-import { AgentProgressLine } from '../../components/AgentProgressLine.js'
+import { AgentProgressLine, type AgentStepInfo } from '../../components/AgentProgressLine.js'
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js'
 import { FallbackToolUseRejectedMessage } from '../../components/FallbackToolUseRejectedMessage.js'
 import { Markdown } from '../../components/Markdown.js'
@@ -17,12 +17,9 @@ import { Box, Text } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js'
 import { getDumpPromptsPath } from '../../services/api/dumpPrompts.js'
+import { getAgentModel } from '../../services/model/agent.js'
 import type { ModelAlias } from '../../services/model/aliases.js'
-import {
-  getMainLoopModel,
-  parseUserSpecifiedModel,
-  renderModelName,
-} from '../../services/model/model.js'
+import { getMainLoopModel, renderModelName } from '../../services/model/model.js'
 import { useAppStateStore, useSetAppState } from '../../state/AppState.js'
 import { findToolByName, type Tools } from '../../tools/tool.js'
 import { backgroundAll } from '../../tasks/local-shell-task/LocalShellTask.js'
@@ -50,6 +47,8 @@ import type { outputSchema, Progress } from './AgentTool.js'
 import { inputSchema } from './AgentTool.js'
 import { getAgentColor } from './agentColorManager.js'
 import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
+import { getBuiltInAgents } from './builtInAgents.js'
+import { normalizeAgentType } from './constants.js'
 
 const MAX_PROGRESS_MESSAGES_TO_SHOW = 3
 const MAX_BRIEF_STANDALONE_DISPLAY = 3
@@ -652,6 +651,47 @@ export function renderToolUseMessage({
   }
   return description
 }
+/**
+ * 解析子智能体实际使用的模型显示名。
+ * 优先从子智能体已产生的 assistant progress 消息中读取真实响应模型，
+ * 在初始化阶段（尚无 assistant 消息）或单条工具标签渲染时，
+ * 按 getAgentModel 规则（环境变量 > 工具入参 > agent 定义 > 继承主模型）解析。
+ */
+export function resolveAgentModelDisplay(
+  input:
+    | Partial<{
+        subagent_type: string
+        model?: ModelAlias
+      }>
+    | undefined,
+  progressMessages?: ProgressMessage<Progress>[],
+): string | undefined {
+  if (progressMessages?.length) {
+    const latestAssistant = progressMessages.findLast(
+      (msg): msg is ProgressMessage<AgentToolProgress> =>
+        hasProgressMessage(msg.data) && msg.data.message.type === 'assistant',
+    )
+    const messageModel =
+      latestAssistant?.data.message.type === 'assistant'
+        ? (latestAssistant.data.message as AssistantMessage).message.model
+        : undefined
+    if (messageModel && messageModel !== '<synthetic>') {
+      return renderModelName(messageModel)
+    }
+  }
+  const mainModel = getMainLoopModel()
+  if (!mainModel) {
+    return undefined
+  }
+  const effectiveType = input?.subagent_type || GENERAL_PURPOSE_AGENT.agentType
+  const normalizedType = normalizeAgentType(effectiveType)
+  const builtInAgent = getBuiltInAgents().find(
+    (a) => normalizeAgentType(a.agentType) === normalizedType,
+  )
+  const resolved = getAgentModel(builtInAgent?.model, mainModel, input?.model)
+  return resolved ? renderModelName(resolved) : undefined
+}
+
 export function renderToolUseTag(
   input: Partial<{
     description: string
@@ -661,16 +701,13 @@ export function renderToolUseTag(
   }>,
 ): React.ReactNode {
   const tags: React.ReactNode[] = []
-  if (input.model) {
-    const mainModel = getMainLoopModel()
-    const agentModel = parseUserSpecifiedModel(input.model)
-    if (agentModel !== mainModel) {
-      tags.push(
-        <Box key="model" flexWrap="nowrap" marginLeft={1}>
-          <Text dimColor>{renderModelName(agentModel)}</Text>
-        </Box>,
-      )
-    }
+  const modelDisplay = resolveAgentModelDisplay(input)
+  if (modelDisplay) {
+    tags.push(
+      <Box key="model" flexWrap="nowrap" marginLeft={1}>
+        <Text dimColor>{modelDisplay}</Text>
+      </Box>,
+    )
   }
   if (tags.length === 0) {
     return null
@@ -980,6 +1017,7 @@ export function renderGroupedAgentToolUse(
   const agentStats = toolUses.map(({ param, isResolved, isError, progressMessages, result }) => {
     const stats = calculateAgentStats(progressMessages)
     const lastToolInfo = extractLastToolInfo(progressMessages, tools)
+    const steps = extractAgentProgressSteps(progressMessages, tools)
     const parsedInput = inputSchema().safeParse(param.input)
 
     // teammate_spawned 不在导出的 Output 类型中（通过 unknown 进行类型转换
@@ -1023,10 +1061,20 @@ export function renderGroupedAgentToolUse(
     const backgroundedMidExecution = outputStatus === 'async_launched'
     const isAsync = launchedAsAsync || backgroundedMidExecution || isTeammateSpawn
     const name = parsedInput.success ? parsedInput.data.name : undefined
+    const spawnedModel = isTeammateSpawn
+      ? (result?.output as { model?: string } | undefined)?.model
+      : undefined
+    const model = spawnedModel
+      ? renderModelName(spawnedModel)
+      : resolveAgentModelDisplay(
+          parsedInput.success ? parsedInput.data : undefined,
+          progressMessages,
+        )
     return {
       id: param.id,
       agentType,
       description,
+      model,
       toolUseCount: stats.toolUseCount,
       tokens: stats.tokens,
       isResolved,
@@ -1035,6 +1083,7 @@ export function renderGroupedAgentToolUse(
       color,
       descriptionColor,
       lastToolInfo,
+      steps,
       taskDescription,
       name,
     }
@@ -1105,6 +1154,7 @@ export function renderGroupedAgentToolUse(
           description={stat.description}
           descriptionColor={stat.descriptionColor}
           taskDescription={stat.taskDescription}
+          model={stat.model}
           toolUseCount={stat.toolUseCount}
           tokens={stat.tokens}
           color={stat.color}
@@ -1114,6 +1164,7 @@ export function renderGroupedAgentToolUse(
           isAsync={stat.isAsync}
           shouldAnimate={shouldAnimate}
           lastToolInfo={stat.lastToolInfo}
+          steps={stat.steps}
           hideType={allSameType}
           name={stat.name}
         />
@@ -1160,6 +1211,50 @@ export function userFacingNameBackgroundColor(
   // 获取此代理的颜色
   return getAgentColor(input.subagent_type) as keyof Theme | undefined
 }
+const MAX_AGENT_PROGRESS_STEPS = 5
+
+export function extractAgentProgressSteps(
+  progressMessages: ProgressMessage<Progress>[],
+  tools: Tools,
+): AgentStepInfo[] {
+  const toolResultStatus = new Map<string, 'success' | 'error'>()
+  for (const pm of progressMessages) {
+    if (!hasProgressMessage(pm.data) || pm.data.message.type !== 'user') {
+      continue
+    }
+    for (const c of pm.data.message.message.content) {
+      if (c.type === 'tool_result') {
+        toolResultStatus.set(c.toolCallId, c.isError ? 'error' : 'success')
+      }
+    }
+  }
+
+  const steps: AgentStepInfo[] = []
+  for (const pm of progressMessages) {
+    if (!hasProgressMessage(pm.data) || pm.data.message.type !== 'assistant') {
+      continue
+    }
+    for (const c of (pm.data.message as AssistantMessage).message.content) {
+      if (c.type !== 'tool_call') {
+        continue
+      }
+      const tool = findToolByName(tools, c.name)
+      const parsed = tool?.inputSchema?.safeParse(c.input)
+      const validInput = parsed?.success ? parsed.data : undefined
+      const userFacingToolName = tool?.userFacingName?.(validInput) ?? c.name
+      const rawSummary = tool?.getToolUseSummary?.(validInput)
+      const summary = formatToolSummaryForPreview(rawSummary)
+      steps.push({
+        id: c.id,
+        text: summary ? `${userFacingToolName}(${summary})` : userFacingToolName,
+        status: toolResultStatus.get(c.id) ?? 'running',
+      })
+    }
+  }
+
+  return steps.slice(-MAX_AGENT_PROGRESS_STEPS)
+}
+
 export function extractLastToolInfo(
   progressMessages: ProgressMessage<Progress>[],
   tools: Tools,

@@ -10,6 +10,7 @@
 import { randomUUID } from 'node:crypto'
 import OpenAI from 'openai'
 import { getMainLoopModel, normalizeModelStringForAPI } from '../model/model.js'
+import { OPENAI_CHATGPT_API_RESOURCE } from '../oauth/providers/openaiChatGPT.js'
 import type {
   CreateParams,
   LLMAdapter,
@@ -24,6 +25,7 @@ import { countTokensWithAdapter } from './shared/countTokens.js'
 import { getOpenAIClient } from './client.js'
 import {
   buildResponsesRequestParams,
+  consumeResponsesStream,
   mapResponsesStreamToStandard,
   responsesToStandard,
 } from './conversions/openaiResponses.js'
@@ -39,15 +41,32 @@ export class OpenAIResponsesProviderAdapter implements LLMAdapter {
    */
   private readonly injectedClient: OpenAI | null
 
-  constructor(client?: OpenAI) {
+  /**
+   * 凭据是否为 ChatGPT 订阅令牌。
+   *
+   * 该令牌虽然发往同一个公开端点，但端点不接受部分请求字段，需要按订阅
+   * 身份裁剪后再发。
+   */
+  private readonly chatGPTSubscription: boolean
+
+  constructor(client?: OpenAI, options?: { chatGPTSubscription?: boolean }) {
     this.injectedClient = client ?? null
+    this.chatGPTSubscription = options?.chatGPTSubscription === true
   }
 
   private async getClient(model?: string): Promise<OpenAI> {
     if (this.injectedClient) {
       return this.injectedClient
     }
-    return getOpenAIClient({ model })
+    // 订阅令牌只发往公开 Responses 资源，不能沿用 API key 连接的代理端点。
+    // 重试交给上层错误分类，避免 SDK 自动重试无法恢复的额度错误。
+    return getOpenAIClient({
+      model,
+      ...(this.chatGPTSubscription && {
+        baseURL: OPENAI_CHATGPT_API_RESOURCE,
+        maxRetries: 0,
+      }),
+    })
   }
 
   async createStream(
@@ -56,7 +75,9 @@ export class OpenAIResponsesProviderAdapter implements LLMAdapter {
     _clientRequestId?: string,
   ): Promise<StreamResult> {
     const client = await this.getClient(params.model)
-    const requestParams = buildResponsesRequestParams(params)
+    const requestParams = buildResponsesRequestParams(params, {
+      chatGPTSubscription: this.chatGPTSubscription,
+    })
     log(
       `Streaming request: model=${params.model}, input items=${
         Array.isArray(requestParams.input) ? requestParams.input.length : 1
@@ -80,7 +101,9 @@ export class OpenAIResponsesProviderAdapter implements LLMAdapter {
     )) as unknown as AsyncIterable<OpenAI.Responses.ResponseStreamEvent>
 
     return {
-      stream: mapResponsesStreamToStandard(stream, params.model),
+      stream: mapResponsesStreamToStandard(stream, params.model, {
+        requireTerminalEvent: this.chatGPTSubscription,
+      }),
       requestId: randomUUID(),
       response: undefined,
     }
@@ -92,7 +115,14 @@ export class OpenAIResponsesProviderAdapter implements LLMAdapter {
     _timeout?: number,
   ): Promise<LLMResponse> {
     const client = await this.getClient(params.model)
-    const requestParams = buildResponsesRequestParams(params)
+    const requestParams = buildResponsesRequestParams(params, {
+      chatGPTSubscription: this.chatGPTSubscription,
+    })
+    // SIWC 的 HTTP 推理只支持 SSE；压缩、标题等非流式业务也必须消费流后返回。
+    if (this.chatGPTSubscription) {
+      const stream = await client.responses.create({ ...requestParams, stream: true }, { signal })
+      return responsesToStandard(await consumeResponsesStream(stream), params.model)
+    }
     log(
       `Non-streaming request: model=${params.model}, input items=${
         Array.isArray(requestParams.input) ? requestParams.input.length : 1
@@ -127,7 +157,22 @@ export class OpenAIResponsesProviderAdapter implements LLMAdapter {
   async verifyApiKey(apiKey: string): Promise<boolean> {
     try {
       const model = getMainLoopModel() ?? ''
-      const client = await getOpenAIClient({ apiKey, maxRetries: 3, model })
+      const client = await getOpenAIClient({
+        apiKey,
+        maxRetries: this.chatGPTSubscription ? 0 : 3,
+        model,
+        ...(this.chatGPTSubscription && { baseURL: OPENAI_CHATGPT_API_RESOURCE }),
+      })
+      if (this.chatGPTSubscription) {
+        const stream = await client.responses.create({
+          model: normalizeModelStringForAPI(model),
+          input: [{ role: 'user', content: 'test' }],
+          store: false,
+          stream: true,
+        })
+        await consumeResponsesStream(stream)
+        return true
+      }
       // Responses 无 max_tokens，用 max_output_tokens 发最小请求验证
       await client.responses.create({
         model: normalizeModelStringForAPI(model),

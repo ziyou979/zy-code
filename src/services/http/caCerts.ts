@@ -2,6 +2,56 @@ import memoize from 'lodash-es/memoize.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { hasNodeOption } from '../../services/infra/envUtils.js'
 import { getFsImplementation } from '../../services/infra/fsOperations.js'
+import { tSync } from '../../i18n/index.js'
+import { errorMessage } from '../../utils/errors.js'
+
+/** 启动阶段可能尚未加载翻译，展示前可重新取得已预热的错误文案。 */
+export class ExtraCACertificatesError extends Error {
+  constructor(
+    readonly path: string,
+    private readonly kind: 'unreadable' | 'invalid',
+    cause: unknown,
+  ) {
+    super('', { cause })
+    this.name = 'ExtraCACertificatesError'
+    this.message = this.getUserMessage()
+  }
+
+  getUserMessage(): string {
+    return tSync(`http.extraCA.${this.kind}`, { path: this.path, reason: errorMessage(this.cause) })
+  }
+}
+
+/** 在 TLS 原生层接触文件前检查，避免延迟的运行时警告直接写入全屏终端。 */
+function readExtraCertificates(path: string): string {
+  let contents: string
+  try {
+    contents = getFsImplementation().readFileSync(path, { encoding: 'utf8' })
+  } catch (error) {
+    throw new ExtraCACertificatesError(path, 'unreadable', error)
+  }
+
+  try {
+    // CA 文件允许包含多个 PEM 证书和注释；逐个解析，不能只验证第一个。
+    const certificates = contents.match(
+      /-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g,
+    )
+    if (!certificates?.length) {
+      throw new Error('No PEM certificates')
+    }
+    const { X509Certificate } = require('node:crypto') as typeof import('node:crypto')
+    for (const certificate of certificates) {
+      new X509Certificate(certificate)
+    }
+    // 残缺的尾证书不应因前面有一个有效证书而被静默忽略。
+    if (contents.split('-----BEGIN CERTIFICATE-----').length - 1 !== certificates.length) {
+      throw new Error('Incomplete PEM certificate')
+    }
+  } catch (error) {
+    throw new ExtraCACertificatesError(path, 'invalid', error)
+  }
+  return contents
+}
 
 /**
  * Load CA certificates for TLS connections.
@@ -36,6 +86,9 @@ export const getCACertificates = memoize((): string[] | undefined => {
   if (!useSystemCA && !extraCertsPath) {
     return undefined
   }
+
+  // 读取失败直接报配置错误，不能静默回退到不包含用户 CA 的信任库。
+  const extraCert = extraCertsPath ? readExtraCertificates(extraCertsPath) : undefined
 
   // Deferred load: Bun's node:tls module eagerly materializes ~150 Mozilla
   // root certificates (~750KB heap) on import, even if tls.rootCertificates
@@ -76,21 +129,11 @@ export const getCACertificates = memoize((): string[] | undefined => {
   }
 
   // Append extra certs from file
-  if (extraCertsPath) {
-    try {
-      const extraCert = getFsImplementation().readFileSync(extraCertsPath, {
-        encoding: 'utf8',
-      })
-      certs.push(extraCert)
-      logForDebugging(
-        `CA certs: Appended extra certificates from NODE_EXTRA_CA_CERTS (${extraCertsPath})`,
-      )
-    } catch (error) {
-      logForDebugging(
-        `CA certs: Failed to read NODE_EXTRA_CA_CERTS file (${extraCertsPath}): ${error}`,
-        { level: 'error' },
-      )
-    }
+  if (extraCert) {
+    certs.push(extraCert)
+    logForDebugging(
+      `CA certs: Appended extra certificates from NODE_EXTRA_CA_CERTS (${extraCertsPath})`,
+    )
   }
 
   return certs.length > 0 ? certs : undefined

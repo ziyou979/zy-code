@@ -35,7 +35,7 @@ function appendStreamingThinking(
   thinking: string,
 ): void {
   onStreamingThinking?.((current) => ({
-    thinking: (current?.thinking ?? '') + thinking,
+    thinking: (current?.isStreaming ? current.thinking : '') + thinking,
     isStreaming: true,
   }))
 }

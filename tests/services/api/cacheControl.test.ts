@@ -9,19 +9,17 @@
  * 2. prompt_caching: "implicit" → false（无需客户端标记）
  * 3. prompt_caching: "explicit" / 未配置 → 默认行为（true）
  */
-import { beforeAll, describe, expect, mock, test } from 'bun:test'
+import { beforeEach, afterEach, describe, expect, mock, test, spyOn } from 'bun:test'
 
 // 使用 beforeAll 预先导入真实模块，再设置 mock 覆盖个别导出。
 // 避免 async factory 在 mock.module 内的无限递归问题。
 let mockCachingMode: 'implicit' | 'explicit' | undefined
 
-beforeAll(async () => {
-  const real = await import('../../../src/services/settings/localModelCapabilities.js')
-  mock.module('../../../src/services/settings/localModelCapabilities.js', () => ({
-    ...real,
-    getModelPromptCachingMode: () => mockCachingMode,
-  }))
-})
+import * as capabilities from '../../../src/services/settings/localModelCapabilities.js'
+beforeEach(() =>
+  spyOn(capabilities, 'getModelPromptCachingMode').mockImplementation(() => mockCachingMode),
+)
+afterEach(() => mock.restore())
 
 // 在 mock 注册后导入被测模块
 import { getPromptCachingEnabled } from '../../../src/services/api/cacheControl.js'

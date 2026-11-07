@@ -3,6 +3,14 @@ import type { ToolPermissionContext } from '../../tools/tool.js'
 import type { LLMMessage } from '../../types/llm.js'
 import { getAutoModeConfig } from '../settings/settings.js'
 
+// 仅提供给模型的工具 schema 指令保持英文，不随界面语言变化。
+export const AUTO_MODE_CLASSIFIER_SCHEMA_PROMPTS = {
+  tool: 'Return the safety classification of the proposed action.',
+  thinking: 'Explain the security assessment and applicable permission rules.',
+  shouldBlock: 'Whether the proposed action must be blocked.',
+  reason: 'A short reason for the decision.',
+} as const
+
 // 死代码消除：auto 模式分类器 prompt 的条件导入。
 // 在构建时，bundler 将 .txt 文件内联为字符串字面量。在测试时，
 // require('./yolo-classifier-prompts/auto_mode_system_prompt.txt') 返回 {default: string} — txtRequire 对两者都进行规范化。

@@ -10,6 +10,8 @@ import type { Message } from '../../src/types/message.js'
 import {
   getCurrentUsage,
   getDisplayContextUsage,
+  finalContextTokensFromLastResponse,
+  getTokenCountFromUsage,
   tokenCountWithEstimation,
 } from '../../src/services/api/tokens.js'
 import { createTestAssistantMessage, createTestUserMessage } from '../_helpers/messageFixtures.js'
@@ -34,6 +36,24 @@ function makeAssistantWithUsage(
 }
 
 describe('getDisplayContextUsage', () => {
+  test('Gemini 续传的重复计费输入不重复占用上下文，缓存与思考输出不漏算', () => {
+    const message = createTestAssistantMessage([{ type: 'text', text: 'answer' }])
+    message.message.usage = {
+      inputTokens: 200000,
+      outputTokens: 40000,
+      cacheReadInputTokens: 160000,
+      extras: { initialPromptTokenCount: 20000, thoughtsTokenCount: 30000 },
+    }
+    expect(getTokenCountFromUsage(message.message.usage)).toBe(60000)
+    expect(finalContextTokensFromLastResponse([message])).toBe(60000)
+    expect(getDisplayContextUsage([message])).toEqual({
+      inputTokens: 20000,
+      outputTokens: 40000,
+      cacheReadInputTokens: 0,
+      cacheCreationInputTokens: 0,
+    })
+    expect(message.message.usage.inputTokens).toBe(200000)
+  })
   test('无 compact 时与 getCurrentUsage 一致', () => {
     const messages = [createTestUserMessage('hi'), makeAssistantWithUsage(50_000, { uuid: 'a1' })]
     expect(getDisplayContextUsage(messages)).toEqual(getCurrentUsage(messages))

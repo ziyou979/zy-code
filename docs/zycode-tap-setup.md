@@ -62,8 +62,13 @@ HTTPS_PROXY=http://127.0.0.1:58437 \
 NODE_EXTRA_CA_CERTS=/Users/zy979/.claude-tap/ca.pem \
 zycode
 
-# win 终端2
-$env:HTTPS_PROXY="http://127.0.0.1:58437"; $env:NODE_EXTRA_CA_CERTS="C:\Users\zy979\.claude-tap\ca.pem"; zycode
+# win 终端 2（端口按终端 1 输出填写；CA 路径使用本机当前用户目录）
+$env:HTTPS_PROXY="http://127.0.0.1:58437"
+$env:NODE_EXTRA_CA_CERTS=Join-Path $env:USERPROFILE '.claude-tap\ca.pem'
+if (-not (Test-Path -LiteralPath $env:NODE_EXTRA_CA_CERTS -PathType Leaf)) {
+  throw "CA 文件不存在，请使用 claude-tap 启动时输出的 CA cert 路径。"
+}
+zycode
 ```
 
 > `0.0.0.0` 表示监听所有网卡，本机访问写 `127.0.0.1` 即可。

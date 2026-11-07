@@ -57,6 +57,14 @@ export function sanitizeAssistantCompletionContent(
   const sanitized: AssistantContentBlock[] = []
 
   for (const block of content) {
+    if (
+      block.type === 'text' &&
+      typeof block.providerMetadata?.googleThoughtSignature === 'string'
+    ) {
+      // 签名 Part 必须逐字回传，不能修剪其空白或思考标签。
+      sanitized.push(block)
+      continue
+    }
     if (block.type !== 'text') {
       sanitized.push(block)
       continue

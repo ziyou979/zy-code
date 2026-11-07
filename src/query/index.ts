@@ -7,6 +7,7 @@ import {
   noteAuthChainSuccess,
   tryAdvanceAuthChainOnError,
 } from '../services/model/modelChainFailover.js'
+import { confirmAuthFailover } from '../services/model/modelChainFailoverPrompt.js'
 import { tSync } from '../i18n/index.js'
 import {
   calculateTokenWarningState,
@@ -515,6 +516,8 @@ async function* queryLoop(
               fallbackModel,
               onStreamingFallback: () => {
                 streamingFallbackOccured = true
+                // 流已结束，非流式回退正在等待新响应，不能继续累计或显示上一段思考。
+                toolUseContext.setStreamMode?.('requesting')
               },
               querySource,
               agents: toolUseContext.options.agentDefinitions.activeAgents,
@@ -774,8 +777,19 @@ async function* queryLoop(
           // 多 auth 候选链：同候选 withRetry 耗尽后，推进 sticky 并换通道
           const previousModel = currentModel
           const authFailover = tryAdvanceAuthChainOnError(previousModel, innerError)
-          if (authFailover) {
-            const nextModel = authFailover.next.model
+          // 先提议后提交：notify 或用户确认后才写 sticky
+          const accepted =
+            authFailover?.mode === 'notify' ||
+            (authFailover !== null && (await confirmAuthFailover(toolUseContext, authFailover)))
+          const committed =
+            authFailover && accepted && !toolUseContext.abortController.signal.aborted
+              ? authFailover.commit()
+              : null
+          if (authFailover && !committed) {
+            authFailover.decline()
+          }
+          if (authFailover && committed) {
+            const nextModel = committed.model
             currentModel = nextModel
             attemptWithFallback = true
 
@@ -806,7 +820,7 @@ async function* queryLoop(
               reason:
                 authFailover.reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               from_index: authFailover.fromIndex,
-              to_index: authFailover.toIndex,
+              to_index: committed.candidateIndex ?? authFailover.toIndex,
               tier: authFailover.tier as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               queryChainId: queryChainIdForAnalytics,
               queryDepth: queryTracking.depth,
@@ -816,14 +830,14 @@ async function* queryLoop(
             const fromLabel = authFailover.from.provider
               ? `${renderModelName(previousModel)} (${authFailover.from.provider})`
               : renderModelName(previousModel)
-            const toLabel = authFailover.next.provider
-              ? `${renderModelName(nextModel)} (${authFailover.next.provider})`
+            const toLabel = committed.provider
+              ? `${renderModelName(nextModel)} (${committed.provider})`
               : renderModelName(nextModel)
             yield createSystemMessage(
               tSync('modelFailover.switched', {
                 from: fromLabel,
                 to: toLabel,
-                provider: authFailover.next.provider ?? '',
+                provider: committed.provider ?? '',
                 reason: reasonLabel,
               }),
               'warn',

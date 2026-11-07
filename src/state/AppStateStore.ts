@@ -37,6 +37,23 @@ import { IDLE_SPECULATION_STATE, type SpeculationState } from './speculationStat
 export type FooterItem = 'tasks' | 'tmux' | 'bagel' | 'teams'
 
 export type AppState = DeepImmutable<{
+  /** 只活到本次 Auto Mode 关闭；不进入 settings 或会话恢复文件。 */
+  autoModeSessionGrant?: {
+    id: string
+    sessionId: string
+    model: string
+    fingerprint: string
+  }
+  /** 自动审批评测独立于当前对话任务，进度由共享 store 持有。 */
+  autoModeEvaluation?: {
+    id: string
+    model: string
+    fingerprint: string
+    status: 'running' | 'passed' | 'failed' | 'cancelled' | 'error'
+    completed: number
+    total: number
+    controller: AbortController
+  }
   settings: SettingsJson
   verbose: boolean
   mainLoopModel: ModelSetting
@@ -333,13 +350,29 @@ export type AppState = DeepImmutable<{
   }
   // 分类器模式（YOLO、headless 等）的拒绝跟踪 - 超出限制时回退到提示
   denialTracking?: DenialTrackingState
-  // 活跃的覆盖层（Select 对话框等），用于 Escape 键协调
-  activeOverlays: ReadonlySet<string>
+  // 按实例标识记录覆盖层类型，避免同类对话框在卸载时互相注销。
+  activeOverlays: ReadonlyMap<string, string>
   // 投入程度值
   effortValue?: EffortLevel
 }
 
 export type AppStateStore = Store<AppState>
+
+/** 所有更新路径统一撤销临时授权，避免模式切换入口遗漏。 */
+export function normalizeAppStateUpdate(previous: AppState, next: AppState): AppState {
+  if (
+    next.autoModeSessionGrant &&
+    ((previous.toolPermissionContext.mode === 'auto' &&
+      next.toolPermissionContext.mode !== 'auto') ||
+      previous.mainLoopModel !== next.mainLoopModel ||
+      previous.settings.model !== next.settings.model ||
+      (previous.settings.models !== next.settings.models &&
+        JSON.stringify(previous.settings.models) !== JSON.stringify(next.settings.models)))
+  ) {
+    return { ...next, autoModeSessionGrant: undefined }
+  }
+  return next
+}
 
 export function getDefaultAppState(): AppState {
   // 确定使用 plan_mode_required 生成的 teammate 的初始权限模式

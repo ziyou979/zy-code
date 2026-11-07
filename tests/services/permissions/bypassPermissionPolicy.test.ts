@@ -5,27 +5,11 @@
  *   - isBypassPermissionsModeDisabled：Statsig 门控和设置双重检查
  *   - createDisabledBypassPermissionsContext：上下文清理逻辑
  */
-import { afterAll, afterEach, beforeEach, describe, expect, test, mock } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, test, mock, spyOn } from 'bun:test'
 import type { ToolPermissionContext } from '../../../src/tools/tool.js'
-// Bun 的 mock.module factory 内不能 import 被 mock 的目标模块（返回空对象，
-// 透传失效甚至卡死加载链），真实导出必须在 factory 外顶层加载。
 import * as growthbookActual from '../../../src/services/analytics/growthbook.js'
 import * as settingsActual from '../../../src/services/settings/settings.js'
 import * as permissionUpdateActual from '../../../src/services/permissions/permissionUpdate.js'
-import * as gracefulShutdownActual from '../../../src/bootstrap/lifecycle/gracefulShutdown.js'
-
-// mock.module 是进程级全局替换且 mock.restore() 不撤销它：此前窄面 mock
-// （growthbook 只给两个 gate、settings 只给 getInitialSettings）丢失其余导出
-// （如 getFeatureValue_CACHED_MAY_BE_STALE），泄漏给同 worker 后续文件报
-// "Export named ... not found"。统一改为真实快照 spread + 仅覆盖所需导出；
-// fake 只在测试体内登记，afterEach 恢复真实快照、afterAll 兜底，把泄漏窗口
-// 限制在本文件执行期内。
-const MOCK_PATHS = {
-  growthbook: '../../../src/services/analytics/growthbook.js',
-  settings: '../../../src/services/settings/settings.js',
-  permissionUpdate: '../../../src/services/permissions/permissionUpdate.js',
-  gracefulShutdown: '../../../src/bootstrap/lifecycle/gracefulShutdown.js',
-} as const
 
 // mock: Statsig 门控（spread-real 保证其余导出完整）
 const mockCheckStatsigGate = mock<(gate: string) => boolean>(() => false)
@@ -40,37 +24,18 @@ const mockApplyUpdate = mock<
   (ctx: ToolPermissionContext, update: unknown) => ToolPermissionContext
 >((ctx, _update) => ctx)
 
-// mock gracefulShutdown
-const mockGracefulShutdown = mock<(code: number, reason: string) => void>(() => {})
-
 function registerMocks() {
-  mock.module(MOCK_PATHS.growthbook, () => ({
-    ...growthbookActual,
-    checkStatsigFeatureGate_CACHED_MAY_BE_STALE: mockCheckStatsigGate,
-    checkSecurityRestrictionGate: mockCheckSecurityGate,
-  }))
-  mock.module(MOCK_PATHS.settings, () => ({
-    ...settingsActual,
-    getInitialSettings: mockGetInitialSettings,
-  }))
-  mock.module(MOCK_PATHS.permissionUpdate, () => ({
-    ...permissionUpdateActual,
-    applyPermissionUpdate: mockApplyUpdate,
-  }))
-  mock.module(MOCK_PATHS.gracefulShutdown, () => ({
-    ...gracefulShutdownActual,
-    gracefulShutdown: mockGracefulShutdown,
-  }))
+  spyOn(growthbookActual, 'checkStatsigFeatureGate_CACHED_MAY_BE_STALE').mockImplementation(
+    mockCheckStatsigGate,
+  )
+  spyOn(growthbookActual, 'checkSecurityRestrictionGate').mockImplementation(mockCheckSecurityGate)
+  spyOn(settingsActual, 'getInitialSettings').mockImplementation(
+    mockGetInitialSettings as typeof settingsActual.getInitialSettings,
+  )
+  spyOn(permissionUpdateActual, 'applyPermissionUpdate').mockImplementation(mockApplyUpdate)
 }
 
-function restoreRealModules() {
-  mock.module(MOCK_PATHS.growthbook, () => ({ ...growthbookActual }))
-  mock.module(MOCK_PATHS.settings, () => ({ ...settingsActual }))
-  mock.module(MOCK_PATHS.permissionUpdate, () => ({ ...permissionUpdateActual }))
-  mock.module(MOCK_PATHS.gracefulShutdown, () => ({ ...gracefulShutdownActual }))
-}
-
-// 在 mock.module 就位之后再导入被测模块
+// 动态加载被测模块；依赖函数只在每个用例执行期间替换。
 const { isBypassPermissionsModeDisabled, createDisabledBypassPermissionsContext } = await import(
   '../../../src/services/permissions/bypassPermissionPolicy.js'
 )
@@ -97,7 +62,6 @@ describe('isBypassPermissionsModeDisabled', () => {
 
   afterEach(() => {
     mock.restore()
-    restoreRealModules()
   })
 
   test('默认不禁用', () => {
@@ -135,7 +99,6 @@ describe('createDisabledBypassPermissionsContext', () => {
 
   afterEach(() => {
     mock.restore()
-    restoreRealModules()
   })
 
   test('非 bypassPermissions 模式仅设置 isBypassPermissionsModeAvailable=false', () => {
@@ -152,8 +115,4 @@ describe('createDisabledBypassPermissionsContext', () => {
     expect(result.isBypassPermissionsModeAvailable).toBe(false)
     expect(mockApplyUpdate).toHaveBeenCalledTimes(1)
   })
-})
-
-afterAll(() => {
-  restoreRealModules()
 })

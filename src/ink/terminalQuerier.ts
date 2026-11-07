@@ -132,6 +132,17 @@ export class TerminalQuerier {
 
   constructor(private stdout: NodeJS.WriteStream) {}
 
+  cancelPending(): void {
+    // 停止读取或销毁会话时释放等待者，避免无 DA1 应答的查询跨生命周期残留。
+    for (const pending of this.queue.splice(0)) {
+      if (pending.kind === 'query') {
+        pending.resolve(undefined)
+      } else {
+        pending.resolve()
+      }
+    }
+  }
+
   /**
    * 发送查询并等待响应。
    *

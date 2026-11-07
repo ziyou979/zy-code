@@ -189,6 +189,24 @@ describe('effort', () => {
   })
 
   describe('resolveEffortForSupportedLevels', () => {
+    test('隐藏 on 后，旧设置映射到等价强度而非最低档', () => {
+      expect(
+        resolveEffortForSupportedLevels(
+          ['quick', 'light', 'balanced', 'thorough', 'extreme'],
+          'on',
+          'balanced',
+          {
+            on: 'max',
+            quick: 'low',
+            light: 'medium',
+            balanced: 'high',
+            thorough: 'xhigh',
+            extreme: 'max',
+          },
+        ),
+      ).toBe('extreme')
+    })
+
     test('切到不支持旧档位的模型时夹取到可用档位', () => {
       expect(resolveEffortForSupportedLevels(['off', 'balanced'], 'extreme', 'balanced')).toBe(
         'balanced',
