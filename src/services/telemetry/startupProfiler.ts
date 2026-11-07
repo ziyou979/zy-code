@@ -45,7 +45,7 @@ const memorySnapshots: NodeJS.MemoryUsage[] = []
 
 // Phase definitions for Statsig logging: [startCheckpoint, endCheckpoint]
 // 额外检查点（由调用方 profileCheckpoint 写入）用于本地报告，不全部上报 Statsig：
-// tti_ready / auth_ready / client_prewarm / first_query_start / first_token
+// tti_ready / auth_ready / first_query_start / first_token
 const PHASE_DEFINITIONS = {
   import_time: ['cli_entry', 'main_tsx_imports_loaded'],
   init_time: ['init_function_start', 'init_function_end'],

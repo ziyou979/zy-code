@@ -34,24 +34,27 @@ export type OauthConfig = {
   MCP_PROXY_PATH: string
 }
 
+// 自建 OAuth 服务尚未部署，保留域名避免遗留调用触达第三方。
+const UNCONFIGURED_OAUTH_ORIGIN = 'https://oauth.example.invalid'
+
 const PLACEHOLDER_CONFIG: OauthConfig = {
-  BASE_API_URL: 'https://zy.ai',
-  CONSOLE_AUTHORIZE_URL: 'https://zy.ai',
-  ZY_CODE_AUTHORIZE_URL: 'https://zy.ai',
-  ZY_CODE_ORIGIN: 'https://zy.ai',
-  TOKEN_URL: 'https://zy.ai',
-  API_KEY_URL: 'https://zy.ai',
-  ROLES_URL: 'https://zy.ai',
-  CONSOLE_SUCCESS_URL: 'https://zy.ai',
-  ZY_CODE_SUCCESS_URL: 'https://zy.ai',
-  MANUAL_REDIRECT_URL: 'https://zy.ai',
+  BASE_API_URL: UNCONFIGURED_OAUTH_ORIGIN,
+  CONSOLE_AUTHORIZE_URL: UNCONFIGURED_OAUTH_ORIGIN,
+  ZY_CODE_AUTHORIZE_URL: UNCONFIGURED_OAUTH_ORIGIN,
+  ZY_CODE_ORIGIN: UNCONFIGURED_OAUTH_ORIGIN,
+  TOKEN_URL: UNCONFIGURED_OAUTH_ORIGIN,
+  API_KEY_URL: UNCONFIGURED_OAUTH_ORIGIN,
+  ROLES_URL: UNCONFIGURED_OAUTH_ORIGIN,
+  CONSOLE_SUCCESS_URL: UNCONFIGURED_OAUTH_ORIGIN,
+  ZY_CODE_SUCCESS_URL: UNCONFIGURED_OAUTH_ORIGIN,
+  MANUAL_REDIRECT_URL: UNCONFIGURED_OAUTH_ORIGIN,
   CLIENT_ID: '',
   OAUTH_FILE_SUFFIX: '',
-  MCP_PROXY_URL: 'https://zy.ai',
+  MCP_PROXY_URL: UNCONFIGURED_OAUTH_ORIGIN,
   MCP_PROXY_PATH: '',
 }
 
-export const MCP_CLIENT_METADATA_URL = 'https://zy.ai/oauth/zy-code-client-metadata'
+export const MCP_CLIENT_METADATA_URL = UNCONFIGURED_OAUTH_ORIGIN + '/oauth/zy-code-client-metadata'
 
 export function getOauthConfig(): OauthConfig {
   return PLACEHOLDER_CONFIG

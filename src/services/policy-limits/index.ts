@@ -5,11 +5,6 @@
  * to disable CLI features. Follows the same patterns as remote managed settings
  * (fail open, ETag caching, background polling, retry logic).
  *
- * Eligibility:
- * - Console users (API key): All eligible
- * - OAuth users (Zy.ai): Only Team and Enterprise/C4E subscribers are eligible
- * - API fails open (non-blocking) - if fetch fails, continues without restrictions
- * - API returns empty restrictions for users without policy limits
  */
 
 import { createHash } from 'node:crypto'
@@ -17,10 +12,8 @@ import { readFileSync as fsReadFileSync } from 'node:fs'
 import { unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import axios from 'axios'
-import { getOauthConfig, ZY_CODE_INFERENCE_SCOPE } from '../../constants/oauth.js'
+import { getOauthConfig } from '../../constants/oauth.js'
 import { buildAuthHeaders } from '../http/authHeaders.js'
-import { getAPIProvider } from '../model/providers.js'
-import { isAnthropicOfficialEndpointForModel } from '../api/baseUrlResolution.js'
 import { registerCleanup } from '../cleanup/cleanupRegistry.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { getZyConfigHomeDir } from '../../services/infra/envUtils.js'
@@ -146,53 +139,9 @@ function computeChecksum(restrictions: PolicyLimitsResponse['restrictions']): st
   return `sha256:${hash}`
 }
 
-/**
- * Check if the current user is eligible for policy limits.
- *
- * IMPORTANT: This function must NOT call getSettings() or any function that calls
- * getSettings() to avoid circular dependencies during settings loading.
- */
 export function isPolicyLimitsEligible(): boolean {
-  // 3p provider users should not hit the policy limits endpoint
-  if (getAPIProvider() !== 'anthropic') {
-    return false
-  }
-
-  // Custom base URL users should not hit the policy limits endpoint
-  if (!isAnthropicOfficialEndpointForModel()) {
-    return false
-  }
-
-  // Console users (API key) are eligible if we can get the actual key
-  try {
-    const { key: apiKey } = getApiKeyWithSource({
-      skipRetrievingKeyFromApiKeyHelper: true,
-    })
-    if (apiKey) {
-      return true
-    }
-  } catch {
-    // No API key available - continue to check OAuth
-  }
-
-  // For OAuth users, check if they have Zy.ai tokens
-  const tokens = getZyAIOAuthTokens()
-  if (!tokens?.accessToken) {
-    return false
-  }
-
-  // Must have Zy.ai inference scope
-  if (!tokens.scopes?.includes(ZY_CODE_INFERENCE_SCOPE)) {
-    return false
-  }
-
-  // Only Team and Enterprise OAuth users are eligible — these orgs have
-  // admin-configurable policy restrictions (e.g. allow_remote_sessions)
-  if (tokens.subscriptionType !== 'enterprise' && tokens.subscriptionType !== 'team') {
-    return false
-  }
-
-  return true
+  // ZY Code 尚无组织策略服务；模型凭据不能授权调用客户端管理服务。
+  return false
 }
 
 /**

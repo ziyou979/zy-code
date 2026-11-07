@@ -29,7 +29,7 @@ export const ESCALATED_MAX_TOKENS = 64_000
  */
 export function getContextWindowForModel(model: string): number {
   const localContextWindow = getLocalContextWindow(model)
-  if (localContextWindow >= 100_000) {
+  if (Number.isFinite(localContextWindow) && localContextWindow > 0) {
     return localContextWindow
   }
 

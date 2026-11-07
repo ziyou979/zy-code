@@ -55,7 +55,7 @@ function formatDebugContextPrefix(): string {
   let agentLabel: string | undefined
   try {
     // 懒加载避免循环依赖，getAgentContext 来自 agentContext.ts
-    const { getAgentContext } = require('./agentContext.js')
+    const { getAgentContext } = require('../agent/agentContext.js')
     const agentCtx = getAgentContext()
     if (agentCtx) {
       agentLabel =
@@ -303,7 +303,7 @@ export function logForDebugging(
     const ctx = debugContextStorage.getStore()
     let agentLabel: string | undefined
     try {
-      const { getAgentContext } = require('./agentContext.js')
+      const { getAgentContext } = require('../agent/agentContext.js')
       const agentCtx = getAgentContext()
       if (agentCtx) {
         agentLabel =

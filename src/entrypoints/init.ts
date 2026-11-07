@@ -18,7 +18,6 @@ import {
   waitForRemoteManagedSettingsToLoad,
 } from '../services/remote-managed-settings/index.js'
 import { isBetaTracingEnabled } from '../services/telemetry/betaSessionTracing.js'
-import { preconnectAnthropicApi } from '../services/api/apiPreconnect.js'
 import { populateOAuthAccountInfoIfNeeded } from '../services/auth/auth.js'
 import { applyExtraCACertsFromConfig } from '../services/settings/caCertsConfig.js'
 import { ExtraCACertificatesError, getCACertificates } from '../services/http/caCerts.js'
@@ -176,13 +175,6 @@ export const init = memoize(async (): Promise<void> => {
     })
     log('[init] configureGlobalAgents complete')
     profileCheckpoint('init_network_configured')
-
-    // 预连接到 Anthropic API —— 将 TCP+TLS 握手（约 100-200ms）
-    // 与 API 请求前约 100ms 的 action-handler 工作重叠执行。
-    // 在 CA 证书 + 代理代理配置完成后进行，以确保预热的连接
-    // 使用正确的传输方式。即发即忘；对于代理/mTLS/unix/云提供商
-    // 场景跳过，因为 SDK 的 dispatcher 不会复用全局连接池。
-    preconnectAnthropicApi()
 
     // 设置 git-bash（如适用）
     setShellIfWindows()

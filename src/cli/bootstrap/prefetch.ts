@@ -106,11 +106,6 @@ export function startDeferredPrefetches(): void {
     m.warmShellHistoryCache()
   })
 
-  // HTTP/TLS preconnect（幂等）；init 已可能调用过，此处兜底 deferred 路径
-  void import('../../services/api/apiPreconnect.js').then((m) => {
-    m.preconnectAnthropicApi()
-  })
-
   // 文件变更检测器从 init() 延迟以不阻塞首次渲染
   void settingsChangeDetector.initialize()
   if (!isBareMode()) {
