@@ -18,7 +18,7 @@ export const zhCommands: TranslationResource = {
   'commands.bridgeKick': '注入桥接失败状态用于调试',
   'commands.btw': '快速提问，不会打断当前工作',
   'commands.chrome': 'Claude in Chrome（Beta）设置',
-  'commands.codeReview': '审查拉取请求',
+  'commands.codeReview': '审查改动中的缺陷；可指定分支、提交、PR 或路径（别名：/review）',
   'commands.claudeInChrome': '自动化 Chrome 浏览器与网页交互——点击元素、填写表单、截图等。',
   'commands.claudeInChrome.whenToUse':
     '当用户想要与网页交互、自动化浏览器任务或执行基于浏览器的操作时使用。',
@@ -319,9 +319,12 @@ export const zhCommands: TranslationResource = {
   'commands.resume': '恢复之前的对话',
   'commands.resume.argumentHint': '[会话 ID 或搜索词]',
   'commands.resume.cancelled': '恢复已取消',
-  'commands.review': '评审拉取请求；审查工作区改动请使用 /code-review',
+  'commands.review': '审查改动中的缺陷；可指定分支、提交、PR 或路径',
+  'commands.review.argumentHint':
+    '[目标] [--base <分支> | --commit <提交> | --pr <编号或链接>] [--fix] [--comment]',
+  'commands.review.progress': '正在审查代码改动',
   'commands.rewind': '将代码和/或对话恢复到之前的时间点',
-  'commands.securityReview': '对当前分支的待提交改动进行安全评审',
+  'commands.securityReview': '安全审查当前分支相对 origin/HEAD 的已提交改动；不接受目标参数',
   'commands.sandbox': '配置代码执行沙箱',
   'commands.schedule': '创建、更新、列出或运行按计划执行的远程 agent（基于 cron 调度）。',
   'commands.schedule.authRequired':

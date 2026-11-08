@@ -40,46 +40,75 @@ export type TeamInfo = {
 //  - 压缩（useLogMessages）：新的 CB/摘要先出现，然后是已记录的
 //    messagesToKeep → 不是前缀 → 不跟踪 → CB 获得 parentUuid=null
 //    （正确：在 compact boundary 处截断 --continue 链）。
+// 串行化 recordTranscript 与 removeTranscriptMessage，消除 insertMessageChain 内
+// await getBranch() 异步窗口期 messageSet 尚未更新导致的并发去重失效与断链。
+let transcriptOpChain: Promise<unknown> = Promise.resolve()
+
+function enqueueTranscriptOp<T>(op: () => Promise<T>): Promise<T> {
+  const next = transcriptOpChain.then(op, op)
+  transcriptOpChain = next.catch(() => {})
+  return next
+}
+
 export async function recordTranscript(
   messages: Message[],
   teamInfo?: TeamInfo,
   startingParentUuidHint?: UUID,
   allMessages?: readonly Message[],
 ): Promise<UUID | null> {
-  const cleanedMessages = cleanMessagesForLogging(messages, allMessages)
-  const sessionId = getSessionId() as UUID
-  const messageSet = await getSessionMessages(sessionId)
-  const newMessages: typeof cleanedMessages = []
-  let startingParentUuid: UUID | undefined = startingParentUuidHint
-  let seenNewMessage = false
-  for (const m of cleanedMessages) {
-    if (messageSet.has(m.uuid as UUID)) {
-      // 仅跟踪形成前缀的跳过消息。压缩后，
-      // messagesToKeep 出现在新的 CB/摘要之后，因此跳过它们。
-      if (!seenNewMessage && isChainParticipant(m)) {
-        startingParentUuid = m.uuid as UUID
+  return enqueueTranscriptOp(async () => {
+    const cleanedMessages = cleanMessagesForLogging(messages, allMessages)
+    const sessionId = getSessionId() as UUID
+    const messageSet = await getSessionMessages(sessionId)
+    const newMessages: typeof cleanedMessages = []
+    let startingParentUuid: UUID | undefined =
+      startingParentUuidHint && messageSet.has(startingParentUuidHint)
+        ? startingParentUuidHint
+        : undefined
+    let seenNewMessage = false
+    for (const m of cleanedMessages) {
+      if (messageSet.has(m.uuid as UUID)) {
+        // 仅跟踪形成前缀的跳过消息。压缩后，
+        // messagesToKeep 出现在新的 CB/摘要之后，因此跳过它们。
+        if (!seenNewMessage && isChainParticipant(m)) {
+          startingParentUuid = m.uuid as UUID
+        }
+      } else {
+        newMessages.push(m)
+        seenNewMessage = true
       }
-    } else {
-      newMessages.push(m)
-      seenNewMessage = true
     }
-  }
-  if (newMessages.length > 0) {
-    await getProject().insertMessageChain(
-      newMessages,
-      false,
-      undefined,
-      startingParentUuid,
-      teamInfo,
-    )
-  }
-  // 返回最后实际记录的链参与者的 UUID，或在没有新链参与者被记录时
-  // 返回前缀跟踪的 UUID。这让调用者（useLogMessages）即使在切片
-  // 全部已记录（回退、/resume 场景，其中每条消息都已在 messageSet 中）
-  // 时也能维护正确的父链。progress 被跳过 — 它被写入 JSONL
-  // 但没有任何东西链接到它（参见 isChainParticipant）。
-  const lastRecorded = newMessages.findLast(isChainParticipant)
-  return (lastRecorded?.uuid as UUID | undefined) ?? startingParentUuid ?? null
+    if (startingParentUuid === undefined && allMessages && newMessages.length > 0) {
+      // startingParentUuidHint 缺失或不在磁盘 messageSet 中（例如流式 fallback 刚被 tombstone 移除、
+      // compact 后首条流式消息在 .then() 之前到达、或 --resume 首屏 ignore=true 末尾有未落盘哨兵）：
+      // 从 allMessages 中新消息之前查找最后一条已在 messageSet 中的链参与者，杜绝写入悬挂或空 parentUuid。
+      const firstNewUuid = newMessages[0]!.uuid
+      for (const m of allMessages) {
+        if (m.uuid === firstNewUuid) {
+          break
+        }
+        if (messageSet.has(m.uuid as UUID) && isChainParticipant(m)) {
+          startingParentUuid = m.uuid as UUID
+        }
+      }
+    }
+    if (newMessages.length > 0) {
+      await getProject().insertMessageChain(
+        newMessages,
+        false,
+        undefined,
+        startingParentUuid,
+        teamInfo,
+      )
+    }
+    // 返回最后实际记录的链参与者的 UUID，或在没有新链参与者被记录时
+    // 返回前缀跟踪的 UUID。这让调用者（useLogMessages）即使在切片
+    // 全部已记录（回退、/resume 场景，其中每条消息都已在 messageSet 中）
+    // 时也能维护正确的父链。progress 被跳过 — 它被写入 JSONL
+    // 但没有任何东西链接到它（参见 isChainParticipant）。
+    const lastRecorded = newMessages.findLast(isChainParticipant)
+    return (lastRecorded?.uuid as UUID | undefined) ?? startingParentUuid ?? null
+  })
 }
 
 export async function recordSidechainTranscript(
@@ -104,7 +133,7 @@ export async function recordQueueOperation(queueOp: QueueOperationMessage) {
  * 当收到孤立消息的 tombstone 时使用。
  */
 export async function removeTranscriptMessage(targetUuid: UUID): Promise<void> {
-  await getProject().removeMessageByUuid(targetUuid)
+  await enqueueTranscriptOp(() => getProject().removeMessageByUuid(targetUuid))
 }
 
 export async function recordFileHistorySnapshot(

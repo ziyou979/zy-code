@@ -397,6 +397,11 @@ class Project {
    */
   async removeMessageByUuid(targetUuid: UUID): Promise<void> {
     return this.trackWrite(async () => {
+      const sessionId = getSessionId() as UUID
+      if (sessionId) {
+        const messageSet = await getSessionMessages(sessionId)
+        messageSet.delete(targetUuid)
+      }
       if (this.sessionFile === null) {
         return
       }

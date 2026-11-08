@@ -33,6 +33,7 @@ import {
   type NavigableType,
   stripSystemReminders,
   toolCallOf,
+  VirtualListLayoutChangeContext,
 } from './MessageActions.js'
 
 // 后备提取器：在此处降低并缓存，供没有 Messages.tsx 工具查找路径的调用者使用
@@ -296,6 +297,9 @@ function VirtualItem({
     [measureCallback, msg.uuid, msg.type],
   )
   const renderedItem = renderItem(msg, idx)
+  // collapsed_read_search 内部自行按顶部汇总行与各子步骤行精细管理悬停高亮，
+  // 无需在虚拟列表外层整块触发 setHoveredKey 重渲染全部挂载项。
+  const hoverable = clickable && msg.type !== 'collapsed_read_search'
   return (
     <Box
       ref={combinedRef}
@@ -303,8 +307,8 @@ function VirtualItem({
       backgroundColor={expanded ? 'userMessageBackgroundHover' : undefined}
       paddingBottom={expanded ? 1 : undefined}
       onClick={clickable ? (e) => onClickK(msg, e.cellIsBlank) : undefined}
-      onMouseEnter={clickable ? () => onEnterK(k) : undefined}
-      onMouseLeave={clickable ? () => onLeaveK(k) : undefined}
+      onMouseEnter={hoverable ? () => onEnterK(k) : undefined}
+      onMouseLeave={hoverable ? () => onLeaveK(k) : undefined}
     >
       {
         <TextHoverColorContext.Provider value={hovered && !expanded ? 'text' : undefined}>
@@ -362,6 +366,7 @@ export function VirtualMessageList({
     getItemElement,
     getItemHeight,
     scrollToIndex,
+    notifyLayoutChange,
   } = useVirtualScroll(scrollRef, keys, columns)
   const [start, end] = range
 
@@ -904,7 +909,9 @@ export function VirtualMessageList({
   }
   const onClickK = useCallback((msg: RenderableMessage, cellIsBlank: boolean) => {
     const h = handlersRef.current
-    if (!cellIsBlank && h.onItemClick) {
+    // collapsed_read_search 下方子区域已拦截点击冒泡，能到达此处的点击必在顶部汇总行内，
+    // 与顶部汇总行的整行悬停高亮保持一致，避免出现“悬停已亮起但点击空白格不展开”。
+    if ((!cellIsBlank || msg.type === 'collapsed_read_search') && h.onItemClick) {
       h.onItemClick(msg)
     }
   }, [])
@@ -915,7 +922,7 @@ export function VirtualMessageList({
     handlersRef.current.setHoveredKey((prev) => (prev === k ? null : prev))
   }, [])
   return (
-    <>
+    <VirtualListLayoutChangeContext.Provider value={notifyLayoutChange}>
       <Box ref={spacerRef} height={topSpacer} flexShrink={0} />
       {messages.slice(start, end).map((msg, i) => {
         const idx = start + i
@@ -953,7 +960,7 @@ export function VirtualMessageList({
           scrollRef={scrollRef}
         />
       )}
-    </>
+    </VirtualListLayoutChangeContext.Provider>
   )
 }
 const NOOP_UNSUB = () => {}

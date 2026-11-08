@@ -17,7 +17,8 @@ export const enCommands: TranslationResource = {
   'commands.bridgeKick': 'Inject bridge failure states for debugging',
   'commands.btw': 'Ask a quick side question without interrupting the main conversation',
   'commands.chrome': 'Claude in Chrome (Beta) settings',
-  'commands.codeReview': 'Code review a pull request',
+  'commands.codeReview':
+    'Review changes for bugs; accepts a branch, commit, PR, or path (alias: /review)',
   'commands.claudeInChrome':
     'Automates your Chrome browser to interact with web pages — clicking, filling forms, screenshots, and more.',
   'commands.claudeInChrome.whenToUse':
@@ -344,10 +345,13 @@ export const enCommands: TranslationResource = {
   'commands.resume': 'Resume a previous conversation',
   'commands.resume.argumentHint': '[conversation id or search term]',
   'commands.resume.cancelled': 'Resume cancelled',
-  'commands.review': 'Review a GitHub pull request; for your working diff use /code-review',
+  'commands.review': 'Review changes for bugs; accepts a branch, commit, PR, or path',
+  'commands.review.argumentHint':
+    '[target] [--base <branch> | --commit <sha> | --pr <number-or-url>] [--fix] [--comment]',
+  'commands.review.progress': 'Reviewing code changes',
   'commands.rewind': 'Restore the code and/or conversation to a previous point',
   'commands.securityReview':
-    'Complete a security review of the pending changes on the current branch',
+    'Security review of committed branch changes against origin/HEAD; no target arguments',
   'commands.sandbox': 'Configure code execution sandbox',
   'commands.schedule':
     'Create, update, list, or run scheduled remote agents that execute on a cron schedule.',

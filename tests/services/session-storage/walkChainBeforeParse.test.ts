@@ -263,6 +263,52 @@ describe('walkChainBeforeParse 冷热分离', () => {
     expect(text).toContain(A_HOT_LEAF)
     expect(text).not.toContain(U_DEAD)
   })
+
+  test('无 compact_boundary 但中途存在悬挂 parentUuid（tombstone/恢复断链）时桥接回溯，不丢弃断链前历史', () => {
+    const historyLines: string[] = []
+    let prev: string | null = null
+    for (let i = 0; i < 20; i++) {
+      const u = `dddddddd-dddd-4ddd-8ddd-${String(i).padStart(12, '0')}`
+      const a = `eeeeeeee-eeee-4eee-8eee-${String(i).padStart(12, '0')}`
+      historyLines.push(
+        msgLine({
+          parentUuid: prev,
+          uuid: u,
+          type: 'user',
+          text: `hist-u-${i}-${'z'.repeat(300)}`,
+        }),
+      )
+      historyLines.push(
+        msgLine({
+          parentUuid: u,
+          uuid: a,
+          type: 'assistant',
+          text: `hist-a-${i}-${'w'.repeat(300)}`,
+        }),
+      )
+      prev = a
+    }
+    const missingTombstonedUuid = 'ffffffff-ffff-4fff-8fff-ffffffffffff'
+    const postTombstoneAssistant = msgLine({
+      parentUuid: missingTombstonedUuid,
+      uuid: A_HOT_ROOT,
+      type: 'assistant',
+      text: 'AFTER_TOMBSTONE_FALLBACK',
+    })
+    const leaf = msgLine({
+      parentUuid: A_HOT_ROOT,
+      uuid: A_HOT_LEAF,
+      type: 'user',
+      text: 'LATEST_USER',
+    })
+    const buf = Buffer.from(historyLines.join('') + postTombstoneAssistant + leaf)
+    const out = walkChainBeforeParse(buf)
+    const text = out.toString('utf8')
+    expect(text).toContain('hist-u-0-')
+    expect(text).toContain('hist-a-19-')
+    expect(text).toContain(A_HOT_ROOT)
+    expect(text).toContain(A_HOT_LEAF)
+  })
 })
 
 describe('repair + buildConversationChain 断链 hot', () => {

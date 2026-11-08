@@ -7,8 +7,8 @@ import { Box, Text } from '../ink/index.js'
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { RenderableMessage, UserMessage } from '../types/message.js'
-import { isEmptyMessageText } from '../services/messages/./predicates.js'
-import { SYNTHETIC_MESSAGES } from '../services/messages/./constants.js'
+import { isEmptyMessageText } from '../services/messages/predicates.js'
+import { SYNTHETIC_MESSAGES } from '../services/messages/constants.js'
 
 const NAVIGABLE_TYPES = [
   'user',
@@ -255,6 +255,10 @@ export type MessageActionsNav = {
 }
 export const MessageActionsSelectedContext = React.createContext(false)
 export const InVirtualListContext = React.createContext(false)
+/** 子组件内部折叠/展开（如单步思考块切换）改变高度时，通知虚拟列表重新测量并补齐下方挂载项 */
+export const VirtualListLayoutChangeContext = React.createContext<(() => void) | undefined>(
+  undefined,
+)
 
 // bg 必须放在有 marginTop 的 Box 上（margin 保持在绘制外部）——这在每个消费者内部。
 export function useSelectedMessageBg() {

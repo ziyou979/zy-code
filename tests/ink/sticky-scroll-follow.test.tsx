@@ -6,6 +6,8 @@ import { describe, expect, test } from 'bun:test'
 import { Writable } from 'node:stream'
 import React from 'react'
 import Box from '../../src/ink/components/Box.js'
+import ScrollBox, { type ScrollBoxHandle } from '../../src/ink/components/ScrollBox.js'
+import Text from '../../src/ink/components/Text.js'
 import Ink from '../../src/ink/ink.js'
 import { canUseScrollShiftFastPath } from '../../src/ink/renderNodeToOutput.js'
 import { computeScrollFollow } from '../../src/ink/scrollFollow.js'
@@ -146,9 +148,70 @@ describe('StreamingMarkdown 长内容渲染时限', () => {
 describe('ScrollBox 滚动快路径', () => {
   test('中间思考块展开时禁用整块平移', () => {
     expect(canUseScrollShiftFastPath(1, 1, true)).toBe(false)
+    expect(canUseScrollShiftFastPath(1, 0, true)).toBe(false)
   })
 
   test('底部流式追加时保留整块平移', () => {
     expect(canUseScrollShiftFastPath(2, 2, false)).toBe(true)
+  })
+
+  test('滚动快路径同步更新嵌套子节点 nodeCache.y 并清除滚出视口底部的后续节点缓存', () => {
+    const stdout = makeStdout(80, 6)
+    const ink = new Ink({
+      stdout,
+      stderr: stdout,
+      stdin: process.stdin,
+      exitOnCtrlC: false,
+      patchConsole: false,
+    })
+    ink.setAltScreenActive(true, false)
+    ink.frameSink = () => true
+
+    const scrollRef = React.createRef<ScrollBoxHandle>()
+    const clicked: string[] = []
+    const hovered: string[] = []
+
+    const renderList = () =>
+      ink.render(
+        <ScrollBox
+          ref={scrollRef}
+          flexDirection="column"
+          height={4}
+          width={80}
+          stickyScroll={false}
+        >
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <Box key={i} flexDirection="column" height={1}>
+              <Box
+                flexDirection="row"
+                onMouseEnter={() => hovered.push(`enter-${i}`)}
+                onClick={() => clicked.push(`click-${i}`)}
+              >
+                <Text>{`Row item ${i}`}</Text>
+              </Box>
+            </Box>
+          ))}
+        </ScrollBox>,
+      )
+
+    // 第 1 帧：先滚到 scrollTop = 2（视口显示 item 2, 3, 4, 5，位于屏幕 row 0, 1, 2, 3）
+    renderList()
+    scrollRef.current?.scrollTo(2)
+    ink.onRender()
+
+    // 第 2 帧：向上滚动 2 行到 scrollTop = 0（触发 ScrollBox 快路径 shift）
+    // 此时视口显示 item 0, 1, 2, 3（屏幕 row 0, 1, 2, 3），而后面的 item 4, 5 已滚出视口底部。
+    // 修复前：item 4, 5 的旧 nodeCache (y=2, 3) 未清除且在逆序 hitTest 中排在前面，
+    // 且稳定行 item 2, 3 的嵌套子 Box nodeCache.y 未加上 +2，导致悬停和点击错位或被吞。
+    scrollRef.current?.scrollTo(0)
+    ink.onRender()
+
+    ink.dispatchHover(2, 2)
+    expect(hovered.at(-1)).toBe('enter-2')
+
+    expect(ink.dispatchClick(2, 2)).toBe(true)
+    expect(clicked).toEqual(['click-2'])
+
+    ink.unmount()
   })
 })

@@ -18,12 +18,12 @@ import {
   hasAnyToolInProgress,
 } from '../services/compact/collapseReadSearch.js'
 import {
+  type buildMessageLookups,
   EMPTY_STRING_SET,
   getProgressMessagesFromLookup,
   getSiblingToolUseIDsFromLookup,
-} from '../services/messages/./lookups.js'
-import { getToolUseID } from '../services/messages/./predicates.js'
-import type { buildMessageLookups } from '../services/messages/./lookups.js'
+} from '../services/messages/lookups.js'
+import { getToolUseID } from '../services/messages/predicates.js'
 import { hasThinkingContent, Message } from './Message.js'
 import { MessageModel } from './MessageModel.js'
 import { shouldRenderStatically } from './Messages.js'
@@ -294,9 +294,24 @@ export function areMessageRowPropsEqual(prev: Props, next: Props): boolean {
     return false
   }
 
-  // collapsed_read_search is never static in prompt mode (matches shouldRenderStatically)
+  // collapsed_read_search：仅在组处于活跃状态或关联查找表/流式思考发生变化时重渲染；
+  // 已完成的历史折叠组在展开/收起其他消息时直接跳过重渲染。
   if (prev.message.type === 'collapsed_read_search' && next.screen !== 'transcript') {
-    return false
+    const group = prev.message as CollapsedReadSearchGroup
+    const prevActive =
+      hasAnyToolInProgress(group, prev.inProgressToolUseIDs) ||
+      (prev.isLoading && !prev.hasContentAfter)
+    const nextActive =
+      hasAnyToolInProgress(group, next.inProgressToolUseIDs) ||
+      (next.isLoading && !next.hasContentAfter)
+    if (
+      prevActive ||
+      nextActive ||
+      prev.lookups !== next.lookups ||
+      prev.streamingThinkingSummary !== next.streamingThinkingSummary
+    ) {
+      return false
+    }
   }
 
   // 宽度变化影响 Box 布局

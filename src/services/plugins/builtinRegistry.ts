@@ -129,6 +129,7 @@ function skillDefinitionToCommand(definition: BundledSkillDefinition): Command {
   return {
     type: 'prompt',
     name: definition.name,
+    aliases: definition.aliases,
     description: definition.description,
     hasUserSpecifiedDescription: true,
     allowedTools: definition.allowedTools ?? [],

@@ -363,7 +363,14 @@
       "Bash(echo EXIT=$?)",
       "Bash(gh repo:*)",
       "Bash(gh api:*)",
-      "Bash(echo \"--- exit: $?--\")"
+      "Bash(echo \"--- exit: $?--\")",
+      "Bash(BIN=/d/nvm/nvm4w/nodejs/node_global/node_modules/@anthropic-ai/claude-code/bin/claude.exe)",
+      "Bash(mkdir -p /tmp/ev)",
+      "Bash(LC_ALL=C dd if=$BIN iflag=skip_bytes,count_bytes skip=207546000 count=3200)",
+      "Bash(LC_ALL=C tr -d 0)",
+      "Bash(python3 -c \":*)",
+      "Bash(gh run:*)",
+      "Bash(gh pr:*)"
     ]
   },
   "spinnerTipsEnabled": true

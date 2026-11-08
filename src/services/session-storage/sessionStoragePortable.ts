@@ -442,16 +442,13 @@ function processStraddle(s: LoadState, chunk: Buffer, bytesRead: number): number
       if (hit?.hasPreservedSegment) {
         s.hasPreservedSegment = true
       } else if (hit) {
-        // 冷热分离：默认保留 boundary 前冷历史供 UI/resume 上翻。
-        // 不再 s.out.len=0 截断。token/API 仅使用 boundary 后热上下文。
-        // boundaryStartOffset 仍记录供 metadata 扫描；需要极限省内存时可设
-        // ZY_CODE_STRIP_COLD_TRANSCRIPT=1 恢复截断。
+        // 冷热分离：默认保留 boundary 前冷历史供 UI/resume 上翻，不再清空 s.out；
+        // 仅当显式开启 ZY_CODE_STRIP_COLD_TRANSCRIPT=1 真正截断前段字节时，才记录
+        // boundaryStartOffset 供 scanPreBoundaryMetadata 补扫前段 metadata。
         if (isEnvTruthy(process.env.ZY_CODE_STRIP_COLD_TRANSCRIPT)) {
           s.out.len = 0
           s.boundaryStartOffset = s.bufFileOff
           s.lastSnapSrc = null
-        } else if (s.boundaryStartOffset === 0) {
-          s.boundaryStartOffset = s.bufFileOff
         }
         s.hasPreservedSegment = false
       }
@@ -494,7 +491,7 @@ function scanChunkLines(
       if (hit?.hasPreservedSegment) {
         s.hasPreservedSegment = true // don't truncate; preserved msgs already in output
       } else if (hit) {
-        // 默认保留冷历史；可选 ZY_CODE_STRIP_COLD_TRANSCRIPT=1 极限截断
+        // 默认保留冷历史；仅在 ZY_CODE_STRIP_COLD_TRANSCRIPT=1 真正截断时记录 boundaryStartOffset
         if (isEnvTruthy(process.env.ZY_CODE_STRIP_COLD_TRANSCRIPT)) {
           s.out.len = 0
           s.boundaryStartOffset = s.bufFileOff + lineStart
@@ -502,8 +499,6 @@ function scanChunkLines(
           lastSnapStart = -1
           s.straddleSnapCarryLen = 0
           runStart = lineStart
-        } else if (s.boundaryStartOffset === 0) {
-          s.boundaryStartOffset = s.bufFileOff + lineStart
         }
         s.hasPreservedSegment = false
       }

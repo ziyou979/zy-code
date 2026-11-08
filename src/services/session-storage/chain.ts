@@ -2,7 +2,7 @@
 // 处理 compact boundary、孤立并行 tool_result 恢复、抓首条 prompt 等。
 
 import type { UUID } from 'node:crypto'
-import { logEvent } from 'src/services/analytics/index.js'
+import { logEvent } from '../analytics/index.js'
 import { builtInCommandNames } from '../../commands/index.js'
 import { COMMAND_NAME_TAG } from '../../constants/xml.js'
 import type { TokenUsage } from '../../types/llm.js'

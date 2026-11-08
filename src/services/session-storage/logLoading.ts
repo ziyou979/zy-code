@@ -8,7 +8,7 @@ import type { Dirent } from 'node:fs'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import memoize from 'lodash-es/memoize.js'
-import { logEvent } from 'src/services/analytics/index.js'
+import { logEvent } from '../analytics/index.js'
 import {
   getOriginalCwd,
   getSessionId,
@@ -805,7 +805,20 @@ export function walkChainBeforeParse(buf: Buffer): Buffer {
       break
     }
     const parent = buf.toString('latin1', parentStart, parentStart + UUID_LEN)
-    slot = uuidToSlot.get(parent)
+    let nextSlot = uuidToSlot.get(parent)
+    if (nextSlot === undefined) {
+      // 悬挂的父 UUID（例如流式 fallback 时被 tombstone 从文件移除的孤立消息，
+      // 或恢复中断轮次时未落盘的内存哨兵 UUID）：与下游 repairBrokenParentUuidChains
+      // 保持同构，桥接到前一条非 sidechain 主消息继续回溯，防止把断链前的全部历史当成死分支裁掉。
+      for (let prev: number = slot - 3; prev >= 0; prev -= 3) {
+        const sc = buf.indexOf(SIDECHAIN_TRUE, msgIdx[prev]!)
+        if (sc === -1 || sc >= msgIdx[prev + 1]!) {
+          nextSlot = prev
+          break
+        }
+      }
+    }
+    slot = nextSlot
   }
 
   // 冷热会话不能只信 parent 链：
@@ -933,7 +946,12 @@ export function repairBrokenParentUuidChains(messages: Map<string, TranscriptMes
         }
       }
       // 与 insertMessageChain 一致：链参与者推进父游标
-      if (msg.type === 'user' || msg.type === 'assistant' || msg.type === 'attachment') {
+      if (
+        msg.type === 'user' ||
+        msg.type === 'assistant' ||
+        msg.type === 'attachment' ||
+        msg.type === 'system'
+      ) {
         prevUuid = msg.uuid as UUID
       }
     }

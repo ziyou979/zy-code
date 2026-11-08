@@ -40,21 +40,18 @@ import {
   getToolUseIDs,
   hasUnresolvedHooksFromLookup,
   scopeMessageLookups,
-} from '../services/messages/./lookups.js'
-import {
-  computeTurnTokenUsage,
-  createAssistantMessage,
-} from '../services/messages/./constructors.js'
+} from '../services/messages/lookups.js'
+import { computeTurnTokenUsage, createAssistantMessage } from '../services/messages/constructors.js'
 import {
   deriveUUID,
   getToolUseID,
   isNotEmptyMessage,
   shouldShowUserMessage,
-} from '../services/messages/./predicates.js'
+} from '../services/messages/predicates.js'
 import { getDisplayMessages } from '../services/messages/projections.js'
-import { createMessageNormalizer, normalizeMessages } from '../services/messages/./normalize.js'
-import { reorderMessagesInUI } from '../services/messages/./api.js'
-import type { StreamingThinking, StreamingToolUse } from '../services/messages/./streaming.js'
+import { createMessageNormalizer, normalizeMessages } from '../services/messages/normalize.js'
+import { reorderMessagesInUI } from '../services/messages/api.js'
+import type { StreamingThinking, StreamingToolUse } from '../services/messages/streaming.js'
 import { plural } from '../utils/stringUtils.js'
 import { renderableSearchText } from '../services/session-transcript/transcriptSearch.js'
 import { Divider } from './design-system/Divider.js'
@@ -849,6 +846,20 @@ const MessagesImpl = ({
     (message: RenderableMessage) => `${message.uuid}-${conversationId}`,
     [conversationId],
   )
+  // 按 lookups 快照缓存每条消息裁剪后的查找表：展开/折叠或光标切换不会改变 lookups，
+  // 复用同一引用既省去视口内每条消息的 Map/Set 重建，也让已完成折叠组命中 MessageRow.memo。
+  const scopedLookupsCache = useMemo(
+    () => new WeakMap<RenderableMessage, ReturnType<typeof buildMessageLookups>>(),
+    [lookups],
+  )
+  const getScopedLookups = (message: RenderableMessage) => {
+    let scoped = scopedLookupsCache.get(message)
+    if (!scoped) {
+      scoped = scopeMessageLookups(message, lookups)
+      scopedLookupsCache.set(message, scoped)
+    }
+    return scoped
+  }
   const renderMessageRow = (message: RenderableMessage, index: number) => {
     const prevType = index > 0 ? renderableMessages[index - 1]?.type : undefined
     const isUserContinuation = message.type === 'user' && prevType === 'user'
@@ -882,7 +893,7 @@ const MessagesImpl = ({
         latestBashOutputUUID={latestBashOutputUUID}
         columns={columns}
         isLoading={isLoading}
-        lookups={scopeMessageLookups(message, lookups)}
+        lookups={getScopedLookups(message)}
         streamingThinkingSummary={
           isStreamingThinkingVisible ? streamingThinking?.thinking : undefined
         }

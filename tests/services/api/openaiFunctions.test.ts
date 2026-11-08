@@ -278,6 +278,15 @@ describe('convertThinkingForOpenAI', () => {
     expect(fn(undefined, 'gpt-4')).toEqual({})
   })
 
+  test('AMD 等自定义 OpenAI 连接仅发送标准推理参数', () => {
+    const model = 'DeepSeek-V4-Flash'
+    expect(fn(thinkingEnabled, model, 'generic', 'high')).toEqual({ reasoning_effort: 'high' })
+    expect(fn(thinkingEnabled, model, 'generic', 'on')).toEqual({ reasoning_effort: 'medium' })
+    expect(fn({ type: 'adaptive' }, model, 'generic')).toEqual({ reasoning_effort: 'medium' })
+    expect(fn({ type: 'disabled' }, model, 'generic')).toEqual({ reasoning_effort: 'none' })
+    expect(fn(undefined, model, 'generic')).toEqual({})
+  })
+
   test('disabled thinking → 统一显式关闭', () => {
     expect(fn({ type: 'disabled' }, 'gpt-4', 'openai')).toEqual({
       thinking: { type: 'disabled' },

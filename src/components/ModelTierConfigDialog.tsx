@@ -27,11 +27,21 @@ import {
 import { getInitialSettings } from '../services/settings/settings.js'
 import type { ModelTier } from '../services/model/model.js'
 import { getModelFailoverConfig } from '../services/model/modelChainState.js'
+import { getAuthConfigForProvider } from '../services/auth/authConfig.js'
+import { getProviderEntry } from '../services/model/providerRegistry.js'
 import { useAppState, useSetAppState } from '../state/AppState.js'
 import { Select } from './CustomSelect/select.js'
 import { ProviderModelPicker } from './ProviderModelPicker.js'
 
 // ─── 全量模型档位与降级链展示工具函数 ─────────────────────────────────────
+
+/** 命名连接没有翻译键；仅翻译注册平台，并保留用户设置的连接名。 */
+export function formatModelTierProviderLabel(connectionId: string, provider: string): string {
+  const key = `onboarding.platform.${provider}`
+  const translated = tSync(key)
+  const providerLabel = translated === key ? provider : translated
+  return connectionId === provider ? providerLabel : `${connectionId} (${providerLabel})`
+}
 
 /** 清空会暴露旧列表时说明原因与替代操作，其余写入失败沿用通用提示。 */
 export function getModelTierSaveErrorMessage(error: Error): string {
@@ -430,12 +440,13 @@ export function ModelTierConfigFlow({
   // 步骤 6：选择该档位使用的 Provider（用于主选或备选追加）
   if (step === 'select_provider') {
     const providerOptions = getModelTierProviderConnections().map((entry) => {
-      const providerLabel = tSync(`onboarding.platform.${entry.provider}`) || entry.provider
-      const label = entry.id === entry.provider ? providerLabel : `${entry.id} (${providerLabel})`
+      const label = formatModelTierProviderLabel(entry.id, entry.provider)
       return {
         label: entry.configured ? `${label} [${tSync('settings.configuredBadge')}]` : label,
         value: entry.id,
-        description: tSync(`onboarding.platform.${entry.provider}Desc`),
+        description: getProviderEntry(entry.provider)
+          ? tSync(`onboarding.platform.${entry.provider}Desc`)
+          : undefined,
       }
     })
 
@@ -471,7 +482,10 @@ export function ModelTierConfigFlow({
         provider={selectedProvider}
         title={tSync('settings.selectModelForTier', {
           tier: selectedTier,
-          provider: tSync(`onboarding.platform.${selectedProvider}`) || selectedProvider,
+          provider: formatModelTierProviderLabel(
+            selectedProvider,
+            getAuthConfigForProvider(selectedProvider)?.provider ?? selectedProvider,
+          ),
         })}
         allowSkip={actionType === 'primary' && selectedTier !== 'standard'}
         skipLabel={tSync('onboarding.tier.skip')}

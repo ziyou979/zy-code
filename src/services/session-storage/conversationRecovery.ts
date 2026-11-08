@@ -1,8 +1,8 @@
 import { feature } from 'bun:bundle'
 import type { UUID } from 'node:crypto'
 import { relative } from 'node:path'
-import { getCwd } from 'src/services/environment/cwd.js'
-import { addInvokedSkill } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getCwd } from '../environment/cwd.js'
+import { addInvokedSkill } from '../../bootstrap/runtime/runtimeContext.js'
 import { asSessionId } from '../../types/ids.js'
 import type {
   AttributionSnapshotMessage,
@@ -19,31 +19,29 @@ import {
   copyFileHistoryForResume,
   type FileHistorySnapshot,
 } from '../file-persistence/fileHistory.js'
-import { readSessionSidecar } from '../../services/session-storage/sessionSidecar.js'
-import { logError } from '../../services/infra/log.js'
-import { createAssistantMessage, createUserMessage } from '../messages/./constructors.js'
+import { readSessionSidecar } from './sessionSidecar.js'
+import { logError } from '../infra/log.js'
+import { createAssistantMessage, createUserMessage } from '../messages/constructors.js'
 import {
   filterOrphanedThinkingOnlyMessages,
   filterWhitespaceOnlyAssistantMessages,
   normalizeMessages,
-} from '../messages/./normalize.js'
-import { filterUnresolvedToolUses } from '../messages/./api.js'
-import { isToolUseResultMessage } from '../messages/./predicates.js'
-import { NO_RESPONSE_REQUESTED } from '../messages/./constants.js'
+} from '../messages/normalize.js'
+import { filterUnresolvedToolUses } from '../messages/api.js'
+import { isToolUseResultMessage } from '../messages/predicates.js'
+import { NO_RESPONSE_REQUESTED } from '../messages/constants.js'
 import { copyPlanForResume } from '../plans/plans.js'
-import { processSessionStartHooks } from '../session-storage/sessionStart.js'
+import { processSessionStartHooks } from './sessionStart.js'
+import { buildConversationChain, checkResumeConsistency, removeExtraFields } from './chain.js'
 import {
-  buildConversationChain,
-  checkResumeConsistency,
   getLastSessionLog,
   getSessionIdFromLog,
   isLiteLog,
   loadFullLog,
   loadMessageLogs,
   loadTranscriptFile,
-  removeExtraFields,
-} from '../sessionStorage.js'
-import type { ContentReplacementRecord } from '../../services/mcp/toolResultStorage.js'
+} from './logLoading.js'
+import type { ContentReplacementRecord } from '../mcp/toolResultStorage.js'
 
 // 死代码消除：ant 专属的工具名通过条件 require 引入，
 // 避免其字符串泄漏到外部构建产物中。静态 import 会始终被打包。

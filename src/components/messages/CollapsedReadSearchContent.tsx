@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { basename } from 'node:path'
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useContext, useMemo, useRef, useState } from 'react'
 import { useMinDisplayTime } from '../../hooks/useMinDisplayTime.js'
 import { tSync } from '../../i18n/index.js'
 import { Ansi, Box, Text, useAnimationFrame, useTheme } from '../../ink/index.js'
@@ -23,12 +23,13 @@ import {
 } from '../../utils/format.js'
 import { stringWidth } from '../../utils/stringWidth.js'
 import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
-import { buildMessageLookups } from '../../services/messages/./lookups.js'
+import { buildMessageLookups } from '../../services/messages/lookups.js'
 import { CtrlOToExpand } from '../CtrlOToExpand.js'
 import { FallbackToolUseErrorMessage } from '../FallbackToolUseErrorMessage.js'
-import { useSelectedMessageBg } from '../MessageActions.js'
+import { useSelectedMessageBg, VirtualListLayoutChangeContext } from '../MessageActions.js'
 import { PrBadge } from '../PrBadge.js'
 import { ToolUseLoader } from '../ToolUseLoader.js'
+import { TextHoverColorContext } from '../design-system/ThemedText.js'
 import { AssistantThinkingMessage } from './AssistantThinkingMessage.js'
 import { Markdown } from '../Markdown.js'
 
@@ -44,6 +45,7 @@ const teamMemCollapsed = feature('TEAMMEM')
 const MIN_HINT_DISPLAY_MS = 700
 const MAX_STEP_SUMMARY_CHARS = 76
 const THINKING_SCROLL_INTERVAL_MS = 45
+const HEADER_HOVER_KEY = '__header__'
 
 type ThinkingStepRowItem = {
   key: string
@@ -352,24 +354,44 @@ function ExpandedToolStepRow({
   shellProgressSuffix: string
 }): React.ReactNode {
   const { toolBlock } = step
-  const tool =
-    findToolByName(tools, toolBlock.name) ?? findToolByName(getReplPrimitiveTools(), toolBlock.name)
+  const tool = useMemo(
+    () =>
+      findToolByName(tools, toolBlock.name) ??
+      findToolByName(getReplPrimitiveTools(), toolBlock.name),
+    [tools, toolBlock.name],
+  )
   const isResolved = lookups.resolvedToolUseIDs.has(toolBlock.id)
   const isError = lookups.erroredToolUseIDs.has(toolBlock.id)
   const resultMsg = lookups.toolResultByToolUseID.get(toolBlock.id)
   const rawToolResult = resultMsg?.type === 'user' ? resultMsg.toolUseResult : undefined
-  const parsedOutput = tool?.outputSchema?.safeParse(rawToolResult)
-  const toolResult = parsedOutput?.success ? parsedOutput.data : rawToolResult
-  const parsedInput = tool?.inputSchema?.safeParse(toolBlock.input)
-  const input = parsedInput?.success ? parsedInput.data : undefined
-  const userFacingName = tool?.userFacingName?.(input) ?? toolBlock.name
-  const toolUseMessage =
-    tool && input
-      ? tool.renderToolUseMessage(input, {
-          theme,
-          verbose: true,
-        })
-      : null
+  const toolResult = useMemo(() => {
+    const parsedOutput = tool?.outputSchema?.safeParse(rawToolResult)
+    return parsedOutput?.success ? parsedOutput.data : rawToolResult
+  }, [tool, rawToolResult])
+  const { userFacingName, toolUseMessage } = useMemo(() => {
+    const parsedInput = tool?.inputSchema?.safeParse(toolBlock.input)
+    const input = parsedInput?.success ? parsedInput.data : undefined
+    const name = tool?.userFacingName?.(input) ?? toolBlock.name
+    const msg =
+      tool && input
+        ? tool.renderToolUseMessage(input, {
+            theme,
+            verbose: true,
+          })
+        : null
+    return { userFacingName: name, toolUseMessage: msg }
+  }, [tool, toolBlock.input, toolBlock.name, theme])
+
+  const renderedResult = useMemo(() => {
+    if (!isResolved || isError || toolResult === undefined || !tool) {
+      return null
+    }
+    return tool.renderToolResultMessage?.(toolResult as never, [], {
+      verbose: true,
+      tools,
+      theme,
+    })
+  }, [isResolved, isError, toolResult, tool, tools, theme])
 
   const errorBlock =
     isError && resultMsg?.type === 'user' && Array.isArray(resultMsg.message.content)
@@ -398,29 +420,128 @@ function ExpandedToolStepRow({
               <Text dimColor>{` \u2026${shellProgressSuffix}`}</Text>
             ) : null}
           </Text>
-          {isResolved && !isError && toolResult !== undefined && tool && (
-            <Box>
-              {tool.renderToolResultMessage?.(toolResult as never, [], {
-                verbose: true,
-                tools,
-                theme,
-              })}
-            </Box>
-          )}
-          {isError && errorBlock && (
-            <Box>
-              {tool?.renderToolUseErrorMessage?.(errorBlock.content, {
-                progressMessagesForMessage: [],
-                tools,
-                verbose: true,
-              }) ?? <FallbackToolUseErrorMessage result={errorBlock.content} verbose={true} />}
-            </Box>
-          )}
+          {/* 展开的工具输出保持自身语义着色，不随步骤行悬停整体变亮 */}
+          <TextHoverColorContext.Provider value={undefined}>
+            {renderedResult ? <Box>{renderedResult}</Box> : null}
+            {isError && errorBlock && (
+              <Box>
+                {tool?.renderToolUseErrorMessage?.(errorBlock.content, {
+                  progressMessagesForMessage: [],
+                  tools,
+                  verbose: true,
+                }) ?? <FallbackToolUseErrorMessage result={errorBlock.content} verbose={true} />}
+              </Box>
+            )}
+          </TextHoverColorContext.Provider>
         </Box>
       </Box>
     </Box>
   )
 }
+
+type CollapsedStepRowProps = {
+  step: StepRowItem
+  isStepExpanded: boolean
+  /** 该行是否应当高亮（顶部汇总行悬停整块亮起，或仅当前子菜单行悬停） */
+  isHovered: boolean
+  shouldAnimate: boolean
+  tools: Tools
+  lookups: ReturnType<typeof buildMessageLookups>
+  theme: ThemeName
+  shellProgressSuffix: string
+  onToggleStep: (key: string) => void
+  onStepMouseEnter: (key: string) => void
+  onStepMouseLeave: (key: string) => void
+}
+
+/**
+ * 独立 memo 化的子步骤行：鼠标在子菜单间移动或点击展开单步时，
+ * 未发生状态变化的兄弟步骤直接跳过重渲染与 Markdown/工具输出计算。
+ */
+const CollapsedStepRow = React.memo(
+  function CollapsedStepRow({
+    step,
+    isStepExpanded,
+    isHovered,
+    shouldAnimate,
+    tools,
+    lookups,
+    theme,
+    shellProgressSuffix,
+    onToggleStep,
+    onStepMouseEnter,
+    onStepMouseLeave,
+  }: CollapsedStepRowProps) {
+    return (
+      <Box
+        flexDirection="column"
+        onMouseEnter={() => onStepMouseEnter(step.key)}
+        onMouseLeave={() => onStepMouseLeave(step.key)}
+        onClick={(e) => {
+          e.stopImmediatePropagation()
+          onToggleStep(step.key)
+        }}
+      >
+        <TextHoverColorContext.Provider value={isHovered ? 'text' : undefined}>
+          {step.kind === 'thinking' ? (
+            isStepExpanded ? (
+              <Box flexDirection="row">
+                <Box width={7} flexShrink={0}>
+                  <Text dimColor>{'  \u23BF  \u{1F4AD} '}</Text>
+                </Box>
+                <Box flexDirection="column" flexGrow={1}>
+                  <Markdown dimColor>{step.thinkingText}</Markdown>
+                </Box>
+              </Box>
+            ) : (
+              <ThinkingStepTicker
+                rawText={step.thinkingText}
+                isRunning={step.status === 'running'}
+                shouldAnimate={shouldAnimate}
+              />
+            )
+          ) : isStepExpanded ? (
+            <ExpandedToolStepRow
+              step={step}
+              tools={tools}
+              lookups={lookups}
+              theme={theme}
+              shellProgressSuffix={shellProgressSuffix}
+            />
+          ) : (
+            <Box flexDirection="row" height={1} overflow="hidden">
+              <Text dimColor wrap="truncate-end">
+                {'  \u23BF  '}
+                {step.text}
+                {step.status === 'success' ? (
+                  <Text color="success">{' \u2713'}</Text>
+                ) : step.status === 'error' ? (
+                  <Text color="error">{' \u2717'}</Text>
+                ) : step.status === 'running' ? (
+                  <Text dimColor>{` \u2026${shellProgressSuffix}`}</Text>
+                ) : null}
+              </Text>
+            </Box>
+          )}
+        </TextHoverColorContext.Provider>
+      </Box>
+    )
+  },
+  (prev, next) =>
+    prev.isStepExpanded === next.isStepExpanded &&
+    prev.isHovered === next.isHovered &&
+    prev.shouldAnimate === next.shouldAnimate &&
+    prev.theme === next.theme &&
+    prev.shellProgressSuffix === next.shellProgressSuffix &&
+    prev.step.key === next.step.key &&
+    prev.step.kind === next.step.kind &&
+    prev.step.status === next.step.status &&
+    prev.step.text === next.step.text &&
+    (prev.step.kind !== 'thinking' ||
+      next.step.kind !== 'thinking' ||
+      prev.step.thinkingText === next.step.thinkingText) &&
+    (!next.isStepExpanded || prev.lookups === next.lookups),
+)
 
 /** 在 verbose 模式下渲染单个工具使用 */
 function VerboseToolUse({
@@ -514,26 +635,48 @@ export function CollapsedReadSearchContent({
     messages: groupMessages,
   } = message
   const [theme] = useTheme()
+  const notifyVirtualListLayoutChange = useContext(VirtualListLayoutChangeContext)
   const [expandedStepKeys, setExpandedStepKeys] = useState<ReadonlySet<string>>(() => new Set())
-  const toggleStepExpanded = useCallback((key: string) => {
-    setExpandedStepKeys((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) {
-        next.delete(key)
-      } else {
-        next.add(key)
-      }
-      return next
-    })
+  const [hoveredTarget, setHoveredTarget] = useState<string | null>(null)
+  const toggleStepExpanded = useCallback(
+    (key: string) => {
+      setExpandedStepKeys((prev) => {
+        const next = new Set(prev)
+        if (next.has(key)) {
+          next.delete(key)
+        } else {
+          next.add(key)
+        }
+        return next
+      })
+      notifyVirtualListLayoutChange?.()
+    },
+    [notifyVirtualListLayoutChange],
+  )
+  const handleHeaderMouseEnter = useCallback(() => {
+    setHoveredTarget(HEADER_HOVER_KEY)
   }, [])
-  const toolUseIds = getToolUseIdsFromCollapsedGroup(message)
+  const handleHeaderMouseLeave = useCallback(() => {
+    setHoveredTarget((prev) => (prev === HEADER_HOVER_KEY ? null : prev))
+  }, [])
+  const handleStepMouseEnter = useCallback((key: string) => {
+    setHoveredTarget(key)
+  }, [])
+  const handleStepMouseLeave = useCallback((key: string) => {
+    setHoveredTarget((prev) => (prev === key ? null : prev))
+  }, [])
+  const toolUseIds = useMemo(() => getToolUseIdsFromCollapsedGroup(message), [message])
+  const toolCallBlocks = useMemo(() => collectToolCallBlocks(message), [message])
   const anyError = toolUseIds.some((id) => lookups.erroredToolUseIDs.has(id))
   // 组内当前正在执行的工具调用类别。每个计数部分的时态由"该类别的
   // 工具是否仍在执行"决定，而非"组是否活跃"——组活跃时搜索可能已完成
   //（正在读取/思考），此时应显示"已根据 N 个模式匹配"而非"正在根据"。
   const inProgressKinds = useMemo(() => {
+    if (inProgressToolUseIDs.size === 0) {
+      return new Set<string>()
+    }
     const kinds = new Set<string>()
-    for (const block of collectToolCallBlocks(message)) {
+    for (const block of toolCallBlocks) {
       if (!inProgressToolUseIDs.has(block.id)) {
         continue
       }
@@ -552,7 +695,7 @@ export function CollapsedReadSearchContent({
       if (info.mcpServerName) kinds.add('mcp')
     }
     return kinds
-  }, [message, inProgressToolUseIDs, tools])
+  }, [toolCallBlocks, inProgressToolUseIDs, tools])
   const hasMemoryOps =
     (memorySearchCount ?? 0) > 0 || (memoryReadCount ?? 0) > 0 || (memoryWriteCount ?? 0) > 0
   const hasTeamMemoryOps = feature('TEAMMEM')
@@ -650,6 +793,58 @@ export function CollapsedReadSearchContent({
         : message.latestDisplayKind === 'thinking'
           ? (thinkingSummary ?? fallbackHint)
           : (fallbackHint ?? thinkingSummary)
+
+  // 预先解析组内静态步骤文本（思考首行提取与工具调用 schema 解析/格式化），
+  // 避免每次悬停切换或单步展开时对所有历史步骤重复执行 safeParse 和正则切分。
+  const baseSteps = useMemo(() => {
+    const items: Array<
+      | ThinkingStepRowItem
+      | {
+          key: string
+          kind: 'tool'
+          text: string
+          toolBlock: { id: string; name: string; input: unknown }
+        }
+    > = []
+    let thinkingIdx = 0
+    for (const msg of (groupMessages ?? []) as Array<
+      | AssistantMessage
+      | { type: 'grouped_tool_use'; messages?: AssistantMessage[]; message?: AssistantMessage[] }
+    >) {
+      const assistantList =
+        msg.type === 'assistant'
+          ? [msg]
+          : msg.type === 'grouped_tool_use'
+            ? (msg.messages ?? msg.message ?? [])
+            : []
+      for (const aMsg of assistantList) {
+        const content = aMsg.message.content[0]
+        if (!content) {
+          continue
+        }
+        if (content.type === 'thinking' && content.thinking) {
+          const line = extractThinkingStepLine(content.thinking)
+          if (line) {
+            items.push({
+              key: `think-step-${thinkingIdx++}`,
+              kind: 'thinking',
+              text: line,
+              thinkingText: content.thinking,
+              status: 'done',
+            })
+          }
+        } else if (content.type === 'tool_call') {
+          items.push({
+            key: `tool-${content.id}`,
+            kind: 'tool',
+            text: formatToolCallStepText(content, tools),
+            toolBlock: content,
+          })
+        }
+      }
+    }
+    return { items, nextThinkingIndex: thinkingIdx }
+  }, [groupMessages, tools])
 
   // 非 verbose 模式：活跃时显示带闪烁灰点的计数，完成后显示绿点
   // 活跃时使用现在时，完成后使用过去时
@@ -971,8 +1166,13 @@ export function CollapsedReadSearchContent({
       </Text>,
     )
   }
+  const isHeaderHovered = hoveredTarget === HEADER_HOVER_KEY
   const summaryHeaderRow = (
-    <Box flexDirection="row">
+    <Box
+      flexDirection="row"
+      onMouseEnter={handleHeaderMouseEnter}
+      onMouseLeave={handleHeaderMouseLeave}
+    >
       {isActiveGroup ? (
         <ToolUseLoader shouldAnimate isUnresolved isError={anyError} />
       ) : (
@@ -1010,68 +1210,74 @@ export function CollapsedReadSearchContent({
     const showHeader = hasMemoryOps || hasTeamMemoryOps || hasNonMemoryOps || hasThinkingContent
     return (
       <Box flexDirection="column" marginTop={showHeader ? 1 : 0} backgroundColor={bg}>
-        {showHeader ? summaryHeaderRow : null}
-        <Box
-          flexDirection="column"
-          onClick={(e) => {
-            e.stopImmediatePropagation()
-          }}
-        >
-          {items.map((msg_0) => {
-            const content = msg_0.message.content[0]
-            // 在工具调用之间内联渲染 thinking 块
-            if (content?.type === 'thinking' && content.thinking) {
+        {showHeader ? (
+          <TextHoverColorContext.Provider value={isHeaderHovered ? 'text' : undefined}>
+            {summaryHeaderRow}
+          </TextHoverColorContext.Provider>
+        ) : null}
+        <TextHoverColorContext.Provider value={undefined}>
+          <Box
+            flexDirection="column"
+            onClick={(e) => {
+              e.stopImmediatePropagation()
+            }}
+          >
+            {items.map((msg_0) => {
+              const content = msg_0.message.content[0]
+              // 在工具调用之间内联渲染 thinking 块
+              if (content?.type === 'thinking' && content.thinking) {
+                return (
+                  <AssistantThinkingMessage
+                    key={msg_0.uuid}
+                    param={content}
+                    addMargin={true}
+                    isTranscriptMode={true}
+                    verbose={true}
+                  />
+                )
+              }
+              if (content?.type !== 'tool_call') {
+                return null
+              }
               return (
-                <AssistantThinkingMessage
-                  key={msg_0.uuid}
-                  param={content}
-                  addMargin={true}
-                  isTranscriptMode={true}
-                  verbose={true}
+                <VerboseToolUse
+                  key={content.id}
+                  content={content}
+                  tools={tools}
+                  lookups={lookups}
+                  inProgressToolUseIDs={inProgressToolUseIDs}
+                  shouldAnimate={shouldAnimate}
+                  theme={theme}
+                  message={msg_0.message as unknown as CollapsedReadSearchGroup}
+                  verbose={verbose}
                 />
               )
-            }
-            if (content?.type !== 'tool_call') {
-              return null
-            }
-            return (
-              <VerboseToolUse
-                key={content.id}
-                content={content}
-                tools={tools}
-                lookups={lookups}
-                inProgressToolUseIDs={inProgressToolUseIDs}
-                shouldAnimate={shouldAnimate}
-                theme={theme}
-                message={msg_0.message as unknown as CollapsedReadSearchGroup}
-                verbose={verbose}
-              />
-            )
-          })}
-          {message.hookInfos && message.hookInfos.length > 0 && (
-            <>
-              <Text dimColor>
-                {'  ⎿  '}
-                {tSync(
-                  message.hookCount === 1
-                    ? 'collapsedReadSearch.hookSummary_one'
-                    : 'collapsedReadSearch.hookSummary_other',
-                  {
-                    count: message.hookCount ?? 0,
-                    duration: formatSecondsShort(message.hookTotalMs ?? 0),
-                  },
-                )}
-              </Text>
-              {message.hookInfos.map((info, idx: number) => (
-                <Text key={`hook-${idx}`} dimColor>
-                  {'     ⎿ '}
-                  {info.command} ({formatSecondsShort(info.durationMs ?? 0)})
+            })}
+            {message.hookInfos && message.hookInfos.length > 0 && (
+              <>
+                <Text dimColor>
+                  {'  ⎿  '}
+                  {tSync(
+                    message.hookCount === 1
+                      ? 'collapsedReadSearch.hookSummary_one'
+                      : 'collapsedReadSearch.hookSummary_other',
+                    {
+                      count: message.hookCount ?? 0,
+                      duration: formatSecondsShort(message.hookTotalMs ?? 0),
+                    },
+                  )}
                 </Text>
-              ))}
-            </>
-          )}
-          {(message.relevantMemories as Array<{ path: string; content: string }> | undefined)?.map(
-            (m) => (
+                {message.hookInfos.map((info, idx: number) => (
+                  <Text key={`hook-${idx}`} dimColor>
+                    {'     ⎿ '}
+                    {info.command} ({formatSecondsShort(info.durationMs ?? 0)})
+                  </Text>
+                ))}
+              </>
+            )}
+            {(
+              message.relevantMemories as Array<{ path: string; content: string }> | undefined
+            )?.map((m) => (
               <Box key={m.path} flexDirection="column" marginTop={1}>
                 <Text dimColor>
                   {'  ⎿  '}
@@ -1083,56 +1289,30 @@ export function CollapsedReadSearchContent({
                   </Text>
                 </Box>
               </Box>
-            ),
-          )}
-        </Box>
+            ))}
+          </Box>
+        </TextHoverColorContext.Provider>
       </Box>
     )
   }
 
-  // 构建每步动作明细列表（参考 deepseek-harness 步骤展示：包含每步思考摘要与具体工具调用动作）
-  const stepRows: StepRowItem[] = []
-  let thinkingStepIndex = 0
-  for (const msg of (groupMessages ?? []) as Array<
-    | AssistantMessage
-    | { type: 'grouped_tool_use'; messages?: AssistantMessage[]; message?: AssistantMessage[] }
-  >) {
-    const assistantList =
-      msg.type === 'assistant'
-        ? [msg]
-        : msg.type === 'grouped_tool_use'
-          ? (msg.messages ?? msg.message ?? [])
-          : []
-    for (const aMsg of assistantList) {
-      const content = aMsg.message.content[0]
-      if (!content) {
-        continue
-      }
-      if (content.type === 'thinking' && content.thinking) {
-        const line = extractThinkingStepLine(content.thinking)
-        if (line) {
-          stepRows.push({
-            key: `think-step-${thinkingStepIndex++}`,
-            kind: 'thinking',
-            text: line,
-            thinkingText: content.thinking,
-            status: 'done',
-          })
-        }
-      } else if (content.type === 'tool_call') {
-        const isInProgress = inProgressToolUseIDs.has(content.id)
-        const isError = lookups.erroredToolUseIDs.has(content.id)
-        const isResolved = lookups.resolvedToolUseIDs.has(content.id)
-        stepRows.push({
-          key: `tool-${content.id}`,
-          kind: 'tool',
-          text: formatToolCallStepText(content, tools),
-          toolBlock: content,
-          status: isInProgress ? 'running' : isError ? 'error' : isResolved ? 'success' : 'pending',
-        })
-      }
+  // 构建每步动作明细列表：复用 baseSteps 缓存的格式化结果，仅按当前集合 O(1) 附加执行状态。
+  const stepRows: StepRowItem[] = baseSteps.items.map((item) => {
+    if (item.kind === 'thinking') {
+      return item
     }
-  }
+    const { id } = item.toolBlock
+    const isInProgress = inProgressToolUseIDs.has(id)
+    const isError = lookups.erroredToolUseIDs.has(id)
+    const isResolved = lookups.resolvedToolUseIDs.has(id)
+    return {
+      key: item.key,
+      kind: 'tool',
+      text: item.text,
+      toolBlock: item.toolBlock,
+      status: isInProgress ? 'running' : isError ? 'error' : isResolved ? 'success' : 'pending',
+    }
+  })
   const activeStreamingThinking =
     (isActiveGroup && streamingThinkingSummary?.trim()) ||
     (stepRows.length === 0 ? thinkingSummary?.trim() : undefined)
@@ -1145,7 +1325,7 @@ export function CollapsedReadSearchContent({
       !(lastStep?.kind === 'thinking' && lastStep.thinkingText.trim() === activeStreamingThinking)
     ) {
       stepRows.push({
-        key: `think-step-${thinkingStepIndex++}`,
+        key: `think-step-${baseSteps.nextThinkingIndex}`,
         kind: 'thinking',
         text: liveLine,
         thinkingText: activeStreamingThinking,
@@ -1154,112 +1334,78 @@ export function CollapsedReadSearchContent({
     }
   }
 
+  // 仅当鼠标悬浮在顶部汇总行（“思考了 X 秒...”）时整块亮起；
+  // 悬浮在下方子菜单时外层保持 undefined，仅由对应 CollapsedStepRow 单独亮起。
   return (
-    <Box flexDirection="column" marginTop={1} backgroundColor={bg}>
-      {summaryHeaderRow}
-      {stepRows.length > 0 ? (
-        <Box
-          flexDirection="column"
-          onClick={(e) => {
-            e.stopImmediatePropagation()
-          }}
-        >
-          {stepRows.map((step) => {
-            const isStepExpanded = expandedStepKeys.has(step.key)
-            return (
-              <Box
-                key={step.key}
-                flexDirection="column"
-                onClick={(e) => {
-                  e.stopImmediatePropagation()
-                  if (e.cellIsBlank) {
-                    return
-                  }
-                  toggleStepExpanded(step.key)
-                }}
-              >
-                {step.kind === 'thinking' ? (
-                  isStepExpanded ? (
-                    <Box flexDirection="row">
-                      <Box width={7} flexShrink={0}>
-                        <Text dimColor>{'  \u23BF  \u{1F4AD} '}</Text>
-                      </Box>
-                      <Box flexDirection="column" flexGrow={1}>
-                        <Markdown dimColor>{step.thinkingText}</Markdown>
-                      </Box>
-                    </Box>
-                  ) : (
-                    <ThinkingStepTicker
-                      rawText={step.thinkingText}
-                      isRunning={step.status === 'running'}
-                      shouldAnimate={shouldAnimate}
-                    />
-                  )
-                ) : isStepExpanded ? (
-                  <ExpandedToolStepRow
-                    step={step}
-                    tools={tools}
-                    lookups={lookups}
-                    theme={theme}
-                    shellProgressSuffix={shellProgressSuffix}
-                  />
-                ) : (
-                  <Box flexDirection="row" height={1} overflow="hidden">
-                    <Text dimColor wrap="truncate-end">
-                      {'  \u23BF  '}
-                      {step.text}
-                      {step.status === 'success' ? (
-                        <Text color="success">{' \u2713'}</Text>
-                      ) : step.status === 'error' ? (
-                        <Text color="error">{' \u2717'}</Text>
-                      ) : step.status === 'running' ? (
-                        <Text dimColor>{` \u2026${shellProgressSuffix}`}</Text>
-                      ) : null}
-                    </Text>
-                  </Box>
-                )}
-              </Box>
-            )
-          })}
-        </Box>
-      ) : (
-        isActiveGroup &&
-        displayedHint !== undefined && (
-          // 行布局：5 宽 gutter 用于 ⎿，然后是 flex 列用于文本。
-          // Ink 的 wrap 保留在右侧列内，因此续行在 ⎿ 下方缩进。
-          // MAX_HINT_CHARS in commandAsHint 将总计限制为约 5 行。
+    <TextHoverColorContext.Provider value={isHeaderHovered ? 'text' : undefined}>
+      <Box flexDirection="column" marginTop={1} backgroundColor={bg}>
+        {summaryHeaderRow}
+        {stepRows.length > 0 ? (
           <Box
-            flexDirection="row"
+            flexDirection="column"
             onClick={(e) => {
               e.stopImmediatePropagation()
             }}
           >
-            <Box width={5} flexShrink={0}>
-              <Text dimColor>{'  ⎿  '}</Text>
-            </Box>
-            <Box flexDirection="column" flexGrow={1}>
-              <Markdown dimColor>{displayedHint + shellProgressSuffix}</Markdown>
-            </Box>
+            {stepRows.map((step) => (
+              <CollapsedStepRow
+                key={step.key}
+                step={step}
+                isStepExpanded={expandedStepKeys.has(step.key)}
+                isHovered={isHeaderHovered || hoveredTarget === step.key}
+                shouldAnimate={shouldAnimate}
+                tools={tools}
+                lookups={lookups}
+                theme={theme}
+                shellProgressSuffix={shellProgressSuffix}
+                onToggleStep={toggleStepExpanded}
+                onStepMouseEnter={handleStepMouseEnter}
+                onStepMouseLeave={handleStepMouseLeave}
+              />
+            ))}
           </Box>
-        )
-      )}
-      {message.hookTotalMs !== undefined && message.hookTotalMs > 0 && (
-        <Box
-          onClick={(e) => {
-            e.stopImmediatePropagation()
-          }}
-        >
-          <Text dimColor>
-            {'  ⎿  '}
-            {tSync(
-              message.hookCount === 1
-                ? 'collapsedReadSearch.hookSummary_one'
-                : 'collapsedReadSearch.hookSummary_other',
-              { count: message.hookCount ?? 0, duration: formatSecondsShort(message.hookTotalMs) },
-            )}
-          </Text>
-        </Box>
-      )}
-    </Box>
+        ) : (
+          isActiveGroup &&
+          displayedHint !== undefined && (
+            // 行布局：5 宽 gutter 用于 ⎿，然后是 flex 列用于文本。
+            // Ink 的 wrap 保留在右侧列内，因此续行在 ⎿ 下方缩进。
+            // MAX_HINT_CHARS in commandAsHint 将总计限制为约 5 行。
+            <Box
+              flexDirection="row"
+              onClick={(e) => {
+                e.stopImmediatePropagation()
+              }}
+            >
+              <Box width={5} flexShrink={0}>
+                <Text dimColor>{'  ⎿  '}</Text>
+              </Box>
+              <Box flexDirection="column" flexGrow={1}>
+                <Markdown dimColor>{displayedHint + shellProgressSuffix}</Markdown>
+              </Box>
+            </Box>
+          )
+        )}
+        {message.hookTotalMs !== undefined && message.hookTotalMs > 0 && (
+          <Box
+            onClick={(e) => {
+              e.stopImmediatePropagation()
+            }}
+          >
+            <Text dimColor>
+              {'  ⎿  '}
+              {tSync(
+                message.hookCount === 1
+                  ? 'collapsedReadSearch.hookSummary_one'
+                  : 'collapsedReadSearch.hookSummary_other',
+                {
+                  count: message.hookCount ?? 0,
+                  duration: formatSecondsShort(message.hookTotalMs),
+                },
+              )}
+            </Text>
+          </Box>
+        )}
+      </Box>
+    </TextHoverColorContext.Provider>
   )
 }

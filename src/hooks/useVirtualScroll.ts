@@ -5,6 +5,7 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
   useSyncExternalStore,
 } from 'react'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
@@ -93,6 +94,8 @@ export type VirtualScrollResult = {
    * 屏幕位置可能有几十行估算漂移，但 item 已进入 DOM；随后用 getItemTop(i) 获取精确位置。
    */
   scrollToIndex: (i: number) => void
+  /** 子组件内部折叠/展开导致高度变化时通知虚拟列表重测高度并补齐范围 */
+  notifyLayoutChange: () => void
 }
 
 /**
@@ -133,6 +136,12 @@ export function useVirtualScroll(
   // heightCache 每次变化时递增，使 offsets 下次读取时重建。使用 ref 而非 state，
   // 在 render 阶段检查，不增加 commit。
   const offsetVersionRef = useRef(0)
+  // 当子项折叠使高度缩小（暴露出下方空白需补齐挂载项）或子组件内部展开/折叠通知时触发重测重算
+  const [, setLayoutTick] = useState(0)
+  const shrunkCatchupRef = useRef(false)
+  const notifyLayoutChange = useCallback(() => {
+    setLayoutTick((t) => t + 1)
+  }, [])
   // 上次 commit 时的 scrollTop，用于检测快速滚动模式（slide cap gate）。
   const lastScrollTopRef = useRef(0)
   const offsetsRef = useRef<{ arr: Float64Array; version: number; n: number }>({
@@ -411,7 +420,9 @@ export function useVirtualScroll(
   // 大幅跳转可能使 effStart > effEnd，此时跳过延迟以避免反向范围。sticky 时也跳过，
   // 因为 scrollToBottom 必须立即挂载尾部，使 scrollTop=maxScroll 落在内容而非 bottomSpacer。
   // sticky snap 只有一帧，不会受益于 time-slicing。
-  if (effStart > effEnd || isSticky) {
+  // 子项折叠高度缩小触发的同步补齐渲染同样跳过延迟，避免下方兄弟消息延迟一拍出现。
+  if (effStart > effEnd || isSticky || shrunkCatchupRef.current) {
+    shrunkCatchupRef.current = false
     effStart = start
     effEnd = end
   }
@@ -484,6 +495,7 @@ export function useVirtualScroll(
       return
     }
     let anyChanged = false
+    let anyShrunk = false
     for (const [key, el] of itemRefs.current) {
       const yoga = el.yogaNode
       if (!yoga) {
@@ -493,16 +505,31 @@ export function useVirtualScroll(
       const prev = heightCache.current.get(key)
       if (h > 0) {
         if (prev !== h) {
+          if (prev !== undefined && h < prev) {
+            anyShrunk = true
+          }
           heightCache.current.set(key, h)
           anyChanged = true
         }
       } else if (yoga.getComputedWidth() > 0 && prev !== 0) {
+        if (prev !== undefined && prev > 0) {
+          anyShrunk = true
+        }
         heightCache.current.set(key, 0)
         anyChanged = true
       }
     }
     if (anyChanged) {
       offsetVersionRef.current++
+      // 当已挂载项高度缩小（例如展开的长思考块被折叠回单行）时，
+      // 本次 render 阶段仍按折叠前的旧大高度计算了 [effStart, effEnd) 与 bottomSpacer/clampBounds，
+      // 导致折叠块下方本应进入视口的兄弟消息仍处于未挂载空白状态，需等待下次渲染才出现。
+      // 在 useLayoutEffect 中同步触发一次重算（在 queueMicrotask(onRender) 写终端前完成），
+      // 立即补齐下方挂载项，避免空白等待与闪烁。
+      if (anyShrunk) {
+        shrunkCatchupRef.current = true
+        setLayoutTick((t) => t + 1)
+      }
     }
   })
 
@@ -577,5 +604,6 @@ export function useVirtualScroll(
     getItemElement,
     getItemHeight,
     scrollToIndex,
+    notifyLayoutChange,
   }
 }

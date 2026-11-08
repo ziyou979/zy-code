@@ -10,25 +10,22 @@ import {
 } from '../services/sessionStorage.js'
 
 /**
- * Hook that logs messages to the transcript
- * conversation ID that only changes when a new conversation is started.
+ * 将当前会话消息增量持久化到 transcript JSONL 文件。
  *
- * @param messages The current conversation messages
- * @param ignore When true, messages will not be recorded to the transcript
+ * @param messages 当前对话的消息数组
+ * @param ignore 为 true 时跳过本轮写入（如恢复会话首屏挂载，消息已在磁盘上），仅同步初始化游标
  */
 export function useLogMessages(messages: Message[], ignore: boolean = false) {
   const teamContext = useAppState((s) => s.teamContext)
 
-  // messages is append-only between compactions, so track where we left off
-  // and only pass the new tail to recordTranscript. Avoids O(n) filter+scan
-  // on every setMessages (~20x/turn, so n=3000 was ~120k wasted iterations).
+  // 正常对话期间 messages 为仅追加模式，通过记录上次处理到的长度与尾部锚点，
+  // 仅向 recordTranscript 传递新增切片，避免每次流式更新都对数千条历史做 O(n) 扫描。
   const lastRecordedLengthRef = useRef(0)
   const lastParentUuidRef = useRef<UUID | undefined>(undefined)
-  // First-uuid change = compaction or /clear rebuilt the array; length alone
-  // can't detect this since post-compact [CB,summary,...keep,new] may be longer.
+  const lastTailUuidRef = useRef<UUID | undefined>(undefined)
+  // 首条消息 UUID 变化代表发生了清空重置或首部替换，不能仅凭数组长度判断。
   const firstMessageUuidRef = useRef<UUID | undefined>(undefined)
-  // Guard against stale async .then() overwriting a fresher sync update when
-  // an incremental render fires before the compaction .then() resolves.
+  // 防止较慢的全量异步 .then() 回调覆盖后续增量渲染已同步更新的新锚点。
   const callSeqRef = useRef(0)
 
   useEffect(() => {
@@ -43,42 +40,49 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
       lastRecordedLengthRef.current = messages.length
       firstMessageUuidRef.current = currentFirstUuid
       lastParentUuidRef.current = last?.uuid as UUID | undefined
+      lastTailUuidRef.current = messages[messages.length - 1]?.uuid as UUID | undefined
       return
     }
 
     const currentFirstUuid = messages[0]?.uuid as UUID | undefined
     const prevLength = lastRecordedLengthRef.current
+    const currentTailUuid = messages[messages.length - 1]?.uuid as UUID | undefined
 
-    // First-render: firstMessageUuidRef is undefined. Compaction: first uuid changes.
-    // Both are !isIncremental, but first-render sync-walk is safe (no messagesToKeep).
     const wasFirstRender = firstMessageUuidRef.current === undefined
-    const isIncremental =
+    const sameHead =
       currentFirstUuid !== undefined &&
       !wasFirstRender &&
-      currentFirstUuid === firstMessageUuidRef.current &&
-      prevLength <= messages.length
-    // Same-head shrink: tombstone filter, rewind, snip, partial-compact.
-    // Distinguished from compaction (first uuid changes) because the tail
-    // is either an existing on-disk message or a fresh message that this
-    // same effect's recordTranscript(fullArray) will write — see sync-walk
-    // guard below.
-    const isSameHeadShrink =
-      currentFirstUuid !== undefined &&
-      !wasFirstRender &&
-      currentFirstUuid === firstMessageUuidRef.current &&
-      prevLength > messages.length
+      currentFirstUuid === firstMessageUuidRef.current
+    const prefixIntact =
+      prevLength === 0 ||
+      (messages[prevLength - 1]?.uuid as UUID | undefined) === lastTailUuidRef.current
+
+    // 高频工具 progress（如 bash_progress）原地替换最后一条消息时，无需触发全量重扫
+    if (
+      sameHead &&
+      !prefixIntact &&
+      prevLength === messages.length &&
+      messages[prevLength - 1]?.type === 'progress'
+    ) {
+      lastTailUuidRef.current = currentTailUuid
+      return
+    }
+
+    const isIncremental = sameHead && prevLength <= messages.length && prefixIntact
+    // 同首部收缩或尾部原地替换（如流式 fallback 在同批次产生 tombstone 与新消息、rewind、snip 等）：
+    // 需走全量去重扫描以跳过已删除项并正确回连父链。
+    const isSameHeadShrink = sameHead && (prevLength > messages.length || !prefixIntact)
 
     const startIndex = isIncremental ? prevLength : 0
     if (startIndex === messages.length) {
       return
     }
 
-    // Full array on first call + after compaction: recordTranscript's own
-    // O(n) dedup loop handles messagesToKeep interleaving correctly there.
+    // 首次渲染、压缩或尾部发生删改时传全量数组，由 recordTranscript 的去重循环处理交错消息。
     const slice = startIndex === 0 ? messages : messages.slice(startIndex)
     const parentHint = isIncremental ? lastParentUuidRef.current : undefined
 
-    // Fire and forget - we don't want to block the UI.
+    // 异步排队写入，不阻塞 UI 渲染。
     const seq = ++callSeqRef.current
     void recordTranscript(
       slice,
@@ -91,11 +95,8 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
       parentHint,
       messages,
     ).then((lastRecordedUuid) => {
-      // For compaction/full array case (!isIncremental): use the async return
-      // value. After compaction, messagesToKeep in the array are skipped
-      // (already in transcript), so the sync loop would find a wrong UUID.
-      // Skip if a newer effect already ran (stale closure would overwrite the
-      // fresher sync update from the subsequent incremental render).
+      // 全量扫描路径（如包含 messagesToKeep 交错的压缩）以 recordTranscript 实际落盘返回的
+      // 末端 UUID 为准；若期间已有更新的渲染周期触发，则跳过过期回调。
       if (seq !== callSeqRef.current) {
         return
       }
@@ -104,25 +105,8 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
       }
     })
 
-    // Sync-walk safe for: incremental (pure new-tail slice), first-render
-    // (no messagesToKeep interleaving), and same-head shrink. Shrink is the
-    // subtle one: the picked uuid is either already on disk (tombstone/rewind
-    // — survivors were written before) or is being written by THIS effect's
-    // recordTranscript(fullArray) call (snip boundary / partial-compact tail
-    // — enqueueWrite ordering guarantees it lands before any later write that
-    // chains to it). Without this, the ref stays stale at a tombstoned uuid:
-    // the async .then() correction is raced out by the next effect's seq bump
-    // on large sessions where recordTranscript(fullArray) is slow. Only the
-    // compaction case (first uuid changed) remains unsafe — tail may be
-    // messagesToKeep whose last-actually-recorded uuid differs.
+    // 纯增量追加、首次渲染及同首部收缩/替换时，可同步从 cleanMessagesForLogging 推导父锚点。
     if (isIncremental || wasFirstRender || isSameHeadShrink) {
-      // Match EXACTLY what recordTranscript persists: cleanMessagesForLogging
-      // applies both the isLoggableMessage filter and (for external users) the
-      // REPL-strip + isVirtual-promote transform. Using the raw predicate here
-      // would pick a UUID that the transform drops, leaving the parent hint
-      // pointing at a message that never reached disk. Pass full messages as
-      // replId context — REPL tool_use and its tool_result land in separate
-      // render cycles, so the slice alone can't pair them.
       const last = cleanMessagesForLogging(slice, messages).findLast(isChainParticipant)
       if (last) {
         lastParentUuidRef.current = last.uuid as UUID
@@ -131,5 +115,6 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
 
     lastRecordedLengthRef.current = messages.length
     firstMessageUuidRef.current = currentFirstUuid
+    lastTailUuidRef.current = currentTailUuid
   }, [messages, ignore, teamContext?.teamName, teamContext?.selfAgentName])
 }

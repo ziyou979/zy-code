@@ -882,7 +882,7 @@ function renderNodeToOutput(
           // 但这不是底部追加：硬件滚动会把后续正文的旧像素上移到透明段落间距中，
           // 留下重复末行。只有高度变化来自尾部时才可走 shift 快路径。
           let hasMiddleHeightChange = false
-          if (heightDelta !== 0 && content.dirty) {
+          if (content.dirty) {
             const lastChildIndex = content.childNodes.length - 1
             for (let index = 0; index < lastChildIndex; index++) {
               const child = content.childNodes[index] as DOMElement
@@ -1011,6 +1011,18 @@ function renderNodeToOutput(
                 const childH = cy.getComputedHeight()
                 const childBottom = childTop + childH
                 const screenY = Math.floor(contentY + childTop)
+                if (isDirty) {
+                  const prev = nodeCache.get(childElem)
+                  cumHeightShift += childH - (prev ? prev.height : 0)
+                }
+                // 跳过被裁剪的子节点（在视口外），并清除刚滚出视口节点的陈旧 nodeCache，
+                // 防止逆序 hitTest 命中已滚出视口底部的后续兄弟节点而吞掉可见节点的悬停与点击。
+                if (childBottom <= scrollTop || childTop >= scrollTop + innerHeight) {
+                  if (nodeCache.has(childElem)) {
+                    dropSubtreeCache(childElem)
+                  }
+                  continue
+                }
                 // 宽度变化时，Yoga 会重新计算所有子节点的 top/height，即使
                 // React 没有标记 dirty。这里不能仅凭 cumHeightShift===0 和
                 // 有缓存就跳过，否则 clean 子节点的陈旧 cached.y 会让 blit
@@ -1023,19 +1035,15 @@ function renderNodeToOutput(
                     childCached.top === childTop &&
                     childCached.height === childH
                   ) {
+                    const dy = contentY + childTop - childCached.y
+                    if (dy !== 0) {
+                      shiftSubtreeCacheY(childElem, dy)
+                    }
                     continue
                   }
                   // 未缓存 = 上一帧被裁剪，现在重新进入。blit
                   // 从未绘制它 → 落入 yoga + 渲染。
                   // 高度不变（干净），因此 cumHeightShift 保持 0。
-                }
-                if (isDirty) {
-                  const prev = nodeCache.get(childElem)
-                  cumHeightShift += childH - (prev ? prev.height : 0)
-                }
-                // 跳过被裁剪的子节点（在视口外）
-                if (childBottom <= scrollTop || childTop >= scrollTop + innerHeight) {
-                  continue
                 }
                 // 跳过完全在边缘行内的子节点（已渲染）
                 if (childTop >= edgeTopLocal && childBottom <= edgeBottomLocal) {
@@ -1050,6 +1058,12 @@ function renderNodeToOutput(
                 if (!isDirty) {
                   const childCached = nodeCache.get(childElem)
                   if (childCached && Math.floor(childCached.y) - delta === screenY) {
+                    childCached.top = childTop
+                    childCached.height = childH
+                    const dy = contentY + childTop - childCached.y
+                    if (dy !== 0) {
+                      shiftSubtreeCacheY(childElem, dy)
+                    }
                     continue
                   }
                 }
@@ -1259,11 +1273,10 @@ export function canUseScrollShiftFastPath(
   heightDelta: number,
   hasMiddleHeightChange: boolean,
 ): boolean {
-  return (
-    delta === undefined ||
-    heightDelta === 0 ||
-    (delta > 0 && heightDelta === delta && !hasMiddleHeightChange)
-  )
+  if (hasMiddleHeightChange) {
+    return false
+  }
+  return delta === undefined || heightDelta === 0 || (delta > 0 && heightDelta === delta)
 }
 
 // 溢出污染：内容向右/下溢出，因此干净兄弟节点
@@ -1516,6 +1529,22 @@ function dropSubtreeCache(node: DOMElement): void {
   for (const child of node.childNodes) {
     if (child.nodeName !== '#text') {
       dropSubtreeCache(child as DOMElement)
+    }
+  }
+}
+
+/**
+ * ScrollBox 快速路径平移像素后，同步平移稳定子树在 nodeCache 中的屏幕 y 坐标，
+ * 确保鼠标 hitTest (onMouseEnter/onClick) 始终与屏幕真实行号一致。
+ */
+function shiftSubtreeCacheY(node: DOMElement, dy: number): void {
+  const cached = nodeCache.get(node)
+  if (cached) {
+    cached.y += dy
+  }
+  for (const child of node.childNodes) {
+    if (child.nodeName !== '#text') {
+      shiftSubtreeCacheY(child as DOMElement, dy)
     }
   }
 }

@@ -1,4 +1,4 @@
-import { getMainThreadAgentType } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getMainThreadAgentType } from '../../bootstrap/runtime/runtimeContext.js'
 import type { AggregatedHookResult } from '../hooks/types.js'
 import type { Message } from '../../types/message.js'
 import { createAttachmentMessage } from '../attachments/attachments.js'

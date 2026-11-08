@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import type { ComponentProps } from 'react'
-import App from '../../src/ink/components/App.js'
+import App, { handleMouseEvent } from '../../src/ink/components/App.js'
 import type { InputEvent } from '../../src/ink/events/inputEvent.js'
 import { INITIAL_STATE, parseMultipleKeypresses } from '../../src/ink/parseKeypress.js'
 import { createSelectionState } from '../../src/ink/selection.js'
@@ -171,6 +171,67 @@ describe('App 输入生命周期', () => {
       expect(app.incompleteEscapeTimer).not.toBeNull()
       await wait(550)
       expect(events.map((event) => event.input)).toEqual(['early'])
+    } finally {
+      app.componentWillUnmount()
+      input.destroy()
+    }
+  })
+
+  test('可点击元素消耗单击后重置多击计数，500ms 内快速二次点击仍触发 onClickAt 且不产生冗余选区重绘', () => {
+    let clicks = 0
+    let multiClicks = 0
+    let selectionChanges = 0
+    const { app, input } = makeApp({
+      onClickAt: () => {
+        clicks++
+        return true
+      },
+      onMultiClick: () => {
+        multiClicks++
+      },
+      onSelectionChange: () => {
+        selectionChanges++
+      },
+    })
+    try {
+      // 第一次单击（展开）
+      handleMouseEvent(app, {
+        kind: 'mouse',
+        button: 0,
+        col: 10,
+        row: 5,
+        action: 'press',
+        sequence: '\x1b[<0;10;5M',
+      })
+      handleMouseEvent(app, {
+        kind: 'mouse',
+        button: 0,
+        col: 10,
+        row: 5,
+        action: 'release',
+        sequence: '\x1b[<0;10;5m',
+      })
+      // 500ms 内立即第二次单击同一坐标（收起）
+      handleMouseEvent(app, {
+        kind: 'mouse',
+        button: 0,
+        col: 10,
+        row: 5,
+        action: 'press',
+        sequence: '\x1b[<0;10;5M',
+      })
+      handleMouseEvent(app, {
+        kind: 'mouse',
+        button: 0,
+        col: 10,
+        row: 5,
+        action: 'release',
+        sequence: '\x1b[<0;10;5m',
+      })
+
+      expect(clicks).toBe(2)
+      expect(multiClicks).toBe(0)
+      expect(selectionChanges).toBe(0)
     } finally {
       app.componentWillUnmount()
       input.destroy()

@@ -792,6 +792,7 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
       app.props.onMultiClick(col, row, count)
       return
     }
+    const hadSelectionBeforePress = hasSelection(sel)
     const selectionCol = app.props.correctSelectionCol?.(col, row) ?? col
     startSelection(sel, selectionCol, row)
     // SGR 位 0x08 = alt（xterm.js 在这里连接 altKey，而不是 metaKey——见
@@ -799,7 +800,9 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
     // 收到 alt 意味着 macOptionClickForcesSelection 已关闭（否则
     // xterm.js 会消耗事件用于原生选择）。
     sel.lastPressHadAlt = (m.button & 0x08) !== 0
-    app.props.onSelectionChange()
+    if (hadSelectionBeforePress) {
+      app.props.onSelectionChange()
+    }
     return
   }
 
@@ -830,6 +833,7 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
     return
   }
 
+  const hadSelectionBeforeRelease = hasSelection(sel)
   finishSelection(sel)
   // 注意：与旧的基于释放的检测不同，我们不会在拖拽后
   // 的释放时重置 clickCount。这符合 NSEvent.clickCount 语义：
@@ -854,16 +858,24 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
       !bounds ||
       (Math.abs(bounds.end.row - bounds.start.row) <= 1 &&
         Math.abs(bounds.end.col - bounds.start.col) <= 2)
-    const isClick = !hasSelection(sel) || trivialSelection
+    const isClick = !hadSelectionBeforeRelease || trivialSelection
     if (isClick) {
-      if (hasSelection(sel)) {
+      if (hadSelectionBeforeRelease) {
         // 清掉伪选区，再派发 DOM click（sticky / 按钮等）
         clearSelection(sel)
       }
       // 单击：立即分发 DOM 点击（光标重新定位
       // 等对延迟敏感）。如果没有 DOM 处理程序消耗它，
       // 延迟超链接检查，使第二次点击可以取消它。
-      if (!app.props.onClickAt(col, row)) {
+      if (app.props.onClickAt(col, row)) {
+        // DOM 点击处理器已消耗本次点击（如折叠/展开切换、按钮点击）：
+        // 重置多击计数链与上一次悬停坐标，避免 500ms 内快速二次点击同一交互元素时
+        // 被误判为双击选词吞掉点击，且允许节点展开/收起后原地刷新悬停状态。
+        app.clickCount = 0
+        app.lastClickTime = 0
+        app.lastHoverCol = -1
+        app.lastHoverRow = -1
+      } else {
         // 在屏幕缓冲区仍反映用户点击内容时同步解析超链接 URL——
         // 仅延迟浏览器打开，使双击可以取消它。
         const url = app.props.getHyperlinkAt(col, row)
@@ -897,5 +909,7 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
       }
     }
   }
-  app.props.onSelectionChange()
+  if (hadSelectionBeforeRelease) {
+    app.props.onSelectionChange()
+  }
 }

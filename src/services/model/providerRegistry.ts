@@ -388,6 +388,13 @@ export const PROVIDER_REGISTRY: readonly ProviderEntry[] = [
     endpointType: ['custom'],
     capabilities: FULL_CAPABILITIES,
     apiKeyLabel: 'API Key',
+    openaiAttr: {
+      thinking: {
+        // 自定义 OpenAI 连接遵循标准推理参数；AMD 等端点会拒绝 thinking 对象。
+        enable: (effort) => ({ reasoning_effort: !effort || effort === 'on' ? 'medium' : effort }),
+        disable: { reasoning_effort: 'none' },
+      },
+    },
   },
   {
     id: 'groq',

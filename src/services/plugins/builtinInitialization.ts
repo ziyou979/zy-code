@@ -16,7 +16,6 @@
 
 import { registerBuiltinPlugin } from './builtinRegistry.js'
 import { codeReviewSkill } from '../../skills/bundled/codeReview.js'
-import { reviewSkill } from '../../skills/bundled/review.js'
 import { securityReviewSkill } from '../../skills/bundled/securityReview.js'
 import { simplifySkill } from '../../skills/bundled/simplify.js'
 
@@ -29,15 +28,10 @@ import { simplifySkill } from '../../skills/bundled/simplify.js'
  */
 export function initBuiltinPlugins(): void {
   registerBuiltinPlugin({
-    name: 'review',
-    description: 'Review a GitHub pull request',
-    skills: [reviewSkill],
-  })
-  registerBuiltinPlugin({
     name: 'code-review',
-    // 插件级描述对齐 CC code-review 插件的 marketplace meta
-    description:
-      'Automated code review for pull requests using multiple specialized agents with confidence-based scoring',
+    get description() {
+      return codeReviewSkill.description
+    },
     skills: [codeReviewSkill],
   })
   registerBuiltinPlugin({

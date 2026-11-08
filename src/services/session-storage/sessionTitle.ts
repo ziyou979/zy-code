@@ -12,15 +12,15 @@
  */
 
 import { z } from 'zod/v4'
-import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext.js'
+import { getIsNonInteractiveSession } from '../../bootstrap/runtime/runtimeContext.js'
 import { getLanguageSection } from '../../constants/prompts.js'
 import { logEvent } from '../analytics/index.js'
 import { queryCompactModel } from '../api/compactQueries.js'
 import type { Message } from '../../types/message.js'
-import { logForDebugging } from '../../services/infra/debug.js'
+import { logForDebugging } from '../infra/debug.js'
 import { safeParseJSON } from '../../utils/json.js'
 import { lazySchema } from '../../utils/lazySchema.js'
-import { extractTextContent } from '../messages/./predicates.js'
+import { extractTextContent } from '../messages/predicates.js'
 import { getInitialSettings } from '../settings/settings.js'
 import { asSystemPrompt } from '../api/systemPromptType.js'
 
