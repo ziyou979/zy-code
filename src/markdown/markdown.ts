@@ -376,9 +376,3 @@ function getListNumber(listDepth: number, orderedListNumber: number): string {
       return orderedListNumber.toString()
   }
 }
-
-/**
- * 重导出 padVisual 以保持向后兼容（markdown 表格渲染使用）。
- * 实际实现在 utils/truncate.ts。
- */
-export { padVisual } from '../utils/truncate.js'
