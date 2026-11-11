@@ -31,7 +31,6 @@ import { OFFICIAL_MARKETPLACE_NAME } from '../../services/plugins/officialMarket
 import { getCurrentSessionAgentColor, isCustomTitleEnabled } from '../../services/sessionStorage.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { getSessionsSinceLastShown } from '../../services/tips/tipHistory.js'
-// @ts-expect-error
 import type { Tip, TipContext } from '../../services/tips/types.js'
 
 let _isOfficialMarketplaceInstalledCache: boolean | undefined

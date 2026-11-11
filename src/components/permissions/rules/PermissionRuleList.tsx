@@ -7,7 +7,7 @@ import {
   persistPermissionUpdate,
 } from 'src/services/permissions/permissionUpdate.js'
 import type { CommandResultDisplay } from '../../../commands/index.js'
-import { Select } from '../../CustomSelect/select.js'
+import { type OptionWithDescription, Select } from '../../CustomSelect/select.js'
 import { WARNING } from '../../../constants/figures.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useSearchInput } from '../../../hooks/useSearchInput.js'
@@ -27,8 +27,6 @@ import { jsonStringify } from '../../../services/infra/slowOperations.js'
 import { Pane } from '../../design-system/Pane.js'
 import { Tab, Tabs, useTabHeaderFocus, useTabsWidth } from '../../design-system/Tabs.js'
 import { SearchBox } from '../../SearchBox.js'
-// @ts-expect-error
-import type { Option } from '../../ui/option.js'
 import { AddPermissionRules } from './AddPermissionRules.js'
 import { AddWorkspaceDirectory } from './AddWorkspaceDirectory.js'
 import { PermissionRuleDescription } from './PermissionRuleDescription.js'
@@ -157,6 +155,8 @@ function RuleDetails({ rule, onDelete, onCancel }: RuleSourceTextProps) {
     </>
   )
 }
+type Option = OptionWithDescription<string>
+
 type RulesTabContentProps = {
   options: Option[]
   searchQuery: string

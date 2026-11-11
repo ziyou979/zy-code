@@ -93,7 +93,6 @@ import { PluginOptionsDialog } from './PluginOptionsDialog.js'
 import { PluginOptionsFlow } from './PluginOptionsFlow.js'
 import type { ViewState as ParentViewState } from './types.js'
 import { UnifiedInstalledCell } from './UnifiedInstalledCell.js'
-// @ts-expect-error
 import type { UnifiedInstalledItem } from './unifiedTypes.js'
 import { usePagination } from './usePagination.js'
 
