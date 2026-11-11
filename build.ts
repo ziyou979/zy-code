@@ -100,7 +100,6 @@ const result = await Bun.build({
     '@ant/computer-use-swift',
     'image-processor-napi',
     // Dynamic-import-only SDK extensions
-    '@azure/identity',
     '@aws-sdk/client-sts',
     '@aws-sdk/credential-provider-node',
     '@aws-sdk/credential-providers',
