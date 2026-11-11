@@ -13,6 +13,8 @@
  *   I. 命名规则 — 目录 kebab-case、模块 camelCase、组件 PascalCase
  *   J. Tool 结构 — 主文件/UI/prompt 完整性
  *   K. Support 文件 — 存量 *Support.ts/.tsx 纳入 baseline，新增报违规
+ *   L. 导入环 — 基于 import-graph（TS AST）的运行时静态 import 环；存量冻结，新增入环文件报违规
+ *   M. 未解析导入 — 指向仓库内却解析不到文件的说明符
  *
  * 用法：
  *   bun scripts/lint-architecture.ts              # 与基线比较（默认）
@@ -23,6 +25,7 @@
 import { readFileSync, readdirSync, existsSync, writeFileSync } from 'node:fs'
 import { join, resolve, relative } from 'node:path'
 import * as ts from 'typescript'
+import { buildImportGraph, stronglyConnectedComponents } from './import-graph.js'
 
 // --------------- 辅助函数 ---------------
 
@@ -1125,6 +1128,39 @@ function checkSupportFiles() {
   }
 }
 
+// --------------- L/M. 导入环与未解析导入 ---------------
+
+/**
+ * 用 import-graph 的真实 AST 导入图（含 export-from、import()、require()）做检查：
+ * - L：只看运行时静态边（type-only 与 import() 不会造成模块初始化环），
+ *   环内每个文件各记一条，便于“新文件入环”精确报出、环缩小时自然消除。
+ * - M：仓库内相对/别名说明符解析不到文件。
+ */
+function checkImportGraph() {
+  const graph = buildImportGraph(ROOT, ['src'])
+  const sccs = stronglyConnectedComponents(graph, ['static'])
+  for (const comp of sccs) {
+    for (const file of comp) {
+      addV(
+        join(ROOT, file),
+        1,
+        `处于运行时 import 环中（环大小 ${comp.length}）`,
+        'importCycle',
+        'static-cycle',
+      )
+    }
+  }
+  for (const u of graph.unresolved) {
+    addV(
+      join(ROOT, u.from),
+      u.line,
+      `无法解析的导入 ${u.specifier}`,
+      'unresolvedImport',
+      u.specifier,
+    )
+  }
+}
+
 // --------------- 基线管理 ---------------
 
 interface BaselineData {
@@ -1330,6 +1366,7 @@ function main() {
   checkNamingConventions()
   checkToolProfiles()
   checkSupportFiles()
+  checkImportGraph()
   const asAnyStats = checkAsAny()
 
   if (lengthReviews.length > 0) {
