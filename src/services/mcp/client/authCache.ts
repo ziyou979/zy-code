@@ -1,11 +1,6 @@
 import { feature } from 'bun:bundle'
 import { type FetchLike } from '@modelcontextprotocol/sdk/shared/transport.js'
 import { type Tool } from '../../../tools/tool.js'
-import {
-  checkAndRefreshOAuthTokenIfNeeded,
-  getZyAIOAuthTokens,
-  handleOAuth401Error,
-} from '../../auth/auth.js'
 import { createDebugLog } from '../../../services/infra/debug.js'
 import { logMCPDebug } from '../../../services/infra/log.js'
 import {
@@ -133,65 +128,6 @@ export function handleRemoteAuthFailure(
   logMCPDebug(name, `Authentication required for ${label[transportType]} server`)
   setMcpAuthCacheEntry(name)
   return { name, type: 'needs-auth', config: serverRef }
-}
-
-/**
- * Fetch wrapper for zy.ai proxy connections. Attaches the OAuth bearer
- * token and retries once on 401 via handleOAuth401Error (force-refresh).
- *
- * The Anthropic API path has this retry (withRetry.ts, grove.ts) to handle
- * memoize-cache staleness and clock drift. Without the same here, a single
- * stale token mass-401s every zy.ai connector and sticks them all in the
- * 15-min needs-auth cache.
- */
-export function createZyAiProxyFetch(innerFetch: FetchLike): FetchLike {
-  return async (url, init) => {
-    const doRequest = async () => {
-      await checkAndRefreshOAuthTokenIfNeeded()
-      const currentTokens = getZyAIOAuthTokens()
-      if (!currentTokens) {
-        throw new Error('No zy.ai OAuth token available')
-      }
-      // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-      const headers = new Headers(init?.headers)
-      headers.set('Authorization', `Bearer ${currentTokens.accessToken}`)
-      const response = await innerFetch(url, { ...init, headers })
-      // 返回发送时的确切 token。在并发 401 场景下，
-      // 请求后再次读取 getZyAIOAuthTokens() 是错误的：另一个
-      // 连接器的 handleOAuth401Error 清除了 memoize 缓存，导致我们读到
-      // 新的 keychain token，传给 handleOAuth401Error 后，
-      // 发现与 keychain 相同 → 返回 false → 跳过重试。与
-      // bridgeApi.ts 的 withOAuthRetry 模式相同（token 作为函数参数传递）。
-      return { response, sentToken: currentTokens.accessToken }
-    }
-
-    const { response, sentToken } = await doRequest()
-    if (response.status !== 401) {
-      return response
-    }
-    // handleOAuth401Error 仅在 token 实际改变时返回 true
-    //（keychain 有更新的，或强制刷新成功）。以此作为重试门控 —
-    // 否则每个需要认证的下游连接器都会双倍往返时间
-    //（常见情况：30+ 服务器显示"MCP 服务器需要认证但未配置 OAuth token"）。
-    const tokenChanged = await handleOAuth401Error(sentToken).catch(() => false)
-    logEvent('zy_mcp_Zyai_proxy_401', {
-      tokenChanged: tokenChanged as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    if (!tokenChanged) {
-      // ELOCKED 竞争：另一个连接器可能已赢得锁文件并完成刷新 — 检查 token 是否在我们底下已改变
-      const now = getZyAIOAuthTokens()?.accessToken
-      if (!now || now === sentToken) {
-        return response
-      }
-    }
-    try {
-      return (await doRequest()).response
-    } catch {
-      // 重试本身失败（网络错误）。返回原始 401，
-      // 以便外部处理器进行分类。
-      return response
-    }
-  }
 }
 
 // 传递给 mcpWebSocketTransport 的 WebSocket 实例的最小接口

@@ -1,5 +1,4 @@
-import { describe, expect, it, vi } from 'bun:test'
-import { retryWithBackoffLoop } from '../../src/services/http/retryLoop.js'
+import { describe, expect, it } from 'bun:test'
 import {
   formatTimestamp,
   formatLocalISODate,
@@ -7,46 +6,6 @@ import {
   formatTimestamp12h,
 } from '../../src/utils/formatTimestamp.js'
 import { padVisual, truncateToWidth } from '../../src/utils/truncate.js'
-
-describe('retryWithBackoffLoop - 重试骨架', () => {
-  it('首次成功立即返回，不重试', async () => {
-    const fetchOnce = vi.fn().mockResolvedValue({ success: true })
-    const onRetry = vi.fn()
-    const result = await retryWithBackoffLoop({ maxRetries: 3, fetchOnce, onRetry })
-    expect(result).toEqual({ success: true })
-    expect(fetchOnce).toHaveBeenCalledTimes(1)
-    expect(onRetry).not.toHaveBeenCalled()
-  })
-
-  it('skipRetry 立即返回，不重试', async () => {
-    const fetchOnce = vi.fn().mockResolvedValue({ success: false, skipRetry: true })
-    const result = await retryWithBackoffLoop({ maxRetries: 3, fetchOnce })
-    expect(result).toEqual({ success: false, skipRetry: true })
-    expect(fetchOnce).toHaveBeenCalledTimes(1)
-  })
-
-  it('耗尽重试次数后返回最后一个结果（fail-open）', async () => {
-    const fetchOnce = vi.fn().mockResolvedValue({ success: false })
-    const result = await retryWithBackoffLoop({ maxRetries: 2, fetchOnce })
-    expect(result).toEqual({ success: false })
-    // 总尝试 = maxRetries + 1
-    expect(fetchOnce).toHaveBeenCalledTimes(3)
-  })
-
-  it('每次重试前调用 onRetry', async () => {
-    const fetchOnce = vi
-      .fn()
-      .mockResolvedValueOnce({ success: false })
-      .mockResolvedValueOnce({ success: false })
-      .mockResolvedValueOnce({ success: true })
-    const onRetry = vi.fn()
-    const result = await retryWithBackoffLoop({ maxRetries: 3, fetchOnce, onRetry })
-    expect(result).toEqual({ success: true })
-    expect(onRetry).toHaveBeenCalledTimes(2)
-    expect(onRetry).toHaveBeenCalledWith(1, expect.any(Number))
-    expect(onRetry).toHaveBeenCalledWith(2, expect.any(Number))
-  })
-})
 
 describe('formatTimestamp - 时间戳格式化', () => {
   // 固定本地时间：2026-09-01 14:05:09（用本地 Date 构造保证时区无关）

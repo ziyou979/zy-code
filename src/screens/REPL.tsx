@@ -110,7 +110,6 @@ import { useReplSessionRestore } from './repl/useReplSessionRestore.js'
 import { createReplStore, type ToolJSXState } from '../state/replStore.js'
 import { ReplStoreProvider } from '../state/ReplState.js'
 import { useReplTranscript } from './repl/useReplTranscript.js'
-import { useReplVoice } from './repl/useReplVoice.js'
 import { getFocusedInputDialog } from './repl/getFocusedInputDialog.js'
 import {
   rewindConversationToImpl,
@@ -1069,7 +1068,6 @@ export function REPL({
     [incomingPromptCtx],
   )
 
-  const voice = useReplVoice({ setInputValueRaw, inputValueRef, insertTextRef })
   useInboxPoller({
     enabled: isAgentSwarmsEnabled(),
     isLoading,
@@ -1219,7 +1217,6 @@ export function REPL({
         globalKeybindingProps={globalKeybindingProps}
         cancelRequestProps={cancelRequestProps}
         focusedInputDialog={focusedInputDialog}
-        voice={voice}
         onSubmit={onSubmit}
         handleOpenRateLimitOptions={handleOpenRateLimitOptions}
       />
@@ -1286,7 +1283,6 @@ export function REPL({
       handleQueuedCommandOnCancel={handleQueuedCommandOnCancel}
       abortController={abortController}
       isRemoteSession={false}
-      voice={voice}
       handleBackgroundSession={handleBackgroundSession}
       mrRender={mrRender}
       regenerateConversationId={regenerateConversationId}

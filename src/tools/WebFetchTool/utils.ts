@@ -1,6 +1,5 @@
 import axios, { type AxiosResponse } from 'axios'
 import { LRUCache } from 'lru-cache'
-import { getOauthConfig } from '../../constants/oauth.js'
 import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -67,18 +66,8 @@ const URL_CACHE = new LRUCache<string, CacheEntry>({
   ttlAutopurge: true,
 })
 
-// 域名预检独立缓存。URL_CACHE 以 URL 为键，因此同一域名的两个路径
-// 会触发两次相同的预检 HTTP 往返请求到 api.anthropic.com。
-// 此缓存以主机名为键来避免该问题。仅缓存 'allowed' 状态——
-// 被拦截/失败的下次尝试会重新检查。
-const DOMAIN_CHECK_CACHE = new LRUCache<string, true>({
-  max: 128,
-  ttl: 5 * 60 * 1000, // 5 分钟——短于 URL_CACHE 的 TTL
-})
-
 export function clearWebFetchCache(): void {
   URL_CACHE.clear()
-  DOMAIN_CHECK_CACHE.clear()
 }
 
 // 懒加载单例 —— 将 turndown → @mixmark-io/domino 的导入（约 1.4MB 堆内存）
@@ -108,9 +97,6 @@ const MAX_HTTP_CONTENT_LENGTH = 10 * 1024 * 1024
 
 // 主 HTTP 请求超时（60 秒），防止在慢速/无响应服务器上无限挂起。
 const FETCH_TIMEOUT_MS = 60_000
-
-// 域名黑名单预检超时（10 秒）。
-const DOMAIN_CHECK_TIMEOUT_MS = 10_000
 
 // 限制同主机重定向跳数。恶意服务器可能返回重定向循环
 // (/a → /b → /a …)，且每次跳转都会重置 FETCH_TIMEOUT_MS，
@@ -166,33 +152,9 @@ type DomainCheckResult =
   | { status: 'check_failed'; error: Error }
 
 export async function checkDomainBlocklist(domain: string): Promise<DomainCheckResult> {
-  // TODO 暂时跳过检测
+  // 不再向远端做域名黑名单查询（原实现依赖 Anthropic 后端 domain_info 接口）
+  void domain
   return { status: 'allowed' }
-  // if (DOMAIN_CHECK_CACHE.has(domain)) {
-  //   return { status: 'allowed' }
-  // }
-  // try {
-  //   // 使用 ZY Code OAuth 配置中的基础 API URL 进行域名安全检查
-  //   const response = await axios.get(
-  //     `${getOauthConfig().BASE_API_URL}/api/web/domain_info?domain=${encodeURIComponent(domain)}`,
-  //     { timeout: DOMAIN_CHECK_TIMEOUT_MS },
-  //   )
-  //   if (response.status === 200) {
-  //     if (response.data.can_fetch === true) {
-  //       DOMAIN_CHECK_CACHE.set(domain, true)
-  //       return { status: 'allowed' }
-  //     }
-  //     return { status: 'blocked' }
-  //   }
-  //   // 非 200 状态但未抛出异常
-  //   return {
-  //     status: 'check_failed',
-  //     error: new Error(`域名检查返回状态 ${response.status}`),
-  //   }
-  // } catch (e) {
-  //   logError(e)
-  //   return { status: 'check_failed', error: e as Error }
-  // }
 }
 
 /**

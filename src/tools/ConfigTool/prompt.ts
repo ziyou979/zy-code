@@ -1,6 +1,4 @@
-import { feature } from 'bun:bundle'
 import { getModelOptions } from '../../services/model/modelOptions.js'
-import { isVoiceGrowthBookEnabled } from '../../voice/voiceModeEnabled.js'
 import { getOptionsForSetting, SUPPORTED_SETTINGS } from './supportedSettings.js'
 
 export const DESCRIPTION = 'Get or set ZY Code configuration settings.'
@@ -15,11 +13,6 @@ export function generatePrompt(): string {
   for (const [key, config] of Object.entries(SUPPORTED_SETTINGS)) {
     // Skip model - it gets its own section with dynamic options
     if (key === 'model') {
-      continue
-    }
-    // Voice settings are registered at build-time but gated by GrowthBook
-    // at runtime. Hide from model prompt when the kill-switch is on.
-    if (feature('VOICE_MODE') && key === 'voiceEnabled' && !isVoiceGrowthBookEnabled()) {
       continue
     }
 

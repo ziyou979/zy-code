@@ -23,7 +23,6 @@ import {
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 startKeychainPrefetch()
 
-import { feature } from 'bun:bundle'
 import { Command as CommanderCommand } from '@commander-js/extra-typings'
 import {
   setClientType,
@@ -56,8 +55,6 @@ import { applyRuntimeOptions } from './cli/options/runtimeOptions.js'
 import { applySessionOptions } from './cli/options/sessionOptions.js'
 import { createSortedHelpConfig } from './cli/options/sortedHelp.js'
 import { init } from './entrypoints/init.js'
-import { loadPolicyLimits } from './services/policy-limits/index.js'
-import { loadRemoteManagedSettings } from './services/remote-managed-settings/index.js'
 import { stopCapturingEarlyInput } from './ink/earlyInput.js'
 import { isEnvTruthy, isInternalBuild } from './services/infra/envUtils.js'
 import { clearPluginCache } from './services/plugins/pluginLoader.js'
@@ -243,22 +240,7 @@ async function run(): Promise<CommanderCommand<any, any, any>> {
     runMigrations()
     profileCheckpoint('preAction_after_migrations')
 
-    // 为企业客户加载远程托管设置（非阻塞）
-    // 开放失败 —— 如果获取失败，继续而不使用远程设置
-    // 设置到达时通过热重载应用
-    // 必须在 init() 之后发生以确保允许读取配置
-    void loadRemoteManagedSettings()
-    void loadPolicyLimits()
     profileCheckpoint('preAction_after_remote_settings')
-
-    // 同步加载设置（非阻塞，开放失败）
-    // CLI：将本地设置上传到远程（CCR 下载由 print.ts 处理）
-    if (feature('UPLOAD_USER_SETTINGS')) {
-      void import('./services/settings-sync/index.js').then((m) =>
-        m.uploadUserSettingsInBackground(),
-      )
-    }
-    profileCheckpoint('preAction_after_settings_sync')
   })
   // 根命令选项按 7 组下沉到 cli/options/*。各组返回的链结果与传入的
   // program 是同一对象（commander 链式 mutate），所以忽略返回值即可。

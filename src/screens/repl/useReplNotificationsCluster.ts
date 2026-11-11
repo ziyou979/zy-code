@@ -54,7 +54,7 @@ const useAntOrgWarningNotification: typeof import('../../hooks/notifs/useAntOrgW
 const useFrustrationDetectionLazy: typeof import('../../components/FeedbackSurvey/useFrustrationDetection.js').useFrustrationDetection =
   isInternalBuild()
     ? require('../../components/FeedbackSurvey/useFrustrationDetection.js').useFrustrationDetection
-    : () => ({ state: 'closed' as const, handleTranscriptSelect: () => {} })
+    : () => ({ state: 'closed' as const })
 
 const useAwaySummaryLazy: typeof import('../../hooks/useAwaySummary.js').useAwaySummary | null =
   feature('AWAY_SUMMARY') ? require('../../hooks/useAwaySummary.js').useAwaySummary : null
@@ -63,8 +63,7 @@ const useAwaySummaryLazy: typeof import('../../hooks/useAwaySummary.js').useAway
 // ── 公共类型 ──────────────────────────────────────────────
 
 export type ReplFrustrationDetection = {
-  state: 'closed' | 'open' | 'thanks' | 'transcript_prompt' | 'submitting' | 'submitted'
-  handleTranscriptSelect: () => void
+  state: 'closed' | 'open' | 'thanks'
 }
 
 export type ReplNotificationsCluster = {

@@ -6,12 +6,11 @@ import {
 } from 'src/services/analytics/index.js'
 import type { CommandResultDisplay } from '../../commands/index.js'
 import { CROSS, RADIO_OFF, TICK, TRIANGLE_UP_OUTLINE } from '../../constants/figures.js'
-import { getOauthConfig } from '../../constants/oauth.js'
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { setClipboard } from '../../ink/termio/osc.js'
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow menu navigation
-import { Box, color, Link, Text, useInput, useTheme } from '../../ink/index.js'
+import { Box, color, Text, useInput, useTheme } from '../../ink/index.js'
 import { useKeybinding } from '../../keybindings/useKeybinding.js'
 import {
   AuthenticationCancelledError,
@@ -35,8 +34,6 @@ import {
   filterMcpPromptsByServer,
 } from '../../services/mcp/utils.js'
 import { useAppState, useSetAppState } from '../../state/AppState.js'
-import { getOauthAccountInfo } from '../../services/auth/auth.js'
-import { openBrowser } from '../../services/browser/browser.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logMCPDebug } from '../../services/infra/log.js'
 import { capitalize } from '../../utils/stringUtils.js'
@@ -50,8 +47,6 @@ import { handleReconnectError, handleReconnectResult } from './utils/ReconnectHe
 import {
   RemoteOAuthAuthenticatingView,
   RemoteReconnectingView,
-  RemoteZyAiAuthenticatingView,
-  RemoteZyAiClearAuthView,
 } from './MCPRemoteServerFlowViews.js'
 
 type Props = {
@@ -100,11 +95,6 @@ export function MCPRemoteServerMenu({
   const [authorizationUrl, setAuthorizationUrl] = React.useState<string | null>(null)
   const [isReconnecting, setIsReconnecting] = useState(false)
   const authAbortControllerRef = useRef<AbortController | null>(null)
-  const [isZyAIAuthenticating, setIsZyAIAuthenticating] = useState(false)
-  const [ZyAIAuthUrl, setZyAIAuthUrl] = useState<string | null>(null)
-  const [isZyAIClearingAuth, setIsZyAIClearingAuth] = useState(false)
-  const [ZyAIClearAuthUrl, setZyAIClearAuthUrl] = useState<string | null>(null)
-  const [ZyAIClearAuthBrowserOpened, setZyAIClearAuthBrowserOpened] = useState(false)
   const [urlCopied, setUrlCopied] = useState(false)
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const unmountedRef = useRef(false)
@@ -140,70 +130,6 @@ export function MCPRemoteServerMenu({
     // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     (srv.client.type === 'connected' && serverToolsCount > 0)
   const reconnectMcpServer = useMcpReconnect()
-  const handleZyAIAuthComplete = React.useCallback(async () => {
-    setIsZyAIAuthenticating(false)
-    setZyAIAuthUrl(null)
-    setIsReconnecting(true)
-    try {
-      const result = await reconnectMcpServer(server.name)
-      const success = result.client.type === 'connected'
-      logEvent('zy_Zyai_mcp_auth_completed', {
-        success,
-      })
-      if (success) {
-        onComplete?.(tSync('mcp.authSuccessfulConnected', { serverName: server.name }))
-      } else if (result.client.type === 'needs-auth') {
-        onComplete?.(tSync('mcp.authSuccessfulNeedsAuth'))
-      } else {
-        onComplete?.(tSync('mcp.authSuccessfulReconnectFailed'))
-      }
-    } catch (err) {
-      logEvent('zy_Zyai_mcp_auth_completed', {
-        success: false,
-      })
-      onComplete?.(handleReconnectError(err, server.name))
-    } finally {
-      setIsReconnecting(false)
-    }
-  }, [reconnectMcpServer, server.name, onComplete])
-  const handleZyAIClearAuthComplete = React.useCallback(async () => {
-    await clearServerCache(server.name, {
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      ...srv.config,
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      scope: srv.scope,
-    })
-    setAppState((prev) => {
-      const newClients = prev.mcp.clients.map((c) =>
-        c.name === server.name
-          ? {
-              ...c,
-              type: 'needs-auth' as const,
-            }
-          : c,
-      )
-      const newTools = excludeToolsByServer(prev.mcp.tools, server.name)
-      const newCommands = excludeCommandsByServer(prev.mcp.commands, server.name)
-      const newResources = excludeResourcesByServer(prev.mcp.resources, server.name)
-      return {
-        ...prev,
-        mcp: {
-          ...prev.mcp,
-          clients: newClients,
-          tools: newTools,
-          commands: newCommands,
-          resources: newResources,
-        },
-      }
-    })
-    logEvent('zy_Zyai_mcp_clear_auth_completed', {})
-    onComplete?.(tSync('mcp.disconnectedFrom', { serverName: server.name }))
-    setIsZyAIClearingAuth(false)
-    setZyAIClearAuthUrl(null)
-    setZyAIClearAuthBrowserOpened(false)
-    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-  }, [server.name, srv.config, srv.scope, setAppState, onComplete])
-
   // Escape to cancel authentication flow
   useKeybinding(
     'confirm:no',
@@ -219,51 +145,10 @@ export function MCPRemoteServerMenu({
     },
   )
 
-  // Escape to cancel Zy AI authentication
-  useKeybinding(
-    'confirm:no',
-    () => {
-      setIsZyAIAuthenticating(false)
-      setZyAIAuthUrl(null)
-    },
-    {
-      context: 'Confirmation',
-      isActive: isZyAIAuthenticating,
-    },
-  )
-
-  // Escape to cancel Zy AI clear auth
-  useKeybinding(
-    'confirm:no',
-    () => {
-      setIsZyAIClearingAuth(false)
-      setZyAIClearAuthUrl(null)
-      setZyAIClearAuthBrowserOpened(false)
-    },
-    {
-      context: 'Confirmation',
-      isActive: isZyAIClearingAuth,
-    },
-  )
-
   // Return key handling for authentication flows and 'c' to copy URL
   useInput((input, key) => {
-    if (key.return && isZyAIAuthenticating) {
-      void handleZyAIAuthComplete()
-    }
-    if (key.return && isZyAIClearingAuth) {
-      if (ZyAIClearAuthBrowserOpened) {
-        void handleZyAIClearAuthComplete()
-      } else {
-        // First Enter: open the browser
-        const connectorsUrl = `${getOauthConfig().ZY_CODE_ORIGIN}/settings/connectors`
-        setZyAIClearAuthUrl(connectorsUrl)
-        setZyAIClearAuthBrowserOpened(true)
-        void openBrowser(connectorsUrl)
-      }
-    }
     if (input === 'c' && !urlCopied) {
-      const urlToCopy = authorizationUrl || ZyAIAuthUrl || ZyAIClearAuthUrl
+      const urlToCopy = authorizationUrl
       if (urlToCopy) {
         void setClipboard(urlToCopy).then((raw) => {
           if (unmountedRef.current) {
@@ -286,37 +171,6 @@ export function MCPRemoteServerMenu({
   // Count MCP prompts for this server (skills are shown in /skills, not here)
   const serverCommandsCount = filterMcpPromptsByServer(mcp.commands, server.name).length
   const toggleMcpServer = useMcpToggleEnabled()
-  const handleZyAIAuth = React.useCallback(async () => {
-    const zyAiBaseUrl = getOauthConfig().ZY_CODE_ORIGIN
-    const accountInfo = getOauthAccountInfo()
-    const orgUuid = accountInfo?.organizationUuid
-    let authUrl: string
-    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-    if (orgUuid && srv.config.type === 'zyai-proxy' && srv.config.id) {
-      // Use the direct auth URL with org and server IDs
-      // Replace 'mcprs' prefix with 'mcpsrv' if present
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      const serverId = srv.config.id.startsWith('mcprs')
-        ? // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          `mcpsrv${srv.config.id.slice(5)}`
-        : // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-          srv.config.id
-      const productSurface = encodeURIComponent(process.env.ZY_CODE_ENTRYPOINT || 'cli')
-      authUrl = `${zyAiBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`
-    } else {
-      // Fall back to settings/connectors if we don't have the required IDs
-      authUrl = `${zyAiBaseUrl}/settings/connectors`
-    }
-    setZyAIAuthUrl(authUrl)
-    setIsZyAIAuthenticating(true)
-    logEvent('zy_Zyai_mcp_auth_started', {})
-    await openBrowser(authUrl)
-    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-  }, [srv.config])
-  const handleZyAIClearAuth = React.useCallback(() => {
-    setIsZyAIClearingAuth(true)
-    logEvent('zy_Zyai_mcp_clear_auth_started', {})
-  }, [])
   const handleToggleEnabled = React.useCallback(async () => {
     // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     const wasEnabled = srv.client.type !== 'disabled'
@@ -497,25 +351,6 @@ export function MCPRemoteServerMenu({
       />
     )
   }
-  if (isZyAIAuthenticating) {
-    return (
-      <RemoteZyAiAuthenticatingView
-        serverName={server.name}
-        authUrl={ZyAIAuthUrl}
-        urlCopied={urlCopied}
-      />
-    )
-  }
-  if (isZyAIClearingAuth) {
-    return (
-      <RemoteZyAiClearAuthView
-        serverName={server.name}
-        clearAuthUrl={ZyAIClearAuthUrl}
-        browserOpened={ZyAIClearAuthBrowserOpened}
-        urlCopied={urlCopied}
-      />
-    )
-  }
   if (isReconnecting) {
     return <RemoteReconnectingView serverName={server.name} />
   }
@@ -537,20 +372,9 @@ export function MCPRemoteServerMenu({
     })
   }
   // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
+  // zy.ai connector（zyai-proxy）的认证依赖 Anthropic 后端，已移除，不提供认证操作。
   if (srv.config.type === 'zyai-proxy') {
-    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-    if (srv.client.type === 'connected') {
-      menuOptions.push({
-        label: tSync('mcp.clearAuthentication'),
-        value: 'zyai-clear-auth',
-      })
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-    } else if (srv.client.type !== 'disabled') {
-      menuOptions.push({
-        label: tSync('mcp.authenticate'),
-        value: 'zyai-auth',
-      })
-    }
+    // 无操作
   } else {
     if (isEffectivelyAuthenticated) {
       menuOptions.push({
@@ -689,12 +513,6 @@ export function MCPRemoteServerMenu({
                     break
                   case 'clear-auth':
                     await handleClearAuth()
-                    break
-                  case 'zyai-auth':
-                    await handleZyAIAuth()
-                    break
-                  case 'zyai-clear-auth':
-                    handleZyAIClearAuth()
                     break
                   case 'reconnectMcpServer':
                     setIsReconnecting(true)

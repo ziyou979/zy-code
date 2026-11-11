@@ -568,18 +568,6 @@ const externalTips: Tip[] = [
       )
     },
   },
-  {
-    id: 'feedback-command',
-    content: async () => tSync('tip.feedbackCommand'),
-    cooldownSessions: 15,
-    async isRelevant() {
-      if (isInternalBuild()) {
-        return false
-      }
-      const config = getGlobalConfig()
-      return config.numStartups > 5
-    },
-  },
 ]
 const internalOnlyTips: Tip[] = isInternalBuild()
   ? [

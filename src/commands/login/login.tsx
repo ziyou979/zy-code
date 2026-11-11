@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { resetCostState } from 'src/bootstrap/runtime/runtimeContext.js'
-import { clearTrustedDeviceToken, enrollTrustedDevice } from '../../bridge/trustedDevice.js'
 import type { LocalJSXCommandContext } from '../../commands/index.js'
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js'
 import { ConsoleOAuthFlow } from '../../components/ConsoleOAuthFlow.js'
@@ -9,8 +8,6 @@ import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink/index.js'
 import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js'
-import { refreshPolicyLimits } from '../../services/policy-limits/index.js'
-import { refreshRemoteManagedSettings } from '../../services/remote-managed-settings/index.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import { stripSignatureBlocks } from '../../services/messages/./prune.js'
 import {
@@ -36,20 +33,10 @@ export async function call(
           // Post-login refresh logic. Keep in sync with onboarding in src/InteractiveHelpers.tsx
           // Reset cost state when switching accounts
           resetCostState()
-          // Refresh remotely managed settings after login (non-blocking)
-          void refreshRemoteManagedSettings()
-          // Refresh policy limits after login (non-blocking)
-          void refreshPolicyLimits()
           // Clear user data cache BEFORE GrowthBook refresh so it picks up fresh credentials
           resetUserCache()
           // Refresh GrowthBook after login to get updated feature flags (e.g., for zy.ai MCPs)
           refreshGrowthBookAfterAuthChange()
-          // Clear any stale trusted device token from a previous account before
-          // re-enrolling — prevents sending the old token on bridge calls while
-          // the async enrollTrustedDevice() is in-flight.
-          clearTrustedDeviceToken()
-          // Enroll as a trusted device for Remote Control (10-min fresh-session window)
-          void enrollTrustedDevice()
           // Reset killswitch gate checks and re-run with new org
           resetBypassPermissionsCheck()
           const appState = context.getAppState()

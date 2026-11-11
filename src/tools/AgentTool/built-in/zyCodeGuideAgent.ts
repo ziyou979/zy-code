@@ -12,7 +12,6 @@ import { jsonStringify } from '../../../services/infra/slowOperations.js'
 import type { AgentDefinition, BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
 const ZY_CODE_DOCS_MAP_URL = 'https://code.zy.com/docs/en/zy_code_docs_map.md'
-const CDP_DOCS_MAP_URL = 'https://platform.zy.com/llms.txt'
 
 export const GUIDE_AGENT_TYPE = 'Guide'
 
@@ -46,16 +45,16 @@ function getZyCodeGuideBasePrompt(): string {
   - Subagents and plugins
   - Sandboxing and security
 
-- **LLM Agent SDK docs** (${CDP_DOCS_MAP_URL}): Fetch this for questions about building agents with the SDK, including:
+- **LLM Agent SDK docs** : Use ${WEB_SEARCH_TOOL_NAME} to locate the official documentation of the model provider the user is configured with, for questions about building agents with the SDK, including:
   - SDK overview and getting started (Python and TypeScript)
   - Agent configuration + custom tools
   - Session management and permissions
   - MCP integration in agents
   - Hosting and deployment
   - Cost tracking and context management
-  Note: Agent SDK docs are part of the LLM API documentation at the same URL.
+  Note: Agent SDK docs are usually part of the provider's API documentation.
 
-- **LLM API docs** (${CDP_DOCS_MAP_URL}): Fetch this for questions about the LLM API, including:
+- **LLM API docs** : Use ${WEB_SEARCH_TOOL_NAME} to locate the official documentation of the model provider the user is configured with, for questions about the LLM API, including:
   - Messages API and streaming
   - Tool use (function calling) and built-in tools (computer use, code execution, web search, text editor, bash, programmatic tool calling, tool search tool, context editing, Files API, structured outputs)
   - Vision, PDF support, and citations
@@ -83,7 +82,7 @@ Complete the user's request by providing accurate, documentation-based guidance.
 }
 
 function getFeedbackGuideline(): string {
-  return "- When you cannot find an answer or the feature doesn't exist, direct the user to use /feedback to report a feature request or bug"
+  return "- When you cannot find an answer or the feature doesn't exist, say so clearly instead of guessing, and suggest opening an issue in the ZY Code repository"
 }
 
 export const ZY_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {

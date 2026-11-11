@@ -6,16 +6,13 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { getMainLoopModel } from '../../services/model/model.js'
-import { isPolicyAllowed } from '../../services/policy-limits/index.js'
 import { logOTelEvent } from '../../services/telemetry/events.js'
 import type { Message } from '../../types/message.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
 import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { getLastAssistantMessage } from '../../services/messages/./predicates.js'
 import { getInitialSettings } from '../../services/settings/settings.js'
-import { submitTranscriptShare, type TranscriptShareTrigger } from './submitTranscriptShare.js'
-import type { TranscriptShareResponse } from './TranscriptSharePrompt.js'
-import { useSurveyState } from './useSurveyState.js'
+import { type SurveyState, useSurveyState } from './useSurveyState.js'
 import type { FeedbackSurveyResponse, FeedbackSurveyType } from './utils.js'
 
 type FeedbackSurveyConfig = {
@@ -28,9 +25,6 @@ type FeedbackSurveyConfig = {
   onForModels: string[]
   probability: number
 }
-type TranscriptAskConfig = {
-  probability: number
-}
 const DEFAULT_FEEDBACK_SURVEY_CONFIG: FeedbackSurveyConfig = {
   minTimeBeforeFeedbackMs: 600000,
   minTimeBetweenFeedbackMs: 3600000,
@@ -41,9 +35,6 @@ const DEFAULT_FEEDBACK_SURVEY_CONFIG: FeedbackSurveyConfig = {
   onForModels: ['*'],
   probability: 0.005,
 }
-const DEFAULT_TRANSCRIPT_ASK_CONFIG: TranscriptAskConfig = {
-  probability: 0,
-}
 export function useFeedbackSurvey(
   messages: Message[],
   isLoading: boolean,
@@ -51,10 +42,9 @@ export function useFeedbackSurvey(
   surveyType: FeedbackSurveyType = 'feedback',
   hasActivePrompt: boolean = false,
 ): {
-  state: 'closed' | 'open' | 'thanks' | 'transcript_prompt' | 'submitting' | 'submitted'
+  state: SurveyState
   lastResponse: FeedbackSurveyResponse | null
-  handleSelect: (selected: FeedbackSurveyResponse) => boolean
-  handleTranscriptSelect: (selected: TranscriptShareResponse) => void
+  handleSelect: (selected: FeedbackSurveyResponse) => void
 } {
   const lastAssistantMessageIdRef = useRef('unknown')
   lastAssistantMessageIdRef.current = getLastAssistantMessage(messages)?.message?.id || 'unknown'
@@ -69,21 +59,11 @@ export function useFeedbackSurvey(
     'zy_feedback_survey_config',
     DEFAULT_FEEDBACK_SURVEY_CONFIG,
   )
-  const badTranscriptAskConfig = useDynamicConfig<TranscriptAskConfig>(
-    'zy_bad_survey_transcript_ask_config',
-    DEFAULT_TRANSCRIPT_ASK_CONFIG,
-  )
-  const goodTranscriptAskConfig = useDynamicConfig<TranscriptAskConfig>(
-    'zy_good_survey_transcript_ask_config',
-    DEFAULT_TRANSCRIPT_ASK_CONFIG,
-  )
   const settingsRate = getInitialSettings().feedbackSurveyRate
   const sessionStartTime = useRef(Date.now())
   const submitCountAtSessionStart = useRef(submitCount)
   const submitCountRef = useRef(submitCount)
   submitCountRef.current = submitCount
-  const messagesRef = useRef(messages)
-  messagesRef.current = messages
   // Probability gate: roll once when eligibility conditions are met, not on every
   // useMemo re-evaluation. Without this, each dependency change (submitCount,
   // isLoading toggle, etc.) re-rolls Math.random(), making the survey almost
@@ -151,99 +131,10 @@ export function useFeedbackSurvey(
     },
     [updateLastShownTime, surveyType],
   )
-  const shouldShowTranscriptPrompt = useCallback(
-    (selected_0: FeedbackSurveyResponse) => {
-      // Only bad and good ratings trigger the transcript ask
-      if (selected_0 !== 'bad' && selected_0 !== 'good') {
-        return false
-      }
-
-      // Don't show if user previously chose "Don't ask again"
-      if (getGlobalConfig().transcriptShareDismissed) {
-        return false
-      }
-
-      // Don't show if product feedback is blocked by org policy (ZDR)
-      if (!isPolicyAllowed('allow_product_feedback')) {
-        return false
-      }
-
-      // Probability gate from GrowthBook config (separate per rating)
-      const probability =
-        selected_0 === 'bad'
-          ? badTranscriptAskConfig.probability
-          : goodTranscriptAskConfig.probability
-      return Math.random() <= probability
-    },
-    [badTranscriptAskConfig.probability, goodTranscriptAskConfig.probability],
-  )
-  const onTranscriptPromptShown = useCallback(
-    (appearanceId_1: string, surveyResponse: FeedbackSurveyResponse) => {
-      const trigger: TranscriptShareTrigger =
-        surveyResponse === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey'
-      logEvent('zy_feedback_survey_event', {
-        event_type:
-          'transcript_prompt_appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        appearance_id: appearanceId_1 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        last_assistant_message_id:
-          lastAssistantMessageIdRef.current as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        survey_type: surveyType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        trigger: trigger as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      void logOTelEvent('feedback_survey', {
-        event_type: 'transcript_prompt_appeared',
-        appearance_id: appearanceId_1,
-        survey_type: surveyType,
-      })
-    },
-    [surveyType],
-  )
-  const onTranscriptSelect = useCallback(
-    async (
-      appearanceId_2: string,
-      selected_1: TranscriptShareResponse,
-      surveyResponse_0: FeedbackSurveyResponse | null,
-    ): Promise<boolean> => {
-      const trigger_0: TranscriptShareTrigger =
-        surveyResponse_0 === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey'
-      logEvent('zy_feedback_survey_event', {
-        event_type:
-          `transcript_share_${selected_1}` as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        appearance_id: appearanceId_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        last_assistant_message_id:
-          lastAssistantMessageIdRef.current as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        survey_type: surveyType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        trigger: trigger_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      if (selected_1 === 'dont_ask_again') {
-        saveGlobalConfig((current_0) => ({
-          ...current_0,
-          transcriptShareDismissed: true,
-        }))
-      }
-      if (selected_1 === 'yes') {
-        const result = await submitTranscriptShare(messagesRef.current, trigger_0, appearanceId_2)
-        logEvent('zy_feedback_survey_event', {
-          event_type: (result.success
-            ? 'transcript_share_submitted'
-            : 'transcript_share_failed') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          appearance_id:
-            appearanceId_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          trigger: trigger_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        })
-        return result.success
-      }
-      return false
-    },
-    [surveyType],
-  )
-  const { state, lastResponse, open, handleSelect, handleTranscriptSelect } = useSurveyState({
+  const { state, lastResponse, open, handleSelect } = useSurveyState({
     hideThanksAfterMs: config.hideThanksAfterMs,
     onOpen,
     onSelect,
-    shouldShowTranscriptPrompt,
-    onTranscriptPromptShown,
-    onTranscriptSelect,
   })
   const currentModel = getMainLoopModel()
   const isModelAllowed = useMemo(() => {
@@ -279,11 +170,6 @@ export function useFeedbackSurvey(
       return false
     }
     if (isFeedbackSurveyDisabled()) {
-      return false
-    }
-
-    // Check if product feedback is allowed by org policy
-    if (!isPolicyAllowed('allow_product_feedback')) {
       return false
     }
 
@@ -358,6 +244,5 @@ export function useFeedbackSurvey(
     state,
     lastResponse,
     handleSelect,
-    handleTranscriptSelect,
   }
 }

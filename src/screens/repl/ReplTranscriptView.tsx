@@ -4,7 +4,6 @@
  * 在 <ReplStoreProvider> 内渲染，可通过 useReplStore() 访问 store。
  */
 
-import { feature } from 'bun:bundle'
 import * as React from 'react'
 import type { Command } from '../../commands/index.js'
 import { AnimatedTerminalTitle } from '../../components/AnimatedTerminalTitle.js'
@@ -38,7 +37,6 @@ import type { SetAppState } from '../../services/input/messageQueueManager.js'
 import { StreamingThinking, StreamingToolUse } from '../../services/messages/./streaming.js'
 import type { Screen } from '../REPL.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'
-import { ReplVoiceKeybindingHandler, type ReplVoiceState } from './useReplVoice.js'
 
 export interface ReplTranscriptViewProps {
   // store
@@ -87,7 +85,6 @@ export interface ReplTranscriptViewProps {
   cancelRequestProps: Parameters<typeof CancelRequestHandler>[0]
   focusedInputDialog: FocusedInputDialog
   // 语音
-  voice: ReplVoiceState
   // callback
   onSubmit: (
     input: string,
@@ -141,7 +138,6 @@ export function ReplTranscriptView(props: ReplTranscriptViewProps): React.ReactN
     globalKeybindingProps,
     cancelRequestProps,
     focusedInputDialog,
-    voice,
     onSubmit,
     handleOpenRateLimitOptions,
   } = props
@@ -192,14 +188,6 @@ export function ReplTranscriptView(props: ReplTranscriptViewProps): React.ReactN
         noPrefix={showStatusInTerminalTab}
       />
       <GlobalKeybindingHandlers {...globalKeybindingProps} />
-      {feature('VOICE_MODE') ? (
-        <ReplVoiceKeybindingHandler
-          voiceHandleKeyEvent={voice.handleKeyEvent}
-          stripTrailing={voice.stripTrailing}
-          resetAnchor={voice.resetAnchor}
-          isActive={!toolJSX?.isLocalJSXCommand}
-        />
-      ) : null}
       <CommandKeybindingHandlers onSubmit={onSubmit} isActive={!toolJSX?.isLocalJSXCommand} />
       {transcriptScrollRef ? (
         <ScrollKeybindingHandler

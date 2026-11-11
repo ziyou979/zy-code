@@ -1,129 +1,24 @@
-import axios from 'axios'
 import memoize from 'lodash-es/memoize.js'
-import { getOauthConfig } from 'src/constants/oauth.js'
-import { ANTHROPIC_VERSION } from '../../constants/api.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from 'src/services/analytics/index.js'
-import { getZyAIOAuthTokens } from 'src/services/auth/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from 'src/services/config/config.js'
 import { createDebugLog } from 'src/services/infra/debug.js'
 
 const mcpLog = createDebugLog('mcp')
 
-import { isEnvDefinedFalsy } from 'src/services/infra/envUtils.js'
 import { clearMcpAuthCache } from './client.js'
-import { normalizeNameForMCP } from './normalization.js'
 import type { ScopedMcpServerConfig } from './types.js'
 
-type ZyAIMcpServer = {
-  type: 'mcp_server'
-  id: string
-  display_name: string
-  url: string
-  created_at: string
-}
-
-type ZyAIMcpServersResponse = {
-  data: ZyAIMcpServer[]
-  has_more: boolean
-  next_page: string | null
-}
-
-const FETCH_TIMEOUT_MS = 5000
-const MCP_SERVERS_BETA_HEADER = 'mcp-servers-2025-12-04'
-
 /**
- * Fetches MCP server configurations from Zy.ai org configs.
- * These servers are managed by the organization via Zy.ai.
+ * zy.ai（原 claude.ai）组织托管 MCP connector 的配置来源。
  *
- * Results are memoized for the session lifetime (fetch once per CLI session).
+ * 上游会带着 OAuth token 请求 Anthropic 后端 `/v1/mcp_servers` 拉取组织配置的 connector；
+ * ZY Code 已移除全部 Anthropic 后端调用，这里改为本地 no-op：始终返回空配置。
+ * 保留函数是因为 MCP 配置解析（-p 启动、交互两阶段加载、getAllMcpConfigs）的合流逻辑
+ * 依赖它的返回值；整体删除 connector 合流与 `zyai-proxy` 类型留作后续清理。
  */
 export const fetchZyAIMcpConfigsIfEligible = memoize(
   async (): Promise<Record<string, ScopedMcpServerConfig>> => {
-    try {
-      if (isEnvDefinedFalsy(process.env.ENABLE_CLAUDEAI_MCP_SERVERS)) {
-        mcpLog('[zyai-mcp] Disabled via env var')
-        logEvent('zy_Zyai_mcp_eligibility', {
-          state: 'disabled_env_var' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        })
-        return {}
-      }
-
-      const tokens = getZyAIOAuthTokens()
-      if (!tokens?.accessToken) {
-        mcpLog('[zyai-mcp] No access token')
-        logEvent('zy_Zyai_mcp_eligibility', {
-          state: 'no_oauth_token' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        })
-        return {}
-      }
-
-      // Check for user:mcp_servers scope directly.
-      if (!tokens.scopes?.includes('user:mcp_servers')) {
-        mcpLog(
-          `[zyai-mcp] Missing user:mcp_servers scope (scopes=${tokens.scopes?.join(',') || 'none'})`,
-        )
-        logEvent('zy_Zyai_mcp_eligibility', {
-          state: 'missing_scope' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        })
-        return {}
-      }
-
-      const baseUrl = getOauthConfig().BASE_API_URL
-      const url = `${baseUrl}/v1/mcp_servers?limit=1000`
-
-      mcpLog(`[zyai-mcp] Fetching from ${url}`)
-
-      const response = await axios.get<ZyAIMcpServersResponse>(url, {
-        headers: {
-          Authorization: `Bearer ${tokens.accessToken}`,
-          'Content-Type': 'application/json',
-          'anthropic-beta': MCP_SERVERS_BETA_HEADER,
-          'anthropic-version': ANTHROPIC_VERSION,
-        },
-        timeout: FETCH_TIMEOUT_MS,
-      })
-
-      const configs: Record<string, ScopedMcpServerConfig> = {}
-      // Track used normalized names to detect collisions and assign (2), (3), etc. suffixes.
-      // We check the final normalized name (including suffix) to handle edge cases where
-      // a suffixed name collides with another server's base name (e.g., "Example Server 2"
-      // colliding with "Example Server! (2)" which both normalize to zy_ai_Example_Server_2).
-      const usedNormalizedNames = new Set<string>()
-
-      for (const server of response.data.data) {
-        const baseName = `zy.ai ${server.display_name}`
-
-        // Try without suffix first, then increment until we find an unused normalized name
-        let finalName = baseName
-        let finalNormalized = normalizeNameForMCP(finalName)
-        let count = 1
-        while (usedNormalizedNames.has(finalNormalized)) {
-          count++
-          finalName = `${baseName} (${count})`
-          finalNormalized = normalizeNameForMCP(finalName)
-        }
-        usedNormalizedNames.add(finalNormalized)
-
-        configs[finalName] = {
-          type: 'zyai-proxy',
-          url: server.url,
-          id: server.id,
-          scope: 'zyai',
-        }
-      }
-
-      mcpLog(`[zyai-mcp] Fetched ${Object.keys(configs).length} servers`)
-      logEvent('zy_Zyai_mcp_eligibility', {
-        state: 'eligible' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      return configs
-    } catch {
-      mcpLog(`[zyai-mcp] Fetch failed`)
-      return {}
-    }
+    mcpLog('[zyai-mcp] Remote connectors are not supported; skipping')
+    return {}
   },
 )
 
