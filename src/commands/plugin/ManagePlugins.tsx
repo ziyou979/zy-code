@@ -14,7 +14,6 @@ import type {
   ServerInfo,
   SSEServerInfo,
   StdioServerInfo,
-  ZyAIServerInfo,
 } from '../../services/mcp/viewTypes.js'
 import { SearchBox } from '../../components/SearchBox.js'
 import { ARROW_DOWN, ARROW_RIGHT, ARROW_UP, POINTER, TICK } from '../../constants/figures.js'
@@ -30,7 +29,6 @@ import type {
   McpHTTPServerConfig,
   McpSSEServerConfig,
   McpStdioServerConfig,
-  McpZyAIProxyServerConfig,
 } from '../../services/mcp/types.js'
 import { filterToolsByServer } from '../../services/mcp/utils.js'
 import {
@@ -524,13 +522,7 @@ function buildServerInfoFromClient(mcpClient: MCPServerConnection): ServerInfo {
     client: mcpClient,
     scope: configScope,
   }
-  if (configType === 'stdio') {
-    return {
-      ...base,
-      transport: 'stdio' as const,
-      config: mcpClient.config as McpStdioServerConfig,
-    } as unknown as ServerInfo
-  } else if (configType === 'sse') {
+  if (configType === 'sse') {
     return {
       ...base,
       transport: 'sse' as const,
@@ -545,11 +537,11 @@ function buildServerInfoFromClient(mcpClient: MCPServerConnection): ServerInfo {
       config: mcpClient.config as McpHTTPServerConfig,
     } as unknown as ServerInfo
   } else {
+    // stdio（含省略 type 的旧配置）及其他内部 transport 均按 stdio 展示
     return {
       ...base,
-      transport: 'zyai-proxy' as const,
-      isAuthenticated: undefined,
-      config: mcpClient.config as McpZyAIProxyServerConfig,
+      transport: 'stdio' as const,
+      config: mcpClient.config as McpStdioServerConfig,
     } as unknown as ServerInfo
   }
 }
@@ -2513,25 +2505,6 @@ export function ManagePlugins({
         isAuthenticated: undefined,
         config: client_3.config as McpHTTPServerConfig,
       } as unknown as HTTPServerInfo
-      return (
-        <MCPRemoteServerMenu
-          server={server}
-          serverToolsCount={serverToolsCount}
-          onViewTools={handleMcpViewTools}
-          onCancel={handleMcpCancel}
-          onComplete={handleMcpComplete}
-          borderless
-        />
-      )
-    } else if (configType === 'zyai-proxy') {
-      const server = {
-        name: client_3.name,
-        client: client_3,
-        scope: scope_5,
-        transport: 'zyai-proxy' as const,
-        isAuthenticated: undefined,
-        config: client_3.config as McpZyAIProxyServerConfig,
-      } as unknown as ZyAIServerInfo
       return (
         <MCPRemoteServerMenu
           server={server}

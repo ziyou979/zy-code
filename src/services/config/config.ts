@@ -205,12 +205,6 @@ export type GlobalConfig = {
   // @已废弃 - 已迁移到 ~/.zy/cache/changelog.md。保留以支持迁移兼容。
   cachedChangelog?: string
   mcpServers?: Record<string, McpServerConfig>
-  // 已成功连接过至少一次的 zy.ai MCP 连接器。
-  // 用于控制"连接器不可用"/"需要认证"的启动通知：
-  // 用户实际使用过的连接器在出问题时值得提醒，
-  // 但组织配置且从一开始就需要认证的连接器，
-  // 用户显然已忽略，不应反复提醒。
-  zyAiMcpEverConnected?: string[]
   preferredNotifChannel: NotificationChannel
   /**
    * @deprecated. Use the Notification hook instead (docs/hooks.md).

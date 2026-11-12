@@ -8,7 +8,6 @@
  *   - unwrapCcrProxyUrl       CCR 代理 URL 还原
  *   - getMcpServerSignature   stdio / url 签名生成
  *   - dedupPluginMcpServers   插件与手动配置去重
- *   - dedupZyAIMcpServers     zy.ai 连接器与手动配置去重
  *   - isMcpServerDenied       名称 / 命令 / URL 匹配黑名单
  *   - isMcpServerAllowedByPolicy  白名单 + 黑名单联合判定
  *   - filterMcpServersByPolicy    SDK 豁免 + 策略过滤
@@ -18,10 +17,8 @@ import type { SettingsJson } from '../../../src/services/settings/types.js'
 import type { McpServerConfig, ScopedMcpServerConfig } from '../../../src/services/mcp/types.js'
 import {
   dedupPluginMcpServers,
-  dedupZyAIMcpServers,
   getMcpServerSignature,
   mergeMcpConfigsByPriority,
-  mergeZyAIMcpConfigs,
   selectEnterpriseMcpServers,
   unwrapCcrProxyUrl,
 } from '../../../src/services/mcp/configMerge.js'
@@ -209,76 +206,6 @@ describe('dedupPluginMcpServers', () => {
     }
     const { servers, suppressed } = dedupPluginMcpServers(plugins, manuals, log)
     expect(servers).toHaveProperty('plugin:c:c1')
-    expect(suppressed).toHaveLength(0)
-  })
-})
-
-// ---------------------------------------------------------------------------
-//  dedupZyAIMcpServers
-// ---------------------------------------------------------------------------
-describe('dedupZyAIMcpServers', () => {
-  const logs: string[] = []
-  const log = (msg: string) => {
-    logs.push(msg)
-  }
-  const enabledTrue = () => false
-  const disabledManual = (name: string) => name === 'disabled-manual'
-
-  function zyAiServer(name: string, url: string): any {
-    return { type: 'sse', url, scope: 'zyai', name }
-  }
-  function manualServer(name: string, url: string): any {
-    return { type: 'sse', url, scope: 'user', name }
-  }
-
-  beforeEach(() => {
-    logs.length = 0
-  })
-
-  test('无冲突时保留所有 zy.ai 连接器', () => {
-    const zyAi = {
-      'zy.ai Slack': zyAiServer('zy.ai Slack', 'https://mcp.slack.com'),
-      'zy.ai GitHub': zyAiServer('zy.ai GitHub', 'https://mcp.github.com'),
-    }
-    const { servers, suppressed } = dedupZyAIMcpServers(zyAi, {}, enabledTrue, log)
-    expect(Object.keys(servers)).toHaveLength(2)
-    expect(suppressed).toHaveLength(0)
-  })
-
-  test('与已启用手动服务器同 URL 的 zy.ai 连接器被压制', () => {
-    const zyAi = {
-      'zy.ai Slack': zyAiServer('zy.ai Slack', 'https://mcp.slack.com'),
-    }
-    const manuals = {
-      slack: manualServer('slack', 'https://mcp.slack.com'),
-    }
-    const { servers, suppressed } = dedupZyAIMcpServers(zyAi, manuals, enabledTrue, log)
-    expect(servers['zy.ai Slack']).toBeUndefined()
-    expect(suppressed).toHaveLength(1)
-    expect(suppressed[0]!.duplicateOf).toBe('slack')
-  })
-
-  test('禁用的手动服务器不压制 zy.ai 连接器', () => {
-    const zyAi = {
-      'zy.ai DB': zyAiServer('zy.ai DB', 'https://mcp.db.com'),
-    }
-    const manuals = {
-      'disabled-manual': manualServer('disabled-manual', 'https://mcp.db.com'),
-    }
-    const { servers, suppressed } = dedupZyAIMcpServers(zyAi, manuals, disabledManual, log)
-    expect(servers['zy.ai DB']).toBeDefined()
-    expect(suppressed).toHaveLength(0)
-  })
-
-  test('签名不同的 zy.ai 连接器不会被压制', () => {
-    const zyAi = {
-      'zy.ai Foo': zyAiServer('zy.ai Foo', 'https://foo.example.com/mcp'),
-    }
-    const manuals = {
-      bar: manualServer('bar', 'https://bar.example.com/mcp'),
-    }
-    const { servers, suppressed } = dedupZyAIMcpServers(zyAi, manuals, enabledTrue, log)
-    expect(servers['zy.ai Foo']).toBeDefined()
     expect(suppressed).toHaveLength(0)
   })
 })
@@ -552,51 +479,6 @@ describe('scope 优先级合并', () => {
     const merged = mergeMcpConfigsByPriority({}, user, {}, local)
     expect(merged['data-svc']).toBe(local['data-svc'])
     expect(merged['data-svc']).not.toHaveProperty('url')
-  })
-
-  test('zy.ai 连接器在手动配置之后作为最低优先级合并', () => {
-    const zyAi: ScopedServer = {
-      'zy.ai DataSvc': { type: 'sse', url: 'https://zyai.example.com/mcp', scope: 'zyai' },
-    }
-    const manual: ScopedServer = {
-      'data-svc': { command: 'manual-tool', args: [], scope: 'user' },
-    }
-    const merged = mergeZyAIMcpConfigs(zyAi, manual)
-    expect(merged['data-svc']).toBeDefined()
-    expect((merged['data-svc'] as Record<string, unknown>).command).toBe('manual-tool')
-    expect(merged['zy.ai DataSvc']).toBeDefined()
-  })
-
-  test('dedupZyAIMcpServers 已启用手动配置压制同签名 zy.ai 连接器', () => {
-    const zyAi: ScopedServer = {
-      'zy.ai API': { type: 'sse', url: 'https://api.example.com/mcp', scope: 'zyai' },
-    }
-    const manual: ScopedServer = {
-      'my-api': { type: 'sse', url: 'https://api.example.com/mcp', scope: 'user' },
-    }
-    const log = () => {}
-    const { servers, suppressed } = dedupZyAIMcpServers(zyAi, manual, () => false, log)
-    expect(servers['zy.ai API']).toBeUndefined()
-    expect(suppressed).toHaveLength(1)
-    expect(suppressed[0]!.duplicateOf).toBe('my-api')
-  })
-
-  test('禁用的手动服务器不压制 zy.ai 连接器', () => {
-    const zyAi: ScopedServer = {
-      'zy.ai DB': { type: 'sse', url: 'https://db.example.com/mcp', scope: 'zyai' },
-    }
-    const manual: ScopedServer = {
-      'my-db': { type: 'sse', url: 'https://db.example.com/mcp', scope: 'user' },
-    }
-    const log = () => {}
-    const { servers } = dedupZyAIMcpServers(
-      zyAi,
-      manual,
-      (name: string) => name === 'my-db', // 已禁用
-      log,
-    )
-    // zy.ai 连接器保留，因为手动服务器被禁用
-    expect(servers['zy.ai DB']).toBeDefined()
   })
 })
 

@@ -105,11 +105,7 @@ export function MCPListPanel({
   const agentServers = agentServersArg
   const [theme] = useTheme()
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const regularServers = servers.filter((s) => s.client.config.type !== 'zyai-proxy')
-  const serversByScope = groupServersByScope(regularServers)
-  const zyAiServers = servers
-    .filter((s) => s.client.config.type === 'zyai-proxy')
-    .sort((a, b) => a.name.localeCompare(b.name))
+  const serversByScope = groupServersByScope(servers)
   const dynamicServers = (serversByScope.get('dynamic') ?? []).sort((a, b) =>
     a.name.localeCompare(b.name),
   )
@@ -123,12 +119,6 @@ export function MCPListPanel({
         server,
       })
     }
-  }
-  for (const zyAiServer of zyAiServers) {
-    items.push({
-      type: 'server',
-      server: zyAiServer,
-    })
   }
   for (const agentServer of agentServers) {
     items.push({
@@ -284,14 +274,6 @@ export function MCPListPanel({
           {
             <Box flexDirection="column">
               {scopeSections}
-              {zyAiServers.length > 0 && (
-                <Box flexDirection="column" marginBottom={1}>
-                  <Box paddingLeft={2}>
-                    <Text bold={true}>zy.ai</Text>
-                  </Box>
-                  {zyAiServers.map((server) => renderServerItem(server))}
-                </Box>
-              )}
               {agentServers.length > 0 && (
                 <Box flexDirection="column" marginBottom={1}>
                   <Box paddingLeft={2}>

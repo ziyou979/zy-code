@@ -573,10 +573,6 @@ export const enMisc: TranslationResource = {
   'notif.reloadPlugins': ' · Run /reload-plugins to apply',
   'notif.remoteControlFailed': 'Remote Control failed',
   'notif.tokenCount': '{count} tokens',
-  'notif.zyaiConnectorNeedsAuth': '{count} zy.ai connector needs auth',
-  'notif.zyaiConnectorsNeedAuth': '{count} zy.ai connectors need auth',
-  'notif.zyaiConnectorsUnavailable': '{count} zy.ai connectors unavailable',
-  'notif.zyaiConnectorUnavailable': '{count} zy.ai connector unavailable',
   'prompts.languageSection.body':
     'Reason and respond in English natively. Keep code, identifiers, file paths, and quoted text unchanged.',
   'outputStyle.hint': 'This changes how ZY Code communicates with you',

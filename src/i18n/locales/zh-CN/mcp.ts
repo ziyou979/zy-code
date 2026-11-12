@@ -128,5 +128,4 @@ export const zhMcp: TranslationResource = {
   'mcp.userMCPs': '用户 MCP',
   'mcp.viewTools': '查看工具',
   'mcp.warningLabel': '[警告]',
-  'mcp.willOpenZyAi': '这将在浏览器中打开 zy.ai。在列表中找到 MCP 服务器并点击"Disconnect"。',
 }

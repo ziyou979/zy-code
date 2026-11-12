@@ -680,7 +680,7 @@ export function clearOAuthTokenCache(): void {
   clearOAuthCredentialsCache()
 }
 
-// 飞行中去重：当 N 个 zy.ai 代理连接器同时以相同 token 触发 401 时
+// 飞行中去重：当 N 个并发请求同时以相同 token 触发 401 时
 // （启动时常见——#20930），应只有一个清除缓存并重新读取 keychain。
 // 如果没有这个机制，每次调用的 clearOAuthTokenCache() 都会销毁
 // macOsKeychainStorage 中的 readInFlight 并触发新的 spawn——

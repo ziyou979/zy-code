@@ -132,6 +132,4 @@ export const enMcp: TranslationResource = {
   'mcp.userMCPs': 'User MCPs',
   'mcp.viewTools': 'View tools',
   'mcp.warningLabel': '[Warning]',
-  'mcp.willOpenZyAi':
-    'This will open zy.ai in the browser. Find the MCP server in the list and click "Disconnect".',
 }

@@ -91,10 +91,8 @@ export function splitMcpConfigs(
 export function createMcpPrefetchPromises(
   isNonInteractiveSession: boolean,
   regularMcpConfigs: Record<string, ScopedMcpServerConfig>,
-  zyaiConfigPromise: Promise<Record<string, ScopedMcpServerConfig>>,
 ): {
   localMcpPromise: Promise<PrefetchedMcpResources>
-  zyaiMcpPromise: Promise<PrefetchedMcpResources>
   mcpPromise: Promise<PrefetchedMcpResources>
 } {
   const emptyResources = {
@@ -107,23 +105,16 @@ export function createMcpPrefetchPromises(
     ? Promise.resolve(emptyResources)
     : prefetchAllMcpResources(regularMcpConfigs)
 
-  const zyaiMcpPromise = isNonInteractiveSession
-    ? Promise.resolve(emptyResources)
-    : zyaiConfigPromise.then((configs) =>
-        Object.keys(configs).length > 0 ? prefetchAllMcpResources(configs) : emptyResources,
-      )
-
-  // 按名称去重合并：每个 prefetchAllMcpResources 调用独立添加帮助工具，
+  // 按名称去重：prefetchAllMcpResources 会为每个服务器独立添加帮助工具，
   // 这里先做一次汇总去重，避免启动期状态里出现重复项。
-  const mcpPromise = Promise.all([localMcpPromise, zyaiMcpPromise]).then(([local, zyai]) => ({
-    clients: [...local.clients, ...zyai.clients],
-    tools: uniqBy([...local.tools, ...zyai.tools], 'name'),
-    commands: uniqBy([...local.commands, ...zyai.commands], 'name'),
+  const mcpPromise = localMcpPromise.then((local) => ({
+    clients: local.clients,
+    tools: uniqBy(local.tools, 'name'),
+    commands: uniqBy(local.commands, 'name'),
   }))
 
   return {
     localMcpPromise,
-    zyaiMcpPromise,
     mcpPromise,
   }
 }

@@ -1243,7 +1243,6 @@
     "importCycle|services/mcp/utils.ts|static-cycle": true,
     "importCycle|services/mcp/vscodeMcp.ts|static-cycle": true,
     "importCycle|services/mcp/xaaIdpLogin.ts|static-cycle": true,
-    "importCycle|services/mcp/zyai.ts|static-cycle": true,
     "importCycle|services/memory/agentsMd.ts|static-cycle": true,
     "importCycle|services/memory/memoryFileDetection.ts|static-cycle": true,
     "importCycle|services/messages/api.ts|static-cycle": true,
@@ -1565,7 +1564,7 @@
     "importCycle|tools/WorkflowTool/runtime/progress.ts|static-cycle": true,
     "importCycle|tools/WorkflowTool/runtime/sandbox.ts|static-cycle": true
   },
-  "total": 1563,
+  "total": 1562,
   "categoryCounts": {
     "utilsI18n": 1,
     "utilsIO": 1,
@@ -1573,7 +1572,7 @@
     "featureMacro": 287,
     "fileLength": 28,
     "hardcodedText": 624,
-    "importCycle": 609,
+    "importCycle": 608,
     "unresolvedImport": 9
   },
   "asAny": {

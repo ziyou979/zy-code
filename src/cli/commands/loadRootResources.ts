@@ -143,7 +143,6 @@ export async function loadRootResources(
     warnings,
     dangerousPermissions,
     overlyBroadBashPermissions,
-    zyaiConfigPromise,
     mcpConfigStart,
     mcpConfigResolvedMs,
     mcpConfigPromise,
@@ -542,10 +541,9 @@ export async function loadRootResources(
   // 在信任对话框之后预取 MCP 资源（这是执行发生的地方）。
   // 仅限交互模式：打印模式延迟连接直到 headlessStore 存在，
   // 并按服务器推送，所以一个慢速服务器不会阻塞整批启动。
-  const { localMcpPromise, zyaiMcpPromise, mcpPromise } = createMcpPrefetchPromises(
+  const { localMcpPromise, mcpPromise } = createMcpPrefetchPromises(
     isNonInteractiveSession,
     regularMcpConfigs,
-    zyaiConfigPromise,
   )
 
   // 早期启动钩子以便它们与 MCP 连接并行运行。
@@ -705,7 +703,6 @@ export async function loadRootResources(
     sdkMcpConfigs,
     regularMcpConfigs,
     localMcpPromise,
-    zyaiMcpPromise,
     mcpPromise,
     hooksPromise,
     hookMessages,

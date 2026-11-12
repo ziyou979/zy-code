@@ -312,9 +312,6 @@ export const connectToServer = memoize(
         logMCPDebug(name, `HTTP transport created successfully`)
       } else if (serverRef.type === 'sdk') {
         throw new Error('SDK servers should be handled in print.ts')
-      } else if (serverRef.type === 'zyai-proxy') {
-        // zy.ai（原 claude.ai）connector 代理属于 Anthropic 后端，ZY Code 不再支持。
-        throw new Error(`zy.ai proxy MCP servers are not supported (server ${serverRef.id})`)
       } else if (
         (serverRef.type === 'stdio' || !serverRef.type) &&
         isClaudeInChromeMCPServer(name)

@@ -252,8 +252,6 @@ export function describeMcpConfigFilePath(scope: ConfigScope): string {
       return 'Dynamically configured'
     case 'enterprise':
       return getEnterpriseMcpFilePath()
-    case 'zyai':
-      return 'zy.ai'
     default:
       return scope
   }
@@ -271,8 +269,6 @@ export function getScopeLabel(scope: ConfigScope): string {
       return 'Dynamic config (from command line)'
     case 'enterprise':
       return 'Enterprise config (managed by your organization)'
-    case 'zyai':
-      return 'zy.ai config'
     default:
       return scope
   }
@@ -344,12 +340,6 @@ export function getMcpServerScopeFromToolName(toolName: string): ConfigScope | n
 
   // Look up server config
   const serverConfig = getMcpConfigByName(mcpInfo.serverName)
-
-  // Fallback: zy.ai servers have normalized names starting with "zy_ai_"
-  // but aren't in getMcpConfigByName (they're fetched async separately)
-  if (!serverConfig && mcpInfo.serverName.startsWith('zy_ai_')) {
-    return 'zyai'
-  }
 
   return serverConfig?.scope ?? null
 }
@@ -446,7 +436,7 @@ export function extractAgentMcpServers(agents: AgentDefinition[]): AgentMcpServe
     } else if (isWebSocketConfig(config)) {
       result.push(agentServer('ws', { url: config.url }))
     }
-    // Skip unsupported transport types (sdk, zyai-proxy, sse-ide, ws-ide)
+    // Skip unsupported transport types (sdk, sse-ide, ws-ide)
     // These are internal types not meant for agent MCP server display
   }
 

@@ -3,7 +3,6 @@ import { useNotifications } from 'src/context/notifications.js'
 import { tSync } from '../../i18n/index.js'
 import { Text } from '../../ink/index.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'
-import { hasZyAiMcpEverConnected } from '../../services/mcp/zyai.js'
 
 type Props = {
   mcpClients?: MCPServerConnection[]
@@ -16,30 +15,10 @@ export function useMcpConnectivityStatus({ mcpClients = EMPTY_MCP_CLIENTS }: Pro
       (client) =>
         client.type === 'failed' &&
         client.config.type !== 'sse-ide' &&
-        client.config.type !== 'ws-ide' &&
-        client.config.type !== 'zyai-proxy',
+        client.config.type !== 'ws-ide',
     )
-    const failedZyAiClients = mcpClients.filter(
-      (client) =>
-        client.type === 'failed' &&
-        client.config.type === 'zyai-proxy' &&
-        hasZyAiMcpEverConnected(client.name),
-    )
-    const needsAuthLocalServers = mcpClients.filter(
-      (client) => client.type === 'needs-auth' && client.config.type !== 'zyai-proxy',
-    )
-    const needsAuthZyAiServers = mcpClients.filter(
-      (client) =>
-        client.type === 'needs-auth' &&
-        client.config.type === 'zyai-proxy' &&
-        hasZyAiMcpEverConnected(client.name),
-    )
-    if (
-      failedLocalClients.length === 0 &&
-      failedZyAiClients.length === 0 &&
-      needsAuthLocalServers.length === 0 &&
-      needsAuthZyAiServers.length === 0
-    ) {
+    const needsAuthLocalServers = mcpClients.filter((client) => client.type === 'needs-auth')
+    if (failedLocalClients.length === 0 && needsAuthLocalServers.length === 0) {
       return
     }
     if (failedLocalClients.length > 0) {
@@ -61,25 +40,6 @@ export function useMcpConnectivityStatus({ mcpClients = EMPTY_MCP_CLIENTS }: Pro
         priority: 'medium',
       })
     }
-    if (failedZyAiClients.length > 0) {
-      addNotification({
-        key: 'mcp-zyai-failed',
-        jsx: (
-          <>
-            <Text color="error">
-              {tSync(
-                failedZyAiClients.length === 1
-                  ? 'notif.zyaiConnectorUnavailable'
-                  : 'notif.zyaiConnectorsUnavailable',
-                { count: failedZyAiClients.length },
-              )}
-            </Text>
-            <Text dimColor={true}> · /mcp</Text>
-          </>
-        ),
-        priority: 'medium',
-      })
-    }
     if (needsAuthLocalServers.length > 0) {
       addNotification({
         key: 'mcp-needs-auth',
@@ -91,25 +51,6 @@ export function useMcpConnectivityStatus({ mcpClients = EMPTY_MCP_CLIENTS }: Pro
                   ? 'notif.mcpServerNeedsAuth'
                   : 'notif.mcpServersNeedAuth',
                 { count: needsAuthLocalServers.length },
-              )}
-            </Text>
-            <Text dimColor={true}> · /mcp</Text>
-          </>
-        ),
-        priority: 'medium',
-      })
-    }
-    if (needsAuthZyAiServers.length > 0) {
-      addNotification({
-        key: 'mcp-zyai-needs-auth',
-        jsx: (
-          <>
-            <Text color="warning">
-              {tSync(
-                needsAuthZyAiServers.length === 1
-                  ? 'notif.zyaiConnectorNeedsAuth'
-                  : 'notif.zyaiConnectorsNeedAuth',
-                { count: needsAuthZyAiServers.length },
               )}
             </Text>
             <Text dimColor={true}> · /mcp</Text>

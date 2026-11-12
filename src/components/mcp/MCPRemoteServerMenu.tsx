@@ -24,7 +24,6 @@ import type {
   MCPServerConnection,
   McpHTTPServerConfig,
   McpSSEServerConfig,
-  McpZyAIProxyServerConfig,
 } from '../../services/mcp/types.js'
 import {
   describeMcpConfigFilePath,
@@ -42,7 +41,7 @@ import { Select } from '../CustomSelect/index.js'
 import { Byline } from '../design-system/Byline.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { CapabilitiesSection } from './CapabilitiesSection.js'
-import type { HTTPServerInfo, SSEServerInfo, ZyAIServerInfo } from '../../services/mcp/viewTypes.js'
+import type { HTTPServerInfo, SSEServerInfo } from '../../services/mcp/viewTypes.js'
 import { handleReconnectError, handleReconnectResult } from './utils/ReconnectHelpers.js'
 import {
   RemoteOAuthAuthenticatingView,
@@ -50,7 +49,7 @@ import {
 } from './MCPRemoteServerFlowViews.js'
 
 type Props = {
-  server: SSEServerInfo | HTTPServerInfo | ZyAIServerInfo
+  server: SSEServerInfo | HTTPServerInfo
   serverToolsCount: number
   onViewTools: () => void
   onCancel: () => void
@@ -66,7 +65,6 @@ type Props = {
 type RemoteServerRuntimeConfig =
   | (McpHTTPServerConfig & { scope: ConfigScope })
   | (McpSSEServerConfig & { scope: ConfigScope })
-  | (McpZyAIProxyServerConfig & { scope: ConfigScope })
 
 type RemoteServerRuntimeState = {
   client: MCPServerConnection
@@ -176,15 +174,6 @@ export function MCPRemoteServerMenu({
     const wasEnabled = srv.client.type !== 'disabled'
     try {
       await toggleMcpServer(server.name)
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      if (srv.config.type === 'zyai-proxy') {
-        logEvent('zy_Zyai_mcp_toggle', {
-          new_state: (wasEnabled
-            ? 'disabled'
-            : 'enabled') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        })
-      }
-
       // Return to the server list so user can continue managing other servers
       onCancel()
     } catch (err_0) {
@@ -208,10 +197,6 @@ export function MCPRemoteServerMenu({
     onComplete,
   ])
   const handleAuthenticate = React.useCallback(async () => {
-    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-    if (srv.config.type === 'zyai-proxy') {
-      return
-    }
     setIsAuthenticating(true)
     setError(null)
     const controller = new AbortController()
@@ -281,10 +266,6 @@ export function MCPRemoteServerMenu({
   ])
   const handleClearAuth = async () => {
     // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-    if (srv.config.type === 'zyai-proxy') {
-      return
-    }
-    // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
     if (srv.config) {
       // First revoke the authentication tokens and clear all auth state
       // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
@@ -331,11 +312,9 @@ export function MCPRemoteServerMenu({
     // XAA: silent exchange (cached id_token → no browser), so don't claim
     // one will open. If IdP login IS needed, authorizationUrl populates and
     // the URL fallback block below still renders.
-    const authCopy =
-      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-      srv.config.type !== 'zyai-proxy' && srv.config.oauth?.xaa
-        ? ` ${tSync('mcp.authViaIdentityProvider')}`
-        : ` ${tSync('mcp.browserWillOpen')}`
+    const authCopy = srv.config.oauth?.xaa
+      ? ` ${tSync('mcp.authViaIdentityProvider')}`
+      : ` ${tSync('mcp.browserWillOpen')}`
     return (
       <RemoteOAuthAuthenticatingView
         serverName={server.name}
@@ -371,23 +350,20 @@ export function MCPRemoteServerMenu({
       value: 'tools',
     })
   }
-  // zy.ai connector（zyai-proxy）的认证依赖 Anthropic 后端，已移除，不提供认证操作。
-  if (srv.config.type !== 'zyai-proxy') {
-    if (isEffectivelyAuthenticated) {
-      menuOptions.push({
-        label: tSync('mcp.reauthenticate'),
-        value: 'reauth',
-      })
-      menuOptions.push({
-        label: tSync('mcp.clearAuthentication'),
-        value: 'clear-auth',
-      })
-    } else {
-      menuOptions.push({
-        label: tSync('mcp.authenticate'),
-        value: 'auth',
-      })
-    }
+  if (isEffectivelyAuthenticated) {
+    menuOptions.push({
+      label: tSync('mcp.reauthenticate'),
+      value: 'reauth',
+    })
+    menuOptions.push({
+      label: tSync('mcp.clearAuthentication'),
+      value: 'clear-auth',
+    })
+  } else {
+    menuOptions.push({
+      label: tSync('mcp.authenticate'),
+      value: 'auth',
+    })
   }
   // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   if (srv.client.type !== 'disabled') {
@@ -445,20 +421,18 @@ export function MCPRemoteServerMenu({
             )}
           </Box>
 
-          {srv.config.type !== 'zyai-proxy' && (
-            <Box>
-              <Text bold>{tSync('mcp.authLabel')} </Text>
-              {isEffectivelyAuthenticated ? (
-                <Text>
-                  {color('success', theme)(TICK)} {tSync('mcp.authenticated')}
-                </Text>
-              ) : (
-                <Text>
-                  {color('error', theme)(CROSS)} {tSync('mcp.notAuthenticated')}
-                </Text>
-              )}
-            </Box>
-          )}
+          <Box>
+            <Text bold>{tSync('mcp.authLabel')} </Text>
+            {isEffectivelyAuthenticated ? (
+              <Text>
+                {color('success', theme)(TICK)} {tSync('mcp.authenticated')}
+              </Text>
+            ) : (
+              <Text>
+                {color('error', theme)(CROSS)} {tSync('mcp.notAuthenticated')}
+              </Text>
+            )}
+          </Box>
 
           <Box>
             <Text bold>{tSync('mcp.urlLabel')} </Text>
@@ -514,21 +488,9 @@ export function MCPRemoteServerMenu({
                     setIsReconnecting(true)
                     try {
                       const result_1 = await reconnectMcpServer(server.name)
-                      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-                      if (srv.config.type === 'zyai-proxy') {
-                        logEvent('zy_Zyai_mcp_reconnect', {
-                          success: result_1.client.type === 'connected',
-                        })
-                      }
                       const { message: message_0 } = handleReconnectResult(result_1, server.name)
                       onComplete?.(message_0)
                     } catch (err_2) {
-                      // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
-                      if (srv.config.type === 'zyai-proxy') {
-                        logEvent('zy_Zyai_mcp_reconnect', {
-                          success: false,
-                        })
-                      }
                       onComplete?.(handleReconnectError(err_2, server.name))
                     } finally {
                       setIsReconnecting(false)

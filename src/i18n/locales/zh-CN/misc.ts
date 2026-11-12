@@ -572,10 +572,6 @@ export const zhMisc: TranslationResource = {
   'notif.reloadPlugins': ' · 运行 /reload-plugins 应用更新',
   'notif.remoteControlFailed': '远程控制失败',
   'notif.tokenCount': '{count} 个 token',
-  'notif.zyaiConnectorNeedsAuth': '{count} 个 zy.ai 连接器需要认证',
-  'notif.zyaiConnectorsNeedAuth': '{count} 个 zy.ai 连接器需要认证',
-  'notif.zyaiConnectorsUnavailable': '{count} 个 zy.ai 连接器不可用',
-  'notif.zyaiConnectorUnavailable': '{count} 个 zy.ai 连接器不可用',
   'prompts.languageSection.body':
     '回复和思考内容使用中文，保持代码、标识符、文件路径和引用文本不变。',
   'outputStyle.hint': '这将改变 ZY Code 与你交流的方式',

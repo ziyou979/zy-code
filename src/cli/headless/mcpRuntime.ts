@@ -26,7 +26,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { isChannelAllowlisted, isChannelsEnabled } from 'src/services/mcp/channelAllowlist.js'
 import { setupSdkMcpClients } from 'src/services/mcp/client.js'
-import { getAllMcpConfigs } from 'src/services/mcp/configResolution.js'
+import { getZyCodeMcpConfigs } from 'src/services/mcp/configResolution.js'
 import {
   runElicitationHooks,
   runElicitationResultHooks,
@@ -381,12 +381,6 @@ export class McpRuntime {
           headers: connection.config.headers,
           oauth: connection.config.oauth,
         }
-      } else if (connection.config.type === 'zyai-proxy') {
-        config = {
-          type: 'zyai-proxy' as const,
-          url: connection.config.url,
-          id: connection.config.id,
-        }
       } else if (connection.config.type === 'stdio' || connection.config.type === undefined) {
         const stdioConfig = connection.config as ScopedMcpServerConfig & McpStdioServerConfig
         config = {
@@ -479,7 +473,7 @@ export class McpRuntime {
   // process-transport-supported types and carries SDK-mode servers through
   // so applyMcpServerChanges' diff doesn't close their transports.
   async applyPluginMcpDiff(): Promise<void> {
-    const { servers: newConfigs } = await getAllMcpConfigs()
+    const { servers: newConfigs } = await getZyCodeMcpConfigs()
     const supportedConfigs: Record<string, McpServerConfigForProcessTransport> = {}
     for (const [name, config] of Object.entries(newConfigs)) {
       const type = config.type

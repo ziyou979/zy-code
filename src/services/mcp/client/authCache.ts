@@ -107,14 +107,14 @@ export function mcpBaseUrlAnalytics(serverRef: ScopedMcpServerConfig): {
 }
 
 /**
- * Shared handler for sse/http/zyai-proxy auth failures during connect:
+ * Shared handler for sse/http auth failures during connect:
  * emits zy_mcp_server_needs_auth, caches the needs-auth entry, and returns
  * the needs-auth connection result.
  */
 export function handleRemoteAuthFailure(
   name: string,
   serverRef: ScopedMcpServerConfig,
-  transportType: 'sse' | 'http' | 'zyai-proxy',
+  transportType: 'sse' | 'http',
 ): MCPServerConnection {
   logEvent('zy_mcp_server_needs_auth', {
     transportType: transportType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -123,7 +123,6 @@ export function handleRemoteAuthFailure(
   const label: Record<typeof transportType, string> = {
     sse: 'SSE',
     http: 'HTTP',
-    'zyai-proxy': 'zy.ai proxy',
   }
   logMCPDebug(name, `Authentication required for ${label[transportType]} server`)
   setMcpAuthCacheEntry(name)
