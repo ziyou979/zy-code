@@ -287,9 +287,6 @@ export type GlobalConfig = {
     lastShownTime?: number
   }
 
-  // 转录分享弹窗追踪（"不再询问"）
-  transcriptShareDismissed?: boolean
-
   // 记忆使用追踪
   memoryUsageCount: number // 用户向记忆添加内容的次数
 
