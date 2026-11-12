@@ -54,10 +54,11 @@ function getSyncMessages(): Record<string, string> {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       _syncMessages = require('./locales/en.js').en
     } else {
-      if (lang in localeLoaders) {
+      if (lang === 'zh-CN') {
+        // 写成字面量路径：打包器才会把它收进产物（模板字符串路径的 require 在 dist 里解析失败，
+        // 未预热时 tSync 会退化成输出 key 本身）
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const localeModule = require(`./locales/${lang}.js`)
-        _syncMessages = lang === 'zh-CN' ? localeModule.zhCN : localeModule[lang]
+        _syncMessages = require('./locales/zh-CN.js').zhCN
       } else {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         _syncMessages = require('./locales/en.js').en

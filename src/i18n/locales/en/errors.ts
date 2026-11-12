@@ -103,6 +103,21 @@ export const enErrors: TranslationResource = {
     'Failed to open a terminal. Make sure a supported terminal emulator is installed.',
   'cli.directConnect.disconnected': 'Server disconnected.',
   'cli.directConnect.failed': 'Failed to connect to server at {url}',
+  'cli.commander.unknownOption': "error: unknown option '{flag}'",
+  'cli.commander.unknownCommand': "error: unknown command '{name}'",
+  'cli.commander.optionMissingArgument': "error: option '{flags}' argument missing",
+  'cli.commander.invalidChoice':
+    "error: option '{flags}' argument '{value}' is invalid. Allowed choices are {choices}.",
+  'cli.commander.invalidArgument':
+    "error: option '{flags}' argument '{value}' is invalid. {detail}",
+  'cli.commander.missingArgument': "error: missing required argument '{name}'",
+  'cli.commander.missingMandatoryOption': "error: required option '{flags}' not specified",
+  'cli.commander.tooManyArguments':
+    'error: too many arguments. Expected {expected} argument(s) but got {received}.',
+  'cli.commander.tooManyArgumentsFor':
+    "error: too many arguments for '{command}'. Expected {expected} argument(s) but got {received}.",
+  'cli.commander.conflictingOption': 'error: {option} cannot be used with {conflicting}',
+  'cli.commander.didYouMean': '(Did you mean {suggestion}?)',
   'cli.errorPrefix': 'Error: {error}',
   'cli.filesRewound': 'Files rewound to state at message {uuid}',
   'cli.gitBashPathNotFound': 'ZY Code was unable to find ZY_CODE_GIT_BASH_PATH path "{path}"',
