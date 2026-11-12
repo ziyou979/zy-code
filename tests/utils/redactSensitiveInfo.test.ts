@@ -20,6 +20,14 @@ describe('redactSensitiveInfo', () => {
     expect(out).not.toContain('hunter2')
   })
 
+  test('多条规则叠加时不产生残缺标记', () => {
+    const out = redactSensitiveInfo(`OPENAI_API_KEY=sk-proj-${'x'.repeat(40)} next`)
+    expect(out).toBe('OPENAI_API_KEY=[REDACTED_API_KEY] next')
+    expect(redactSensitiveInfo(`Authorization: Bearer ghp_${'a'.repeat(36)}`)).toBe(
+      'Authorization: Bearer [REDACTED_TOKEN]',
+    )
+  })
+
   test('普通文本不变', () => {
     const text = 'TypeError: cannot read properties of undefined (reading "foo")\n中文描述'
     expect(redactSensitiveInfo(text)).toBe(text)

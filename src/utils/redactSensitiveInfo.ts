@@ -7,6 +7,20 @@
 export function redactSensitiveInfo(text: string): string {
   let redacted = text
 
+  // 请求头规则放最前：先整体替换 Authorization / x-api-key 的值，
+  // 避免后面的 token 规则先改写值、导致 Bearer 前缀被当成值。
+  // x-api-key 头
+  redacted = redacted.replace(
+    /(["']?x-api-key["']?\s*[:=]\s*["']?)(?!\[REDACTED)[^"',\s)}\]]+/gi,
+    '$1[REDACTED_API_KEY]',
+  )
+
+  // Authorization 头与 Bearer token
+  redacted = redacted.replace(
+    /(["']?authorization["']?\s*[:=]\s*["']?(bearer\s+)?)(?!\[REDACTED)[^"',\s)}\]]+/gi,
+    '$1[REDACTED_TOKEN]',
+  )
+
   // Anthropic 风格 key（sk-ant...），先处理带引号的，再处理裸露的
   redacted = redacted.replace(/"(sk-ant[^\s"']{24,})"/g, '"[REDACTED_API_KEY]"')
   redacted = redacted.replace(
@@ -42,31 +56,20 @@ export function redactSensitiveInfo(text: string): string {
     '[REDACTED_GCP_SERVICE_ACCOUNT]',
   )
 
-  // 请求头里的 x-api-key
-  redacted = redacted.replace(
-    /(["']?x-api-key["']?\s*[:=]\s*["']?)[^"',\s)}\]]+/gi,
-    '$1[REDACTED_API_KEY]',
-  )
-
-  // Authorization 头与 Bearer token
-  redacted = redacted.replace(
-    /(["']?authorization["']?\s*[:=]\s*["']?(bearer\s+)?)[^"',\s)}\]]+/gi,
-    '$1[REDACTED_TOKEN]',
-  )
-
   // AWS_* / GOOGLE_* 环境变量
   redacted = redacted.replace(
-    /(AWS[_-][A-Za-z0-9_]+\s*[=:]\s*)["']?[^"',\s)}\]]+["']?/gi,
+    /(AWS[_-][A-Za-z0-9_]+\s*[=:]\s*)(?!\[REDACTED)["']?[^"',\s)}\]]+["']?/gi,
     '$1[REDACTED_AWS_VALUE]',
   )
   redacted = redacted.replace(
-    /(GOOGLE[_-][A-Za-z0-9_]+\s*[=:]\s*)["']?[^"',\s)}\]]+["']?/gi,
+    /(GOOGLE[_-][A-Za-z0-9_]+\s*[=:]\s*)(?!\[REDACTED)["']?[^"',\s)}\]]+["']?/gi,
     '$1[REDACTED_GCP_VALUE]',
   )
 
   // 名字里带 API_KEY / TOKEN / SECRET / PASSWORD 的赋值
+  // （各赋值规则都跳过已被前面规则替换成 [REDACTED_*] 的值，避免留下多余的 ]）
   redacted = redacted.replace(
-    /((API[-_]?KEY|TOKEN|SECRET|PASSWORD)\s*[=:]\s*)["']?[^"',\s)}\]]+["']?/gi,
+    /((API[-_]?KEY|TOKEN|SECRET|PASSWORD)\s*[=:]\s*)(?!\[REDACTED)["']?[^"',\s)}\]]+["']?/gi,
     '$1[REDACTED]',
   )
   return redacted
