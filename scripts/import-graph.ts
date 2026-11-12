@@ -4,18 +4,20 @@
  * 供 lint-architecture.ts（层间依赖 / 环检测 / 传递依赖规则）复用，也可直接运行：
  *   bun scripts/import-graph.ts --unreferenced   # 列出从入口不可达、也无人引用的源文件
  *   bun scripts/import-graph.ts --path <from> <to>  # 打印一条运行时依赖链
- *   bun scripts/import-graph.ts --cycles             # 列出 src/ 内运行时静态 import 环（SCC）
+ *   bun scripts/import-graph.ts --cycles             # 列出 src/ 内模块初始化环（static + 顶层 require，SCC）
  *
  * 收集的边：
  *   - import ... from '…' / import '…'（含 import type，标记为 type）
  *   - export ... from '…'（含 export type，标记为 type）
  *   - import x = require('…')
- *   - import('…') 动态导入、require('…')（标记为 dynamic）
+ *   - 顶层 require('…')：不在任何函数体内、模块初始化时同步执行（如
+ *     `const x = feature('X') ? require('./x.js') : null`），标记为 init，参与环检测
+ *   - import('…') 动态导入、函数体内的 require('…')（标记为 dynamic）
  *   - typeof import('…') 类型查询（标记为 type）
  * 只解析能落到仓库内源文件的说明符（相对路径、`src/*` 别名、`@ant/*` workspace 包、
  * build.ts 插件映射的 native 包）；npm 依赖记为 external，不进入图。
  *
- * 取舍：不做 feature() 宏求值——被禁用 flag 包住的 require 仍算一条 dynamic 边。
+ * 取舍：不做 feature() 宏求值——被禁用 flag 包住的 require 仍照常记边（顶层为 init，函数内为 dynamic）。
  * 这样图偏保守（宁可多算可达），用于"确定无人引用"判断时不会误删。
  */
 
@@ -23,7 +25,16 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import * as ts from 'typescript'
 
-export type EdgeKind = 'static' | 'type' | 'dynamic'
+/**
+ * - static：import / export … from / import x = require，模块初始化时同步加载
+ * - init：顶层（不在函数体内）的 require()，同样在模块初始化时同步执行
+ * - dynamic：import()，以及函数体内的 require()——调用时才加载
+ * - type：纯类型引用，运行时擦除
+ */
+export type EdgeKind = 'static' | 'init' | 'type' | 'dynamic'
+
+/** 模块初始化时同步执行、会造成初始化环的边 */
+export const RUNTIME_INIT_KINDS: EdgeKind[] = ['static', 'init']
 
 export interface ImportEdge {
   /** 相对仓库根的源文件路径（正斜杠） */
@@ -155,6 +166,25 @@ interface RawImport {
   pos: number
 }
 
+/**
+ * 节点是否位于某个函数体内（函数声明/表达式、箭头函数、方法、构造器、访问器），
+ * 即只有被调用时才执行。类的实例字段初始化器在构造时执行，也算延迟；
+ * 静态字段与 static {} 块在模块初始化时执行，不算。
+ */
+function isInsideFunctionBody(node: ts.Node): boolean {
+  for (let cur = node.parent; cur; cur = cur.parent) {
+    if (ts.isFunctionLike(cur)) return true
+    if (
+      ts.isPropertyDeclaration(cur) &&
+      cur.parent &&
+      ts.isClassLike(cur.parent) &&
+      !cur.modifiers?.some((m) => m.kind === ts.SyntaxKind.StaticKeyword)
+    )
+      return true
+  }
+  return false
+}
+
 /** 从单个文件收集所有模块说明符 */
 export function collectImports(file: string, content: string): RawImport[] {
   const kind = file.endsWith('.tsx')
@@ -218,7 +248,11 @@ export function collectImports(file: string, content: string): RawImport[] {
         if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
           out.push({ specifier: spec, kind: 'dynamic', pos: node.getStart(sf) })
         } else if (ts.isIdentifier(node.expression) && node.expression.text === 'require') {
-          out.push({ specifier: spec, kind: 'dynamic', pos: node.getStart(sf) })
+          out.push({
+            specifier: spec,
+            kind: isInsideFunctionBody(node) ? 'dynamic' : 'init',
+            pos: node.getStart(sf),
+          })
         }
       }
     }
@@ -271,7 +305,7 @@ export function buildImportGraph(rootDir: string, dirs: string[] = SOURCE_DIRS):
 export function reachable(
   graph: ImportGraph,
   starts: string[],
-  kinds: EdgeKind[] = ['static', 'dynamic', 'type'],
+  kinds: EdgeKind[] = ['static', 'init', 'dynamic', 'type'],
 ): Set<string> {
   const seen = new Set<string>(starts)
   const stack = [...starts]
@@ -291,7 +325,7 @@ export function shortestPath(
   graph: ImportGraph,
   from: string,
   isTarget: (file: string) => boolean,
-  kinds: EdgeKind[] = ['static'],
+  kinds: EdgeKind[] = RUNTIME_INIT_KINDS,
 ): string[] | null {
   const prev = new Map<string, string | null>([[from, null]])
   const queue = [from]
@@ -316,7 +350,7 @@ export function shortestPath(
  */
 export function stronglyConnectedComponents(
   graph: ImportGraph,
-  kinds: EdgeKind[] = ['static'],
+  kinds: EdgeKind[] = RUNTIME_INIT_KINDS,
   filter: (file: string) => boolean = () => true,
 ): string[][] {
   const index = new Map<string, number>()
@@ -388,10 +422,10 @@ if (import.meta.main) {
     }
   } else if (args[0] === '--path' && args[1] && args[2]) {
     const target = args[2]
-    const path = shortestPath(graph, args[1], (f) => f.includes(target), ['static'])
-    console.log(path ? path.join('\n  -> ') : '(no static path)')
+    const path = shortestPath(graph, args[1], (f) => f.includes(target), RUNTIME_INIT_KINDS)
+    console.log(path ? path.join('\n  -> ') : '(no static/init path)')
   } else if (args[0] === '--cycles') {
-    const sccs = stronglyConnectedComponents(graph, ['static'], (f) => f.startsWith('src/'))
+    const sccs = stronglyConnectedComponents(graph, RUNTIME_INIT_KINDS, (f) => f.startsWith('src/'))
     sccs.sort((a, b) => b.length - a.length)
     console.log(`cycles=${sccs.length} files=${sccs.reduce((n, c) => n + c.length, 0)}`)
     for (const comp of sccs)
@@ -399,7 +433,7 @@ if (import.meta.main) {
   } else if (args[0] === '--unresolved') {
     for (const u of graph.unresolved) console.log(`${u.from}:${u.line}\t${u.specifier}`)
   } else {
-    const counts = { static: 0, type: 0, dynamic: 0 }
+    const counts = { static: 0, init: 0, type: 0, dynamic: 0 }
     for (const e of graph.edges) counts[e.kind]++
     console.log(
       `files=${graph.files.length} edges=${graph.edges.length} ${JSON.stringify(counts)} unresolved=${graph.unresolved.length}`,
