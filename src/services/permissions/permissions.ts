@@ -149,6 +149,7 @@ async function runPermissionRequestHooksForHeadlessAgent(
         }
         return {
           behavior: 'deny',
+          // i18n-ignore: deny 的 message 会作为 tool_result 回传给模型
           message: decision.message || 'Permission denied by hook',
           decisionReason: {
             type: 'hook',

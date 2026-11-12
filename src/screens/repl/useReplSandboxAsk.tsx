@@ -126,7 +126,7 @@ export function useReplSandboxAsk({
       key: 'sandbox-unavailable',
       jsx: (
         <>
-          <Text color="warning">sandbox disabled</Text>
+          <Text color="warning">{tSync('notif.sandboxDisabled')}</Text>
           <Text dimColor> · /sandbox</Text>
         </>
       ),

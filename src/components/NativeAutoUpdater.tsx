@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { tSync } from '../i18n/index.js'
 import { useEffect, useRef, useState } from 'react'
 import { logEvent } from 'src/services/analytics/index.js'
 import { logForDebugging } from 'src/services/infra/debug.js'
@@ -199,7 +200,8 @@ export function NativeAutoUpdater({
       )}
       {autoUpdaterResult?.status === 'install_failed' && (
         <Text color="error" wrap="truncate">
-          ✗ Auto-update failed &middot; Try <Text bold>/status</Text>
+          ✗ {tSync('updater.autoUpdateFailed')} &middot; {tSync('updater.try')}{' '}
+          <Text bold>/status</Text>
         </Text>
       )}
       {maxVersionIssue && isInternalBuild() && (

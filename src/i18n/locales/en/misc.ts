@@ -1697,4 +1697,23 @@ export const enMisc: TranslationResource = {
   'notif.compactError': 'Error compacting conversation',
   'notif.autoModeClassifierError':
     'Auto mode classifier error — prompts dumped to {path} (included in /share)',
+  'settings.invalid.title': 'Settings Error',
+  'settings.invalid.skippedNote':
+    'Files with errors are skipped entirely, not just the invalid settings.',
+  'settings.invalid.exitAndFix': 'Exit and fix manually',
+  'settings.invalid.continueWithout': 'Continue without these settings',
+  'updater.autoUpdateFailed': 'Auto-update failed',
+  'updater.try': 'Try',
+  'hooks.ui.blockingError': '{hook} hook returned blocking error',
+  'hooks.ui.error': '{hook} hook error',
+  'hooks.ui.warning': '{hook} hook warning',
+  'install.failed': 'Installation failed',
+  'install.tryForce': 'Try running with --force to override checks',
+  'notif.lspFailed': 'LSP for {name} failed',
+  'notif.pluginForDetails': '/plugin for details',
+  'notif.pluginsFailed_one': '{count} plugin failed to install',
+  'notif.pluginsFailed_other': '{count} plugins failed to install',
+  'notif.pluginInstallFailed': 'Failed to install {name}',
+  'notif.sandboxDisabled': 'sandbox disabled',
+  'diff.binaryFile': 'Binary file - cannot display diff',
 }

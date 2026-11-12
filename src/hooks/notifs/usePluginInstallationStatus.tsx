@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
+import { tSync } from '../../i18n/index.js'
 import { useNotifications } from '../../context/notifications.js'
 import { Text } from '../../ink/index.js'
 import { useAppState } from '../../state/AppState.js'
 import { logForDebugging } from '../../services/infra/debug.js'
-import { plural } from '../../utils/stringUtils.js'
 export function usePluginInstallationStatus() {
   const { addNotification } = useNotifications()
   const installationStatus = useAppState((s) => s.plugins.installationStatus)
@@ -44,9 +44,12 @@ export function usePluginInstallationStatus() {
       jsx: (
         <>
           <Text color="error">
-            {totalFailed} {plural(totalFailed, 'plugin')} failed to install
+            {tSync(
+              totalFailed === 1 ? 'notif.pluginsFailed_one' : 'notif.pluginsFailed_other',
+              { count: totalFailed },
+            )}
           </Text>
-          <Text dimColor={true}> · /plugin for details</Text>
+          <Text dimColor={true}> · {tSync('notif.pluginForDetails')}</Text>
         </>
       ),
       priority: 'medium',
