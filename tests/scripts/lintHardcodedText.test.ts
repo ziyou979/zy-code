@@ -13,7 +13,9 @@ const lintScript = join(repoRoot, 'scripts', 'lint-hardcoded-text.ts')
 const tempRoots: string[] = []
 
 afterEach(() => {
-  for (const root of tempRoots.splice(0)) rmSync(root, { recursive: true, force: true })
+  for (const root of tempRoots.splice(0)) {
+    rmSync(root, { recursive: true, force: true })
+  }
 })
 
 function kinds(rel: string, src: string): string[] {

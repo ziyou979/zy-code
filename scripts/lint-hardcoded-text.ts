@@ -145,17 +145,39 @@ function normalize(text: string): string {
 
 /** 明显是代码 / 路径 / 标识符 / 符号的文本（沿用 lint-architecture H 的规则并略放宽） */
 export function isCodeLike(text: string): boolean {
-  if (!text) return true
-  if (!/[A-Za-z]{2,}/.test(text)) return true
-  if (/^(https?:\/\/|\/|~\/|\.{1,2}\/|[A-Za-z]:\\)/.test(text)) return true
-  if (/^&[a-z]+;$/.test(text)) return true
-  if (/^[A-Z0-9_]+$/.test(text)) return true
-  if (/^[A-Za-z0-9_.-]+$/.test(text) && /[._-]/.test(text)) return true
-  if (/^[a-z0-9_.:/#@-]+$/.test(text) && /[./:_#@-]/.test(text)) return true
-  if (/^--?[a-z][\w-]*$/.test(text)) return true // CLI flag
-  if (/^\{.+\}$/.test(text)) return true
-  if (/^[a-z]+[A-Z]\w*$/.test(text)) return true // camelCase 标识符
-  if (/^\/[a-z][\w-]*$/.test(text)) return true // /command
+  if (!text) {
+    return true
+  }
+  if (!/[A-Za-z]{2,}/.test(text)) {
+    return true
+  }
+  if (/^(https?:\/\/|\/|~\/|\.{1,2}\/|[A-Za-z]:\\)/.test(text)) {
+    return true
+  }
+  if (/^&[a-z]+;$/.test(text)) {
+    return true
+  }
+  if (/^[A-Z0-9_]+$/.test(text)) {
+    return true
+  }
+  if (/^[A-Za-z0-9_.-]+$/.test(text) && /[._-]/.test(text)) {
+    return true
+  }
+  if (/^[a-z0-9_.:/#@-]+$/.test(text) && /[./:_#@-]/.test(text)) {
+    return true
+  }
+  if (/^--?[a-z][\w-]*$/.test(text)) {
+    return true // CLI flag
+  }
+  if (/^\{.+\}$/.test(text)) {
+    return true
+  }
+  if (/^[a-z]+[A-Z]\w*$/.test(text)) {
+    return true // camelCase 标识符
+  }
+  if (/^\/[a-z][\w-]*$/.test(text)) {
+    return true // /command
+  }
   return false
 }
 
@@ -165,40 +187,22 @@ function isSentence(text: string): boolean {
 }
 
 function literalText(node: ts.Node): string | null {
-  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    return node.text
+  }
   if (ts.isTemplateExpression(node)) {
     return [node.head.text, ...node.templateSpans.map((s) => s.literal.text)].join(' ')
   }
   return null
 }
 
-/** 表达式里「直接作为结果」的字符串字面量：穿过 ?: / && / || / ?? / 括号 / + 拼接 */
-function resultLiterals(node: ts.Expression): ts.Expression[] {
-  if (ts.isParenthesizedExpression(node)) return resultLiterals(node.expression)
-  if (ts.isConditionalExpression(node)) {
-    return [...resultLiterals(node.whenTrue), ...resultLiterals(node.whenFalse)]
-  }
-  if (ts.isBinaryExpression(node)) {
-    const op = node.operatorToken.kind
-    if (op === ts.SyntaxKind.AmpersandAmpersandToken) return resultLiterals(node.right)
-    if (
-      op === ts.SyntaxKind.BarBarToken ||
-      op === ts.SyntaxKind.QuestionQuestionToken ||
-      op === ts.SyntaxKind.PlusToken
-    ) {
-      return [...resultLiterals(node.left), ...resultLiterals(node.right)]
-    }
-    return []
-  }
-  if (literalText(node) !== null) return [node]
-  return []
-}
-
 // ---------------------------------------------------------------- 上下文判定
 
 function calleeName(call: ts.CallExpression): string {
   const e = call.expression
-  if (ts.isIdentifier(e)) return e.text
+  if (ts.isIdentifier(e)) {
+    return e.text
+  }
   if (ts.isPropertyAccessExpression(e)) {
     const obj = e.expression
     const objName = ts.isIdentifier(obj)
@@ -234,14 +238,20 @@ function isNotificationCallee(name: string): boolean {
 }
 
 function propName(name: ts.PropertyName): string | null {
-  if (ts.isIdentifier(name) || ts.isStringLiteral(name)) return name.text
+  if (ts.isIdentifier(name) || ts.isStringLiteral(name)) {
+    return name.text
+  }
   return null
 }
 
 function enclosingFunctionName(node: ts.Node): string | null {
   for (let p = node.parent; p; p = p.parent) {
-    if (ts.isFunctionDeclaration(p) && p.name) return p.name.text
-    if (ts.isMethodDeclaration(p) && ts.isIdentifier(p.name)) return p.name.text
+    if (ts.isFunctionDeclaration(p) && p.name) {
+      return p.name.text
+    }
+    if (ts.isMethodDeclaration(p) && ts.isIdentifier(p.name)) {
+      return p.name.text
+    }
     if (
       (ts.isArrowFunction(p) || ts.isFunctionExpression(p)) &&
       ts.isVariableDeclaration(p.parent) &&
@@ -249,7 +259,9 @@ function enclosingFunctionName(node: ts.Node): string | null {
     ) {
       return p.parent.name.text
     }
-    if (ts.isArrowFunction(p) || ts.isFunctionExpression(p)) return null
+    if (ts.isArrowFunction(p) || ts.isFunctionExpression(p)) {
+      return null
+    }
   }
   return null
 }
@@ -288,7 +300,9 @@ function classifyInner(
     cur = cur.parent
   }
   const parent = cur.parent
-  if (!parent) return null
+  if (!parent) {
+    return null
+  }
 
   // JSX
   if (ts.isJsxExpression(parent)) {
@@ -310,7 +324,9 @@ function classifyInner(
   // 调用参数
   if (ts.isCallExpression(parent) && parent.arguments.includes(cur as ts.Expression)) {
     const name = calleeName(parent)
-    if (STDIO_CALLEES.has(name)) return { kind: 'stdio', ui: false, anchor: parent }
+    if (STDIO_CALLEES.has(name)) {
+      return { kind: 'stdio', ui: false, anchor: parent }
+    }
     if (name === 'onDone' && parent.arguments[0] === cur) {
       return { kind: 'command-output', ui: false, anchor: parent }
     }
@@ -332,7 +348,9 @@ function classifyInner(
   if (ts.isPropertyAssignment(parent) && parent.initializer === cur) {
     const key = propName(parent.name)
     const obj = parent.parent
-    if (!key || !ts.isObjectLiteralExpression(obj)) return null
+    if (!key || !ts.isObjectLiteralExpression(obj)) {
+      return null
+    }
     const call = obj.parent
     if (ts.isCallExpression(call)) {
       const name = calleeName(call)
@@ -372,8 +390,9 @@ function classifyInner(
     if (rel.startsWith('services/api/') && /(_MESSAGE|_ERROR_MESSAGE[A-Z_]*)$/.test(n)) {
       return { kind: 'api-error', ui: false, anchor: parent }
     }
-    if (isUiFile(rel) && UI_VARIABLE_NAMES.has(n))
+    if (isUiFile(rel) && UI_VARIABLE_NAMES.has(n)) {
       return { kind: 'ui-prop', ui: true, anchor: parent }
+    }
     return null
   }
 
@@ -419,7 +438,9 @@ function isTranslationCall(node: ts.Node): boolean {
 
 export function scanSource(rel: string, src: string): Hit[] {
   const ign = ignoredLines(src)
-  if (ign.file) return []
+  if (ign.file) {
+    return []
+  }
   const kindOfScript = rel.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   const sf = ts.createSourceFile(rel, src, ts.ScriptTarget.Latest, true, kindOfScript)
   const hits: Hit[] = []
@@ -428,7 +449,9 @@ export function scanSource(rel: string, src: string): Hit[] {
   const add = (node: ts.Node, kind: Kind, text: string, anchor?: ts.Node) => {
     const line = lineOf(node)
     // i18n-ignore 作用于字面量所在行，或其使用位置（调用 / 属性 / 声明）的起始行
-    if (ign.lines.has(line) || (anchor && ign.lines.has(lineOf(anchor)))) return
+    if (ign.lines.has(line) || (anchor && ign.lines.has(lineOf(anchor)))) {
+      return
+    }
     hits.push({ file: rel, line, kind, text: normalize(text).slice(0, 120) })
   }
 
@@ -438,7 +461,9 @@ export function scanSource(rel: string, src: string): Hit[] {
     }
     if (ts.isJsxText(node)) {
       const text = normalize(node.getText(sf))
-      if (!isCodeLike(text)) add(node, 'jsx-text', text)
+      if (!isCodeLike(text)) {
+        add(node, 'jsx-text', text)
+      }
       return
     }
     const text = literalText(node)
@@ -447,7 +472,9 @@ export function scanSource(rel: string, src: string): Hit[] {
       const ctx = classify(node as ts.Expression, rel)
       if (ctx) {
         const t = normalize(text)
-        if (ctx.ui ? !isCodeLike(t) : isSentence(t)) add(node, ctx.kind, t, ctx.anchor)
+        if (ctx.ui ? !isCodeLike(t) : isSentence(t)) {
+          add(node, ctx.kind, t, ctx.anchor)
+        }
       }
     }
     ts.forEachChild(node, visit)
@@ -459,10 +486,15 @@ export function scanSource(rel: string, src: string): Hit[] {
 function walk(dir: string): string[] {
   const out: string[] = []
   for (const e of readdirSync(dir, { withFileTypes: true })) {
-    if (e.name === 'node_modules' || e.name.startsWith('.')) continue
+    if (e.name === 'node_modules' || e.name.startsWith('.')) {
+      continue
+    }
     const full = join(dir, e.name)
-    if (e.isDirectory()) out.push(...walk(full))
-    else if (/\.tsx?$/.test(e.name)) out.push(full)
+    if (e.isDirectory()) {
+      out.push(...walk(full))
+    } else if (/\.tsx?$/.test(e.name)) {
+      out.push(full)
+    }
   }
   return out
 }
@@ -471,7 +503,9 @@ export function scanRepo(): Hit[] {
   const hits: Hit[] = []
   for (const file of walk(SRC).sort()) {
     const rel = relative(SRC, file).split('\\').join('/')
-    if (isExcludedFile(rel)) continue
+    if (isExcludedFile(rel)) {
+      continue
+    }
     hits.push(...scanSource(rel, readFileSync(file, 'utf8')))
   }
   return hits
@@ -498,7 +532,9 @@ function countHits(hits: Hit[]): Counts {
 
 function totals(hits: Hit[]): Partial<Record<Kind, number>> {
   const t: Partial<Record<Kind, number>> = {}
-  for (const k of KINDS) t[k] = hits.filter((h) => h.kind === k).length
+  for (const k of KINDS) {
+    t[k] = hits.filter((h) => h.kind === k).length
+  }
   return t
 }
 
@@ -530,12 +566,16 @@ function report(hits: Hit[], out: string) {
   lines.push('# 硬编码用户文案审计（scripts/lint-hardcoded-text.ts）', '')
   lines.push(`生成时间：${new Date().toISOString()}；命中总数：**${hits.length}**`, '')
   lines.push('## 按类别', '', '| 类别 | 数量 |', '|---|---:|')
-  for (const k of KINDS) lines.push(`| ${k} | ${t[k]} |`)
+  for (const k of KINDS) {
+    lines.push(`| ${k} | ${t[k]} |`)
+  }
   lines.push('', '## 按区域 × 类别', '')
   const areas = new Map<string, Hit[]>()
   for (const h of hits) {
     const a = area(h.file)
-    if (!areas.has(a)) areas.set(a, [])
+    if (!areas.has(a)) {
+      areas.set(a, [])
+    }
     areas.get(a)!.push(h)
   }
   lines.push(
@@ -587,13 +627,17 @@ function compare(hits: Hit[], verbose: boolean): number {
   for (const [file, kinds] of Object.entries(cur)) {
     for (const [kind, n] of Object.entries(kinds) as [Kind, number][]) {
       const base = baseline.files[file]?.[kind] ?? 0
-      if (n > base) over.push(`${file}|${kind}|${n}|${base}`)
+      if (n > base) {
+        over.push(`${file}|${kind}|${n}|${base}`)
+      }
     }
   }
   for (const [file, kinds] of Object.entries(baseline.files)) {
     for (const [kind, n] of Object.entries(kinds) as [Kind, number][]) {
       const now = cur[file]?.[kind] ?? 0
-      if (now < n) shrinkable += n - now
+      if (now < n) {
+        shrinkable += n - now
+      }
     }
   }
   const baseTotal = Object.values(baseline.totals).reduce((a, b) => a + (b ?? 0), 0)
