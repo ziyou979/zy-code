@@ -82,7 +82,6 @@ export function usePromptInputSubmission(context: ReturnType<typeof usePromptInp
     hasSuppressedDialogs,
     isLocalJSXCommandActive,
     insertTextRef,
-    voiceInterimRange,
     mainLoopModel,
     isModalOverlayActive,
     isAutoUpdating,

@@ -99,8 +99,4 @@ export type Props = {
     deleteScreenSelection?: (bounds: SelectionBounds) => boolean
     cursorOffset: number
   } | null>
-  voiceInterimRange?: {
-    start: number
-    end: number
-  } | null
 }

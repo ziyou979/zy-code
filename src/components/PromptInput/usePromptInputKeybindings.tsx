@@ -67,7 +67,6 @@ export function usePromptInputKeybindings(context: ReturnType<typeof usePromptIn
     hasSuppressedDialogs,
     isLocalJSXCommandActive,
     insertTextRef,
-    voiceInterimRange,
     mainLoopModel,
     isModalOverlayActive,
     isAutoUpdating,

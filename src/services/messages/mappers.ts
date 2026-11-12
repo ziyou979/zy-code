@@ -164,7 +164,7 @@ export function toSDKMessages(messages: Message[]): WireMessage[] {
 }
 
 /**
- * Converts local command output (e.g. /voice, /cost) to a well-formed
+ * Converts local command output (e.g. /cost) to a well-formed
  * WireAssistantMessage so downstream consumers (mobile apps, session-ingress
  * v1alpha→v1beta converter) can parse it without schema changes.
  *

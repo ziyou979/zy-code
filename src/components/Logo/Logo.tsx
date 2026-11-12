@@ -53,8 +53,7 @@ const ExperimentEnrollmentNotice: any = null
 // Conditional require so ChannelsNotice.tsx tree-shakes when both flags are
 // false. A module-scope helper component inside a feature() ternary does NOT
 // tree-shake (docs/feature-gating.md); the require pattern eliminates the
-// whole file. VoiceModeNotice uses the unsafe helper pattern but VOICE_MODE
-// is external: true so it's moot there.
+// whole file.
 /* eslint-disable @typescript-eslint/no-require-imports */
 const ChannelsNoticeModule =
   feature('KAIROS') || feature('KAIROS_CHANNELS')

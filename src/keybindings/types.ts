@@ -52,6 +52,12 @@ export const KEYBINDING_CONTEXTS = [
 
 type KeybindingContextName = (typeof KEYBINDING_CONTEXTS)[number]
 
+/**
+ * 已随功能一起移除的 action。旧的 keybindings.json 里可能仍有这些条目：
+ * 解析时直接忽略（不生成绑定，按键照常传给输入框），校验时给出警告，不会导致启动失败。
+ */
+export const REMOVED_KEYBINDING_ACTIONS: ReadonlySet<string> = new Set(['voice:pushToTalk'])
+
 /** 快捷键 action 名称的字符串类型，例如 `app:toggleTranscript`。 */
 type KeybindingAction = string
 

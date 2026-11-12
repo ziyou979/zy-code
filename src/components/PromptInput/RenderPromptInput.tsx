@@ -68,7 +68,6 @@ export function renderPromptInput(context: ReturnType<typeof usePromptInputViewM
     hasSuppressedDialogs,
     isLocalJSXCommandActive,
     insertTextRef,
-    voiceInterimRange,
     mainLoopModel,
     isModalOverlayActive,
     isAutoUpdating,

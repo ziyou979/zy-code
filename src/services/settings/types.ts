@@ -576,7 +576,7 @@ export const SettingsSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          'Preferred language for Zy responses and voice dictation (e.g., "Chinese", "Japanese", "Español"). Also controls UI text language.',
+          'Preferred language for Zy responses (e.g., "Chinese", "Japanese", "Español"). Also controls UI text language.',
         ),
       skipWebFetchPreflight: z
         .boolean()
@@ -836,14 +836,6 @@ export const SettingsSchema = lazySchema(() =>
                 ),
             }
           : {}),
-      ...(feature('VOICE_MODE')
-        ? {
-            voiceEnabled: z
-              .boolean()
-              .optional()
-              .describe('Enable voice mode (hold-to-talk dictation)'),
-          }
-        : {}),
       ...(feature('KAIROS')
         ? {
             assistant: z

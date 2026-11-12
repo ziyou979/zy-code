@@ -296,12 +296,6 @@ export type GlobalConfig = {
   // Powerup 课程进度追踪
   powerupsUnlocked?: string[] // 已完成的 powerup 课程 id 列表
 
-  // 语音模式通知追踪
-  voiceNoticeSeenCount?: number // 语音模式可用通知已展示的次数
-  voiceLangHintShownCount?: number // /voice 听写语言提示已展示的次数
-  voiceLangHintLastLanguage?: string // 上次展示提示时解析的 STT 语言代码 — 变更时重置计数
-  voiceFooterHintSeenCount?: number // "按住 X 说话" 底部提示已展示的会话数
-
   // 实验注册通知追踪（按实验 ID 索引）
   experimentNoticesSeenCount?: Record<string, number>
 

@@ -91,6 +91,5 @@ export const COMMAND_DESCRIPTION_I18N_KEYS: Record<string, string> = {
   peers: 'commands.peers',
   proactive: 'commands.proactive',
   stats: 'commands.stats',
-  voice: 'commands.voice',
   install: 'commands.install',
 }

@@ -99,4 +99,26 @@ describe('快捷键回归', () => {
       getSyncLoadErrorWarnings(Object.assign(new Error('missing'), { code: 'ENOENT' })),
     ).toEqual([])
   })
+
+  test('旧配置里已移除的 voice:pushToTalk 被忽略并警告，不会报错', () => {
+    const blocks = [
+      {
+        context: 'Chat' as const,
+        bindings: { space: 'voice:pushToTalk', 'ctrl+t': 'app:toggleTodos' },
+      },
+    ]
+    // 解析：不生成该绑定，space 不会被拦截
+    const parsed = parseBindings(blocks)
+    expect(parsed.map((b) => b.action)).toEqual(['app:toggleTodos'])
+    expect(resolveKey(' ', plainKey, ['Chat'], parsed)).toEqual({ type: 'none' })
+    // 校验：只有一条 warning 级别的提示，没有 error
+    const warnings = validateUserConfig(blocks)
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toMatchObject({
+      type: 'invalid_action',
+      severity: 'warning',
+      key: 'space',
+      action: 'voice:pushToTalk',
+    })
+  })
 })

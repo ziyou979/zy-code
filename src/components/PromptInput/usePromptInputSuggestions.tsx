@@ -65,7 +65,6 @@ export function usePromptInputSuggestions(context: ReturnType<typeof usePromptIn
     hasSuppressedDialogs,
     isLocalJSXCommandActive,
     insertTextRef,
-    voiceInterimRange,
     mainLoopModel,
     isModalOverlayActive,
     isAutoUpdating,
@@ -311,17 +310,6 @@ export function usePromptInputSuggestions(context: ReturnType<typeof usePromptIn
       })
     }
 
-    // Dim interim voice dictation text
-    if (voiceInterimRange) {
-      highlights.push({
-        start: voiceInterimRange.start,
-        end: voiceInterimRange.end,
-        color: undefined,
-        dimColor: true,
-        priority: 1,
-      })
-    }
-
     // Rainbow highlighting for ultrathink keyword (per-character cycling colors)
     if (isUltrathinkEnabled()) {
       for (const trigger of thinkTriggers) {
@@ -350,7 +338,6 @@ export function usePromptInputSuggestions(context: ReturnType<typeof usePromptIn
     slashCommandTriggers,
     tokenBudgetTriggers,
     slackChannelTriggers,
-    voiceInterimRange,
     thinkTriggers,
   ])
 
