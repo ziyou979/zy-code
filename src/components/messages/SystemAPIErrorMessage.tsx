@@ -37,11 +37,14 @@ export function SystemAPIErrorMessage({ message, verbose }: Props) {
           {truncated && <CtrlOToExpand />}
           {
             <Text dimColor={true}>
-              {tSync(retryInSecondsLive === 1 ? 'apiError.retrying_one' : 'apiError.retrying_other', {
-                seconds: retryInSecondsLive,
-                attempt: retryAttempt,
-                max: maxRetries ?? '',
-              })}
+              {tSync(
+                retryInSecondsLive === 1 ? 'apiError.retrying_one' : 'apiError.retrying_other',
+                {
+                  seconds: retryInSecondsLive,
+                  attempt: retryAttempt,
+                  max: maxRetries ?? '',
+                },
+              )}
               {process.env.API_TIMEOUT_MS
                 ? tSync('apiError.retryTimeoutHint', { ms: process.env.API_TIMEOUT_MS })
                 : ''}

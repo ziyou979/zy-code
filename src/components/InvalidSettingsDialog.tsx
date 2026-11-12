@@ -26,9 +26,7 @@ export function InvalidSettingsDialog({ settingsErrors, onContinue, onExit }: Pr
   return (
     <Dialog title={tSync('settings.invalid.title')} onCancel={onExit} color="warning">
       {<ValidationErrorsList errors={settingsErrors} />}
-      {
-        <Text dimColor={true}>{tSync('settings.invalid.skippedNote')}</Text>
-      }
+      {<Text dimColor={true}>{tSync('settings.invalid.skippedNote')}</Text>}
       {
         <Select
           options={[

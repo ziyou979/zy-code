@@ -72,7 +72,9 @@ describe('scanSource', () => {
       console.error('Kept in English on purpose')
       console.error('This one is flagged')`
     expect(kinds('cli/x.ts', src)).toEqual(['stdio:This one is flagged'])
-    expect(kinds('cli/x.ts', `// i18n-ignore-file: 桩\nconsole.error('Not implemented yet here')`)).toEqual([])
+    expect(
+      kinds('cli/x.ts', `// i18n-ignore-file: 桩\nconsole.error('Not implemented yet here')`),
+    ).toEqual([])
   })
 
   test('发给模型的文件（prompt / 系统提示词 / skills）、i18n 资源、测试不扫描', () => {
@@ -107,7 +109,9 @@ describe('基线门禁', () => {
   }
 
   test('存量允许、新增失败、修掉后提示可收紧', () => {
-    const root = fixture({ 'src/components/A.tsx': 'export const A = () => <Text>Old debt here</Text>\n' })
+    const root = fixture({
+      'src/components/A.tsx': 'export const A = () => <Text>Old debt here</Text>\n',
+    })
     expect(run(root, ['--write-baseline']).code).toBe(0)
     expect(run(root).code).toBe(0)
 

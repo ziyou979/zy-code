@@ -1466,7 +1466,9 @@ function getConfig<A>(file: string, createDefault: () => A, throwOnInvalid?: boo
       // 通知用户配置文件损坏及可用备份
       const backupPath = findMostRecentBackup(file)
       if (corruptedBackupPath) {
-        process.stderr.write(`${tSync('config.corruptedBackedUp', { backup: corruptedBackupPath })}\n`)
+        process.stderr.write(
+          `${tSync('config.corruptedBackedUp', { backup: corruptedBackupPath })}\n`,
+        )
       } else if (alreadyBackedUp) {
         process.stderr.write(`${tSync('config.corruptedAlreadyBackedUp')}\n`)
       }

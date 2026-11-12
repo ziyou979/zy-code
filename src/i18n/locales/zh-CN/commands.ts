@@ -592,8 +592,10 @@ export const zhCommands: TranslationResource = {
   'commands.out.addDir.cancelledPath': '未将 {path} 添加为工作目录。',
   'commands.out.assistant.enabled': '已开启助手模式。',
   'commands.out.assistant.disabled': '已关闭助手模式。',
-  'commands.out.assistant.statusEnabled': '助手模式当前已开启。使用 "/assistant on" 或 "/assistant off" 切换。',
-  'commands.out.assistant.statusDisabled': '助手模式当前已关闭。使用 "/assistant on" 或 "/assistant off" 切换。',
+  'commands.out.assistant.statusEnabled':
+    '助手模式当前已开启。使用 "/assistant on" 或 "/assistant off" 切换。',
+  'commands.out.assistant.statusDisabled':
+    '助手模式当前已关闭。使用 "/assistant on" 或 "/assistant off" 切换。',
   'commands.out.branch.done': '已创建对话分支{title}。恢复命令：/resume {sessionId}',
   'commands.out.branch.failed': '创建对话分支失败：{error}',
   'commands.out.brief.notEnabled': '你的账户未开启 Brief 工具',

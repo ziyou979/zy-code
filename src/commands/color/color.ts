@@ -16,10 +16,7 @@ export async function call(
 ): Promise<null> {
   // Teammates cannot set their own color
   if (isTeammate()) {
-    onDone(
-      tSync('commands.out.color.teammate'),
-      { display: 'system' },
-    )
+    onDone(tSync('commands.out.color.teammate'), { display: 'system' })
     return null
   }
 

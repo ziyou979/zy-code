@@ -44,10 +44,9 @@ export function usePluginInstallationStatus() {
       jsx: (
         <>
           <Text color="error">
-            {tSync(
-              totalFailed === 1 ? 'notif.pluginsFailed_one' : 'notif.pluginsFailed_other',
-              { count: totalFailed },
-            )}
+            {tSync(totalFailed === 1 ? 'notif.pluginsFailed_one' : 'notif.pluginsFailed_other', {
+              count: totalFailed,
+            })}
           </Text>
           <Text dimColor={true}> · {tSync('notif.pluginForDetails')}</Text>
         </>

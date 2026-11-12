@@ -41,9 +41,9 @@ export const enErrors: TranslationResource = {
   'apiError.manyImageDimensions.nonInteractive':
     'An image in the conversation exceeds the dimension limit for many-image requests (2000px). Start a new session with fewer images.',
   'apiError.maxOutputTokens':
-    'API Error: Zy\'s response exceeded the {max} output token maximum. To configure this behavior, set the ZY_CODE_MAX_OUTPUT_TOKENS environment variable.',
+    "API Error: Zy's response exceeded the {max} output token maximum. To configure this behavior, set the ZY_CODE_MAX_OUTPUT_TOKENS environment variable.",
   'apiError.modelNotFound':
-    'There\'s an issue with the selected model ({model}). It may not exist or you may not have access to it. Run {switchCmd} to pick a different model.',
+    "There's an issue with the selected model ({model}). It may not exist or you may not have access to it. Run {switchCmd} to pick a different model.",
   'apiError.notLoggedIn': 'Not logged in · Please run /login',
   'apiError.oauthOrgNotAllowed': 'Your account does not have access to ZY Code. Please run /login.',
   'apiError.oauthOrgNotAllowedNonInteractive':
@@ -94,7 +94,7 @@ export const enErrors: TranslationResource = {
   'cli.auth.pasteCode': 'Paste the authorization code:',
   'cli.auth.unknownProvider': 'Unknown provider: {provider}',
   'cli.betaNotAllowed':
-    'Warning: Beta header \'{beta}\' is not allowed. Only the following betas are supported: {allowed}',
+    "Warning: Beta header '{beta}' is not allowed. Only the following betas are supported: {allowed}",
   'cli.chromeFailed': 'Error: Failed to run with ZY in Chrome.',
   'cli.configErrorIn': 'Configuration error in {file}: {error}',
   'cli.continueNotFound': 'No conversation found to continue',

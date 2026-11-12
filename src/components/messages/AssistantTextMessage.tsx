@@ -47,9 +47,7 @@ function InvalidApiKeyMessage() {
     <MessageResponse>
       <Box flexDirection="column">
         <Text color="error">{localizeApiErrorText(getInvalidApiKeyErrorMessage())}</Text>
-        {isKeychainLocked && (
-          <Text dimColor={true}>{tSync('apiError.keychainLockedHint')}</Text>
-        )}
+        {isKeychainLocked && <Text dimColor={true}>{tSync('apiError.keychainLockedHint')}</Text>}
       </Box>
     </MessageResponse>
   )

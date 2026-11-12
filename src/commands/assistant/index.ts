@@ -25,7 +25,9 @@ const command = {
         return {
           type: 'text',
           value: tSync(
-            isActive ? 'commands.out.assistant.statusEnabled' : 'commands.out.assistant.statusDisabled',
+            isActive
+              ? 'commands.out.assistant.statusEnabled'
+              : 'commands.out.assistant.statusDisabled',
           ),
         }
       },

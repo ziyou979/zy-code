@@ -70,9 +70,7 @@ export function filterAllowedSdkBetas(sdkBetas: string[] | undefined): string[] 
   const { allowed, disallowed } = partitionBetasByAllowlist(sdkBetas)
   for (const beta of disallowed) {
     // biome-ignore lint/suspicious/noConsole: intentional warning
-    console.warn(
-      tSync('cli.betaNotAllowed', { beta, allowed: ALLOWED_SDK_BETAS.join(', ') }),
-    )
+    console.warn(tSync('cli.betaNotAllowed', { beta, allowed: ALLOWED_SDK_BETAS.join(', ') }))
   }
   return allowed.length > 0 ? allowed : undefined
 }

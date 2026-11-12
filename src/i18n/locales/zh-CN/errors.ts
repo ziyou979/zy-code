@@ -12,7 +12,8 @@ export const zhErrors: TranslationResource = {
   'apiError.creditBalanceTooLowHint': '余额不足 · 充值：https://platform.zy.com/settings/billing',
   'apiError.customOffSwitch': '当前模型请求量较高。请使用 /model 切换到其他模型。',
   'apiError.duplicateToolUseId': 'API 错误：400，对话历史中存在重复的 tool_use ID。',
-  'apiError.duplicateToolUseId.withRewind': 'API 错误：400，对话历史中存在重复的 tool_use ID。运行 /rewind 恢复对话。',
+  'apiError.duplicateToolUseId.withRewind':
+    'API 错误：400，对话历史中存在重复的 tool_use ID。运行 /rewind 恢复对话。',
   'apiError.extraUsageRequired.interactive':
     'API 错误：1M 上下文需要额外用量 · 运行 /extra-usage 开启，或用 /model 切换到标准上下文',
   'apiError.extraUsageRequired.nonInteractive':
@@ -24,19 +25,23 @@ export const zhErrors: TranslationResource = {
   'apiError.keychainLockedHint': '· 请在另一个终端运行：security unlock-keychain',
   'apiError.manyImageDimensions.interactive':
     '对话中有图片超出多图请求的尺寸上限（2000px）。运行 /compact 从上下文中移除旧图片，或开启新会话。',
-  'apiError.manyImageDimensions.nonInteractive': '对话中有图片超出多图请求的尺寸上限（2000px）。请用更少的图片开启新会话。',
+  'apiError.manyImageDimensions.nonInteractive':
+    '对话中有图片超出多图请求的尺寸上限（2000px）。请用更少的图片开启新会话。',
   'apiError.maxOutputTokens':
     'API 错误：Zy 的回复超出了 {max} 个输出 token 的上限。可通过环境变量 ZY_CODE_MAX_OUTPUT_TOKENS 调整。',
-  'apiError.modelNotFound': '所选模型（{model}）有问题：可能不存在，或你没有访问权限。运行 {switchCmd} 选择其他模型。',
+  'apiError.modelNotFound':
+    '所选模型（{model}）有问题：可能不存在，或你没有访问权限。运行 {switchCmd} 选择其他模型。',
   'apiError.notLoggedIn': '未登录 · 请运行 /login',
   'apiError.oauthOrgNotAllowed': '你的账户无权使用 ZY Code。请运行 /login。',
   'apiError.oauthOrgNotAllowedNonInteractive': '你的组织无权使用 ZY。请重新登录或联系管理员。',
   'apiError.orgDisabledEnvKey': '你的 API 密钥所属的组织已被停用 · 请更新或取消设置该环境变量',
-  'apiError.orgDisabledEnvKeyWithOAuth': '你的 API 密钥所属的组织已被停用 · 取消设置该环境变量即可改用你的订阅',
+  'apiError.orgDisabledEnvKeyWithOAuth':
+    '你的 API 密钥所属的组织已被停用 · 取消设置该环境变量即可改用你的订阅',
   'apiError.pdfInvalid.interactive': 'PDF 文件无效。连按两次 Esc 返回，换一个文件重试。',
   'apiError.pdfInvalid.nonInteractive': 'PDF 文件无效。请先转换成文本（例如用 pdftotext）。',
   'apiError.pdfPasswordProtected.interactive': 'PDF 受密码保护。请连按两次 Esc 编辑消息后重试。',
-  'apiError.pdfPasswordProtected.nonInteractive': 'PDF 受密码保护。请用命令行工具提取或转换该 PDF。',
+  'apiError.pdfPasswordProtected.nonInteractive':
+    'PDF 受密码保护。请用命令行工具提取或转换该 PDF。',
   'apiError.pdfTooLarge.interactive':
     'PDF 过大（最多 {pages} 页、{size}）。连按两次 Esc 返回重试，或先用 pdftotext 转成文本。',
   'apiError.pdfTooLarge.nonInteractive':
@@ -44,10 +49,12 @@ export const zhErrors: TranslationResource = {
   'apiError.promptTooLong': '提示词过长',
   'apiError.refusal.interactive':
     'API 错误：该请求似乎违反了使用政策，ZY Code 无法回应。请连按两次 Esc 编辑上一条消息，或开启新会话让 ZY Code 协助其他任务。',
-  'apiError.refusal.nonInteractive': 'API 错误：该请求似乎违反了使用政策，ZY Code 无法回应。请换个说法或换一种做法。',
+  'apiError.refusal.nonInteractive':
+    'API 错误：该请求似乎违反了使用政策，ZY Code 无法回应。请换个说法或换一种做法。',
   'apiError.repeated529': '连续多次收到 529 过载错误',
   'apiError.requestRejected429': 'API 错误：请求被拒绝（429）· {detail}',
-  'apiError.requestTooLarge.interactive': '请求过大（最大 {size}）。连按两次 Esc 返回，换一个更小的文件重试。',
+  'apiError.requestTooLarge.interactive':
+    '请求过大（最大 {size}）。连按两次 Esc 返回，换一个更小的文件重试。',
   'apiError.requestTooLarge.nonInteractive': '请求过大（最大 {size}）。请换一个更小的文件。',
   'apiError.retryTimeoutHint': ' · API_TIMEOUT_MS={ms}ms，可尝试调大',
   'apiError.retrying_one': '{seconds} 秒后重试…（第 {attempt}/{max} 次）',
@@ -57,7 +64,8 @@ export const zhErrors: TranslationResource = {
   'apiError.tokenRevoked': 'OAuth 令牌已被撤销 · 请运行 /login',
   'apiError.tokenRevokedNonInteractive': '你的账户无权使用 ZY。请重新登录或联系管理员。',
   'apiError.toolUseConcurrency': 'API 错误：400，工具调用存在并发问题。',
-  'apiError.toolUseConcurrency.withRewind': 'API 错误：400，工具调用存在并发问题。运行 /rewind 恢复对话。',
+  'apiError.toolUseConcurrency.withRewind':
+    'API 错误：400，工具调用存在并发问题。运行 /rewind 恢复对话。',
   'apiError.waitAndRetry': 'API 错误：请稍候片刻再试。',
   'cli.auth.availableProviders': '可用的 provider：{providers}',
   'cli.auth.availableProvidersHeader': '可用的 provider：',
@@ -65,7 +73,7 @@ export const zhErrors: TranslationResource = {
   'cli.auth.loginUsage': '用法：zy auth login --provider <provider>',
   'cli.auth.pasteCode': '粘贴授权码：',
   'cli.auth.unknownProvider': '未知的 provider：{provider}',
-  'cli.betaNotAllowed': '警告：不允许使用 Beta 请求头 \'{beta}\'。仅支持以下 beta：{allowed}',
+  'cli.betaNotAllowed': "警告：不允许使用 Beta 请求头 '{beta}'。仅支持以下 beta：{allowed}",
   'cli.chromeFailed': '错误：无法以 ZY in Chrome 模式运行。',
   'cli.configErrorIn': '配置文件 {file} 有误：{error}',
   'cli.continueNotFound': '没有可继续的对话',
@@ -111,7 +119,8 @@ export const zhErrors: TranslationResource = {
   'cli.mcpAdd.commandRequired': '错误：提供了服务器名称时，必须同时提供命令。',
   'cli.mcpAdd.ifHttp': '如果这是 HTTP 服务器，请使用：zy mcp add --transport http {name} {command}',
   'cli.mcpAdd.ifSse': '如果这是 SSE 服务器，请使用：zy mcp add --transport sse {name} {command}',
-  'cli.mcpAdd.looksLikeUrl': '警告：命令 "{command}" 看起来像 URL，但由于未指定 --transport，将按 stdio 服务器处理。',
+  'cli.mcpAdd.looksLikeUrl':
+    '警告：命令 "{command}" 看起来像 URL，但由于未指定 --transport，将按 stdio 服务器处理。',
   'cli.mcpAdd.nameRequired': '错误：必须提供服务器名称。',
   'cli.mcpAdd.oauthFlagsIgnored':
     '警告：--client-id、--client-secret、--callback-port 与 --xaa 仅支持 HTTP/SSE 传输，stdio 下将被忽略。',
@@ -132,7 +141,8 @@ export const zhErrors: TranslationResource = {
   'cli.resumeLoadTranscriptFailed': '无法从文件加载对话记录：{file}',
   'cli.resumeSessionAtRequiresResume': '错误：--resume-session-at 需要配合 --resume 使用',
   'cli.resumeSessionNotFound': '未找到会话 ID 为 {sessionId} 的对话',
-  'cli.rewindFilesNotUserMessage': '错误：--rewind-files 需要用户消息的 UUID，但 {uuid} 不是本会话中的用户消息',
+  'cli.rewindFilesNotUserMessage':
+    '错误：--rewind-files 需要用户消息的 UUID，但 {uuid} 不是本会话中的用户消息',
   'cli.rewindFilesRequiresResume': '错误：--rewind-files 需要配合 --resume 使用',
   'cli.rewindFilesStandalone': '错误：--rewind-files 是独立操作，不能与 prompt 一起使用',
   'cli.sandboxDisabled': '沙箱已停用：{reason}',
@@ -142,7 +152,8 @@ export const zhErrors: TranslationResource = {
   'cli.sandboxRequiredUnavailable': '错误：要求使用沙箱，但沙箱不可用：{reason}',
   'cli.sessionEndHookFailed': 'SessionEnd hook [{command}] 执行失败：{output}',
   'cli.sshNoPrintMode': '错误：zy ssh 不支持无头（-p/--print）模式',
-  'cli.streamJsonRequiresVerbose': '错误：使用 --print 时，--output-format=stream-json 需要配合 --verbose',
+  'cli.streamJsonRequiresVerbose':
+    '错误：使用 --print 时，--output-format=stream-json 需要配合 --verbose',
   'cli.taskBudgetInvalid': '--task-budget 必须是正整数',
   'cli.unexpectedError': '意外错误',
   'config.backupExists': '存在备份文件：{backup}',

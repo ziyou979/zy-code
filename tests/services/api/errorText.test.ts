@@ -162,9 +162,13 @@ describe('localizeApiErrorText', () => {
   test('中文界面：常量、带插值模板、交互 / 非交互两套措辞', () => {
     zh()
     expect(localizeApiErrorText(API_TIMEOUT_ERROR_MESSAGE)).toBe('请求超时')
-    expect(localizeApiErrorText(TOKEN_REVOKED_ERROR_MESSAGE)).toBe('OAuth 令牌已被撤销 · 请运行 /login')
+    expect(localizeApiErrorText(TOKEN_REVOKED_ERROR_MESSAGE)).toBe(
+      'OAuth 令牌已被撤销 · 请运行 /login',
+    )
     expect(
-      localizeApiErrorText(apiErrorText('apiError.modelNotFound', { model: 'm1', switchCmd: '/model' })),
+      localizeApiErrorText(
+        apiErrorText('apiError.modelNotFound', { model: 'm1', switchCmd: '/model' }),
+      ),
     ).toBe('所选模型（m1）有问题：可能不存在，或你没有访问权限。运行 /model 选择其他模型。')
     expect(
       localizeApiErrorText(apiErrorText('apiError.requestRejected429', { detail: 'slow down' })),

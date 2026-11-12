@@ -354,7 +354,9 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
       if (isInternalBuild() && classifierResult.errorDumpPath && context.addNotification) {
         context.addNotification({
           key: 'auto-mode-error-dump',
-          text: tSync('notif.autoModeClassifierError', { path: String(classifierResult.errorDumpPath) }),
+          text: tSync('notif.autoModeClassifierError', {
+            path: String(classifierResult.errorDumpPath),
+          }),
           priority: 'immediate',
           color: 'error',
         })

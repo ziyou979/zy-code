@@ -637,7 +637,7 @@ export const enCommands: TranslationResource = {
   'managePlugins.installing': 'Installing...',
   'commands.out.unknownError': 'Unknown error',
   'commands.out.unknownErrorOccurred': 'Unknown error occurred',
-  'commands.out.browserFailedVisit': 'Couldn\'t open browser. Visit: {url}',
+  'commands.out.browserFailedVisit': "Couldn't open browser. Visit: {url}",
   'commands.out.browserFailedVisitAlt': 'Failed to open browser. Visit: {url}',
   'commands.out.addDir.cancelled': 'Did not add a working directory.',
   'commands.out.addDir.cancelledPath': 'Did not add {path} as a working directory.',

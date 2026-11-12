@@ -302,7 +302,9 @@ function classifyInner(
     return null
   }
   if (ts.isJsxAttribute(parent)) {
-    return UI_ATTR_NAMES.has(parent.name.getText()) ? { kind: 'jsx-attr', ui: true, anchor: parent } : null
+    return UI_ATTR_NAMES.has(parent.name.getText())
+      ? { kind: 'jsx-attr', ui: true, anchor: parent }
+      : null
   }
 
   // 调用参数
@@ -361,12 +363,17 @@ function classifyInner(
   }
 
   // 变量 / 常量
-  if (ts.isVariableDeclaration(parent) && parent.initializer === cur && ts.isIdentifier(parent.name)) {
+  if (
+    ts.isVariableDeclaration(parent) &&
+    parent.initializer === cur &&
+    ts.isIdentifier(parent.name)
+  ) {
     const n = parent.name.text
     if (rel.startsWith('services/api/') && /(_MESSAGE|_ERROR_MESSAGE[A-Z_]*)$/.test(n)) {
       return { kind: 'api-error', ui: false, anchor: parent }
     }
-    if (isUiFile(rel) && UI_VARIABLE_NAMES.has(n)) return { kind: 'ui-prop', ui: true, anchor: parent }
+    if (isUiFile(rel) && UI_VARIABLE_NAMES.has(n))
+      return { kind: 'ui-prop', ui: true, anchor: parent }
     return null
   }
 
@@ -473,7 +480,12 @@ export function scanRepo(): Hit[] {
 // ---------------------------------------------------------------- 基线
 
 type Counts = Record<string, Partial<Record<Kind, number>>>
-type Baseline = { generatedAt: string; note: string; totals: Partial<Record<Kind, number>>; files: Counts }
+type Baseline = {
+  generatedAt: string
+  note: string
+  totals: Partial<Record<Kind, number>>
+  files: Counts
+}
 
 function countHits(hits: Hit[]): Counts {
   const c: Counts = {}
@@ -526,9 +538,14 @@ function report(hits: Hit[], out: string) {
     if (!areas.has(a)) areas.set(a, [])
     areas.get(a)!.push(h)
   }
-  lines.push(`| 区域 | 合计 | ${KINDS.join(' | ')} |`, `|---|---:|${KINDS.map(() => '---:').join('|')}|`)
+  lines.push(
+    `| 区域 | 合计 | ${KINDS.join(' | ')} |`,
+    `|---|---:|${KINDS.map(() => '---:').join('|')}|`,
+  )
   for (const [a, hs] of [...areas].sort((x, y) => y[1].length - x[1].length)) {
-    lines.push(`| ${a} | ${hs.length} | ${KINDS.map((k) => hs.filter((h) => h.kind === k).length || '').join(' | ')} |`)
+    lines.push(
+      `| ${a} | ${hs.length} | ${KINDS.map((k) => hs.filter((h) => h.kind === k).length || '').join(' | ')} |`,
+    )
   }
   lines.push('', '## 按文件（命中数降序）', '', '| 文件 | 合计 | 类别分布 |', '|---|---:|---|')
   const counts = countHits(hits)
@@ -538,10 +555,20 @@ function report(hits: Hit[], out: string) {
       Object.values(x[1]).reduce((a, b) => a + (b ?? 0), 0),
   )) {
     const sum = Object.values(c).reduce((a, b) => a + (b ?? 0), 0)
-    lines.push(`| src/${f} | ${sum} | ${Object.entries(c).map(([k, v]) => `${k}:${v}`).join(' ')} |`)
+    lines.push(
+      `| src/${f} | ${sum} | ${Object.entries(c)
+        .map(([k, v]) => `${k}:${v}`)
+        .join(' ')} |`,
+    )
   }
-  lines.push('', '## 非 UI 类别明细（api-error / cli-error / stdio / command-output / notification）', '')
-  for (const h of hits.filter((x) => !['jsx-text', 'jsx-expr', 'jsx-attr', 'ui-prop'].includes(x.kind))) {
+  lines.push(
+    '',
+    '## 非 UI 类别明细（api-error / cli-error / stdio / command-output / notification）',
+    '',
+  )
+  for (const h of hits.filter(
+    (x) => !['jsx-text', 'jsx-expr', 'jsx-attr', 'ui-prop'].includes(x.kind),
+  )) {
     lines.push(`- \`src/${h.file}:${h.line}\` [${h.kind}] ${h.text.replace(/\|/g, '\\|')}`)
   }
   writeFileSync(out, `${lines.join('\n')}\n`)
@@ -571,7 +598,9 @@ function compare(hits: Hit[], verbose: boolean): number {
   }
   const baseTotal = Object.values(baseline.totals).reduce((a, b) => a + (b ?? 0), 0)
   if (over.length) {
-    console.error('❌ 新增了用户可见的硬编码英文文案（请改用 t / tSync，并在 en 与 zh-CN 两个 locale 加 key）：\n')
+    console.error(
+      '❌ 新增了用户可见的硬编码英文文案（请改用 t / tSync，并在 en 与 zh-CN 两个 locale 加 key）：\n',
+    )
     for (const o of over) {
       const [file, kind, n, base] = o.split('|')
       console.error(`  src/${file} [${kind}] ${n} 处（基线 ${base}）`)
@@ -604,7 +633,9 @@ if (import.meta.main) {
     report(hits, args[args.indexOf('--report') + 1] ?? 'hardcoded-text-audit.md')
   } else if (args.includes('--list')) {
     const prefix = args[args.indexOf('--list') + 1]
-    for (const h of hits.filter((x) => !prefix || prefix.startsWith('--') || x.file.startsWith(prefix.replace(/^src\//, '')))) {
+    for (const h of hits.filter(
+      (x) => !prefix || prefix.startsWith('--') || x.file.startsWith(prefix.replace(/^src\//, '')),
+    )) {
       console.log(`src/${h.file}:${h.line}\t${h.kind}\t${h.text}`)
     }
   } else {

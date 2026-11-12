@@ -124,7 +124,9 @@ export async function call(
       permissionContext={appState.toolPermissionContext}
       onAddDirectory={handleAddDirectory}
       onCancel={() => {
-        onDone(tSync('commands.out.addDir.cancelledPath', { path: chalk.bold(result.absolutePath) }))
+        onDone(
+          tSync('commands.out.addDir.cancelledPath', { path: chalk.bold(result.absolutePath) }),
+        )
       }}
     />
   )

@@ -1644,7 +1644,8 @@ export const zhMisc: TranslationResource = {
   'notif.escAgainToClear': '再按一次 Esc 清空',
   'notif.conversationSummarized': '对话已总结（按 {shortcut} 查看历史）',
   'notif.compactError': '压缩对话时出错',
-  'notif.autoModeClassifierError': '自动模式分类器出错 —— 提示词已导出到 {path}（会包含在 /share 中）',
+  'notif.autoModeClassifierError':
+    '自动模式分类器出错 —— 提示词已导出到 {path}（会包含在 /share 中）',
   'settings.invalid.title': '设置错误',
   'settings.invalid.skippedNote': '有错误的文件会被整体跳过，而不只是跳过无效的设置项。',
   'settings.invalid.exitAndFix': '退出并手动修复',

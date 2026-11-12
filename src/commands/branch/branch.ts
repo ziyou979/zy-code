@@ -273,7 +273,8 @@ export async function call(
 
     return null
   } catch (error) {
-    const message = error instanceof Error ? error.message : tSync('commands.out.unknownErrorOccurred')
+    const message =
+      error instanceof Error ? error.message : tSync('commands.out.unknownErrorOccurred')
     onDone(tSync('commands.out.branch.failed', { error: message }))
     return null
   }
