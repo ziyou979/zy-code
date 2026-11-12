@@ -204,7 +204,6 @@ export interface ReplMainViewProps {
   abortController: AbortController | null
   // remote
   isRemoteSession: boolean
-  // 语音
   // 其他 callback
   handleBackgroundSession: () => void
   mrRender: () => React.ReactNode

@@ -84,7 +84,6 @@ export interface ReplTranscriptViewProps {
   globalKeybindingProps: Parameters<typeof GlobalKeybindingHandlers>[0]
   cancelRequestProps: Parameters<typeof CancelRequestHandler>[0]
   focusedInputDialog: FocusedInputDialog
-  // 语音
   // callback
   onSubmit: (
     input: string,

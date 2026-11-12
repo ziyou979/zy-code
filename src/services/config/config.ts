@@ -348,9 +348,6 @@ export type GlobalConfig = {
   inputNeededNotifEnabled?: boolean
   agentPushNotifEnabled?: boolean
 
-  // ZY Code 使用追踪
-  ZyCodeFirstTokenDate?: string // 用户首次获取 ZY Code OAuth token 的 ISO 时间戳
-
   // 模型切换提示追踪（ant-only）
   modelSwitchCalloutDismissed?: boolean // 用户是否选择了"不再显示"
   modelSwitchCalloutLastShown?: number // 上次展示的时间戳（24小时内不再展示）
