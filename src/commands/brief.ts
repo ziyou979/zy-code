@@ -1,4 +1,5 @@
 import { feature } from 'bun:bundle'
+import { tSync } from '../i18n/index.js'
 import { z } from 'zod/v4'
 import { getKairosActive, setUserMsgOptIn } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
@@ -71,7 +72,7 @@ const brief = {
             gated: true,
             source: 'slash_command' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           })
-          onDone('Brief tool is not enabled for your account', {
+          onDone(tSync('commands.out.brief.notEnabled'), {
             display: 'system',
           })
           return null
@@ -117,7 +118,7 @@ const brief = {
               }\n</system-reminder>`,
             ]
 
-        onDone(newState ? 'Brief-only mode enabled' : 'Brief-only mode disabled', {
+        onDone(tSync(newState ? 'commands.out.brief.enabled' : 'commands.out.brief.disabled'), {
           display: 'system',
           metaMessages,
         })

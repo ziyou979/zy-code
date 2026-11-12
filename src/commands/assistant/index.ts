@@ -1,4 +1,5 @@
 import type { Command } from '../../commands/index.js'
+import { tSync } from '../../i18n/index.js'
 import type { LocalCommandModule } from '../types.js'
 
 const command = {
@@ -15,15 +16,17 @@ const command = {
         const isActive = isAssistantMode()
         if (args === 'on') {
           enableAssistantMode()
-          return { type: 'text', value: 'Assistant mode enabled.' }
+          return { type: 'text', value: tSync('commands.out.assistant.enabled') }
         }
         if (args === 'off') {
           disableAssistantMode()
-          return { type: 'text', value: 'Assistant mode disabled.' }
+          return { type: 'text', value: tSync('commands.out.assistant.disabled') }
         }
         return {
           type: 'text',
-          value: `Assistant mode is currently ${isActive ? 'enabled' : 'disabled'}. Use "/assistant on" or "/assistant off" to toggle.`,
+          value: tSync(
+            isActive ? 'commands.out.assistant.statusEnabled' : 'commands.out.assistant.statusDisabled',
+          ),
         }
       },
     }

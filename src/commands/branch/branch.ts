@@ -1,4 +1,5 @@
 import { randomUUID, type UUID } from 'node:crypto'
+import { tSync } from '../../i18n/index.js'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { getOriginalCwd, getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { LocalJSXCommandContext } from '../../commands/index.js'
@@ -267,13 +268,13 @@ export async function call(
       onDone(successMessage, { display: 'system' })
     } else {
       // Fallback if resume not available
-      onDone(`Branched conversation${titleInfo}. Resume with: /resume ${sessionId}`)
+      onDone(tSync('commands.out.branch.done', { title: titleInfo, sessionId }))
     }
 
     return null
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error occurred'
-    onDone(`Failed to branch conversation: ${message}`)
+    const message = error instanceof Error ? error.message : tSync('commands.out.unknownErrorOccurred')
+    onDone(tSync('commands.out.branch.failed', { error: message }))
     return null
   }
 }

@@ -1682,4 +1682,19 @@ export const enMisc: TranslationResource = {
     'Comma-separated input types, e.g. text, image/jpeg, image/png, application/pdf. Exact MIME declarations only allow those formats.',
   'modelCapability.invalidInputTypes':
     'Enter at least one valid input category or MIME type (without parameters or wildcards).',
+  'notif.sentTo': 'Sent to @{name}',
+  'notif.externalEditorFailed': 'External editor failed: {error}',
+  'notif.effortHighThisTurn': 'Effort set to high for this turn',
+  'notif.idePluginNotConnected': 'IDE plugin not connected · /status for info',
+  'notif.ideExtensionInstallFailed': 'IDE extension install failed (see /status for info)',
+  'notif.noBackgroundAgents': 'No background agents running',
+  'notif.pressAgainToStopAgents': 'Press {shortcut} again to stop background agents',
+  'notif.imageInClipboard': 'Image in clipboard · {shortcut} to paste',
+  'notif.pluginsFlagged': 'Plugins flagged. Check /plugins',
+  'notif.pluginsChanged': 'Plugins changed. Run /reload-plugins to activate.',
+  'notif.escAgainToClear': 'Esc again to clear',
+  'notif.conversationSummarized': 'Conversation summarized ({shortcut} for history)',
+  'notif.compactError': 'Error compacting conversation',
+  'notif.autoModeClassifierError':
+    'Auto mode classifier error — prompts dumped to {path} (included in /share)',
 }

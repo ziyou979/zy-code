@@ -1631,4 +1631,18 @@ export const zhMisc: TranslationResource = {
   'modelCapability.inputTypesHint':
     '用逗号分隔，例如 text, image/jpeg, image/png, application/pdf。具体 MIME 声明仅允许对应格式。',
   'modelCapability.invalidInputTypes': '请填写至少一个有效输入类别或 MIME 类型，不含参数或通配符。',
+  'notif.sentTo': '已发送给 @{name}',
+  'notif.externalEditorFailed': '外部编辑器出错：{error}',
+  'notif.effortHighThisTurn': '本轮 effort 已设为 high',
+  'notif.idePluginNotConnected': 'IDE 插件未连接 · 详见 /status',
+  'notif.ideExtensionInstallFailed': 'IDE 扩展安装失败（详见 /status）',
+  'notif.noBackgroundAgents': '没有正在运行的后台 agent',
+  'notif.pressAgainToStopAgents': '再按一次 {shortcut} 停止后台 agent',
+  'notif.imageInClipboard': '剪贴板中有图片 · 按 {shortcut} 粘贴',
+  'notif.pluginsFlagged': '有插件被标记，请查看 /plugins',
+  'notif.pluginsChanged': '插件已变更，运行 /reload-plugins 生效。',
+  'notif.escAgainToClear': '再按一次 Esc 清空',
+  'notif.conversationSummarized': '对话已总结（按 {shortcut} 查看历史）',
+  'notif.compactError': '压缩对话时出错',
+  'notif.autoModeClassifierError': '自动模式分类器出错 —— 提示词已导出到 {path}（会包含在 /share 中）',
 }

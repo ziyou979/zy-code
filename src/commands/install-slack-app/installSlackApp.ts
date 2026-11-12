@@ -1,4 +1,5 @@
 import type { LocalCommandResult } from '../../commands/index.js'
+import { tSync } from '../../i18n/index.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { openBrowser } from '../../services/browser/browser.js'
 import { saveGlobalConfig } from '../../services/config/config.js'
@@ -19,12 +20,12 @@ export async function call(): Promise<LocalCommandResult> {
   if (success) {
     return {
       type: 'text',
-      value: 'Opening Slack app installation page in browser…',
+      value: tSync('commands.out.slack.opening'),
     }
   } else {
     return {
       type: 'text',
-      value: `Couldn't open browser. Visit: ${SLACK_APP_URL}`,
+      value: tSync('commands.out.browserFailedVisit', { url: SLACK_APP_URL }),
     }
   }
 }

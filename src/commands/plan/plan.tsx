@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { tSync } from '../../i18n/index.js'
 import { handlePlanModeTransition } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { LocalJSXCommandContext } from '../../commands/index.js'
 import { Box, Text } from '../../ink/index.js'
@@ -66,11 +67,12 @@ export async function call(
     }))
     const description = args.trim()
     if (description && description !== 'open') {
+      // i18n-ignore: shouldQuery —— 这条会作为用户消息发给模型，保持英文
       onDone('Enabled plan mode', {
         shouldQuery: true,
       })
     } else {
-      onDone('Enabled plan mode')
+      onDone(tSync('commands.out.plan.enabled'))
     }
     return null
   }
@@ -79,7 +81,7 @@ export async function call(
   const planContent = getPlan()
   const planPath = getPlanFilePath()
   if (!planContent) {
-    onDone('Already in plan mode. No plan written yet.')
+    onDone(tSync('commands.out.plan.noPlanYet'))
     return null
   }
 
@@ -88,9 +90,9 @@ export async function call(
   if (argList[0] === 'open') {
     const result = await editFileInEditor(planPath)
     if (result.error) {
-      onDone(`Failed to open plan in editor: ${result.error}`)
+      onDone(tSync('commands.out.plan.openFailed', { error: String(result.error) }))
     } else {
-      onDone(`Opened plan in editor: ${planPath}`)
+      onDone(tSync('commands.out.plan.opened', { path: planPath }))
     }
     return null
   }

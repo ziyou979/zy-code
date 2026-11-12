@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { tSync } from '../../i18n/index.js'
 import { useNotifications } from 'src/context/notifications.js'
 import { Text } from 'src/ink/index.js'
 import type { MCPServerConnection } from 'src/services/mcp/types.js'
@@ -99,7 +100,7 @@ export function useIDEStatusIndicator({ ideSelection, mcpClients, ideInstallatio
     }
     addNotification({
       key: 'ide-status-jetbrains-disconnected',
-      text: 'IDE plugin not connected \xB7 /status for info',
+      text: tSync('notif.idePluginNotConnected'),
       priority: 'medium',
     })
   }, [addNotification, removeNotification, showJetBrainsInfo])
@@ -110,7 +111,7 @@ export function useIDEStatusIndicator({ ideSelection, mcpClients, ideInstallatio
     }
     addNotification({
       key: 'ide-status-install-error',
-      text: 'IDE extension install failed (see /status for info)',
+      text: tSync('notif.ideExtensionInstallFailed'),
       color: 'error',
       priority: 'medium',
     })
