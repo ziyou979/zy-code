@@ -371,11 +371,8 @@ export function MCPRemoteServerMenu({
       value: 'tools',
     })
   }
-  // biome-ignore lint/suspicious/noExplicitAny: MCP 协议动态类型处理
   // zy.ai connector（zyai-proxy）的认证依赖 Anthropic 后端，已移除，不提供认证操作。
-  if (srv.config.type === 'zyai-proxy') {
-    // 无操作
-  } else {
+  if (srv.config.type !== 'zyai-proxy') {
     if (isEffectivelyAuthenticated) {
       menuOptions.push({
         label: tSync('mcp.reauthenticate'),
@@ -385,8 +382,7 @@ export function MCPRemoteServerMenu({
         label: tSync('mcp.clearAuthentication'),
         value: 'clear-auth',
       })
-    }
-    if (!isEffectivelyAuthenticated) {
+    } else {
       menuOptions.push({
         label: tSync('mcp.authenticate'),
         value: 'auth',
