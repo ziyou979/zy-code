@@ -17,6 +17,7 @@ import {
   startsWithApiErrorPrefix,
   TOKEN_REVOKED_ERROR_MESSAGE,
 } from '../../services/api/errors.js'
+import { localizeApiErrorText } from '../../services/api/errorText.js'
 import { getDefaultStandardModel, renderModelName } from '../../services/model/model.js'
 import { isMacOsKeychainLocked } from '../../services/secure-storage/macOsKeychainStorage.js'
 import type { TextBlock } from '../../types/llm.js'
@@ -37,15 +38,17 @@ type Props = {
   verbose: boolean
   width?: number | string
   onOpenRateLimitOptions?: () => void
+  /** 合成的 API 错误消息：识别仍按持久化英文 text，展示按当前界面语言 */
+  isApiErrorMessage?: boolean
 }
 function InvalidApiKeyMessage() {
   const isKeychainLocked = isMacOsKeychainLocked()
   return (
     <MessageResponse>
       <Box flexDirection="column">
-        <Text color="error">{getInvalidApiKeyErrorMessage()}</Text>
+        <Text color="error">{localizeApiErrorText(getInvalidApiKeyErrorMessage())}</Text>
         {isKeychainLocked && (
-          <Text dimColor={true}>· Run in another terminal: security unlock-keychain</Text>
+          <Text dimColor={true}>{tSync('apiError.keychainLockedHint')}</Text>
         )}
       </Box>
     </MessageResponse>
@@ -57,6 +60,7 @@ export function AssistantTextMessage({
   shouldShowDot,
   verbose,
   onOpenRateLimitOptions,
+  isApiErrorMessage,
 }: Props) {
   const { text } = param
   const isSelected = useContext(MessageActionsSelectedContext)
@@ -73,7 +77,7 @@ export function AssistantTextMessage({
   if (text === INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL) {
     return (
       <MessageResponse height={1}>
-        <Text color="error">{INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL}</Text>
+        <Text color="error">{localizeApiErrorText(INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL)}</Text>
       </MessageResponse>
     )
   }
@@ -84,16 +88,14 @@ export function AssistantTextMessage({
     case PROMPT_TOO_LONG_ERROR_MESSAGE: {
       return (
         <MessageResponse height={1}>
-          <Text color="error">Context limit reached · /compact or /clear to continue</Text>
+          <Text color="error">{tSync('apiError.contextLimitReached')}</Text>
         </MessageResponse>
       )
     }
     case CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE: {
       return (
         <MessageResponse height={1}>
-          <Text color="error">
-            Credit balance too low · Add funds: https://platform.zy.com/settings/billing
-          </Text>
+          <Text color="error">{tSync('apiError.creditBalanceTooLowHint')}</Text>
         </MessageResponse>
       )
     }
@@ -101,14 +103,14 @@ export function AssistantTextMessage({
     case ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH: {
       return (
         <MessageResponse>
-          <Text color="error">{text}</Text>
+          <Text color="error">{localizeApiErrorText(text)}</Text>
         </MessageResponse>
       )
     }
     case TOKEN_REVOKED_ERROR_MESSAGE: {
       return (
         <MessageResponse height={1}>
-          <Text color="error">{TOKEN_REVOKED_ERROR_MESSAGE}</Text>
+          <Text color="error">{localizeApiErrorText(TOKEN_REVOKED_ERROR_MESSAGE)}</Text>
         </MessageResponse>
       )
     }
@@ -116,10 +118,9 @@ export function AssistantTextMessage({
       return (
         <MessageResponse height={1}>
           <Text color="error">
-            {API_TIMEOUT_ERROR_MESSAGE}
-            {process.env.API_TIMEOUT_MS && (
-              <> (API_TIMEOUT_MS={process.env.API_TIMEOUT_MS}ms, try increasing it)</>
-            )}
+            {localizeApiErrorText(API_TIMEOUT_ERROR_MESSAGE)}
+            {process.env.API_TIMEOUT_MS &&
+              tSync('apiError.timeoutHint', { ms: process.env.API_TIMEOUT_MS })}
           </Text>
         </MessageResponse>
       )
@@ -149,13 +150,15 @@ export function AssistantTextMessage({
     }
     default: {
       if (startsWithApiErrorPrefix(text)) {
-        const truncated = !verbose && text.length > MAX_API_ERROR_CHARS
+        // 识别仍按持久化的英文 text；展示按当前界面语言（上游原始错误正文原样保留）
+        const shown = localizeApiErrorText(text)
+        const truncated = !verbose && shown.length > MAX_API_ERROR_CHARS
         const errorMessage =
           text === API_ERROR_MESSAGE_PREFIX
-            ? `${API_ERROR_MESSAGE_PREFIX}: Please wait a moment and try again.`
+            ? tSync('apiError.waitAndRetry')
             : truncated
-              ? `${text.slice(0, MAX_API_ERROR_CHARS)}\u2026`
-              : text
+              ? `${shown.slice(0, MAX_API_ERROR_CHARS)}\u2026`
+              : shown
         const errorTextElement = <Text color="error">{errorMessage}</Text>
         const expandHint = truncated && <CtrlOToExpand />
         return (
@@ -176,7 +179,7 @@ export function AssistantTextMessage({
       )
       const messageContent = (
         <Box flexDirection="column">
-          <Markdown>{text}</Markdown>
+          <Markdown>{isApiErrorMessage ? localizeApiErrorText(text) : text}</Markdown>
         </Box>
       )
       const messageRow = (

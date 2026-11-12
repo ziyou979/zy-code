@@ -39,6 +39,8 @@ import { logError, logMCPDebug } from 'src/services/infra/log.js'
 import { writeToStdout, registerProcessOutputErrorHandlers } from 'src/services/shell/process.js'
 import type { Stream } from 'src/utils/stream.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
+import { localizeApiErrorText } from 'src/services/api/errorText.js'
+import { tSync } from 'src/i18n/index.js'
 import {
   loadConversationForResume,
   type TurnInterruptionState,
@@ -711,22 +713,26 @@ export async function runHeadless(
         throw new Error('No messages returned')
       }
       switch (lastMessage.subtype) {
-        case 'success':
-          writeToStdout(
-            lastMessage.result.endsWith('\n') ? lastMessage.result : `${lastMessage.result}\n`,
-          )
+        case 'success': {
+          // 文本输出给人看：API 错误按当前界面语言展示（json / stream-json 是机器接口，
+          // result 保持持久化的英文原文，不受界面语言影响）。
+          const text = lastMessage.isError
+            ? localizeApiErrorText(lastMessage.result)
+            : lastMessage.result
+          writeToStdout(text.endsWith('\n') ? text : `${text}\n`)
           break
+        }
         case 'error_during_execution':
-          writeToStdout(`Execution error`)
+          writeToStdout(tSync('print.executionError'))
           break
         case 'error_max_turns':
-          writeToStdout(`Error: Reached max turns (${options.maxTurns})`)
+          writeToStdout(tSync('print.maxTurns', { maxTurns: String(options.maxTurns) }))
           break
         case 'error_max_budget_usd':
-          writeToStdout(`Error: Exceeded USD budget (${options.maxBudgetUsd})`)
+          writeToStdout(tSync('print.maxBudget', { budget: String(options.maxBudgetUsd) }))
           break
         case 'error_max_structured_output_retries':
-          writeToStdout(`Error: Failed to provide valid structured output after maximum retries`)
+          writeToStdout(tSync('print.structuredOutputRetries'))
       }
   }
 
