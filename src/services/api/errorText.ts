@@ -51,23 +51,26 @@ function compileMatchers(): Matcher[] {
       continue
     }
     const vars: string[] = []
-    let pattern = ''
+    // 先收集转义后的字面量片段，插值之间用片段边界分隔，最后统一拼接（不用占位符字符）
+    const literals: string[] = []
     let literalLength = 0
     let last = 0
     for (const m of template.matchAll(/\{(\w+)\}/g)) {
       const literal = template.slice(last, m.index)
-      pattern += escapeRegExp(literal)
+      literals.push(escapeRegExp(literal))
       literalLength += literal.length
-      // 最后一个插值贪婪（吃掉剩余全部，含换行），中间的非贪婪
-      pattern += '\u0000'
       vars.push(m[1]!)
       last = m.index! + m[0].length
     }
     const tail = template.slice(last)
-    pattern += escapeRegExp(tail)
+    literals.push(escapeRegExp(tail))
     literalLength += tail.length
-    let seen = 0
-    pattern = pattern.replace(/\u0000/g, () => (++seen === vars.length ? '([\\s\\S]*)' : '([\\s\\S]*?)'))
+    // 最后一个插值贪婪（吃掉剩余全部，含换行），中间的非贪婪
+    let pattern = literals[0]!
+    for (let i = 0; i < vars.length; i++) {
+      pattern += i === vars.length - 1 ? '([\\s\\S]*)' : '([\\s\\S]*?)'
+      pattern += literals[i + 1]!
+    }
     out.push({ key, re: new RegExp(`^${pattern}$`), vars, literalLength })
   }
   // 字面量越长越具体，优先匹配（"Failed to authenticate. API Error: {detail}" 先于 "API Error: {detail}"）
