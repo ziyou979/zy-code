@@ -1228,9 +1228,6 @@ export const enMisc: TranslationResource = {
   'webBrowser.reload': 'Reload',
   'webBrowser.title': 'Web Browser',
   'webBrowser.urlPlaceholder': 'Enter URL…',
-  'webFetch.domainBlocked': 'ZY Code is unable to fetch from {domain}',
-  'webFetch.domainCheckFailed':
-    'Unable to verify if domain {domain} is safe to fetch. This may be due to network restrictions or enterprise security policies blocking zy.ai.',
   'webFetch.egressBlocked': 'Access to {domain} is blocked by the network egress proxy.',
   'webFetch.fetching': 'Fetching…',
   'webFetch.invalidUrl': 'Invalid URL',

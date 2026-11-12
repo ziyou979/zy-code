@@ -1209,9 +1209,6 @@ export const zhMisc: TranslationResource = {
   'webBrowser.reload': '重新加载',
   'webBrowser.title': '网页浏览器',
   'webBrowser.urlPlaceholder': '输入 URL…',
-  'webFetch.domainBlocked': 'ZY Code 无法从 {domain} 获取内容',
-  'webFetch.domainCheckFailed':
-    '无法验证域名 {domain} 是否安全可获取。这可能是由于网络限制或企业安全策略阻止了 zy.ai 的访问。',
   'webFetch.egressBlocked': '网络出口代理阻止了对 {domain} 的访问。',
   'webFetch.fetching': '获取中…',
   'webFetch.invalidUrl': '无效的 URL',

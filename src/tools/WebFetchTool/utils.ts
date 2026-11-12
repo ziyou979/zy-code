@@ -11,25 +11,9 @@ import { AbortError } from '../../utils/errors.js'
 import { getWebFetchUserAgent } from '../../services/http/http.js'
 import { logError } from '../../services/infra/log.js'
 import { isBinaryContentType, persistBinaryContent } from '../../services/mcp/mcpOutputStorage.js'
-import { getInitialSettings } from '../../services/settings/settings.js'
 import { asSystemPrompt } from '../../services/api/systemPromptType.js'
 import { isPreapprovedHost } from './preapproved.js'
 import { makeSecondaryModelPrompt } from './prompt.js'
-
-// 域名拦截相关的自定义错误类
-class DomainBlockedError extends Error {
-  constructor(domain: string) {
-    super(tSync('webFetch.domainBlocked', { domain }))
-    this.name = 'DomainBlockedError'
-  }
-}
-
-class DomainCheckFailedError extends Error {
-  constructor(domain: string) {
-    super(tSync('webFetch.domainCheckFailed', { domain }))
-    this.name = 'DomainCheckFailedError'
-  }
-}
 
 class EgressBlockedError extends Error {
   constructor(public readonly domain: string) {
@@ -144,17 +128,6 @@ export function validateURL(url: string): boolean {
   }
 
   return true
-}
-
-type DomainCheckResult =
-  | { status: 'allowed' }
-  | { status: 'blocked' }
-  | { status: 'check_failed'; error: Error }
-
-export async function checkDomainBlocklist(domain: string): Promise<DomainCheckResult> {
-  // 不再向远端做域名黑名单查询（原实现依赖 Anthropic 后端 domain_info 接口）
-  void domain
-  return { status: 'allowed' }
 }
 
 /**
@@ -325,33 +298,12 @@ export async function getURLMarkdownContent(
 
     const hostname = parsedUrl.hostname
 
-    // 检查用户是否选择跳过黑名单检查
-    // 这是为具有限制性安全策略的企业客户准备的，
-    // 这些策略可能会阻止到 zy.ai 的出站连接
-    const settings = getInitialSettings()
-    if (!settings.skipWebFetchPreflight) {
-      const checkResult = await checkDomainBlocklist(hostname)
-      switch (checkResult.status) {
-        case 'allowed':
-          // 继续获取
-          break
-        case 'blocked':
-          throw new DomainBlockedError(hostname)
-        case 'check_failed':
-          throw new DomainCheckFailedError(hostname)
-      }
-    }
-
     if (isInternalBuild()) {
       logEvent('zy_web_fetch_host', {
         hostname: hostname as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
     }
   } catch (e) {
-    if (e instanceof DomainBlockedError || e instanceof DomainCheckFailedError) {
-      // 预期的面向用户的失败——直接抛出，不作为内部错误记录
-      throw e
-    }
     logError(e)
   }
 

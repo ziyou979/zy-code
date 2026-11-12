@@ -582,7 +582,7 @@ export const SettingsSchema = lazySchema(() =>
         .boolean()
         .optional()
         .describe(
-          'Skip the WebFetch blocklist check for enterprise environments with restrictive security policies',
+          'Deprecated, no effect: WebFetch no longer performs a remote domain preflight check. Kept so existing settings files stay valid.',
         ),
       sandbox: SandboxSettingsSchema().optional(),
       feedbackSurveyRate: z
