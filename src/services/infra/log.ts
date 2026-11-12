@@ -146,6 +146,7 @@ export function logError(error: unknown): void {
   const err = toError(error)
   if (feature('HARD_FAIL') && isHardFailMode()) {
     // biome-ignore lint/suspicious/noConsole:: intentional crash output
+    // i18n-ignore: 调试 / 诊断输出，不面向终端用户
     console.error('[HARD FAIL] logError called with:', err.stack || err.message)
     // eslint-disable-next-line custom-rules/no-process-exit
     process.exit(1)

@@ -103,6 +103,7 @@ export async function startMCPServer(cwd: string, debug: boolean, verbose: boole
       const tools = getTools(toolPermissionContext)
       const tool = findToolByName(tools, name)
       if (!tool) {
+        // i18n-ignore: MCP server 模式的协议错误，返回给 MCP 客户端（模型）
         throw new Error(`Tool ${name} not found`)
       }
 
@@ -134,11 +135,13 @@ export async function startMCPServer(cwd: string, debug: boolean, verbose: boole
       // TODO: validate input types with zod
       try {
         if (!tool.isEnabled()) {
+          // i18n-ignore: MCP server 模式的协议错误，返回给 MCP 客户端（模型）
           throw new Error(`Tool ${name} is not enabled`)
         }
         const validationResult = await tool.validateInput?.((args as never) ?? {}, toolUseContext)
         if (validationResult && !validationResult.result) {
           throw new Error(
+            // i18n-ignore: MCP server 模式的协议错误，返回给 MCP 客户端（模型）
             `Tool ${name} input is invalid: ${(validationResult as unknown as { message: string }).message}`,
           )
         }

@@ -384,6 +384,7 @@ export class StructuredIO {
       return message
     } catch (error) {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
+      // i18n-ignore: SDK / stream-json 协议层错误，面向集成方
       console.error(`Error parsing streaming input line: ${line}: ${error}`)
       // eslint-disable-next-line custom-rules/no-process-exit
       process.exit(1)
@@ -406,9 +407,11 @@ export class StructuredIO {
       request,
     }
     if (this.inputClosed) {
+      // i18n-ignore: SDK / stream-json 协议层错误，面向集成方
       throw new Error('Stream closed')
     }
     if (signal?.aborted) {
+      // i18n-ignore: SDK / stream-json 协议层错误，面向集成方
       throw new Error('Request aborted')
     }
     this.outbound.enqueue(message)
@@ -585,6 +588,7 @@ export class StructuredIO {
           return result
         } catch (error) {
           // biome-ignore lint/suspicious/noConsole:: intentional console output
+          // i18n-ignore: SDK / stream-json 协议层错误，面向集成方
           console.error(`Error in hook callback ${callbackId}:`, error)
           return {}
         }
