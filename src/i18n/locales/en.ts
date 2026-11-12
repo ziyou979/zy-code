@@ -1,6 +1,7 @@
 import { enAgents } from './en/agents.js'
 import { enChat } from './en/chat.js'
 import { enCommands } from './en/commands.js'
+import { enErrors } from './en/errors.js'
 import { enMcp } from './en/mcp.js'
 import { enMisc } from './en/misc.js'
 import { enOnboarding } from './en/onboarding.js'
@@ -39,6 +40,7 @@ export const en: TranslationResource = {
   ...enShell,
   ...enStats,
   ...enUi,
+  ...enErrors,
   ...enMisc,
   ...enPowerupLessons,
   ...enWorkflow,

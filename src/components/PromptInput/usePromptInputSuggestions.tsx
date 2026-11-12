@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { tSync } from '../../i18n/index.js'
 import { useNotifications } from 'src/context/notifications.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { parseReferences } from '../../services/session-storage/history.js'
@@ -348,7 +349,7 @@ export function usePromptInputSuggestions(context: ReturnType<typeof usePromptIn
     if (thinkTriggers.length && isUltrathinkEnabled()) {
       addNotification({
         key: 'ultrathink-active',
-        text: 'Effort set to high for this turn',
+        text: tSync('notif.effortHighThisTurn'),
         priority: 'immediate',
         timeoutMs: 5000,
       })

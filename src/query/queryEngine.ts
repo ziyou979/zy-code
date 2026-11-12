@@ -1091,6 +1091,7 @@ export class QueryEngine {
     this.mutableMessages = result.messages
     // 仅在调试模式打印，避免污染普通输出
     if (isEnvTruthy(process.env.ZY_CODE_PROFILE_STARTUP)) {
+      // i18n-ignore: 调试输出（ZY_CODE_PROFILE_STARTUP）
       // eslint-disable-next-line no-console
       console.error(
         `[QueryEngine] Pruned ${result.droppedCount} UI-only messages (` +

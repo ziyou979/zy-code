@@ -1,4 +1,5 @@
 import { feature } from 'bun:bundle'
+import { tSync } from '../../i18n/index.js'
 import type { UUID } from 'node:crypto'
 import uniqBy from 'lodash-es/uniqBy.js'
 
@@ -1189,7 +1190,7 @@ function addErrorNotificationIfNeeded(
   ) {
     context.addNotification?.({
       key: 'error-compacting-conversation',
-      text: 'Error compacting conversation',
+      text: tSync('notif.compactError'),
       priority: 'immediate',
       color: 'error',
     })

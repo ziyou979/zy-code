@@ -68,5 +68,6 @@ export function getBudgetContinuationMessage(
   budget: number,
 ): string {
   const fmt = (n: number): string => new Intl.NumberFormat('en-US').format(n)
+  // i18n-ignore: 发给模型的续写指令（meta user message），必须保持英文
   return `Stopped at ${pct}% of token target (${fmt(turnTokens)} / ${fmt(budget)}). Keep working \u2014 do not summarize.`
 }

@@ -4,6 +4,7 @@
  */
 
 import * as React from 'react'
+import { tSync } from '../i18n/index.js'
 import { TICK } from '../constants/figures.js'
 import type { useNotifications } from '../context/notifications.js'
 import { Text } from '../ink/index.js'
@@ -76,7 +77,7 @@ export async function installPluginAndNotify(
     logError(error)
     addNotification({
       key: `${keyPrefix}-install-failed`,
-      jsx: <Text color="error">Failed to install {pluginName}</Text>,
+      jsx: <Text color="error">{tSync('notif.pluginInstallFailed', { name: pluginName })}</Text>,
       priority: 'immediate',
       timeoutMs: 5000,
     })

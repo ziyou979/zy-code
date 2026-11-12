@@ -1,4 +1,5 @@
 import type { LocalCommandResult } from '../types.js'
+import { tSync } from '../../i18n/index.js'
 import { openBrowser } from '../../services/browser/browser.js'
 
 export async function call(): Promise<LocalCommandResult> {
@@ -6,11 +7,11 @@ export async function call(): Promise<LocalCommandResult> {
   const success = await openBrowser(url)
 
   if (success) {
-    return { type: 'text', value: 'Opening sticker page in browser…' }
+    return { type: 'text', value: tSync('commands.out.stickers.opening') }
   } else {
     return {
       type: 'text',
-      value: `Failed to open browser. Visit: ${url}`,
+      value: tSync('commands.out.browserFailedVisitAlt', { url }),
     }
   }
 }

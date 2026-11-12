@@ -45,13 +45,17 @@ function createStderrLogger(): {
   return {
     error: (msg: string, ...args: unknown[]) =>
       // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
+      // i18n-ignore: 调试 / 诊断输出，不面向终端用户
       console.error('[SDK ERROR]', msg, ...args),
     // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
+    // i18n-ignore: 调试 / 诊断输出，不面向终端用户
     warn: (msg: string, ...args: unknown[]) => console.error('[SDK WARN]', msg, ...args),
     // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
+    // i18n-ignore: 调试 / 诊断输出，不面向终端用户
     info: (msg: string, ...args: unknown[]) => console.error('[SDK INFO]', msg, ...args),
     debug: (msg: string, ...args: unknown[]) =>
       // biome-ignore lint/suspicious/noConsole:: intentional console output -- SDK logger must use console
+      // i18n-ignore: 调试 / 诊断输出，不面向终端用户
       console.error('[SDK DEBUG]', msg, ...args),
   }
 }

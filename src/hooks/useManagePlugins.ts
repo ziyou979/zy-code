@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react'
+import { tSync } from '../i18n/index.js'
 import type { Command } from '../commands/index.js'
 import { useNotifications } from '../context/notifications.js'
 import {
@@ -58,7 +59,7 @@ export function useManagePlugins({ enabled = true }: { enabled?: boolean } = {})
       if (Object.keys(flagged).length > 0) {
         addNotification({
           key: 'plugin-delisted-flagged',
-          text: 'Plugins flagged. Check /plugins',
+          text: tSync('notif.pluginsFlagged'),
           color: 'warning',
           priority: 'high',
         })
@@ -299,7 +300,7 @@ export function useManagePlugins({ enabled = true }: { enabled?: boolean } = {})
     }
     addNotification({
       key: 'plugin-reload-pending',
-      text: 'Plugins changed. Run /reload-plugins to activate.',
+      text: tSync('notif.pluginsChanged'),
       color: 'suggestion',
       priority: 'low',
     })

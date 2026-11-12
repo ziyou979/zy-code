@@ -39,6 +39,8 @@ import { logError, logMCPDebug } from 'src/services/infra/log.js'
 import { writeToStdout, registerProcessOutputErrorHandlers } from 'src/services/shell/process.js'
 import type { Stream } from 'src/utils/stream.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
+import { localizeApiErrorText } from 'src/services/api/errorText.js'
+import { tSync } from 'src/i18n/index.js'
 import {
   loadConversationForResume,
   type TurnInterruptionState,
@@ -336,6 +338,7 @@ export async function runHeadless(
   },
 ): Promise<void> {
   if (isInternalBuild() && isEnvTruthy(process.env.ZY_CODE_EXIT_AFTER_FIRST_RENDER)) {
+    // i18n-ignore: 调试输出（ZY_CODE_PROFILE_STARTUP），不面向终端用户
     process.stderr.write(`\nStartup time: ${Math.round(process.uptime() * 1000)}ms\n`)
     // eslint-disable-next-line custom-rules/no-process-exit
     process.exit(0)
@@ -368,21 +371,19 @@ export async function runHeadless(
   void initializeGrowthBook()
 
   if (options.resumeSessionAt && !options.resume) {
-    process.stderr.write(`Error: --resume-session-at requires --resume\n`)
+    process.stderr.write(`${tSync('cli.resumeSessionAtRequiresResume')}\n`)
     gracefulShutdownSync(1)
     return
   }
 
   if (options.rewindFiles && !options.resume) {
-    process.stderr.write(`Error: --rewind-files requires --resume\n`)
+    process.stderr.write(`${tSync('cli.rewindFilesRequiresResume')}\n`)
     gracefulShutdownSync(1)
     return
   }
 
   if (options.rewindFiles && inputPrompt) {
-    process.stderr.write(
-      `Error: --rewind-files is a standalone operation and cannot be used with a prompt\n`,
-    )
+    process.stderr.write(`${tSync('cli.rewindFilesStandalone')}\n`)
     gracefulShutdownSync(1)
     return
   }
@@ -402,15 +403,15 @@ export async function runHeadless(
   if (sandboxUnavailableReason) {
     if (SandboxManager.isSandboxRequired()) {
       process.stderr.write(
-        `\nError: sandbox required but unavailable: ${sandboxUnavailableReason}\n` +
-          `  sandbox.failIfUnavailable is set — refusing to start without a working sandbox.\n\n`,
+        `\n${tSync('cli.sandboxRequiredUnavailable', { reason: sandboxUnavailableReason })}\n` +
+          `  ${tSync('cli.sandboxFailIfUnavailable')}\n\n`,
       )
       gracefulShutdownSync(1)
       return
     }
     process.stderr.write(
-      `\n⚠ Sandbox disabled: ${sandboxUnavailableReason}\n` +
-        `  Commands will run WITHOUT sandboxing. Network and filesystem restrictions will NOT be enforced.\n\n`,
+      `\n⚠ ${tSync('cli.sandboxDisabled', { reason: sandboxUnavailableReason })}\n` +
+        `  ${tSync('cli.sandboxDisabledWarning')}\n\n`,
     )
   } else if (SandboxManager.isSandboxingEnabled()) {
     // 初始化 sandbox，并提供 callback，通过 can_use_tool control_request 协议将网络权限请求转发到
@@ -418,7 +419,7 @@ export async function runHeadless(
     try {
       await SandboxManager.initialize(structuredIO.createSandboxAskCallback())
     } catch (err) {
-      process.stderr.write(`\n❌ Sandbox Error: ${errorMessage(err)}\n`)
+      process.stderr.write(`\n❌ ${tSync('cli.sandboxError', { error: errorMessage(err) })}\n`)
       gracefulShutdownSync(1, 'other')
       return
     }
@@ -534,7 +535,7 @@ export async function runHeadless(
 
     if (!targetMessage || targetMessage.type !== 'user') {
       process.stderr.write(
-        `Error: --rewind-files requires a user message UUID, but ${options.rewindFiles} is not a user message in this session\n`,
+        `${tSync('cli.rewindFilesNotUserMessage', { uuid: String(options.rewindFiles) })}\n`,
       )
       gracefulShutdownSync(1)
       return
@@ -548,13 +549,15 @@ export async function runHeadless(
       false,
     )
     if (!result.canRewind) {
-      process.stderr.write(`Error: ${result.error || 'Unexpected error'}\n`)
+      process.stderr.write(
+        `${tSync('cli.errorPrefix', { error: result.error || tSync('cli.unexpectedError') })}\n`,
+      )
       gracefulShutdownSync(1)
       return
     }
 
     // rewind 完成，成功退出
-    process.stdout.write(`Files rewound to state at message ${options.rewindFiles}\n`)
+    process.stdout.write(`${tSync('cli.filesRewound', { uuid: String(options.rewindFiles) })}\n`)
     gracefulShutdownSync(0)
     return
   }
@@ -565,17 +568,13 @@ export async function runHeadless(
     (Boolean(validateUuid(options.resume)) || options.resume.endsWith('.jsonl'))
 
   if (!inputPrompt && !hasValidResumeSessionId) {
-    process.stderr.write(
-      `Error: Input must be provided either through stdin or as a prompt argument when using --print\n`,
-    )
+    process.stderr.write(`${tSync('cli.printRequiresInput')}\n`)
     gracefulShutdownSync(1)
     return
   }
 
   if (options.outputFormat === 'stream-json' && !options.verbose) {
-    process.stderr.write(
-      'Error: When using --print, --output-format=stream-json requires --verbose\n',
-    )
+    process.stderr.write(`${tSync('cli.streamJsonRequiresVerbose')}\n`)
     gracefulShutdownSync(1)
     return
   }
@@ -695,6 +694,7 @@ export async function runHeadless(
   switch (options.outputFormat) {
     case 'json':
       if (!lastMessage || lastMessage.type !== 'result') {
+        // i18n-ignore: 内部断言，正常流程不会触发
         throw new Error('No messages returned')
       }
       if (options.verbose) {
@@ -708,25 +708,30 @@ export async function runHeadless(
       break
     default:
       if (!lastMessage || lastMessage.type !== 'result') {
+        // i18n-ignore: 内部断言，正常流程不会触发
         throw new Error('No messages returned')
       }
       switch (lastMessage.subtype) {
-        case 'success':
-          writeToStdout(
-            lastMessage.result.endsWith('\n') ? lastMessage.result : `${lastMessage.result}\n`,
-          )
+        case 'success': {
+          // 文本输出给人看：API 错误按当前界面语言展示（json / stream-json 是机器接口，
+          // result 保持持久化的英文原文，不受界面语言影响）。
+          const text = lastMessage.isError
+            ? localizeApiErrorText(lastMessage.result)
+            : lastMessage.result
+          writeToStdout(text.endsWith('\n') ? text : `${text}\n`)
           break
+        }
         case 'error_during_execution':
-          writeToStdout(`Execution error`)
+          writeToStdout(tSync('print.executionError'))
           break
         case 'error_max_turns':
-          writeToStdout(`Error: Reached max turns (${options.maxTurns})`)
+          writeToStdout(tSync('print.maxTurns', { maxTurns: String(options.maxTurns) }))
           break
         case 'error_max_budget_usd':
-          writeToStdout(`Error: Exceeded USD budget (${options.maxBudgetUsd})`)
+          writeToStdout(tSync('print.maxBudget', { budget: String(options.maxBudgetUsd) }))
           break
         case 'error_max_structured_output_retries':
-          writeToStdout(`Error: Failed to provide valid structured output after maximum retries`)
+          writeToStdout(tSync('print.structuredOutputRetries'))
       }
   }
 
@@ -1288,6 +1293,7 @@ export function createCanUseToolWithPermissionPrompt(
       typeof permissionToolResultBlock.content[0].text !== 'string'
     ) {
       throw new Error(
+        // i18n-ignore: SDK 协议错误，面向集成方开发者
         'Permission prompt tool returned an invalid result. Expected a single text block param with type="text" and a string text value.',
       )
     }

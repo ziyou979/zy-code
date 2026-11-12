@@ -104,12 +104,12 @@ function ResumeCommand({
           : await loadSameRepoMessageLogs(paths)
         const resumable = filterResumableSessions(allLogs, getSessionId())
         if (resumable.length === 0) {
-          onDone('No conversations found to resume')
+          onDone(tSync('commands.out.resume.none'))
           return
         }
         setLogs(resumable)
       } catch (_err) {
-        onDone('Failed to load conversations')
+        onDone(tSync('commands.out.resume.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -132,7 +132,7 @@ function ResumeCommand({
   async function handleSelect(log: LogOption) {
     const sessionId = validateUuid(getSessionIdFromLog(log))
     if (!sessionId) {
-      onDone('Failed to resume conversation')
+      onDone(tSync('commands.out.resume.failed'))
       return
     }
 
@@ -225,7 +225,7 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
       })
     } catch (error) {
       logError(error as Error)
-      onDone(`Failed to resume: ${(error as Error).message}`)
+      onDone(tSync('commands.out.resume.failedWithError', { error: (error as Error).message }))
     }
   }
   const arg = args?.trim()

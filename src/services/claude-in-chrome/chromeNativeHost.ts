@@ -34,6 +34,7 @@ function log(message: string, ...args: unknown[]): void {
       // Ignore file write errors
     })
   }
+  // i18n-ignore: 调试 / 诊断输出，不面向终端用户
   console.error(`[Zy Chrome Native Host] ${message}`, ...args)
 }
 /**

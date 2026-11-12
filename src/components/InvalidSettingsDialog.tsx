@@ -1,4 +1,5 @@
 import { Text } from '../ink/index.js'
+import { tSync } from '../i18n/index.js'
 import type { ValidationError } from '../services/settings/validation.js'
 import { Select } from './CustomSelect/index.js'
 import { Dialog } from './design-system/Dialog.js'
@@ -23,22 +24,18 @@ export function InvalidSettingsDialog({ settingsErrors, onContinue, onExit }: Pr
     }
   }
   return (
-    <Dialog title="Settings Error" onCancel={onExit} color="warning">
+    <Dialog title={tSync('settings.invalid.title')} onCancel={onExit} color="warning">
       {<ValidationErrorsList errors={settingsErrors} />}
-      {
-        <Text dimColor={true}>
-          Files with errors are skipped entirely, not just the invalid settings.
-        </Text>
-      }
+      {<Text dimColor={true}>{tSync('settings.invalid.skippedNote')}</Text>}
       {
         <Select
           options={[
             {
-              label: 'Exit and fix manually',
+              label: tSync('settings.invalid.exitAndFix'),
               value: 'exit',
             },
             {
-              label: 'Continue without these settings',
+              label: tSync('settings.invalid.continueWithout'),
               value: 'continue',
             },
           ]}

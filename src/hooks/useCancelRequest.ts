@@ -5,6 +5,7 @@
  * 此组件不渲染任何内容——它仅注册 cancel 快捷键处理函数。
  */
 import { useCallback, useRef } from 'react'
+import { tSync } from '../i18n/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/metadata.js'
 import { useAppState, useAppStateStore, useSetAppState } from 'src/state/AppState.js'
@@ -217,7 +218,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     if (!hasRunningAgents) {
       addNotification({
         key: 'kill-agents-none',
-        text: 'No background agents running',
+        text: tSync('notif.noBackgroundAgents'),
         priority: 'immediate',
         timeoutMs: 2000,
       })
@@ -241,7 +242,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     const shortcut = getShortcutDisplay('chat:killAgents', 'Chat', 'ctrl+x ctrl+k')
     addNotification({
       key: 'kill-agents-confirm',
-      text: `Press ${shortcut} again to stop background agents`,
+      text: tSync('notif.pressAgainToStopAgents', { shortcut }),
       priority: 'immediate',
       timeoutMs: KILL_AGENTS_CONFIRM_WINDOW_MS,
     })
