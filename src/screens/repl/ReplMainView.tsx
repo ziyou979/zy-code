@@ -106,8 +106,6 @@ import type {
   ReplNotificationsCluster,
 } from './useReplNotificationsCluster.js'
 import type { FocusedInputDialog } from './useReplOnCancel.js'
-import type { ReplVoiceState } from './useReplVoice.js'
-import { ReplVoiceKeybindingHandler } from './useReplVoice.js'
 
 // ────────────────────────────────────────────────────────
 //  Props
@@ -206,8 +204,6 @@ export interface ReplMainViewProps {
   abortController: AbortController | null
   // remote
   isRemoteSession: boolean
-  // 语音
-  voice: ReplVoiceState
   // 其他 callback
   handleBackgroundSession: () => void
   mrRender: () => React.ReactNode
@@ -330,7 +326,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
     handleQueuedCommandOnCancel,
     abortController,
     isRemoteSession,
-    voice,
     handleBackgroundSession,
     mrRender,
     regenerateConversationId,
@@ -415,7 +410,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
   const [exitFlow, setExitFlow] = useState<React.ReactNode>(null)
   const [isExiting, setIsExiting] = useState(false)
   const [autoRunIssueReason, setAutoRunIssueReason] = useState<AutoRunIssueReason | null>(null)
-  const didAutoRunIssueRef = useRef(false)
   const [cursor, setCursor] = useState<MessageActionsState | null>(null)
   const cursorNavRef = useRef<MessageActionsNav | null>(null)
 
@@ -452,15 +446,9 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
     () => ({
       ...feedbackSurveyOriginal,
       handleSelect: (selected: FeedbackSurveyResponse) => {
-        didAutoRunIssueRef.current = false
-        const showedTranscriptPrompt = feedbackSurveyOriginal.handleSelect(selected)
-        if (
-          selected === 'bad' &&
-          !showedTranscriptPrompt &&
-          shouldAutoRunIssue('feedback_survey_bad')
-        ) {
+        feedbackSurveyOriginal.handleSelect(selected)
+        if (selected === 'bad' && shouldAutoRunIssue('feedback_survey_bad')) {
           setAutoRunIssueReason('feedback_survey_bad')
-          didAutoRunIssueRef.current = true
         }
       },
     }),
@@ -641,19 +629,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
     setAutoRunIssueReason(null)
   }, [])
 
-  const handleSurveyRequestFeedback = useCallback(() => {
-    const command = isInternalBuild() ? '/issue' : '/feedback'
-    onSubmit(command, {
-      setCursorOffset: () => {},
-      clearBuffer: () => {},
-      resetHistory: () => {},
-    }).catch((err) => {
-      logForDebugging(
-        `Survey feedback request failed: ${err instanceof Error ? err.message : String(err)}`,
-      )
-    })
-  }, [onSubmit])
-
   const handleOpenRateLimitOptions = useCallback(() => {
     void onSubmitRef.current('/rate-limit-options', {
       setCursorOffset: () => {},
@@ -712,14 +687,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
         noPrefix={showStatusInTerminalTab}
       />
       <GlobalKeybindingHandlers {...globalKeybindingProps} />
-      {feature('VOICE_MODE') ? (
-        <ReplVoiceKeybindingHandler
-          voiceHandleKeyEvent={voice.handleKeyEvent}
-          stripTrailing={voice.stripTrailing}
-          resetAnchor={voice.resetAnchor}
-          isActive={!toolJSX?.isLocalJSXCommand}
-        />
-      ) : null}
       <CommandKeybindingHandlers onSubmit={onSubmit} isActive={!toolJSX?.isLocalJSXCommand} />
       <ScrollKeybindingHandler
         scrollRef={scrollRef}
@@ -895,17 +862,14 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                               handleSelect={postCompactSurvey.handleSelect}
                               inputValue={inputValue}
                               setInputValue={setInputValue}
-                              onRequestFeedback={handleSurveyRequestFeedback}
                             />
                           ) : memorySurvey.state !== 'closed' ? (
                             <FeedbackSurvey
                               state={memorySurvey.state}
                               lastResponse={memorySurvey.lastResponse}
                               handleSelect={memorySurvey.handleSelect}
-                              handleTranscriptSelect={memorySurvey.handleTranscriptSelect}
                               inputValue={inputValue}
                               setInputValue={setInputValue}
-                              onRequestFeedback={handleSurveyRequestFeedback}
                               message={tSync('misc.repl.memorySurvey.question')}
                             />
                           ) : (
@@ -913,12 +877,8 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                               state={feedbackSurvey.state}
                               lastResponse={feedbackSurvey.lastResponse}
                               handleSelect={feedbackSurvey.handleSelect}
-                              handleTranscriptSelect={feedbackSurvey.handleTranscriptSelect}
                               inputValue={inputValue}
                               setInputValue={setInputValue}
-                              onRequestFeedback={
-                                didAutoRunIssueRef.current ? undefined : handleSurveyRequestFeedback
-                              }
                             />
                           )}
                           {frustrationDetection.state !== 'closed' && (
@@ -926,7 +886,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                               state={frustrationDetection.state}
                               lastResponse={null}
                               handleSelect={() => {}}
-                              handleTranscriptSelect={frustrationDetection.handleTranscriptSelect}
                               inputValue={inputValue}
                               setInputValue={setInputValue}
                             />
@@ -989,7 +948,6 @@ export function ReplMainView(props: ReplMainViewProps): React.ReactNode {
                             helpOpen={isHelpOpen}
                             setHelpOpen={setIsHelpOpen}
                             insertTextRef={insertTextRef}
-                            voiceInterimRange={voice.interimRange}
                           />
                           <SessionBackgroundHint
                             onBackgroundSession={handleBackgroundSession}

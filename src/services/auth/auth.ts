@@ -1,21 +1,13 @@
-import { mkdir, stat } from 'node:fs/promises'
-import { join } from 'node:path'
 import chalk from 'chalk'
 import { execa } from 'execa'
 import memoize from 'lodash-es/memoize.js'
 import { ZY_CODE_INFERENCE_SCOPE } from '../../constants/oauth.js'
-import { isAnthropicOfficialEndpoint } from '../api/baseUrlResolution.js'
-import { resolveModelRequestContext } from '../model/modelRequestContext.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from 'src/services/analytics/index.js'
+import { logEvent } from 'src/services/analytics/index.js'
 import {
   getAPIProvider,
   isAnthropicProvider,
   isOpenAIProvider,
 } from 'src/services/model/providers.js'
-import { getSecureStorage } from 'src/services/secure-storage/index.js'
 import {
   clearLegacyApiKeyPrefetch,
   getLegacyApiKeyPrefetchResult,
@@ -32,17 +24,13 @@ import {
   maybeRemoveApiKeyFromMacOSKeychainThrows,
   normalizeApiKeyForConfig,
 } from '../auth/authPortable.js'
-import { clearBetasCaches } from '../feature-flags/betas.js'
 import { logForDebugging } from '../../services/infra/debug.js'
-import { getZyConfigHomeDir, isBareMode, isEnvTruthy } from '../../services/infra/envUtils.js'
+import { isBareMode, isEnvTruthy } from '../../services/infra/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { execSyncWithDefaults_DEPRECATED } from '../shell/execFileNoThrow.js'
-import * as lockfile from '../file-persistence/lockfile.js'
 import { logError } from '../../services/infra/log.js'
 import { getInitialSettings, getSettingsForSource } from '../settings/settings.js'
-import { sleep } from '../../utils/sleep.js'
 import { jsonParse } from '../../services/infra/slowOperations.js'
-import { clearToolSchemaCache } from '../../services/api/toolSchemaCache.js'
 import {
   type AccountInfo,
   checkHasTrustDialogAccepted,
@@ -672,23 +660,6 @@ export function isUsingOAuthTokens(
 }
 
 /**
- * 判断当前模型连接是否走 Zy.ai OAuth 官方端点（anthropic provider +
- * 官方 base URL），并要求 token 具备 user:inference scope。
- *
- * 收敛 settings-sync 与 team-memory-sync 两处的重复实现。后者额外要求
- * user:profile scope（团队记忆同步需要读取用户资料），通过 extraScopes 传入。
- * settings-sync 只查 inference 是有意的——CCR 的 file-descriptor token 只
- * 硬编码 ['user:inference']，要求 profile 会使下载变 no-op。
- */
-export function isUsingOAuthForService(extraScopes: string[] = []): boolean {
-  const context = resolveModelRequestContext()
-  if (context.provider !== 'anthropic' || !isAnthropicOfficialEndpoint(context)) {
-    return false
-  }
-  return isUsingOAuthTokens(getZyAIOAuthTokens(), extraScopes)
-}
-
-/**
  * 检查 OAuth token 是否已过期（含 5 分钟安全余量）。
  */
 export function isOAuthTokenExpired(expiresAt: number | null): boolean {
@@ -709,7 +680,7 @@ export function clearOAuthTokenCache(): void {
   clearOAuthCredentialsCache()
 }
 
-// 飞行中去重：当 N 个 zy.ai 代理连接器同时以相同 token 触发 401 时
+// 飞行中去重：当 N 个并发请求同时以相同 token 触发 401 时
 // （启动时常见——#20930），应只有一个清除缓存并重新读取 keychain。
 // 如果没有这个机制，每次调用的 clearOAuthTokenCache() 都会销毁
 // macOsKeychainStorage 中的 readInFlight 并触发新的 spawn——

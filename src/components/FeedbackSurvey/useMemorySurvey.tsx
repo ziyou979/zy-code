@@ -6,27 +6,22 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
-import { isPolicyAllowed } from '../../services/policy-limits/index.js'
 import { logOTelEvent } from '../../services/telemetry/events.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
 import type { Message } from '../../types/message.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
-import { isEnvTruthy, isInternalBuild } from '../../services/infra/envUtils.js'
+import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { isAutoManagedMemoryFile } from '../../services/memory/memoryFileDetection.js'
 import {
   extractTextContent,
   getLastAssistantMessage,
 } from '../../services/messages/./predicates.js'
-import { submitTranscriptShare } from './submitTranscriptShare.js'
-import type { TranscriptShareResponse } from './TranscriptSharePrompt.js'
-import { useSurveyState } from './useSurveyState.js'
+import { type SurveyState, useSurveyState } from './useSurveyState.js'
 import type { FeedbackSurveyResponse } from './utils.js'
 
 const HIDE_THANKS_AFTER_MS = 3000
 const MEMORY_SURVEY_GATE = 'zy_dunwich_bell'
 const MEMORY_SURVEY_EVENT = 'zy_memory_survey_event'
 const SURVEY_PROBABILITY = 0.2
-const TRANSCRIPT_SHARE_TRIGGER = 'memory_survey'
 const MEMORY_WORD_RE = /\bmemor(?:y|ies)\b/i
 function hasMemoryFileRead(messages: Message[]): boolean {
   for (const message of messages) {
@@ -61,10 +56,9 @@ export function useMemorySurvey(
     enabled?: boolean
   } = {},
 ): {
-  state: 'closed' | 'open' | 'thanks' | 'transcript_prompt' | 'submitting' | 'submitted'
+  state: SurveyState
   lastResponse: FeedbackSurveyResponse | null
   handleSelect: (selected: FeedbackSurveyResponse) => void
-  handleTranscriptSelect: (selected: TranscriptShareResponse) => void
 } {
   // Track assistant message UUIDs that were already evaluated so we don't
   // re-roll probability on re-renders or re-scan messages for the same turn.
@@ -72,8 +66,6 @@ export function useMemorySurvey(
   // Once a memory file read is observed it stays true for the session —
   // skip the O(n) scan on subsequent turns.
   const memoryReadSeen = useRef(false)
-  const messagesRef = useRef(messages)
-  messagesRef.current = messages
   const onOpen = useCallback((appearanceId: string) => {
     logEvent(MEMORY_SURVEY_EVENT, {
       event_type: 'appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -98,78 +90,10 @@ export function useMemorySurvey(
       survey_type: 'memory',
     })
   }, [])
-  const shouldShowTranscriptPrompt = useCallback((selected_0: FeedbackSurveyResponse) => {
-    if (!isInternalBuild()) {
-      return false
-    }
-    if (selected_0 !== 'bad' && selected_0 !== 'good') {
-      return false
-    }
-    if (getGlobalConfig().transcriptShareDismissed) {
-      return false
-    }
-    if (!isPolicyAllowed('allow_product_feedback')) {
-      return false
-    }
-    return true
-  }, [])
-  const onTranscriptPromptShown = useCallback((appearanceId_1: string) => {
-    logEvent(MEMORY_SURVEY_EVENT, {
-      event_type:
-        'transcript_prompt_appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      appearance_id: appearanceId_1 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      trigger:
-        TRANSCRIPT_SHARE_TRIGGER as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    })
-    void logOTelEvent('feedback_survey', {
-      event_type: 'transcript_prompt_appeared',
-      appearance_id: appearanceId_1,
-      survey_type: 'memory',
-    })
-  }, [])
-  const onTranscriptSelect = useCallback(
-    async (appearanceId_2: string, selected_1: TranscriptShareResponse): Promise<boolean> => {
-      logEvent(MEMORY_SURVEY_EVENT, {
-        event_type:
-          `transcript_share_${selected_1}` as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        appearance_id: appearanceId_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        trigger:
-          TRANSCRIPT_SHARE_TRIGGER as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      if (selected_1 === 'dont_ask_again') {
-        saveGlobalConfig((current) => ({
-          ...current,
-          transcriptShareDismissed: true,
-        }))
-      }
-      if (selected_1 === 'yes') {
-        const result = await submitTranscriptShare(
-          messagesRef.current,
-          TRANSCRIPT_SHARE_TRIGGER,
-          appearanceId_2,
-        )
-        logEvent(MEMORY_SURVEY_EVENT, {
-          event_type: (result.success
-            ? 'transcript_share_submitted'
-            : 'transcript_share_failed') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          appearance_id:
-            appearanceId_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          trigger:
-            TRANSCRIPT_SHARE_TRIGGER as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        })
-        return result.success
-      }
-      return false
-    },
-    [],
-  )
-  const { state, lastResponse, open, handleSelect, handleTranscriptSelect } = useSurveyState({
+  const { state, lastResponse, open, handleSelect } = useSurveyState({
     hideThanksAfterMs: HIDE_THANKS_AFTER_MS,
     onOpen,
     onSelect,
-    shouldShowTranscriptPrompt,
-    onTranscriptPromptShown,
-    onTranscriptSelect,
   })
   const lastAssistant = useMemo(() => getLastAssistantMessage(messages), [messages])
   useEffect(() => {
@@ -196,9 +120,6 @@ export function useMemorySurvey(
       return
     }
     if (isFeedbackSurveyDisabled()) {
-      return
-    }
-    if (!isPolicyAllowed('allow_product_feedback')) {
       return
     }
     if (isEnvTruthy(process.env.ZY_CODE_DISABLE_FEEDBACK_SURVEY)) {
@@ -230,6 +151,5 @@ export function useMemorySurvey(
     state,
     lastResponse,
     handleSelect,
-    handleTranscriptSelect,
   }
 }

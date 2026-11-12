@@ -1,9 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { shouldSkipHookDueToTrust } from '../config.js'
 
-// FileSuggestionCommandInput 在 ../../../types/fileSuggestion.js 实际不导出。
-// 该 hook 当前不读取字段，因此用 unknown 占位。
-type FileSuggestionCommandInput = unknown
+import type { FileSuggestionCommandInput } from '../../../types/fileSuggestion.js'
 
 import { createDebugLog } from '../../../services/infra/debug.js'
 import { getInitialSettings, getSettingsForSource } from '../../settings/settings.js'

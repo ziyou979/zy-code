@@ -1,12 +1,9 @@
 import * as React from 'react'
-import { clearTrustedDeviceTokenCache } from '../../bridge/trustedDevice.js'
 import { Text } from '../../ink/index.js'
 import { tSync } from '../../i18n/index.js'
 import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js'
 import { clearOAuthCredentialsCache } from '../../services/oauth/oauthStorage.js'
-import { clearPolicyLimitsCache } from '../../services/policy-limits/index.js'
 // flushTelemetry is loaded lazily to avoid pulling in ~1.1MB of OpenTelemetry at startup
-import { clearRemoteManagedSettingsCache } from '../../services/remote-managed-settings/index.js'
 import { getSecureStorage } from '../../services/secure-storage/index.js'
 import { removeApiKey } from '../../services/auth/auth.js'
 import { clearBetasCaches } from '../../services/feature-flags/betas.js'
@@ -48,19 +45,12 @@ export async function performLogout({ clearOnboarding = false }): Promise<void> 
 export async function clearAuthRelatedCaches(): Promise<void> {
   // Clear the multi-provider OAuth credentials cache
   clearOAuthCredentialsCache()
-  clearTrustedDeviceTokenCache()
   clearBetasCaches()
   clearToolSchemaCache()
 
   // Clear user data cache BEFORE GrowthBook refresh so it picks up fresh credentials
   resetUserCache()
   refreshGrowthBookAfterAuthChange()
-
-  // Clear remotely managed settings cache
-  await clearRemoteManagedSettingsCache()
-
-  // Clear policy limits cache
-  await clearPolicyLimitsCache()
 }
 export async function call(): Promise<React.ReactNode> {
   await performLogout({

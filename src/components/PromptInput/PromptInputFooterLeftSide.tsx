@@ -1,5 +1,3 @@
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
-import type { Task } from '../../services/tasks-service/tasks.js'
 import { feature } from 'bun:bundle'
 // Dead code elimination: conditional import for COORDINATOR_MODE
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -7,10 +5,10 @@ const coordinatorModule = feature('COORDINATOR_MODE')
   ? (require('../../coordinator/coordinatorMode.js') as typeof import('../../coordinator/coordinatorMode.js'))
   : undefined
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { Box, Text, Link } from '../../ink/index.js'
+import { Box, Text } from '../../ink/index.js'
 import { stringWidth } from '../../ink/stringWidth.js'
 import * as React from 'react'
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type { VimMode, PromptInputMode } from '../../types/textInputTypes.js'
 import type { ToolPermissionContext } from '../../tools/tool.js'
 import { isVimModeEnabled } from './utils.js'
@@ -30,7 +28,7 @@ import { shouldHideTasksFooter } from '../tasks/TaskStatusUtils.js'
 import { isAgentSwarmsEnabled } from '../../services/swarm/agentSwarmsEnabled.js'
 import { TeamStatus } from '../teams/TeamStatus.js'
 import { isInProcessEnabled } from '../../services/swarm/backends/registry.js'
-import { useAppState, useAppStateStore } from 'src/state/AppState.js'
+import { useAppState } from 'src/state/AppState.js'
 import HistorySearchInput from './HistorySearchInput.js'
 import { usePrStatus } from '../../hooks/usePrStatus.js'
 import type { KeyboardShortcutAction } from '../design-system/KeyboardShortcutHint.js'
@@ -39,13 +37,10 @@ import { Byline } from '../design-system/Byline.js'
 import { useTerminalSize } from '../../hooks/useTerminalSize.js'
 import { useTasks } from '../../hooks/useTasks.js'
 import { formatDuration } from '../../utils/format.js'
-import { VoiceWarmupHint } from './VoiceIndicator.js'
-import { useVoiceEnabled } from '../../hooks/useVoiceEnabled.js'
-import { useVoiceState } from '../../context/voice.js'
 import { isFullscreenEnvEnabled } from '../../services/terminal/fullscreen.js'
 import { isXtermJs } from '../../ink/terminal.js'
 import { useHasSelection, useSelection } from '../../ink/hooks/useSelection.js'
-import { getGlobalConfig, saveGlobalConfig } from '../../services/config/config.js'
+import { getGlobalConfig } from '../../services/config/config.js'
 import { getPlatform } from '../../services/shell/platform.js'
 import { isInternalBuild } from '../../services/infra/envUtils.js'
 import { PrBadge } from '../PrBadge.js'
@@ -58,7 +53,6 @@ const proactiveModule =
 /* eslint-enable @typescript-eslint/no-require-imports */
 const NO_OP_SUBSCRIBE = (_cb: () => void) => () => {}
 const NULL = () => null
-const MAX_VOICE_HINT_SHOWS = 3
 type Props = {
   exitMessage: {
     show: boolean
@@ -218,16 +212,6 @@ function ModeIndicator({
     proactiveModule?.getNextTickAt ?? NULL,
     NULL,
   )
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const voiceEnabled = feature('VOICE_MODE') ? useVoiceEnabled() : false
-  const voiceState = feature('VOICE_MODE')
-    ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useVoiceState((s_5) => s_5.voiceState)
-    : ('idle' as const)
-  const voiceWarmingUp = feature('VOICE_MODE')
-    ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useVoiceState((s_6) => s_6.voiceWarmingUp)
-    : false
   const hasSelection = useHasSelection()
   const selGetState = useSelection().getState
   const hasNextTick = nextTickAt !== null
@@ -247,44 +231,6 @@ function ModeIndicator({
   const escShortcut = useShortcutDisplay('chat:cancel', 'Chat', 'esc').toLowerCase()
   const todosShortcut = useShortcutDisplay('app:toggleTodos', 'Global', 'ctrl+t')
   const killAgentsShortcut = useShortcutDisplay('chat:killAgents', 'Chat', 'ctrl+x ctrl+k')
-  const voiceKeyShortcut = feature('VOICE_MODE')
-    ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useShortcutDisplay('voice:pushToTalk', 'Chat', 'Space')
-    : ''
-  // Captured at mount so the hint doesn't flicker mid-session if another
-  // CC instance increments the counter. Incremented once via useEffect the
-  // first time voice is enabled in this session — approximates "hint was
-  // shown" without tracking the exact render-time condition (which depends
-  // on parts/hintParts computed after the early-return hooks boundary).
-  const [voiceHintUnderCap] = feature('VOICE_MODE')
-    ? // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-      useState(() => (getGlobalConfig().voiceFooterHintSeenCount ?? 0) < MAX_VOICE_HINT_SHOWS)
-    : [false]
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  const voiceHintIncrementedRef = feature('VOICE_MODE') ? useRef(false) : null
-  useEffect(() => {
-    if (feature('VOICE_MODE')) {
-      if (!voiceEnabled || !voiceHintUnderCap) {
-        return
-      }
-      if (voiceHintIncrementedRef?.current) {
-        return
-      }
-      if (voiceHintIncrementedRef) {
-        voiceHintIncrementedRef.current = true
-      }
-      const newCount = (getGlobalConfig().voiceFooterHintSeenCount ?? 0) + 1
-      saveGlobalConfig((prev) => {
-        if ((prev.voiceFooterHintSeenCount ?? 0) >= newCount) {
-          return prev
-        }
-        return {
-          ...prev,
-          voiceFooterHintSeenCount: newCount,
-        }
-      })
-    }
-  }, [voiceEnabled, voiceHintUnderCap, voiceHintIncrementedRef?.current, voiceHintIncrementedRef])
   const isKillAgentsConfirmShowing = useAppState(
     (state) => state.notifications.current?.key === 'kill-agents-confirm',
   )
@@ -491,18 +437,14 @@ function ModeIndicator({
     )
   }
 
-  // Only replace the idle voice hint when there's something to say — otherwise
+  // Only show the selection hint when there's something to say — otherwise
   // fall through instead of showing an empty Byline. "esc to clear" was removed
   // (looked like "esc to interrupt" when idle; esc-clears-selection is standard
   // UX) leaving only ctrl+c (copyOnSelect off) and the xterm.js native-select hint.
   const copyOnSelect = getGlobalConfig().copyOnSelect ?? true
   const selectionHintHasContent = hasSelection && (!copyOnSelect || isXtermJs())
 
-  // Warmup hint takes priority — when the user is actively holding
-  // the activation key, show feedback regardless of other hints.
-  if (feature('VOICE_MODE') && voiceEnabled && voiceWarmingUp) {
-    parts.push(<VoiceWarmupHint key="voice-warmup" />)
-  } else if (isFullscreenEnvEnabled() && selectionHintHasContent) {
+  if (isFullscreenEnvEnabled() && selectionHintHasContent) {
     // xterm.js (VS Code/Cursor/Windsurf) force-selection modifier is
     // platform-specific and gated on macOS (SelectionService.shouldForceSelection):
     //   macOS:     altKey && macOptionClickForcesSelection (VS Code default: false)
@@ -529,20 +471,6 @@ function ModeIndicator({
               />
             ))}
         </Byline>
-      </Text>,
-    )
-  } else if (
-    feature('VOICE_MODE') &&
-    parts.length > 0 &&
-    showHint &&
-    voiceEnabled &&
-    voiceState === 'idle' &&
-    hintParts.length === 0 &&
-    voiceHintUnderCap
-  ) {
-    parts.push(
-      <Text dimColor key="voice-hint">
-        {tSync('promptInput.voiceHint', { shortcut: voiceKeyShortcut })}
       </Text>,
     )
   }

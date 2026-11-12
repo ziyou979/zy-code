@@ -128,17 +128,6 @@ export function mergeMcpConfigsByPriority(
 }
 
 /**
- * 合并 zy.ai 连接器与本地配置，zy.ai 具有最低优先级。
- * 调用前需先通过 dedupZyAIMcpServers 去重。
- */
-export function mergeZyAIMcpConfigs(
-  zyAiServers: Record<string, ScopedMcpServerConfig>,
-  localServers: Record<string, ScopedMcpServerConfig>,
-): Record<string, ScopedMcpServerConfig> {
-  return Object.assign({}, zyAiServers, localServers)
-}
-
-/**
  * 企业 MCP 独占选择器。
  * 当企业配置文件存在时，只返回经过策略过滤的企业服务器，跳过所有其他来源。
  *
@@ -163,54 +152,4 @@ export function selectEnterpriseMcpServers(
     filtered[name] = serverConfig
   }
   return { servers: filtered }
-}
-
-/**
- * Filter zy.ai connectors, dropping any whose signature matches an enabled
- * manually-configured server. Manual wins: a user who wrote .mcp.json or ran
- * `zy mcp add` expressed higher intent than a connector toggled in the web UI.
- *
- * Connector keys are `zy.ai <DisplayName>` so they never key-collide with
- * manual servers in the merge — this content-based check catches the case where
- * both point at the same underlying URL (e.g. `mcp__slack__*` and
- * `mcp__Zy_ai_Slack__*` both hitting mcp.slack.com, ~600 chars/turn wasted).
- *
- * Only enabled manual servers count as dedup targets — a disabled manual server
- * mustn't suppress its connector twin, or neither runs.
- */
-export function dedupZyAIMcpServers(
-  zyAiServers: Record<string, ScopedMcpServerConfig>,
-  manualServers: Record<string, ScopedMcpServerConfig>,
-  isServerDisabled: (name: string) => boolean,
-  log: (message: string) => void,
-): {
-  servers: Record<string, ScopedMcpServerConfig>
-  suppressed: Array<{ name: string; duplicateOf: string }>
-} {
-  const manualSignatures = new Map<string, string>()
-  for (const [name, config] of Object.entries(manualServers)) {
-    if (isServerDisabled(name)) {
-      continue
-    }
-    const signature = getMcpServerSignature(config)
-    if (signature && !manualSignatures.has(signature)) {
-      manualSignatures.set(signature, name)
-    }
-  }
-
-  const servers: Record<string, ScopedMcpServerConfig> = {}
-  const suppressed: Array<{ name: string; duplicateOf: string }> = []
-  for (const [name, config] of Object.entries(zyAiServers)) {
-    const signature = getMcpServerSignature(config)
-    const manualDuplicate = signature !== null ? manualSignatures.get(signature) : undefined
-    if (manualDuplicate !== undefined) {
-      log(
-        `Suppressing zy.ai connector "${name}": duplicates manually-configured "${manualDuplicate}"`,
-      )
-      suppressed.push({ name, duplicateOf: manualDuplicate })
-      continue
-    }
-    servers[name] = config
-  }
-  return { servers, suppressed }
 }

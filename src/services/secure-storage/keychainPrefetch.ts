@@ -2,8 +2,8 @@
  * Minimal module for firing macOS keychain reads in parallel with main.tsx
  * module evaluation, same pattern as startMdmRawRead() in settings/mdm/rawRead.ts.
  *
- * isRemoteManagedSettingsEligible() reads two separate keychain entries
- * SEQUENTIALLY via sync execSync during applySafeConfigEnvironmentVariables():
+ * Startup credential reads hit two separate keychain entries SEQUENTIALLY via
+ * sync execSync:
  *   1. "ZY Code-credentials" (OAuth tokens)  — ~32ms
  *   2. "ZY Code" (legacy API key)            — ~33ms
  * Sequential cost: ~65ms on every macOS startup.

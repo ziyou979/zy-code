@@ -19,7 +19,6 @@ import {
   type OAuthClientMetadata,
   type OAuthTokens,
 } from '@modelcontextprotocol/sdk/shared/auth.js'
-import { MCP_CLIENT_METADATA_URL } from '../../../constants/oauth.js'
 import { getSecureStorage } from '../../secure-storage/index.js'
 import { clearKeychainCache } from '../../secure-storage/macOsKeychainHelpers.js'
 import type { SecureStorageData } from '../../secure-storage/types.js'
@@ -115,6 +114,9 @@ export class ZyAuthProvider implements OAuthClientProvider {
    * client_id_metadata_document_supported: true, the SDK uses this URL as the
    * client_id instead of performing Dynamic Client Registration.
    * Override via MCP_OAUTH_CLIENT_METADATA_URL env var (e.g. for testing, FedStart).
+   *
+   * ZY Code 没有自托管的 client metadata 文档（上游指向 Anthropic 域名，授权服务器会去拉取
+   * 该 URL），因此默认返回 undefined，让 SDK 走动态客户端注册。
    */
   get clientMetadataUrl(): string | undefined {
     const override = process.env.MCP_OAUTH_CLIENT_METADATA_URL
@@ -122,7 +124,7 @@ export class ZyAuthProvider implements OAuthClientProvider {
       logMCPDebug(this.serverName, `Using CIMD URL from env: ${override}`)
       return override
     }
-    return MCP_CLIENT_METADATA_URL
+    return undefined
   }
 
   setMetadata(metadata: Awaited<ReturnType<typeof discoverAuthorizationServerMetadata>>): void {

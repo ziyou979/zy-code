@@ -3,8 +3,8 @@
 // 2. startMdmRawRead 触发 MDM 子进程（plutil/reg query），使其与下方
 //    剩余约 135ms 的导入并行运行
 // 3. startKeychainPrefetch 并行触发两个 macOS keychain 读取（OAuth + 旧版 API
-//    密钥）—— 否则 isRemoteManagedSettingsEligible() 会在 applySafeConfigEnvironmentVariables()
-//    内部通过同步 spawn 顺序读取它们（每次 macOS 启动约 65ms）
+//    密钥）—— 否则之后首次同步读取凭据时会通过同步 spawn 顺序读取它们
+//    （每次 macOS 启动约 65ms）
 import { profileCheckpoint, profileReport } from './services/telemetry/startupProfiler.js'
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
@@ -23,7 +23,6 @@ import {
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 startKeychainPrefetch()
 
-import { feature } from 'bun:bundle'
 import { Command as CommanderCommand } from '@commander-js/extra-typings'
 import {
   setClientType,
@@ -56,8 +55,6 @@ import { applyRuntimeOptions } from './cli/options/runtimeOptions.js'
 import { applySessionOptions } from './cli/options/sessionOptions.js'
 import { createSortedHelpConfig } from './cli/options/sortedHelp.js'
 import { init } from './entrypoints/init.js'
-import { loadPolicyLimits } from './services/policy-limits/index.js'
-import { loadRemoteManagedSettings } from './services/remote-managed-settings/index.js'
 import { stopCapturingEarlyInput } from './ink/earlyInput.js'
 import { isEnvTruthy, isInternalBuild } from './services/infra/envUtils.js'
 import { clearPluginCache } from './services/plugins/pluginLoader.js'
@@ -200,8 +197,8 @@ async function run(): Promise<CommanderCommand<any, any, any>> {
     // 等待在模块评估时启动的异步子进程加载（顶部 side-effect 块：startMdmRawRead、startKeychainPrefetch）。
     // 几乎免费 —— 子进程在上方约 135ms 的导入期间完成。
     // 必须在 init() 之前解析，init() 会触发第一次设置读取
-    //（applySafeConfigEnvironmentVariables → getSettingsForSource('policySettings')
-    // → isRemoteManagedSettingsEligible → 否则同步 keychain 读取约 65ms）。
+    //（applySafeConfigEnvironmentVariables → getSettingsForSource('policySettings')），
+    // 之后的同步凭据读取直接命中 keychain 预取缓存（否则约 65ms）。
     await Promise.all([ensureMdmSettingsLoaded(), ensureKeychainPrefetchCompleted()])
     profileCheckpoint('preAction_after_mdm')
     await init()
@@ -242,23 +239,6 @@ async function run(): Promise<CommanderCommand<any, any, any>> {
     }
     runMigrations()
     profileCheckpoint('preAction_after_migrations')
-
-    // 为企业客户加载远程托管设置（非阻塞）
-    // 开放失败 —— 如果获取失败，继续而不使用远程设置
-    // 设置到达时通过热重载应用
-    // 必须在 init() 之后发生以确保允许读取配置
-    void loadRemoteManagedSettings()
-    void loadPolicyLimits()
-    profileCheckpoint('preAction_after_remote_settings')
-
-    // 同步加载设置（非阻塞，开放失败）
-    // CLI：将本地设置上传到远程（CCR 下载由 print.ts 处理）
-    if (feature('UPLOAD_USER_SETTINGS')) {
-      void import('./services/settings-sync/index.js').then((m) =>
-        m.uploadUserSettingsInBackground(),
-      )
-    }
-    profileCheckpoint('preAction_after_settings_sync')
   })
   // 根命令选项按 7 组下沉到 cli/options/*。各组返回的链结果与传入的
   // program 是同一对象（commander 链式 mutate），所以忽略返回值即可。

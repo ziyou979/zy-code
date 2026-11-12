@@ -11,7 +11,6 @@
  */
 
 import { feature } from 'bun:bundle'
-import chalk from 'chalk'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -39,8 +38,6 @@ import {
   type ModelSetting,
   parseUserSpecifiedModel,
 } from '../../services/model/model.js'
-import { refreshPolicyLimits } from '../../services/policy-limits/index.js'
-import { refreshRemoteManagedSettings } from '../../services/remote-managed-settings/index.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { checkQuotaStatus } from '../../services/zyAiLimits.js'
 import { isBuiltInAgent, isCustomAgent } from '../../tools/AgentTool/loadAgentsDir.js'
@@ -73,11 +70,6 @@ import { gracefulShutdownSync } from 'src/bootstrap/lifecycle/gracefulShutdown.j
 import {
   getInitialMainLoopModel,
   setInitialMainLoopModel,
-} from 'src/bootstrap/runtime/runtimeContext.js'
-import {
-  getIsNonInteractiveSession,
-  getUserMsgOptIn,
-  setUserMsgOptIn,
 } from 'src/bootstrap/runtime/runtimeContext.js'
 // teleportWithProgress 在调用处动态导入
 import { initializeLspServerManager } from '../../services/lsp/manager.js'
@@ -151,7 +143,6 @@ export async function loadRootResources(
     warnings,
     dangerousPermissions,
     overlyBroadBashPermissions,
-    zyaiConfigPromise,
     mcpConfigStart,
     mcpConfigResolvedMs,
     mcpConfigPromise,
@@ -447,21 +438,10 @@ export async function loadRootResources(
     if (onboardingShown) {
       // 现在刷新认证依赖的服务，因为用户在入门培训期间已登录
       // 与 src/commands/login.tsx 中的登录后逻辑保持一致
-      void refreshRemoteManagedSettings()
-      void refreshPolicyLimits()
       // 在 GrowthBook 刷新之前清除用户数据缓存，以便它获取新鲜凭证
       resetUserCache()
       // 登录后刷新 GrowthBook 以获取更新的功能标志（例如用于 zy.ai MCP）
       refreshGrowthBookAfterAuthChange()
-      // 清除任何过时的受信任设备令牌，然后注册远程控制。
-      // 两者都在内部通过 zy_sessions_elevated_auth_enforcement 自门控
-      // —— enrollTrustedDevice() 通过 checkGate_CACHED_OR_BLOCKING（等待
-      // 上方的 GrowthBook 重新初始化），clearTrustedDeviceToken() 通过
-      // 同步缓存检查（可接受，因为清除是幂等的）。
-      void import('../../bridge/trustedDevice.js').then((m) => {
-        m.clearTrustedDeviceToken()
-        return m.enrollTrustedDevice()
-      })
       // Onboarding 写入了 settings.json（包括 models 和 mainLoopModel），
       // 需要刷新 settings 缓存并重新解析模型。
       resetSettingsCache()
@@ -561,10 +541,9 @@ export async function loadRootResources(
   // 在信任对话框之后预取 MCP 资源（这是执行发生的地方）。
   // 仅限交互模式：打印模式延迟连接直到 headlessStore 存在，
   // 并按服务器推送，所以一个慢速服务器不会阻塞整批启动。
-  const { localMcpPromise, zyaiMcpPromise, mcpPromise } = createMcpPrefetchPromises(
+  const { localMcpPromise, mcpPromise } = createMcpPrefetchPromises(
     isNonInteractiveSession,
     regularMcpConfigs,
-    zyaiConfigPromise,
   )
 
   // 早期启动钩子以便它们与 MCP 连接并行运行。
@@ -724,7 +703,6 @@ export async function loadRootResources(
     sdkMcpConfigs,
     regularMcpConfigs,
     localMcpPromise,
-    zyaiMcpPromise,
     mcpPromise,
     hooksPromise,
     hookMessages,

@@ -1,6 +1,6 @@
 // Proactive / Loop mode hook 包装。
 // 抽自 screens/REPL.tsx 的 useProactive 条件 require + 调用块。
-// 同 useReplVoice / useReplFrustration / useReplScheduledTasks 模式：feature() 守卫
+// 同 useReplFrustration / useReplScheduledTasks 模式：feature() 守卫
 // 与条件 require 内聚于本模块，REPL 主体直接调用 useReplProactive。
 //
 // 与 cli/lazyModules.ts 中的 proactiveModule 共享同一份 feature 门控

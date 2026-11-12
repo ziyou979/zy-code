@@ -96,14 +96,6 @@ export type McpServerConfigForProcessTransport =
   | McpHttpServerConfig
   | McpSdkServerConfig
 
-export interface McpZyAIProxyServerConfig {
-  type: 'zyai-proxy'
-  url: string
-  id: string
-}
-
-export type McpServerStatusConfig = McpServerConfigForProcessTransport | McpZyAIProxyServerConfig
-
 export interface McpServerStatus {
   name: string
   status: 'connected' | 'failed' | 'needs-auth' | 'pending' | 'disabled'
@@ -112,7 +104,7 @@ export interface McpServerStatus {
     version: string
   }
   error?: string
-  config?: McpServerStatusConfig
+  config?: McpServerConfigForProcessTransport
   scope?: string
   tools?: Array<{
     name: string

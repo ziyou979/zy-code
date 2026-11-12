@@ -22,7 +22,7 @@ import {
   saveMcpClientSecret,
 } from '../../services/mcp/auth.js'
 import { connectToServer, getMcpServerConnectionBatchSize } from '../../services/mcp/client.js'
-import { getAllMcpConfigs } from '../../services/mcp/configResolution.js'
+import { getZyCodeMcpConfigs } from '../../services/mcp/configResolution.js'
 import { getMcpConfigByName } from '../../services/mcp/configLookup.js'
 import { addMcpConfig, removeMcpConfig } from '../../services/mcp/configMutations.js'
 import { getMcpConfigsByScope } from '../../services/mcp/configRepository.js'
@@ -173,7 +173,7 @@ export async function mcpRemoveHandler(
 // mcp list (lines 4641–4688)
 export async function mcpListHandler(): Promise<void> {
   logEvent('zy_mcp_list', {})
-  const { servers: configs } = await getAllMcpConfigs()
+  const { servers: configs } = await getZyCodeMcpConfigs()
   if (Object.keys(configs).length === 0) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log('No MCP servers configured. Use `zy mcp add` to add a server.')
@@ -202,9 +202,6 @@ export async function mcpListHandler(): Promise<void> {
       } else if (server.type === 'http') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(`${name}: ${server.url} (HTTP) - ${status}`)
-      } else if (server.type === 'zyai-proxy') {
-        // biome-ignore lint/suspicious/noConsole:: intentional console output
-        console.log(`${name}: ${server.url} - ${status}`)
       } else if (!server.type || server.type === 'stdio') {
         const args = Array.isArray((server as unknown as { args?: string[] }).args)
           ? (server as unknown as { args: string[] }).args

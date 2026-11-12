@@ -3,7 +3,7 @@ import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import OpenAI from 'openai'
 import { resolveModelRequestContext } from 'src/services/model/modelRequestContext.js'
-import { isCustomEndpointProvider, isEnvEndpointProvider } from 'src/services/model/providers.js'
+import { isCustomEndpointProvider } from 'src/services/model/providers.js'
 import {
   getApiKey,
   getApiKeyFromApiKeyHelper,
@@ -17,10 +17,9 @@ import {
   refreshOAuthTokenForConnection,
 } from 'src/services/oauth/oauthStorage.js'
 import { getIsNonInteractiveSession, getSessionId } from '../../bootstrap/runtime/runtimeContext.js'
-import { getOauthConfig } from '../../constants/oauth.js'
 import type { LLMAdapter } from '../../types/llm.js'
 import { isDebugToStdErr, logForDebugging } from '../../services/infra/debug.js'
-import { isEnvTruthy, isInternalBuild, parseEnvNumber } from '../../services/infra/envUtils.js'
+import { isEnvTruthy, parseEnvNumber } from '../../services/infra/envUtils.js'
 import { anthropicProviderAdapter } from './anthropicProviderAdapter.js'
 import { googleProviderAdapter } from './googleProviderAdapter.js'
 import { VertexGoogleProviderAdapter } from './vertexGoogleProviderAdapter.js'
@@ -186,12 +185,6 @@ export async function getAnthropicClient({
   const clientConfig = {
     apiKey: apiKey || getApiKey(authProvider),
     authToken: undefined,
-    // 使用 staging OAuth 时从 OAuth 配置设置 baseURL
-    ...(isInternalBuild() && isEnvTruthy(process.env.USE_STAGING_OAUTH)
-      ? {
-          baseURL: getOauthConfig().BASE_API_URL,
-        }
-      : {}),
     ...ARGS,
     ...(isDebugToStdErr() && {
       logger: createStderrLogger(),

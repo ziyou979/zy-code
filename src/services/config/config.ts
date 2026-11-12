@@ -205,12 +205,6 @@ export type GlobalConfig = {
   // @已废弃 - 已迁移到 ~/.zy/cache/changelog.md。保留以支持迁移兼容。
   cachedChangelog?: string
   mcpServers?: Record<string, McpServerConfig>
-  // 已成功连接过至少一次的 zy.ai MCP 连接器。
-  // 用于控制"连接器不可用"/"需要认证"的启动通知：
-  // 用户实际使用过的连接器在出问题时值得提醒，
-  // 但组织配置且从一开始就需要认证的连接器，
-  // 用户显然已忽略，不应反复提醒。
-  zyAiMcpEverConnected?: string[]
   preferredNotifChannel: NotificationChannel
   /**
    * @deprecated. Use the Notification hook instead (docs/hooks.md).
@@ -287,20 +281,11 @@ export type GlobalConfig = {
     lastShownTime?: number
   }
 
-  // 转录分享弹窗追踪（"不再询问"）
-  transcriptShareDismissed?: boolean
-
   // 记忆使用追踪
   memoryUsageCount: number // 用户向记忆添加内容的次数
 
   // Powerup 课程进度追踪
   powerupsUnlocked?: string[] // 已完成的 powerup 课程 id 列表
-
-  // 语音模式通知追踪
-  voiceNoticeSeenCount?: number // 语音模式可用通知已展示的次数
-  voiceLangHintShownCount?: number // /voice 听写语言提示已展示的次数
-  voiceLangHintLastLanguage?: string // 上次展示提示时解析的 STT 语言代码 — 变更时重置计数
-  voiceFooterHintSeenCount?: number // "按住 X 说话" 底部提示已展示的会话数
 
   // 实验注册通知追踪（按实验 ID 索引）
   experimentNoticesSeenCount?: Record<string, number>
@@ -347,9 +332,6 @@ export type GlobalConfig = {
   taskCompleteNotifEnabled?: boolean
   inputNeededNotifEnabled?: boolean
   agentPushNotifEnabled?: boolean
-
-  // ZY Code 使用追踪
-  ZyCodeFirstTokenDate?: string // 用户首次获取 ZY Code OAuth token 的 ISO 时间戳
 
   // 模型切换提示追踪（ant-only）
   modelSwitchCalloutDismissed?: boolean // 用户是否选择了"不再显示"

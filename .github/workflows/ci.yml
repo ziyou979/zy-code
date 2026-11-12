@@ -29,6 +29,9 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun tsc --noEmit
       - run: bunx biome check .
+      - run: bun run lint:i18n
+      - run: bun run lint:locale
+      - run: bun run lint:architecture
 
   test:
     name: Tests

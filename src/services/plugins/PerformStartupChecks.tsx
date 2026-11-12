@@ -38,7 +38,7 @@ export async function performStartupChecks(setAppState: SetAppState): Promise<vo
     // would see seed marketplaces as missing → clone → defeats seed's purpose.
     //
     // If registration changed state, clear caches so earlier plugin-load passes
-    // (e.g. getAllMcpConfigs during REPL init) don't keep stale "marketplace
+    // (e.g. getZyCodeMcpConfigs during REPL init) don't keep stale "marketplace
     // not found" results.
     const seedChanged = await registerSeedMarketplaces()
     if (seedChanged) {

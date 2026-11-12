@@ -367,7 +367,7 @@ export const WireLocalCommandOutputMessageSchema = lazySchema(() =>
       session_id: z.string(),
     })
     .describe(
-      'Output from a local slash command (e.g. /voice, /cost). Displayed as assistant-style text in the transcript.',
+      'Output from a local slash command (e.g. /cost). Displayed as assistant-style text in the transcript.',
     ),
 )
 

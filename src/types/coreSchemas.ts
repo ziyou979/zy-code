@@ -142,19 +142,6 @@ export const McpServerConfigForProcessTransportSchema = lazySchema(() =>
   ]),
 )
 
-export const McpZyAIProxyServerConfigSchema = lazySchema(() =>
-  z.object({
-    type: z.literal('zyai-proxy'),
-    url: z.string(),
-    id: z.string(),
-  }),
-)
-
-// Broader config type for status responses (includes zyai-proxy which is output-only)
-export const McpServerStatusConfigSchema = lazySchema(() =>
-  z.union([McpServerConfigForProcessTransportSchema(), McpZyAIProxyServerConfigSchema()]),
-)
-
 export const McpServerStatusSchema = lazySchema(() =>
   z
     .object({
@@ -170,13 +157,13 @@ export const McpServerStatusSchema = lazySchema(() =>
         .optional()
         .describe('Server information (available when connected)'),
       error: z.string().optional().describe("Error message (available when status is 'failed')"),
-      config: McpServerStatusConfigSchema()
+      config: McpServerConfigForProcessTransportSchema()
         .optional()
         .describe('Server configuration (includes URL for HTTP/SSE servers)'),
       scope: z
         .string()
         .optional()
-        .describe('Configuration scope (e.g., project, user, local, zyai, managed)'),
+        .describe('Configuration scope (e.g., project, user, local, managed)'),
       tools: z
         .array(
           z.object({

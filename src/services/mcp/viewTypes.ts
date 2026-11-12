@@ -2,14 +2,7 @@
 
 import type { MCPServerConnection } from './types.js'
 
-export type ConfigScope =
-  | 'user'
-  | 'project'
-  | 'local'
-  | 'dynamic'
-  | 'enterprise'
-  | 'zyai'
-  | 'managed'
+export type ConfigScope = 'user' | 'project' | 'local' | 'dynamic' | 'enterprise' | 'managed'
 
 export interface ServerInfo {
   name: string
@@ -30,14 +23,6 @@ export interface AgentMcpServerInfo extends ServerInfo {
   url?: string
   command?: string
   isAuthenticated?: boolean
-}
-
-export interface ZyAIServerInfo {
-  type: 'zyai'
-  name: string
-  status: 'connected' | 'disconnected' | 'connecting' | 'error'
-  scope: ConfigScope
-  url: string
 }
 
 export interface HTTPServerInfo {

@@ -68,13 +68,11 @@ import {
   areMcpConfigsAllowedWithEnterpriseMcpConfig,
   doesEnterpriseMcpConfigExist,
 } from 'src/services/mcp/configLookup.js'
-import { filterMcpServersByPolicy, getZyCodeMcpConfigs } from 'src/services/mcp/configResolution.js'
-import { fetchZyAIMcpConfigsIfEligible } from 'src/services/mcp/zyai.js'
+import { getZyCodeMcpConfigs } from 'src/services/mcp/configResolution.js'
 import { getCwd } from 'src/services/environment/cwd.js'
 import { logForDebugging } from 'src/services/infra/debug.js'
 import { errorMessage } from 'src/utils/errors.js'
 import { writeToStderr } from 'src/services/shell/process.js'
-import { plural } from 'src/utils/stringUtils.js'
 import type { ChannelEntry } from 'src/bootstrap/runtime/runtimeContext.js'
 import {
   getIsNonInteractiveSession,
@@ -398,29 +396,6 @@ export async function initializeRootRuntime(
   })
 
   void assertMinVersion()
-
-  // zy.ai 配置获取：仅 -p 模式（交互使用 useManageMCPConnections
-  // 两阶段加载）。在这里启动以便与 setup() 重叠；在
-  // runHeadless 之前等待，以便单次 -p 看到连接器。在
-  // 企业/严格 MCP 下跳过以保留策略边界。
-  const zyaiConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> =
-    isNonInteractiveSession &&
-    !strictMcpConfig &&
-    !doesEnterpriseMcpConfigExist() &&
-    // --bare / SIMPLE：跳过 zy.ai 代理服务器（datadog、Gmail、
-    // Slack、BigQuery、PubMed —— 每个连接 6-14 秒）。需要 MCP 的脚本化调用
-    // 显式传递 --mcp-config。
-    !isBareMode()
-      ? fetchZyAIMcpConfigsIfEligible().then((configs) => {
-          const { allowed, blocked } = filterMcpServersByPolicy(configs)
-          if (blocked.length > 0) {
-            process.stderr.write(
-              `Warning: zy.ai MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`,
-            )
-          }
-          return allowed
-        })
-      : Promise.resolve({})
 
   // 早期启动 MCP 配置加载（安全 —— 仅读取文件，不执行）。
   // 交互和 -p 都使用 getZyCodeMcpConfigs（仅本地文件读取）。
@@ -747,7 +722,6 @@ export async function initializeRootRuntime(
     warnings,
     dangerousPermissions,
     overlyBroadBashPermissions,
-    zyaiConfigPromise,
     mcpConfigStart,
     mcpConfigResolvedMs,
     mcpConfigPromise,

@@ -1,5 +1,3 @@
-// @ts-expect-error
-import type { Cursor } from './cursor.js'
 import type { Size } from './layout/geometry.js'
 import type { ScrollHint } from './renderNodeToOutput.js'
 import {
@@ -9,6 +7,9 @@ import {
   type Screen,
   type StylePool,
 } from './screen.js'
+
+/** 终端光标位置（相对 frame 左上角）与可见性。 */
+export type Cursor = { x: number; y: number; visible: boolean }
 
 export type Frame = {
   readonly screen: Screen

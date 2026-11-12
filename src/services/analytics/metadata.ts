@@ -87,7 +87,6 @@ export function isToolDetailsLoggingEnabled(): boolean {
  *
  * 按 go/taxonomy，MCP 名称属于中等级 PII。我们为以下情况记录：
  * - Cowork (entrypoint=local-agent) —— 无 ZDR 概念，记录所有 MCP
- * - zy.ai 代理连接器 —— 始终为官方 (来自 zy.ai 列表)
  * - URL 匹配官方 MCP 注册表的服务器 —— 通过 `zy mcp add`
  *   添加的目录连接器，非客户特定配置
  *
@@ -98,9 +97,6 @@ export function isAnalyticsToolDetailsLoggingEnabled(
   mcpServerBaseUrl: string | undefined,
 ): boolean {
   if (process.env.ZY_CODE_ENTRYPOINT === 'local-agent') {
-    return true
-  }
-  if (mcpServerType === 'zyai-proxy') {
     return true
   }
   if (mcpServerBaseUrl && isOfficialMcpUrl(mcpServerBaseUrl)) {

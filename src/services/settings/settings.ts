@@ -1,4 +1,3 @@
-import { feature } from 'bun:bundle'
 import { dirname, join, resolve } from 'node:path'
 import mergeWith from 'lodash-es/mergeWith.js'
 import { z } from 'zod/v4'
@@ -9,7 +8,6 @@ import {
   getUseCoworkPlugins,
 } from '../../bootstrap/runtime/runtimeContext.js'
 import { setLanguage } from '../../i18n/languageStore.js'
-import { getRemoteManagedSettingsSyncFromCache } from '../remote-managed-settings/syncCacheState.js'
 import { uniq } from '../../utils/array.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { logForDiagnosticsNoPII } from '../telemetry/diagLogs.js'
@@ -292,13 +290,9 @@ export function getSettingsForSource(source: SettingSource): SettingsJson | null
 }
 
 function getSettingsForSourceUncached(source: SettingSource): SettingsJson | null {
-  // 对于 policySettings：第一个有内容的源生效（remote > HKLM/plist > file > HKCU）
+  // 对于 policySettings：第一个有内容的源生效（HKLM/plist > file > HKCU）。
+  // 远程托管设置（Anthropic 后端下发）已移除。
   if (source === 'policySettings') {
-    const remoteSettings = getRemoteManagedSettingsSyncFromCache()
-    if (remoteSettings && Object.keys(remoteSettings).length > 0) {
-      return remoteSettings
-    }
-
     const mdmResult = getMdmSettings()
     if (Object.keys(mdmResult.settings).length > 0) {
       return mdmResult.settings
@@ -339,15 +333,9 @@ function getSettingsForSourceUncached(source: SettingSource): SettingsJson | nul
 /**
  * 获取最高优先级的活跃策略配置源的来源。
  * 使用"第一个有内容的源生效"策略 - 返回第一个有内容的源。
- * 优先级：remote > plist/hklm > file (managed-settings.json) > hkcu
+ * 优先级：plist/hklm > file (managed-settings.json) > hkcu
  */
-export function getPolicySettingsOrigin(): 'remote' | 'plist' | 'hklm' | 'file' | 'hkcu' | null {
-  // 1. 远程（最高优先级）
-  const remoteSettings = getRemoteManagedSettingsSyncFromCache()
-  if (remoteSettings && Object.keys(remoteSettings).length > 0) {
-    return 'remote'
-  }
-
+export function getPolicySettingsOrigin(): 'plist' | 'hklm' | 'file' | 'hkcu' | null {
   // 2. 仅管理员的 MDM（HKLM / macOS plist）
   const mdmResult = getMdmSettings()
   if (Object.keys(mdmResult.settings).length > 0) {
@@ -618,22 +606,10 @@ function loadSettingsFromDisk(): SettingsWithErrors {
     // 按优先级顺序深度合并各源的配置
     for (const source of getEnabledSettingSources()) {
       // policySettings："第一个有内容的源生效" - 使用最高优先级的源。
-      // 优先级：remote > HKLM/plist > managed-settings.json > HKCU
+      // 优先级：HKLM/plist > managed-settings.json > HKCU
       if (source === 'policySettings') {
         let policySettings: SettingsJson | null = null
         const policyErrors: ValidationError[] = []
-
-        // 1. 远程（最高优先级）
-        const remoteSettings = getRemoteManagedSettingsSyncFromCache()
-        if (remoteSettings && Object.keys(remoteSettings).length > 0) {
-          const result = SettingsSchema().safeParse(remoteSettings)
-          if (result.success) {
-            policySettings = result.data
-          } else {
-            // 远程配置存在但无效 - 即使继续回退也要暴露错误
-            policyErrors.push(...formatZodError(result.error, 'remote managed settings'))
-          }
-        }
 
         // 2. 仅管理员的 MDM（HKLM / macOS plist）
         if (!policySettings) {

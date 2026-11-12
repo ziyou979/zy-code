@@ -28,7 +28,7 @@ export function toRGBColor(color: RGBColorType): RGBColorString {
   return `rgb(${color.r},${color.g},${color.b})`
 }
 
-// HSL hue (0-360) to RGB, using voice-mode waveform parameters (s=0.7, l=0.6).
+// HSL hue (0-360) to RGB with fixed saturation/lightness (s=0.7, l=0.6).
 export function hueToRgb(hue: number): RGBColorType {
   const h = ((hue % 360) + 360) % 360
   const s = 0.7
