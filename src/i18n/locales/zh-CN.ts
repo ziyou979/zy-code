@@ -2,6 +2,7 @@ import type { TranslationResource } from './resourceTypes.js'
 import { zhAgents } from './zh-CN/agents.js'
 import { zhChat } from './zh-CN/chat.js'
 import { zhCommands } from './zh-CN/commands.js'
+import { zhErrors } from './zh-CN/errors.js'
 import { zhMcp } from './zh-CN/mcp.js'
 import { zhMisc } from './zh-CN/misc.js'
 import { zhOnboarding } from './zh-CN/onboarding.js'
@@ -39,6 +40,7 @@ export const zhCN: TranslationResource = {
   ...zhShell,
   ...zhStats,
   ...zhUi,
+  ...zhErrors,
   ...zhMisc,
   ...zhPowerupLessons,
   ...zhWorkflow,

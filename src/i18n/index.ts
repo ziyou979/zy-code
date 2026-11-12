@@ -128,6 +128,28 @@ export function tSync(key: string, vars?: Record<string, string | number>): stri
   return interpolate(template, vars)
 }
 
+let _enMessages: Record<string, string> | undefined
+
+/** 英文资源（同步、缓存）。只给 tEn 与「按英文模板反查」的逻辑用。 */
+export function getEnMessages(): Record<string, string> {
+  if (!_enMessages) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    _enMessages = require('./locales/en.js').en as Record<string, string>
+  }
+  return _enMessages
+}
+
+/**
+ * 固定取英文模板，与当前界面语言无关。
+ *
+ * 用于「持久化 / 被字符串匹配 / 可能回传给模型」的文本：内容必须稳定为英文字节，
+ * 但文案仍以 locale 为唯一事实来源，渲染层再按 key 反查翻译
+ * （见 services/api/errorText.ts 的 localizeApiErrorText）。
+ */
+export function tEn(key: string, vars?: Record<string, string | number>): string {
+  return interpolate(getEnMessages()[key] ?? key, vars)
+}
+
 // 语言变化时重新预热消息缓存（mirrors i18next：changeLanguage 触发资源加载），
 // 使运行时切换语言后同步路径（tSync）也即时拿到新语言文案，无需各调用点手动 warm。
 onLanguageChange(() => {
