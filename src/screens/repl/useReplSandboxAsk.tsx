@@ -16,6 +16,7 @@
 // 对话框 approval 处理（REPL JSX 中）也要遍历清理同 host 的兄弟订阅。
 
 import { useCallback, useEffect, useRef } from 'react'
+import { tSync } from '../../i18n/index.js'
 import type { Notification } from '../../context/notifications.js'
 import { registerSandboxPermissionCallback } from '../../hooks/useSwarmPermissionPoller.js'
 import { Text } from '../../ink/index.js'
@@ -114,8 +115,8 @@ export function useReplSandboxAsk({
     }
     if (SandboxManager.isSandboxRequired()) {
       process.stderr.write(
-        `\nError: sandbox required but unavailable: ${reason}\n` +
-          `  sandbox.failIfUnavailable is set — refusing to start without a working sandbox.\n\n`,
+        `\n${tSync('cli.sandboxRequiredUnavailable', { reason })}\n` +
+          `  ${tSync('cli.sandboxFailIfUnavailable')}\n\n`,
       )
       gracefulShutdownSync(1, 'other')
       return
@@ -136,7 +137,7 @@ export function useReplSandboxAsk({
   // SandboxManager.initialize 每次渲染调用（内部幂等）；失败则 graceful exit
   if (SandboxManager.isSandboxingEnabled()) {
     SandboxManager.initialize(sandboxAskCallback).catch((err) => {
-      process.stderr.write(`\n❌ Sandbox Error: ${errorMessage(err)}\n`)
+      process.stderr.write(`\n❌ ${tSync('cli.sandboxError', { error: errorMessage(err) })}\n`)
       gracefulShutdownSync(1, 'other')
     })
   }

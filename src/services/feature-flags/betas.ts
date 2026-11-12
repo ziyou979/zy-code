@@ -1,4 +1,5 @@
 import { feature } from 'bun:bundle'
+import { tSync } from '../../i18n/index.js'
 import memoize from 'lodash-es/memoize.js'
 import {
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
@@ -70,7 +71,7 @@ export function filterAllowedSdkBetas(sdkBetas: string[] | undefined): string[] 
   for (const beta of disallowed) {
     // biome-ignore lint/suspicious/noConsole: intentional warning
     console.warn(
-      `Warning: Beta header '${beta}' is not allowed. Only the following betas are supported: ${ALLOWED_SDK_BETAS.join(', ')}`,
+      tSync('cli.betaNotAllowed', { beta, allowed: ALLOWED_SDK_BETAS.join(', ') }),
     )
   }
   return allowed.length > 0 ? allowed : undefined

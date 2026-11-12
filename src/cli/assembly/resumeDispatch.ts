@@ -2,6 +2,7 @@
 // 处理 --from-pr PR 过滤、按自定义标题搜索会话、普通 resume 会话恢复和交互式选择器。
 
 import { resolve } from 'node:path'
+import { tSync } from '../../i18n/index.js'
 import chalk from 'chalk'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -181,8 +182,10 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
             success: false,
           })
           logError(error)
-          await exitWithError(root, `Unable to load transcript from file: ${options.resume}`, () =>
-            gracefulShutdown(1),
+          await exitWithError(
+            root,
+            tSync('cli.resumeLoadTranscriptFailed', { file: String(options.resume) }),
+            () => gracefulShutdown(1),
           )
         }
       }
@@ -203,7 +206,7 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
           entrypoint: 'cli_flag' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           success: false,
         })
-        return await exitWithError(root, `No conversation found with session ID: ${sessionId}`)
+        return await exitWithError(root, tSync('cli.resumeSessionNotFound', { sessionId }))
       }
       const fullPath = matchedLog?.fullPath ?? result.fullPath
       processedResume = await processResumedConversation(
@@ -229,7 +232,7 @@ export async function dispatchResumeMode(params: ResumeDispatchParams): Promise<
         success: false,
       })
       logError(error)
-      await exitWithError(root, `Failed to resume session ${sessionId}`)
+      await exitWithError(root, tSync('cli.resumeFailed', { sessionId }))
     }
   }
 

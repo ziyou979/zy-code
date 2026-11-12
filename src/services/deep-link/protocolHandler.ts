@@ -12,6 +12,7 @@
  */
 
 import { homedir } from 'node:os'
+import { tSync } from '../../i18n/index.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { filterExistingPaths, getKnownPathsForRepo } from '../github/githubRepoPathMapping.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
@@ -38,7 +39,7 @@ export async function handleDeepLinkUri(uri: string): Promise<number> {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     // biome-ignore lint/suspicious/noConsole: 有意的错误输出
-    console.error(`Deep link error: ${message}`)
+    console.error(tSync('cli.deepLink.error', { error: message }))
     return 1
   }
 
@@ -59,9 +60,7 @@ export async function handleDeepLinkUri(uri: string): Promise<number> {
   })
   if (!launched) {
     // biome-ignore lint/suspicious/noConsole: 有意的错误输出
-    console.error(
-      'Failed to open a terminal. Make sure a supported terminal emulator is installed.',
-    )
+    console.error(tSync('cli.deepLink.noTerminal'))
     return 1
   }
 

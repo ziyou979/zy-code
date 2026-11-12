@@ -4,6 +4,7 @@
  */
 
 import { stat } from 'node:fs/promises'
+import { tSync } from '../../i18n/index.js'
 import { cwd } from 'node:process'
 import pMap from 'p-map'
 import { MCPServerDesktopImportDialog } from '../../components/MCPServerDesktopImportDialog.js'
@@ -48,14 +49,14 @@ async function checkMcpServerHealth(name: string, server: ScopedMcpServerConfig)
   try {
     const result = await connectToServer(name, server)
     if (result.type === 'connected') {
-      return `${TICK} Connected`
+      return `${TICK} ${tSync('cli.mcp.health.connected')}`
     } else if (result.type === 'needs-auth') {
-      return '! Needs authentication'
+      return `! ${tSync('cli.mcp.health.needsAuth')}`
     } else {
-      return `${CROSS} Failed to connect`
+      return `${CROSS} ${tSync('cli.mcp.health.failed')}`
     }
   } catch (_error) {
-    return `${CROSS} Connection error`
+    return `${CROSS} ${tSync('cli.mcp.health.error')}`
   }
 }
 
@@ -73,7 +74,7 @@ export async function mcpServeHandler({
     await stat(providedCwd)
   } catch (error) {
     if (isFsInaccessible(error)) {
-      cliError(`Error: Directory ${providedCwd} does not exist`)
+      cliError(tSync('cli.mcp.dirNotExist', { dir: providedCwd }))
     }
     throw error
   }
@@ -86,7 +87,7 @@ export async function mcpServeHandler({
     const { startMCPServer } = await import('../../entrypoints/mcp.js')
     await startMCPServer(providedCwd, debug ?? false, verbose ?? false)
   } catch (error) {
-    cliError(`Error: Failed to start MCP server: ${error}`)
+    cliError(tSync('cli.mcp.serveFailed', { error: String(error) }))
   }
 }
 
@@ -117,8 +118,8 @@ export async function mcpRemoveHandler(
       })
       await removeMcpConfig(name, scope)
       cleanupSecureStorage()
-      process.stdout.write(`Removed MCP server ${name} from ${scope} config\n`)
-      cliOk(`File modified: ${describeMcpConfigFilePath(scope)}`)
+      process.stdout.write(`${tSync('cli.mcp.removedExplicitScope', { name, scope })}\n`)
+      cliOk(tSync('cli.mcp.fileModified', { file: describeMcpConfigFilePath(scope) }))
     }
 
     // If no scope specified, check where the server exists
@@ -141,7 +142,7 @@ export async function mcpRemoveHandler(
       scopes.push('user')
     }
     if (scopes.length === 0) {
-      cliError(`No MCP server found with name: "${name}"`)
+      cliError(tSync('cli.mcp.notFound', { name }))
     } else if (scopes.length === 1) {
       // Server exists in only one scope, remove it
       const scope = scopes[0]!
@@ -151,15 +152,15 @@ export async function mcpRemoveHandler(
       })
       await removeMcpConfig(name, scope)
       cleanupSecureStorage()
-      process.stdout.write(`Removed MCP server "${name}" from ${scope} config\n`)
-      cliOk(`File modified: ${describeMcpConfigFilePath(scope)}`)
+      process.stdout.write(`${tSync('cli.mcp.removed', { name, scope })}\n`)
+      cliOk(tSync('cli.mcp.fileModified', { file: describeMcpConfigFilePath(scope) }))
     } else {
       // Server exists in multiple scopes
-      process.stderr.write(`MCP server "${name}" exists in multiple scopes:\n`)
+      process.stderr.write(`${tSync('cli.mcp.multipleScopes', { name })}\n`)
       scopes.forEach((scope) => {
         process.stderr.write(`  - ${getScopeLabel(scope)} (${describeMcpConfigFilePath(scope)})\n`)
       })
-      process.stderr.write('\nTo remove from a specific scope, use:\n')
+      process.stderr.write(`\n${tSync('cli.mcp.removeFromScopeHint')}\n`)
       scopes.forEach((scope) => {
         process.stderr.write(`  zy mcp remove "${name}" -s ${scope}\n`)
       })
@@ -176,10 +177,10 @@ export async function mcpListHandler(): Promise<void> {
   const { servers: configs } = await getZyCodeMcpConfigs()
   if (Object.keys(configs).length === 0) {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log('No MCP servers configured. Use `zy mcp add` to add a server.')
+    console.log(tSync('cli.mcp.noneConfigured'))
   } else {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.log('Checking MCP server health...\n')
+    console.log(`${tSync('cli.mcp.checkingHealth')}\n`)
 
     // Check servers concurrently
     const entries = Object.entries(configs)
@@ -225,7 +226,7 @@ export async function mcpGetHandler(name: string): Promise<void> {
   })
   const server = getMcpConfigByName(name)
   if (!server) {
-    cliError(`No MCP server found with name: ${name}`)
+    cliError(tSync('cli.mcp.notFoundUnquoted', { name }))
   }
 
   // biome-ignore lint/suspicious/noConsole:: intentional console output
@@ -313,7 +314,7 @@ export async function mcpGetHandler(name: string): Promise<void> {
     }
   }
   // biome-ignore lint/suspicious/noConsole:: intentional console output
-  console.log(`\nTo remove this server, run: zy mcp remove "${name}" -s ${server.scope}`)
+  console.log(`\n${tSync('cli.mcp.removeThisHint', { name, scope: server.scope })}`)
   // Use gracefulShutdown to properly clean up MCP server connections
   // (process.exit bypasses cleanup handlers, leaving child processes orphaned)
   await gracefulShutdown(0)
@@ -374,7 +375,7 @@ export async function mcpAddJsonHandler(
       source: 'json' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       type: transportType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
-    cliOk(`Added ${transportType} MCP server ${name} to ${scope} config`)
+    cliOk(tSync('cli.mcp.addedJson', { transport: transportType, name, scope }))
   } catch (error) {
     cliError((error as Error).message)
   }
@@ -393,9 +394,7 @@ export async function mcpAddFromDesktopHandler(options: { scope?: string }): Pro
     const { readZyDesktopMcpServers } = await import('../../services/desktop/zyDesktop.js')
     const servers = await readZyDesktopMcpServers()
     if (Object.keys(servers).length === 0) {
-      cliOk(
-        'No MCP servers found in Zy Desktop configuration or configuration file does not exist.',
-      )
+      cliOk(tSync('cli.mcp.noDesktopServers'))
     }
     const { unmount } = await render(
       <AppStateProvider>
@@ -427,8 +426,5 @@ export async function mcpResetChoicesHandler(): Promise<void> {
     disabledMcpjsonServers: [],
     enableAllProjectMcpServers: false,
   }))
-  cliOk(
-    'All project-scoped (.mcp.json) server approvals and rejections have been reset.\n' +
-      'You will be prompted for approval next time you start ZY Code.',
-  )
+  cliOk(`${tSync('cli.mcp.choicesReset')}\n${tSync('cli.mcp.choicesResetHint')}`)
 }

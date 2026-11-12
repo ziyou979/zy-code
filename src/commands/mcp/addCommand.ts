@@ -4,6 +4,7 @@
  * Extracted from main.tsx to enable direct testing.
  */
 import { type Command, Option } from '@commander-js/extra-typings'
+import { tSync } from '../../i18n/index.js'
 import { cliError, cliOk } from '../../cli/exit.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -69,14 +70,9 @@ export function registerMcpAddCommand(mcp: Command): void {
 
       // If no name is provided, error
       if (!name) {
-        cliError(
-          'Error: Server name is required.\n' + 'Usage: zy mcp add <name> <command> [args...]',
-        )
+        cliError(`${tSync('cli.mcpAdd.nameRequired')}\n${tSync('cli.mcpAdd.usage')}`)
       } else if (!actualCommand) {
-        cliError(
-          'Error: Command is required when server name is provided.\n' +
-            'Usage: zy mcp add <name> <command> [args...]',
-        )
+        cliError(`${tSync('cli.mcpAdd.commandRequired')}\n${tSync('cli.mcpAdd.usage')}`)
       }
 
       try {
@@ -85,7 +81,7 @@ export function registerMcpAddCommand(mcp: Command): void {
 
         // XAA fail-fast: validate at add-time, not auth-time.
         if (options.xaa && !isXaaEnabled()) {
-          cliError('Error: --xaa requires ZY_CODE_ENABLE_XAA=1 in your environment')
+          cliError(tSync('cli.mcpAdd.xaaNotEnabled'))
         }
         const xaa = Boolean(options.xaa)
         if (xaa) {
@@ -100,7 +96,7 @@ export function registerMcpAddCommand(mcp: Command): void {
             missing.push("'zy mcp xaa setup' (settings.xaaIdp not configured)")
           }
           if (missing.length) {
-            cliError(`Error: --xaa requires: ${missing.join(', ')}`)
+            cliError(tSync('cli.mcpAdd.xaaRequires', { missing: missing.join(', ') }))
           }
         }
 
@@ -126,7 +122,7 @@ export function registerMcpAddCommand(mcp: Command): void {
 
         if (transport === 'sse') {
           if (!actualCommand) {
-            cliError('Error: URL is required for SSE transport.')
+            cliError(tSync('cli.mcpAdd.urlRequiredSse'))
           }
 
           const headers = options.header ? parseHeaders(options.header) : undefined
@@ -157,14 +153,14 @@ export function registerMcpAddCommand(mcp: Command): void {
           }
 
           process.stdout.write(
-            `Added SSE MCP server ${name} with URL: ${actualCommand} to ${scope} config\n`,
+            `${tSync('cli.mcpAdd.addedSse', { name, url: String(actualCommand), scope })}\n`,
           )
           if (headers) {
             process.stdout.write(`Headers: ${jsonStringify(headers, null, 2)}\n`)
           }
         } else if (transport === 'http') {
           if (!actualCommand) {
-            cliError('Error: URL is required for HTTP transport.')
+            cliError(tSync('cli.mcpAdd.urlRequiredHttp'))
           }
 
           const headers = options.header ? parseHeaders(options.header) : undefined
@@ -195,28 +191,26 @@ export function registerMcpAddCommand(mcp: Command): void {
           }
 
           process.stdout.write(
-            `Added HTTP MCP server ${name} with URL: ${actualCommand} to ${scope} config\n`,
+            `${tSync('cli.mcpAdd.addedHttp', { name, url: String(actualCommand), scope })}\n`,
           )
           if (headers) {
             process.stdout.write(`Headers: ${jsonStringify(headers, null, 2)}\n`)
           }
         } else {
           if (options.clientId || options.clientSecret || options.callbackPort || options.xaa) {
-            process.stderr.write(
-              `Warning: --client-id, --client-secret, --callback-port, and --xaa are only supported for HTTP/SSE transports and will be ignored for stdio.\n`,
-            )
+            process.stderr.write(`${tSync('cli.mcpAdd.oauthFlagsIgnored')}\n`)
           }
 
           // Warn if this looks like a URL but transport wasn't explicitly specified
           if (!transportExplicit && looksLikeUrl) {
             process.stderr.write(
-              `\nWarning: The command "${actualCommand}" looks like a URL, but is being interpreted as a stdio server as --transport was not specified.\n`,
+              `\n${tSync('cli.mcpAdd.looksLikeUrl', { command: String(actualCommand) })}\n`,
             )
             process.stderr.write(
-              `If this is an HTTP server, use: zy mcp add --transport http ${name} ${actualCommand}\n`,
+              `${tSync('cli.mcpAdd.ifHttp', { name, command: String(actualCommand) })}\n`,
             )
             process.stderr.write(
-              `If this is an SSE server, use: zy mcp add --transport sse ${name} ${actualCommand}\n`,
+              `${tSync('cli.mcpAdd.ifSse', { name, command: String(actualCommand) })}\n`,
             )
           }
 
@@ -228,10 +222,10 @@ export function registerMcpAddCommand(mcp: Command): void {
           )
 
           process.stdout.write(
-            `Added stdio MCP server ${name} with command: ${actualCommand} ${actualArgs.join(' ')} to ${scope} config\n`,
+            `${tSync('cli.mcpAdd.addedStdio', { name, command: `${actualCommand} ${actualArgs.join(' ')}`, scope })}\n`,
           )
         }
-        cliOk(`File modified: ${describeMcpConfigFilePath(scope)}`)
+        cliOk(tSync('cli.mcp.fileModified', { file: describeMcpConfigFilePath(scope) }))
       } catch (error) {
         cliError((error as Error).message)
       }
