@@ -11,6 +11,7 @@ import autofixPr from '../commands/autofix-pr/index.js'
 import backfillSessions from '../commands/backfill-sessions/index.js'
 import btw from '../commands/btw/index.js'
 import issue from '../commands/issue/index.js'
+import feedback from '../commands/feedback/index.js'
 import clear from '../commands/clear/index.js'
 import color from '../commands/color/index.js'
 import copy from '../commands/copy/index.js'
@@ -258,6 +259,7 @@ const COMMANDS = memoize((): Command[] => [
   tag,
   theme,
   tools,
+  feedback,
   rewind,
   terminalSetup,
   upgrade,
