@@ -9,6 +9,7 @@ import { semanticNumber } from '../../utils/semanticNumber.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { hasExternalToolOverride } from '../externalToolLoader.js'
 import { getWebSearchPrompt, WEB_SEARCH_TOOL_NAME } from './prompt.js'
+import { runSearchChain, type SearchResponseItem } from './searchBackends.js'
 import {
   getToolUseSummary,
   renderToolResultMessage,
@@ -170,6 +171,9 @@ export const WebSearchTool = buildTool({
 
       const searchResults = await executeSearch({
         query: effectiveQuery,
+        rawQuery: query,
+        allowedDomains: allowed_domains,
+        blockedDomains: blocked_domains,
         maxResults,
         date: date_range,
       })
@@ -257,121 +261,34 @@ export const WebSearchTool = buildTool({
 } satisfies ToolDef<InputSchema, Output, WebSearchProgress>)
 
 // ---------------------------------------------------------------------------
-// 搜索后端：通过 OpenSerp HTTP API（http://127.0.0.1:7000）搜索
+// 搜索后端：本地 OpenSERP → 托管 zy-search 网关 → Tavily → Brave（见 searchBackends.ts）
 // ---------------------------------------------------------------------------
 
-interface SearchResponseItem {
-  title: string
-  url: string
-  content?: string
-}
-
-/** OpenSerp 单条搜索结果结构 */
-interface OpenSerpResult {
-  title: string
-  url: string
-  snippet?: string
-  domain?: string
-}
-
-/** OpenSerp /mega/search 响应结构 */
-interface OpenSerpMegaResponse {
-  query: { text: string }
-  meta: {
-    took_ms: number
-    engines_failed?: string[]
-  }
-  results: OpenSerpResult[]
-}
-
-const OPENSERP_BASE = 'http://127.0.0.1:7000'
-
-/** 默认多引擎组合，按可用性与覆盖度排序 */
-const MEGA_ENGINES = ['bing', 'baidu', 'ecosia', 'duck', 'google']
-
-const RETRYABLE = new Set([408, 429, 500, 502, 503])
-const MAX_RETRIES = 4
-
-/**
- * 带指数退避重试的 fetch 包装，参考 OpenSERP 官方客户端模式。
- * - 重试状态码：408（超时）、429（限流）、500/502/503（服务端）
- * - 优先使用 Retry-After 响应头，否则指数退避 + 随机抖动
- */
-async function fetchWithRetry(url: string, maxAttempts = MAX_RETRIES): Promise<Response> {
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) })
-
-    if (res.ok) return res
-
-    if (!RETRYABLE.has(res.status) || attempt === maxAttempts) {
-      return res
-    }
-
-    const retryAfter = Number(res.headers.get('Retry-After') ?? 0)
-    const waitMs = retryAfter
-      ? retryAfter * 1000
-      : Math.min(2 ** attempt * 250, 8000) + Math.random() * 250
-
-    logForDebugging(
-      `[WebSearch] Retry ${attempt}/${maxAttempts} after ${res.status}, waiting ${waitMs.toFixed(0)}ms`,
-    )
-    await new Promise((resolve) => setTimeout(resolve, waitMs))
-  }
-  throw new Error('Unexpected: retry loop exhausted without returning')
-}
-
-/** OpenSERP 搜索选项 */
+/** 搜索选项 */
 interface SearchOptions {
   query: string
+  rawQuery: string
+  allowedDomains?: string[]
+  blockedDomains?: string[]
   maxResults?: number
   date?: string
 }
 
 /**
- * 通过 OpenSerp /mega/search 执行搜索。
- * 多引擎并行聚合，自动从用户设置推断语言。
+ * 按后端链执行搜索。全部后端不可用时抛错，由 call() 转成工具错误结果。
  */
 async function executeSearch(options: SearchOptions): Promise<SearchResponseItem[]> {
-  const { query, maxResults = DEFAULT_MAX_RESULTS, date } = options
-
-  const params = new URLSearchParams({
-    text: query,
-    limit: String(Math.min(maxResults, MAX_ALLOWED_RESULTS)),
-    engines: MEGA_ENGINES.join(','),
-    mode: 'balanced',
-    dedupe: 'true',
-    merge: 'true',
-    filter: 'true',
-    features: 'false', // 只需普通搜索结果，不需要 SERP feature
+  const { maxResults = DEFAULT_MAX_RESULTS } = options
+  const { items, backend } = await runSearchChain({
+    query: options.query,
+    rawQuery: options.rawQuery,
+    allowedDomains: options.allowedDomains,
+    blockedDomains: options.blockedDomains,
+    maxResults: Math.min(maxResults, MAX_ALLOWED_RESULTS),
+    date: options.date,
   })
-
-  if (date) params.set('date', date)
-
-  try {
-    const res = await fetchWithRetry(`${OPENSERP_BASE}/mega/search?${params}`)
-
-    if (!res.ok) {
-      logForDebugging(
-        `[WebSearch] OpenSerp returned ${res.status} for query="${query}": ${await res.text().catch(() => '')}`,
-      )
-      return []
-    }
-
-    const data = (await res.json()) as OpenSerpMegaResponse
-
-    const searchItems: SearchResponseItem[] = data.results.map((r) => ({
-      title: r.title,
-      url: r.url,
-      content: r.snippet,
-    }))
-
-    return searchItems.slice(0, maxResults)
-  } catch (error) {
-    logForDebugging(
-      `[WebSearch] OpenSerp fetch error: ${error instanceof Error ? error.message : String(error)}`,
-    )
-    return []
-  }
+  logForDebugging(`[WebSearch] backend=${backend} results=${items.length}`)
+  return items.slice(0, maxResults)
 }
 
 // 插件化注册

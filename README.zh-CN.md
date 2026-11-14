@@ -63,10 +63,19 @@ ZY Code 会从项目级 `.zy/tools/` 和用户级 `~/.zy/tools/` 加载外部 To
 无关的对象，只需提供描述、JSON Schema 和异步 `call()` 函数。
 
 > [!IMPORTANT]
-> 内置 `WebSearch` 依赖自行部署的 [OpenSERP](https://github.com/karust/openserp)，并从
-> `http://127.0.0.1:7000` 访问；ZY Code 不会内置或托管该服务。可以通过
-> `docker run --rm -p 127.0.0.1:7000:7000 karust/openserp:latest serve -a 0.0.0.0 -p 7000`
-> 启动，也可以按照下方示例使用自己的外部 Tool 覆盖 `WebSearch`。
+> 内置 `WebSearch` 按以下顺序尝试后端，使用第一个可用的：
+>
+> 1. 自行部署的 [OpenSERP](https://github.com/karust/openserp)，默认 `http://127.0.0.1:7000`
+>    （可用 `ZY_OPENSERP_URL` 修改），例如
+>    `docker run --rm -p 127.0.0.1:7000:7000 karust/openserp:latest serve -a 0.0.0.0 -p 7000`。
+> 2. 托管的 zy-search 网关：仅在设置了个人 Key 时启用，需要 `ZY_SEARCH_URL` 和 `ZY_SEARCH_KEY`
+>    （用 GitHub 登录网关领取的 `zys_...` Key）。
+> 3. [Tavily](https://tavily.com)：仅在设置 `TAVILY_API_KEY` 时启用。
+> 4. [Brave Search](https://brave.com/search/api/)：仅在设置 `BRAVE_SEARCH_API_KEY` 时启用。
+>
+> 全部不可用时，工具会返回错误并说明该如何配置。Key 只从环境变量或用户级/托管策略 settings
+> （`webSearch.*`）读取，不会读取项目内的 `.zy/settings.json`；只放在请求头里发送，不会写入日志。
+> 详见[配置文档](docs/configuration.md)。也可以按照下方示例使用自己的外部 Tool 覆盖 `WebSearch`。
 
 仓库内置的 [DuckDuckGo WebSearch demo](examples/external-tools/web-search-duckduckgo.ts) 展示了如何在
 不修改 ZY Code 源码的情况下替换内置 `WebSearch`：

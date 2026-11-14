@@ -71,11 +71,21 @@ built-in replaces that implementation while the external tool is active. Tool de
 small framework-independent object with a description, JSON Schema, and async `call()` function.
 
 > [!IMPORTANT]
-> The built-in `WebSearch` requires a self-hosted [OpenSERP](https://github.com/karust/openserp)
-> service at `http://127.0.0.1:7000`; ZY Code does not bundle or host this service. Deploy it
-> yourself, for example with
-> `docker run --rm -p 127.0.0.1:7000:7000 karust/openserp:latest serve -a 0.0.0.0 -p 7000`, or
-> replace `WebSearch` with your own external tool as shown below.
+> The built-in `WebSearch` tries its backends in this order and uses the first one that works:
+>
+> 1. A self-hosted [OpenSERP](https://github.com/karust/openserp) at `http://127.0.0.1:7000`
+>    (override with `ZY_OPENSERP_URL`), e.g.
+>    `docker run --rm -p 127.0.0.1:7000:7000 karust/openserp:latest serve -a 0.0.0.0 -p 7000`.
+> 2. The hosted zy-search gateway, only when you set a personal key: `ZY_SEARCH_URL` and
+>    `ZY_SEARCH_KEY` (a `zys_...` key you get by logging in to the gateway with GitHub).
+> 3. [Tavily](https://tavily.com), only when `TAVILY_API_KEY` is set.
+> 4. [Brave Search](https://brave.com/search/api/), only when `BRAVE_SEARCH_API_KEY` is set.
+>
+> If none is available the tool returns an error explaining what to configure. Keys are read only
+> from environment variables or your user/managed settings (`webSearch.*`), never from a project's
+> `.zy/settings.json`, are sent only in request headers, and are never logged. See
+> [configuration](docs/configuration.md). You can also replace `WebSearch` with your own external
+> tool as shown below.
 
 The included [DuckDuckGo WebSearch demo](examples/external-tools/web-search-duckduckgo.ts) replaces
 the built-in `WebSearch` tool without modifying ZY Code itself:
