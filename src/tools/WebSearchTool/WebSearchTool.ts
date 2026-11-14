@@ -171,7 +171,6 @@ export const WebSearchTool = buildTool({
 
       const searchResults = await executeSearch({
         query: effectiveQuery,
-        rawQuery: query,
         allowedDomains: allowed_domains,
         blockedDomains: blocked_domains,
         maxResults,
@@ -261,13 +260,12 @@ export const WebSearchTool = buildTool({
 } satisfies ToolDef<InputSchema, Output, WebSearchProgress>)
 
 // ---------------------------------------------------------------------------
-// 搜索后端：本地 OpenSERP → 托管 zy-search 网关 → Tavily → Brave（见 searchBackends.ts）
+// 搜索后端：本地 OpenSERP → 用户自己的托管 zy-search 网关（见 searchBackends.ts）
 // ---------------------------------------------------------------------------
 
 /** 搜索选项 */
 interface SearchOptions {
   query: string
-  rawQuery: string
   allowedDomains?: string[]
   blockedDomains?: string[]
   maxResults?: number
@@ -281,7 +279,6 @@ async function executeSearch(options: SearchOptions): Promise<SearchResponseItem
   const { maxResults = DEFAULT_MAX_RESULTS } = options
   const { items, backend } = await runSearchChain({
     query: options.query,
-    rawQuery: options.rawQuery,
     allowedDomains: options.allowedDomains,
     blockedDomains: options.blockedDomains,
     maxResults: Math.min(maxResults, MAX_ALLOWED_RESULTS),

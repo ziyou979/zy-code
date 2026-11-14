@@ -2,10 +2,11 @@
  * WebSearch 后端链：按顺序尝试，前一个不可用时自动回退到下一个。
  *
  *   1. 本地 OpenSERP（默认 http://127.0.0.1:7000，可用 ZY_OPENSERP_URL / webSearch.openserpUrl 覆盖）
- *   2. 托管网关 zy-search（仅当配置了 ZY_SEARCH_KEY / webSearch.hostedKey）
- *   3. Tavily（仅当配置了 TAVILY_API_KEY / webSearch.tavilyApiKey）
- *   4. Brave Search（仅当配置了 BRAVE_SEARCH_API_KEY / webSearch.braveApiKey）
- *   5. 全部不可用 → 抛出带指引的错误（建议使用 DuckDuckGo 外部 Tool 示例）
+ *   2. 用户自己的托管网关 zy-search（仅当配置了 ZY_SEARCH_URL + ZY_SEARCH_KEY /
+ *      webSearch.hostedUrl + webSearch.hostedKey）
+ *   3. 全部不可用 → 抛出带配置指引的错误
+ *
+ * 有意不接入任何第三方搜索 API：搜索只走自建的 OpenSERP 或用户自己的网关。
  *
  * 安全约束：
  * - URL 与 key 只从环境变量和可信 settings 源（user / flag / policy）读取；
@@ -26,8 +27,6 @@ export interface SearchResponseItem {
 export interface SearchRequest {
   /** 已经拼好 site:/-site: 的查询，供原生支持搜索语法的后端使用 */
   query: string
-  /** 用户原始查询（不含 site: 拼接），供支持结构化域名过滤的后端使用 */
-  rawQuery: string
   allowedDomains?: string[]
   blockedDomains?: string[]
   maxResults: number
@@ -39,15 +38,11 @@ export interface WebSearchSettings {
   openserpUrl?: string
   hostedUrl?: string
   hostedKey?: string
-  tavilyApiKey?: string
-  braveApiKey?: string
 }
 
 export interface ResolvedWebSearchConfig {
   openserpUrl: string
   hosted?: { url: string; key: string }
-  tavilyKey?: string
-  braveKey?: string
   /** 配置了 key 但缺少托管地址时的提示 */
   hostedMisconfigured?: string
 }
@@ -59,10 +54,8 @@ export const DEFAULT_OPENSERP_URL = 'http://127.0.0.1:7000'
  */
 export const DEFAULT_HOSTED_SEARCH_URL: string | undefined = undefined
 
-const TAVILY_URL = 'https://api.tavily.com/search'
-const BRAVE_URL = 'https://api.search.brave.com/res/v1/web/search'
 const DUCKDUCKGO_HINT =
-  'To search without any service, copy examples/external-tools/web-search-duckduckgo.ts to ~/.zy/tools/web-search.ts (or .zy/tools/) and run /reload-tools.'
+  'Or replace WebSearch with a no-key external tool: copy examples/external-tools/web-search-duckduckgo.ts to ~/.zy/tools/web-search.ts (or .zy/tools/) and run /reload-tools.'
 
 // ---------------------------------------------------------------------------
 // 配置解析
@@ -78,13 +71,7 @@ function readTrustedWebSearchSettings(): WebSearchSettings {
     if (!ws || typeof ws !== 'object') {
       continue
     }
-    for (const key of [
-      'openserpUrl',
-      'hostedUrl',
-      'hostedKey',
-      'tavilyApiKey',
-      'braveApiKey',
-    ] as const) {
+    for (const key of ['openserpUrl', 'hostedUrl', 'hostedKey'] as const) {
       const value = ws[key]
       if (merged[key] === undefined && typeof value === 'string' && value.trim()) {
         merged[key] = value.trim()
@@ -118,11 +105,7 @@ export function resolveWebSearchConfig(
   const hostedKey = nonEmpty(env.ZY_SEARCH_KEY) ?? settings.hostedKey
   const hostedUrlRaw =
     nonEmpty(env.ZY_SEARCH_URL) ?? settings.hostedUrl ?? DEFAULT_HOSTED_SEARCH_URL
-  const result: ResolvedWebSearchConfig = {
-    openserpUrl,
-    tavilyKey: nonEmpty(env.TAVILY_API_KEY) ?? settings.tavilyApiKey,
-    braveKey: nonEmpty(env.BRAVE_SEARCH_API_KEY) ?? settings.braveApiKey,
-  }
+  const result: ResolvedWebSearchConfig = { openserpUrl }
   if (hostedKey) {
     if (!hostedUrlRaw) {
       result.hostedMisconfigured =
@@ -212,31 +195,6 @@ async function fetchWithRetry(
     await new Promise((resolve) => setTimeout(resolve, waitMs))
   }
   throw new Error('Unexpected: retry loop exhausted without returning')
-}
-
-/** "20250101" → "2025-01-01" */
-function isoDate(compact: string): string {
-  return `${compact.slice(0, 4)}-${compact.slice(4, 6)}-${compact.slice(6, 8)}`
-}
-
-function parseDateRange(
-  date?: string,
-):
-  | { kind: 'relative'; unit: 'day' | 'week' | 'month' | 'year' }
-  | { kind: 'range'; start: string; end: string }
-  | undefined {
-  if (!date) {
-    return undefined
-  }
-  const rel = /^past_(day|week|month|year)$/.exec(date)
-  if (rel) {
-    return { kind: 'relative', unit: rel[1] as 'day' | 'week' | 'month' | 'year' }
-  }
-  const range = /^(\d{8})\.\.(\d{8})$/.exec(date)
-  if (range) {
-    return { kind: 'range', start: isoDate(range[1]!), end: isoDate(range[2]!) }
-  }
-  return undefined
 }
 
 // ---------------------------------------------------------------------------
@@ -365,133 +323,6 @@ export async function searchHostedGateway(
 }
 
 // ---------------------------------------------------------------------------
-// Tavily
-
-interface TavilyResponse {
-  results?: Array<{ title?: string; url?: string; content?: string }>
-}
-
-export async function searchTavily(
-  req: SearchRequest,
-  apiKey: string,
-  fetchImpl: typeof fetch,
-): Promise<SearchResponseItem[]> {
-  const label = 'Tavily'
-  const body: Record<string, unknown> = {
-    // Tavily 原生支持域名过滤，因此用原始查询 + include/exclude_domains
-    query: req.allowedDomains?.length || req.blockedDomains?.length ? req.rawQuery : req.query,
-    max_results: Math.min(req.maxResults, 20),
-    search_depth: 'basic',
-    topic: 'general',
-    include_answer: false,
-    include_raw_content: false,
-    include_images: false,
-  }
-  if (req.allowedDomains?.length) {
-    body.include_domains = req.allowedDomains
-  }
-  if (req.blockedDomains?.length) {
-    body.exclude_domains = req.blockedDomains
-  }
-  const date = parseDateRange(req.date)
-  if (date?.kind === 'relative') {
-    body.time_range = date.unit
-  }
-  if (date?.kind === 'range') {
-    body.start_date = date.start
-    body.end_date = date.end
-  }
-  let res: Response
-  try {
-    res = await fetchWithRetry(
-      fetchImpl,
-      TAVILY_URL,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      },
-      { maxAttempts: 2, timeoutMs: 20_000, maxRetryAfterSec: 5, label },
-    )
-  } catch (error) {
-    throw new SearchBackendError(label, `not reachable (${errorMessage(error)})`)
-  }
-  if (!res.ok) {
-    throw new SearchBackendError(label, `returned HTTP ${res.status}`)
-  }
-  const data = (await res.json()) as TavilyResponse
-  return (data.results ?? [])
-    .filter(
-      (r): r is { title?: string; url: string; content?: string } => typeof r?.url === 'string',
-    )
-    .map((r) => ({ title: r.title ?? r.url, url: r.url, content: r.content }))
-}
-
-// ---------------------------------------------------------------------------
-// Brave Search
-
-interface BraveResponse {
-  web?: { results?: Array<{ title?: string; url?: string; description?: string }> }
-}
-
-const BRAVE_FRESHNESS = { day: 'pd', week: 'pw', month: 'pm', year: 'py' } as const
-
-/** Brave 的 description 带 <strong> 等高亮标签，转成纯文本 */
-function stripHtml(s: string | undefined): string | undefined {
-  if (!s) {
-    return s
-  }
-  return s
-    .replace(/<[^>]+>/g, '')
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;|&#39;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-}
-
-export async function searchBrave(
-  req: SearchRequest,
-  apiKey: string,
-  fetchImpl: typeof fetch,
-): Promise<SearchResponseItem[]> {
-  const label = 'Brave Search'
-  // Brave 在 q 中原生支持 site: / -site: 运算符
-  const params = new URLSearchParams({ q: req.query, count: String(Math.min(req.maxResults, 20)) })
-  const date = parseDateRange(req.date)
-  if (date?.kind === 'relative') {
-    params.set('freshness', BRAVE_FRESHNESS[date.unit])
-  }
-  if (date?.kind === 'range') {
-    params.set('freshness', `${date.start}to${date.end}`)
-  }
-  let res: Response
-  try {
-    res = await fetchWithRetry(
-      fetchImpl,
-      `${BRAVE_URL}?${params}`,
-      { headers: { Accept: 'application/json', 'X-Subscription-Token': apiKey } },
-      { maxAttempts: 2, timeoutMs: 20_000, maxRetryAfterSec: 5, label },
-    )
-  } catch (error) {
-    throw new SearchBackendError(label, `not reachable (${errorMessage(error)})`)
-  }
-  if (!res.ok) {
-    throw new SearchBackendError(label, `returned HTTP ${res.status}`)
-  }
-  const data = (await res.json()) as BraveResponse
-  return (data.web?.results ?? [])
-    .filter(
-      (r): r is { title?: string; url: string; description?: string } => typeof r?.url === 'string',
-    )
-    .map((r) => ({
-      title: stripHtml(r.title) ?? r.url,
-      url: r.url,
-      content: stripHtml(r.description),
-    }))
-}
-
-// ---------------------------------------------------------------------------
 // 后端链
 
 function errorMessage(error: unknown): string {
@@ -513,7 +344,7 @@ export async function runSearchChain(
   fetchImpl: typeof fetch = fetch,
   log: (message: string) => void = logForDebugging,
 ): Promise<SearchChainResult> {
-  const secrets = [config.hosted?.key, config.tavilyKey, config.braveKey]
+  const secrets = [config.hosted?.key]
   const attempts: Array<{ name: string; run: () => Promise<SearchResponseItem[]> }> = [
     { name: 'local OpenSERP', run: () => searchLocalOpenSerp(req, config.openserpUrl, fetchImpl) },
   ]
@@ -523,14 +354,6 @@ export async function runSearchChain(
       name: 'hosted zy-search',
       run: () => searchHostedGateway(req, hosted, fetchImpl),
     })
-  }
-  if (config.tavilyKey) {
-    const key = config.tavilyKey
-    attempts.push({ name: 'Tavily', run: () => searchTavily(req, key, fetchImpl) })
-  }
-  if (config.braveKey) {
-    const key = config.braveKey
-    attempts.push({ name: 'Brave Search', run: () => searchBrave(req, key, fetchImpl) })
   }
 
   const failures: string[] = []
@@ -550,15 +373,14 @@ export async function runSearchChain(
     }
   }
 
-  const hints: string[] = []
+  const hints: string[] = [
+    `Start a self-hosted OpenSERP at ${config.openserpUrl} or point ZY_OPENSERP_URL at yours.`,
+  ]
   if (config.hostedMisconfigured) {
     hints.push(config.hostedMisconfigured)
   }
   if (!config.hosted && !config.hostedMisconfigured) {
-    hints.push('Hosted search is not configured (set ZY_SEARCH_URL and ZY_SEARCH_KEY).')
-  }
-  if (!config.tavilyKey && !config.braveKey) {
-    hints.push('No Tavily or Brave key is configured (TAVILY_API_KEY / BRAVE_SEARCH_API_KEY).')
+    hints.push('Your hosted gateway is not configured (set ZY_SEARCH_URL and ZY_SEARCH_KEY).')
   }
   hints.push(DUCKDUCKGO_HINT)
   throw new Error(`No web search backend is available. ${failures.join('; ')}. ${hints.join(' ')}`)

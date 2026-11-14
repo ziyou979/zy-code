@@ -68,12 +68,10 @@ ZY Code 会从项目级 `.zy/tools/` 和用户级 `~/.zy/tools/` 加载外部 To
 > 1. 自行部署的 [OpenSERP](https://github.com/karust/openserp)，默认 `http://127.0.0.1:7000`
 >    （可用 `ZY_OPENSERP_URL` 修改），例如
 >    `docker run --rm -p 127.0.0.1:7000:7000 karust/openserp:latest serve -a 0.0.0.0 -p 7000`。
-> 2. 托管的 zy-search 网关：仅在设置了个人 Key 时启用，需要 `ZY_SEARCH_URL` 和 `ZY_SEARCH_KEY`
+> 2. 你自己的托管 zy-search 网关：仅在同时设置 `ZY_SEARCH_URL` 和 `ZY_SEARCH_KEY` 时启用
 >    （用 GitHub 登录网关领取的 `zys_...` Key）。
-> 3. [Tavily](https://tavily.com)：仅在设置 `TAVILY_API_KEY` 时启用。
-> 4. [Brave Search](https://brave.com/search/api/)：仅在设置 `BRAVE_SEARCH_API_KEY` 时启用。
 >
-> 全部不可用时，工具会返回错误并说明该如何配置。Key 只从环境变量或用户级/托管策略 settings
+> 不使用任何第三方搜索 API。两者都不可用时，工具会返回错误并说明该如何配置。Key 只从环境变量或用户级/托管策略 settings
 > （`webSearch.*`）读取，不会读取项目内的 `.zy/settings.json`；只放在请求头里发送，不会写入日志。
 > 详见[配置文档](docs/configuration.md)。也可以按照下方示例使用自己的外部 Tool 覆盖 `WebSearch`。
 

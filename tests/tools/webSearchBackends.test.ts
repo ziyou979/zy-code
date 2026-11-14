@@ -9,10 +9,8 @@ import {
 } from '../../src/tools/WebSearchTool/searchBackends.js'
 
 const HOSTED_KEY = 'zys_hostedKeyhostedKeyhostedKeyhostedKey1234567'
-const TAVILY_KEY = 'tvly-secret-tavily-key'
-const BRAVE_KEY = 'BSA-secret-brave-key'
 
-const REQ: SearchRequest = { query: 'bun test', rawQuery: 'bun test', maxResults: 5 }
+const REQ: SearchRequest = { query: 'bun test', maxResults: 5 }
 
 type Call = { url: string; init?: RequestInit }
 
@@ -56,8 +54,15 @@ describe('resolveWebSearchConfig', () => {
     const c = resolveWebSearchConfig({}, {})
     expect(c.openserpUrl).toBe('http://127.0.0.1:7000')
     expect(c.hosted).toBeUndefined()
-    expect(c.tavilyKey).toBeUndefined()
-    expect(c.braveKey).toBeUndefined()
+    expect(c.hostedMisconfigured).toBeUndefined()
+  })
+
+  test('ignores third-party search API keys entirely', () => {
+    const c = resolveWebSearchConfig({ TAVILY_API_KEY: 'tvly-x', BRAVE_SEARCH_API_KEY: 'BSA-x' }, {
+      tavilyApiKey: 'tvly-y',
+      braveApiKey: 'BSA-y',
+    } as never)
+    expect(Object.keys(c).sort()).toEqual(['openserpUrl'])
   })
 
   test('env overrides settings; hosted needs both URL and key', () => {
@@ -65,13 +70,16 @@ describe('resolveWebSearchConfig', () => {
       {
         ZY_SEARCH_URL: 'https://env.example/',
         ZY_SEARCH_KEY: HOSTED_KEY,
-        TAVILY_API_KEY: TAVILY_KEY,
       },
-      { hostedUrl: 'https://settings.example', hostedKey: 'zys_other', braveApiKey: BRAVE_KEY },
+      { hostedUrl: 'https://settings.example', hostedKey: 'zys_other' },
     )
     expect(c.hosted).toEqual({ url: 'https://env.example', key: HOSTED_KEY })
-    expect(c.tavilyKey).toBe(TAVILY_KEY)
-    expect(c.braveKey).toBe(BRAVE_KEY)
+
+    const fromSettings = resolveWebSearchConfig(
+      {},
+      { hostedUrl: 'https://settings.example/', hostedKey: HOSTED_KEY },
+    )
+    expect(fromSettings.hosted).toEqual({ url: 'https://settings.example', key: HOSTED_KEY })
 
     const noUrl = resolveWebSearchConfig({ ZY_SEARCH_KEY: HOSTED_KEY }, {})
     expect(noUrl.hosted).toBeUndefined()
@@ -112,7 +120,7 @@ describe('runSearchChain', () => {
     )
     const r = await runSearchChain(
       REQ,
-      config({ hosted: { url: 'https://gw.test', key: HOSTED_KEY }, tavilyKey: TAVILY_KEY }),
+      config({ hosted: { url: 'https://gw.test', key: HOSTED_KEY } }),
       f,
     )
     expect(r.backend).toBe('local OpenSERP')
@@ -144,7 +152,7 @@ describe('runSearchChain', () => {
     expect(u.searchParams.get('engines')).toBeNull()
   })
 
-  test('hosted quota error falls through to Tavily without long waits', async () => {
+  test('hosted quota error ends the chain with a clear error, without long waits', async () => {
     const calls: Call[] = []
     const f = fakeFetch(
       [
@@ -162,83 +170,26 @@ describe('runSearchChain', () => {
               },
             ),
         ],
-        [
-          'https://api.tavily.com/search',
-          () =>
-            new Response(
-              JSON.stringify({
-                results: [
-                  { title: 'Tav', url: 'https://t.test/1', content: 'tavily snippet', score: 0.9 },
-                ],
-              }),
-            ),
-        ],
       ],
       calls,
     )
     const started = Date.now()
-    const r = await runSearchChain(
-      { ...REQ, allowedDomains: ['bun.sh'], query: 'bun test site:bun.sh', date: 'past_week' },
-      config({ hosted: { url: 'https://gw.test', key: HOSTED_KEY }, tavilyKey: TAVILY_KEY }),
-      f,
-    )
+    let message = ''
+    try {
+      await runSearchChain(REQ, config({ hosted: { url: 'https://gw.test', key: HOSTED_KEY } }), f)
+    } catch (e) {
+      message = (e as Error).message
+    }
     expect(Date.now() - started).toBeLessThan(2000)
-    expect(r.backend).toBe('Tavily')
-    expect(r.items).toEqual([{ title: 'Tav', url: 'https://t.test/1', content: 'tavily snippet' }])
-    const tav = calls.find((c) => c.url.startsWith('https://api.tavily.com'))!
-    expect(headerOf(tav, 'authorization')).toBe(`Bearer ${TAVILY_KEY}`)
-    const body = JSON.parse(String(tav.init?.body))
-    expect(body).toMatchObject({
-      query: 'bun test',
-      include_domains: ['bun.sh'],
-      time_range: 'week',
-      max_results: 5,
-    })
+    expect(message).toContain('No web search backend is available')
+    expect(message).toContain('Daily quota of 100 searches used up.')
     expect(calls.filter((c) => c.url.startsWith('https://gw.test'))).toHaveLength(1)
-  })
-
-  test('Brave is last; results and freshness are mapped', async () => {
-    const calls: Call[] = []
-    const f = fakeFetch(
-      [
-        [
-          'https://api.tavily.com',
-          () => new Response('{"detail":{"error":"Unauthorized"}}', { status: 401 }),
-        ],
-        [
-          'https://api.search.brave.com/res/v1/web/search',
-          () =>
-            new Response(
-              JSON.stringify({
-                web: {
-                  results: [
-                    {
-                      title: 'Brave <strong>Bun</strong>',
-                      url: 'https://b.test/1',
-                      description: 'a &amp; <strong>b</strong>',
-                    },
-                    { title: 'no url' },
-                  ],
-                },
-              }),
-            ),
-        ],
-      ],
-      calls,
-    )
-    const r = await runSearchChain(
-      { ...REQ, date: '20250101..20250131' },
-      config({ tavilyKey: TAVILY_KEY, braveKey: BRAVE_KEY }),
-      f,
-    )
-    expect(r.backend).toBe('Brave Search')
-    expect(r.items).toEqual([{ title: 'Brave Bun', url: 'https://b.test/1', content: 'a & b' }])
-    const brave = calls.find((c) => c.url.startsWith('https://api.search.brave.com'))!
-    expect(headerOf(brave, 'x-subscription-token')).toBe(BRAVE_KEY)
-    const u = new URL(brave.url)
-    expect(u.searchParams.get('freshness')).toBe('2025-01-01to2025-01-31')
-    expect(u.searchParams.get('count')).toBe('5')
-    expect(brave.url).not.toContain(BRAVE_KEY)
+    // Only local OpenSERP and the user's own gateway are ever contacted.
+    for (const c of calls) {
+      expect(c.url.startsWith('http://127.0.0.1:7000') || c.url.startsWith('https://gw.test')).toBe(
+        true,
+      )
+    }
   })
 
   test('local OpenSERP with all engines failing counts as unavailable', async () => {
@@ -255,28 +206,26 @@ describe('runSearchChain', () => {
               }),
             ),
         ],
-        [
-          'https://api.search.brave.com',
-          () =>
-            new Response(
-              JSON.stringify({ web: { results: [{ title: 'x', url: 'https://x.test' }] } }),
-            ),
-        ],
+        ['https://gw.test', () => new Response(openSerpBody(1))],
       ],
       calls,
     )
-    const r = await runSearchChain(REQ, config({ braveKey: BRAVE_KEY }), f)
-    expect(r.backend).toBe('Brave Search')
+    const r = await runSearchChain(
+      REQ,
+      config({ hosted: { url: 'https://gw.test', key: HOSTED_KEY } }),
+      f,
+    )
+    expect(r.backend).toBe('hosted zy-search')
   })
 
-  test('nothing available → clear error pointing at the DuckDuckGo example, no keys leaked', async () => {
+  test('nothing available → clear error naming OpenSERP and the hosted gateway, no keys leaked', async () => {
     const f = fakeFetch(
       [
-        // A misbehaving provider that echoes the key back in its error must not leak it.
+        // A misbehaving gateway that echoes the key back in its error must not leak it.
         [
-          'https://api.tavily.com',
+          'https://gw.test',
           () => {
-            throw new Error(`boom ${TAVILY_KEY}`)
+            throw new Error(`boom ${HOSTED_KEY}`)
           },
         ],
       ],
@@ -284,16 +233,30 @@ describe('runSearchChain', () => {
     )
     let message = ''
     try {
-      await runSearchChain(REQ, config({ tavilyKey: TAVILY_KEY }), f)
+      await runSearchChain(REQ, config({ hosted: { url: 'https://gw.test', key: HOSTED_KEY } }), f)
     } catch (e) {
       message = (e as Error).message
     }
     expect(message).toContain('No web search backend is available')
     expect(message).toContain('local OpenSERP')
-    expect(message).toContain('web-search-duckduckgo.ts')
-    expect(message).toContain('ZY_SEARCH_KEY')
-    expect(message).not.toContain(TAVILY_KEY)
+    expect(message).toContain('hosted zy-search')
+    expect(message).toContain('ZY_OPENSERP_URL')
+    expect(message).not.toContain(HOSTED_KEY)
     expect(message).toContain('[REDACTED]')
+    expect(message).not.toMatch(/tavily|brave/i)
+  })
+
+  test('unconfigured gateway is named in the error hint', async () => {
+    const f = fakeFetch([], [])
+    let message = ''
+    try {
+      await runSearchChain(REQ, config(), f)
+    } catch (e) {
+      message = (e as Error).message
+    }
+    expect(message).toContain('ZY_SEARCH_URL')
+    expect(message).toContain('ZY_SEARCH_KEY')
+    expect(message).not.toMatch(/tavily|brave/i)
   })
 
   test('respects maxResults across providers', async () => {
@@ -319,31 +282,20 @@ describe('debug logging never contains keys', () => {
         [
           'https://gw.test',
           () =>
-            new Response(JSON.stringify({ error: 'invalid_key', message: 'bad' }), { status: 401 }),
-        ],
-        ['https://api.tavily.com', () => new Response('nope', { status: 400 })],
-        [
-          'https://api.search.brave.com',
-          () => new Response(JSON.stringify({ web: { results: [] } })),
+            new Response(JSON.stringify({ error: 'invalid_key', message: `bad ${HOSTED_KEY}` }), {
+              status: 401,
+            }),
         ],
       ],
       [],
     )
-    const r = await runSearchChain(
-      REQ,
-      config({
-        hosted: { url: 'https://gw.test', key: HOSTED_KEY },
-        tavilyKey: TAVILY_KEY,
-        braveKey: BRAVE_KEY,
-      }),
-      f,
-      (m) => logged.push(m),
-    )
-    expect(r.backend).toBe('Brave Search')
+    await expect(
+      runSearchChain(REQ, config({ hosted: { url: 'https://gw.test', key: HOSTED_KEY } }), f, (m) =>
+        logged.push(m),
+      ),
+    ).rejects.toThrow('No web search backend is available')
     const all = logged.join('\n')
     expect(all).toContain('hosted zy-search')
-    for (const k of [HOSTED_KEY, TAVILY_KEY, BRAVE_KEY]) {
-      expect(all).not.toContain(k)
-    }
+    expect(all).not.toContain(HOSTED_KEY)
   })
 })

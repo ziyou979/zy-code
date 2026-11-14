@@ -598,18 +598,6 @@ export const SettingsSchema = lazySchema(() =>
             .string()
             .optional()
             .describe('Personal zy-search gateway key (zys_...). Prefer the ZY_SEARCH_KEY env var'),
-          tavilyApiKey: z
-            .string()
-            .optional()
-            .describe(
-              'Tavily API key used as a WebSearch fallback. Prefer the TAVILY_API_KEY env var',
-            ),
-          braveApiKey: z
-            .string()
-            .optional()
-            .describe(
-              'Brave Search API key used as a WebSearch fallback. Prefer the BRAVE_SEARCH_API_KEY env var',
-            ),
         })
         .passthrough()
         .optional()

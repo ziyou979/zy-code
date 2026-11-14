@@ -210,18 +210,16 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 | 顺序 | 后端 | 启用条件 | settings 字段 | 环境变量（优先） |
 |---|---|---|---|---|
 | 1 | 本地 / 自建 OpenSERP | 总是尝试 | `webSearch.openserpUrl`（默认 `http://127.0.0.1:7000`） | `ZY_OPENSERP_URL` |
-| 2 | 托管 zy-search 网关 | 配置了 key 且有网关地址 | `webSearch.hostedUrl` + `webSearch.hostedKey` | `ZY_SEARCH_URL` + `ZY_SEARCH_KEY` |
-| 3 | Tavily | 配置了 key | `webSearch.tavilyApiKey` | `TAVILY_API_KEY` |
-| 4 | Brave Search | 配置了 key | `webSearch.braveApiKey` | `BRAVE_SEARCH_API_KEY` |
+| 2 | 你自己的托管 zy-search 网关 | 配置了 key 且有网关地址 | `webSearch.hostedUrl` + `webSearch.hostedKey` | `ZY_SEARCH_URL` + `ZY_SEARCH_KEY` |
 
-全部不可用时，工具结果是一条错误，列出每个后端的失败原因，并提示可以把 `examples/external-tools/web-search-duckduckgo.ts` 复制到 `~/.zy/tools/web-search.ts` 改用 DuckDuckGo。
+有意不接入任何第三方搜索 API。两者都不可用时，工具结果是一条错误，列出每个后端的失败原因，并提示如何启动自建 OpenSERP、配置网关；也可以把 `examples/external-tools/web-search-duckduckgo.ts`（无需 key）复制到 `~/.zy/tools/web-search.ts` 覆盖内置 WebSearch。
 
 ```json
 // ~/.zy/settings.json（用户级）
 {
   "webSearch": {
-    "hostedUrl": "https://<网关地址>",
-    "tavilyApiKey": "tvly-..."
+    "openserpUrl": "http://127.0.0.1:7000",
+    "hostedUrl": "https://<网关地址>"
   }
 }
 ```
@@ -229,10 +227,10 @@ HookEvent:`PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`SessionStart`/`SessionE
 安全约定：
 
 - `webSearch.*` 只从 `userSettings`、`flagSettings`、`policySettings` 读取（优先级 policy > flag > user，环境变量高于全部 settings）。仓库可控的 `.zy/settings.json` / `.zy/settings.local.json` 中的 `webSearch` 被忽略，防止恶意仓库把你的 key 或查询重定向到第三方服务器。
-- 托管网关的 key 以 `Authorization: Bearer` 发送，只允许 `https://`（本机 `127.0.0.1` / `localhost` 调试地址除外）；Tavily 用 `Authorization: Bearer`，Brave 用 `X-Subscription-Token`。key 不会出现在 URL、调试日志或错误信息中。
+- 托管网关的 key 以 `Authorization: Bearer` 发送，只允许 `https://`（本机 `127.0.0.1` / `localhost` 调试地址除外）。key 不会出现在 URL、调试日志或错误信息中。
 - 推荐用环境变量保存 key；写在 settings 里时注意 `~/.zy/settings.json` 是明文文件。
 - 托管网关目前没有内置默认地址，上线后会在此处更新；在此之前需要显式设置 `ZY_SEARCH_URL`。
-- 结构映射：OpenSERP/网关 `results[].snippet`、Tavily `results[].content`、Brave `web.results[].description`（去掉高亮标签）统一映射为 `{ title, url, snippet }`。`allowed_domains` / `blocked_domains` 对 Tavily 使用原生 `include_domains` / `exclude_domains`，其它后端拼接 `site:` / `-site:`；`date_range` 的 `past_day|week|month|year` 与 `YYYYMMDD..YYYYMMDD` 分别映射为 Tavily `time_range` / `start_date`+`end_date` 与 Brave `freshness`。
+- 结构映射：OpenSERP/网关 `results[].snippet` 映射为 `{ title, url, snippet }`。`allowed_domains` / `blocked_domains` 拼接为 `site:` / `-site:`；`date_range`（`past_day|week|month|year` 或 `YYYYMMDD..YYYYMMDD`）原样作为 `date` 参数传给 OpenSERP / 网关。
 
 ---
 
@@ -469,7 +467,6 @@ provider 解析优先级：sticky 多 auth 候选 > 模型引用中的连接 > �
 | `ZY_CODE_OAUTH_CALLBACK_HOST` | OAuth 本地回调监听主机，默认 `127.0.0.1` |
 | `ZY_OPENSERP_URL` | 本地 / 自建 OpenSERP 地址，默认 `http://127.0.0.1:7000`（见 [2.14](#214-websearch-后端-websearch)） |
 | `ZY_SEARCH_URL` / `ZY_SEARCH_KEY` | 托管 zy-search 网关地址与个人 key（`zys_...`），两者都有才启用 |
-| `TAVILY_API_KEY` / `BRAVE_SEARCH_API_KEY` | WebSearch 的 Tavily / Brave Search 回退后端 |
 
 ### 5.3 Beta / tool-search
 

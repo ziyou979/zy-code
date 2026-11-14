@@ -76,14 +76,12 @@ small framework-independent object with a description, JSON Schema, and async `c
 > 1. A self-hosted [OpenSERP](https://github.com/karust/openserp) at `http://127.0.0.1:7000`
 >    (override with `ZY_OPENSERP_URL`), e.g.
 >    `docker run --rm -p 127.0.0.1:7000:7000 karust/openserp:latest serve -a 0.0.0.0 -p 7000`.
-> 2. The hosted zy-search gateway, only when you set a personal key: `ZY_SEARCH_URL` and
+> 2. Your own hosted zy-search gateway, only when you set both `ZY_SEARCH_URL` and
 >    `ZY_SEARCH_KEY` (a `zys_...` key you get by logging in to the gateway with GitHub).
-> 3. [Tavily](https://tavily.com), only when `TAVILY_API_KEY` is set.
-> 4. [Brave Search](https://brave.com/search/api/), only when `BRAVE_SEARCH_API_KEY` is set.
 >
-> If none is available the tool returns an error explaining what to configure. Keys are read only
+> No third-party search API is used. If neither is available the tool returns an error explaining what to configure. The key is read only
 > from environment variables or your user/managed settings (`webSearch.*`), never from a project's
-> `.zy/settings.json`, are sent only in request headers, and are never logged. See
+> `.zy/settings.json`, is sent only in a request header, and is never logged. See
 > [configuration](docs/configuration.md). You can also replace `WebSearch` with your own external
 > tool as shown below.
 
