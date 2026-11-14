@@ -584,6 +584,26 @@ export const SettingsSchema = lazySchema(() =>
         .describe(
           'Skip the WebFetch blocklist check for enterprise environments with restrictive security policies',
         ),
+      webSearch: z
+        .object({
+          openserpUrl: z
+            .string()
+            .optional()
+            .describe('Base URL of a self-hosted OpenSERP (default http://127.0.0.1:7000)'),
+          hostedUrl: z
+            .string()
+            .optional()
+            .describe('Base URL of the hosted zy-search gateway (https)'),
+          hostedKey: z
+            .string()
+            .optional()
+            .describe('Personal zy-search gateway key (zys_...). Prefer the ZY_SEARCH_KEY env var'),
+        })
+        .passthrough()
+        .optional()
+        .describe(
+          'WebSearch backends. Only read from user, flag and policy settings; project and local settings are ignored',
+        ),
       sandbox: SandboxSettingsSchema().optional(),
       feedbackSurveyRate: z
         .number()
