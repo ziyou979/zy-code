@@ -16,7 +16,9 @@ describe('cachedLexer', () => {
     expect(cachedLexer(large)).not.toBe(cachedLexer(large))
   })
   test('未达到条数上限时也按内容容量淘汰', () => {
-    const content = (i: number) => `# document ${i}\n${'x'.repeat(20000)}`
+    // 用代码围栏提供同等缓存压力，避免计入长段落的行内 Markdown 解析成本。
+    const text = 'x'.repeat(20000)
+    const content = (i: number) => `# document ${i}\n\n\`\`\`text\n${text}\n\`\`\``
     const first = cachedLexer(content(0))
     for (let i = 1; i < 180; i++) cachedLexer(content(i))
     expect(cachedLexer(content(0))).not.toBe(first)

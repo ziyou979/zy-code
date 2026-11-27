@@ -10,7 +10,7 @@
  * 通过 mock.module 隔离 IO 依赖（config/marketplace/GCS/git/analytics），
  * 用可变闭包状态切换场景。
  */
-import { afterAll, afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
+import { afterAll, afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test'
 // Bun 的 mock.module factory 内不能 import 被 mock 的目标模块（返回空对象，
 // 透传失效甚至卡死加载链），真实导出必须在 factory 外顶层加载。
 import * as configActual from '../../../src/services/config/config.js'
@@ -50,7 +50,6 @@ const MOCK_PATHS = {
   gitAvailability: '../../../src/services/plugins/gitAvailability.js',
   marketplaceHelpers: '../../../src/services/plugins/marketplaceHelpers.js',
   analytics: '../../../src/services/analytics/index.js',
-  growthbook: '../../../src/services/analytics/growthbook.js',
 } as const
 
 const mockLogEvent = mock(() => {})
@@ -98,10 +97,14 @@ function registerMocks() {
     logEvent: mockLogEvent,
   }))
 
-  mock.module(MOCK_PATHS.growthbook, () => ({
-    ...growthbookActual,
-    getFeatureValue_CACHED_MAY_BE_STALE: () => featureGitFallback,
-  }))
+  // 只覆盖市场回退开关，避免把后续 OAuth 测试的登录门控也打开。
+  const getFeatureValue = growthbookActual.getFeatureValue_CACHED_MAY_BE_STALE
+  spyOn(growthbookActual, 'getFeatureValue_CACHED_MAY_BE_STALE').mockImplementation(
+    <T>(feature: string, fallback: T) =>
+      feature === 'zy_plugin_official_mkt_git_fallback'
+        ? (featureGitFallback as T)
+        : getFeatureValue(feature, fallback),
+  )
 }
 
 function restoreRealModules() {
@@ -111,7 +114,6 @@ function restoreRealModules() {
   mock.module(MOCK_PATHS.gitAvailability, () => ({ ...gitAvailabilityActual }))
   mock.module(MOCK_PATHS.marketplaceHelpers, () => ({ ...marketplaceHelpersActual }))
   mock.module(MOCK_PATHS.analytics, () => ({ ...analyticsActual }))
-  mock.module(MOCK_PATHS.growthbook, () => ({ ...growthbookActual }))
 }
 
 // envUtils 不 mock（避免全模块替换破坏其它 consumer 的 named import）；

@@ -15,9 +15,6 @@
  * - key 只出现在请求头里，绝不进 URL、日志或错误信息（日志前统一 redact）。
  */
 
-import { getSettingsForSource } from '../../services/settings/settings.js'
-import { logForDebugging } from '../../services/infra/debug.js'
-
 export interface SearchResponseItem {
   title: string
   url: string
@@ -59,27 +56,6 @@ const DUCKDUCKGO_HINT =
 
 // ---------------------------------------------------------------------------
 // 配置解析
-
-/** 只信任这些 settings 源；projectSettings / localSettings 由仓库控制，故排除。 */
-const TRUSTED_SOURCES = ['policySettings', 'flagSettings', 'userSettings'] as const
-
-function readTrustedWebSearchSettings(): WebSearchSettings {
-  const merged: WebSearchSettings = {}
-  // 优先级：policy > flag > user（先写入者胜出）
-  for (const source of TRUSTED_SOURCES) {
-    const ws = (getSettingsForSource(source) as { webSearch?: WebSearchSettings } | null)?.webSearch
-    if (!ws || typeof ws !== 'object') {
-      continue
-    }
-    for (const key of ['openserpUrl', 'hostedUrl', 'hostedKey'] as const) {
-      const value = ws[key]
-      if (merged[key] === undefined && typeof value === 'string' && value.trim()) {
-        merged[key] = value.trim()
-      }
-    }
-  }
-  return merged
-}
 
 function nonEmpty(value: string | undefined): string | undefined {
   const v = value?.trim()
@@ -134,10 +110,6 @@ export function resolveWebSearchConfig(
   return result
 }
 
-export function getWebSearchConfig(): ResolvedWebSearchConfig {
-  return resolveWebSearchConfig(process.env, readTrustedWebSearchSettings())
-}
-
 // ---------------------------------------------------------------------------
 // 工具函数
 
@@ -174,6 +146,7 @@ async function fetchWithRetry(
   url: string,
   init: RequestInit,
   opts: { maxAttempts: number; timeoutMs: number; maxRetryAfterSec?: number; label: string },
+  log: (message: string) => void,
 ): Promise<Response> {
   for (let attempt = 1; attempt <= opts.maxAttempts; attempt++) {
     const res = await fetchImpl(url, { ...init, signal: AbortSignal.timeout(opts.timeoutMs) })
@@ -188,7 +161,7 @@ async function fetchWithRetry(
     const waitMs = retryAfter
       ? retryAfter * 1000
       : Math.min(2 ** attempt * 250, 8000) + Math.random() * 250
-    logForDebugging(
+    log(
       `[WebSearch] ${opts.label}: retry ${attempt}/${opts.maxAttempts} after ${res.status}, waiting ${waitMs.toFixed(0)}ms`,
     )
     await res.body?.cancel().catch(() => undefined)
@@ -264,10 +237,11 @@ async function readGatewayError(res: Response): Promise<string> {
   return `HTTP ${res.status}`
 }
 
-export async function searchLocalOpenSerp(
+async function searchLocalOpenSerp(
   req: SearchRequest,
   baseUrl: string,
   fetchImpl: typeof fetch,
+  log: (message: string) => void,
 ): Promise<SearchResponseItem[]> {
   const label = 'local OpenSERP'
   let res: Response
@@ -281,6 +255,7 @@ export async function searchLocalOpenSerp(
         timeoutMs: 30_000,
         label,
       },
+      log,
     )
   } catch (error) {
     throw new SearchBackendError(label, `not reachable at ${baseUrl} (${errorMessage(error)})`)
@@ -291,10 +266,11 @@ export async function searchLocalOpenSerp(
   return mapOpenSerp((await res.json()) as OpenSerpMegaResponse, label)
 }
 
-export async function searchHostedGateway(
+async function searchHostedGateway(
   req: SearchRequest,
   hosted: { url: string; key: string },
   fetchImpl: typeof fetch,
+  log: (message: string) => void,
 ): Promise<SearchResponseItem[]> {
   const label = 'hosted zy-search'
   // 网关强制引擎与模式，这里只发它接受的参数
@@ -309,6 +285,7 @@ export async function searchHostedGateway(
       `${hosted.url}/mega/search?${params}`,
       { headers: { Authorization: `Bearer ${hosted.key}`, Accept: 'application/json' } },
       { maxAttempts: 2, timeoutMs: 40_000, maxRetryAfterSec: 5, label },
+      log,
     )
   } catch (error) {
     throw new SearchBackendError(label, `not reachable (${errorMessage(error)})`)
@@ -340,19 +317,22 @@ export interface SearchChainResult {
  */
 export async function runSearchChain(
   req: SearchRequest,
-  config: ResolvedWebSearchConfig = getWebSearchConfig(),
+  config: ResolvedWebSearchConfig,
   fetchImpl: typeof fetch = fetch,
-  log: (message: string) => void = logForDebugging,
+  log: (message: string) => void = () => {},
 ): Promise<SearchChainResult> {
   const secrets = [config.hosted?.key]
   const attempts: Array<{ name: string; run: () => Promise<SearchResponseItem[]> }> = [
-    { name: 'local OpenSERP', run: () => searchLocalOpenSerp(req, config.openserpUrl, fetchImpl) },
+    {
+      name: 'local OpenSERP',
+      run: () => searchLocalOpenSerp(req, config.openserpUrl, fetchImpl, log),
+    },
   ]
   if (config.hosted) {
     const hosted = config.hosted
     attempts.push({
       name: 'hosted zy-search',
-      run: () => searchHostedGateway(req, hosted, fetchImpl),
+      run: () => searchHostedGateway(req, hosted, fetchImpl, log),
     })
   }
 

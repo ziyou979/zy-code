@@ -4,12 +4,18 @@ import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../services/infra/log.js'
+import { getSettingsForSource } from '../../services/settings/settings.js'
 import type { PermissionResult } from 'src/types/permissions.js'
 import { semanticNumber } from '../../utils/semanticNumber.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { hasExternalToolOverride } from '../externalToolLoader.js'
 import { getWebSearchPrompt, WEB_SEARCH_TOOL_NAME } from './prompt.js'
-import { runSearchChain, type SearchResponseItem } from './searchBackends.js'
+import {
+  resolveWebSearchConfig,
+  runSearchChain,
+  type SearchResponseItem,
+  type WebSearchSettings,
+} from './searchBackends.js'
 import {
   getToolUseSummary,
   renderToolResultMessage,
@@ -272,18 +278,41 @@ interface SearchOptions {
   date?: string
 }
 
+function readTrustedWebSearchSettings(): WebSearchSettings {
+  const settings: WebSearchSettings = {}
+  // 优先使用 policy，其次 flag 和 user。仓库可控配置无权重定向搜索请求或密钥。
+  for (const source of ['policySettings', 'flagSettings', 'userSettings'] as const) {
+    const webSearch = getSettingsForSource(source)?.webSearch
+    if (!webSearch || typeof webSearch !== 'object') {
+      continue
+    }
+    for (const key of ['openserpUrl', 'hostedUrl', 'hostedKey'] as const) {
+      const value = webSearch[key]
+      if (settings[key] === undefined && typeof value === 'string' && value.trim()) {
+        settings[key] = value.trim()
+      }
+    }
+  }
+  return settings
+}
+
 /**
  * 按后端链执行搜索。全部后端不可用时抛错，由 call() 转成工具错误结果。
  */
 async function executeSearch(options: SearchOptions): Promise<SearchResponseItem[]> {
   const { maxResults = DEFAULT_MAX_RESULTS } = options
-  const { items, backend } = await runSearchChain({
-    query: options.query,
-    allowedDomains: options.allowedDomains,
-    blockedDomains: options.blockedDomains,
-    maxResults: Math.min(maxResults, MAX_ALLOWED_RESULTS),
-    date: options.date,
-  })
+  const { items, backend } = await runSearchChain(
+    {
+      query: options.query,
+      allowedDomains: options.allowedDomains,
+      blockedDomains: options.blockedDomains,
+      maxResults: Math.min(maxResults, MAX_ALLOWED_RESULTS),
+      date: options.date,
+    },
+    resolveWebSearchConfig(process.env, readTrustedWebSearchSettings()),
+    fetch,
+    logForDebugging,
+  )
   logForDebugging(`[WebSearch] backend=${backend} results=${items.length}`)
   return items.slice(0, maxResults)
 }

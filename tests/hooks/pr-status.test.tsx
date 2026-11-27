@@ -1,21 +1,10 @@
-import { describe, expect, jest, mock, test } from 'bun:test'
+import { describe, expect, jest, spyOn, test } from 'bun:test'
 import { Writable } from 'node:stream'
-import React, { act } from 'react'
+import type React from 'react'
+import * as runtimeContext from '../../src/bootstrap/runtime/runtimeContext.js'
+import { usePrStatus } from '../../src/hooks/usePrStatus.js'
 import Ink from '../../src/ink/ink.js'
-
-const fetchPrStatus = mock(async () => null)
-mock.module('src/bootstrap/runtime/runtimeContext.js', () => ({
-  getLastInteractionTime: () => 1,
-}))
-mock.module('../../src/services/github/ghPrStatus.js', () => ({
-  fetchPrStatus,
-}))
-
-const { usePrStatus } = await import('../../src/hooks/usePrStatus.js')
-
-;(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true
+import * as ghPrStatus from '../../src/services/github/ghPrStatus.js'
 
 function makeStdout(): NodeJS.WriteStream {
   const stream = new Writable({
@@ -31,10 +20,6 @@ function makeStdout(): NodeJS.WriteStream {
 
 describe('usePrStatus', () => {
   test('空闲停止后 isLoading 变化会恢复轮询', async () => {
-    jest.useFakeTimers()
-    jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))
-    fetchPrStatus.mockClear()
-
     function Probe({ isLoading }: { isLoading: boolean }): React.ReactNode {
       usePrStatus(isLoading)
       return null
@@ -48,18 +33,31 @@ describe('usePrStatus', () => {
       exitOnCtrlC: false,
       patchConsole: false,
     })
-    await act(async () => ink.render(<Probe isLoading={false} />))
+    const interactionTime = spyOn(runtimeContext, 'getLastInteractionTime').mockReturnValue(1)
+    const fetchPrStatus = spyOn(ghPrStatus, 'fetchPrStatus').mockResolvedValue(null)
+    jest.useFakeTimers({ now: new Date('2026-01-01T00:00:00Z') })
+    try {
+      // Ink 同步提交；每次推进后让异步轮询完成，再推进下一分钟。
+      ink.render(<Probe isLoading={false} />)
+      await Promise.resolve()
+      expect(fetchPrStatus).toHaveBeenCalledTimes(1)
 
-    await act(async () => jest.advanceTimersByTime(60_000))
-    expect(fetchPrStatus).toHaveBeenCalledTimes(1)
-    await act(async () => jest.advanceTimersByTime(60 * 60_000))
-    const stoppedAt = fetchPrStatus.mock.calls.length
+      for (let minute = 1; minute <= 60; minute++) {
+        jest.advanceTimersByTime(60_000)
+        await Promise.resolve()
+      }
+      expect(fetchPrStatus).toHaveBeenCalledTimes(60)
+      jest.advanceTimersByTime(60_000)
+      expect(fetchPrStatus).toHaveBeenCalledTimes(60)
 
-    await act(async () => ink.render(<Probe isLoading={true} />))
-    await act(async () => jest.advanceTimersByTime(1))
-    expect(fetchPrStatus.mock.calls.length).toBe(stoppedAt + 1)
-
-    await act(async () => ink.unmount())
-    jest.useRealTimers()
+      ink.render(<Probe isLoading={true} />)
+      await Promise.resolve()
+      expect(fetchPrStatus).toHaveBeenCalledTimes(61)
+    } finally {
+      jest.useRealTimers()
+      ink.unmount()
+      interactionTime.mockRestore()
+      fetchPrStatus.mockRestore()
+    }
   })
 })
