@@ -216,7 +216,8 @@ describe('WebSearchTool', () => {
       )
 
       expect(output.data.query).toBe('error query')
-      expect(output.data.results[0]).toContain('No results found')
+      expect(output.data.results[0]).toContain('No web search backend is available')
+      expect(output.data.results[0]).toContain('Network error')
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -232,7 +233,8 @@ describe('WebSearchTool', () => {
           message: 'all selected engines failed; google: blocked',
           meta: { engine_errors: [{ engine: 'google', error: 'blocked' }] },
         }),
-        { status: 502 },
+        // 服务端要求等待超过重试预算，直接验证最终错误，避免测试实际休眠。
+        { status: 502, headers: { 'Retry-After': '30' } },
       )) as unknown as typeof fetch
 
     try {
@@ -246,7 +248,8 @@ describe('WebSearchTool', () => {
       )
 
       expect(output.data.query).toBe('blocked query')
-      expect(output.data.results[0]).toBe('No results found for this query.')
+      expect(output.data.results[0]).toContain('No web search backend is available')
+      expect(output.data.results[0]).toContain('local OpenSERP: returned HTTP 502')
     } finally {
       globalThis.fetch = originalFetch
     }
