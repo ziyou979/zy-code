@@ -13,10 +13,8 @@ import { createFetchWithInit, type Transport } from '@modelcontextprotocol/sdk/s
 import { ElicitRequestSchema, ListRootsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import mapValues from 'lodash-es/mapValues.js'
 import memoize from 'lodash-es/memoize.js'
-import { getOriginalCwd, getSessionId } from '../../../bootstrap/runtime/runtimeContext.js'
-import { getOauthConfig } from '../../../constants/oauth.js'
+import { getOriginalCwd } from '../../../bootstrap/runtime/runtimeContext.js'
 import { PRODUCT_URL } from '../../../constants/product.js'
-import { getZyAIOAuthTokens } from '../../auth/auth.js'
 import { registerCleanup } from '../../../services/cleanup/cleanupRegistry.js'
 import {
   errorMessage,
@@ -56,7 +54,6 @@ import {
   MCP_REQUEST_TIMEOUT_MS,
   WsClientLike,
   createNodeWsClient,
-  createZyAiProxyFetch,
   fetchMcpSkillsForClient,
   getConnectionTimeoutMs,
   getServerCacheKey,
@@ -315,37 +312,6 @@ export const connectToServer = memoize(
         logMCPDebug(name, `HTTP transport created successfully`)
       } else if (serverRef.type === 'sdk') {
         throw new Error('SDK servers should be handled in print.ts')
-      } else if (serverRef.type === 'zyai-proxy') {
-        logMCPDebug(name, `Initializing zy.ai proxy transport for server ${serverRef.id}`)
-
-        const tokens = getZyAIOAuthTokens()
-        if (!tokens) {
-          throw new Error('No zy.ai OAuth token found')
-        }
-
-        const oauthConfig = getOauthConfig()
-        const proxyUrl = `${oauthConfig.MCP_PROXY_URL}${oauthConfig.MCP_PROXY_PATH.replace('{server_id}', serverRef.id)}`
-
-        logMCPDebug(name, `Using zy.ai proxy at ${proxyUrl}`)
-
-        // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-        const fetchWithAuth = createZyAiProxyFetch(globalThis.fetch)
-
-        const proxyOptions = getProxyFetchOptions()
-        const transportOptions: StreamableHTTPClientTransportOptions = {
-          // 用新鲜超时包装 fetchWithAuth
-          fetch: wrapFetchWithTimeout(fetchWithAuth),
-          requestInit: {
-            ...proxyOptions,
-            headers: {
-              'User-Agent': getMCPUserAgent(),
-              'X-Mcp-Client-Session-Id': getSessionId(),
-            },
-          },
-        }
-
-        transport = new StreamableHTTPClientTransport(new URL(proxyUrl), transportOptions)
-        logMCPDebug(name, `zy.ai proxy transport created successfully`)
       } else if (
         (serverRef.type === 'stdio' || !serverRef.type) &&
         isClaudeInChromeMCPServer(name)
@@ -552,15 +518,6 @@ export const connectToServer = memoize(
           if (error instanceof UnauthorizedError) {
             return handleRemoteAuthFailure(name, serverRef, 'http')
           }
-        } else if (serverRef.type === 'zyai-proxy' && error instanceof Error) {
-          logMCPDebug(name, `zy.ai proxy connection failed after ${elapsed}ms: ${error.message}`)
-          logMCPError(name, error)
-
-          // StreamableHTTPError has a `code` property with the HTTP status
-          const errorCode = (error as Error & { code?: number }).code
-          if (errorCode === 401) {
-            return handleRemoteAuthFailure(name, serverRef, 'zyai-proxy')
-          }
         } else if (serverRef.type === 'sse-ide' || serverRef.type === 'ws-ide') {
           logEvent('zy_mcp_ide_server_connection_failed', {
             connectionDurationMs: elapsed,
@@ -715,10 +672,7 @@ export const connectToServer = memoize(
         // For HTTP transports, detect session expiry (404 + JSON-RPC -32001)
         // and close the transport so pending tool calls reject and the next
         // call reconnects with a fresh session ID.
-        if (
-          (transportType === 'http' || transportType === 'zyai-proxy') &&
-          isMcpSessionExpiredError(error)
-        ) {
+        if (transportType === 'http' && isMcpSessionExpiredError(error)) {
           logMCPDebug(
             name,
             `MCP session expired (server returned 404 with session-not-found), triggering reconnection`,
@@ -732,7 +686,7 @@ export const connectToServer = memoize(
 
         // For remote transports (SSE/HTTP), track terminal connection errors
         // and trigger reconnection via close if we see repeated failures.
-        if (transportType === 'sse' || transportType === 'http' || transportType === 'zyai-proxy') {
+        if (transportType === 'sse' || transportType === 'http') {
           // The SDK's StreamableHTTP transport fires this after exhausting its
           // own SSE reconnect attempts (default maxRetries: 2) — but it never
           // calls onclose, so pending callTool() promises hang indefinitely.

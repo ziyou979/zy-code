@@ -8,7 +8,6 @@ import {
 import type { SuggestionItem } from '../components/PromptInput/PromptInputFooterSuggestions.js'
 import { CHUNK_MS, FileIndex, yieldToEventLoop } from '../native-ts/file-index/index.js'
 import { logEvent } from '../services/analytics/index.js'
-// @ts-expect-error
 import type { FileSuggestionCommandInput } from '../types/fileSuggestion.js'
 import { getGlobalConfig } from '../services/config/config.js'
 import { getCwd } from '../services/environment/cwd.js'

@@ -88,7 +88,6 @@ export function usePromptInputViewModel(context: ReturnType<typeof usePromptInpu
     hasSuppressedDialogs,
     isLocalJSXCommandActive,
     insertTextRef,
-    voiceInterimRange,
     mainLoopModel,
     isModalOverlayActive,
     isAutoUpdating,

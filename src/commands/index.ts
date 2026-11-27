@@ -11,7 +11,6 @@ import autofixPr from '../commands/autofix-pr/index.js'
 import backfillSessions from '../commands/backfill-sessions/index.js'
 import btw from '../commands/btw/index.js'
 import issue from '../commands/issue/index.js'
-import feedback from '../commands/feedback/index.js'
 import clear from '../commands/clear/index.js'
 import color from '../commands/color/index.js'
 import copy from '../commands/copy/index.js'
@@ -126,7 +125,6 @@ if (feature('KAIROS')) {
 const assistantCommand = feature('KAIROS')
   ? require('../commands/assistant/index.js').default
   : null
-const voiceCommand = feature('VOICE_MODE') ? require('../commands/voice/index.js').default : null
 const workflowsCmd = feature('WORKFLOW_SCRIPTS')
   ? (require('../commands/workflows/index.js') as typeof import('../commands/workflows/index.js'))
       .default
@@ -260,7 +258,6 @@ const COMMANDS = memoize((): Command[] => [
   tag,
   theme,
   tools,
-  feedback,
   rewind,
   terminalSetup,
   upgrade,
@@ -273,7 +270,6 @@ const COMMANDS = memoize((): Command[] => [
   ...(proactive ? [proactive] : []),
   ...(briefCommand ? [briefCommand] : []),
   ...(assistantCommand ? [assistantCommand] : []),
-  ...(voiceCommand ? [voiceCommand] : []),
   thinkback,
   thinkbackPlay,
   permissions,

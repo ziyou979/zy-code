@@ -1,15 +1,14 @@
 import type { ClickEvent } from './clickEvent.js'
 import type { FocusEvent } from './focusEvent.js'
 import type { KeyboardEvent } from './keyboardEvent.js'
-// @ts-expect-error
-import type { PasteEvent } from './paste-event.js'
-// @ts-expect-error
-import type { ResizeEvent } from './resize-event.js'
+import type { TerminalEvent } from './terminalEvent.js'
 
 type KeyboardEventHandler = (event: KeyboardEvent) => void
 type FocusEventHandler = (event: FocusEvent) => void
-type PasteEventHandler = (event: PasteEvent) => void
-type ResizeEventHandler = (event: ResizeEvent) => void
+// paste / resize 目前没有专门的事件子类（上游的 paste-event / resize-event 未随泄露版提供），
+// dispatcher 只按事件类型名路由，处理器拿到的是通用 TerminalEvent。
+type PasteEventHandler = (event: TerminalEvent) => void
+type ResizeEventHandler = (event: TerminalEvent) => void
 type ClickEventHandler = (event: ClickEvent) => void
 type HoverEventHandler = () => void
 

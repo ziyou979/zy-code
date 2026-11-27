@@ -210,8 +210,7 @@ export const enPermissions: TranslationResource = {
   'permission.ctrlEToExplain': 'ctrl+e to {explain}',
   'permission.ctrlEToHide': 'ctrl+e to {hide}',
   'permission.deleteAllowedTool': 'Delete allowed tool?',
-  'permission.deniedByAutoModeClassifier':
-    'Denied by auto mode classifier {bullet} /feedback if incorrect',
+  'permission.deniedByAutoModeClassifier': 'Denied by auto mode classifier',
   'permission.deleteAskTool': 'Delete ask tool?',
   'permission.deleteCellFrom': 'delete this cell from',
   'permission.deleteDeniedTool': 'Delete denied tool?',

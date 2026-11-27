@@ -5,7 +5,7 @@ import { lazySchema } from '../../utils/lazySchema.js'
 
 // 配置 schema 和类型
 export const ConfigScopeSchema = lazySchema(() =>
-  z.enum(['local', 'user', 'project', 'dynamic', 'enterprise', 'zyai', 'managed']),
+  z.enum(['local', 'user', 'project', 'dynamic', 'enterprise', 'managed']),
 )
 export type ConfigScope = z.infer<ReturnType<typeof ConfigScopeSchema>>
 
@@ -100,15 +100,6 @@ export const McpSdkServerConfigSchema = lazySchema(() =>
   }),
 )
 
-// Zy.ai proxy server 的配置类型
-export const McpZyAIProxyServerConfigSchema = lazySchema(() =>
-  z.object({
-    type: z.literal('zyai-proxy'),
-    url: z.string(),
-    id: z.string(),
-  }),
-)
-
 export const McpServerConfigSchema = lazySchema(() =>
   z.union([
     McpStdioServerConfigSchema(),
@@ -118,7 +109,6 @@ export const McpServerConfigSchema = lazySchema(() =>
     McpHTTPServerConfigSchema(),
     McpWebSocketServerConfigSchema(),
     McpSdkServerConfigSchema(),
-    McpZyAIProxyServerConfigSchema(),
   ]),
 )
 
@@ -131,7 +121,6 @@ export type McpWebSocketIDEServerConfig = z.infer<
 export type McpHTTPServerConfig = z.infer<ReturnType<typeof McpHTTPServerConfigSchema>>
 export type McpWebSocketServerConfig = z.infer<ReturnType<typeof McpWebSocketServerConfigSchema>>
 export type McpSdkServerConfig = z.infer<ReturnType<typeof McpSdkServerConfigSchema>>
-export type McpZyAIProxyServerConfig = z.infer<ReturnType<typeof McpZyAIProxyServerConfigSchema>>
 export type McpServerConfig = z.infer<ReturnType<typeof McpServerConfigSchema>>
 
 export type ScopedMcpServerConfig = McpServerConfig & {

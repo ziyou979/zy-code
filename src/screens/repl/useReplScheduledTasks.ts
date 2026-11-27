@@ -1,7 +1,7 @@
 // 来自 .zy/scheduled_tasks.json 的计划任务（CronCreate/Delete/List）。
 // 抽自 screens/REPL.tsx 的 feature('AGENT_TRIGGERS') 条件 require + 调用块。
 //
-// 与 useReplVoice / useReplFrustration 同模式：feature() 守卫与条件 require 内聚，
+// 与 useReplFrustration 同模式：feature() 守卫与条件 require 内聚，
 // REPL 主体不再持有 feature() 调用，调用方仅看到一个语义化 hook。
 //
 // 注意：原文件中 if (feature('AGENT_TRIGGERS')) 内的 hook 调用通过 build-time DCE

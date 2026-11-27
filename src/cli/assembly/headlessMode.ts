@@ -1,22 +1,18 @@
 // 无头（--print）模式装配。
 // 从 root.ts 的 `if (isNonInteractiveSession)` 块提取。
 // 处理 stream-json/json 格式设置、遥测初始化、SessionStart 钩子、
-// org 验证、headlessStore 创建、MCP 批量连接、zy.ai MCP 连接、
+// org 验证、headlessStore 创建、MCP 批量连接、
 // 以及最终的 runHeadless 调用。
 
 import { feature } from 'bun:bundle'
-import pickBy from 'lodash-es/pickBy.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { setSdkBetas } from 'src/bootstrap/runtime/runtimeContext.js'
 import { setSessionPersistenceDisabled } from 'src/bootstrap/runtime/runtimeContext.js'
 import { startDeferredPrefetches } from '../bootstrap/prefetch.js'
 import { logSessionTelemetry } from '../bootstrap/telemetry.js'
 import { initializeTelemetryAfterTrust } from '../../entrypoints/init.js'
-import { clearServerCache, getMcpToolsCommandsAndResources } from '../../services/mcp/client.js'
-import { dedupZyAIMcpServers } from '../../services/mcp/configResolution.js'
-import { getMcpServerSignature } from '../../services/mcp/configMerge.js'
+import { getMcpToolsCommandsAndResources } from '../../services/mcp/client.js'
 import type { McpSdkServerConfig, ScopedMcpServerConfig } from '../../services/mcp/types.js'
-import { excludeCommandsByServer, excludeResourcesByServer } from '../../services/mcp/utils.js'
 import { type AppState, getDefaultAppState } from '../../state/AppStateStore.js'
 import { onChangeAppState } from '../../state/onChangeAppState.js'
 import { createStore } from '../../state/store.js'
@@ -92,7 +88,6 @@ export interface HeadlessModeParams {
   mcpTools: AppState['mcp']['tools']
   regularMcpConfigs: Record<string, ScopedMcpServerConfig>
   sdkMcpConfigs: Record<string, McpSdkServerConfig>
-  zyaiConfigPromise: Promise<Record<string, ScopedMcpServerConfig>>
 
   // SDK / 集成
   betas: string[]
@@ -137,7 +132,6 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
     mcpTools,
     regularMcpConfigs,
     sdkMcpConfigs,
-    zyaiConfigPromise,
     betas,
     effectiveReplayUserMessages,
     effectiveIncludePartialMessages,
@@ -291,99 +285,10 @@ export async function runHeadlessMode(params: HeadlessModeParams): Promise<void>
   // 消息和第一轮工具列表都需要存在的 MCP 工具。
   // 零服务器情况通过 connectMcpBatch 中的早期返回免费处理。
   // 连接器在 getMcpToolsCommandsAndResources 内部并行化
-  //（带 Promise.all 的 processBatched）。zy.ai 也等待 —— 它的
-  // 获取很早就启动了（zyaiMcpPromise 在 prefetchAllMcpResources 之前）所以只有剩余时间阻塞
-  // 在这里。--bare 完全跳过 zy.ai 以用于性能敏感的脚本。
+  //（带 Promise.all 的 processBatched）。
   profileCheckpoint('before_connectMcp')
   await connectMcpBatch(regularMcpConfigs, 'regular')
   profileCheckpoint('after_connectMcp')
-  // 去重：抑制重复 zy.ai 连接器的插件 MCP 服务器
-  //（连接器获胜），然后连接 zy.ai 服务器。
-  // 有界等待 —— #23725 使其阻塞以便单次 -p 看到
-  // 连接器，但有 40+ 慢速连接器时 zy_startup_perf p99
-  // 攀升到 76 秒。如果获取+连接没有及时完成，继续；
-  // promise 继续运行并在后台更新 headlessStore
-  // 以便第 2+ 轮仍然看到连接器。
-  const ZY_AI_MCP_TIMEOUT_MS = 5_000
-  const zyaiConnect = zyaiConfigPromise.then((zyaiConfigs) => {
-    if (Object.keys(zyaiConfigs).length > 0) {
-      const zyaiSigs = new Set<string>()
-      for (const config of Object.values(zyaiConfigs)) {
-        const sig = getMcpServerSignature(config)
-        if (sig) {
-          zyaiSigs.add(sig)
-        }
-      }
-      const suppressed = new Set<string>()
-      for (const [name, config] of Object.entries(regularMcpConfigs)) {
-        if (!name.startsWith('plugin:')) {
-          continue
-        }
-        const sig = getMcpServerSignature(config)
-        if (sig && zyaiSigs.has(sig)) {
-          suppressed.add(name)
-        }
-      }
-      if (suppressed.size > 0) {
-        logForDebugging(
-          `[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate zy.ai connectors: ${[...suppressed].join(', ')}`,
-        )
-        // 从状态过滤前先断开连接。只有已连接的服务器需要清理 —
-        // 对未连接的服务器调用 clearServerCache 会触发一次真实连接
-        // 然后立即终止（memoize 缓存未命中路径）。
-        for (const c of headlessStore.getState().mcp.clients) {
-          if (!suppressed.has(c.name) || c.type !== 'connected') {
-            continue
-          }
-          c.client.onclose = undefined
-          void clearServerCache(c.name, c.config).catch(() => {})
-        }
-        headlessStore.setState((prev) => {
-          let { clients, tools, commands, resources } = prev.mcp
-          clients = clients.filter((c) => !suppressed.has(c.name))
-          tools = tools.filter((t) => !t.mcpInfo || !suppressed.has(t.mcpInfo.serverName))
-          for (const name of suppressed) {
-            commands = excludeCommandsByServer(commands, name)
-            resources = excludeResourcesByServer(resources, name)
-          }
-          return {
-            ...prev,
-            mcp: {
-              ...prev.mcp,
-              clients,
-              tools,
-              commands,
-              resources,
-            },
-          }
-        })
-      }
-    }
-    // 抑制重复已启用手动服务器的 zy.ai 连接器
-    //（URL 签名匹配）。上方的插件去重仅处理 `plugin:*` 键；
-    // 这捕获手动 `.mcp.json` 条目。plugin:* 必须在此处排除
-    // —— 步骤 1 已经抑制了那些（zy.ai 获胜）；留下它们也会
-    // 抑制连接器，两者都不存活（gh-39974）。
-    const nonPluginConfigs = pickBy(regularMcpConfigs, (_, n) => !n.startsWith('plugin:'))
-    const { servers: dedupedZyAI } = dedupZyAIMcpServers(zyaiConfigs, nonPluginConfigs)
-    return connectMcpBatch(dedupedZyAI, 'zyai')
-  })
-  let zyaiTimer: ReturnType<typeof setTimeout> | undefined
-  const zyaiTimedOut = await Promise.race([
-    zyaiConnect.then(() => false),
-    new Promise<boolean>((resolve) => {
-      zyaiTimer = setTimeout((r) => r(true), ZY_AI_MCP_TIMEOUT_MS, resolve)
-    }),
-  ])
-  if (zyaiTimer) {
-    clearTimeout(zyaiTimer)
-  }
-  if (zyaiTimedOut) {
-    logForDebugging(
-      `[MCP] zy.ai connectors not ready after ${ZY_AI_MCP_TIMEOUT_MS}ms — proceeding; background connection continues`,
-    )
-  }
-  profileCheckpoint('after_connectMcp_zyai')
 
   // 在无头模式下，立即启动延迟预取（没有用户输入延迟）
   // --bare / SIMPLE：startDeferredPrefetches 在内部早期返回。

@@ -35,12 +35,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
-import {
-  dedupZyAIMcpServers,
-  filterMcpServersByPolicy,
-  getZyCodeMcpConfigs,
-} from 'src/services/mcp/configResolution.js'
-import { doesEnterpriseMcpConfigExist } from 'src/services/mcp/configLookup.js'
+import { getZyCodeMcpConfigs } from 'src/services/mcp/configResolution.js'
 import { isMcpServerDisabled, setMcpServerEnabled } from 'src/services/mcp/serverEnablement.js'
 import type { AppState } from 'src/state/AppStateStore.js'
 import type { PluginError } from 'src/services/plugins/types.js'
@@ -76,7 +71,6 @@ import {
 } from './mcpConnectionReducer.js'
 import { getTransportDisplayName } from './transportPresentation.js'
 import { excludeStalePluginClients } from './utils.js'
-import { clearZyAIMcpConfigsCache, fetchZyAIMcpConfigsIfEligible } from './zyai.js'
 
 // 指数退避重连所用常量
 const MAX_RECONNECT_ATTEMPTS = 5
@@ -685,8 +679,7 @@ export function useManageMCPConnections(
 
   // appState 中不存在的所有 server 初始化为 pending。session 变化（/clear）及
   // /reload-plugins（pluginReconnectKey）时重跑。plugin 重载时还会断开配置中已不存在的
-  // stale plugin MCP server（scope 为 dynamic），防止已禁用 plugin 留下幽灵 tool。此处跳过
-  // zy.ai 去重以免等待网络；下方 connect useEffect 会紧接着运行，并在连接前去重。
+  // stale plugin MCP server（scope 为 dynamic），防止已禁用 plugin 留下幽灵 tool。
   const _sessionId = getSessionId()
   useEffect(() => {
     async function initializeServersAsPending() {
@@ -756,25 +749,12 @@ export function useManageMCPConnections(
     })
   }, [isStrictMcpConfig, dynamicMcpConfig, setAppState])
 
-  // 加载 MCP 配置并连接 server。分两阶段：先加载较快的 ZY Code 配置，再加载可能较慢的
-  // zy.ai 配置。
+  // 加载 MCP 配置并连接 server。
   useEffect(() => {
     let cancelled = false
 
     async function loadAndConnectMcpConfigs() {
-      // 清除 zy.ai MCP 缓存，以当前 auth 状态获取最新配置；authVersion 在 login/logout 后变化
-      // 时尤其重要。立即启动请求，使其与 getZyCodeMcpConfigs 内的 loadAllPlugins() 并行，只在
-      // 去重阶段等待。下方 Phase 2 等待同一 promise，不会发起第二次网络调用。
-      let zyaiPromise: Promise<Record<string, ScopedMcpServerConfig>>
-      if (isStrictMcpConfig || doesEnterpriseMcpConfigExist()) {
-        zyaiPromise = Promise.resolve({})
-      } else {
-        clearZyAIMcpConfigsCache()
-        zyaiPromise = fetchZyAIMcpConfigsIfEligible()
-      }
-
-      // Phase 1：加载 ZY Code 配置。此处抑制与 --mcp-config 条目或 zy.ai connector 重复的
-      // plugin MCP server，避免它们在 Phase 2 与 connector 同时连接。
+      // 加载 ZY Code 配置（getZyCodeMcpConfigs 内部会抑制与 --mcp-config 条目重复的 plugin MCP server）。
       const { servers: ZyCodeConfigs, errors: mcpErrors } = isStrictMcpConfig
         ? { servers: {}, errors: [] }
         : await getZyCodeMcpConfigs(dynamicMcpConfig)
@@ -787,7 +767,7 @@ export function useManageMCPConnections(
 
       const configs = { ...ZyCodeConfigs, ...dynamicMcpConfig }
 
-      // 开始连接 ZY Code server，不等待完成，与 Phase 2 并发；过滤已禁用 server，避免无用连接
+      // 开始连接 server，不等待完成；过滤已禁用 server，避免无用连接
       const enabledConfigs = Object.fromEntries(
         Object.entries(configs).filter(([name]) => !isMcpServerDisabled(name)),
       )
@@ -798,68 +778,14 @@ export function useManageMCPConnections(
         )
       })
 
-      // Phase 2：等待上方已启动且记忆化的 zy.ai 配置请求，不会重复获取
-      let zyaiConfigs: Record<string, ScopedMcpServerConfig> = {}
-      if (!isStrictMcpConfig) {
-        zyaiConfigs = filterMcpServersByPolicy(await zyaiPromise).allowed
-        if (cancelled) {
-          return
-        }
-
-        // 抑制与已启用手动 server 重复的 zy.ai connector。二者 key 不会冲突（如 `slack` 与
-        // `zy.ai Slack`），下方 merge 无法发现，因此需按 URL signature 基于内容去重。
-        if (Object.keys(zyaiConfigs).length > 0) {
-          const { servers: dedupedZyAI } = dedupZyAIMcpServers(zyaiConfigs, configs)
-          zyaiConfigs = dedupedZyAI
-        }
-
-        if (Object.keys(zyaiConfigs).length > 0) {
-          // 立即将 zy.ai server 加为 pending，使其显示在 UI 中
-          setAppState((prevState) => {
-            const existingServerNames = new Set(prevState.mcp.clients.map((c) => c.name))
-            const newClients = Object.entries(zyaiConfigs)
-              .filter(([name]) => !existingServerNames.has(name))
-              .map(([name, config]) => ({
-                name,
-                type: isMcpServerDisabled(name) ? ('disabled' as const) : ('pending' as const),
-                config,
-              }))
-            if (newClients.length === 0) {
-              return prevState
-            }
-            return {
-              ...prevState,
-              mcp: {
-                ...prevState.mcp,
-                clients: [...prevState.mcp.clients, ...newClients],
-              },
-            }
-          })
-
-          // 开始连接，仅处理已启用 server
-          const enabledZyaiConfigs = Object.fromEntries(
-            Object.entries(zyaiConfigs).filter(([name]) => !isMcpServerDisabled(name)),
-          )
-          getMcpToolsCommandsAndResources(onConnectionAttempt, enabledZyaiConfigs).catch(
-            (error) => {
-              logMCPError(
-                'useManageMcpConnections',
-                `Failed to get zy.ai MCP resources: ${errorMessage(error)}`,
-              )
-            },
-          )
-        }
-      }
-
-      // 两个阶段完成后记录 server 数量
-      const allConfigs = { ...configs, ...zyaiConfigs }
+      // 记录 server 数量
+      const allConfigs = configs
       const counts = {
         enterprise: 0,
         global: 0,
         project: 0,
         user: 0,
         plugin: 0,
-        zyai: 0,
       }
       // 仅限 Ant：收集 stdio 命令 basename，与 RSS/FPS metrics 关联。rust-analyzer 等 stdio
       // server 可能资源消耗较大，需要识别哪些与会话性能不佳相关。
@@ -875,8 +801,6 @@ export function useManageMCPConnections(
           counts.user++
         } else if (serverConfig.scope === 'dynamic') {
           counts.plugin++
-        } else if (serverConfig.scope === 'zyai') {
-          counts.zyai++
         }
 
         if (

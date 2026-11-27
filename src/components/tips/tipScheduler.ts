@@ -5,7 +5,6 @@ import {
 } from '../../services/analytics/index.js'
 import { getSessionsSinceLastShown, recordTipShown } from '../../services/tips/tipHistory.js'
 import { getRelevantTips } from './tipRegistry.js'
-// @ts-expect-error
 import type { Tip, TipContext } from '../../services/tips/types.js'
 
 export function selectTipWithLongestTimeSinceShown(availableTips: Tip[]): Tip | undefined {

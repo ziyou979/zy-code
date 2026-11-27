@@ -2,12 +2,11 @@ import type { UUID } from 'node:crypto'
 import { dirname, sep } from 'node:path'
 import { logEvent } from 'src/services/analytics/index.js'
 import { z } from 'zod/v4'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { diagnosticTracker } from '../../services/diagnosticTracking.js'
 import { clearDeliveredDiagnosticsForFile } from '../../services/lsp/lspDiagnosticRegistry.js'
 import { getLspServerManager } from '../../services/lsp/manager.js'
 import { notifyVscodeFileUpdated } from '../../services/mcp/vscodeMcp.js'
-import { checkTeamMemSecrets } from '../../services/team-memory-sync/teamMemSecretGuard.js'
+import { checkTeamMemSecrets } from '../../services/memory/teamMemSecretGuard.js'
 import {
   activateConditionalSkillsForPaths,
   addSkillDirectories,
@@ -18,7 +17,6 @@ import { buildTool, type ToolDef } from '../../tools/tool.js'
 import { getCwd } from '../../services/environment/cwd.js'
 import { logForDebugging } from '../../services/infra/debug.js'
 import { countLinesChanged, getPatchForDisplay } from '../../services/git/diff.js'
-import { isEnvTruthy } from '../../services/infra/envUtils.js'
 import { isENOENT } from '../../utils/errors.js'
 import { getFileModificationTime, writeTextContent } from '../../services/infra/file.js'
 import {

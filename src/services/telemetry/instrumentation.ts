@@ -53,7 +53,6 @@ import { getInitialSettings } from '../settings/settings.js'
 import { jsonStringify } from '../../services/infra/slowOperations.js'
 import { profileCheckpoint } from '../telemetry/startupProfiler.js'
 import { isBetaTracingEnabled } from './betaSessionTracing.js'
-import { BigQueryMetricsExporter } from './bigqueryExporter.js'
 import { ZyCodeDiagLogger } from './logger.js'
 import { initializePerfettoTracing } from './perfettoTracing.js'
 import { endInteractionSpan, isEnhancedTelemetryEnabled } from './sessionTracing.js'
@@ -311,19 +310,6 @@ export function isTelemetryEnabled() {
   return isEnvTruthy(process.env.ZY_CODE_ENABLE_TELEMETRY)
 }
 
-function getBigQueryExportingReader() {
-  const bigqueryExporter = new BigQueryMetricsExporter()
-  return new PeriodicExportingMetricReader({
-    exporter: bigqueryExporter,
-    exportIntervalMillis: 5 * 60 * 1000, // 5mins for BigQuery metrics exporter to reduce load
-  })
-}
-
-function isBigQueryMetricsEnabled() {
-  // BigQuery metrics are always enabled for API customers
-  return true
-}
-
 /**
  * Initialize beta tracing - a separate code path for detailed debugging.
  * Uses BETA_TRACING_ENDPOINT instead of OTEL_EXPORTER_OTLP_ENDPOINT.
@@ -439,11 +425,6 @@ export async function initializeTelemetry() {
   )
   if (telemetryEnabled) {
     readers.push(...(await getOtlpReaders()))
-  }
-
-  // Add BigQuery exporter (for API customers, C4E users, and internal users)
-  if (isBigQueryMetricsEnabled()) {
-    readers.push(getBigQueryExportingReader())
   }
 
   // Create base resource with service attributes

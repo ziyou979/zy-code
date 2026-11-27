@@ -332,7 +332,6 @@ export const zhOnboarding: TranslationResource = {
   'tip.effortHighA': '在做复杂的东西？{cmd} 能提供更好的首次回答',
   'tip.effortHighB': '使用 {cmd} 获得更好的单次回答质量，ZY 会先深入思考。',
   'tip.enterToSteer': 'ZY Code 工作时发送消息来实时引导它',
-  'tip.feedbackCommand': '使用 /feedback 帮助我们改进！',
   'tip.frontendDesignPlugin': '在处理 HTML/CSS？安装前端设计插件：\n{command}',
   'tip.gitWorktrees': '使用 git worktrees 并行运行多个 ZY Code 会话。',
   'tip.ideUpsellExternalTerminal': '将 ZY Code 连接到你的 IDE · /ide',

@@ -173,7 +173,6 @@ export type McpServerType =
   | 'sdk'
   | 'sse-ide'
   | 'ws-ide'
-  | 'zyai-proxy'
   | undefined
 
 function findMcpServerConnection(
@@ -189,8 +188,8 @@ function findMcpServerConnection(
     return undefined
   }
 
-  // mcpInfo.serverName 是已归一化名称（如 “zy_ai_Slack”），而 client.name
-  // 是原始名称（如 “zy.ai Slack”）。比较前对两者均进行归一化。
+  // mcpInfo.serverName 是已归一化名称（如 “my_server”），而 client.name
+  // 是原始名称（如 “my.server”）。比较前对两者均进行归一化。
   return mcpClients.find((client) => normalizeNameForMCP(client.name) === mcpInfo.serverName)
 }
 

@@ -7,7 +7,6 @@ import type {
   McpHTTPServerConfig,
   McpSSEServerConfig,
   McpStdioServerConfig,
-  McpZyAIProxyServerConfig,
 } from '../../services/mcp/types.js'
 import { extractAgentMcpServers, filterToolsByServer } from '../../services/mcp/utils.js'
 import { useAppState } from '../../state/AppState.js'
@@ -54,7 +53,6 @@ export function MCPSettings({ onComplete }: Props) {
           const scope = client.config.scope
           const isSSE = client.config.type === 'sse'
           const isHTTP = client.config.type === 'http'
-          const isZyAIProxy = client.config.type === 'zyai-proxy'
           let isAuthenticated
           if (isSSE || isHTTP) {
             const authProvider = new ZyAuthProvider(
@@ -71,37 +69,26 @@ export function MCPSettings({ onComplete }: Props) {
             client: client,
             scope,
           }
-          if (isZyAIProxy) {
+          if (isSSE) {
             return {
               ...baseInfo,
-              transport: 'zyai-proxy' as const,
-              isAuthenticated: false,
-              config: client.config as McpZyAIProxyServerConfig,
+              transport: 'sse' as const,
+              isAuthenticated,
+              config: client.config as McpSSEServerConfig,
             }
-          } else {
-            if (isSSE) {
-              return {
-                ...baseInfo,
-                transport: 'sse' as const,
-                isAuthenticated,
-                config: client.config as McpSSEServerConfig,
-              }
-            } else {
-              if (isHTTP) {
-                return {
-                  ...baseInfo,
-                  transport: 'http' as const,
-                  isAuthenticated,
-                  config: client.config as McpHTTPServerConfig,
-                }
-              } else {
-                return {
-                  ...baseInfo,
-                  transport: 'stdio' as const,
-                  config: client.config as McpStdioServerConfig,
-                }
-              }
+          }
+          if (isHTTP) {
+            return {
+              ...baseInfo,
+              transport: 'http' as const,
+              isAuthenticated,
+              config: client.config as McpHTTPServerConfig,
             }
+          }
+          return {
+            ...baseInfo,
+            transport: 'stdio' as const,
+            config: client.config as McpStdioServerConfig,
           }
         }),
       )
@@ -142,7 +129,7 @@ export function MCPSettings({ onComplete }: Props) {
     case 'server-menu': {
       const { server } = viewState
       const serverTools = filterToolsByServer(mcp.tools, server.name)
-      const defaultTab = server.transport === 'zyai-proxy' ? 'zy.ai' : 'ZY Code'
+      const defaultTab = 'ZY Code'
       if (server.transport === 'stdio') {
         return (
           <MCPStdioServerMenu

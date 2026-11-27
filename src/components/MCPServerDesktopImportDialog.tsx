@@ -3,7 +3,7 @@ import { tSync } from 'src/i18n/index.js'
 import { gracefulShutdown } from 'src/bootstrap/lifecycle/gracefulShutdown.js'
 import { writeToStdout } from 'src/services/shell/process.js'
 import { Box, color, Text, useTheme } from '../ink/index.js'
-import { getAllMcpConfigs } from '../services/mcp/configResolution.js'
+import { getZyCodeMcpConfigs } from '../services/mcp/configResolution.js'
 import { addMcpConfig } from '../services/mcp/configMutations.js'
 import type { ConfigScope, McpServerConfig } from '../services/mcp/types.js'
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js'
@@ -21,7 +21,7 @@ export function MCPServerDesktopImportDialog({ servers, scope, onDone }: Props) 
   const serverNames = Object.keys(servers)
   const [existingServers, setExistingServers] = useState<Record<string, McpServerConfig>>({})
   useEffect(() => {
-    getAllMcpConfigs().then((existingConfigs) => {
+    getZyCodeMcpConfigs().then((existingConfigs) => {
       const { servers: existingServerConfigs } = existingConfigs
       return setExistingServers(existingServerConfigs)
     })

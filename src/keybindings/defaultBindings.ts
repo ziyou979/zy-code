@@ -82,10 +82,6 @@ export const DEFAULT_BINDINGS: KeybindingBlock[] = [
       // 图片粘贴快捷键，具体平台按键在上方定义
       [IMAGE_PASTE_KEY]: 'chat:imagePaste',
       ...(feature('MESSAGE_ACTIONS') ? { 'shift+up': 'chat:messageActions' as const } : {}),
-      // Voice 按住说话激活键。注册后 getShortcutDisplay 可直接找到它，不会触发 fallback
-      // analytics 日志。重新绑定时添加 voice:pushToTalk 条目，最后一项优先；禁用请使用 /voice。
-      // 用户可将 space 设为 null 来禁用按住说话；此时按键会继续传给输入框。
-      ...(feature('VOICE_MODE') ? { space: 'voice:pushToTalk' } : {}),
     },
   },
   {

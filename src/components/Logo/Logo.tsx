@@ -42,7 +42,6 @@ import {
   createRecentActivityFeed,
   createWhatsNewFeed,
 } from './FeedConfigs.js'
-import { VoiceModeNotice } from './VoiceModeNotice.js'
 import { AnimatedZy } from './AnimatedZy.js'
 
 // Type declarations for missing components
@@ -54,8 +53,7 @@ const ExperimentEnrollmentNotice: any = null
 // Conditional require so ChannelsNotice.tsx tree-shakes when both flags are
 // false. A module-scope helper component inside a feature() ternary does NOT
 // tree-shake (docs/feature-gating.md); the require pattern eliminates the
-// whole file. VoiceModeNotice uses the unsafe helper pattern but VOICE_MODE
-// is external: true so it's moot there.
+// whole file.
 /* eslint-disable @typescript-eslint/no-require-imports */
 const ChannelsNoticeModule =
   feature('KAIROS') || feature('KAIROS_CHANNELS')
@@ -141,7 +139,6 @@ export function Logo() {
     return (
       <>
         {<CondensedLogo />}
-        {<VoiceModeNotice />}
         {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
         {debugInfoSection}
         {<EmergencyTip />}
@@ -228,7 +225,6 @@ export function Logo() {
             </Text>
           </Box>
         </OffscreenFreeze>
-        {<VoiceModeNotice />}
         {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
         {showSandboxStatus && (
           <Box marginTop={1} flexDirection="column">
@@ -339,7 +335,6 @@ export function Logo() {
           }
         </OffscreenFreeze>
       }
-      {<VoiceModeNotice />}
       {ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />}
       {debugInfoSection}
       {<EmergencyTip />}

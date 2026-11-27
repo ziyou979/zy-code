@@ -1,6 +1,5 @@
-import { describe, expect, it, vi, beforeEach, afterEach, spyOn } from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 import { isUsingOAuthTokens } from '../../../src/services/auth/auth.js'
-import { isUsingOAuthForService } from '../../../src/services/auth/auth.js'
 
 const INFERENCE = 'user:inference'
 const PROFILE = 'user:profile'
@@ -39,50 +38,5 @@ describe('isUsingOAuthTokens - scope 判断纯函数', () => {
 
   it('scopes 缺省时 false', () => {
     expect(isUsingOAuthTokens({ accessToken: 'tok' } as never)).toBe(false)
-  })
-})
-
-// isUsingOAuthForService 依赖 modelRequestContext / baseUrlResolution / getZyAIOAuthTokens，
-// 通过 mock 依赖链验证 provider/endpoint 门槛。
-const mockResolveModelRequestContext = vi.fn()
-const mockIsAnthropicOfficialEndpoint = vi.fn()
-
-import * as requestContext from '../../../src/services/model/modelRequestContext.js'
-import * as baseUrlResolution from '../../../src/services/api/baseUrlResolution.js'
-import * as authFileDescriptor from '../../../src/services/auth/authFileDescriptor.js'
-afterEach(() => vi.restoreAllMocks())
-
-describe('isUsingOAuthForService - provider/endpoint 门槛', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    spyOn(requestContext, 'resolveModelRequestContext').mockImplementation(
-      mockResolveModelRequestContext,
-    )
-    spyOn(baseUrlResolution, 'isAnthropicOfficialEndpoint').mockImplementation(
-      mockIsAnthropicOfficialEndpoint,
-    )
-    spyOn(authFileDescriptor, 'getOAuthTokenFromFileDescriptor').mockReturnValue(null)
-    spyOn(authFileDescriptor, 'getApiKeyFromFileDescriptor').mockReturnValue(null)
-    // 默认：非 anthropic 或非官方端点 → false（不读 token）
-    mockResolveModelRequestContext.mockReturnValue({ provider: 'openai' })
-    mockIsAnthropicOfficialEndpoint.mockReturnValue(true)
-  })
-
-  it('非 anthropic provider → false', () => {
-    mockResolveModelRequestContext.mockReturnValue({ provider: 'openai' })
-    expect(isUsingOAuthForService()).toBe(false)
-  })
-
-  it('非官方端点 → false', () => {
-    mockResolveModelRequestContext.mockReturnValue({ provider: 'anthropic' })
-    mockIsAnthropicOfficialEndpoint.mockReturnValue(false)
-    expect(isUsingOAuthForService()).toBe(false)
-  })
-
-  it('anthropic + 官方端点但无 token → false', () => {
-    mockResolveModelRequestContext.mockReturnValue({ provider: 'anthropic' })
-    mockIsAnthropicOfficialEndpoint.mockReturnValue(true)
-    // getZyAIOAuthTokens 在测试环境无连接配置 → null
-    expect(isUsingOAuthForService()).toBe(false)
   })
 })

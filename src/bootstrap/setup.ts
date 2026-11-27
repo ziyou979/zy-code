@@ -377,9 +377,6 @@ export async function setup(
     void import('../services/hooks/sessionFileAccessHooks.js').then((m) =>
       m.registerSessionFileAccessHooks(),
     ) // 注册会话文件访问分析 hooks
-    if (feature('TEAMMEM')) {
-      void import('../services/team-memory-sync/watcher.js').then((m) => m.startTeamMemoryWatcher()) // 启动团队内存同步监视器
-    }
   }
   initSinks() // 附加错误日志 + 分析 sink 并排空队列中的事件
 

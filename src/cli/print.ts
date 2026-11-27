@@ -1,7 +1,6 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { feature } from 'bun:bundle'
 import { dirname } from 'node:path'
-import { downloadUserSettings } from 'src/services/settings-sync/index.js'
 import { StructuredIO } from 'src/cli/structuredIO.js'
 import { type Command, formatDescriptionWithSource, getCommandName } from 'src/commands/index.js'
 import { createStreamlinedTransformer } from 'src/services/compact/streamlinedTransform.js'
@@ -91,7 +90,6 @@ import type { PermissionMode } from '@zy-ai/agent-sdk'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
 import { cwd } from 'node:process'
 import { getCwd } from 'src/services/environment/cwd.js'
-import { isPolicyAllowed } from 'src/services/policy-limits/index.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import { hasPermissionsToUseTool } from 'src/services/permissions/permissions.js'
 import { safeParseJSON } from 'src/utils/json.js'
@@ -341,13 +339,6 @@ export async function runHeadless(
     process.stderr.write(`\nStartup time: ${Math.round(process.uptime() * 1000)}ms\n`)
     // eslint-disable-next-line custom-rules/no-process-exit
     process.exit(0)
-  }
-
-  // 立即启动用户 settings 下载，使其与下方 MCP/tool 设置重叠。managed settings 已在 main.tsx
-  // preAction 中启动；此处给用户 settings 类似的提前量。plugin 安装读取 enabledPlugins 前，
-  // installPluginsAndApplyMcpInBackground 会等待缓存的 promise。
-  if (feature('DOWNLOAD_USER_SETTINGS')) {
-    void downloadUserSettings()
   }
 
   // headless 模式没有 React 树，因此 useSettingsChange hook 不会运行。直接订阅，使 settings

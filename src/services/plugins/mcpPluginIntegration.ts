@@ -526,11 +526,10 @@ export function resolvePluginMcpEnvironment(
       break
     }
 
-    // For other types (sse-ide, ws-ide, sdk, zyai-proxy), pass through unchanged
+    // For other types (sse-ide, ws-ide, sdk), pass through unchanged
     case 'sse-ide':
     case 'ws-ide':
     case 'sdk':
-    case 'zyai-proxy':
       resolved = config
       break
   }

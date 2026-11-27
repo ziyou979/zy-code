@@ -90,8 +90,6 @@ export async function addMcpConfig(
       throw new Error('Cannot add MCP server to scope: dynamic')
     case 'enterprise':
       throw new Error('Cannot add MCP server to scope: enterprise')
-    case 'zyai':
-      throw new Error('Cannot add MCP server to scope: zyai')
   }
 
   switch (scope) {

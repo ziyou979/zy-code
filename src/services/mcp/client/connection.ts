@@ -30,7 +30,7 @@ import { normalizeNameForMCP } from '../normalization.js'
 import { clearKeychainCache } from '../../secure-storage/macOsKeychainHelpers.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { hasMcpDiscoveryButNoToken } from '../auth.js'
-import { getAllMcpConfigs } from '../configResolution.js'
+import { getZyCodeMcpConfigs } from '../configResolution.js'
 import { isMcpServerDisabled } from '../serverEnablement.js'
 import type {
   ConnectedMCPServer,
@@ -38,7 +38,6 @@ import type {
   ScopedMcpServerConfig,
   ServerResource,
 } from '../types.js'
-import { markZyAiMcpConnected } from '../zyai.js'
 /**
  * 自定义错误类，表示 MCP 工具调用因认证问题失败
  *（例如 OAuth token 过期返回 401）。
@@ -352,10 +351,6 @@ export async function reconnectMcpServerImpl(
       }
     }
 
-    if (config.type === 'zyai-proxy') {
-      markZyAiMcpConnected(name)
-    }
-
     const supportsResources = !!client.capabilities?.resources
 
     const [tools, mcpCommands, mcpSkills, resources] = await Promise.all([
@@ -425,7 +420,7 @@ export async function getMcpToolsCommandsAndResources(
 ): Promise<void> {
   let resourceToolsAdded = false
 
-  const allConfigEntries = Object.entries(mcpConfigs ?? (await getAllMcpConfigs()).servers)
+  const allConfigEntries = Object.entries(mcpConfigs ?? (await getZyCodeMcpConfigs()).servers)
 
   // 分区为禁用和活跃条目 — 禁用的服务器不应
   // 生成 HTTP 连接或流经批次处理
@@ -487,10 +482,8 @@ export async function getMcpToolsCommandsAndResources(
       // 每次探测都是一次 connect-401 加 OAuth 发现的网络往返，
       // 而 print 模式会等待整个批次（main.tsx:3503）。
       if (
-        (config.type === 'zyai-proxy' || config.type === 'http' || config.type === 'sse') &&
-        ((await isMcpAuthCached(name)) ||
-          ((config.type === 'http' || config.type === 'sse') &&
-            hasMcpDiscoveryButNoToken(name, config)))
+        (config.type === 'http' || config.type === 'sse') &&
+        ((await isMcpAuthCached(name)) || hasMcpDiscoveryButNoToken(name, config))
       ) {
         logMCPDebug(name, `Skipping connection (cached needs-auth)`)
         onConnectionAttempt({
@@ -510,10 +503,6 @@ export async function getMcpToolsCommandsAndResources(
           commands: [],
         })
         return
-      }
-
-      if (config.type === 'zyai-proxy') {
-        markZyAiMcpConnected(name)
       }
 
       const supportsResources = !!client.capabilities?.resources

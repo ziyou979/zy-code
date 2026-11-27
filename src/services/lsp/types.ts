@@ -16,7 +16,7 @@ export interface LSPServerConfig {
 export type LspServerConfig = LSPServerConfig
 
 export interface ScopedLspServerConfig extends LSPServerConfig {
-  scope: 'user' | 'project' | 'local' | 'dynamic' | 'enterprise' | 'zyai' | 'managed'
+  scope: 'user' | 'project' | 'local' | 'dynamic' | 'enterprise' | 'managed'
   pluginSource?: string
 }
 

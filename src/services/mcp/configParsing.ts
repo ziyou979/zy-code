@@ -80,7 +80,6 @@ function expandEnvVars(config: McpServerConfig): {
     case 'sse-ide':
     case 'ws-ide':
     case 'sdk':
-    case 'zyai-proxy':
       expanded = config
       break
   }

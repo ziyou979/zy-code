@@ -1,4 +1,3 @@
-import { feature } from 'bun:bundle'
 import React, { useContext, useEffect, useEffectEvent, useState, useSyncExternalStore } from 'react'
 import { MailboxProvider } from '../context/mailbox.js'
 import { useSettingsChange } from '../hooks/useSettingsChange.js'
@@ -11,15 +10,6 @@ import { applySettingsChange } from '../services/settings/applySettingsChange.js
 import { createStore } from './store.js'
 import { configureRuntimeContext, onSessionSwitch } from '../bootstrap/runtime/runtimeContext.js'
 
-// DCE：语音 context 仅供 ant 使用，外部构建直接透传。
-/* eslint-disable @typescript-eslint/no-require-imports */
-const VoiceProvider: (props: { children: React.ReactNode }) => React.ReactNode = feature(
-  'VOICE_MODE',
-)
-  ? require('../context/voice.js').VoiceProvider
-  : ({ children }) => children
-
-/* eslint-enable @typescript-eslint/no-require-imports */
 import {
   type AppState,
   type AppStateStore,
@@ -79,11 +69,7 @@ export function AppStateProvider({ children, initialState, onChangeAppState }: P
   return (
     <HasAppStateContext.Provider value={true}>
       <AppStoreContext.Provider value={store}>
-        {
-          <MailboxProvider>
-            <VoiceProvider>{children}</VoiceProvider>
-          </MailboxProvider>
-        }
+        {<MailboxProvider>{children}</MailboxProvider>}
       </AppStoreContext.Provider>
     </HasAppStateContext.Provider>
   )

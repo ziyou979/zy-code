@@ -7,17 +7,6 @@ import { getIsNonInteractiveSession } from 'src/bootstrap/runtime/runtimeContext
 import type { AttributedCounter } from 'src/bootstrap/runtime/runtimeContext.js'
 import { getSessionCounter, setMeter } from 'src/bootstrap/runtime/runtimeContext.js'
 import { shutdownLspServerManager } from '../services/lsp/manager.js'
-import {
-  initializePolicyLimitsLoadingPromise,
-  isPolicyLimitsEligible,
-} from '../services/policy-limits/index.js'
-import {
-  initializeRemoteManagedSettingsLoadingPromise,
-  isEligibleForRemoteManagedSettings,
-  setManagedSettingsSecurityChecker,
-  waitForRemoteManagedSettingsToLoad,
-} from '../services/remote-managed-settings/index.js'
-import { isBetaTracingEnabled } from '../services/telemetry/betaSessionTracing.js'
 import { populateOAuthAccountInfoIfNeeded } from '../services/auth/auth.js'
 import { applyExtraCACertsFromConfig } from '../services/settings/caCertsConfig.js'
 import { ExtraCACertificatesError, getCACertificates } from '../services/http/caCerts.js'
@@ -28,17 +17,13 @@ import { createDebugLog } from '../services/infra/debug.js'
 import { detectCurrentRepository } from '../services/git/detectRepository.js'
 import { logForDiagnosticsNoPII } from '../services/telemetry/diagLogs.js'
 import { initJetBrainsDetection } from '../services/environment/envDynamic.js'
-import { isEnvTruthy } from '../services/infra/envUtils.js'
 import { ConfigParseError, errorMessage } from '../utils/errors.js'
 // showInvalidConfigDialog 在错误路径中动态导入，以避免在初始化时加载 React
 import {
   gracefulShutdownSync,
   setupGracefulShutdown,
 } from '../bootstrap/lifecycle/gracefulShutdown.js'
-import {
-  applyConfigEnvironmentVariables,
-  applySafeConfigEnvironmentVariables,
-} from '../services/environment/managedEnv.js'
+import { applySafeConfigEnvironmentVariables } from '../services/environment/managedEnv.js'
 import { configureGlobalMTLS } from '../services/http/mtls.js'
 import {
   ensureScratchpadDir,
@@ -136,24 +121,6 @@ export const init = memoize(async (): Promise<void> => {
     // 异步检测 GitHub 仓库（填充缓存用于 gitDiff PR 链接）
     void detectCurrentRepository()
 
-    // 尽早初始化加载 promise，以便其他系统（如插件钩子）
-    // 可以等待远程设置加载完成。该 promise 包含超时机制，
-    // 以防止 loadRemoteManagedSettings() 从未被调用时发生死锁（如 Agent SDK 测试）。
-    setManagedSettingsSecurityChecker(async (cachedSettings, newSettings) => {
-      // 仅在确实需要交互确认时加载 React/Ink，避免增加普通启动路径成本。
-      const { checkManagedSettingsSecurity } = await import(
-        '../components/remote-managed-settings/SecurityCheck.js'
-      )
-      return checkManagedSettingsSecurity(cachedSettings, newSettings)
-    })
-    if (isEligibleForRemoteManagedSettings()) {
-      initializeRemoteManagedSettingsLoadingPromise()
-    }
-    if (isPolicyLimitsEligible()) {
-      initializePolicyLimitsLoadingPromise()
-    }
-    profileCheckpoint('init_after_remote_settings_check')
-
     // 记录首次启动时间
     recordFirstStartTime()
 
@@ -233,44 +200,15 @@ export const init = memoize(async (): Promise<void> => {
 })
 
 /**
- * 在用户授予信任后初始化遥测。
- * 对于符合远程设置条件的用户，等待设置加载完成（非阻塞），
- * 然后在初始化遥测之前重新应用环境变量（以包含远程设置）。
- * 对于不符合条件的用户，立即初始化遥测。
+ * 在用户授予信任后初始化遥测（远程托管设置已移除，无需再等待其加载）。
  * 此函数仅应在接受信任对话框后调用一次。
  */
 export function initializeTelemetryAfterTrust(): void {
-  if (isEligibleForRemoteManagedSettings()) {
-    // 对于启用 beta tracing 的 SDK/无头模式，首先急切初始化
-    // 以确保 tracer 在第一次查询运行前就绪。
-    // 下面的异步路径仍会执行，但 doInitializeTelemetry() 会防止重复初始化。
-    if (getIsNonInteractiveSession() && isBetaTracingEnabled()) {
-      void doInitializeTelemetry().catch((error) => {
-        log(`[3P telemetry] Eager telemetry init failed (beta tracing): ${errorMessage(error)}`, {
-          level: 'error',
-        })
-      })
-    }
-    log('[3P telemetry] Waiting for remote managed settings before telemetry init')
-    void waitForRemoteManagedSettingsToLoad()
-      .then(async () => {
-        log('[3P telemetry] Remote managed settings loaded, initializing telemetry')
-        // 在初始化遥测之前重新应用环境变量，以获取远程设置。
-        applyConfigEnvironmentVariables()
-        await doInitializeTelemetry()
-      })
-      .catch((error) => {
-        log(`[3P telemetry] Telemetry init failed (remote settings path): ${errorMessage(error)}`, {
-          level: 'error',
-        })
-      })
-  } else {
-    void doInitializeTelemetry().catch((error) => {
-      log(`[3P telemetry] Telemetry init failed: ${errorMessage(error)}`, {
-        level: 'error',
-      })
+  void doInitializeTelemetry().catch((error) => {
+    log(`[3P telemetry] Telemetry init failed: ${errorMessage(error)}`, {
+      level: 'error',
     })
-  }
+  })
 }
 
 async function doInitializeTelemetry(): Promise<void> {

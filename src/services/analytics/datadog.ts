@@ -59,8 +59,6 @@ const DATADOG_ALLOWED_EVENTS = new Set([
   'zy_tool_use_success',
   'zy_uncaught_exception',
   'zy_unhandled_rejection',
-  'zy_voice_recording_started',
-  'zy_voice_toggled',
   'zy_team_mem_sync_pull',
   'zy_team_mem_sync_push',
   'zy_team_mem_sync_started',

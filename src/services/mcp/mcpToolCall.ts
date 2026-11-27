@@ -408,7 +408,7 @@ export async function callMCPTool({
         'code' in e &&
         (e as Error & { code?: number }).code === -32000 &&
         e.message.includes('Connection closed') &&
-        (config.type === 'http' || config.type === 'zyai-proxy')
+        config.type === 'http'
       if (isSessionExpired || isConnectionClosedOnHttp) {
         logMCPDebug(
           name,

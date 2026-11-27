@@ -1,12 +1,11 @@
 import type { UUID } from 'node:crypto'
 import { dirname, isAbsolute, sep } from 'node:path'
 import { logEvent } from 'src/services/analytics/index.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { diagnosticTracker } from '../../services/diagnosticTracking.js'
 import { clearDeliveredDiagnosticsForFile } from '../../services/lsp/lspDiagnosticRegistry.js'
 import { getLspServerManager } from '../../services/lsp/manager.js'
 import { notifyVscodeFileUpdated } from '../../services/mcp/vscodeMcp.js'
-import { checkTeamMemSecrets } from '../../services/team-memory-sync/teamMemSecretGuard.js'
+import { checkTeamMemSecrets } from '../../services/memory/teamMemSecretGuard.js'
 import {
   activateConditionalSkillsForPaths,
   addSkillDirectories,
@@ -47,7 +46,7 @@ import type { PermissionDecision } from 'src/types/permissions.js'
 import { matchWildcardPattern } from '../../services/permissions/shellRuleMatching.js'
 import { validateInputForSettingsFileEdit } from '../../services/settings/validateEditTool.js'
 import { NOTEBOOK_EDIT_TOOL_NAME } from '../NotebookEditTool/constants.js'
-import { FILE_EDIT_TOOL_NAME, FILE_UNEXPECTEDLY_MODIFIED_ERROR } from './constants.js'
+import { FILE_EDIT_TOOL_NAME } from './constants.js'
 import { getEditToolDescription } from './prompt.js'
 import { type FileEditInput, type FileEditOutput, inputSchema, outputSchema } from './types.js'
 import {

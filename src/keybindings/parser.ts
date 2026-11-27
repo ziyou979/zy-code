@@ -1,4 +1,10 @@
-import type { Chord, KeybindingBlock, ParsedBinding, ParsedKeystroke } from './types.js'
+import {
+  type Chord,
+  type KeybindingBlock,
+  type ParsedBinding,
+  type ParsedKeystroke,
+  REMOVED_KEYBINDING_ACTIONS,
+} from './types.js'
 
 /**
  * 将 "ctrl+shift+k" 形式的按键字符串解析为 ParsedKeystroke。
@@ -199,6 +205,8 @@ export function parseBindings(blocks: KeybindingBlock[]): ParsedBinding[] {
   const bindings: ParsedBinding[] = []
   for (const block of blocks) {
     for (const [key, action] of Object.entries(block.bindings)) {
+      // 已移除功能的 action（如 voice:pushToTalk）直接忽略；validate 会给出警告
+      if (action !== null && REMOVED_KEYBINDING_ACTIONS.has(action)) continue
       bindings.push({
         chord: parseChord(key),
         action,

@@ -519,7 +519,6 @@ export const zhCommands: TranslationResource = {
   'commands.mem': '显示运行时内存使用分析和诊断信息',
   'commands.peers': '管理对等节点 (peers)',
   'commands.proactive': '进入主动模式 — AI 主动推进任务',
-  'commands.voice': '切换语音模式',
   'commands.install': '安装 ZY Code 原生构建版本',
   'commands.mem.reportHeader': '━━━ 内存使用报告 ━━━',
   'commands.mem.processMemory': '进程内存:',

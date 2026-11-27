@@ -26,7 +26,7 @@ import {
 } from 'src/services/analytics/index.js'
 import { isChannelAllowlisted, isChannelsEnabled } from 'src/services/mcp/channelAllowlist.js'
 import { setupSdkMcpClients } from 'src/services/mcp/client.js'
-import { getAllMcpConfigs } from 'src/services/mcp/configResolution.js'
+import { getZyCodeMcpConfigs } from 'src/services/mcp/configResolution.js'
 import {
   runElicitationHooks,
   runElicitationResultHooks,
@@ -40,8 +40,6 @@ import type {
 } from 'src/services/mcp/types.js'
 import { filterToolsByServer } from 'src/services/mcp/utils.js'
 import { setupVscodeSdkMcp } from 'src/services/mcp/vscodeMcp.js'
-import { waitForRemoteManagedSettingsToLoad } from 'src/services/remote-managed-settings/index.js'
-import { downloadUserSettings } from 'src/services/settings-sync/index.js'
 import type { AppState } from 'src/state/AppStateStore.js'
 import type { Tools } from 'src/tools/tool.js'
 import type { AgentDefinition } from 'src/tools/AgentTool/loadAgentsDir.js'
@@ -49,7 +47,6 @@ import type { McpServerConfigForProcessTransport, McpServerStatus } from 'src/ty
 import type { WireControlMcpSetServersResponse } from 'src/types/wire/control.js'
 import { uniq } from 'src/utils/array.js'
 import { logForDebugging } from 'src/services/infra/debug.js'
-import { withDiagnosticsTiming } from 'src/services/telemetry/diagLogs.js'
 import { executeNotificationHooks } from 'src/services/hooks.js'
 import { logError, logMCPDebug } from 'src/services/infra/log.js'
 import { installPluginsForHeadless } from 'src/services/plugins/headlessPluginInstall.js'
@@ -384,12 +381,6 @@ export class McpRuntime {
           headers: connection.config.headers,
           oauth: connection.config.oauth,
         }
-      } else if (connection.config.type === 'zyai-proxy') {
-        config = {
-          type: 'zyai-proxy' as const,
-          url: connection.config.url,
-          id: connection.config.id,
-        }
       } else if (connection.config.type === 'stdio' || connection.config.type === undefined) {
         const stdioConfig = connection.config as ScopedMcpServerConfig & McpStdioServerConfig
         config = {
@@ -446,18 +437,6 @@ export class McpRuntime {
 
   async installPluginsAndApplyMcpInBackground(): Promise<void> {
     try {
-      // Join point for user settings (fired at runHeadless entry) and managed
-      // settings (fired in main.tsx preAction). downloadUserSettings() caches
-      // its promise so this awaits the same in-flight request.
-      await Promise.all([
-        feature('DOWNLOAD_USER_SETTINGS')
-          ? withDiagnosticsTiming('headless_user_settings_download', () => downloadUserSettings())
-          : Promise.resolve(),
-        withDiagnosticsTiming('headless_managed_settings_wait', () =>
-          waitForRemoteManagedSettingsToLoad(),
-        ),
-      ])
-
       const pluginsInstalled = await installPluginsForHeadless()
 
       if (pluginsInstalled) {
@@ -494,7 +473,7 @@ export class McpRuntime {
   // process-transport-supported types and carries SDK-mode servers through
   // so applyMcpServerChanges' diff doesn't close their transports.
   async applyPluginMcpDiff(): Promise<void> {
-    const { servers: newConfigs } = await getAllMcpConfigs()
+    const { servers: newConfigs } = await getZyCodeMcpConfigs()
     const supportedConfigs: Record<string, McpServerConfigForProcessTransport> = {}
     for (const [name, config] of Object.entries(newConfigs)) {
       const type = config.type

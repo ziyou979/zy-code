@@ -1,7 +1,6 @@
 import React from 'react'
 import { tSync } from 'src/i18n/index.js'
 import { Box, Link, Text } from '../../ink/index.js'
-import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js'
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js'
 import { Spinner } from '../Spinner.js'
 import TextInput from '../TextInput.js'
@@ -84,92 +83,6 @@ export function RemoteOAuthAuthenticatingView({
       <Box marginLeft={3}>
         <Text dimColor>{tSync('mcp.returnAfterAuth')}</Text>
       </Box>
-    </Box>
-  )
-}
-
-type RemoteZyAiAuthenticatingViewProps = {
-  serverName: string
-  authUrl: string | null
-  urlCopied: boolean
-}
-
-export function RemoteZyAiAuthenticatingView({
-  serverName,
-  authUrl,
-  urlCopied,
-}: RemoteZyAiAuthenticatingViewProps): React.ReactNode {
-  return (
-    <Box flexDirection="column" gap={1} padding={1}>
-      <Text color="zy">{tSync('mcp.authenticatingWith', { serverName })}</Text>
-      <Box>
-        <Spinner />
-        <Text> {tSync('mcp.browserWillOpen')}</Text>
-      </Box>
-      {authUrl && <CopyableUrl url={authUrl} urlCopied={urlCopied} />}
-      <Box marginLeft={3} flexDirection="column">
-        <Text color="permission">{tSync('mcp.pressEnterAfterAuth')}</Text>
-        <Text dimColor italic>
-          <ConfigurableShortcutHint
-            action="confirm:no"
-            context="Confirmation"
-            fallback="Esc"
-            description={tSync('mcp.back')}
-          />
-        </Text>
-      </Box>
-    </Box>
-  )
-}
-
-type RemoteZyAiClearAuthViewProps = {
-  serverName: string
-  clearAuthUrl: string | null
-  browserOpened: boolean
-  urlCopied: boolean
-}
-
-export function RemoteZyAiClearAuthView({
-  serverName,
-  clearAuthUrl,
-  browserOpened,
-  urlCopied,
-}: RemoteZyAiClearAuthViewProps): React.ReactNode {
-  return (
-    <Box flexDirection="column" gap={1} padding={1}>
-      <Text color="zy">{tSync('mcp.clearAuthTitle', { serverName })}</Text>
-      {browserOpened ? (
-        <>
-          <Text>{tSync('mcp.findServerAndDisconnect')}</Text>
-          {clearAuthUrl && <CopyableUrl url={clearAuthUrl} urlCopied={urlCopied} />}
-          <Box marginLeft={3} flexDirection="column">
-            <Text color="permission">{tSync('mcp.pressEnterWhenDone')}</Text>
-            <Text dimColor italic>
-              <ConfigurableShortcutHint
-                action="confirm:no"
-                context="Confirmation"
-                fallback="Esc"
-                description={tSync('mcp.back')}
-              />
-            </Text>
-          </Box>
-        </>
-      ) : (
-        <>
-          <Text>{tSync('mcp.willOpenZyAi')}</Text>
-          <Box marginLeft={3} flexDirection="column">
-            <Text color="permission">{tSync('mcp.pressEnterToOpenBrowser')}</Text>
-            <Text dimColor italic>
-              <ConfigurableShortcutHint
-                action="confirm:no"
-                context="Confirmation"
-                fallback="Esc"
-                description={tSync('mcp.back')}
-              />
-            </Text>
-          </Box>
-        </>
-      )}
     </Box>
   )
 }

@@ -566,7 +566,6 @@ export const enCommands: TranslationResource = {
   'commands.mem': 'Show runtime memory usage analysis and diagnostic information',
   'commands.peers': 'Manage peers',
   'commands.proactive': 'Enter proactive mode — AI takes initiative',
-  'commands.voice': 'Toggle voice mode',
   'commands.install': 'Install ZY Code native build',
   'commands.mem.reportHeader': '━━━ Memory Usage Report ━━━',
   'commands.mem.description': 'Show runtime memory usage analysis and diagnostic information',

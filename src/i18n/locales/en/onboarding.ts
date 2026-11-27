@@ -359,7 +359,6 @@ export const enOnboarding: TranslationResource = {
   'tip.effortHighA': 'Working on something tricky? {cmd} gives better first answers',
   'tip.effortHighB': 'Use {cmd} for better one-shot answers. Zy thinks it through first.',
   'tip.enterToSteer': 'Send messages to ZY code while it works to steer ZY Code in real-time',
-  'tip.feedbackCommand': 'Use /feedback to help us improve!',
   'tip.frontendDesignPlugin':
     'Working with HTML/CSS? Install the frontend-design plugin:\n{command}',
   'tip.gitWorktrees': 'Use git worktrees to run multiple ZY code sessions in parallel.',

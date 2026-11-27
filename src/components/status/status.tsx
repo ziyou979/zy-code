@@ -214,8 +214,6 @@ export function buildSettingSourcesProperties(): Property[] {
         }
         const base = tSync('status.settingSource.policySettings')
         switch (origin) {
-          case 'remote':
-            return `${base} (remote)`
           case 'plist':
             return `${base} (plist)`
           case 'hklm':

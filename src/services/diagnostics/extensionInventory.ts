@@ -1,6 +1,6 @@
 import { getCommands } from '../../commands/index.js'
 import { toolRegistry } from '../../tools/registry.js'
-import { getAllMcpConfigs } from '../mcp/configResolution.js'
+import { getZyCodeMcpConfigs } from '../mcp/configResolution.js'
 import { loadAllPluginsCacheOnly } from '../plugins/pluginLoader.js'
 
 export type ExtensionEntry = {
@@ -22,7 +22,7 @@ export async function getExtensionInventory(cwd: string): Promise<ExtensionInven
   const [commands, pluginResult, mcpResult] = await Promise.all([
     getCommands(cwd),
     loadAllPluginsCacheOnly(),
-    getAllMcpConfigs(),
+    getZyCodeMcpConfigs(),
   ])
 
   const tools = toolRegistry.getAll()

@@ -11,11 +11,9 @@ export function useFrustrationDetection(
   _isSurveyOpen: boolean,
 ): {
   state: 'closed'
-  handleTranscriptSelect: () => void
 } {
   // Stub: always returns closed state in external builds
   return {
     state: 'closed',
-    handleTranscriptSelect: () => {},
   }
 }

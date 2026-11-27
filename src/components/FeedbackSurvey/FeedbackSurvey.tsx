@@ -1,77 +1,27 @@
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from 'src/services/analytics/index.js'
 import { tSync } from '../../i18n/index.js'
 import { Box, Text } from '../../ink/index.js'
 import { FeedbackSurveyView, isValidResponseInput } from './FeedbackSurveyView.js'
-import type { TranscriptShareResponse } from './TranscriptSharePrompt.js'
-import { TranscriptSharePrompt } from './TranscriptSharePrompt.js'
-import { useDebouncedDigitInput } from './useDebouncedDigitInput.js'
+import type { SurveyState } from './useSurveyState.js'
 import type { FeedbackSurveyResponse } from './utils.js'
 
 type Props = {
-  state: 'closed' | 'open' | 'thanks' | 'transcript_prompt' | 'submitting' | 'submitted'
+  state: SurveyState
   lastResponse: FeedbackSurveyResponse | null
   handleSelect: (selected: FeedbackSurveyResponse) => void
-  handleTranscriptSelect?: (selected: TranscriptShareResponse) => void
   inputValue: string
   setInputValue: (value: string) => void
-  onRequestFeedback?: () => void
   message?: string
 }
-export function FeedbackSurvey({
-  state,
-  lastResponse,
-  handleSelect,
-  handleTranscriptSelect,
-  inputValue,
-  setInputValue,
-  onRequestFeedback,
-  message,
-}: Props) {
+export function FeedbackSurvey({ state, handleSelect, inputValue, setInputValue, message }: Props) {
   if (state === 'closed') {
     return null
   }
   if (state === 'thanks') {
-    return (
-      <FeedbackSurveyThanks
-        lastResponse={lastResponse}
-        inputValue={inputValue}
-        setInputValue={setInputValue}
-        onRequestFeedback={onRequestFeedback}
-      />
-    )
-  }
-  if (state === 'submitted') {
+    // 原上游在此引导 /feedback 或会话转录上传（都提交到 Anthropic 后端），ZY Code 已移除，只致谢。
     return (
       <Box marginTop={1}>
-        <Text color="success">
-          {'\u2713'} {tSync('feedbackSurvey.thanksTranscript')}
-        </Text>
+        <Text color="success">{tSync('feedbackSurvey.thanksFeedback')}</Text>
       </Box>
-    )
-  }
-  if (state === 'submitting') {
-    return (
-      <Box marginTop={1}>
-        <Text dimColor={true}>{tSync('feedbackSurvey.sharingTranscript')}</Text>
-      </Box>
-    )
-  }
-  if (state === 'transcript_prompt') {
-    if (!handleTranscriptSelect) {
-      return null
-    }
-    if (inputValue && !['1', '2', '3'].includes(inputValue)) {
-      return null
-    }
-    return (
-      <TranscriptSharePrompt
-        onSelect={handleTranscriptSelect}
-        inputValue={inputValue}
-        setInputValue={setInputValue}
-      />
     )
   }
   if (inputValue && !isValidResponseInput(inputValue)) {
@@ -84,53 +34,5 @@ export function FeedbackSurvey({
       setInputValue={setInputValue}
       message={message}
     />
-  )
-}
-type ThanksProps = {
-  lastResponse: FeedbackSurveyResponse | null
-  inputValue: string
-  setInputValue: (value: string) => void
-  onRequestFeedback?: () => void
-}
-const isFollowUpDigit = (char: string): char is '1' => char === '1'
-function FeedbackSurveyThanks({
-  lastResponse,
-  inputValue,
-  setInputValue,
-  onRequestFeedback,
-}: ThanksProps) {
-  const showFollowUp = onRequestFeedback && lastResponse === 'good'
-  const followUpEnabled = Boolean(showFollowUp)
-  useDebouncedDigitInput({
-    inputValue,
-    setInputValue,
-    isValidDigit: isFollowUpDigit,
-    enabled: followUpEnabled,
-    once: true,
-    onDigit: () => {
-      logEvent('zy_feedback_survey_event', {
-        event_type:
-          'followup_accepted' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-        response: lastResponse as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      })
-      onRequestFeedback?.()
-    },
-  })
-  const feedbackCommand = false ? '/issue' : '/feedback'
-  return (
-    <Box marginTop={1} flexDirection="column">
-      {<Text color="success">{tSync('feedbackSurvey.thanksFeedback')}</Text>}
-      {showFollowUp ? (
-        <Text dimColor={true}>
-          {tSync('feedbackSurvey.tellUsWhatWentWell', { command: feedbackCommand })}
-        </Text>
-      ) : lastResponse === 'bad' ? (
-        <Text dimColor={true}>{tSync('feedbackSurvey.useIssueToReport')}</Text>
-      ) : (
-        <Text dimColor={true}>
-          {tSync('feedbackSurvey.useCommandToShare', { command: feedbackCommand })}
-        </Text>
-      )}
-    </Box>
   )
 }

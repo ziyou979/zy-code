@@ -119,7 +119,6 @@ export function usePromptInputState({
   hasSuppressedDialogs,
   isLocalJSXCommandActive = false,
   insertTextRef,
-  voiceInterimRange,
 }: Props) {
   const { columns, rows } = useTerminalSize()
   const mainLoopModel = useMainLoopModel()
@@ -593,7 +592,6 @@ export function usePromptInputState({
     hasSuppressedDialogs,
     isLocalJSXCommandActive,
     insertTextRef,
-    voiceInterimRange,
     mainLoopModel,
     isModalOverlayActive,
     isAutoUpdating,

@@ -167,7 +167,7 @@ export const zhPermissions: TranslationResource = {
   'permission.ctrlEToExplain': 'ctrl+e {explain}',
   'permission.ctrlEToHide': 'ctrl+e {hide}',
   'permission.deleteAllowedTool': '删除已允许的工具？',
-  'permission.deniedByAutoModeClassifier': '已被自动模式分类器拒绝 {bullet} /feedback 如有误',
+  'permission.deniedByAutoModeClassifier': '已被自动模式分类器拒绝',
   'permission.deleteAskTool': '删除需确认的工具？',
   'permission.deleteCellFrom': '从此处删除此单元格',
   'permission.deleteDeniedTool': '删除已拒绝的工具？',

@@ -8,6 +8,7 @@ import {
   type KeybindingBlock,
   type KeybindingContextName,
   type ParsedBinding,
+  REMOVED_KEYBINDING_ACTIONS,
 } from './types.js'
 
 /**
@@ -163,28 +164,16 @@ function validateBlock(block: unknown, blockIndex: number): KeybindingWarning[] 
           suggestion: 'Move this binding to a block with "context": "Chat"',
         })
       }
-    } else if (action === 'voice:pushToTalk') {
-      // 按住检测依赖 OS 自动重复。预热期间，裸字母会输入到文本框，且激活字符的移除只是
-      // 尽力而为；使用默认的 space 或 meta+k 等修饰键组合可避免此问题。
-      const ks = parseChord(key)[0]
-      if (
-        ks &&
-        !ks.ctrl &&
-        !ks.alt &&
-        !ks.shift &&
-        !ks.meta &&
-        !ks.super &&
-        /^[a-z]$/.test(ks.key)
-      ) {
-        warnings.push({
-          type: 'invalid_action',
-          severity: 'warning',
-          message: `Binding "${key}" to voice:pushToTalk prints into the input during warmup; use space or a modifier combo like meta+k`,
-          key,
-          context: contextName,
-          action,
-        })
-      }
+    } else if (typeof action === 'string' && REMOVED_KEYBINDING_ACTIONS.has(action)) {
+      warnings.push({
+        type: 'invalid_action',
+        severity: 'warning',
+        message: `Action "${action}" for "${key}" has been removed and will be ignored`,
+        key,
+        context: contextName,
+        action,
+        suggestion: `Remove the "${key}" binding from keybindings.json`,
+      })
     }
   }
 

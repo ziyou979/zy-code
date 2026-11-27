@@ -1,4 +1,3 @@
-import { isRemoteManagedSettingsEligible } from '../remote-managed-settings/syncCache.js'
 import { clearCACertsCache } from '../http/caCerts.js'
 import { getGlobalConfig } from '../config/config.js'
 import { isEnvTruthy } from '../../services/infra/envUtils.js'
@@ -142,14 +141,6 @@ export function applySafeConfigEnvironmentVariables(): void {
     }
     Object.assign(process.env, filterSettingsEnv(getSettingsForSource(source)?.env))
   }
-
-  // Compute remote-managed-settings eligibility now, with userSettings and
-  // flagSettings env applied. Eligibility reads ZY_CODE_USE_BEDROCK,
-  // ZY_CODE_BASE_URL — both settable via settings.env.
-  // getSettingsForSource('policySettings') below consults the remote cache,
-  // which guards on this. The two-phase structure makes the ordering
-  // dependency visible: non-policy env → eligibility → policy env.
-  isRemoteManagedSettingsEligible()
 
   Object.assign(process.env, filterSettingsEnv(getSettingsForSource('policySettings')?.env))
 

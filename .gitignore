@@ -8,3 +8,6 @@ coverage/
 # Agent worktrees & temp files
 .zy/worktrees/
 .tmp/
+
+# 本地个人权限设置，不入库
+.zy/settings.local.json
