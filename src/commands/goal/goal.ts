@@ -4,6 +4,7 @@
  */
 
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
+import { tSync } from '../../i18n/index.js'
 import { getTotalInputTokens } from '../../services/cost/costTracker.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { LocalJSXCommandCall } from '../types.js'
@@ -143,7 +144,7 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   if (!trimmedArgs) {
     const activeGoal = context.getAppState().activeGoal
     if (!activeGoal) {
-      onDone('No goal set. Usage: `/goal <condition>`', { display: 'system' })
+      onDone(tSync('commands.out.goal.noneWithUsage'), { display: 'system' })
       return null
     }
     const iterationText =
@@ -160,14 +161,19 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   // 清除关键词
   if (isClearKeyword(trimmedArgs)) {
     const cleared = clearGoal(context.setAppState, context.getAppState)
-    onDone(cleared === null ? 'No goal set' : `Goal cleared: ${cleared}`, { display: 'system' })
+    onDone(
+      cleared === null
+        ? tSync('commands.out.goal.none')
+        : tSync('commands.out.goal.cleared', { goal: cleared }),
+      { display: 'system' },
+    )
     return null
   }
 
   // 条件长度检查
   if (trimmedArgs.length > MAX_CONDITION_LENGTH) {
     onDone(
-      `Goal condition is limited to ${MAX_CONDITION_LENGTH} characters (got ${trimmedArgs.length})`,
+      tSync('commands.out.goal.tooLong', { max: MAX_CONDITION_LENGTH, got: trimmedArgs.length }),
       { display: 'system' },
     )
     return null
@@ -181,6 +187,7 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   }
 
   // 触发模型：shouldQuery + metaMessages
+  // i18n-ignore: shouldQuery —— 这条会作为用户消息发给模型，保持英文
   onDone(`Goal set: ${trimmedArgs}`, {
     shouldQuery: true,
     metaMessages: [buildGoalMetaMessage(trimmedArgs)],

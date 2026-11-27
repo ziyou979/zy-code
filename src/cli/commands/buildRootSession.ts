@@ -11,6 +11,7 @@
  */
 
 import { feature } from 'bun:bundle'
+import { tSync } from '../../i18n/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -450,7 +451,7 @@ export async function buildRootSession(context: Awaited<ReturnType<typeof loadRo
         logEvent('zy_continue', {
           success: false,
         })
-        return await exitWithError(root, 'No conversation found to continue')
+        return await exitWithError(root, tSync('cli.continueNotFound'))
       }
       const loaded = await processResumedConversation(
         result,

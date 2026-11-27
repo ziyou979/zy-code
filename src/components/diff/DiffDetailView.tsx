@@ -84,7 +84,7 @@ export function DiffDetailView({
         {
           <Box flexDirection="column">
             <Text dimColor={true} italic={true}>
-              Binary file - cannot display diff
+              {tSync('diff.binaryFile')}
             </Text>
           </Box>
         }

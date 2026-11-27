@@ -372,7 +372,9 @@ export function AttachmentMessage({
       const stderr = attachment.blockingError.blockingError.trim()
       return (
         <>
-          <Line color="error">{attachment.hookName} hook returned blocking error</Line>
+          <Line color="error">
+            {tSync('hooks.ui.blockingError', { hook: attachment.hookName })}
+          </Line>
           {stderr ? <Line color="error">{stderr}</Line> : null}
         </>
       )
@@ -383,7 +385,7 @@ export function AttachmentMessage({
         return null
       }
       // 完整的 hook 输出通过 hookEvents.ts 记录到 debug 日志
-      return <Line color="error">{attachment.hookName} hook error</Line>
+      return <Line color="error">{tSync('hooks.ui.error', { hook: attachment.hookName })}</Line>
     }
     case 'hook_error_during_execution':
       // Stop hook 在 SystemStopHookSummaryMessage 中渲染为摘要
@@ -391,7 +393,7 @@ export function AttachmentMessage({
         return null
       }
       // 完整的 hook 输出通过 hookEvents.ts 记录到 debug 日志
-      return <Line>{attachment.hookName} hook warning</Line>
+      return <Line>{tSync('hooks.ui.warning', { hook: attachment.hookName })}</Line>
     case 'hook_success':
       // 完整的 hook 输出通过 hookEvents.ts 记录到 debug 日志
       return null

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { tSync } from '../i18n/index.js'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
 import { convertSDKMessage, isSessionEndMessage } from '../remote/messageAdapter.js'
 import type { RemotePermissionResponse } from '../remote/types.js'
@@ -160,10 +161,10 @@ export function useDirectConnect({
         logForDebugging('[useDirectConnect] Disconnected')
         if (!isConnectedRef.current) {
           // 从未连接成功，说明连接失败（例如认证被拒）
-          process.stderr.write(`\nFailed to connect to server at ${config.wsUrl}\n`)
+          process.stderr.write(`\n${tSync('cli.directConnect.failed', { url: config.wsUrl })}\n`)
         } else {
           // 连接成功后又断开，说明服务端进程已退出或网络中断
-          process.stderr.write('\nServer disconnected.\n')
+          process.stderr.write(`\n${tSync('cli.directConnect.disconnected')}\n`)
         }
         isConnectedRef.current = false
         void gracefulShutdown(1)

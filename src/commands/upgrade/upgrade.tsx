@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { tSync } from '../../i18n/index.js'
 import type { LocalJSXCommandContext } from '../../commands/index.js'
 import type { LocalJSXCommandOnDone } from '../types.js'
 import { openBrowser } from '../../services/browser/browser.js'
@@ -18,7 +19,7 @@ export async function call(
         }
         onDone={(success: boolean) => {
           context.onChangeAPIKey()
-          onDone(success ? 'Login successful' : 'Login interrupted')
+          onDone(tSync(success ? 'commands.out.login.success' : 'commands.out.login.interrupted'))
         }}
       />
     )

@@ -41,7 +41,9 @@ async function authLoginWithProvider(providerId: string): Promise<void> {
     const available = getOAuthProviders()
       .map((p) => p.id)
       .join(', ')
-    process.stderr.write(`Unknown provider: ${providerId}\nAvailable providers: ${available}\n`)
+    process.stderr.write(
+      `${tSync('cli.auth.unknownProvider', { provider: providerId })}\n${tSync('cli.auth.availableProviders', { providers: available })}\n`,
+    )
     process.exit(1)
   }
 
@@ -54,7 +56,7 @@ async function authLoginWithProvider(providerId: string): Promise<void> {
       providerId: providerId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
-    process.stdout.write(`Logging in with ${provider.name}...\n`)
+    process.stdout.write(`${tSync('cli.auth.loggingInWith', { provider: provider.name })}\n`)
 
     const callbacks: OAuthLoginCallbacks = {
       onAuth: async (info) => {
@@ -74,7 +76,7 @@ async function authLoginWithProvider(providerId: string): Promise<void> {
         return answer
       },
       onManualCodeInput: async () => {
-        const answer = await rl.question('Paste the authorization code: ')
+        const answer = await rl.question(`${tSync('cli.auth.pasteCode')} `)
         return answer
       },
       onSelect: async (prompt) => {
@@ -127,11 +129,11 @@ export async function authLogin({ provider }: { provider?: string } = {}): Promi
   if (!provider) {
     // 未指定 provider，列出可用 provider
     const providers = getOAuthProviders()
-    process.stderr.write('Available providers:\n')
+    process.stderr.write(`${tSync('cli.auth.availableProvidersHeader')}\n`)
     for (const p of providers) {
       process.stderr.write(`  ${p.id} - ${p.name}\n`)
     }
-    process.stderr.write('\nUsage: zy auth login --provider <provider>\n')
+    process.stderr.write(`\n${tSync('cli.auth.loginUsage')}\n`)
     process.exit(1)
   }
 

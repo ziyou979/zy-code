@@ -1,4 +1,5 @@
 import { isInputModeCharacter } from 'src/components/PromptInput/inputModes.js'
+import { tSync } from '../i18n/index.js'
 import { useNotifications } from 'src/context/notifications.js'
 import stripAnsi from 'strip-ansi'
 import { useMemo } from 'react'
@@ -132,7 +133,7 @@ export function useTextInput({
       }
       addNotification({
         key: 'escape-again-to-clear',
-        text: 'Esc again to clear',
+        text: tSync('notif.escAgainToClear'),
         priority: 'immediate',
         timeoutMs: 1000,
       })

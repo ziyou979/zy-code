@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import { tSync } from '../../i18n/index.js'
 import React, { useEffect } from 'react'
 import {
   getAdditionalDirectoriesForAgentsMd,
@@ -106,7 +107,7 @@ export async function call(
         permissionContext={appState.toolPermissionContext}
         onAddDirectory={handleAddDirectory}
         onCancel={() => {
-          onDone('Did not add a working directory.')
+          onDone(tSync('commands.out.addDir.cancelled'))
         }}
         directoryPath={undefined}
       />
@@ -123,7 +124,9 @@ export async function call(
       permissionContext={appState.toolPermissionContext}
       onAddDirectory={handleAddDirectory}
       onCancel={() => {
-        onDone(`Did not add ${chalk.bold(result.absolutePath)} as a working directory.`)
+        onDone(
+          tSync('commands.out.addDir.cancelledPath', { path: chalk.bold(result.absolutePath) }),
+        )
       }}
     />
   )

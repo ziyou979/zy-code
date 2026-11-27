@@ -1,4 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises'
+import { tSync } from '../../i18n/index.js'
 import { dirname } from 'node:path'
 import {
   getKeybindingsPath,
@@ -12,7 +13,7 @@ export async function call(): Promise<{ type: 'text'; value: string }> {
   if (!isKeybindingCustomizationEnabled()) {
     return {
       type: 'text',
-      value: 'Keybinding customization is not enabled. This feature is currently in preview.',
+      value: tSync('commands.out.keybindings.notEnabled'),
     }
   }
 
@@ -40,13 +41,18 @@ export async function call(): Promise<{ type: 'text'; value: string }> {
   if (result.error) {
     return {
       type: 'text',
-      value: `${fileExists ? 'Opened' : 'Created'} ${keybindingsPath}. Could not open in editor: ${result.error}`,
+      value: tSync(
+        fileExists
+          ? 'commands.out.keybindings.openedEditorFailed'
+          : 'commands.out.keybindings.createdEditorFailed',
+        { path: keybindingsPath, error: String(result.error) },
+      ),
     }
   }
   return {
     type: 'text',
     value: fileExists
-      ? `Opened ${keybindingsPath} in your editor.`
-      : `Created ${keybindingsPath} with template. Opened in your editor.`,
+      ? tSync('commands.out.keybindings.opened', { path: keybindingsPath })
+      : tSync('commands.out.keybindings.created', { path: keybindingsPath }),
   }
 }

@@ -1,4 +1,5 @@
 import * as path from 'node:path'
+import { tSync } from '../../i18n/index.js'
 import * as pathWin32 from 'node:path/win32'
 import memoize from 'lodash-es/memoize.js'
 import { getCwd } from '../environment/cwd.js'
@@ -102,7 +103,7 @@ export const findGitBashPath = memoize((): string => {
     }
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.error(
-      `ZY Code was unable to find ZY_CODE_GIT_BASH_PATH path "${process.env.ZY_CODE_GIT_BASH_PATH}"`,
+      tSync('cli.gitBashPathNotFound', { path: String(process.env.ZY_CODE_GIT_BASH_PATH) }),
     )
     // eslint-disable-next-line custom-rules/no-process-exit
     process.exit(1)
@@ -117,9 +118,7 @@ export const findGitBashPath = memoize((): string => {
   }
 
   // biome-ignore lint/suspicious/noConsole:: intentional console output
-  console.error(
-    'ZY Code on Windows requires git-bash (https://git-scm.com/downloads/win). If installed but not in PATH, set environment variable pointing to your bash.exe, similar to: ZY_CODE_GIT_BASH_PATH=C:\\Program Files\\Git\\bin\\bash.exe',
-  )
+  console.error(tSync('cli.gitBashRequired'))
   // eslint-disable-next-line custom-rules/no-process-exit
   process.exit(1)
 })

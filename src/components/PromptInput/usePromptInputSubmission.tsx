@@ -1,4 +1,5 @@
 import * as path from 'node:path'
+import { tSync } from '../../i18n/index.js'
 import { useCallback, useEffect, useState } from 'react'
 import { type IDEAtMentioned, useIdeAtMentioned } from 'src/hooks/useIdeAtMentioned.js'
 import { logEvent } from 'src/services/analytics/index.js'
@@ -301,7 +302,7 @@ export function usePromptInputSubmission(context: ReturnType<typeof usePromptInp
           if (result.success) {
             addNotification({
               key: 'direct-message-sent',
-              text: `Sent to @${result.recipientName}`,
+              text: tSync('notif.sentTo', { name: result.recipientName }),
               priority: 'immediate',
               timeoutMs: 3000,
             })
@@ -703,7 +704,7 @@ export function usePromptInputSubmission(context: ReturnType<typeof usePromptInp
       }
       addNotification({
         key: 'external-editor-error',
-        text: `External editor failed: ${errorMessage(err)}`,
+        text: tSync('notif.externalEditorFailed', { error: errorMessage(err) }),
         color: 'warning',
         priority: 'high',
       })

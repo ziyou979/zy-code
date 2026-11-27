@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { tSync } from '../../i18n/index.js'
 import { useEffect, useRef, useState } from 'react'
 import { useInterval } from 'usehooks-ts'
 import type { CommandResultDisplay } from '../../commands/index.js'
@@ -203,7 +204,7 @@ export async function call(
 ): Promise<React.ReactNode> {
   const question = args?.trim()
   if (!question) {
-    onDone('Usage: /btw <your question>', {
+    onDone(tSync('commands.out.btw.usage'), {
       display: 'system',
     })
     return null

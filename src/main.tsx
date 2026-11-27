@@ -35,6 +35,7 @@ import { resetCursor } from './cli/bootstrap/cursor.js'
 import { isBeingDebugged } from './cli/bootstrap/debugCheck.js'
 import { initializeEntrypoint } from './cli/bootstrap/entrypoint.js'
 import { eagerLoadSettings } from './cli/bootstrap/managedSettings.js'
+import { localizeCommanderError } from './cli/commanderErrorText.js'
 import { runMigrations } from './cli/bootstrap/migrations.js'
 import { registerAntCommands } from './cli/commands/ant.js'
 import { registerAuthCommands } from './cli/commands/auth.js'
@@ -188,6 +189,8 @@ async function run(): Promise<CommanderCommand<any, any, any>> {
     // 子命令通过 commander 的 copyInheritedSettings 继承 helpOption ——
     // 在这里设置一次就覆盖了 mcp、plugin、auth 和所有其他子命令。
     .helpOption('-h, --help', 'Display help for command')
+    // 参数解析报错发生在 preAction（settings / 语言加载）之前，这里按界面语言翻译
+    .configureOutput({ outputError: (str, write) => write(localizeCommanderError(str)) })
   profileCheckpoint('run_commander_initialized')
 
   // 使用 preAction 钩子在执行命令时运行初始化，

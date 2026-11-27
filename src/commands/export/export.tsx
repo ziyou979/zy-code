@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import { tSync } from '../../i18n/index.js'
 import React from 'react'
 import { ExportDialog } from '../../components/ExportDialog.js'
 import type { ToolUseContext } from '../../tools/tool.js'
@@ -65,11 +66,13 @@ export async function call(
         encoding: 'utf-8',
         flush: true,
       })
-      onDone(`Conversation exported to: ${filepath}`)
+      onDone(tSync('commands.out.export.done', { path: filepath }))
       return null
     } catch (error) {
       onDone(
-        `Failed to export conversation: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        tSync('commands.out.export.failed', {
+          error: error instanceof Error ? error.message : tSync('commands.out.unknownError'),
+        }),
       )
       return null
     }

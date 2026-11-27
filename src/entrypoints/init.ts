@@ -10,7 +10,7 @@ import { shutdownLspServerManager } from '../services/lsp/manager.js'
 import { populateOAuthAccountInfoIfNeeded } from '../services/auth/auth.js'
 import { applyExtraCACertsFromConfig } from '../services/settings/caCertsConfig.js'
 import { ExtraCACertificatesError, getCACertificates } from '../services/http/caCerts.js'
-import { warmI18n } from '../i18n/index.js'
+import { warmI18n, tSync } from '../i18n/index.js'
 import { registerCleanup } from '../services/cleanup/cleanupRegistry.js'
 import { enableConfigs, recordFirstStartTime } from '../services/config/config.js'
 import { createDebugLog } from '../services/infra/debug.js'
@@ -182,7 +182,10 @@ export const init = memoize(async (): Promise<void> => {
       // 该对话框会导致 JSON 消费者出错（如在 VM 沙箱中运行
       // `plugin marketplace list --json` 的桌面市场插件管理器）。
       if (getIsNonInteractiveSession()) {
-        process.stderr.write(`Configuration error in ${error.filePath}: ${error.message}\n`)
+        await warmI18n()
+        process.stderr.write(
+          `${tSync('cli.configErrorIn', { file: error.filePath, error: error.message })}\n`,
+        )
         gracefulShutdownSync(1)
         return
       }

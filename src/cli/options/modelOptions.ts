@@ -1,4 +1,5 @@
 import { Command, InvalidArgumentError, Option } from '@commander-js/extra-typings'
+import { tSync } from '../../i18n/index.js'
 
 /**
  * 模型/agent 相关选项：--model、--effort、--agent、--betas、--fallback-model、--workload（隐藏）。
@@ -20,7 +21,7 @@ export function applyModelOptions(cmd: Command<any, any>): Command<any, any> {
           const value = rawValue.toLowerCase()
           const allowed = ['low', 'medium', 'high', 'max']
           if (!allowed.includes(value)) {
-            throw new InvalidArgumentError(`It must be one of: ${allowed.join(', ')}`)
+            throw new InvalidArgumentError(tSync('cli.mustBeOneOf', { values: allowed.join(', ') }))
           }
           return value
         }),
@@ -75,7 +76,7 @@ export function applyThinkingAndLimitOptions(cmd: Command<any, any>): Command<an
       ).argParser((value) => {
         const amount = Number(value)
         if (Number.isNaN(amount) || amount <= 0) {
-          throw new Error('--max-budget-usd must be a positive number greater than 0')
+          throw new Error(tSync('cli.maxBudgetInvalid'))
         }
         return amount
       }),
@@ -88,7 +89,7 @@ export function applyThinkingAndLimitOptions(cmd: Command<any, any>): Command<an
         .argParser((value) => {
           const tokens = Number(value)
           if (Number.isNaN(tokens) || tokens <= 0 || !Number.isInteger(tokens)) {
-            throw new Error('--task-budget must be a positive integer')
+            throw new Error(tSync('cli.taskBudgetInvalid'))
           }
           return tokens
         })

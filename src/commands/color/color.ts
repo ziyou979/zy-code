@@ -1,4 +1,5 @@
 import type { UUID } from 'node:crypto'
+import { tSync } from '../../i18n/index.js'
 import { getSessionId } from 'src/bootstrap/runtime/runtimeContext.js'
 import type { ToolUseContext } from '../../tools/tool.js'
 import { AGENT_COLORS, type AgentColorName } from '../../tools/AgentTool/agentColorManager.js'
@@ -15,16 +16,13 @@ export async function call(
 ): Promise<null> {
   // Teammates cannot set their own color
   if (isTeammate()) {
-    onDone(
-      'Cannot set color: This session is a swarm teammate. Teammate colors are assigned by the team leader.',
-      { display: 'system' },
-    )
+    onDone(tSync('commands.out.color.teammate'), { display: 'system' })
     return null
   }
 
   if (!args || args.trim() === '') {
     const colorList = AGENT_COLORS.join(', ')
-    onDone(`Please provide a color. Available colors: ${colorList}, default`, {
+    onDone(tSync('commands.out.color.missing', { colors: colorList }), {
       display: 'system',
     })
     return null
@@ -50,13 +48,13 @@ export async function call(
       },
     }))
 
-    onDone('Session color reset to default', { display: 'system' })
+    onDone(tSync('commands.out.color.reset'), { display: 'system' })
     return null
   }
 
   if (!AGENT_COLORS.includes(colorArg as AgentColorName)) {
     const colorList = AGENT_COLORS.join(', ')
-    onDone(`Invalid color "${colorArg}". Available colors: ${colorList}, default`, {
+    onDone(tSync('commands.out.color.invalid', { color: colorArg, colors: colorList }), {
       display: 'system',
     })
     return null
@@ -78,6 +76,6 @@ export async function call(
     },
   }))
 
-  onDone(`Session color set to: ${colorArg}`, { display: 'system' })
+  onDone(tSync('commands.out.color.set', { color: colorArg }), { display: 'system' })
   return null
 }

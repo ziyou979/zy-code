@@ -1,4 +1,5 @@
 import type { CommandResultDisplay } from '../../commands/index.js'
+import { tSync } from '../../i18n/index.js'
 import { Pane } from '../../components/design-system/Pane.js'
 import { ThemePicker } from '../../components/ThemePicker.js'
 import { useTheme } from '../../ink/index.js'
@@ -19,10 +20,10 @@ function ThemePickerCommand({ onDone }: Props) {
       <ThemePicker
         onThemeSelect={(setting) => {
           setTheme(setting)
-          onDone(`Theme set to ${setting}`)
+          onDone(tSync('commands.out.theme.set', { theme: setting }))
         }}
         onCancel={() => {
-          onDone('Theme picker dismissed', {
+          onDone(tSync('commands.out.theme.dismissed'), {
             display: 'system',
           })
         }}

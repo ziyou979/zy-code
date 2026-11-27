@@ -11,6 +11,7 @@
  */
 
 import { feature } from 'bun:bundle'
+import { tSync } from '../../i18n/index.js'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import chalk from 'chalk'
@@ -58,7 +59,6 @@ import { parseMcpConfigFromFilePath } from 'src/services/mcp/configRepository.js
 import { logForDebugging } from 'src/services/infra/debug.js'
 import { errorMessage, getErrnoCode } from 'src/utils/errors.js'
 import { setAllHookEventsEnabled } from 'src/services/hooks/hookEvents.js'
-import { plural } from 'src/utils/stringUtils.js'
 import {
   getIsNonInteractiveSession,
   setKairosActive,
@@ -489,7 +489,7 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
           level: 'error',
         },
       )
-      process.stderr.write(`Error: Invalid MCP configuration:\n${formattedErrors}\n`)
+      process.stderr.write(`${tSync('cli.invalidMcpConfig')}\n${formattedErrors}\n`)
       process.exit(1)
     }
     if (Object.keys(allConfigs).length > 0) {
@@ -500,19 +500,19 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
         .map(([name]) => name)
       let reservedNameError: string | null = null
       if (nonSdkConfigNames.some(isClaudeInChromeMCPServer)) {
-        reservedNameError = `Invalid MCP configuration: "${CLAUDE_IN_CHROME_MCP_SERVER_NAME}" is a reserved MCP name.`
+        reservedNameError = tSync('cli.mcpReservedName', { name: CLAUDE_IN_CHROME_MCP_SERVER_NAME })
       } else if (feature('CHICAGO_MCP')) {
         const { isComputerUseMCPServer, COMPUTER_USE_MCP_SERVER_NAME } = await import(
           'src/services/computer-use/common.js'
         )
         if (nonSdkConfigNames.some(isComputerUseMCPServer)) {
-          reservedNameError = `Invalid MCP configuration: "${COMPUTER_USE_MCP_SERVER_NAME}" is a reserved MCP name.`
+          reservedNameError = tSync('cli.mcpReservedName', { name: COMPUTER_USE_MCP_SERVER_NAME })
         }
       }
       if (reservedNameError) {
         // 使用 stderr+exit(1)；stream-json 模式下若在此抛错，会因 cli.tsx 中 void main() 而
         // 成为静默的未处理 rejection。
-        process.stderr.write(`Error: ${reservedNameError}\n`)
+        process.stderr.write(`${tSync('cli.errorPrefix', { error: reservedNameError })}\n`)
         process.exit(1)
       }
 
@@ -536,7 +536,7 @@ export async function prepareRootAction(prompt: string | undefined, options: Roo
       const { allowed, blocked } = filterMcpServersByPolicy(scopedConfigs)
       if (blocked.length > 0) {
         process.stderr.write(
-          `Warning: MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`,
+          `${tSync(blocked.length === 1 ? 'cli.mcpBlockedByPolicy_one' : 'cli.mcpBlockedByPolicy_other', { servers: blocked.join(', ') })}\n`,
         )
       }
       dynamicMcpConfig = {

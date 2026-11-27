@@ -19,7 +19,8 @@
     "lint:i18n": "bun scripts/lint-no-toplevel-i18n.ts",
     "lint:architecture": "bun scripts/lint-architecture.ts --baseline",
     "lint:locale": "bun scripts/lint-locale-consistency.ts",
-    "quality": "bun run format:check && bun run lint && bun run lint:i18n && bun run lint:architecture && bun tsc --noEmit && bun run test"
+    "lint:hardcoded-text": "bun scripts/lint-hardcoded-text.ts",
+    "quality": "bun run format:check && bun run lint && bun run lint:i18n && bun run lint:architecture && bun run lint:hardcoded-text && bun tsc --noEmit && bun run test"
   },
   "dependencies": {
     "@alcalzone/ansi-tokenize": "^0.1.3",

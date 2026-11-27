@@ -246,6 +246,7 @@ export async function runTurnLoop(deps: TurnLoopDeps): Promise<void> {
           command.mode !== 'orphaned-permission' &&
           command.mode !== 'task-notification'
         ) {
+          // i18n-ignore: SDK / stream-json 协议层错误，面向集成方
           throw new Error('only prompt commands are supported in streaming mode')
         }
 

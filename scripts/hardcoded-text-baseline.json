@@ -1,0 +1,768 @@
+{
+  "generatedAt": "2026-11-12",
+  "note": "用户可见英文硬编码文案的存量（文件 × 类别计数）。只允许下降：修掉后运行 bun scripts/lint-hardcoded-text.ts --write-baseline 收紧。",
+  "totals": {
+    "api-error": 0,
+    "cli-error": 0,
+    "stdio": 123,
+    "command-output": 5,
+    "notification": 1,
+    "jsx-text": 323,
+    "jsx-expr": 59,
+    "jsx-attr": 73,
+    "ui-prop": 152
+  },
+  "files": {
+    "cli/assembly/sshMode.ts": {
+      "stdio": 2
+    },
+    "cli/commands/mcp.ts": {
+      "stdio": 5
+    },
+    "cli/handlers/agents.ts": {
+      "stdio": 2
+    },
+    "cli/handlers/autoMode.ts": {
+      "stdio": 6
+    },
+    "cli/handlers/mcp.tsx": {
+      "stdio": 4
+    },
+    "cli/update.ts": {
+      "stdio": 50
+    },
+    "commands/add-dir/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/agents/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/assistant/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/background/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/branch/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/brief.ts": {
+      "ui-prop": 1
+    },
+    "commands/btw/btw.tsx": {
+      "jsx-text": 1
+    },
+    "commands/btw/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/chrome/chrome.tsx": {
+      "jsx-text": 2
+    },
+    "commands/chrome/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/clear/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/color/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/compact/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/config/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/context/contextNoninteractive.ts": {
+      "ui-prop": 2
+    },
+    "commands/context/index.ts": {
+      "ui-prop": 2
+    },
+    "commands/copy/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/cost/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/desktop/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/diff/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/doctor/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/effort/EffortPicker.tsx": {
+      "jsx-expr": 3
+    },
+    "commands/effort/effortPickerData.ts": {
+      "ui-prop": 1
+    },
+    "commands/effort/index.ts": {
+      "ui-prop": 2
+    },
+    "commands/exit/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/export/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/files/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/fork/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/goal/goal.ts": {
+      "command-output": 1
+    },
+    "commands/goal/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/heapdump/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/help/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/hooks/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/ide/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/initVerifiers.ts": {
+      "ui-prop": 1
+    },
+    "commands/insights/exportData.ts": {
+      "ui-prop": 1,
+      "stdio": 1
+    },
+    "commands/insights/insightGeneration.ts": {
+      "ui-prop": 4
+    },
+    "commands/install-github-app/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/install-github-app/setupGitHubActions.ts": {
+      "ui-prop": 10
+    },
+    "commands/install-slack-app/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/install.tsx": {
+      "jsx-text": 11,
+      "ui-prop": 1
+    },
+    "commands/keybindings/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/login/index.ts": {
+      "ui-prop": 2
+    },
+    "commands/login/login.tsx": {
+      "jsx-attr": 1
+    },
+    "commands/logout/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/mcp/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/mcp/xaaIdpCommand.ts": {
+      "stdio": 22
+    },
+    "commands/memory/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/mobile/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/mobile/mobile.tsx": {
+      "jsx-text": 2
+    },
+    "commands/model/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/output-style/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/peers/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/permissions/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/plan/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/plan/plan.tsx": {
+      "jsx-text": 3
+    },
+    "commands/plugin/AddMarketplace.tsx": {
+      "jsx-text": 7,
+      "jsx-expr": 1,
+      "jsx-attr": 1
+    },
+    "commands/plugin/DiscoverPlugins.tsx": {
+      "jsx-attr": 6
+    },
+    "commands/plugin/index.tsx": {
+      "ui-prop": 1
+    },
+    "commands/plugin/ManageMarketplaces.tsx": {
+      "jsx-attr": 8
+    },
+    "commands/plugin/ManagePlugins.tsx": {
+      "jsx-expr": 1,
+      "jsx-attr": 1
+    },
+    "commands/plugin/PluginOptionsDialog.tsx": {
+      "jsx-text": 4
+    },
+    "commands/plugin/PluginOptionsFlow.tsx": {
+      "ui-prop": 4
+    },
+    "commands/plugin/PluginSettings.tsx": {
+      "jsx-attr": 8
+    },
+    "commands/plugin/PluginTrustWarning.tsx": {
+      "jsx-text": 1
+    },
+    "commands/plugin/UnifiedInstalledCell.tsx": {
+      "jsx-text": 4
+    },
+    "commands/plugin/ValidatePlugin.tsx": {
+      "jsx-text": 1
+    },
+    "commands/powerup/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/pr-comments/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/proactive.ts": {
+      "ui-prop": 1,
+      "command-output": 1
+    },
+    "commands/rate-limit-options/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/release-notes/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/reload-plugins/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/reload-skills/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/reload-tools/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/rename/index.ts": {
+      "ui-prop": 2
+    },
+    "commands/rename/performRename.ts": {
+      "ui-prop": 2
+    },
+    "commands/resume/resume.tsx": {
+      "jsx-text": 2,
+      "ui-prop": 1
+    },
+    "commands/rewind/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/skills/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/stats/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/status/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/stickers/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/tag/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/tasks/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/terminal-setup/index.ts": {
+      "ui-prop": 2
+    },
+    "commands/theme/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/thinkback-play/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/thinkback/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/thinkback/thinkback.tsx": {
+      "ui-prop": 4
+    },
+    "commands/tools/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/upgrade/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/usage/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/version.ts": {
+      "ui-prop": 1
+    },
+    "commands/vim/index.ts": {
+      "ui-prop": 1
+    },
+    "commands/vim/vim.ts": {
+      "command-output": 1
+    },
+    "components/AgentProgressLine.tsx": {
+      "jsx-text": 1
+    },
+    "components/agents/AgentDetail.tsx": {
+      "jsx-text": 11
+    },
+    "components/agents/AgentNavigationFooter.tsx": {
+      "jsx-expr": 1
+    },
+    "components/agents/ColorPicker.tsx": {
+      "jsx-text": 1
+    },
+    "components/agents/ModelSelector.tsx": {
+      "ui-prop": 1,
+      "jsx-text": 1
+    },
+    "components/agents/new-agent-creation/wizard-steps/ColorStep.tsx": {
+      "jsx-attr": 1
+    },
+    "components/agents/new-agent-creation/wizard-steps/ConfirmStep.tsx": {
+      "jsx-attr": 1
+    },
+    "components/agents/new-agent-creation/wizard-steps/DescriptionStep.tsx": {
+      "jsx-attr": 2
+    },
+    "components/agents/new-agent-creation/wizard-steps/GenerateStep.tsx": {
+      "jsx-attr": 5
+    },
+    "components/agents/new-agent-creation/wizard-steps/LocationStep.tsx": {
+      "jsx-attr": 1
+    },
+    "components/agents/new-agent-creation/wizard-steps/MemoryStep.tsx": {
+      "jsx-attr": 1
+    },
+    "components/agents/new-agent-creation/wizard-steps/MethodStep.tsx": {
+      "jsx-attr": 1
+    },
+    "components/agents/new-agent-creation/wizard-steps/ModelStep.tsx": {
+      "jsx-attr": 1
+    },
+    "components/agents/new-agent-creation/wizard-steps/PromptStep.tsx": {
+      "jsx-attr": 2
+    },
+    "components/agents/new-agent-creation/wizard-steps/ToolsStep.tsx": {
+      "jsx-attr": 1
+    },
+    "components/agents/new-agent-creation/wizard-steps/TypeStep.tsx": {
+      "jsx-attr": 1
+    },
+    "components/ApproveApiKey.tsx": {
+      "jsx-text": 1
+    },
+    "components/AutoUpdater.tsx": {
+      "jsx-text": 2
+    },
+    "components/AwsAuthStatusBox.tsx": {
+      "jsx-text": 1
+    },
+    "components/BypassPermissionsModeDialog.tsx": {
+      "jsx-attr": 1,
+      "jsx-text": 3,
+      "ui-prop": 2
+    },
+    "components/ConsoleOAuthFlow.tsx": {
+      "ui-prop": 1
+    },
+    "components/ContextVisualization.tsx": {
+      "jsx-text": 31
+    },
+    "components/CustomSelect/select-input-option.tsx": {
+      "jsx-attr": 4,
+      "jsx-expr": 1
+    },
+    "components/design-system/Dialog.tsx": {
+      "jsx-attr": 1
+    },
+    "components/DesktopUpsell/DesktopUpsellStartup.tsx": {
+      "ui-prop": 3,
+      "jsx-attr": 1,
+      "jsx-text": 1
+    },
+    "components/DevBar.tsx": {
+      "jsx-text": 1
+    },
+    "components/DevChannelsDialog.tsx": {
+      "jsx-text": 1
+    },
+    "components/DiagnosticsDisplay.tsx": {
+      "jsx-expr": 2
+    },
+    "components/diff/DiffDetailView.tsx": {
+      "jsx-text": 4
+    },
+    "components/diff/DiffFileList.tsx": {
+      "jsx-expr": 2
+    },
+    "components/hooks/SelectHookMode.tsx": {
+      "ui-prop": 1
+    },
+    "components/IdeStatusIndicator.tsx": {
+      "jsx-expr": 2,
+      "jsx-text": 2
+    },
+    "components/IdleReturnDialog.tsx": {
+      "jsx-attr": 1
+    },
+    "components/InterruptedByUser.tsx": {
+      "jsx-text": 1
+    },
+    "components/Logo/ChannelsNotice.tsx": {
+      "jsx-text": 10
+    },
+    "components/Logo/CondensedLogo.tsx": {
+      "jsx-text": 1
+    },
+    "components/Logo/FeedConfigs.tsx": {
+      "ui-prop": 1
+    },
+    "components/Logo/Logo.tsx": {
+      "jsx-text": 15,
+      "jsx-expr": 4
+    },
+    "components/Logo/Welcome.tsx": {
+      "jsx-expr": 1
+    },
+    "components/MarkdownTable.tsx": {
+      "ui-prop": 1
+    },
+    "components/mcp/computer-use-overrides.tsx": {
+      "ui-prop": 2
+    },
+    "components/mcp/ElicitationDialog.tsx": {
+      "jsx-text": 4
+    },
+    "components/mcp/MCPToolDetailView.tsx": {
+      "jsx-expr": 1
+    },
+    "components/MCPServerApprovalDialog.tsx": {
+      "jsx-attr": 1,
+      "ui-prop": 3
+    },
+    "components/MCPServerDesktopImportDialog.tsx": {
+      "jsx-attr": 1
+    },
+    "components/MCPServerMultiselectDialog.tsx": {
+      "jsx-attr": 1
+    },
+    "components/memory/MemoryFileSelector.tsx": {
+      "ui-prop": 4,
+      "jsx-text": 2,
+      "jsx-expr": 2
+    },
+    "components/memory/MemoryUpdateNotification.tsx": {
+      "jsx-text": 2
+    },
+    "components/Messages.tsx": {
+      "jsx-attr": 3
+    },
+    "components/messages/AssistantRedactedThinkingMessage.tsx": {
+      "jsx-text": 1
+    },
+    "components/messages/AssistantToolUseMessage.tsx": {
+      "jsx-expr": 2,
+      "jsx-text": 1
+    },
+    "components/messages/AttachmentMessage.tsx": {
+      "jsx-text": 22,
+      "jsx-expr": 2
+    },
+    "components/messages/HighlightedThinkingText.tsx": {
+      "jsx-text": 1
+    },
+    "components/messages/HookProgressMessage.tsx": {
+      "jsx-expr": 4,
+      "jsx-text": 2
+    },
+    "components/messages/SystemTextMessage.tsx": {
+      "jsx-text": 3,
+      "jsx-expr": 1
+    },
+    "components/messages/TaskAssignmentMessage.tsx": {
+      "jsx-text": 2
+    },
+    "components/messages/UserCommandMessage.tsx": {
+      "jsx-text": 1
+    },
+    "components/messages/UserImageMessage.tsx": {
+      "ui-prop": 2
+    },
+    "components/messages/UserPlanMessage.tsx": {
+      "jsx-text": 1
+    },
+    "components/messages/UserTeammateMessage.tsx": {
+      "jsx-text": 1
+    },
+    "components/MessageSelectorDetails.tsx": {
+      "jsx-expr": 1
+    },
+    "components/ModelPicker.tsx": {
+      "jsx-attr": 1
+    },
+    "components/NativeAutoUpdater.tsx": {
+      "jsx-text": 6
+    },
+    "components/PackageManagerAutoUpdater.tsx": {
+      "jsx-text": 2
+    },
+    "components/permissions/AskUserQuestionPermissionRequest/PreviewBox.tsx": {
+      "ui-prop": 1
+    },
+    "components/permissions/AskUserQuestionPermissionRequest/QuestionView.tsx": {
+      "jsx-text": 1
+    },
+    "components/permissions/ComputerUseApproval/ComputerUseApproval.tsx": {
+      "jsx-text": 1
+    },
+    "components/permissions/FallbackPermissionRequest.tsx": {
+      "jsx-text": 1
+    },
+    "components/permissions/NotebookEditPermissionRequest/NotebookEditToolDiff.tsx": {
+      "jsx-text": 1
+    },
+    "components/permissions/PermissionDecisionDebugInfo.tsx": {
+      "jsx-text": 1
+    },
+    "components/permissions/PowerShellPermissionRequest/PowerShellPermissionRequest.tsx": {
+      "jsx-text": 1
+    },
+    "components/permissions/rules/PermissionRuleDescription.tsx": {
+      "jsx-text": 5
+    },
+    "components/permissions/rules/PermissionRuleInput.tsx": {
+      "jsx-text": 1
+    },
+    "components/permissions/rules/PermissionRuleList.tsx": {
+      "jsx-text": 7,
+      "jsx-attr": 1
+    },
+    "components/PressEnterToContinue.tsx": {
+      "jsx-text": 3
+    },
+    "components/PromptInput/HistorySearchInput.tsx": {
+      "jsx-expr": 2
+    },
+    "components/PromptInput/PromptInputFooter.tsx": {
+      "jsx-text": 1
+    },
+    "components/PromptInput/PromptInputStashNotice.tsx": {
+      "jsx-text": 1
+    },
+    "components/PromptInput/RenderPromptInput.tsx": {
+      "jsx-text": 1
+    },
+    "components/PromptInput/SandboxPromptFooterHint.tsx": {
+      "jsx-text": 2,
+      "jsx-expr": 2
+    },
+    "components/PromptInput/usePromptInputKeybindings.tsx": {
+      "ui-prop": 2
+    },
+    "components/PromptInput/usePromptInputSuggestions.tsx": {
+      "jsx-text": 1,
+      "jsx-attr": 1
+    },
+    "components/PromptInput/usePromptInputViewModel.tsx": {
+      "ui-prop": 1,
+      "jsx-text": 1,
+      "jsx-expr": 2
+    },
+    "components/Runtime/AutoRunIssue.tsx": {
+      "jsx-text": 4
+    },
+    "components/Runtime/StatusNoticeDefinitions.tsx": {
+      "jsx-text": 20,
+      "jsx-expr": 6
+    },
+    "components/sandbox/SandboxConfigTab.tsx": {
+      "jsx-text": 14,
+      "jsx-expr": 3
+    },
+    "components/sandbox/SandboxDependenciesTab.tsx": {
+      "jsx-text": 18
+    },
+    "components/sandbox/SandboxDoctorSection.tsx": {
+      "jsx-text": 3
+    },
+    "components/sandbox/SandboxOverridesTab.tsx": {
+      "jsx-text": 9,
+      "jsx-expr": 2,
+      "ui-prop": 6
+    },
+    "components/Settings/Status.tsx": {
+      "jsx-attr": 1
+    },
+    "components/Settings/Usage.tsx": {
+      "jsx-attr": 1
+    },
+    "components/skills/SkillsMenu.tsx": {
+      "jsx-attr": 2
+    },
+    "components/Spinner/SpinnerAnimationRow.tsx": {
+      "jsx-text": 1
+    },
+    "components/Spinner/TeammateSpinnerLine.tsx": {
+      "jsx-text": 3
+    },
+    "components/Spinner/TeammateSpinnerTree.tsx": {
+      "jsx-text": 4
+    },
+    "components/Stats.tsx": {
+      "jsx-expr": 2,
+      "jsx-text": 2,
+      "ui-prop": 3
+    },
+    "components/swarm/It2SetupPrompt.tsx": {
+      "jsx-text": 1
+    },
+    "components/TaskList.tsx": {
+      "jsx-text": 1
+    },
+    "components/tasks/AsyncAgentDetailDialog.tsx": {
+      "jsx-text": 1
+    },
+    "components/tasks/InProcessTeammateDetailDialog.tsx": {
+      "jsx-text": 1
+    },
+    "components/tasks/ShellDetailDialog.tsx": {
+      "command-output": 2,
+      "jsx-expr": 3
+    },
+    "components/teams/TeamsDialog.tsx": {
+      "jsx-attr": 1,
+      "jsx-text": 10,
+      "jsx-expr": 2
+    },
+    "components/teams/TeamStatus.tsx": {
+      "jsx-text": 1
+    },
+    "components/ThinkingToggle.tsx": {
+      "jsx-attr": 2
+    },
+    "components/TranscriptModeFooter.tsx": {
+      "jsx-expr": 1
+    },
+    "components/TranscriptSearchBar.tsx": {
+      "jsx-text": 4
+    },
+    "components/TungstenPill.tsx": {
+      "ui-prop": 1
+    },
+    "components/wizard/WizardDialogLayout.tsx": {
+      "ui-prop": 1
+    },
+    "components/wizard/WizardNavigationFooter.tsx": {
+      "jsx-attr": 1,
+      "jsx-expr": 1
+    },
+    "components/WorkflowMultiselectDialog.tsx": {
+      "ui-prop": 2,
+      "jsx-attr": 3,
+      "jsx-text": 2
+    },
+    "daemon/main.ts": {
+      "stdio": 11
+    },
+    "daemon/workerRegistry.ts": {
+      "stdio": 8
+    },
+    "entrypoints/cli.tsx": {
+      "stdio": 1
+    },
+    "hooks/notifs/useCanSwitchToExistingSubscription.tsx": {
+      "jsx-text": 3
+    },
+    "hooks/notifs/useMcpConnectivityStatus.tsx": {
+      "jsx-text": 2
+    },
+    "hooks/useArrowKeyHistory.tsx": {
+      "jsx-attr": 1
+    },
+    "hooks/useCanUseTool.tsx": {
+      "jsx-text": 1
+    },
+    "hooks/usePluginRecommendationBase.tsx": {
+      "jsx-text": 1
+    },
+    "hooks/useTypeahead.tsx": {
+      "jsx-text": 2
+    },
+    "screens/Doctor.tsx": {
+      "jsx-text": 2
+    },
+    "screens/REPL.tsx": {
+      "stdio": 1
+    },
+    "screens/repl/useReplEffects.ts": {
+      "ui-prop": 1
+    },
+    "screens/repl/useReplSandboxAsk.tsx": {
+      "jsx-text": 1
+    },
+    "services/mcp/auth/authProvider.ts": {
+      "stdio": 1
+    },
+    "services/messages/attachmentApi.ts": {
+      "ui-prop": 3
+    },
+    "services/permissions/permissionExplainer.ts": {
+      "ui-prop": 5
+    },
+    "services/plugins/pluginCliCommands.ts": {
+      "stdio": 3
+    },
+    "services/updater/autoUpdater.ts": {
+      "stdio": 2
+    },
+    "services/worktree/worktree.ts": {
+      "stdio": 4
+    },
+    "tools/AgentTool/UI.tsx": {
+      "jsx-attr": 2,
+      "jsx-expr": 1
+    },
+    "tools/ExitPlanModeTool/ExitPlanModeTool.ts": {
+      "notification": 1
+    },
+    "tools/MCPTool/UI.tsx": {
+      "ui-prop": 1
+    },
+    "tools/NotebookEditTool/UI.tsx": {
+      "jsx-expr": 1
+    },
+    "tools/TaskOutputTool/TaskOutputTool.tsx": {
+      "jsx-text": 6
+    }
+  }
+}

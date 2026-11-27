@@ -11,6 +11,7 @@
  */
 
 import { feature } from 'bun:bundle'
+import { tSync } from '../../i18n/index.js'
 import chalk from 'chalk'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -161,7 +162,7 @@ export async function initializeRootRuntime(
       logForDebugging(`[Claude in Chrome] Error: ${error}`)
       logError(error)
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.error(`Error: Failed to run with ZY in Chrome.`)
+      console.error(tSync('cli.chromeFailed'))
       process.exit(1)
     }
   } else if (autoEnableClaudeInChrome) {
@@ -425,13 +426,13 @@ export async function initializeRootRuntime(
 
   if (inputFormat && inputFormat !== 'text' && inputFormat !== 'stream-json') {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.error(`Error: Invalid input format "${inputFormat}".`)
+    console.error(tSync('cli.invalidInputFormat', { format: String(inputFormat) }))
     process.exit(1)
   }
 
   if (inputFormat === 'stream-json' && outputFormat !== 'stream-json') {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
-    console.error(`Error: --input-format=stream-json requires output-format=stream-json.`)
+    console.error(tSync('cli.inputStreamJsonRequiresOutput'))
     process.exit(1)
   }
 
@@ -439,9 +440,7 @@ export async function initializeRootRuntime(
   if (options.replayUserMessages) {
     if (inputFormat !== 'stream-json' || outputFormat !== 'stream-json') {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
-      console.error(
-        `Error: --replay-user-messages requires both --input-format=stream-json and --output-format=stream-json.`,
-      )
+      console.error(tSync('cli.replayUserMessagesRequiresStreamJson'))
       process.exit(1)
     }
   }
@@ -449,16 +448,14 @@ export async function initializeRootRuntime(
   // 验证 includePartialMessages 仅与打印模式和 stream-json 输出一起使用
   if (effectiveIncludePartialMessages) {
     if (!isNonInteractiveSession || outputFormat !== 'stream-json') {
-      writeToStderr(
-        `Error: --include-partial-messages requires --print and --output-format=stream-json.`,
-      )
+      writeToStderr(tSync('cli.includePartialMessagesRequires'))
       process.exit(1)
     }
   }
 
   // 验证 --no-session-persistence 仅与打印模式一起使用
   if (options.sessionPersistence === false && !isNonInteractiveSession) {
-    writeToStderr(`Error: --no-session-persistence can only be used with --print mode.`)
+    writeToStderr(tSync('cli.noSessionPersistencePrintOnly'))
     process.exit(1)
   }
 

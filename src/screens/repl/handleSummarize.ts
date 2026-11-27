@@ -11,6 +11,7 @@
 // 7. 显示"已摘要"通知
 
 import { feature } from 'bun:bundle'
+import { tSync } from '../../i18n/index.js'
 import { proactiveModule } from '../../cli/lazyModules.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import type { Notification } from '../../context/notifications.js'
@@ -159,7 +160,7 @@ export async function handleSummarize({
   const historyShortcut = getShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o')
   addNotification({
     key: 'summarize-ctrl-o-hint',
-    text: `Conversation summarized (${historyShortcut} for history)`,
+    text: tSync('notif.conversationSummarized', { shortcut: historyShortcut }),
     priority: 'medium',
     timeoutMs: 8000,
   })

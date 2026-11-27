@@ -65,11 +65,11 @@ import {
   validateAssistantCompletion,
 } from '../assistantCompletionValidator.js'
 import {
-  API_ERROR_MESSAGE_PREFIX,
   getAPIErrorSeverity,
   getAssistantMessageFromError,
   getErrorMessageIfRefusal,
 } from '../errors.js'
+import { apiErrorText } from '../errorText.js'
 import { EMPTY_USAGE, logAPIError, logAPISuccessAndDuration } from '../logging.js'
 import { probeThinkingFromError } from '../modelCapabilityProbe.js'
 import { checkResponseForCacheBreak } from '../promptCacheBreakDetection.js'
@@ -600,9 +600,7 @@ export async function* queryModel(
                 max_tokens: maxOutputTokens,
               })
               yield createAssistantAPIErrorMessage({
-                content: `${API_ERROR_MESSAGE_PREFIX}: Zy's response exceeded the ${
-                  maxOutputTokens
-                } output token maximum. To configure this behavior, set the ZY_CODE_MAX_OUTPUT_TOKENS environment variable.`,
+                content: apiErrorText('apiError.maxOutputTokens', { max: maxOutputTokens }),
                 apiError: 'max_output_tokens' as unknown as LLMError,
                 error: 'max_output_tokens',
               })
@@ -616,7 +614,7 @@ export async function* queryModel(
               // 复用 max_output_tokens 恢复路径——从模型视角来看，
               // 两者都意味着"响应被截断，从上次停止的地方继续"。
               yield createAssistantAPIErrorMessage({
-                content: `${API_ERROR_MESSAGE_PREFIX}: The model has reached its context window limit.`,
+                content: apiErrorText('apiError.contextWindowExceeded'),
                 apiError: 'max_output_tokens' as unknown as LLMError,
                 error: 'max_output_tokens',
               })

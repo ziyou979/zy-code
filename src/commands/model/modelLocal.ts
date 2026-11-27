@@ -1,4 +1,5 @@
 import type { LocalCommandCall } from '../types.js'
+import { tSync } from '../../i18n/index.js'
 import { resolveEffortForModelSetting } from '../../services/effort/effort.js'
 import { shouldEnableThinkingByDefault } from '../../services/messages/thinking.js'
 import { describeCurrentModel, resolveModelChange } from './performModelChange.js'
@@ -31,7 +32,7 @@ export const call: LocalCommandCall = async (args, context) => {
       )
       return {
         type: 'text',
-        value: `${current}\nUsage: /model <name|default>`,
+        value: `${current}\n${tSync('commands.out.model.usage')}`,
       }
     }
 

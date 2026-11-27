@@ -1,4 +1,5 @@
 import { homedir } from 'node:os'
+import { tSync } from '../i18n/index.js'
 import { join } from 'node:path'
 import React, { useEffect, useState } from 'react'
 import type { CommandResultDisplay } from 'src/commands/index.js'
@@ -281,11 +282,11 @@ function Install({ onDone, force, target }: InstallProps): React.ReactNode {
         <Box flexDirection="column" gap={1}>
           <Box>
             <StatusIcon status="error" withSpace />
-            <Text color="error">Installation failed</Text>
+            <Text color="error">{tSync('install.failed')}</Text>
           </Box>
           <Text color="error">{state.message}</Text>
           <Box marginTop={1}>
-            <Text dimColor>Try running with --force to override checks</Text>
+            <Text dimColor>{tSync('install.tryForce')}</Text>
           </Box>
         </Box>
       )}

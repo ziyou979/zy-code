@@ -128,6 +128,7 @@ function MessageImpl({
           onOpenRateLimitOptions={onOpenRateLimitOptions}
           thinkingBlockId={`${message.uuid}:${index}`}
           lastThinkingBlockId={lastThinkingBlockId}
+          isApiErrorMessage={message.isApiErrorMessage === true}
         />
       )
       // MessageDisplay hook 的 display-only 文本覆盖：替换文本块、保留 tool_use 等非文本块。
@@ -339,6 +340,8 @@ type AssistantMessageBlockProps = {
   onOpenRateLimitOptions?: () => void
   thinkingBlockId: string
   lastThinkingBlockId?: string | null
+  /** 该块所属消息是合成的 API 错误消息（content 为持久化英文，展示时需本地化） */
+  isApiErrorMessage?: boolean
 }
 function AssistantMessageBlock(props: AssistantMessageBlockProps) {
   const {
@@ -358,6 +361,7 @@ function AssistantMessageBlock(props: AssistantMessageBlockProps) {
     onOpenRateLimitOptions,
     thinkingBlockId,
     lastThinkingBlockId,
+    isApiErrorMessage,
   } = props
   // Some providers return tool_use (API shape) instead of tool_call (stream shape)
   // Both have the same structure (id, name, input), handled identically below
@@ -378,6 +382,7 @@ function AssistantMessageBlock(props: AssistantMessageBlockProps) {
           verbose={verbose}
           width={width}
           onOpenRateLimitOptions={onOpenRateLimitOptions}
+          isApiErrorMessage={isApiErrorMessage}
         />
       )
     }
@@ -411,6 +416,7 @@ function AssistantMessageBlock(props: AssistantMessageBlockProps) {
           verbose={verbose}
           width={width}
           onOpenRateLimitOptions={onOpenRateLimitOptions}
+          isApiErrorMessage={isApiErrorMessage}
         />
       )
     }

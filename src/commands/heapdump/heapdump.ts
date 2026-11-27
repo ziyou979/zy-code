@@ -1,4 +1,5 @@
 import { performHeapDump } from '../../services/diagnostics/heapDumpService.js'
+import { tSync } from '../../i18n/index.js'
 
 export async function call(): Promise<{ type: 'text'; value: string }> {
   const result = await performHeapDump()
@@ -6,7 +7,7 @@ export async function call(): Promise<{ type: 'text'; value: string }> {
   if (!result.success) {
     return {
       type: 'text',
-      value: `Failed to create heap dump: ${result.error}`,
+      value: tSync('commands.out.heapdump.failed', { error: String(result.error) }),
     }
   }
 

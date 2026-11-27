@@ -1,4 +1,5 @@
 import { feature } from 'bun:bundle'
+import { tSync } from '../i18n/index.js'
 import { gracefulShutdownSync } from '../bootstrap/lifecycle/gracefulShutdown.js'
 
 // ─── 跨模块共享的"挂起请求"状态：argv 改写阶段写入，run() 子命令 action 读取 ───
@@ -212,7 +213,7 @@ function rewriteArgvForSsh(): boolean {
     // 无头模式（-p）在 v1 中不支持 SSH —— 提前拒绝
     // 以免标志静默导致本地执行。
     if (rest.includes('-p') || rest.includes('--print')) {
-      process.stderr.write('Error: headless (-p/--print) mode is not supported with zy ssh\n')
+      process.stderr.write(`${tSync('cli.sshNoPrintMode')}\n`)
       gracefulShutdownSync(1)
       return false
     }

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { tSync } from '../../i18n/index.js'
 import { useInterval } from 'usehooks-ts'
 import { getIsScrollDraining } from 'src/bootstrap/runtime/runtimeContext.js'
 import { useNotifications } from '../../context/notifications.js'
@@ -64,8 +65,8 @@ export function useLspInitializationNotification() {
       key: `lsp-error-${source}`,
       jsx: (
         <>
-          <Text color="error">LSP for {displayName} failed</Text>
-          <Text dimColor={true}> · /plugin for details</Text>
+          <Text color="error">{tSync('notif.lspFailed', { name: displayName })}</Text>
+          <Text dimColor={true}> · {tSync('notif.pluginForDetails')}</Text>
         </>
       ),
       priority: 'medium',

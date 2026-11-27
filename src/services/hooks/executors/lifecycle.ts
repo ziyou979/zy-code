@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { tSync } from '../../../i18n/index.js'
 import type { PromptRequest, PromptResponse } from 'src/types/hooks/index.js'
 import type {
   BackgroundTaskInfo,
@@ -297,7 +298,9 @@ export async function executeSessionEndHooks(
   // 关闭期间 Ink 已卸载，因此可以直接写入 stderr
   for (const result of results) {
     if (!result.succeeded && result.output) {
-      process.stderr.write(`SessionEnd hook [${result.command}] failed: ${result.output}\n`)
+      process.stderr.write(
+        `${tSync('cli.sessionEndHookFailed', { command: result.command, output: result.output })}\n`,
+      )
     }
   }
 

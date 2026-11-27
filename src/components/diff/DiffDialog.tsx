@@ -195,7 +195,7 @@ export function DiffDialog({ messages, onDone }: Props) {
     if (viewMode === 'detail') {
       setViewMode('list')
     } else {
-      onDone('Diff dialog dismissed', {
+      onDone(tSync('commands.out.diff.dismissed'), {
         display: 'system',
       })
     }

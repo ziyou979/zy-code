@@ -24,6 +24,7 @@ import {
   logEvent,
 } from '../analytics/index.js'
 import { tSync } from '../../i18n/index.js'
+import { apiErrorText } from './errorText.js'
 import { shouldProcessRateLimits } from '../rateLimitMocking.js' // 供 /mock-limits 命令使用
 import {
   getRateLimitErrorMessage,
@@ -32,7 +33,13 @@ import {
 } from '../zyAiLimits.js'
 import { extractConnectionErrorDetails, formatAPIError } from './errorUtils.js'
 
-export const API_ERROR_MESSAGE_PREFIX = 'API Error'
+// ---------------------------------------------------------------------------
+// 持久化匹配 token：下列 *_MESSAGE 常量是 assistant 错误消息的 content 本身，会写进会话
+// jsonl，并被 startsWith / includes / switch-case 按字节识别，因此固定为英文、不可按界面
+// 语言生成。它们的文案与 locales 的 apiError.* 英文模板逐字一致（errorText.test 守护），
+// 展示时由 localizeApiErrorText 按当前语言翻译。
+// ---------------------------------------------------------------------------
+export const API_ERROR_MESSAGE_PREFIX = 'API Error' // i18n-ignore: 持久化匹配 token
 
 export function startsWithApiErrorPrefix(text: string): boolean {
   return (
@@ -40,7 +47,7 @@ export function startsWithApiErrorPrefix(text: string): boolean {
     text.startsWith(`Please run /login · ${API_ERROR_MESSAGE_PREFIX}`)
   )
 }
-export const PROMPT_TOO_LONG_ERROR_MESSAGE = 'Prompt is too long'
+export const PROMPT_TOO_LONG_ERROR_MESSAGE = 'Prompt is too long' // i18n-ignore: 持久化匹配 token
 
 export function isPromptTooLongMessage(msg: AssistantMessage): boolean {
   if (!msg.isApiErrorMessage) {
@@ -124,7 +131,9 @@ export function isMediaSizeErrorMessage(msg: AssistantMessage): boolean {
     isMediaSizeError(msg.errorDetails)
   )
 }
+// i18n-ignore: 持久化匹配 token
 export const CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE = 'Credit balance is too low'
+// i18n-ignore: 持久化匹配 token
 export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL = 'Invalid API key · Fix external API key'
 
 /**
@@ -135,62 +144,68 @@ export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL = 'Invalid API key · Fix ex
 export function getInvalidApiKeyErrorMessage(): string {
   const model = getDefaultMainLoopModelSetting()
   return isAnthropicProvider(getProviderForModel(model), model)
-    ? 'Not logged in · Please run /login'
+    ? apiErrorText('apiError.notLoggedIn')
     : ''
 }
+// i18n-ignore: 持久化匹配 token
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH =
   'Your API key belongs to a disabled organization · Unset the environment variable to use your subscription instead'
+// i18n-ignore: 持久化匹配 token
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY =
   'Your API key belongs to a disabled organization · Update or unset the environment variable'
-export const TOKEN_REVOKED_ERROR_MESSAGE = 'OAuth token revoked · Please run /login'
+export const TOKEN_REVOKED_ERROR_MESSAGE = 'OAuth token revoked · Please run /login' // i18n-ignore: 持久化匹配 token
+// i18n-ignore: 持久化匹配 token
 export const CCR_AUTH_ERROR_MESSAGE =
   'Authentication error · This may be a temporary network issue, please try again'
-export const REPEATED_529_ERROR_MESSAGE = 'Repeated 529 Overloaded errors'
+export const REPEATED_529_ERROR_MESSAGE = 'Repeated 529 Overloaded errors' // i18n-ignore: 持久化匹配 token
 // 持久化匹配 token：错误分类的 includes 与 AssistantTextMessage 的 case 都以它
 // 为键，旧会话 jsonl 回放依赖该值稳定，不可变更、不可 i18n 化；用户可见文案由
 // 渲染层经 tSync('rateLimit.offSwitch*') 翻译。
+// i18n-ignore: 持久化匹配 token
 export const CUSTOM_OFF_SWITCH_MESSAGE =
   'Current model is experiencing high demand. Please use /model to switch to another model.'
-export const API_TIMEOUT_ERROR_MESSAGE = 'Request timed out'
+export const API_TIMEOUT_ERROR_MESSAGE = 'Request timed out' // i18n-ignore: 持久化匹配 token
+
+/** 交互 / 非交互（-p、SDK）两套措辞：交互模式提示「双击 Esc」，非交互给通用建议。 */
+function byMode(key: string, vars?: Record<string, string | number>): string {
+  return apiErrorText(
+    `${key}.${getIsNonInteractiveSession() ? 'nonInteractive' : 'interactive'}`,
+    vars,
+  )
+}
+// 以下 get*ErrorMessage 的返回值同样是持久化内容（apiNormalize 的媒体错误剥离表按它们
+// 精确匹配），所以固定取英文模板。
 export function getPdfTooLargeErrorMessage(): string {
-  const limits = `max ${API_PDF_MAX_PAGES} pages, ${formatFileSize(PDF_TARGET_RAW_SIZE)}`
-  return getIsNonInteractiveSession()
-    ? `PDF too large (${limits}). Try reading the file a different way (e.g., extract text with pdftotext).`
-    : `PDF too large (${limits}). Double press esc to go back and try again, or use pdftotext to convert to text first.`
+  return byMode('apiError.pdfTooLarge', {
+    pages: API_PDF_MAX_PAGES,
+    size: formatFileSize(PDF_TARGET_RAW_SIZE),
+  })
 }
 export function getPdfPasswordProtectedErrorMessage(): string {
-  return getIsNonInteractiveSession()
-    ? 'PDF is password protected. Try using a CLI tool to extract or convert the PDF.'
-    : 'PDF is password protected. Please double press esc to edit your message and try again.'
+  return byMode('apiError.pdfPasswordProtected')
 }
 export function getPdfInvalidErrorMessage(): string {
-  return getIsNonInteractiveSession()
-    ? 'The PDF file was not valid. Try converting it to text first (e.g., pdftotext).'
-    : 'The PDF file was not valid. Double press esc to go back and try again with a different file.'
+  return byMode('apiError.pdfInvalid')
 }
 export function getImageTooLargeErrorMessage(): string {
-  return getIsNonInteractiveSession()
-    ? 'Image was too large. Try resizing the image or using a different approach.'
-    : 'Image was too large. Double press esc to go back and try again with a smaller image.'
+  return byMode('apiError.imageTooLarge')
 }
 export function getRequestTooLargeErrorMessage(): string {
-  const limits = `max ${formatFileSize(PDF_TARGET_RAW_SIZE)}`
-  return getIsNonInteractiveSession()
-    ? `Request too large (${limits}). Try with a smaller file.`
-    : `Request too large (${limits}). Double press esc to go back and try with a smaller file.`
+  return byMode('apiError.requestTooLarge', { size: formatFileSize(PDF_TARGET_RAW_SIZE) })
 }
+// i18n-ignore: 持久化匹配 token
 export const OAUTH_ORG_NOT_ALLOWED_ERROR_MESSAGE =
   'Your account does not have access to ZY Code. Please run /login.'
 
 export function getTokenRevokedErrorMessage(): string {
   return getIsNonInteractiveSession()
-    ? 'Your account does not have access to ZY. Please login again or contact your administrator.'
+    ? apiErrorText('apiError.tokenRevokedNonInteractive')
     : TOKEN_REVOKED_ERROR_MESSAGE
 }
 
 export function getOauthOrgNotAllowedErrorMessage(): string {
   return getIsNonInteractiveSession()
-    ? 'Your organization does not have access to ZY. Please login again or contact your administrator.'
+    ? apiErrorText('apiError.oauthOrgNotAllowedNonInteractive')
     : OAUTH_ORG_NOT_ALLOWED_ERROR_MESSAGE
 }
 
@@ -520,11 +535,8 @@ export function getAssistantMessageFromError(
     // 而非通用的 "Rate limit reached"。权限拒绝
     // （例如 1M 上下文无 Extra Usage）和基础设施容量 429 都会到达此处。
     if (error.message.includes('Extra usage is required for long context')) {
-      const hint = getIsNonInteractiveSession()
-        ? 'enable extra usage at zy.ai/settings/usage, or use --model to switch to standard context'
-        : 'run /extra-usage to enable, or /model to switch to standard context'
       return createAssistantAPIErrorMessage({
-        content: `${API_ERROR_MESSAGE_PREFIX}: Extra usage is required for 1M context · ${hint}`,
+        content: byMode('apiError.extraUsageRequired'),
         error: 'rate_limit',
       })
     }
@@ -534,7 +546,9 @@ export function getAssistantMessageFromError(
     const innerMessage = stripped.match(/"message"\s*:\s*"([^"]*)"/)?.[1]
     const detail = innerMessage || stripped
     return createAssistantAPIErrorMessage({
-      content: `${API_ERROR_MESSAGE_PREFIX}: Request rejected (429) · ${detail || tSync('rateLimit.temporaryCapacity')}`,
+      content: apiErrorText('apiError.requestRejected429', {
+        detail: detail || tSync('rateLimit.temporaryCapacity'),
+      }),
       error: 'rate_limit',
     })
   }
@@ -600,9 +614,7 @@ export function getAssistantMessageFromError(
     error.message.includes('many-image')
   ) {
     return createAssistantAPIErrorMessage({
-      content: getIsNonInteractiveSession()
-        ? 'An image in the conversation exceeds the dimension limit for many-image requests (2000px). Start a new session with fewer images.'
-        : 'An image in the conversation exceeds the dimension limit for many-image requests (2000px). Run /compact to remove old images from context, or start a new session.',
+      content: byMode('apiError.manyImageDimensions'),
       error: 'invalid_request',
       errorDetails: error.message,
     })
@@ -619,7 +631,7 @@ export function getAssistantMessageFromError(
     error.message.includes('anthropic-beta')
   ) {
     return createAssistantAPIErrorMessage({
-      content: 'Auto mode is unavailable for your plan',
+      content: apiErrorText('apiError.autoModeUnavailable'),
       error: 'invalid_request',
     })
   }
@@ -651,6 +663,8 @@ export function getAssistantMessageFromError(
     }
 
     if (isInternalBuild()) {
+      // 内部构建的排障指引，不面向终端用户，保持英文。
+      // i18n-ignore: 内部构建排障信息
       const baseMessage = `API Error: 400 ${error.message}\n\nRun /share and post the JSON file to ${MACRO.FEEDBACK_CHANNEL}.`
       const rewindInstruction = getIsNonInteractiveSession()
         ? ''
@@ -660,12 +674,12 @@ export function getAssistantMessageFromError(
         error: 'invalid_request',
       })
     } else {
-      const baseMessage = 'API Error: 400 due to tool use concurrency issues.'
-      const rewindInstruction = getIsNonInteractiveSession()
-        ? ''
-        : ' Run /rewind to recover the conversation.'
       return createAssistantAPIErrorMessage({
-        content: baseMessage + rewindInstruction,
+        content: apiErrorText(
+          getIsNonInteractiveSession()
+            ? 'apiError.toolUseConcurrency'
+            : 'apiError.toolUseConcurrency.withRewind',
+        ),
         error: 'invalid_request',
       })
     }
@@ -688,11 +702,12 @@ export function getAssistantMessageFromError(
     error.message.includes('`tool_use` ids must be unique')
   ) {
     logEvent('zy_duplicate_tool_use_id', {})
-    const rewindInstruction = getIsNonInteractiveSession()
-      ? ''
-      : ' Run /rewind to recover the conversation.'
     return createAssistantAPIErrorMessage({
-      content: `API Error: 400 duplicate tool_use ID in conversation history.${rewindInstruction}`,
+      content: apiErrorText(
+        getIsNonInteractiveSession()
+          ? 'apiError.duplicateToolUseId'
+          : 'apiError.duplicateToolUseId.withRewind',
+      ),
       error: 'invalid_request',
       errorDetails: error.message,
     })
@@ -811,9 +826,7 @@ export function getAssistantMessageFromError(
 
     return createAssistantAPIErrorMessage({
       error: 'authentication_failed',
-      content: getIsNonInteractiveSession()
-        ? `Failed to authenticate. ${API_ERROR_MESSAGE_PREFIX}: ${error.message}`
-        : `Please run /login · ${API_ERROR_MESSAGE_PREFIX}: ${error.message}`,
+      content: byMode('apiError.authFailed', { detail: error.message }),
     })
   }
 
@@ -822,7 +835,7 @@ export function getAssistantMessageFromError(
   if (isAPIError(error) && error.status === 404) {
     const switchCmd = getIsNonInteractiveSession() ? '--model' : '/model'
     return createAssistantAPIErrorMessage({
-      content: `There's an issue with the selected model (${model}). It may not exist or you may not have access to it. Run ${switchCmd} to pick a different model.`,
+      content: apiErrorText('apiError.modelNotFound', { model, switchCmd }),
       error: 'invalid_request',
     })
   }
@@ -830,14 +843,16 @@ export function getAssistantMessageFromError(
   // 连接错误（非超时）——使用 formatAPIError 获取详细消息
   if (isConnectionError(error)) {
     return createAssistantAPIErrorMessage({
-      content: `${API_ERROR_MESSAGE_PREFIX}: ${formatAPIError(error as unknown as APIErrorLike)}`,
+      content: apiErrorText('apiError.generic', {
+        detail: formatAPIError(error as unknown as APIErrorLike),
+      }),
       error: 'unknown',
     })
   }
 
   if (error instanceof Error) {
     return createAssistantAPIErrorMessage({
-      content: `${API_ERROR_MESSAGE_PREFIX}: ${error.message}`,
+      content: apiErrorText('apiError.generic', { detail: error.message }),
       error: 'unknown',
     })
   }
@@ -1194,14 +1209,8 @@ export function getErrorMessageIfRefusal(
 
   logEvent('zy_refusal_api_response', {})
 
-  const baseMessage = getIsNonInteractiveSession()
-    ? `${API_ERROR_MESSAGE_PREFIX}: ZY Code is unable to respond to this request, which appears to violate our Usage Policy. Try rephrasing the request or attempting a different approach.`
-    : `${API_ERROR_MESSAGE_PREFIX}: ZY Code is unable to respond to this request, which appears to violate our Usage Policy. Please double press esc to edit your last message or start a new session for ZY Code to assist with a different task.`
-
-  const modelSuggestion = ''
-
   return createAssistantAPIErrorMessage({
-    content: baseMessage + modelSuggestion,
+    content: byMode('apiError.refusal'),
     error: 'invalid_request',
   })
 }

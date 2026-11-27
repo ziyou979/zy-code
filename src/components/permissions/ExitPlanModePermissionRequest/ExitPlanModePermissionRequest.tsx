@@ -632,10 +632,12 @@ export function ExitPlanModePermissionRequest({
     stickyFooterRunCount.current++
     const runCount = stickyFooterRunCount.current
     process.stderr.write(
+      // i18n-ignore: 调试 / 诊断输出，不面向终端用户
       `[diag:stickyFooter] effect run #${runCount} deps={options:${options.length} pastedContents:${Object.keys(pastedContents).length} showSaveMessage:${String(showSaveMessage)}}\n`,
     )
     if (runCount > 5) {
       process.stderr.write(
+        // i18n-ignore: 调试 / 诊断输出，不面向终端用户
         `[diag:stickyFooter] WARNING: effect ran ${runCount} times — possible infinite loop!\n`,
       )
     }
@@ -681,6 +683,7 @@ export function ExitPlanModePermissionRequest({
       </Box>,
     )
     return () => {
+      // i18n-ignore: 调试 / 诊断输出，不面向终端用户
       process.stderr.write(`[diag:stickyFooter] cleanup run #${runCount}\n`)
       setStickyFooter(null)
     }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { tSync } from 'src/i18n/index.js'
 import { Box, Text } from 'src/ink/index.js'
 import { formatAPIError } from 'src/services/api/errorUtils.js'
 import type { SystemAPIErrorMessage } from 'src/types/message.js'
@@ -36,10 +37,16 @@ export function SystemAPIErrorMessage({ message, verbose }: Props) {
           {truncated && <CtrlOToExpand />}
           {
             <Text dimColor={true}>
-              Retrying in {retryInSecondsLive} {retryInSecondsLive === 1 ? 'second' : 'seconds'}…
-              (attempt {retryAttempt}/{maxRetries})
+              {tSync(
+                retryInSecondsLive === 1 ? 'apiError.retrying_one' : 'apiError.retrying_other',
+                {
+                  seconds: retryInSecondsLive,
+                  attempt: retryAttempt,
+                  max: maxRetries ?? '',
+                },
+              )}
               {process.env.API_TIMEOUT_MS
-                ? ` · API_TIMEOUT_MS=${process.env.API_TIMEOUT_MS}ms, try increasing it`
+                ? tSync('apiError.retryTimeoutHint', { ms: process.env.API_TIMEOUT_MS })
                 : ''}
             </Text>
           }
